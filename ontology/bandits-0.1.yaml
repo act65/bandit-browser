@@ -1,0 +1,137 @@
+# Bandits ontology v0.1: machine-readable version of schema.md §2.
+# The extractor prompt renders this file in place of {{ONTOLOGY}}; the JSON Schema
+# enums are generated from it, so this file is the single source of truth.
+#
+# Order semantics (desiderata D1): a pair [a, b] under `order` means a ⊑ b,
+# i.e. any algorithm for b can be run on a with at most the same guarantee.
+# Upper bounds flow from b to a; lower bounds flow from a to b.
+# Orders are a first pass: each needs a justification and validity scope
+# before the inference engine uses it.
+
+name: bandits
+version: "0.1"
+
+dimensions:
+  objective:
+    multi: false
+    values:
+      cumulative_regret: ""
+      simple_regret: ""
+      bai_fixed_confidence: "best-arm identification, fixed confidence (sample complexity)"
+      bai_fixed_budget: "best-arm identification, fixed budget (error probability)"
+      pac_epsilon_best: "find an epsilon-optimal arm with probability >= 1-delta"
+      top_m_identification: ""
+      other_pure_exploration: ""
+    order: []
+
+  feedback:
+    multi: false
+    values:
+      full_information: "experts setting: all losses observed"
+      semi_bandit: "observe the reward of each selected base arm"
+      bandit: "observe only the reward of the chosen action"
+      graph_feedback: "side observations given by a feedback graph"
+      partial_monitoring: "general feedback matrix"
+      dueling: "relative / preference feedback"
+    order:
+      - [full_information, graph_feedback]
+      - [graph_feedback, bandit]
+      - [semi_bandit, bandit]
+      - [bandit, partial_monitoring]
+
+  environment:
+    multi: false
+    values:
+      stochastic_iid: "rewards i.i.d. from fixed distributions"
+      stochastic_corrupted: "stochastic with adversarial corruption budget C"
+      adversarial_oblivious: "rewards fixed in advance by an adversary"
+      adversarial_adaptive: "rewards may depend on the learner's past actions"
+      nonstationary_switching: "piecewise stationary with S_T switches"
+      nonstationary_drifting: "variation budget V_T"
+      markovian: "rested or restless Markov arms"
+    order:
+      - [stochastic_iid, stochastic_corrupted]
+      - [stochastic_iid, nonstationary_switching]
+      - [nonstationary_switching, adversarial_oblivious]
+      - [adversarial_oblivious, adversarial_adaptive]
+    notes: >
+      'Best of both worlds' is NOT an environment: it is one algorithm with results
+      in several settings. Record one result per setting.
+
+  action_space:
+    multi: false
+    values:
+      finite_K: "K arms, no structure"
+      linear_finite: "finite action set in R^d, linear reward"
+      linear_infinite: "compact / convex action set in R^d, linear reward"
+      generalized_linear: "reward = link(<theta, x>)"
+      combinatorial: "subsets of base arms, typically of size m"
+      convex: "bandit convex optimisation"
+      lipschitz_metric: "arms in a metric space, Lipschitz reward"
+      kernel_rkhs: "reward in an RKHS / Gaussian-process bandit"
+      continuum_other: ""
+    order: []
+    reductions:
+      - {from: finite_K, to: linear_finite, map: {d: K}, note: "canonical basis actions"}
+      - {from: linear_finite, to: generalized_linear, map: {}, note: "identity link"}
+      - {from: linear_infinite, to: kernel_rkhs, map: {}, note: "linear kernel"}
+
+  context:
+    multi: false
+    values:
+      none: ""
+      stochastic_contexts: ""
+      adversarial_contexts: ""
+    order:
+      - [none, stochastic_contexts]
+      - [stochastic_contexts, adversarial_contexts]
+
+  noise:
+    multi: false
+    values:
+      bounded_01: "rewards in [0,1]"
+      bernoulli: ""
+      subgaussian: ""
+      gaussian_known_variance: ""
+      exponential_family: ""
+      heavy_tailed: "bounded (1+eps)-th moment"
+      not_applicable: "e.g. adversarial losses"
+    order:
+      - [bernoulli, bounded_01]
+      - [gaussian_known_variance, subgaussian]
+      - [bounded_01, subgaussian]
+      - [subgaussian, heavy_tailed]
+
+  learner_knows:
+    multi: true
+    values: {T: "", sigma: "", Delta_min: "", S: "", C: "", S_T: "", V_T: "", D: "", gamma_T: "", K: "", d: ""}
+
+  extras:
+    multi: true
+    values:
+      delayed_feedback: ""
+      batched: ""
+      switching_cost: ""
+      differential_privacy: ""
+      knapsack_constraints: ""
+      safety_constraints: ""
+      multi_player_collision: ""
+      multi_agent_cooperative: ""
+      federated: ""
+      fairness: ""
+      sleeping_arms: ""
+      mortal_arms: ""
+      rotting_or_rising: ""
+      causal: ""
+      strategic_arms: ""
+      budgeted_exploration: ""
+      infinitely_many_arms: ""
+      restless: ""
+
+vocabularies:
+  techniques: [optimism, thompson_sampling, elimination, explore_then_commit, epsilon_greedy,
+               exponential_weights, ftrl_or_mirror_descent, information_directed_sampling,
+               track_and_stop, gittins_or_bayes_optimal, doubling_trick, restarts_or_sliding_window,
+               lower_bound_change_of_measure, lower_bound_minimax_construction, other]
+  quantity: [pseudo_regret, expected_regret, high_probability_regret, bayesian_regret, simple_regret,
+             sample_complexity, error_probability, dynamic_regret, switching_regret, other]

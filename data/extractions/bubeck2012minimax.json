@@ -1,0 +1,301 @@
+{
+ "schema_version": "0.2",
+ "ontology_version": "bandits-0.2",
+ "paper": {
+  "title": "Towards minimax policies for online linear optimization with bandit feedback",
+  "arxiv_id": "1202.3079",
+  "arxiv_version": null,
+  "year": 2012,
+  "authors": [
+   "Sébastien Bubeck",
+   "Nicolò Cesa-Bianchi",
+   "Sham M. Kakade"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online linear optimization with bandit feedback, finite action set of N actions",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_unspecified",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "not_applicable",
+   "learner_knows": [
+    "T",
+    "d"
+   ],
+   "extras": [],
+   "parameters": {},
+   "unmapped": [
+    "Losses bounded: |a^T z| <= 1 for all a in A, z in Z (dual action sets)",
+    "Finite action set of size N"
+   ],
+   "definition_quote": "at each time instance $t = 1, \\hdots, n$, the player chooses, possibly in a randomized way, an action from a given compact action set $\\cA \\subset \\R^d$... We consider here the {\\em bandit} version, where the player only observes the incurred loss $a_t^{\\top} z_t$... $\\cA$ and $\\cZ$ are such that $|a^{\\top} z| \\leq 1, \\forall (a,z) \\in \\cA \\times \\cZ$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Bandit linear optimization on the hypercube with cross-polytope losses",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_unspecified",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "not_applicable",
+   "learner_knows": [
+    "T",
+    "d"
+   ],
+   "extras": [],
+   "parameters": {},
+   "unmapped": [
+    "Action set A = {x: ||x||_inf <= 1}, loss set Z = {z: ||z||_1 <= 1}"
+   ],
+   "definition_quote": "Consider the online linear optimization problem with bandit feedback on $\\cA = \\{x \\in \\R^d: \\|x\\|_{\\infty} \\leq 1 \\}$, and with $\\cZ = \\{x \\in \\R^d: \\|x\\|_{1} \\leq 1 \\}$."
+  },
+  {
+   "id": "s3",
+   "name_in_paper": "Bandit linear optimization on the Euclidean ball",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_unspecified",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "not_applicable",
+   "learner_knows": [
+    "T",
+    "d"
+   ],
+   "extras": [],
+   "parameters": {},
+   "unmapped": [
+    "Action set and loss set both the Euclidean unit ball"
+   ],
+   "definition_quote": "Consider the online linear optimization problem with bandit feedback on $\\cA = \\{x \\in \\R^d: \\|x\\| \\leq 1 \\}$, and with $\\cZ = \\{x \\in \\R^d: \\|x\\| \\leq 1 \\}$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "exp2 with John's exploration",
+   "is_new": true,
+   "techniques": [
+    "exponential_weights"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d",
+    "N"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "OSMD with entropic regularizer (hypercube)",
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "OSMD with F(x) = -log(1-||x||) - ||x|| (Euclidean ball)",
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*sqrt(3*T*d*log(N))",
+    "expression_latex": "R_n \\leq 2 \\sqrt{3 n d \\log N}",
+    "regime": "gamma = eta d, eta = sqrt(log N/(3 n d))"
+   },
+   "symbols": {
+    "N": "number of actions"
+   },
+   "extra_assumptions": [
+    "action set preprocessed so John's ellipsoid of conv(A) is unit ball"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:exp2john",
+    "number": "Theorem 4",
+    "quote": "{\\sc exp2} with John's exploration and estimate \\eqref{eq:banditestimate} satisfies, for $\\frac{\\eta d}{\\gamma} \\leq 1$, $$R_n \\leq 2 \\gamma n + \\frac{\\log N}{\\eta} + \\eta n d.$$ In particular with $\\gamma = \\eta d$ and $\\eta = \\sqrt{\\frac{\\log N}{3 n d}}$ we have that $$R_n \\leq 2 \\sqrt{3 n d \\log N} .$$"
+   },
+   "confidence": "high",
+   "notes": "Regret defined as E sum - min_a E sum (pseudo-regret). Computing John's ellipsoid may be hard in general; exp2 is linear in N per round."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*d*sqrt(3*T*log(2))",
+    "expression_latex": "R_n \\leq 2 d \\sqrt{3 n \\log 2}",
+    "regime": "gamma = 2d sqrt(log2/(3n)), eta = sqrt(log2/(3n))"
+   },
+   "symbols": {},
+   "extra_assumptions": [],
+   "is_new": true,
+   "source": {
+    "label": "th:hypercube",
+    "number": "Theorem 5",
+    "quote": "Then {\\sc osmd} on $\\cA$ with regularizer~(\\ref{eq:entro-reg}) satisfies, for any $\\eta$ and $\\gamma \\in (0,1)$ such that $\\frac{\\eta d}{\\gamma} \\leq \\frac12$, ... In particular, with $\\gamma = 2 d \\sqrt{\\frac{\\log 2}{3 n}}$ and $\\eta= \\sqrt{\\frac{\\log 2}{3 n}}$, $R_n \\leq 2 d \\sqrt{3 n \\log 2}$."
+   },
+   "confidence": "high",
+   "notes": "Paper states computational complexity linear in d."
+  },
+  {
+   "id": "r3",
+   "setting": "s3",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "3*sqrt(d*T*log(T))",
+    "expression_latex": "R_n \\leq 3 \\sqrt{d n \\log n}",
+    "regime": "gamma = 1/sqrt(n), eta = sqrt(log n/(2nd)), eta d <= 1/2"
+   },
+   "symbols": {},
+   "extra_assumptions": [],
+   "is_new": true,
+   "source": {
+    "label": "th:ball",
+    "number": "Theorem 6",
+    "quote": "Then {\\sc osmd} on $\\cA' = \\{x \\in \\R^d: \\|x\\| \\leq 1-\\gamma \\}$ with the estimate \\eqref{eq:ballestimate}, and $F(x) = - \\log (1 - \\|x\\|) - \\|x\\|$ satisfies, for any $\\eta$ such that $\\eta d \\leq \\frac12$, ... In particular, with $\\gamma = \\frac{1}{\\sqrt{n}}$ and $\\eta= \\sqrt{\\frac{\\log n}{2 n d}}$, $R_n \\leq 3 \\sqrt{d n \\log n}$."
+   },
+   "confidence": "high",
+   "notes": "Described as computationally efficient."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "DHK08",
+   "cited_title": "The price of bandit information for online optimization",
+   "algorithm_name": null,
+   "side": "lower",
+   "setting_description": "Bandit linear optimization on the hypercube (minimax)",
+   "bound": {
+    "notation": "Omega",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "d \\sqrt{n}",
+    "regime": null
+   },
+   "where": "Section 1.1 and Section 4"
+  },
+  {
+   "cited_key": "AHR08",
+   "cited_title": "Competing in the dark: An efficient algorithm for bandit linear optimization",
+   "algorithm_name": "Mirror descent with self-concordant barrier (SCRiBLe)",
+   "side": "upper",
+   "setting_description": "Bandit linear optimization on convex compact set admitting a theta-self-concordant barrier",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(vartheta*T*log(T))",
+    "expression_latex": "d \\sqrt{ \\theta n \\log n}",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "AHR08",
+   "cited_title": "Competing in the dark: An efficient algorithm for bandit linear optimization",
+   "algorithm_name": "Mirror descent with self-concordant barrier",
+   "side": "upper",
+   "setting_description": "Bandit linear optimization on the hypercube (theta = O(d))",
+   "bound": {
+    "notation": "O",
+    "expression": "d**(3/2)*sqrt(T*log(T))",
+    "expression_latex": "d^{3/2} \\sqrt{n \\log n}",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "AHR08",
+   "cited_title": "Competing in the dark: An efficient algorithm for bandit linear optimization",
+   "algorithm_name": "Mirror descent with self-concordant barrier",
+   "side": "upper",
+   "setting_description": "Bandit linear optimization on the Euclidean ball (O(1)-self-concordant barrier)",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(T*log(T))",
+    "expression_latex": "d \\sqrt{n \\log n}",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "ACFS03",
+   "cited_title": "The non-stochastic multi-armed bandit problem",
+   "algorithm_name": "EXP4",
+   "side": "upper",
+   "setting_description": "d-armed adversarial bandit with N experts",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(d*T*log(N))",
+    "expression_latex": "\\sqrt{d n \\ln N}",
+    "regime": null
+   },
+   "where": "Section 3.2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "c6d1de293f21",
+  "schema_version": "0.2",
+  "ontology_version": "bandits-0.2",
+  "date": "2026-10-19T15:56:38",
+  "source_chars": 45952,
+  "input_tokens": 35429,
+  "output_tokens": 4913,
+  "cost_usd_equiv": 0.29603219999999997,
+  "status": "extracted"
+ }
+}

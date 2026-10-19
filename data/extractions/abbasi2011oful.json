@@ -1,0 +1,321 @@
+{
+ "schema_version": "0.2",
+ "ontology_version": "bandits-0.2",
+ "paper": {
+  "title": "Online Least Squares Estimation with Self-Normalized Processes: An Application to Bandit Problems",
+  "arxiv_id": "1102.2670",
+  "arxiv_version": null,
+  "year": 2011,
+  "authors": [
+   "Yasin Abbasi-Yadkori",
+   "David Pal",
+   "Csaba Szepesvari"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "The Multi-Armed Bandit Problem",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "K",
+    "sigma"
+   ],
+   "extras": [],
+   "parameters": {},
+   "unmapped": [
+    "Confidence widths in UCB(delta) implicitly use sub-Gaussian constant R=1",
+    "Algorithm takes the confidence level delta as input"
+   ],
+   "definition_quote": "We assume that if we choose action $I_t$ in round $t$, we obtain reward $\\mu_{I_t} + \\eta_t$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "The Linear Bandit Problem",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "S",
+    "sigma",
+    "d"
+   ],
+   "extras": [],
+   "parameters": {},
+   "unmapped": [
+    "Action set D is an arbitrary fixed subset of R^d (not necessarily finite or convex)",
+    "Feature bound stated on squared norm: ||x||^2 <= L",
+    "Mean rewards theta*^T x in [-1,1]",
+    "Noise is conditionally R-sub-Gaussian martingale difference"
+   ],
+   "definition_quote": "Assume the actions lie in $\\MD\\subset \\real^d$ and for any $x\\in \\MD$, $\\norm{x}^2\\leq L$. Assume the reward of taking action $x\\in \\MD$ has the form of $$h_t(x)=\\theta_*\\ttop x + \\eta_t$$ and assume $\\forall x\\in \\MD,\\, \\theta_*\\ttop x \\in [-1,1]$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "UCB(delta)",
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "delta",
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Linear Bandit Algorithm (modified ConfidenceBall, Table 1)",
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "delta",
+    "R",
+    "S",
+    "lambda"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "Linear Bandit Algorithm with rare policy switching (Table 2)",
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "delta",
+    "R",
+    "S",
+    "lambda"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(3*Delta_i + 16/Delta_i*log(2*K/(Delta_i*delta)))",
+    "expression_latex": "R(T) \\leq \\sum_{i: \\Delta_i >0} \\left( 3 \\Delta_i + \\frac{16}{\\Delta_i} \\log \\frac{2K}{\\Delta_i \\delta} \\right)",
+    "regime": "for all T, with probability at least 1-delta"
+   },
+   "symbols": {},
+   "extra_assumptions": [
+    "sub-Gaussian noise with R=1 implicit in confidence widths"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:UCBImp",
+    "number": "Theorem 4",
+    "quote": "With probability at least $1-\\delta$, the total regret of the UCB($\\delta$) algorithm with the action selection rule~\\eqref{eq:actSelFinite} is constant and is bounded by $$R(T) \\leq \\sum_{i: \\Delta_i >0} \\left( 3 \\Delta_i + \\frac{16}{\\Delta_i} \\log \\frac{2K}{\\Delta_i \\delta} \\right).$$"
+   },
+   "confidence": "high",
+   "notes": "Regret R(T)=sum Delta_i N_{i,T} (random pull counts). Theorem numbering inferred from shared counter."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*sqrt(T*d*log(lam + T*L_feat/d))*(sqrt(lam)*S + sigma*sqrt(2*log(1/delta) + d*log(1 + T*L_feat/(lam*d))))",
+    "expression_latex": "4 \\sqrt{T d \\log (\\lambda + T L /d)} \\left( \\lambda^{1/2} S + R \\sqrt{2\\log 1/\\delta + d \\log( 1+ T L/(\\lambda d) )} \\right)",
+    "regime": "for all T >= 1, w.p. >= 1-delta"
+   },
+   "symbols": {
+    "L_feat": "bound on squared action norm: ||x||^2 <= L",
+    "sigma": "sub-Gaussian constant R of noise"
+   },
+   "extra_assumptions": [
+    "||theta_*|| <= S",
+    "theta_*^T x in [-1,1]",
+    "lambda > 0 regularization"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:ConfEllpImp",
+    "number": "Theorem 9",
+    "quote": "With probability at least $1-\\delta$, the regret of the Linear Bandit Algorithm shown in Table~\\ref{alg:LinBandit} satisfies $$\\forall T\\geq 1,\\quad R(T) \\leq 4 \\sqrt{T d \\log (\\lambda + T L /d)} \\left( \\lambda^{1/2} S + R \\sqrt{2\\log 1/\\delta + d \\log( 1+ T L/(\\lambda d) )} \\right).$$"
+   },
+   "confidence": "high",
+   "notes": "Action selection is NP-hard in general (per paper), so compute not stated as polynomial. Theorem number inferred."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*sqrt(2*T*d*log(lam + T*L_feat/d))*(sqrt(lam)*S + sigma*sqrt(2*log(1/delta) + d*log(1 + T*L_feat/(lam*d)))) + 4*sqrt(d*log(T/d))",
+    "expression_latex": "R(T) \\leq 4 \\sqrt{2T d \\log (\\lambda + T L /d)} \\left( \\lambda^{1/2} S + R \\sqrt{2\\log 1/\\delta + d \\log( 1+T L/(\\lambda d) )} \\right)+ 4\\sqrt{d\\log(T/d)}",
+    "regime": "for all T >= 1, w.p. >= 1-delta"
+   },
+   "symbols": {
+    "L_feat": "bound on squared action norm: ||x||^2 <= L",
+    "sigma": "sub-Gaussian constant R of noise"
+   },
+   "extra_assumptions": [
+    "||theta_*|| <= S",
+    "theta_*^T x in [-1,1]"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:ConfEllpEff",
+    "number": "Theorem 10",
+    "quote": "With probability at least $1-\\delta$, $\\forall T\\geq 1$, the regret of the Linear Bandit Algorithm shown in Table~\\ref{alg:LinBanditFixAct} satisfies R(T) \\leq 4 \\sqrt{2T d \\log (\\lambda + T L /d)} \\left( \\lambda^{1/2} S + R \\sqrt{2\\log 1/\\delta + d \\log( 1+T L/(\\lambda d) )} \\right)+ 4\\sqrt{d\\log(T/d)}."
+   },
+   "confidence": "medium",
+   "notes": "Proof's final line omits the additive 4sqrt(d log(T/d)) term; recorded theorem statement. Algorithm only recomputes the optimistic action O(log t) times."
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "16*sigma**2*lam*S**2/Delta_gap*(log(L_feat*T) + (d-1)*log(64*sigma**2*lam*S**2*L_feat/Delta_gap**2) + 2*(d-1)*log(d*log((d*lam + T*L_feat**2)/d) + 2*log(1/delta)) + 2*log(1/delta))**2",
+    "expression_latex": "\\frac{16 R^2 \\lambda S^2}{\\Delta} \\left(\\log (L T) + (d-1)\\log \\frac{64 R^2 \\lambda S^2 L}{\\Delta^2} + 2(d-1)\\log \\left( d\\log \\frac{d\\lambda + T L^2}{d} + 2\\log (1/\\delta)\\right) + 2\\log (1/\\delta)\\right)^2",
+    "regime": "for all T >= 1, w.p. >= 1-delta"
+   },
+   "symbols": {
+    "Delta_gap": "gap Delta as defined in Dani et al. 2008 (positive, e.g. polytope action sets)",
+    "L_feat": "bound on squared action norm: ||x||^2 <= L",
+    "sigma": "sub-Gaussian constant R of noise"
+   },
+   "extra_assumptions": [
+    "Delta > 0",
+    "lambda >= 1",
+    "S >= 1",
+    "||theta_*|| <= S"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:ConfEllpDeltaImp",
+    "number": "Theorem 13",
+    "quote": "Assume that $\\Delta>0$ for the gap $\\Delta$ defined in~\\citep{DaniStoch}. Further assume that $\\lambda \\geq 1$ and $S\\geq 1$. With probability at least $1-\\delta$, $\\forall T\\geq 1$, the regret of the algorithm shown in Table~\\ref{alg:LinBandit} satisfies $$R(T)=\\frac{16 R^2 \\lambda S^2}{\\Delta} \\left(\\log (L T) + ...\\right)^2.$$"
+   },
+   "confidence": "medium",
+   "notes": "Theorem written with '=' but is an upper bound. Proof has constant inconsistencies (64 vs 16). Theorem number inferred."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "LaiRo85",
+   "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "algorithm_name": null,
+   "side": "lower",
+   "setting_description": "Stochastic K-armed bandit, consistent algorithms, expected regret",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sum_subopt(1/KL_i)*log(T)",
+    "expression_latex": "(\\sum_{i\\neq i_*}1/D(p_j,p_{i_*})-o(1))\\log T",
+    "regime": "asymptotic"
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "AuerBandit",
+   "cited_title": "Finite time analysis of the multiarmed bandit problem",
+   "algorithm_name": "UCB",
+   "side": "upper",
+   "setting_description": "Stochastic K-armed bandit, expected regret",
+   "bound": {
+    "notation": "O",
+    "expression": "K*log(T)/Delta_min",
+    "expression_latex": "O((K \\log T)/ \\Delta)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "DaniStoch",
+   "cited_title": "Stochastic linear optimization under bandit feedback",
+   "algorithm_name": "ConfidenceBall",
+   "side": "upper",
+   "setting_description": "Stochastic linear bandit, high-probability worst-case regret",
+   "bound": {
+    "notation": "O",
+    "expression": "d*log(T)*sqrt(T*log(T/delta))",
+    "expression_latex": "O(d \\log(T) \\sqrt{T \\log(T/\\delta)})",
+    "regime": "T sufficiently large"
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "DaniStoch",
+   "cited_title": "Stochastic linear optimization under bandit feedback",
+   "algorithm_name": "ConfidenceBall",
+   "side": "upper",
+   "setting_description": "Stochastic linear bandit with gap Delta > 0, high-probability problem-dependent regret",
+   "bound": {
+    "notation": "O",
+    "expression": "d**2/Delta_gap*log(T)**2*log(T/delta)",
+    "expression_latex": "O(\\frac{d^2}{\\Delta} \\log^2 T \\log(T/\\delta))",
+    "regime": null
+   },
+   "where": "Introduction"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "c6d1de293f21",
+  "schema_version": "0.2",
+  "ontology_version": "bandits-0.2",
+  "date": "2026-10-19T15:54:54",
+  "source_chars": 59724,
+  "input_tokens": 45822,
+  "output_tokens": 6051,
+  "cost_usd_equiv": 0.4019362,
+  "status": "extracted"
+ }
+}

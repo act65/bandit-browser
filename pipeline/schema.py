@@ -1,0 +1,140 @@
+"""Extraction output schema (schema.md §1) as pydantic models.
+
+Vocabulary fields are typed as Literals generated from the ontology YAML, so the
+same models give us (a) the JSON Schema passed to `claude -p --json-schema`, which
+constrains the model's answer, and (b) validation of stored extractions.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Literal, Optional
+
+import yaml
+from pydantic import BaseModel, ConfigDict, create_model
+
+ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_ONTOLOGY = ROOT / "ontology" / "bandits-0.2.yaml"
+SCHEMA_VERSION = "0.2"
+
+
+def load_ontology(path: Path = DEFAULT_ONTOLOGY) -> dict:
+    return yaml.safe_load(path.read_text())
+
+
+def _lit(values):
+    return Literal[tuple(values)]
+
+
+class Strict(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class Paper(Strict):
+    title: str
+    arxiv_id: Optional[str]
+    arxiv_version: Optional[str]
+    year: Optional[int]
+    authors: list[str]
+
+
+class Bound(Strict):
+    notation: Literal["exact", "O", "O_tilde", "Theta", "Omega", "Omega_tilde", "liminf", "limsup"]
+    expression: str
+    expression_latex: str
+    regime: Optional[str]
+
+
+class Source(Strict):
+    label: Optional[str]
+    number: str
+    quote: str
+
+
+class CitedResult(Strict):
+    cited_key: str
+    cited_title: Optional[str]
+    algorithm_name: Optional[str]
+    side: Literal["upper", "lower"]
+    setting_description: str
+    bound: Bound
+    where: str
+
+
+def build_models(ontology: dict):
+    """Return the top-level Extraction model for a given ontology."""
+    dims = ontology["dimensions"]
+    voc = ontology["vocabularies"]
+
+    setting_fields = {
+        "id": (str, ...),
+        "name_in_paper": (str, ...),
+    }
+    for name, spec in dims.items():
+        lit = _lit(spec["values"].keys())
+        setting_fields[name] = (list[lit], ...) if spec.get("multi") else (lit, ...)
+    setting_fields["parameters"] = (dict[str, str], ...)
+    setting_fields["unmapped"] = (list[str], ...)
+    setting_fields["definition_quote"] = (str, ...)
+    Setting = create_model("Setting", __base__=Strict, **setting_fields)
+
+    Algorithm = create_model(
+        "Algorithm", __base__=Strict,
+        id=(str, ...), name=(str, ...), is_new=(bool, ...),
+        techniques=(list[_lit(voc["techniques"])], ...),
+        requires_knowledge_of=(list[str], ...),
+    )
+
+    Result = create_model(
+        "Result", __base__=Strict,
+        id=(str, ...),
+        setting=(str, ...),
+        side=(Literal["upper", "lower"], ...),
+        algorithm=(Optional[str], ...),
+        algorithm_class=(Optional[Literal["all", "consistent", "uniformly_good", "other"]], ...),
+        quantity=(_lit(voc["quantity"]), ...),
+        dependence=(Literal["worst_case", "instance_dependent"], ...),
+        probability=(Literal["expectation", "high_probability", "almost_sure", "asymptotic"], ...),
+        horizon=(Literal["known", "anytime", "not_applicable"], ...),
+        compute=(Literal["polynomial", "exponential", "non_constructive", "not_stated"], ...),
+        bound=(Bound, ...),
+        symbols=(dict[str, str], ...),
+        extra_assumptions=(list[str], ...),
+        is_new=(bool, ...),
+        source=(Source, ...),
+        confidence=(Literal["high", "medium", "low"], ...),
+        notes=(str, ...),
+    )
+
+    Extraction = create_model(
+        "Extraction", __base__=Strict,
+        schema_version=(str, ...),
+        ontology_version=(str, ...),
+        paper=(Paper, ...),
+        settings=(list[Setting], ...),
+        algorithms=(list[Algorithm], ...),
+        results=(list[Result], ...),
+        cited_results=(list[CitedResult], ...),
+    )
+    return Extraction
+
+
+def _inline_refs(node, defs):
+    if isinstance(node, dict):
+        if "$ref" in node:
+            return _inline_refs(defs[node["$ref"].split("/")[-1]], defs)
+        return {k: _inline_refs(v, defs) for k, v in node.items() if k != "$defs"}
+    if isinstance(node, list):
+        return [_inline_refs(v, defs) for v in node]
+    return node
+
+
+def json_schema(ontology: dict) -> dict:
+    """Self-contained JSON Schema (no $refs) for the CLI's structured output."""
+    schema = build_models(ontology).model_json_schema()
+    return _inline_refs(schema, schema.get("$defs", {}))
+
+
+if __name__ == "__main__":
+    import json
+    print(json.dumps(json_schema(load_ontology()), indent=1)[:2000])

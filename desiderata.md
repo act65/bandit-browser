@@ -89,6 +89,14 @@ The system produces, per release: settings with non-tight bounds, settings with 
 
 Gaps are coarsely labelled (e.g. "log-factor gap", "polynomial gap", "no lower bound"). A detected gap is only a **candidate**: before it is reported as open, a targeted retrieval search (Semantic Scholar / OpenAlex / TheoremSearch) checks for a resolving paper outside the corpus. Most apparent gaps will be coverage holes, as the Erdős-problems episode showed. Negative searches are logged.
 
+## D9. Queryable and browsable
+
+A static website (per-setting pages with bound tables, the Hasse diagram, gap lists) and a programmatic query interface. Later: natural-language queries answered from the graph with citations.
+
+## D10. Incremental and cheap to maintain
+
+New papers can be added without reprocessing the corpus; a periodic job can pick up new arXiv papers. The pipeline is reproducible from a corpus manifest.
+
 ## D11. Parameterised settings and classification theorems
 
 Nodes can be parameterised families (e.g. "feedback graph with independence number α", "Bellman–Eluder dimension ≤ d", a partial-monitoring game). Some results are **classification theorems** that settle a whole family at once (partial monitoring: trivial / easy / hard / hopeless). Gap detection must then ask "is this node covered by a characterisation?", not only compare two bounds.
@@ -97,10 +105,12 @@ Nodes can be parameterised families (e.g. "feedback graph with independence numb
 
 Every fact is tagged with how it was produced (model, prompt version, human edits). Nothing is published as verified without human review. This matches π-Base's policy that unedited AI output is rejected. Data is CC-BY in an open git repo with no single maintainer or corporate host, because hosting failure is how most precedents died.
 
-## D9. Queryable and browsable
+## D13. Canonical notation (entity resolution)
 
-A static website (per-setting pages with bound tables, the Hasse diagram, gap lists) and a programmatic query interface. Later: natural-language queries answered from the graph with citations.
+Every entity has one canonical form, and the paper's own form is kept alongside for provenance.
+- **Settings:** the controlled vocabulary; each paper's setting maps to an assumption vector, and identical vectors are one node.
+- **Variables:** a symbol registry with precise definitions and aliases (`n`, `N` → `T`; …). Symbols that look alike but are defined differently (σ as standard deviation vs sub-Gaussian parameter; a bound on ‖x‖² vs on ‖x‖) are separate symbols linked by explicit conversion rules, which are applied before bounds are compared.
+- **Algorithms:** a registry with canonical ids and aliases.
+- **Papers / citations:** resolved to arXiv ids or DOIs.
 
-## D10. Incremental and cheap to maintain
-
-New papers can be added without reprocessing the corpus; a periodic job can pick up new arXiv papers. The pipeline is reproducible from a corpus manifest.
+The site shows canonical notation, with the original LaTeX next to it.

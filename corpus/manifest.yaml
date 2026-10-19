@@ -1,0 +1,800 @@
+# bandit-browser Phase 1 pilot corpus manifest
+# Created: 2026-10-19
+#
+# Pilot slice: stochastic K-armed, adversarial K-armed / best-of-both-worlds (incl. corrupted
+# stochastic), stochastic linear, adversarial linear, linear contextual (finite arms).
+#
+# Selection criteria:
+#   - Classic upper AND lower bound results that define the slice (Lai-Robbins, UCB1, EXP3,
+#     MOSS, KL-UCB, Thompson Sampling, OFUL, Dani et al., Exp2/John, ...).
+#   - Papers that closed known gaps: minimax log-factor gaps (MOSS, Li-Wang-Zhou 2019),
+#     simultaneous minimax + asymptotic optimality (KL-UCB++, KL-UCB-switch, MOTS, ExpTS+),
+#     asymptotic optimality in linear bandits (end of optimism, OSSB, IDS, SOLID),
+#     best-of-both-worlds optimality (Tsallis-INF and successors).
+#   - Recent papers (2018-2026) with "comparison with prior work" tables, for cross-checking
+#     extracted bounds.
+#   - Strong preference for arXiv (LaTeX source is parsed); 6 essential non-arXiv classics
+#     are included with arxiv_id: null and a DOI or publisher/proceedings URL.
+#
+# Field notes:
+#   - verified: true means the arXiv id was checked against arxiv.org/abs/<id> (title, authors
+#     and year below are copied from the arXiv metadata), or, for arxiv_id: null, the DOI was
+#     checked against Crossref / the URL against the landing page.
+#   - title is the arXiv title, which can differ from the venue title (e.g. abbasi2011oful).
+#   - year is the year of the first arXiv version (publication year for non-arXiv entries);
+#     the id slug may use the venue year instead.
+#   - has_comparison_table was set by scanning the arXiv LaTeX source for table/tabular
+#     environments that compare against prior work, then spot-checking ambiguous cases by hand;
+#     "unknown" for non-arXiv entries (not scanned).
+#     "false" means no such table was found in the source (a comparison may still be in prose).
+#   - venue is from memory or arXiv comments; null where not confirmed.
+#   - slice is the primary slice; several papers span more (e.g. bubeck2012survey covers all,
+#     lee2021instanceminimax and kong2023bestofthree are best-of-both-worlds for *linear* bandits).
+papers:
+  - id: lai1985asymptotically
+    arxiv_id: null
+    doi: "10.1016/0196-8858(85)90002-8"
+    url: https://doi.org/10.1016/0196-8858(85)90002-8
+    title: "Asymptotically efficient adaptive allocation rules"
+    authors: ["Tze Leung Lai", "Herbert Robbins"]
+    year: 1985
+    venue: "Advances in Applied Mathematics 6(1)"
+    slice: stochastic_k_armed
+    result_types: [lower, upper]
+    has_comparison_table: unknown
+    why: "Asymptotic lower bound sum_i log(T)/KL(i) for consistent policies (one-parameter families) and matching UCB-type index policies; origin of 'asymptotically optimal'"
+    verified: true
+  - id: auer2002ucb1
+    arxiv_id: null
+    doi: "10.1023/A:1013689704352"
+    url: https://doi.org/10.1023/A:1013689704352
+    title: "Finite-time Analysis of the Multiarmed Bandit Problem"
+    authors: ["Peter Auer", "Nicolò Cesa-Bianchi", "Paul Fischer"]
+    year: 2002
+    venue: "Machine Learning 47"
+    slice: stochastic_k_armed
+    result_types: [upper]
+    has_comparison_table: unknown
+    why: "UCB1: finite-time O(sum_i log T / Delta_i) regret for bounded rewards; also UCB2 and epsilon-greedy"
+    verified: true
+  - id: audibert2009moss
+    arxiv_id: null
+    doi: null
+    url: https://hal.science/hal-00834882
+    title: "Minimax Policies for Adversarial and Stochastic Bandits"
+    authors: ["Jean-Yves Audibert", "Sébastien Bubeck"]
+    year: 2009
+    venue: "COLT 2009"
+    slice: stochastic_k_armed
+    result_types: [upper, lower]
+    has_comparison_table: unknown
+    why: "MOSS: first minimax-optimal O(sqrt(KT)) stochastic regret, closing the sqrt(log T) gap of UCB1; INF for adversarial setting"
+    verified: true
+  - id: garivier2011klucb
+    arxiv_id: "1102.2490"
+    doi: null
+    url: https://arxiv.org/abs/1102.2490
+    title: "The KL-UCB Algorithm for Bounded Stochastic Bandits and Beyond"
+    authors: ["Aurélien Garivier", "Olivier Cappé"]
+    year: 2011
+    venue: "COLT 2011"
+    slice: stochastic_k_armed
+    result_types: [upper]
+    has_comparison_table: false
+    why: "KL-UCB: finite-time regret matching the Lai-Robbins constant for Bernoulli rewards, uniformly better than UCB1"
+    verified: true
+  - id: cappe2013klucb
+    arxiv_id: "1210.1136"
+    doi: "10.1214/13-AOS1119"
+    url: https://arxiv.org/abs/1210.1136
+    title: "Kullback-Leibler upper confidence bounds for optimal sequential allocation"
+    authors: ["Olivier Cappé", "Aurélien Garivier", "Odalric-Ambrym Maillard", "Rémi Munos", "Gilles Stoltz"]
+    year: 2012
+    venue: "Annals of Statistics 2013"
+    slice: stochastic_k_armed
+    result_types: [upper]
+    has_comparison_table: false
+    why: "KL-UCB / empirical-likelihood KL-UCB asymptotically optimal for exponential families and bounded (Burnetas-Katehakis) lower bound"
+    verified: true
+  - id: agrawal2012thompson
+    arxiv_id: "1111.1797"
+    doi: null
+    url: https://arxiv.org/abs/1111.1797
+    title: "Analysis of Thompson Sampling for the multi-armed bandit problem"
+    authors: ["Shipra Agrawal", "Navin Goyal"]
+    year: 2011
+    venue: "COLT 2012"
+    slice: stochastic_k_armed
+    result_types: [upper]
+    has_comparison_table: false
+    why: "First logarithmic problem-dependent regret analysis of Thompson Sampling for Bernoulli bandits"
+    verified: true
+  - id: kaufmann2012thompson
+    arxiv_id: "1205.4217"
+    doi: null
+    url: https://arxiv.org/abs/1205.4217
+    title: "Thompson Sampling: An Asymptotically Optimal Finite Time Analysis"
+    authors: ["Emilie Kaufmann", "Nathaniel Korda", "Rémi Munos"]
+    year: 2012
+    venue: "ALT 2012"
+    slice: stochastic_k_armed
+    result_types: [upper]
+    has_comparison_table: false
+    why: "Thompson Sampling asymptotically optimal (matches Lai-Robbins) for Bernoulli bandits, finite-time analysis"
+    verified: true
+  - id: agrawal2013further
+    arxiv_id: "1209.3353"
+    doi: null
+    url: https://arxiv.org/abs/1209.3353
+    title: "Further Optimal Regret Bounds for Thompson Sampling"
+    authors: ["Shipra Agrawal", "Navin Goyal"]
+    year: 2012
+    venue: "AISTATS 2013"
+    slice: stochastic_k_armed
+    result_types: [upper]
+    has_comparison_table: false
+    why: "Thompson Sampling: optimal problem-dependent bound and O(sqrt(KT log T)) / O(sqrt(KT log K)) problem-independent bounds"
+    verified: true
+  - id: bubeck2012survey
+    arxiv_id: "1204.5721"
+    doi: null
+    url: https://arxiv.org/abs/1204.5721
+    title: "Regret Analysis of Stochastic and Nonstochastic Multi-armed Bandit Problems"
+    authors: ["Sébastien Bubeck", "Nicolò Cesa-Bianchi"]
+    year: 2012
+    venue: "Foundations and Trends in Machine Learning 2012"
+    slice: stochastic_k_armed
+    result_types: [upper, lower]
+    has_comparison_table: false
+    why: "Survey of stochastic and adversarial (and linear) bandit regret bounds with proofs of standard upper/lower bounds; also covers adversarial_k_armed"
+    verified: true
+  - id: bubeck2013bounded
+    arxiv_id: "1302.1611"
+    doi: null
+    url: https://arxiv.org/abs/1302.1611
+    title: "Bounded regret in stochastic multi-armed bandits"
+    authors: ["Sébastien Bubeck", "Vianney Perchet", "Philippe Rigollet"]
+    year: 2013
+    venue: "COLT 2013"
+    slice: stochastic_k_armed
+    result_types: [upper, lower]
+    has_comparison_table: false
+    why: "Bounded (T-independent) regret when the optimal mean and a gap lower bound are known; matching lower bound"
+    verified: true
+  - id: bubeck2013heavy
+    arxiv_id: "1209.1727"
+    doi: null
+    url: https://arxiv.org/abs/1209.1727
+    title: "Bandits with heavy tail"
+    authors: ["Sébastien Bubeck", "Nicolò Cesa-Bianchi", "Gábor Lugosi"]
+    year: 2012
+    venue: "IEEE Trans. Information Theory 2013"
+    slice: stochastic_k_armed
+    result_types: [upper, lower]
+    has_comparison_table: false
+    why: "Robust UCB: log T regret under only (1+eps)-moment assumptions, with matching lower bounds (heavy-tailed rewards)"
+    verified: true
+  - id: lattimore2015ocucb
+    arxiv_id: "1507.07880"
+    doi: null
+    url: https://arxiv.org/abs/1507.07880
+    title: "Optimally Confident UCB: Improved Regret for Finite-Armed Bandits"
+    authors: ["Tor Lattimore"]
+    year: 2015
+    venue: null
+    slice: stochastic_k_armed
+    result_types: [upper, lower]
+    has_comparison_table: false
+    why: "Optimally Confident UCB: simultaneously O(sqrt(KT)) minimax and near-optimal problem-dependent regret; lower bound for the trade-off"
+    verified: true
+  - id: garivier2019explore
+    arxiv_id: "1602.07182"
+    doi: null
+    url: https://arxiv.org/abs/1602.07182
+    title: "Explore First, Exploit Next: The True Shape of Regret in Bandit Problems"
+    authors: ["Aurélien Garivier", "Pierre Ménard", "Gilles Stoltz"]
+    year: 2016
+    venue: "Mathematics of Operations Research 2019"
+    slice: stochastic_k_armed
+    result_types: [lower]
+    has_comparison_table: false
+    why: "Non-asymptotic distribution-dependent lower bounds via a fundamental KL inequality; 'true shape' of regret at small T"
+    verified: true
+  - id: garivier2016etc
+    arxiv_id: "1605.08988"
+    doi: null
+    url: https://arxiv.org/abs/1605.08988
+    title: "On Explore-Then-Commit Strategies"
+    authors: ["Aurélien Garivier", "Emilie Kaufmann", "Tor Lattimore"]
+    year: 2016
+    venue: "NeurIPS 2016"
+    slice: stochastic_k_armed
+    result_types: [upper, lower]
+    has_comparison_table: true
+    why: "Explore-then-commit strategies are necessarily suboptimal by a factor 2 asymptotically (Gaussian two-armed); matching bounds"
+    verified: true
+  - id: menard2017klucbpp
+    arxiv_id: "1702.07211"
+    doi: null
+    url: https://arxiv.org/abs/1702.07211
+    title: "A minimax and asymptotically optimal algorithm for stochastic bandits"
+    authors: ["Pierre Ménard", "Aurélien Garivier"]
+    year: 2017
+    venue: "ALT 2017"
+    slice: stochastic_k_armed
+    result_types: [upper]
+    has_comparison_table: false
+    why: "KL-UCB++: first algorithm simultaneously minimax optimal O(sqrt(KT)) and asymptotically optimal (exponential families)"
+    verified: true
+  - id: garivier2018klucbswitch
+    arxiv_id: "1805.05071"
+    doi: null
+    url: https://arxiv.org/abs/1805.05071
+    title: "KL-UCB-switch: optimal regret bounds for stochastic bandits from both a distribution-dependent and a distribution-free viewpoints"
+    authors: ["Aurélien Garivier", "Hédi Hadiji", "Pierre Menard", "Gilles Stoltz"]
+    year: 2018
+    venue: "Electronic Journal of Statistics 2022"
+    slice: stochastic_k_armed
+    result_types: [upper]
+    has_comparison_table: false
+    why: "KL-UCB-switch: simultaneously distribution-free sqrt(KT) and distribution-dependent asymptotically optimal for bounded rewards"
+    verified: true
+  - id: jin2020detc
+    arxiv_id: "2002.09174"
+    doi: null
+    url: https://arxiv.org/abs/2002.09174
+    title: "Double Explore-then-Commit: Asymptotic Optimality and Beyond"
+    authors: ["Tianyuan Jin", "Pan Xu", "Xiaokui Xiao", "Quanquan Gu"]
+    year: 2020
+    venue: "ICML 2022"
+    slice: stochastic_k_armed
+    result_types: [upper]
+    has_comparison_table: true
+    why: "Double Explore-then-Commit achieves asymptotic optimality, overcoming the ETC factor-2 barrier; batched variants"
+    verified: true
+  - id: jin2021mots
+    arxiv_id: "2003.01803"
+    doi: null
+    url: https://arxiv.org/abs/2003.01803
+    title: "MOTS: Minimax Optimal Thompson Sampling"
+    authors: ["Tianyuan Jin", "Pan Xu", "Jieming Shi", "Xiaokui Xiao", "Quanquan Gu"]
+    year: 2020
+    venue: "ICML 2021"
+    slice: stochastic_k_armed
+    result_types: [upper]
+    has_comparison_table: true
+    why: "MOTS: first Thompson Sampling variant that is minimax optimal O(sqrt(KT)) and asymptotically optimal (Gaussian rewards)"
+    verified: true
+  - id: bian2022maillard
+    arxiv_id: "2111.03290"
+    doi: null
+    url: https://arxiv.org/abs/2111.03290
+    title: "Maillard Sampling: Boltzmann Exploration Done Optimally"
+    authors: ["Jie Bian", "Kwang-Sung Jun"]
+    year: 2021
+    venue: "AISTATS 2022"
+    slice: stochastic_k_armed
+    result_types: [upper]
+    has_comparison_table: true
+    why: "Maillard Sampling: closed-form randomized algorithm with asymptotic optimality and sqrt(KT log K) minimax regret (sub-Gaussian)"
+    verified: true
+  - id: jin2022exptsfamily
+    arxiv_id: "2206.03520"
+    doi: null
+    url: https://arxiv.org/abs/2206.03520
+    title: "Finite-Time Regret of Thompson Sampling Algorithms for Exponential Family Multi-Armed Bandits"
+    authors: ["Tianyuan Jin", "Pan Xu", "Xiaokui Xiao", "Anima Anandkumar"]
+    year: 2022
+    venue: null
+    slice: stochastic_k_armed
+    result_types: [upper]
+    has_comparison_table: true
+    why: "ExpTS/ExpTS+: Thompson Sampling for exponential families, simultaneously minimax and asymptotically optimal finite-time regret"
+    verified: true
+  - id: baudry2023recipe
+    arxiv_id: "2303.06058"
+    doi: null
+    url: https://arxiv.org/abs/2303.06058
+    title: "A General Recipe for the Analysis of Randomized Multi-Armed Bandit Algorithms"
+    authors: ["Dorian Baudry", "Kazuya Suzuki", "Junya Honda"]
+    year: 2023
+    venue: null
+    slice: stochastic_k_armed
+    result_types: [upper]
+    has_comparison_table: true
+    why: "General recipe for analysing randomized (TS-type, MED-type) algorithms; asymptotically optimal regret for broad families"
+    verified: true
+  - id: qin2023klms
+    arxiv_id: "2304.14989"
+    doi: null
+    url: https://arxiv.org/abs/2304.14989
+    title: "Kullback-Leibler Maillard Sampling for Multi-armed Bandits with Bounded Rewards"
+    authors: ["Hao Qin", "Kwang-Sung Jun", "Chicheng Zhang"]
+    year: 2023
+    venue: "NeurIPS 2023"
+    slice: stochastic_k_armed
+    result_types: [upper]
+    has_comparison_table: true
+    why: "KL Maillard Sampling for bounded rewards: asymptotically optimal (Bernoulli) and near-minimax sqrt(KT log K) regret"
+    verified: true
+  - id: auer2002exp3
+    arxiv_id: null
+    doi: "10.1137/S0097539701398375"
+    url: https://doi.org/10.1137/S0097539701398375
+    title: "The Nonstochastic Multiarmed Bandit Problem"
+    authors: ["Peter Auer", "Nicolò Cesa-Bianchi", "Yoav Freund", "Robert E. Schapire"]
+    year: 2002
+    venue: "SIAM Journal on Computing 32(1)"
+    slice: adversarial_k_armed
+    result_types: [upper, lower]
+    has_comparison_table: unknown
+    why: "EXP3: O(sqrt(KT log K)) adversarial regret and Omega(sqrt(KT)) minimax lower bound"
+    verified: true
+  - id: neu2015explore
+    arxiv_id: "1506.03271"
+    doi: null
+    url: https://arxiv.org/abs/1506.03271
+    title: "Explore no more: Improved high-probability regret bounds for non-stochastic bandits"
+    authors: ["Gergely Neu"]
+    year: 2015
+    venue: "NeurIPS 2015"
+    slice: adversarial_k_armed
+    result_types: [upper]
+    has_comparison_table: true
+    why: "EXP3-IX: high-probability O(sqrt(KT log K)) regret via implicit exploration, no forced uniform exploration"
+    verified: true
+  - id: abernethy2015fighting
+    arxiv_id: "1512.04152"
+    doi: null
+    url: https://arxiv.org/abs/1512.04152
+    title: "Fighting Bandits with a New Kind of Smoothness"
+    authors: ["Jacob Abernethy", "Chansoo Lee", "Ambuj Tewari"]
+    year: 2015
+    venue: "NeurIPS 2015"
+    slice: adversarial_k_armed
+    result_types: [upper]
+    has_comparison_table: false
+    why: "Perturbation/smoothing view of adversarial bandits; Gradient-based Prediction Alg with near-optimal O(sqrt(KT log K)) and optimal Tsallis-type bounds"
+    verified: true
+  - id: gerchinovitz2016refined
+    arxiv_id: "1605.07416"
+    doi: null
+    url: https://arxiv.org/abs/1605.07416
+    title: "Refined Lower Bounds for Adversarial Bandits"
+    authors: ["Sébastien Gerchinovitz", "Tor Lattimore"]
+    year: 2016
+    venue: "NeurIPS 2016"
+    slice: adversarial_k_armed
+    result_types: [lower]
+    has_comparison_table: false
+    why: "Refined lower bounds for adversarial bandits: impossibility of certain first/second-order and high-probability adaptive bounds"
+    verified: true
+  - id: wei2018moreadaptive
+    arxiv_id: "1801.03265"
+    doi: null
+    url: https://arxiv.org/abs/1801.03265
+    title: "More Adaptive Algorithms for Adversarial Bandits"
+    authors: ["Chen-Yu Wei", "Haipeng Luo"]
+    year: 2018
+    venue: "COLT 2018"
+    slice: adversarial_k_armed
+    result_types: [upper]
+    has_comparison_table: false
+    why: "Data-dependent adversarial regret (variance/path-length/first-order) via optimistic mirror descent with log-barrier"
+    verified: true
+  - id: bubeck2012bobw
+    arxiv_id: "1202.4473"
+    doi: null
+    url: https://arxiv.org/abs/1202.4473
+    title: "The best of both worlds: stochastic and adversarial bandits"
+    authors: ["Sebastien Bubeck", "Aleksandrs Slivkins"]
+    year: 2012
+    venue: "COLT 2012"
+    slice: best_of_both_worlds
+    result_types: [upper]
+    has_comparison_table: false
+    why: "SAO: first best-of-both-worlds algorithm, O(polylog T) stochastic and O~(sqrt(KT)) adversarial regret"
+    verified: true
+  - id: auer2016nearly
+    arxiv_id: "1605.08722"
+    doi: null
+    url: https://arxiv.org/abs/1605.08722
+    title: "An algorithm with nearly optimal pseudo-regret for both stochastic and adversarial bandits"
+    authors: ["Peter Auer", "Chao-Kai Chiang"]
+    year: 2016
+    venue: "COLT 2016"
+    slice: best_of_both_worlds
+    result_types: [upper, lower]
+    has_comparison_table: false
+    why: "SAPO: near-optimal pseudo-regret in both regimes; shows high-probability BOBW is impossible"
+    verified: true
+  - id: zimmert2021tsallisinf
+    arxiv_id: "1807.07623"
+    doi: null
+    url: https://arxiv.org/abs/1807.07623
+    title: "Tsallis-INF: An Optimal Algorithm for Stochastic and Adversarial Bandits"
+    authors: ["Julian Zimmert", "Yevgeny Seldin"]
+    year: 2018
+    venue: "AISTATS 2019; JMLR 2021"
+    slice: best_of_both_worlds
+    result_types: [upper]
+    has_comparison_table: true
+    why: "Tsallis-INF (1/2-Tsallis FTRL): optimal O(sqrt(KT)) adversarial and O(sum log T/Delta_i) stochastic regret simultaneously"
+    verified: true
+  - id: masoudian2021improved
+    arxiv_id: "2103.12487"
+    doi: null
+    url: https://arxiv.org/abs/2103.12487
+    title: "Improved Analysis of the Tsallis-INF Algorithm in Stochastically Constrained Adversarial Bandits and Stochastic Bandits with Adversarial Corruptions"
+    authors: ["Saeed Masoudian", "Yevgeny Seldin"]
+    year: 2021
+    venue: "COLT 2021"
+    slice: best_of_both_worlds
+    result_types: [upper]
+    has_comparison_table: true
+    why: "Improved Tsallis-INF analysis in stochastically constrained adversarial regime and with adversarial corruptions"
+    verified: true
+  - id: lykouris2018corruption
+    arxiv_id: "1803.09353"
+    doi: null
+    url: https://arxiv.org/abs/1803.09353
+    title: "Stochastic bandits robust to adversarial corruptions"
+    authors: ["Thodoris Lykouris", "Vahab Mirrokni", "Renato Paes Leme"]
+    year: 2018
+    venue: "STOC 2018"
+    slice: best_of_both_worlds
+    result_types: [upper, lower]
+    has_comparison_table: false
+    why: "Stochastic bandits with adversarial corruption level C: regret degrading gracefully with C; lower bound"
+    verified: true
+  - id: gupta2019corruption
+    arxiv_id: "1902.08647"
+    doi: null
+    url: https://arxiv.org/abs/1902.08647
+    title: "Better Algorithms for Stochastic Bandits with Adversarial Corruptions"
+    authors: ["Anupam Gupta", "Tomer Koren", "Kunal Talwar"]
+    year: 2019
+    venue: "COLT 2019"
+    slice: best_of_both_worlds
+    result_types: [upper, lower]
+    has_comparison_table: false
+    why: "BARBAR: O(KC + sum log T/Delta_i) corrupted-stochastic regret (additive in C), with lower bound"
+    verified: true
+  - id: ito2022variance
+    arxiv_id: "2206.06810"
+    doi: null
+    url: https://arxiv.org/abs/2206.06810
+    title: "Adversarially Robust Multi-Armed Bandit Algorithm with Variance-Dependent Regret Bounds"
+    authors: ["Shinji Ito", "Taira Tsuchiya", "Junya Honda"]
+    year: 2022
+    venue: "COLT 2022"
+    slice: best_of_both_worlds
+    result_types: [upper]
+    has_comparison_table: true
+    why: "BOBW algorithm with variance-dependent regret bounds in both stochastic and adversarial regimes"
+    verified: true
+  - id: dann2023blackbox
+    arxiv_id: "2302.09739"
+    doi: null
+    url: https://arxiv.org/abs/2302.09739
+    title: "A Blackbox Approach to Best of Both Worlds in Bandits and Beyond"
+    authors: ["Christoph Dann", "Chen-Yu Wei", "Julian Zimmert"]
+    year: 2023
+    venue: "COLT 2023"
+    slice: best_of_both_worlds
+    result_types: [upper]
+    has_comparison_table: true
+    why: "Black-box reduction turning first-order/high-prob adversarial algorithms into BOBW algorithms (MAB, linear, MDPs)"
+    verified: true
+  - id: jin2023improved
+    arxiv_id: "2302.13534"
+    doi: null
+    url: https://arxiv.org/abs/2302.13534
+    title: "Improved Best-of-Both-Worlds Guarantees for Multi-Armed Bandits: FTRL with General Regularizers and Multiple Optimal Arms"
+    authors: ["Tiancheng Jin", "Junyan Liu", "Haipeng Luo"]
+    year: 2023
+    venue: "NeurIPS 2023"
+    slice: best_of_both_worlds
+    result_types: [upper]
+    has_comparison_table: true
+    why: "FTRL with general regularizers (Shannon, log-barrier, Tsallis) achieves BOBW, removing the unique-optimal-arm assumption"
+    verified: true
+  - id: dani2008stochastic
+    arxiv_id: null
+    doi: null
+    url: https://www.learningtheory.org/colt2008/papers/80-Dani.pdf
+    title: "Stochastic Linear Optimization under Bandit Feedback"
+    authors: ["Varsha Dani", "Thomas P. Hayes", "Sham M. Kakade"]
+    year: 2008
+    venue: "COLT 2008"
+    slice: stochastic_linear
+    result_types: [upper, lower]
+    has_comparison_table: unknown
+    why: "ConfidenceBall: O~(d sqrt(T)) regret for stochastic linear bandits and Omega(d sqrt(T)) lower bound (infinite action set)"
+    verified: true
+  - id: rusmevichientong2010linear
+    arxiv_id: "0812.3465"
+    doi: null
+    url: https://arxiv.org/abs/0812.3465
+    title: "Linearly Parameterized Bandits"
+    authors: ["Paat Rusmevichientong", "John N. Tsitsiklis"]
+    year: 2008
+    venue: "Mathematics of Operations Research 2010"
+    slice: stochastic_linear
+    result_types: [upper, lower]
+    has_comparison_table: false
+    why: "PEGE: Theta(d sqrt(T)) regret for linearly parameterized bandits on the unit sphere, matching lower bound"
+    verified: true
+  - id: abbasi2011oful
+    arxiv_id: "1102.2670"
+    doi: null
+    url: https://arxiv.org/abs/1102.2670
+    title: "Online Least Squares Estimation with Self-Normalized Processes: An Application to Bandit Problems"
+    authors: ["Yasin Abbasi-Yadkori", "David Pal", "Csaba Szepesvari"]
+    year: 2011
+    venue: "NeurIPS 2011"
+    slice: stochastic_linear
+    result_types: [upper]
+    has_comparison_table: false
+    why: "OFUL: O~(d sqrt(T)) regret via self-normalized martingale confidence ellipsoids (arXiv title differs from NeurIPS title 'Improved Algorithms for Linear Stochastic Bandits')"
+    verified: true
+  - id: russo2014posterior
+    arxiv_id: "1301.2609"
+    doi: null
+    url: https://arxiv.org/abs/1301.2609
+    title: "Learning to Optimize Via Posterior Sampling"
+    authors: ["Daniel Russo", "Benjamin Van Roy"]
+    year: 2013
+    venue: "Mathematics of Operations Research 2014"
+    slice: stochastic_linear
+    result_types: [upper]
+    has_comparison_table: false
+    why: "Bayesian regret of posterior sampling via eluder dimension; O~(d sqrt(T)) for linear bandits, links TS to UCB"
+    verified: true
+  - id: agrawal2013lints
+    arxiv_id: "1209.3352"
+    doi: null
+    url: https://arxiv.org/abs/1209.3352
+    title: "Thompson Sampling for Contextual Bandits with Linear Payoffs"
+    authors: ["Shipra Agrawal", "Navin Goyal"]
+    year: 2012
+    venue: "ICML 2013"
+    slice: linear_contextual
+    result_types: [upper]
+    has_comparison_table: false
+    why: "Linear Thompson Sampling: O~(d^{3/2} sqrt(T)) frequentist regret for linear contextual bandits"
+    verified: true
+  - id: abeille2017lints
+    arxiv_id: "1611.06534"
+    doi: "10.1214/154957804100000000"
+    url: https://arxiv.org/abs/1611.06534
+    title: "Linear Thompson Sampling Revisited"
+    authors: ["Marc Abeille", "Alessandro Lazaric"]
+    year: 2016
+    venue: "AISTATS 2017"
+    slice: stochastic_linear
+    result_types: [upper]
+    has_comparison_table: false
+    why: "Simplified LinTS analysis via optimism-with-constant-probability, O~(d^{3/2} sqrt(T))"
+    verified: true
+  - id: hamidi2020lints
+    arxiv_id: "2006.06790"
+    doi: null
+    url: https://arxiv.org/abs/2006.06790
+    title: "On Frequentist Regret of Linear Thompson Sampling"
+    authors: ["Nima Hamidi", "Mohsen Bayati"]
+    year: 2020
+    venue: null
+    slice: stochastic_linear
+    result_types: [lower, upper]
+    has_comparison_table: false
+    why: "Shows the extra sqrt(d) in LinTS regret is necessary without inflation: lower bound for frequentist regret of LinTS"
+    verified: true
+  - id: lattimore2017endofoptimism
+    arxiv_id: "1610.04491"
+    doi: null
+    url: https://arxiv.org/abs/1610.04491
+    title: "The End of Optimism? An Asymptotic Analysis of Finite-Armed Linear Bandits"
+    authors: ["Tor Lattimore", "Csaba Szepesvari"]
+    year: 2016
+    venue: "AISTATS 2017"
+    slice: stochastic_linear
+    result_types: [lower, upper]
+    has_comparison_table: false
+    why: "Asymptotic instance-dependent lower bound for finite-armed linear bandits; optimism/TS are not asymptotically optimal"
+    verified: true
+  - id: combes2017ossb
+    arxiv_id: "1711.00400"
+    doi: null
+    url: https://arxiv.org/abs/1711.00400
+    title: "Minimal Exploration in Structured Stochastic Bandits"
+    authors: ["Richard Combes", "Stefan Magureanu", "Alexandre Proutiere"]
+    year: 2017
+    venue: "NeurIPS 2017"
+    slice: stochastic_linear
+    result_types: [upper, lower]
+    has_comparison_table: false
+    why: "OSSB: asymptotically optimal algorithm for general structured bandits incl. linear, matching the Graves-Lai lower bound"
+    verified: true
+  - id: li2019nearlyminimax
+    arxiv_id: "1904.00242"
+    doi: null
+    url: https://arxiv.org/abs/1904.00242
+    title: "Nearly Minimax-Optimal Regret for Linearly Parameterized Bandits"
+    authors: ["Yingkai Li", "Yining Wang", "Yuan Zhou"]
+    year: 2019
+    venue: "COLT 2019"
+    slice: stochastic_linear
+    result_types: [upper, lower]
+    has_comparison_table: true
+    why: "Closes log gap: O(d sqrt(T log T) poly(log log T)) upper and Omega(d sqrt(T log T)) lower bound for linear bandits on the ball"
+    verified: true
+  - id: hao2020adaptive
+    arxiv_id: "1910.06996"
+    doi: null
+    url: https://arxiv.org/abs/1910.06996
+    title: "Adaptive Exploration in Linear Contextual Bandit"
+    authors: ["Botao Hao", "Tor Lattimore", "Csaba Szepesvari"]
+    year: 2019
+    venue: "AISTATS 2020"
+    slice: linear_contextual
+    result_types: [upper]
+    has_comparison_table: false
+    why: "Asymptotically optimal algorithm for linear contextual bandits with finite arms, also minimax O~(d sqrt(T))"
+    verified: true
+  - id: tirinzoni2020primaldual
+    arxiv_id: "2010.12247"
+    doi: null
+    url: https://arxiv.org/abs/2010.12247
+    title: "An Asymptotically Optimal Primal-Dual Incremental Algorithm for Contextual Linear Bandits"
+    authors: ["Andrea Tirinzoni", "Matteo Pirotta", "Marcello Restelli", "Alessandro Lazaric"]
+    year: 2020
+    venue: "NeurIPS 2020"
+    slice: linear_contextual
+    result_types: [upper, lower]
+    has_comparison_table: true
+    why: "SOLID: primal-dual incremental algorithm, asymptotically optimal for contextual linear bandits with finite-time minimax guarantee"
+    verified: true
+  - id: kirschner2021ids
+    arxiv_id: "2011.05944"
+    doi: null
+    url: https://arxiv.org/abs/2011.05944
+    title: "Asymptotically Optimal Information-Directed Sampling"
+    authors: ["Johannes Kirschner", "Tor Lattimore", "Claire Vernade", "Csaba Szepesvári"]
+    year: 2020
+    venue: "COLT 2021"
+    slice: stochastic_linear
+    result_types: [upper]
+    has_comparison_table: false
+    why: "Information-directed sampling is asymptotically optimal for finite-armed linear bandits and minimax optimal"
+    verified: true
+  - id: zhang2021varianceaware
+    arxiv_id: "2101.12745"
+    doi: null
+    url: https://arxiv.org/abs/2101.12745
+    title: "Improved Variance-Aware Confidence Sets for Linear Bandits and Linear Mixture MDP"
+    authors: ["Zihan Zhang", "Jiaqi Yang", "Xiangyang Ji", "Simon S. Du"]
+    year: 2021
+    venue: "NeurIPS 2021"
+    slice: stochastic_linear
+    result_types: [upper]
+    has_comparison_table: false
+    why: "Variance-aware confidence sets: regret O~(poly(d) sqrt(1 + sum sigma_t^2)), horizon-free for linear bandits"
+    verified: true
+  - id: kim2022varianceadaptive
+    arxiv_id: "2111.03289"
+    doi: null
+    url: https://arxiv.org/abs/2111.03289
+    title: "Improved Regret Analysis for Variance-Adaptive Linear Bandits and Horizon-Free Linear Mixture MDPs"
+    authors: ["Yeoneung Kim", "Insoon Yang", "Kwang-Sung Jun"]
+    year: 2021
+    venue: "NeurIPS 2022"
+    slice: stochastic_linear
+    result_types: [upper]
+    has_comparison_table: false
+    why: "Improved variance-adaptive linear bandit regret O~(d^{1.5} sqrt(sum sigma_t^2) + d^2)"
+    verified: true
+  - id: chu2011suplinucb
+    arxiv_id: null
+    doi: null
+    url: https://proceedings.mlr.press/v15/chu11a.html
+    title: "Contextual Bandits with Linear Payoff Functions"
+    authors: ["Wei Chu", "Lihong Li", "Lev Reyzin", "Robert E. Schapire"]
+    year: 2011
+    venue: "AISTATS 2011"
+    slice: linear_contextual
+    result_types: [upper, lower]
+    has_comparison_table: unknown
+    why: "SupLinUCB: O~(sqrt(dT log^3(KT))) regret for finite-arm linear contextual bandits, with Omega(sqrt(dT)) lower bound"
+    verified: true
+  - id: bubeck2012minimax
+    arxiv_id: "1202.3079"
+    doi: null
+    url: https://arxiv.org/abs/1202.3079
+    title: "Towards minimax policies for online linear optimization with bandit feedback"
+    authors: ["Sébastien Bubeck", "Nicolò Cesa-Bianchi", "Sham M. Kakade"]
+    year: 2012
+    venue: "COLT 2012"
+    slice: adversarial_linear
+    result_types: [upper, lower]
+    has_comparison_table: false
+    why: "Exp2 with John's exploration: O(sqrt(dT log N)) adversarial linear regret, optimal for finite action sets; minimax analysis"
+    verified: true
+  - id: hazan2016volumetric
+    arxiv_id: "1312.6214"
+    doi: null
+    url: https://arxiv.org/abs/1312.6214
+    title: "Volumetric Spanners: an Efficient Exploration Basis for Learning"
+    authors: ["Elad Hazan", "Zohar Karnin", "Raghu Mehka"]
+    year: 2013
+    venue: "JMLR 2016"
+    slice: adversarial_linear
+    result_types: [upper]
+    has_comparison_table: false
+    why: "Volumetric spanners: efficient O~(d sqrt(T)) high-probability regret for adversarial linear bandits"
+    verified: true
+  - id: shamir2015complexity
+    arxiv_id: "1408.2368"
+    doi: null
+    url: https://arxiv.org/abs/1408.2368
+    title: "On the Complexity of Bandit Linear Optimization"
+    authors: ["Ohad Shamir"]
+    year: 2014
+    venue: "COLT 2015"
+    slice: adversarial_linear
+    result_types: [lower]
+    has_comparison_table: false
+    why: "Lower bounds for bandit linear optimization: Omega(d sqrt(T)) / Omega(sqrt(d) ...) depending on action set geometry and feedback"
+    verified: true
+  - id: lee2020biasnomore
+    arxiv_id: "2006.08040"
+    doi: null
+    url: https://arxiv.org/abs/2006.08040
+    title: "Bias no more: high-probability data-dependent regret bounds for adversarial bandits and MDPs"
+    authors: ["Chung-Wei Lee", "Haipeng Luo", "Chen-Yu Wei", "Mengxiao Zhang"]
+    year: 2020
+    venue: "NeurIPS 2020"
+    slice: adversarial_linear
+    result_types: [upper]
+    has_comparison_table: false
+    why: "High-probability data-dependent (first-order, small-loss) regret bounds for adversarial MAB and linear bandits via increasing log-barrier"
+    verified: true
+  - id: neu2020adversarialcontextual
+    arxiv_id: "2002.00287"
+    doi: null
+    url: https://arxiv.org/abs/2002.00287
+    title: "Efficient and Robust Algorithms for Adversarial Linear Contextual Bandits"
+    authors: ["Gergely Neu", "Julia Olkhovskaya"]
+    year: 2020
+    venue: "COLT 2020"
+    slice: linear_contextual
+    result_types: [upper]
+    has_comparison_table: false
+    why: "Adversarial linear contextual bandits (i.i.d. contexts, adversarial losses): O~((dKT)^{1/2}) style regret"
+    verified: true
+  - id: lee2021instanceminimax
+    arxiv_id: "2102.05858"
+    doi: null
+    url: https://arxiv.org/abs/2102.05858
+    title: "Achieving Near Instance-Optimality and Minimax-Optimality in Stochastic and Adversarial Linear Bandits Simultaneously"
+    authors: ["Chung-Wei Lee", "Haipeng Luo", "Chen-Yu Wei", "Mengxiao Zhang", "Xiaojin Zhang"]
+    year: 2021
+    venue: "ICML 2021"
+    slice: best_of_both_worlds
+    result_types: [upper]
+    has_comparison_table: false
+    why: "Linear bandits: simultaneously near instance-optimal stochastic regret and minimax O~(d sqrt(T)) adversarial regret (BOBW for linear)"
+    verified: true
+  - id: kong2023bestofthree
+    arxiv_id: "2303.06825"
+    doi: null
+    url: https://arxiv.org/abs/2303.06825
+    title: "Best-of-three-worlds Analysis for Linear Bandits with Follow-the-regularized-leader Algorithm"
+    authors: ["Fang Kong", "Canzhe Zhao", "Shuai Li"]
+    year: 2023
+    venue: "COLT 2023"
+    slice: best_of_both_worlds
+    result_types: [upper]
+    has_comparison_table: true
+    why: "FTRL with Shannon entropy achieves best-of-three-worlds (stochastic, adversarial, corrupted) regret for linear bandits"
+    verified: true

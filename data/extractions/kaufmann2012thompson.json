@@ -1,0 +1,164 @@
+{
+ "schema_version": "0.2",
+ "ontology_version": "bandits-0.2",
+ "paper": {
+  "title": "Thompson Sampling: An Asymptotically Optimal Finite Time Analysis",
+  "arxiv_id": "1205.4217",
+  "arxiv_version": null,
+  "year": 2012,
+  "authors": [
+   "Emilie Kaufmann",
+   "Nathaniel Korda",
+   "Rémi Munos"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Stochastic multi-armed bandit with Bernoulli rewards",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [],
+   "extras": [],
+   "parameters": {},
+   "unmapped": [],
+   "definition_quote": "Associated with each action, $a$, is an unknown Bernoulli distribution $\\cB\\left(\\mu_a\\right)$, whose expectation is $\\mu_a$. At each time $t$ the agent chooses to observe an action $A_t\\in\\{1,\\dots,K\\}$ and receives a reward $R_t$ drawn from the distribution $\\cB\\left(\\mu_{A_t}\\right)$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Thompson Sampling (Beta-Bernoulli, uniform prior)",
+   "is_new": false,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(1 + epsilon)*sum_subopt(Delta_i*(log(T) + log(log(T)))/KL_i) + C_eps",
+    "expression_latex": "(1+\\epsilon)\\sum_{a\\in A:\\mu_a\\neq\\mu^*}\\frac{\\Delta_a(\\ln(T)+\\ln\\ln(T))}{K(\\mu_a,\\mu^*)}+ C(\\epsilon,\\mu_1,\\dots,\\mu_K)",
+    "regime": "for every epsilon > 0"
+   },
+   "symbols": {
+    "KL_i": "Bernoulli KL divergence K(mu_i, mu_star)",
+    "C_eps": "problem-dependent constant C(epsilon, mu_1,...,mu_K)",
+    "epsilon": "arbitrary positive slack (not a PAC accuracy)"
+   },
+   "extra_assumptions": [
+    "unique optimal arm (assumed in analysis; paper argues WLOG)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "For every $\\epsilon>0$ there exists a problem-dependent constant $C(\\epsilon,\\mu_1,\\dots,\\mu_K)$ such that the regret of Thompson Sampling satisfies: \\[ \\cR(T)\\leq(1+\\epsilon)\\sum_{a\\in A:\\mu_a\\neq\\mu^*}\\frac{\\Delta_a(\\ln(T)+\\ln\\ln(T))}{K(\\mu_a,\\mu^*)}+ C(\\epsilon,\\mu_1,\\dots,\\mu_K). \\]"
+   },
+   "confidence": "high",
+   "notes": "Regret defined via expected pull counts (pseudo-regret). Thompson Sampling does not use T; the ln ln T only arises in the analysis, so horizon marked anytime. Implies asymptotic optimality matching Lai-Robbins."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(1 + epsilon)*(log(T) + log(log(T)))/KL_a + D_eps + N_eps + N_0 + 5 + 2*C_b",
+    "expression_latex": "(1+\\epsilon)\\frac{\\ln(T) + \\ln\\ln (T) }{K(\\mu_a,\\mu_1)} + D(\\epsilon,\\mu_1,\\mu_a) + N(b,\\epsilon,\\mu_1,\\mu_a)+N_0(b) + 5 + 2C_b",
+    "regime": "for every epsilon > 0, each suboptimal arm a"
+   },
+   "symbols": {
+    "KL_a": "Bernoulli KL divergence K(mu_a, mu_1)",
+    "D_eps": "constant D(epsilon,mu_1,mu_a) = (1+epsilon/2)^2/(epsilon^2 min(mu_a(1-mu_a), mu_1(1-mu_1))^2)",
+    "N_eps": "constant N(b,epsilon,mu_1,mu_a)",
+    "N_0": "constant N_0(b)",
+    "C_b": "constant from Proposition 1, C_b(mu_1,mu_2)",
+    "epsilon": "arbitrary positive slack"
+   },
+   "extra_assumptions": [
+    "unique optimal arm, mu_1 > mu_2 >= ... >= mu_K"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "Thm2Arm",
+    "number": "Theorem 2",
+    "quote": "Let $\\epsilon>0$. With $b$ as in Proposition \\ref{important:lemma}, for every suboptimal arm $a$, there exist constants $D(\\epsilon,\\mu_1,\\mu_a)$, $N(b,\\epsilon,\\mu_1,\\mu_a)$ and $N_0(b)$ such that: \\bE[N_{a,T}] \\leq (1+\\epsilon)\\frac{\\ln(T) + \\ln\\ln (T) }{K(\\mu_a,\\mu_1)} + D(\\epsilon,\\mu_1,\\mu_a) + N(b,\\epsilon,\\mu_1,\\mu_a)+N_0(b) + 5 + 2C_b ."
+   },
+   "confidence": "high",
+   "notes": "Bound on the expected number of pulls E[N_{a,T}] of a suboptimal arm, hence quantity 'other'."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "LaiRobbins85bandits",
+   "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "algorithm_name": null,
+   "side": "lower",
+   "setting_description": "Stochastic K-armed bandit (Bernoulli case as stated), strongly consistent policies; lower bound on expected pulls of each suboptimal arm",
+   "bound": {
+    "notation": "liminf",
+    "expression": "1/KL_i",
+    "expression_latex": "\\liminf_{T\\ra\\infty}\\frac{\\bE[N_{a,T}]}{\\ln T}\\geq \\frac{1}{K(\\mu_a,\\mu^*)}",
+    "regime": "T -> infinity, normalized by ln T"
+   },
+   "where": "Introduction, eq. (2)"
+  },
+  {
+   "cited_key": "AuerEtAl02FiniteTime",
+   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
+   "algorithm_name": "UCB1 (also UCB-V, MOSS)",
+   "side": "upper",
+   "setting_description": "Stochastic K-armed bandit; expected pulls of a suboptimal arm",
+   "bound": {
+    "notation": "exact",
+    "expression": "K_1*log(T)/Delta_i**2 + K_2",
+    "expression_latex": "\\bE[N_{a,T}] \\leq \\frac{K_1}{\\Delta_a^2}\\ln(T) + K_2",
+    "regime": "constants K_1 > 2, K_2 > 0"
+   },
+   "where": "Introduction, eq. (3)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "c6d1de293f21",
+  "schema_version": "0.2",
+  "ontology_version": "bandits-0.2",
+  "date": "2026-10-19T15:50:17",
+  "source_chars": 50861,
+  "input_tokens": 40314,
+  "output_tokens": 3507,
+  "cost_usd_equiv": 0.392644,
+  "status": "extracted"
+ }
+}

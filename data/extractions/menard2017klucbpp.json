@@ -1,0 +1,209 @@
+{
+ "schema_version": "0.2",
+ "ontology_version": "bandits-0.2",
+ "paper": {
+  "title": "A minimax and asymptotically optimal algorithm for stochastic bandits",
+  "arxiv_id": "1702.07211",
+  "arxiv_version": null,
+  "year": 2017,
+  "authors": [
+   "Pierre Ménard",
+   "Aurélien Garivier"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Stochastic K-armed bandit with one-dimensional exponential family arms (bounded means, bounded variance)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "exponential_family",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "extras": [],
+   "parameters": {},
+   "unmapped": [
+    "Arm means restricted to a known bounded interval [mu^-, mu^+] inside the family's mean interval",
+    "Variance of the exponential family bounded by V (Pinsker-like inequality kl >= (mu-mu')^2/(2V))"
+   ],
+   "definition_quote": "Each arm is assumed to be a probability distribution of some canonical one-dimensional exponential family $\\nu_{\\theta}$ indexed by $\\theta\\in\\Theta$. ... we suppose that each arm $\\nu_\\theta$ satisfies $\\mu=b'(\\theta)\\in [\\mu-,\\mu+]\\subset I$ ... there exists $V>0$ such that $\\sup_{\\mu\\in I} b''( {b'}^{-1}(\\mu))\\leq V<+\\infty$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "kl-UCB++",
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "76*sqrt(V*K*T) + (mu_plus - mu_minus)*K",
+    "expression_latex": "R_T\\leq 76 \\sqrt{ V K T}+(\\mu^+-\\mu^-)K",
+    "regime": null
+   },
+   "symbols": {
+    "V": "upper bound on the variance in the exponential family",
+    "mu_plus": "upper bound on arm means",
+    "mu_minus": "lower bound on arm means"
+   },
+   "extra_assumptions": [],
+   "is_new": true,
+   "source": {
+    "label": "th:minimax_bound",
+    "number": "Theorem 1",
+    "quote": "For any family $\\mathcal{F}$ satisfying the assumptions detailed in Section~\\ref{sec:settings}, and for any bandit model $\\nu\\in\\mathcal{F}$, the expected regret of the kl-UC$\\Bpp$ algorithm is upper-bounded as R_T\\leq 76 \\sqrt{ V K T}+(\\mu^+-\\mu^-)K."
+   },
+   "confidence": "high",
+   "notes": "Regret is defined as sum of gaps times expected pull counts (pseudo-regret). The algorithm takes T as a parameter."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)/kl_delta + log(log(T))/delta_p**2",
+    "expression_latex": "\\E[N_a(T)]\\leq \\frac{\\log(T)}{\\kl(\\mu_a+\\delta,\\mu^\\star-\\delta)}+O\\left(\\frac{\\loglog(T)}{\\delta^2}\\right)",
+    "regime": "sqrt(22 V K / T) <= delta <= (mu_star - mu_a)/3"
+   },
+   "symbols": {
+    "kl_delta": "kl(mu_a + delta_p, mu_star - delta_p), the KL divergence between the shifted means",
+    "delta_p": "free slack parameter delta (not a failure probability)",
+    "V": "variance bound"
+   },
+   "extra_assumptions": [],
+   "is_new": true,
+   "source": {
+    "label": "th:asymptotic_bound",
+    "number": "Theorem 2",
+    "quote": "For any bandit model $\\nu\\in\\mathcal{F}$, for any suboptimal arm $a$ and any $\\delta$ such that $\\sqrt{22 V K / T}\\leq \\delta\\leq(\\mustar-\\mu_a)/3$, \\E[N_a(T)]\\leq \\frac{\\log(T)}{\\kl(\\mu_a+\\delta,\\mu^\\star-\\delta)}+O\\left(\\frac{\\loglog(T)}{\\delta^2}\\right) which implies the asymptotic optimality"
+   },
+   "confidence": "medium",
+   "notes": "This bounds the expected number of pulls of a suboptimal arm. The leading term has constant exactly 1, and only the second term is O(.). The proof gives an explicit bound: log T/kl + log((1/K)(1+log^2(T/K)))/kl + (16e^2+2)*2VK/delta^2 + 1."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "probability": "asymptotic",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "sum_subopt(Delta_i/KL_i)",
+    "expression_latex": "R_T \\le C(\\mu)\\log(T)(1+o(1))",
+    "regime": "T -> infinity"
+   },
+   "symbols": {
+    "KL_i": "kl(mu_i, mu_star) in the exponential family"
+   },
+   "extra_assumptions": [],
+   "is_new": true,
+   "source": {
+    "label": "th:asymptotic_bound",
+    "number": "Theorem 2",
+    "quote": "which implies the asymptotic optimality ... Choosing $\\delta$ of order $1/\\loglog(T)^{1/2}$ yields the asymptotic optimality."
+   },
+   "confidence": "low",
+   "notes": "This is a corollary that the paper only claims informally: the limsup of R_T/log T equals the Lai-Robbins constant. It is not stated as a separate formal result."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "lai1985asymptotically",
+   "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "algorithm_name": null,
+   "side": "lower",
+   "setting_description": "Stochastic K-armed bandit, exponential family; uniformly efficient strategies; expected pulls of suboptimal arm",
+   "bound": {
+    "notation": "liminf",
+    "expression": "log(T)/KL_i",
+    "expression_latex": "\\E[N_a(T)] \\geq \\frac{\\log(T)}{\\kl(\\mu_a,\\mustar)}(1-o(1))",
+    "regime": "T -> infinity"
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "auer2002nonstochastic",
+   "cited_title": "The nonstochastic multiarmed bandit problem",
+   "algorithm_name": null,
+   "side": "lower",
+   "setting_description": "Minimax regret lower bound over the exponential family class F (adaptation of Theorem A.2)",
+   "bound": {
+    "notation": "Omega",
+    "expression": "Min(sqrt(K*T), T)",
+    "expression_latex": "\\sup_{\\nu\\in \\mathcal{F}} R_T\\geq C'\\min(\\sqrt{K T },T)",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "audibert2009minimax",
+   "cited_title": "Minimax policies for adversarial and stochastic bandits",
+   "algorithm_name": "MOSS / PolyINF",
+   "side": "upper",
+   "setting_description": "Stochastic K-armed bandit, minimax regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "C'\\sqrt{KT}",
+    "regime": null
+   },
+   "where": "Introduction"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "c6d1de293f21",
+  "schema_version": "0.2",
+  "ontology_version": "bandits-0.2",
+  "date": "2026-10-19T15:51:54",
+  "source_chars": 48455,
+  "input_tokens": 38801,
+  "output_tokens": 4169,
+  "cost_usd_equiv": 0.30812819999999996,
+  "status": "extracted"
+ }
+}

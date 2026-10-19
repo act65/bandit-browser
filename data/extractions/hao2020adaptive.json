@@ -1,0 +1,204 @@
+{
+ "schema_version": "0.2",
+ "ontology_version": "bandits-0.2",
+ "paper": {
+  "title": "Adaptive Exploration in Linear Contextual Bandit",
+  "arxiv_id": "1910.06996",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Botao Hao",
+   "Tor Lattimore",
+   "Csaba Szepesvari"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "stochastic K-armed contextual linear bandit with M discrete contexts",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "T",
+    "d",
+    "K"
+   ],
+   "extras": [],
+   "parameters": {},
+   "unmapped": [
+    "Finite number M of discrete contexts drawn i.i.d. from an unknown distribution p, each with positive probability",
+    "Each context m has a known action set A^m of size K that spans R^d",
+    "Actions satisfy ||x||_2 <= 1",
+    "Standard Gaussian noise (unit variance); paper notes conditional sub-Gaussian suffices for the upper bound"
+   ],
+   "definition_quote": "We consider the stochastic $K$-armed contextual linear bandit with a horizon of $n$ rounds and $M$ possible contexts. ... For each context $m \\in [M]$ there is a known feature/action set $\\cA^m\\subset \\mathbb R^d$ with $|\\cA^m| = K$. ... First the environment samples a sequence of independent contexts $(c_t)_{t=1}^n$ from an unknown distribution $p$ over $[M]$ and each context is assumed to appear with positive probability. ... $Y_t = \\langle X_t,\\theta \\rangle + \\eta_t$, where $(\\eta_t)_{t=1}^n$ is a sequence of independent standard Gaussian random variables"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Optimal Allocation Matching (OAM)",
+   "is_new": true,
+   "techniques": [
+    "track_and_stop",
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "action sets"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "LinUCB (optimistic policy)",
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "consistent",
+   "quantity": "expected_regret",
+   "dependence": "instance_dependent",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "C_theta*log(T)",
+    "expression_latex": "\\liminf_{n\\to\\infty}\\frac{R_{\\theta}^{\\pi}(n)}{\\log(n)}\\geq \\cC(\\theta,\\cA^1,\\ldots, \\cA^M)",
+    "regime": "n -> infinity"
+   },
+   "symbols": {
+    "C_theta": "optimal value of the allocation optimisation problem: inf over alpha_{x,m} >= 0 of sum alpha_{x,m} Delta_x^m s.t. ||x||^2_{(sum alpha xx^T)^{-1}} <= (Delta_x^m)^2/2 for each suboptimal x"
+   },
+   "extra_assumptions": [
+    "p(m) > 0 for all contexts",
+    "optimal arm x_m^* unique for each context",
+    "Gaussian noise"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:lower_bound",
+    "number": "Theorem 1",
+    "quote": "Under the same conditions as \\cref{lemma:confidence_width}, \\liminf_{n\\to\\infty}\\frac{R_{\\theta}^{\\pi}(n)}{\\log(n)}\\geq \\cC(\\theta,\\cA^1,\\ldots, \\cA^M), where $\\cC$ is defined as the optimal value of the following optimisation problem: \\inf_{\\alpha_{x,m}\\in[0, \\infty]}\\sum_{m=1}^M\\sum_{x\\in\\cA^m}\\alpha_{x,m}\\Delta_x^m subject to ... x^{\\top}(\\sum\\alpha_{x,m}xx^{\\top})^{-1}x \\leq \\frac{(\\Delta_x^m)^2}{2}"
+   },
+   "confidence": "high",
+   "notes": "Expression encodes liminf R(n)/log(n) >= C_theta. Proof omitted in paper (follows Lattimore & Szepesvari 2017). Paper notes it can also be derived from Ok et al. 2018."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "instance_dependent",
+   "probability": "asymptotic",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "C_theta*log(T)",
+    "expression_latex": "\\limsup_{n\\to \\infty}\\frac{R_{\\theta}^{\\pi_{\\text{oam}}}(n)}{\\log (n)}\\leq \\cC(\\theta, \\cA^1,\\ldots, \\cA^M)",
+    "regime": "n -> infinity"
+   },
+   "symbols": {
+    "C_theta": "optimal value of the allocation optimisation problem defined in Theorem 1"
+   },
+   "extra_assumptions": [
+    "T_x^m(Delta) uniquely defined and continuous at true Delta for all contexts and actions",
+    "epsilon_t = 1/log(log(t))",
+    "p(m) > 0 for all contexts",
+    "each A^m spans R^d"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:upper_bound",
+    "number": "Theorem 2",
+    "quote": "Suppose that $T_x^m(\\Delta)$ is uniquely defined and $T_x^m(\\cdot)$ is continuous at $\\Delta$ for all contexts $m$ and actions $x \\in \\cA^m$. Then the policy $\\pi_{\\text{oam}}$ proposed in Algorithm \\ref{alg:main} with $\\epsilon_t = 1/\\log(\\log(t))$ satisfies \\limsup_{n\\to \\infty}\\frac{R_{\\theta}^{\\pi_{\\text{oam}}}(n)}{\\log (n)}\\leq \\cC(\\theta, \\cA^1,\\ldots, \\cA^M)."
+   },
+   "confidence": "high",
+   "notes": "Expression encodes limsup R(n)/log(n) <= C_theta; matches lower bound. Algorithm uses f_n depending on horizon n, so horizon known. Compute: solves a convex program per (lazy) update via CVXPY; paper calls it computationally efficient. Theorem numbering by order of appearance (thm:ucb precedes it); printed number uncertain."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "instance_dependent",
+   "probability": "asymptotic",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "1",
+    "expression_latex": "\\limsup_{n\\to\\infty} R_\\theta^\\pi(n) < \\infty",
+    "regime": "optimal arms {x_1^*,...,x_M^*} span R^d; n -> infinity"
+   },
+   "symbols": {},
+   "extra_assumptions": [
+    "optimal arms {x_1^*,...,x_M^*} span R^d",
+    "beta_t = O(d log t) suitably chosen"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:ucb",
+    "number": "Theorem 2",
+    "quote": "Consider the policy $\\pi$ that plays optimistically by X_t = \\argmax_{x \\in \\cA^{c_t}} \\ip{\\hat \\theta_{t-1}, x} + \\|x\\|_{G_t^{-1}} \\beta_t^{1/2}. Suppose that $\\theta$ is such that $\\{x_1^*, \\ldots, x_M^*\\}$ spans $\\mathbb R^d$. Then, for suitable $(\\beta_t)_{t=1}^n$ with $\\beta_t = O(d \\log(t))$, it holds that $\\limsup_{n\\to\\infty} R_\\theta^\\pi(n) < \\infty$."
+   },
+   "confidence": "medium",
+   "notes": "Bounded (finite limsup) regret; constant unspecified. Encoded as O(1). Printed theorem number may differ (appears before the OAM upper bound theorem)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "lai1985asymptotically",
+   "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "algorithm_name": null,
+   "side": "lower",
+   "setting_description": "Classical K-armed Gaussian bandit (special case M=1, standard basis actions) asymptotic lower bound for consistent policies",
+   "bound": {
+    "notation": "liminf",
+    "expression": "sum_subopt(2/Delta_i)*log(T)",
+    "expression_latex": "\\cC(\\theta, \\cA^1) = \\sum_{x \\in \\cA^1, \\Delta_x > 0} 2/\\Delta_x",
+    "regime": "n -> infinity"
+   },
+   "where": "Example after Theorem 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "c6d1de293f21",
+  "schema_version": "0.2",
+  "ontology_version": "bandits-0.2",
+  "date": "2026-10-19T15:56:09",
+  "source_chars": 103355,
+  "input_tokens": 68409,
+  "output_tokens": 4475,
+  "cost_usd_equiv": 0.5511121999999999,
+  "status": "extracted"
+ }
+}

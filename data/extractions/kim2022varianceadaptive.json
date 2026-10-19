@@ -1,0 +1,301 @@
+{
+ "schema_version": "0.2",
+ "ontology_version": "bandits-0.2",
+ "paper": {
+  "title": "Improved Regret Analysis for Variance-Adaptive Linear Bandits and Horizon-Free Linear Mixture MDPs",
+  "arxiv_id": "2111.03289",
+  "arxiv_version": null,
+  "year": 2021,
+  "authors": [
+   "Yeoneung Kim",
+   "Insoon Yang",
+   "Kwang-Sung Jun"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Linear bandits (variance-adaptive)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "d"
+   ],
+   "extras": [],
+   "parameters": {},
+   "unmapped": [
+    "Arm set X_k subset of unit l2 ball, may change each round (arbitrary subset, not necessarily convex)",
+    "theta* in unit l2 ball",
+    "Rewards bounded |r_k| <= 1/2 almost surely; noise is martingale difference with unknown, time-varying conditional variance sigma_k^2 (heteroscedastic), not known to learner",
+    "Regret is variance-adaptive in sum_k sigma_k^2"
+   ],
+   "definition_quote": "At time step $k$, the learner observes an arm set $\\mathcal{X}_k \\subseteq \\mathbb{B}_2^d(1)$, chooses an arm $x_k \\in \\mathcal{X}_k$, pulls it. The learner then receives a stochastic reward $r_k = x_k^\\T \\th^*+\\eps_k$ where $\\th^* \\in \\mathbb{B}_2^d(1)$ is an unknown parameter ... we assume that $(i)$ $|r_k|\\le [-\\fr12,\\fr12]$ almost surely, $(ii)$ $\\mathbb{E}[\\eps_k | \\mathcal{F}_k]=0$ ..., and $(iii)$ $\\mathbb{E}[\\eps_k^2|\\mathcal{F}_k]=\\sigma_k^2$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Linear mixture MDPs with unit cumulative rewards",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "markovian",
+   "action_space": "continuum_other",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "d"
+   ],
+   "extras": [],
+   "parameters": {},
+   "unmapped": [
+    "Episodic reinforcement learning (MDP) with K episodes and planning horizon H, not a bandit",
+    "Transition kernel is a linear mixture P = sum_i theta*_i P^i of d known base models, theta* in unit l1 ball",
+    "Known deterministic reward function r(s,a) in [0,1]",
+    "Unit cumulative rewards: sum_h r_h^k in [0,1] for any policy",
+    "Time-homogeneous transitions",
+    "Horizon-free: regret bound independent of H up to polylog factors"
+   ],
+   "definition_quote": "The key modeling assumption of linear mixture MDPs is that the transition probability $P$ is a linear combination of a known set of models $\\{P^i\\}$, namely, $P=\\sum_{i=1}^d \\th_i^* P^i$ where $\\th^* \\in \\mathbb{B}_1^d(1)$ is an unknown parameter. ... Unit cumulative rewards:$\\sum_{h=1}^H r_h^k \\in [0,1]$ for any policy $\\pi^k$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "VOFUL2",
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "delta",
+    "d"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "VOFUL3",
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "delta",
+    "d"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "VARLin2",
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "K (number of episodes)",
+    "H",
+    "delta",
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**1.5*sqrt(Sigma2*log(1/delta)) + d**2*log(1/delta)",
+    "expression_latex": "\\tilde O\\del{d^{1.5} \\sqrt{\\sum_{k=1}^K \\sig_k^2\\ln(1/\\dt)} + d^2 \\ln(1/\\dt)}",
+    "regime": "with probability at least 1-2delta, delta <= e^{-1}"
+   },
+   "symbols": {
+    "Sigma2": "sum_{k=1}^K sigma_k^2, total (unknown) conditional noise variance"
+   },
+   "extra_assumptions": [
+    "delta <= e^{-1}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "main-thm-bandit",
+    "number": "Theorem 1",
+    "quote": "VOFUL2 satisfies, with probability at least $1-2\\dt$, \\mathcal{R}^K =\\tilde O\\del{d^{1.5} \\sqrt{\\sum_{k=1}^K \\sig_k^2\\ln(1/\\dt)} + d^2 \\ln(1/\\dt)} where $\\tilde O$ hides poly-logarithmic dependence on $\\{d,K,\\sum_{k=1}^K \\sig_k^{2},  \\ln(1/\\dt)\\}$."
+   },
+   "confidence": "high",
+   "notes": "Paper's K is the horizon (T). Algorithm uses K in L and iota so horizon known. Conclusion states algorithms are not computationally tractable."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "Min(d*sqrt(T*log(1/delta)), d**1.5*sqrt(Sigma2*log(1/delta))) + d**2*log(1/delta)",
+    "expression_latex": "\\tilde O\\del[1]{  \\min\\cbr[1]{d\\sqrt{K\\ln(1/\\dt)}, d^{1.5} \\sqrt{\\sum_{k=1}^K \\sig_k^2\\ln(1/\\dt)}} + d^2 \\ln(1/\\dt)}",
+    "regime": "K >= (e-1)d"
+   },
+   "symbols": {
+    "Sigma2": "sum_{k=1}^K sigma_k^2"
+   },
+   "extra_assumptions": [
+    "K >= (e-1)d (used in Lemma rls_norm_bound)",
+    "delta <= e^{-1}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Section A.4 (informal claim after Theorem 1)",
+    "quote": "Note that one can also show that VOFUL2 can be slightly modified to achieve the regret bound of $\\tilde O\\del[1]{  \\min\\cbr[1]{d\\sqrt{K\\ln(1/\\dt)}, d^{1.5} \\sqrt{\\sum_{k=1}^K \\sig_k^2\\ln(1/\\dt)}} + d^2 \\ln(1/\\dt)} $, thus being no worse than OFUL."
+   },
+   "confidence": "medium",
+   "notes": "Not a numbered theorem; sketched in appendix via reduction to OFUL confidence ellipsoid. Exact failure probability not stated precisely."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(K_ep*log(1/delta)**2) + d**2*log(1/delta)",
+    "expression_latex": "\\tilde O(d\\sqrt{K\\log^2(1/\\dt)} + d^2\\log (1/\\dt))",
+    "regime": "with probability at least 1-delta"
+   },
+   "symbols": {
+    "K_ep": "number of episodes K"
+   },
+   "extra_assumptions": [
+    "unit cumulative rewards",
+    "known reward function",
+    "time-homogeneous transitions",
+    "delta <= e^{-1}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "main-rl",
+    "number": "Theorem 2",
+    "quote": "With probability at least 1-$\\dt$, \\mathcal{R}^K =\\sum_{k=1}^K [V^*(s_1^k)-V^k(s_1^k)] = \\tilde O(d\\sqrt{K\\log^2(1/\\dt)} + d^2\\log (1/\\dt))~. where $\\tilde O$ hides poly-logarithmic dependence on $\\{d,K,H, \\ln(1/\\dt)\\}$."
+   },
+   "confidence": "high",
+   "notes": "Horizon-free (H only in polylogs). d is number of base models."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "zhang21variance",
+   "cited_title": "Variance-Aware Confidence Set: Variance-Dependent Bound for Linear Bandits and Horizon-Free Bound for Linear Mixture MDP",
+   "algorithm_name": "VOFUL",
+   "side": "upper",
+   "setting_description": "Variance-adaptive linear bandits with unknown variances sigma_k^2",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**4.5*sqrt(Sigma2) + d**5",
+    "expression_latex": "\\tilde O(d^{4.5}\\sqrt{\\sum_{k=1}^K \\sig_k^2} + d^5)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "zhang21variance",
+   "cited_title": "Variance-Aware Confidence Set: Variance-Dependent Bound for Linear Bandits and Horizon-Free Bound for Linear Mixture MDP",
+   "algorithm_name": "VARLin",
+   "side": "upper",
+   "setting_description": "Linear mixture MDP with unit cumulative rewards, K episodes",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**4.5*sqrt(K_ep) + d**9",
+    "expression_latex": "\\tilde O(d^{4.5}\\sqrt{K}+d^9)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "dani08stochastic",
+   "cited_title": "Stochastic Linear Optimization under Bandit Feedback.",
+   "algorithm_name": null,
+   "side": "lower",
+   "setting_description": "Stochastic linear bandits, worst-case regret",
+   "bound": {
+    "notation": "Omega",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\Omega(d\\sqrt{K})",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "zhou2021nearly",
+   "cited_title": "Nearly minimax optimal reinforcement learning for linear mixture markov decision processes",
+   "algorithm_name": null,
+   "side": "upper",
+   "setting_description": "Linear mixture MDP with per-step rewards in [0,1], time-inhomogeneous transitions",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(d**2*H + d*H**3)*sqrt(H*K_ep) + d**2*H**3 + d**3*H**2",
+    "expression_latex": "\\tilde O(\\sqrt{d^2H+dH^3}\\sqrt{HK}+d^2H^3+d^3H^2)",
+    "regime": null
+   },
+   "where": "Related work"
+  },
+  {
+   "cited_key": "zhou2021nearly",
+   "cited_title": "Nearly minimax optimal reinforcement learning for linear mixture markov decision processes",
+   "algorithm_name": null,
+   "side": "lower",
+   "setting_description": "Linear mixture MDP with per-step rewards in [0,1], time-inhomogeneous transitions",
+   "bound": {
+    "notation": "Omega_tilde",
+    "expression": "d*H**1.5*sqrt(K_ep)",
+    "expression_latex": "\\tilde \\Omega(dH^{3/2}\\sqrt{K})",
+    "regime": null
+   },
+   "where": "Related work"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "c6d1de293f21",
+  "schema_version": "0.2",
+  "ontology_version": "bandits-0.2",
+  "date": "2026-10-19T15:56:29",
+  "source_chars": 105086,
+  "input_tokens": 76118,
+  "output_tokens": 5639,
+  "cost_usd_equiv": 0.6360642,
+  "status": "extracted"
+ }
+}

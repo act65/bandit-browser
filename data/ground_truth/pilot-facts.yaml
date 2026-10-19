@@ -1,0 +1,161 @@
+# Pilot acceptance facts (plan.md Phase 1 → Phase 3 acceptance tests).
+#
+# Known results in the K-armed + linear pilot slice that the graph should rediscover
+# from extracted data alone: the tightness status per setting and regime, plus the
+# historical gap closures. Written from domain knowledge plus the corpus manifest's
+# `why` notes, NOT yet checked line by line against the papers.
+#   confidence: high   = textbook fact (Lattimore & Szepesvári 2020)
+#   confidence: medium = believed correct; check exact form/regime against the paper
+# Status vocabulary: tight_constants | tight_logs | log_gap | poly_gap |
+#                    algorithm_specific (a lower bound for one algorithm class) | impossibility
+# `papers` are ids in corpus/manifest.yaml. `user_verified` is for the human reviewer.
+
+base_settings:
+  stoch_k: &stoch_k {objective: cumulative_regret, feedback: bandit, environment: stochastic_iid,
+                     action_space: finite_K, function_class: [], domain: not_applicable,
+                     context: none, noise: subgaussian, extras: []}
+  adv_k: &adv_k {objective: cumulative_regret, feedback: bandit, environment: adversarial_oblivious,
+                 action_space: finite_K, function_class: [], domain: not_applicable,
+                 context: none, noise: not_applicable, extras: []}
+  stoch_lin_inf: &stoch_lin_inf {objective: cumulative_regret, feedback: bandit, environment: stochastic_iid,
+                                 action_space: linear_infinite, function_class: [], domain: not_applicable,
+                                 context: none, noise: conditionally_subgaussian, extras: []}
+  stoch_lin_fin: &stoch_lin_fin {objective: cumulative_regret, feedback: bandit, environment: stochastic_iid,
+                                 action_space: linear_finite, function_class: [], domain: not_applicable,
+                                 context: none, noise: conditionally_subgaussian, extras: []}
+  adv_lin_fin: &adv_lin_fin {objective: cumulative_regret, feedback: bandit, environment: adversarial_oblivious,
+                             action_space: linear_finite, function_class: [], domain: not_applicable,
+                             context: none, noise: not_applicable, extras: []}
+
+facts:
+  - id: F01
+    setting: *stoch_k
+    regime: "worst case, pseudo-regret, known T"
+    status: tight_constants
+    upper: {bound: "sqrt(K*T)", notation: O, papers: [audibert2009moss]}
+    lower: {bound: "sqrt(K*T)", notation: Omega, papers: [auer2002exp3]}
+    history: "UCB1 gives O(sqrt(K T log T)); MOSS (2009) removed the sqrt(log T). The Omega(sqrt(KT)) construction in Auer et al. 2002 uses stochastic (Bernoulli) arms, so it applies here."
+    tests: ["lower bound transfers stochastic -> adversarial (F05)", "log-gap closure detected over time"]
+    confidence: high
+
+  - id: F02
+    setting: *stoch_k
+    regime: "asymptotic, instance-dependent, consistent policies"
+    status: tight_constants
+    upper: {bound: "sum_subopt(Delta_i/KL_i)*log(T)", notation: limsup, papers: [cappe2013klucb, kaufmann2012thompson, agrawal2013further]}
+    lower: {bound: "sum_subopt(Delta_i/KL_i)*log(T)", notation: liminf, papers: [lai1985asymptotically]}
+    history: "Lai & Robbins (1985) for one-parameter families; matched by KL-UCB and by Thompson sampling (Bernoulli). UCB1 matches only up to constants (Delta_i/KL_i vs 1/Delta_i)."
+    notes: "Exact optimality depends on the reward family (Bernoulli, exponential family, bounded); the noise dimension matters here."
+    confidence: high
+
+  - id: F03
+    setting: *stoch_k
+    regime: "simultaneously worst-case and asymptotically optimal"
+    status: tight_constants
+    upper: {papers: [menard2017klucbpp, garivier2018klucbswitch, jin2021mots, jin2022exptsfamily]}
+    history: "The first algorithms achieving O(sqrt(KT)) and the Lai-Robbins constant at once. Tests multi-regime results attached to one algorithm."
+    confidence: medium
+
+  - id: F04
+    setting: *stoch_k
+    regime: "asymptotic, explore-then-commit class"
+    status: algorithm_specific
+    lower: {papers: [garivier2016etc], claim: "ETC-type strategies lose a factor 2 asymptotically (Gaussian, two arms)"}
+    upper: {papers: [jin2020detc], claim: "Double ETC is asymptotically optimal"}
+    tests: ["lower bounds restricted to an algorithm class must NOT propagate as minimax lower bounds"]
+    confidence: medium
+
+  - id: F05
+    setting: *adv_k
+    regime: "worst case, pseudo-regret"
+    status: tight_constants
+    upper: {bound: "sqrt(K*T)", notation: O, papers: [audibert2009moss, zimmert2021tsallisinf]}
+    lower: {bound: "sqrt(K*T)", notation: Omega, papers: [auer2002exp3]}
+    history: "EXP3 gives O(sqrt(K T log K)); INF (Audibert & Bubeck 2009) removed the sqrt(log K); Tsallis-INF is the modern FTRL form."
+    tests: ["EXP3's bound shown as dominated", "log K gap closure"]
+    confidence: high
+
+  - id: F06
+    setting: *adv_k
+    regime: "high probability"
+    status: tight_logs
+    upper: {bound: "sqrt(K*T*log(K/delta))", notation: O, papers: [neu2015explore]}
+    notes: "Gerchinovitz & Lattimore (2016) give impossibility results for some first-order and high-probability refinements; check what exactly they rule out."
+    papers_related: [gerchinovitz2016refined]
+    confidence: medium
+
+  - id: F07
+    setting: "*stoch_k AND *adv_k (one algorithm)"
+    regime: "best of both worlds"
+    status: tight_constants
+    upper: {papers: [zimmert2021tsallisinf], claim: "O(sqrt(KT)) adversarial and O(sum_subopt(log(T)/Delta_i)) stochastic simultaneously"}
+    history: "SAO (2012) was polylog-suboptimal; SAPO (2016) near-optimal; Tsallis-INF (2018/21) optimal in both. Jin et al. 2023 removed the unique-optimal-arm assumption."
+    related: [bubeck2012bobw, auer2016nearly, jin2023improved]
+    tests: ["one algorithm with results on two settings (BOBW is not an environment)", "extra assumption 'unique optimal arm' is tracked"]
+    confidence: high
+
+  - id: F08
+    setting: {<<: *stoch_k, environment: stochastic_corrupted}
+    regime: "instance-dependent with corruption budget C"
+    status: log_gap
+    upper: {bound: "K*C + sum_subopt(log(T)/Delta_i)", notation: O_tilde, papers: [gupta2019corruption]}
+    lower: {papers: [lykouris2018corruption, gupta2019corruption], claim: "Omega(C)-type additive dependence is necessary"}
+    notes: "Check the exact log factors and the lower-bound form."
+    confidence: medium
+
+  - id: F09
+    setting: *stoch_lin_inf
+    regime: "worst case"
+    status: log_gap
+    upper: {bound: "d*sqrt(T)*log(T)", notation: O, papers: [dani2008stochastic, abbasi2011oful]}
+    lower: {bound: "d*sqrt(T)", notation: Omega, papers: [dani2008stochastic, rusmevichientong2010linear]}
+    history: "Li, Wang & Zhou (2019) narrowed this to O(d sqrt(T log T) polyloglog T) vs Omega(d sqrt(T log T)) for (some) infinite action sets. The precise action set (ball / sphere / hypercube) matters for the lower bound."
+    related: [li2019nearlyminimax]
+    tests: ["action-set geometry as a node parameter (D11)", "near-closure of a log gap"]
+    confidence: medium
+
+  - id: F10
+    setting: *stoch_lin_fin
+    regime: "worst case, K actions"
+    status: log_gap
+    upper: {bound: "sqrt(d*T*log(K))", notation: O_tilde, papers: [chu2011suplinucb]}
+    lower: {bound: "sqrt(d*T)", notation: Omega, papers: [chu2011suplinucb]}
+    notes: "SupLinUCB is for the contextual version (adversarial contexts, finite arms per round); the non-contextual finite-arm rate is O(sqrt(dT log K)). The setting should be linear_contextual / adversarial_contexts; check the mapping."
+    tests: ["K-armed -> linear reduction with d = K: sqrt(dT log K) -> sqrt(KT log K), dominated by F01's sqrt(KT)"]
+    confidence: medium
+
+  - id: F11
+    setting: *stoch_lin_inf
+    regime: "Linear Thompson sampling (frequentist)"
+    status: algorithm_specific
+    upper: {bound: "d**(3/2)*sqrt(T)", notation: O_tilde, papers: [agrawal2013lints, abeille2017lints]}
+    lower: {papers: [hamidi2020lints], claim: "the extra sqrt(d) is necessary for LinTS without posterior inflation"}
+    tests: ["algorithm-specific lower bound vs minimax F09: a poly gap in d that is NOT a gap of the setting"]
+    confidence: medium
+
+  - id: F12
+    setting: *stoch_lin_fin
+    regime: "asymptotic, instance-dependent"
+    status: tight_constants
+    lower: {papers: [lattimore2017endofoptimism], claim: "Graves-Lai style asymptotic lower bound; optimism and Thompson sampling are not asymptotically optimal"}
+    upper: {papers: [combes2017ossb, hao2020adaptive, kirschner2021ids, tirinzoni2020primaldual]}
+    tests: ["asymptotic optimality differs from the K-armed case: the reduction K-armed -> linear does not transfer optimality of UCB"]
+    confidence: high
+
+  - id: F13
+    setting: *adv_lin_fin
+    regime: "worst case, N actions"
+    status: tight_logs
+    upper: {bound: "sqrt(d*T*log(N))", notation: O, papers: [bubeck2012minimax]}
+    lower: {bound: "d*sqrt(T)", notation: Omega, papers: [dani2008stochastic, shamir2015complexity]}
+    notes: "For |A| = N with log N ~ d (e.g. the hypercube), sqrt(dT log N) ~ d sqrt(T) matches. Exp2 is not computationally efficient; Hazan & Karnin (2016) give an efficient O~(d sqrt(T)) high-probability algorithm. Tests the D2 'efficient vs not' regime (the compute field)."
+    related: [hazan2016volumetric]
+    confidence: medium
+
+  - id: F14
+    setting: {<<: *stoch_k, objective: cumulative_regret}
+    regime: "known optimal mean and gap lower bound"
+    status: tight_constants
+    upper: {papers: [bubeck2013bounded], claim: "bounded regret, independent of T"}
+    tests: ["learner_knows (mu_star, Delta_min) changes the rate: knowledge must be part of the setting comparison"]
+    confidence: medium

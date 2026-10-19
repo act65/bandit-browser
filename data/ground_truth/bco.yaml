@@ -1,0 +1,2399 @@
+# Ground-truth dataset: Tor Lattimore, "Bandit Convex Optimisation" (arXiv:2402.06535v5).
+# Hand-built (LLM-assisted, not yet human-verified) from the arXiv LaTeX source (cvx.tex) and
+# cross-checked against the PDF text of the same version. Quotes are verbatim LaTeX from cvx.tex
+# unless marked "pdf_text". Provenance tier: extracted (D4 tier 1); verification status: extracted (D5).
+
+source:
+  title: Bandit Convex Optimisation
+  authors: [Tor Lattimore]
+  kind: book (monograph, arXiv preprint)
+  arxiv_id: "2402.06535"
+  arxiv_version: v5
+  arxiv_version_date: "2025-11-12"
+  version_evidence: >-
+    PDF first page reads "arXiv:2402.06535v5 [math.OC] 12 Nov 2025" and "November 2025";
+    e-print tarball (https://arxiv.org/e-print/2402.06535) gzip header dated 2025-11-13, single
+    source file cvx.tex + all.bib. Table/section numbers below are as printed in the v5 PDF.
+  files_used:
+    latex: cvx.tex (from arXiv e-print, v5)
+    bib: all.bib
+    pdf_text: bco.txt (pdftotext of v5 PDF)
+  schema_version: "0.1"
+  ontology_version: bandits-0.1
+  ontology_extensions_proposed: see data/ground_truth/bco-ontology-notes.md (proposed bandits-0.2 / bco module)
+  extraction:
+    produced_by: Claude (claude-opus-5-5) acting as a sub-agent, 2026-10-19
+    status: extracted
+    human_verified: false
+  conventions:
+    horizon_symbol: >-
+      Expressions use the book's symbol `n` for the horizon (number of rounds). It is the
+      canonical variable `T` of schema.md (map n -> T).
+    dimension_symbol: "`d` = ambient dimension of K (canonical d)."
+    diameter_symbol: >-
+      `D_K` = diam(K). The book writes D, but canonical `D` in schema.md means delay, so it is renamed.
+    other_symbols:
+      alpha: strong-convexity parameter (Prop (sc)); known constant
+      beta: smoothness parameter (Prop (sm)); known constant
+      vartheta: self-concordance parameter of a self-concordant barrier on K (book's \vartheta)
+      epsilon: target accuracy for sample-complexity bounds (canonical epsilon)
+      delta: failure probability (canonical delta)
+    quantity_note: >-
+      quantity "regret" (not in the v0.1 vocabulary) means the book's Reg_n, which has the sup over x inside
+      (i.e. the expected-regret sense when bounded in expectation, not pseudo-regret), where Table 2.2 does not
+      say whether the bound is in expectation or with high probability. Lower bounds are recorded as
+      expected_regret, the usual minimax reading (not printed in Table 2.1).
+    sympy_note: >-
+      `alpha`, `beta` collide with SymPy built-ins; parse expressions with
+      local_dict built from each result's `symbols` (all names treated as positive Symbols).
+      `Max` is the SymPy maximum. O/Omega/O_tilde wrappers are in bound.notation, not in expression.
+      For O_tilde bounds polylog factors are dropped from `expression`.
+    regret_definition_quote: |-
+      The main performance metric in this book is the regret,\index{regret|textbf} which is
+      \begin{align*}
+      \Reg_n = \sup_{x \in K} \sum_{t=1}^n (f_t(X_t) - f_t(x))\,.
+      \end{align*}
+      The regret is a random variable with the randomness coming from both the noise and the learner's decisions.
+      Normally the regret will be bounded in expectation or with high probability, depending on what is most convenient.
+    simple_regret_definition_quote: |-
+      At the end of the interaction the learner is expected to output one last point $\widehat X \in K$ and the simple regret is
+      \begin{align*}
+      \sReg_n = f(\widehat X) - \inf_{x \in K} f(x) \,.
+      \end{align*}
+    sample_complexity_definition_quote: |-
+      Another standard measure of performance in the stochastic setting is the sample complexity, which is the number of
+      interactions needed before the simple regret is at most $\eps > 0$ with high probability.
+    horizon_known_quote: |-
+      We have also assumed that $n$ is known upfront and used this to tune learning rates or other parameters.
+  global_assumptions:
+    - id: def_1_1
+      number: Definition 1.1
+      quote: |-
+        Let $\cF$ be the space of convex functions from $K$ to $\R$, and
+        with $\norm{\cdot}$ the standard euclidean norm define the following properties of a function $f \in \cF$:
+        \item[\texttt{Prop (b)}] $f$ is bounded: $f(x) \in [0,1]$ for all $x \in K$.
+        \item[\texttt{Prop (l)}] $f$ is Lipschitz: $f(x) - f(y) \leq \norm{x - y}$ for all $x, y \in K$.
+        \item[\texttt{Prop (sm)}] $f$ is $\beta$-smooth: $f(x) - \frac{\beta}{2} \norm{x}^2$ is concave on $K$.
+        \item[\texttt{Prop (sc)}] $f$ is $\alpha$-strongly convex: $f(x) - \frac{\alpha}{2} \norm{x}^2$ is convex on $K$.
+        \item[\texttt{Prop (lin)}] $f$ is linear: $f(x) = x^\top b + c$.
+        \item[\texttt{Prop (quad)}] $f$ is quadratic: $f(x) = x^\top A x + x^\top b + c$.
+    - id: def_1_1_params
+      number: Section 1.3 (after Definition 1.1)
+      quote: |-
+        When smoothness and strong convexity are involved, our bounds will depend on the parameters $\alpha > 0$ and $0 \leq \beta < \infty$, which we assume are known constants.
+    - id: ass_1_2
+      number: Assumption 1.2
+      quote: |-
+        The constraint set $K \subset \R^d$ is a convex body, which means that:
+        \item $K$ is convex;
+        \item $K$ has a nonempty interior; and
+        \item $K$ is compact.
+    - id: ass_1_4
+      number: Assumption 1.4
+      quote: |-
+        The noise random variables $\eps_1,\ldots,\eps_n$ are conditionally subgaussian:
+        \E\left[\eps_t \mid X_1,Y_1,\ldots,X_{t-1},Y_{t-1},X_t\right] &= 0\,; \text{ and}
+        \E\left[\exp(\eps_t^2) \mid X_1,Y_1,\ldots,X_{t-1},Y_{t-1},X_t\right] &\leq 2\,.
+      note: Global; noise may depend on history and on the action (needed for submodular bandits, Ch. 13).
+    - id: adversarial_def
+      number: Section 1.3 (Adversarial Bandit Convex Optimisation)
+      quote: |-
+        In the adversarial setting the most common assumption is that the noise $\eps_t = 0$ while the functions $f_1,\ldots,f_n$ are chosen
+        in an arbitrary way by the adversary.
+        Sometimes the adversary is allowed to choose $f_t$ at the same time as the learner chooses $X_t$, in which case we say the adversary is non-oblivious.
+        Perhaps more commonly, however, the adversary is obliged to choose all loss functions $f_1,\ldots,f_n$ before the interaction starts. Adversaries of this kind
+        are called oblivious. For our purposes it is convenient to allow nonzero noise even in the adversarial case.
+    - id: stochastic_def
+      number: Section 1.3 (Stochastic Bandit Convex Optimisation)
+      quote: |-
+        The stochastic setting is more classical. The loss function is now constant over time: $f_t = f$ for all rounds $t$ and unknown $f$.
+    - id: improper_def
+      number: Note 1.iii
+      quote: |-
+        Another situation related to the constraint set that arises often is that the losses are defined on all of $\R^d$ and the learner can query any point in $\R^d$ but is
+        only evaluated against the best point in $K$. This setting is sometimes referred to as the \textit{improper} setting. The definition ensures that the improper setting is easier
+        than both the constrained setting (the learner has more power) and the unconstrained setting (the adversary has less power).
+    - id: unconstrained_def
+      number: Note 1.ii
+      quote: |-
+        But assuming boundedness discards many interesting settings.
+        Most fundamentally, it prohibits the \textit{unconstrained} setting where $K = \R^d$. Similarly, $K$ cannot be a half-space or other unbounded subset of $\R^d$.
+  table_conventions:
+    table_2_1:
+      label: tab:lower
+      caption: Summary of lower bounds.
+      quote: |-
+        In the class column we use an \texttt{(s)} superscript to indicate that the lower bound holds in the stochastic setting
+        and \texttt{(i)} to show that it holds in the improper setting explained in Note~\ref{note:improper}. In the improper setting, Lipschitzness and
+        boundedness only hold inside $K$ while smoothness and strong convexity hold everywhere.
+    table_2_2:
+      label: tab:upper
+      caption: Summary of upper bounds
+      quote: |-
+        Those bounds that depend on $n$ are regret bounds while those that depend on $\eps$ are sample complexity bounds.
+        The superscript \texttt{(s)} in the function classes indicate whether or not the work only considers the
+        stochastic setting, while the superscript \texttt{(i)} is used when the algorithm needs to query outside $K$ (the improper setting of Note~\ref{note:improper}).
+        In some cases the subscript $d = 1$ in the function class indicates that the algorithm assumes the dimension is one.
+        The quantity $\vartheta$ is the parameter associated with a self-concordant barrier on $K$ (see \cref{chap:ftrl}) and $D$ is an abbreviation for the diameter $D = \diam(K)$.
+        The \textsc{compute} column gives the per-round complexity of each algorithm, which is $\infty$ in the few cases that the regret bound was established non-constructively.
+    semantic_warning: >-
+      The superscripts mean slightly different things in the two tables. In Table 2.1 "(s)" means the
+      lower bound already holds in the (easier) stochastic setting and "(i)" means it holds in the (easier)
+      improper setting, so it transfers to harder settings. In Table 2.2 "(s)" means the work only covers the
+      stochastic setting and "(i)" means the algorithm needs to query outside K. A missing "(s)" in Table 2.2
+      means the bound holds in the adversarial setting. A missing "(i)" means constrained (plays in K).
+
+# ---------------------------------------------------------------------------------------------
+# SETTINGS
+# assumption_vector dimensions (proposed; see ontology notes):
+#   function_class: set of Definition 1.1 properties (convexity always assumed)
+#   environment: stochastic (f_t = f) | adversarial (oblivious or non-oblivious left unspecified by the tables)
+#   domain: constrained (play in convex body K, compare to K) | improper (query R^d, compare to K) | unconstrained (K = R^d)
+#   dimension: any | d=1
+#   noise: book default = conditionally 1-subgaussian (Assumption 1.4); many adversarial results are noise-free
+#   feedback: one-point bandit (value of f_t at X_t only, plus noise)
+# ---------------------------------------------------------------------------------------------
+settings:
+  - id: S_b_adv
+    notation_latex: '\cF_\pb'
+    notation_plain: F_b
+    name_in_book: adversarial bandit convex optimisation, bounded losses
+    assumption_vector:
+      function_class: {convex: true, bounded_01: true, lipschitz: false, smooth: false, strongly_convex: false, linear: false, quadratic: false}
+      environment: adversarial
+      domain: constrained
+      dimension: any
+      noise: book_default_conditionally_subgaussian_or_zero
+      feedback: bandit_one_point
+    ontology_v0_1_mapping: {objective: cumulative_regret, feedback: bandit, environment: adversarial_oblivious, action_space: convex, context: none, noise: not_applicable}
+    unmapped:
+      - "boundedness f(x) in [0,1] on K (no 'bounded convex' value in v0.1)"
+      - adversary obliviousness not specified in the tables
+      - noise conditionally subgaussian and possibly action-dependent; many cited adversarial results assume noise-free
+    definition_quote: |-
+      $\cF_\pb = \{f \in \cF \colon f(x)  \in[0,1] \text{ for all } x \in K\}$.
+    used_in: [U2, U3, U13, U14, U16, U18, U26, X1]
+  - id: S_b_sto
+    notation_latex: '\sF_\pb^\ps'
+    notation_plain: F_b^(s)
+    name_in_book: stochastic bandit convex optimisation, bounded loss
+    assumption_vector:
+      function_class: {convex: true, bounded_01: true, lipschitz: false, smooth: false, strongly_convex: false, linear: false, quadratic: false}
+      environment: stochastic
+      domain: constrained
+      dimension: any
+      noise: conditionally_1_subgaussian
+      feedback: bandit_one_point
+    ontology_v0_1_mapping: {objective: cumulative_regret, feedback: bandit, environment: stochastic_iid, action_space: convex, context: none, noise: subgaussian}
+    unmapped:
+      - "noise is a conditionally subgaussian martingale difference that may depend on X_t (not iid); v0.1 'stochastic_iid' is only approximate"
+    definition_quote: |-
+      The stochastic setting is more classical. The loss function is now constant over time: $f_t = f$ for all rounds $t$ and unknown $f$.
+    used_in: [U22, U24, U25, U27, U28, U29, X4]
+  - id: S_bl_adv
+    notation_latex: '\sF_{\pb,\pl}'
+    notation_plain: F_{b,l}
+    assumption_vector:
+      function_class: {convex: true, bounded_01: true, lipschitz: true, smooth: false, strongly_convex: false, linear: false, quadratic: false}
+      environment: adversarial
+      domain: constrained
+      dimension: any
+      noise: book_default_conditionally_subgaussian_or_zero
+      feedback: bandit_one_point
+    ontology_v0_1_mapping: {objective: cumulative_regret, feedback: bandit, environment: adversarial_oblivious, action_space: convex, context: none, noise: not_applicable}
+    unmapped: ["1-Lipschitz w.r.t. euclidean norm (Prop (l)); no Lipschitz flag in v0.1 for convex action spaces"]
+    definition_quote: |-
+      \item[\texttt{Prop (l)}] $f$ is Lipschitz: $f(x) - f(y) \leq \norm{x - y}$ for all $x, y \in K$.
+    used_in: [U1]
+  - id: S_bl_sto
+    notation_latex: '\sF_{\pb,\pl}^\ps'
+    notation_plain: F_{b,l}^(s)
+    assumption_vector:
+      function_class: {convex: true, bounded_01: true, lipschitz: true, smooth: false, strongly_convex: false, linear: false, quadratic: false}
+      environment: stochastic
+      domain: constrained
+      dimension: any
+      noise: conditionally_1_subgaussian
+      feedback: bandit_one_point
+    ontology_v0_1_mapping: {objective: cumulative_regret, feedback: bandit, environment: stochastic_iid, action_space: convex, context: none, noise: subgaussian}
+    unmapped: ["bounded + 1-Lipschitz"]
+    definition_quote: |-
+      They established $\tilde O(d^{16}\sqrt{n})$ regret while assuming only that the loss is bounded and Lipschitz.
+    used_in: [U9]
+  - id: S_bsm_adv
+    notation_latex: '\sF_{\pb,\psm}'
+    notation_plain: F_{b,sm}
+    assumption_vector:
+      function_class: {convex: true, bounded_01: true, lipschitz: false, smooth: true, strongly_convex: false, linear: false, quadratic: false}
+      environment: adversarial
+      domain: constrained
+      dimension: any
+      noise: book_default_conditionally_subgaussian_or_zero
+      feedback: bandit_one_point
+    parameters: [beta]
+    ontology_v0_1_mapping: {objective: cumulative_regret, feedback: bandit, environment: adversarial_oblivious, action_space: convex, context: none, noise: not_applicable}
+    unmapped: ["beta-smooth (Prop (sm)), beta known"]
+    definition_quote: |-
+      \item[\texttt{Prop (sm)}] $f$ is $\beta$-smooth: $f(x) - \frac{\beta}{2} \norm{x}^2$ is concave on $K$.
+    used_in: [U6]
+  - id: S_bsmsc_adv
+    notation_latex: '\sF_{\pb,\psm,\psc}'
+    notation_plain: F_{b,sm,sc}
+    assumption_vector:
+      function_class: {convex: true, bounded_01: true, lipschitz: false, smooth: true, strongly_convex: true, linear: false, quadratic: false}
+      environment: adversarial
+      domain: constrained
+      dimension: any
+      noise: book_default_conditionally_subgaussian_or_zero
+      feedback: bandit_one_point
+    parameters: [alpha, beta]
+    ontology_v0_1_mapping: {objective: cumulative_regret, feedback: bandit, environment: adversarial_oblivious, action_space: convex, context: none, noise: not_applicable}
+    unmapped: ["alpha-strongly convex and beta-smooth, alpha, beta known"]
+    definition_quote: |-
+      $\cF_{\pb,\psm,\psc}$ is the set of bounded convex functions that are smooth and strongly convex.
+    used_in: [U10, U19, U20]
+  - id: S_bsmsc_adv_improper
+    notation_latex: '\sF^{\pu}_{\pb,\psm,\psc}'
+    notation_plain: F^(i)_{b,sm,sc}
+    assumption_vector:
+      function_class: {convex: true, bounded_01: true, lipschitz: false, smooth: true, strongly_convex: true, linear: false, quadratic: false}
+      environment: adversarial
+      domain: improper
+      dimension: any
+      noise: book_default_conditionally_subgaussian_or_zero
+      feedback: bandit_one_point
+    parameters: [alpha, beta]
+    ontology_v0_1_mapping: {objective: cumulative_regret, feedback: bandit, environment: adversarial_oblivious, action_space: convex, context: none, noise: not_applicable}
+    unmapped: ["improper: learner may query outside K; boundedness only near K"]
+    definition_quote: |-
+      \item $\dom(f_t) = \R^d$ and the setting is improper so that the learner can play outside of $K$.
+      \item $f_t$ is strongly convex and smooth: $x \mapsto f_t(x) - \frac{\alpha}{2} \norm{x}^2$ is convex
+      and $x \mapsto f_t(x) - \frac{\beta}{2} \norm{x}^2$ is concave for some known constants $0 < \alpha \leq \beta$.
+      \item There exists a known constant $r > 0$ such that $f_t(x) \in [0,1]$ for all $x \in K + \ball_r$.
+      \item There is no noise: $\eps_t = 0$.
+    definition_source: Assumption 5.7 (label ass:gd:sc-sm), the book's own version of this setting
+    used_in: [U4, U5]
+  - id: S_blin_adv
+    notation_latex: '\sF_{\pb,\plin}'
+    notation_plain: F_{b,lin}
+    name_in_book: (adversarial) linear bandits
+    assumption_vector:
+      function_class: {convex: true, bounded_01: true, lipschitz: false, smooth: true, strongly_convex: false, linear: true, quadratic: true}
+      environment: adversarial
+      domain: constrained
+      dimension: any
+      noise: book_default_conditionally_subgaussian_or_zero
+      feedback: bandit_one_point
+    ontology_v0_1_mapping: {objective: cumulative_regret, feedback: bandit, environment: adversarial_oblivious, action_space: linear_infinite, context: none, noise: not_applicable}
+    unmapped: []
+    notes: >-
+      smooth=true (beta = 0 allowed since 0 <= beta) and quadratic=true (A = 0) are implied by linearity,
+      not stated as separate assumptions. Equivalent to v0.1 action_space linear_infinite (convex body action set).
+    definition_quote: |-
+      \item[\texttt{Prop (lin)}] $f$ is linear: $f(x) = x^\top b + c$.
+    used_in: [U7]
+  - id: S_blin_sto
+    notation_latex: '\cF^{\ps}_{\pb,\plin}'
+    notation_plain: F^(s)_{b,lin}
+    name_in_book: stochastic linear bandits
+    assumption_vector:
+      function_class: {convex: true, bounded_01: true, lipschitz: false, smooth: true, strongly_convex: false, linear: true, quadratic: true}
+      environment: stochastic
+      domain: constrained
+      dimension: any
+      noise: conditionally_1_subgaussian
+      feedback: bandit_one_point
+    ontology_v0_1_mapping: {objective: cumulative_regret, feedback: bandit, environment: stochastic_iid, action_space: linear_infinite, context: none, noise: subgaussian}
+    unmapped: ["lower bound (L1) uses a non-convex K (product of circles); see footnote 1 of Table 2.1"]
+    definition_quote: |-
+      \citealt{DHK08}$^1$ & $\Omega(d \sqrt{n})$ & $\cF^{\ps}_{\pb,\plin}$ & $\prod_{k=1}^{d/2} \mathbb S^1_1$  \\
+    used_in: [L1, X2]
+  - id: S_bquad_adv
+    notation_latex: '\sF_{\pb,\pquad}'
+    notation_plain: F_{b,quad}
+    assumption_vector:
+      function_class: {convex: true, bounded_01: true, lipschitz: false, smooth: true, strongly_convex: false, linear: false, quadratic: true}
+      environment: adversarial
+      domain: constrained
+      dimension: any
+      noise: book_default_conditionally_subgaussian_or_zero
+      feedback: bandit_one_point
+    ontology_v0_1_mapping: {objective: cumulative_regret, feedback: bandit, environment: adversarial_oblivious, action_space: convex, context: none, noise: not_applicable}
+    unmapped: ["quadratic convex losses (A PSD by convexity); v0.1 has no quadratic value"]
+    notes: smooth=true is implied (a convex quadratic is smooth with beta = 2||A||) but beta is not a parameter of the bound.
+    definition_quote: |-
+      \item[\texttt{Prop (quad)}] $f$ is quadratic: $f(x) = x^\top A x + x^\top b + c$.
+    used_in: [U21]
+  - id: S_blquadscsm_sto
+    notation_latex: '\cF^{\ps}_{\pb,\pl,\pquad,\psc,\psm}'
+    notation_plain: F^(s)_{b,l,quad,sc,sm}
+    assumption_vector:
+      function_class: {convex: true, bounded_01: true, lipschitz: true, smooth: true, strongly_convex: true, linear: false, quadratic: true}
+      environment: stochastic
+      domain: constrained
+      dimension: any
+      noise: conditionally_1_subgaussian
+      feedback: bandit_one_point
+    parameters: [alpha, beta]
+    ontology_v0_1_mapping: {objective: cumulative_regret, feedback: bandit, environment: stochastic_iid, action_space: convex, context: none, noise: subgaussian}
+    unmapped: ["quadratic + strongly convex + smooth + Lipschitz + bounded"]
+    definition_quote: |-
+      \citealt{Sha13} & $\Omega(d \sqrt{n})$ & $\cF^{\ps}_{\pb,\pl,\pquad,\psc,\psm}$, $\alpha = \beta = 1$ & $\ball_1$ \\
+    used_in: [L3]
+  - id: S_blscsm_sto_improper
+    notation_latex: '\cF^{\ps,\pu}_{\pb,\pl,\psc,\psm}'
+    notation_plain: F^(s,i)_{b,l,sc,sm}
+    assumption_vector:
+      function_class: {convex: true, bounded_01: true, lipschitz: true, smooth: true, strongly_convex: true, linear: false, quadratic: false}
+      environment: stochastic
+      domain: improper
+      dimension: any
+      noise: conditionally_1_subgaussian
+      feedback: bandit_one_point
+    parameters: [alpha, beta]
+    ontology_v0_1_mapping: {objective: cumulative_regret, feedback: bandit, environment: stochastic_iid, action_space: convex, context: none, noise: subgaussian}
+    unmapped: ["improper: bounded and Lipschitz only inside K, smooth/strongly convex everywhere"]
+    definition_quote: |-
+      In the improper setting, Lipschitzness and
+      boundedness only hold inside $K$ while smoothness and strong convexity hold everywhere.
+    used_in: [L2, L4, L5, L6]
+  - id: S_lsmsc_sto_improper
+    notation_latex: '\sF_{\pl,\psm,\psc}^{\ps,\pu}'
+    notation_plain: F^(s,i)_{l,sm,sc}
+    assumption_vector:
+      function_class: {convex: true, bounded_01: false, lipschitz: true, smooth: true, strongly_convex: true, linear: false, quadratic: false}
+      environment: stochastic
+      domain: improper
+      dimension: any
+      noise: conditionally_1_subgaussian
+      feedback: bandit_one_point
+    parameters: [alpha, beta]
+    ontology_v0_1_mapping: {objective: cumulative_regret, feedback: bandit, environment: stochastic_iid, action_space: convex, context: none, noise: subgaussian}
+    unmapped: ["no boundedness assumed in class label"]
+    definition_quote: |-
+      \cite{akhavan2020exploiting}$^2$ & $O(d \sqrt{\beta n / \alpha})$ & $\sF_{\pl,\psm,\psc}^{\ps,\pu}$ & $O(d)$ & \textendash \\
+    used_in: [U17]
+  - id: S_l_sto_improper
+    notation_latex: '\sF_{\pl}^{\ps,\pu}'
+    notation_plain: F^(s,i)_l
+    assumption_vector:
+      function_class: {convex: true, bounded_01: false, lipschitz: true, smooth: false, strongly_convex: false, linear: false, quadratic: false}
+      environment: stochastic
+      domain: improper
+      dimension: any
+      noise: conditionally_1_subgaussian
+      feedback: bandit_one_point
+    ontology_v0_1_mapping: {objective: cumulative_regret, feedback: bandit, environment: stochastic_iid, action_space: convex, context: none, noise: subgaussian}
+    unmapped: ["Section 2.2 says LG23 is for K = B_1 (unit ball) and Lipschitz loss"]
+    definition_quote: |-
+      Recently \cite{LG23} showed that $O(d^{1.5}\sqrt{n})$ regret
+      is possible in the improper stochastic setting when the loss is Lipschitz and $K = \ball_1$
+    used_in: [U23]
+  - id: S_l_sto_d1
+    notation_latex: '\sF_{\pl,d=1}^\ps'
+    notation_plain: F^(s)_{l,d=1}
+    assumption_vector:
+      function_class: {convex: true, bounded_01: false, lipschitz: true, smooth: false, strongly_convex: false, linear: false, quadratic: false}
+      environment: stochastic
+      domain: constrained
+      dimension: d=1
+      noise: conditionally_1_subgaussian
+      feedback: bandit_one_point
+    ontology_v0_1_mapping: {objective: cumulative_regret, feedback: bandit, environment: stochastic_iid, action_space: convex, context: none, noise: subgaussian}
+    unmapped: ["d = 1 is a parameter restriction (K an interval)", "loss not assumed bounded (book's Assumption 4.1)"]
+    definition_quote: |-
+      \item $d = 1$ and $K$ is a nonempty interval;
+      \item the setting is stochastic: $f_t = f$ for all $t$; and
+      \item the loss function is Lipschitz: $f \in \cF_\pl$.
+    definition_source: Assumption 4.1 (label ass:bisect)
+    used_in: [U8]
+  - id: S_b_adv_d1
+    notation_latex: '\sF_{\pb,d=1}'
+    notation_plain: F_{b,d=1}
+    assumption_vector:
+      function_class: {convex: true, bounded_01: true, lipschitz: false, smooth: false, strongly_convex: false, linear: false, quadratic: false}
+      environment: adversarial
+      domain: constrained
+      dimension: d=1
+      noise: book_default_conditionally_subgaussian_or_zero
+      feedback: bandit_one_point
+    ontology_v0_1_mapping: {objective: cumulative_regret, feedback: bandit, environment: adversarial_oblivious, action_space: convex, context: none, noise: not_applicable}
+    unmapped: ["d = 1"]
+    definition_quote: |-
+      \cite{BDKP15} proved that $\tilde O(\sqrt{n})$ regret \textit{is} possible in the adversarial setting with no assumptions
+      beyond convexity and boundedness, but only when $d = 1$.
+    used_in: [U12, U15]
+  - id: S_convex_sto
+    notation_latex: '\sF^\ps'
+    notation_plain: F^(s)
+    assumption_vector:
+      function_class: {convex: true, bounded_01: false, lipschitz: false, smooth: false, strongly_convex: false, linear: false, quadratic: false}
+      environment: stochastic
+      domain: constrained
+      dimension: any
+      noise: conditionally_1_subgaussian
+      feedback: bandit_one_point
+    ontology_v0_1_mapping: {objective: pac_epsilon_best, feedback: bandit, environment: stochastic_iid, action_space: convex, context: none, noise: subgaussian}
+    unmapped: ["no boundedness in the class label"]
+    confidence: low
+    notes: >-
+      Only used by the BLN15 row of Table 2.2, whose class is printed as \sF^\ps (no b). Note 2.v says
+      the same result is "for losses in \cF_\pb". The class may be a typo for \sF_\pb^\ps. Recorded as a conflict (D5).
+    definition_quote: |-
+      \cite{BLN15} & $\tilde O(d^{7.5} / \eps^2)$ & $\sF^\ps$ & $O(1)$ & \textendash \\
+    used_in: [U11]
+  - id: S_smsc_sto_unconstrained
+    notation_latex: '\cF_{\psm,\psc}, K = \R^d'
+    notation_plain: F_{sm,sc}, K = R^d (stochastic)
+    assumption_vector:
+      function_class: {convex: true, bounded_01: false, lipschitz: false, smooth: true, strongly_convex: true, linear: false, quadratic: false}
+      environment: stochastic
+      domain: unconstrained
+      dimension: any
+      noise: conditionally_1_subgaussian
+      feedback: bandit_one_point
+    parameters: [alpha, beta]
+    ontology_v0_1_mapping: {objective: pac_epsilon_best, feedback: bandit, environment: stochastic_iid, action_space: convex, context: none, noise: subgaussian}
+    unmapped: ["unconstrained K = R^d (not a convex body; outside the book's main Assumption 1.2)"]
+    in_tables: false
+    definition_quote: |-
+      \cite{jamieson2012query} consider functions in $\cF_{\psm,\psc}$ and $K = \R^d$ and prove a sample complexity bound of $O(\frac{d^{3}}{\eps^2})$
+    definition_source: Note 2.v
+    used_in: [X3]
+  - id: S_quadsmsc_sto_improper
+    notation_latex: 'quadratic, \psm, \psc, stochastic, improper or unconstrained'
+    notation_plain: F^(s,i)_{quad,sm,sc} (also unconstrained)
+    assumption_vector:
+      function_class: {convex: true, bounded_01: null, lipschitz: null, smooth: true, strongly_convex: true, linear: false, quadratic: true}
+      environment: stochastic
+      domain: improper
+      dimension: any
+      noise: conditionally_1_subgaussian
+      feedback: bandit_one_point
+    parameters: [alpha, beta]
+    ontology_v0_1_mapping: {objective: simple_regret, feedback: bandit, environment: stochastic_iid, action_space: convex, context: none, noise: subgaussian}
+    unmapped: ["quadratic, sm, sc with alpha, beta = Theta(1); boundedness/Lipschitz not stated (null = unknown)"]
+    in_tables: false
+    confidence: medium
+    definition_quote: |-
+      The quadratic case with smoothness and strong convexity ($\alpha, \beta = \Theta(1)$) is quite interesting.
+    definition_source: Section 2.4, bullet 6
+    used_in: [X5]
+
+# ---------------------------------------------------------------------------------------------
+# RESULTS
+# L* = Table 2.1 (lower bounds; (a) regret, (b) simple regret), U* = Table 2.2 (upper bounds),
+# X* = results stated in the text/notes but not in the tables (in_tables: false).
+# All table entries are restatements of prior work (is_new: false) unless the author column is
+# "This book" (is_new: true). probability is null when the table does not say; the linked book
+# theorem (if any) is recorded separately because it may be a re-derivation, not the original.
+# ---------------------------------------------------------------------------------------------
+results:
+  # ------------------------------ Table 2.1 (a): regret lower bounds ---------------------------
+  - id: L1
+    setting: S_blin_sto
+    side: lower
+    algorithm: null
+    algorithm_class: all
+    quantity: expected_regret
+    dependence: worst_case
+    probability: expectation
+    horizon: known
+    bound:
+      notation: Omega
+      expression: "d*sqrt(n)"
+      expression_latex: '\Omega(d \sqrt{n})'
+      regime: "K = prod_{k=1}^{d/2} S^1_1 (product of d/2 unit circles; d even)"
+    symbols: {n: horizon (canonical T), d: dimension}
+    constraint_set: '\prod_{k=1}^{d/2} \mathbb S^1_1'
+    extra_assumptions:
+      - K is a product of circles, which is NOT convex; footnote 1 says lower bounds on non-convex K transfer to conv(K) for linear losses (see TR_nonconvex_hull)
+    is_new: false
+    original_citation: {bib_key: DHK08, authors: [V. Dani, T. P. Hayes, S. M. Kakade], year: 2008, title: Stochastic linear optimization under bandit feedback}
+    source:
+      label: tab:lower
+      number: Table 2.1(a) row 1
+      quote: |-
+        \citealt{DHK08}$^1$ & $\Omega(d \sqrt{n})$ & $\cF^{\ps}_{\pb,\plin}$ & $\prod_{k=1}^{d/2} \mathbb S^1_1$  \\
+      footnote: |-
+        $^1$The product of spheres is not convex. As \cite{shamir2015complexity} argues, in the linear setting lower bounds for non-convex sets
+        imply lower bounds on $\conv(K)$ via a simple reduction.
+    confidence: high
+    notes: >-
+      quantity/probability not printed in the table; minimax lower bounds of this kind are on expected regret
+      (assumed; medium confidence on that field only). Section 2.4 says this is also the best lower bound known for F_b.
+  - id: L2
+    setting: S_blscsm_sto_improper
+    side: lower
+    algorithm: null
+    algorithm_class: all
+    quantity: expected_regret
+    dependence: worst_case
+    probability: expectation
+    horizon: known
+    bound:
+      notation: Omega
+      expression: "d*sqrt(n)"
+      expression_latex: '\Omega(d \sqrt{n})'
+      regime: "alpha = 1/2, beta = 7/2, K = B_1 (unit euclidean ball)"
+    symbols: {n: horizon (canonical T), d: dimension, alpha: strong convexity parameter, beta: smoothness parameter}
+    constraint_set: '\ball_1'
+    extra_assumptions: ["alpha = 1/2", "beta = 7/2"]
+    is_new: false
+    original_citation: {bib_key: Sha13, authors: [O. Shamir], year: 2013, title: On the complexity of bandit and derivative-free stochastic convex optimization}
+    source:
+      label: tab:lower
+      number: Table 2.1(a) row 2
+      quote: |-
+        \citealt{Sha13} & $\Omega(d \sqrt{n})$ & $\cF^{\ps,\pu}_{\pb,\pl,\psc,\psm}$, $\alpha = \frac{1}{2}, \beta = \frac{7}{2}$ & $\ball_1$ \\
+    confidence: high
+    notes: quantity/probability inferred as expected regret (not printed).
+  - id: L3
+    setting: S_blquadscsm_sto
+    side: lower
+    algorithm: null
+    algorithm_class: all
+    quantity: expected_regret
+    dependence: worst_case
+    probability: expectation
+    horizon: known
+    bound:
+      notation: Omega
+      expression: "d*sqrt(n)"
+      expression_latex: '\Omega(d \sqrt{n})'
+      regime: "alpha = beta = 1, K = B_1"
+    symbols: {n: horizon (canonical T), d: dimension, alpha: strong convexity parameter, beta: smoothness parameter}
+    constraint_set: '\ball_1'
+    extra_assumptions: ["alpha = beta = 1", "quadratic losses"]
+    is_new: false
+    original_citation: {bib_key: Sha13, authors: [O. Shamir], year: 2013, title: On the complexity of bandit and derivative-free stochastic convex optimization}
+    source:
+      label: tab:lower
+      number: Table 2.1(a) row 3
+      quote: |-
+        \citealt{Sha13} & $\Omega(d \sqrt{n})$ & $\cF^{\ps}_{\pb,\pl,\pquad,\psc,\psm}$, $\alpha = \beta = 1$ & $\ball_1$ \\
+    confidence: high
+    notes: >-
+      No (i) superscript, so constrained. Section 2.4 says this is matched by upper bounds in the unconstrained/improper
+      settings (akhavan2020exploiting) and nearly so in the constrained setting (HL14).
+  - id: L4
+    setting: S_blscsm_sto_improper
+    side: lower
+    algorithm: null
+    algorithm_class: all
+    quantity: expected_regret
+    dependence: worst_case
+    probability: expectation
+    horizon: known
+    bound:
+      notation: Omega
+      expression: "d*sqrt(n)/Max(1, alpha)"
+      expression_latex: '\Omega(\frac{d \sqrt{n}}{\max(1,\alpha)})'
+      regime: "beta = O(alpha), K = B_1"
+    symbols: {n: horizon (canonical T), d: dimension, alpha: strong convexity parameter, beta: smoothness parameter}
+    constraint_set: '\ball_1'
+    extra_assumptions: ["beta = O(alpha)"]
+    is_new: false
+    original_citation: {bib_key: akhavan2024gradient, authors: [A. Akhavan, E. Chzhen, M. Pontil, A. Tsybakov], year: 2024, title: "Gradient-free optimization of highly smooth functions: Improved analysis and a new algorithm"}
+    source:
+      label: tab:lower
+      number: Table 2.1(a) row 4
+      quote: |-
+        \citealt{akhavan2024gradient}$^2$ & $\Omega(\frac{d \sqrt{n}}{\max(1,\alpha)})$ & $\cF^{\ps,\pu}_{\pb,\pl,\psc,\psm}$, $\beta = O(\alpha)$ & $\ball_1$ \\ \hline
+      footnote: |-
+        $^2$These authors also prove a more general result for function classes with more smoothness and their results
+        hold for a large class of noise models.
+    confidence: high
+    notes: quantity/probability inferred as expected regret (not printed).
+  # ------------------------------ Table 2.1 (b): simple regret lower bounds --------------------
+  - id: L5
+    setting: S_blscsm_sto_improper
+    side: lower
+    algorithm: null
+    algorithm_class: all
+    quantity: simple_regret
+    dependence: worst_case
+    probability: expectation
+    horizon: known
+    bound:
+      notation: Omega
+      expression: "d/sqrt(n)"
+      expression_latex: '\Omega(d / \sqrt{n})'
+      regime: "alpha = 1/2, beta = 7/2, K = B_1"
+    symbols: {n: horizon (canonical T), d: dimension, alpha: strong convexity parameter, beta: smoothness parameter}
+    constraint_set: '\ball_1'
+    extra_assumptions: ["alpha = 1/2", "beta = 7/2"]
+    is_new: false
+    original_citation: {bib_key: Sha13, authors: [O. Shamir], year: 2013, title: On the complexity of bandit and derivative-free stochastic convex optimization}
+    source:
+      label: tab:lower
+      number: Table 2.1(b) row 1
+      quote: |-
+        \citealt{Sha13} & $\Omega(d / \sqrt{n})$ & $\cF^{\ps,\pu}_{\pb,\pl,\psc,\psm}$, $\alpha = \frac{1}{2}, \beta = \frac{7}{2}$ & $\ball_1$ \\
+    confidence: high
+    notes: Via TR_simple_to_cumulative this implies L2 (n * d/sqrt(n) = d sqrt(n)).
+  - id: L6
+    setting: S_blscsm_sto_improper
+    side: lower
+    algorithm: null
+    algorithm_class: all
+    quantity: simple_regret
+    dependence: worst_case
+    probability: expectation
+    horizon: known
+    bound:
+      notation: Omega
+      expression: "d/(Max(1, alpha)*sqrt(n))"
+      expression_latex: '\Omega\left(\frac{d}{\max(1,\alpha) \sqrt{n}}\right)'
+      regime: "beta = O(alpha), K = B_1"
+    symbols: {n: horizon (canonical T), d: dimension, alpha: strong convexity parameter, beta: smoothness parameter}
+    constraint_set: '\ball_1'
+    extra_assumptions: ["beta = O(alpha)"]
+    is_new: false
+    original_citation: {bib_key: akhavan2024gradient, authors: [A. Akhavan, E. Chzhen, M. Pontil, A. Tsybakov], year: 2024, title: "Gradient-free optimization of highly smooth functions: Improved analysis and a new algorithm"}
+    source:
+      label: tab:lower
+      number: Table 2.1(b) row 2
+      quote: |-
+        \citealt{akhavan2024gradient}$^2$ & $\Omega\left(\frac{d}{\max(1,\alpha) \sqrt{n}}\right)$ & $\cF^{\ps,\pu}_{\pb,\pl,\psc,\psm}$, $\beta = O(\alpha)$ & $\ball_1$ \\
+    confidence: high
+    notes: ""
+  # ------------------------------ Table 2.2: upper bounds ---------------------------------------
+  - id: U1
+    setting: S_bl_adv
+    side: upper
+    algorithm: Bandit gradient descent (Algorithm 5.1 in the book; FK05)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: null
+    horizon: known
+    bound:
+      notation: O
+      expression: "sqrt(d)*sqrt(D_K)*n**(3/4)"
+      expression_latex: 'O(d^{1/2} D^{1/2}n^{3/4})'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension, D_K: "diameter of K (book: D = diam(K))"}
+    extra_assumptions: []
+    compute: 'O(d), \Pi'
+    book_chapter: 5
+    book_theorem:
+      label: thm:sgd
+      number: Theorem 5.6
+      statement_summary: 'E[Reg_n] <= sqrt(8) diam(K)^{1/2} d^{1/2} n^{3/4}'
+      probability: expectation
+      assumptions: "Assumption 5.1: B_1 subset K; losses in F_{b,l}; no noise"
+    is_new: false
+    original_citation: {bib_key: FK05, authors: [A. Flaxman, A. Kalai, H. B. McMahan], year: 2005, title: "Online convex optimization in the bandit setting: Gradient descent without a gradient"}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 1
+      quote: |-
+        \cite{FK05} & \hyperref[thm:sgd]{$O(d^{1/2} D^{1/2}n^{3/4})$} & $\sF_{\pb,\pl}$ & $O(d), \Pi$  & \ref{chap:sgd} \\
+    confidence: high
+    notes: "quantity 'regret' = book's Reg_n (table does not say expectation vs high probability)."
+  - id: U2
+    setting: S_b_adv
+    side: upper
+    algorithm: Bandit gradient descent (FK05)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: null
+    horizon: known
+    bound:
+      notation: O
+      expression: "d*n**(5/6)"
+      expression_latex: 'O(d n^{5/6})'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension}
+    extra_assumptions: ["K put in isotropic position (ISO in compute column)"]
+    compute: 'O(d), \Pi, \ISO'
+    book_chapter: null
+    book_theorem: null
+    is_new: false
+    original_citation: {bib_key: FK05, authors: [A. Flaxman, A. Kalai, H. B. McMahan], year: 2005, title: "Online convex optimization in the bandit setting: Gradient descent without a gradient"}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 2
+      quote: |-
+        \cite{FK05} & $O(d n^{5/6})$ & $\sF_\pb$ & $O(d), \Pi, \ISO$  & \textendash \\
+    confidence: high
+    notes: ""
+  - id: U3
+    setting: S_b_adv
+    side: upper
+    algorithm: Follow-the-regularised-leader with ellipsoidal smoothing (Algorithm 6.2, label alg:ftrl:basic)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: expectation
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "sqrt(d)*vartheta**(1/4)*n**(3/4)"
+      expression_latex: '\tilde O(d^{1/2} \vartheta^{1/4} n^{3/4})'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension, vartheta: self-concordance parameter of a barrier on K}
+    extra_assumptions: ["no noise (Assumption 6.1)"]
+    compute: 'O(d^2), \optsc, \svd'
+    book_chapter: 6
+    book_theorem:
+      label: thm:ftrl:basic
+      number: Theorem 6.13
+      statement_summary: 'E[Reg_n] <= 1 + 4 (vartheta log(n))^{1/4} d^{1/2} n^{3/4}'
+      probability: expectation
+      assumptions: "Assumption 6.1: no noise; losses in F_b"
+    is_new: true
+    original_citation: {bib_key: null, authors: [T. Lattimore], year: 2025, title: "This book"}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 3
+      quote: |-
+        This book & \hyperref[thm:ftrl:basic]{$\tilde O(d^{1/2} \vartheta^{1/4} n^{3/4})$} & $\sF_\pb$ & $O(d^2), \optsc, \svd$  & \ref{chap:ftrl}\\
+    confidence: high
+    notes: ""
+  - id: U4
+    setting: S_bsmsc_adv_improper
+    side: upper
+    algorithm: gradient descent with spherical smoothing (ADX10)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: null
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "d*sqrt(beta*n/alpha)"
+      expression_latex: '\tilde O(d \sqrt{\beta n / \alpha})'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension, alpha: strong convexity parameter, beta: smoothness parameter}
+    extra_assumptions: []
+    compute: 'O(d), \Pi'
+    book_chapter: null
+    book_theorem: null
+    is_new: false
+    original_citation: {bib_key: ADX10, authors: [A. Agarwal, O. Dekel, L. Xiao], year: 2010, title: Optimal algorithms for online convex optimization with multi-point bandit feedback}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 4
+      quote: |-
+        \cite{ADX10}$^1$ & $\tilde O(d \sqrt{\beta n / \alpha})$ & $\sF^{\pu}_{\pb,\psm,\psc}$ & $O(d), \Pi$ & \textendash \\
+      footnote: |-
+        $^1$The proof of this result is only sketched and both the theorem statement and proof contain minor issues.
+        These are corrected in \cref{sec:gd:sm-sc} where we take the opportunity to incorporate an idea by
+        \cite{akhavan2020exploiting} to remove the logarithmic factor.
+    erratum: "Book footnote: proof only sketched; theorem statement and proof contain minor issues (corrected by U5)."
+    confidence: high
+    notes: Flag for D5 errata propagation.
+  - id: U5
+    setting: S_bsmsc_adv_improper
+    side: upper
+    algorithm: Bandit gradient descent with varying learning rates and smoothing radii (label alg:sgd-sm-sc)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: expectation
+    horizon: known
+    bound:
+      notation: O
+      expression: "d*sqrt(beta*n/alpha)"
+      expression_latex: 'O(d \sqrt{\beta n / \alpha})'
+      regime: "leading term; the book theorem adds a lower-order term d^2/(alpha r^2) log(1 + d^2/(alpha beta r^4))"
+    symbols: {n: horizon (canonical T), d: dimension, alpha: strong convexity parameter, beta: smoothness parameter, r: "radius such that f_t in [0,1] on K + B_r"}
+    extra_assumptions: ["no noise", "0 < alpha <= beta known", "f_t in [0,1] on K + B_r for known r > 0"]
+    compute: 'O(d), \Pi'
+    book_chapter: 5
+    book_theorem:
+      label: thm:sgd:sm-sc
+      number: Theorem 5.8
+      statement_summary: 'E[Reg_n] = O(d sqrt(beta n / alpha) + d^2/(alpha r^2) log(1 + d^2/(alpha beta r^4)))'
+      probability: expectation
+      assumptions: "Assumption 5.7 (ass:gd:sc-sm)"
+    is_new: true
+    original_citation: {bib_key: null, authors: [T. Lattimore], year: 2025, title: "This book (corrects ADX10, uses an idea of akhavan2020exploiting)"}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 5
+      quote: |-
+        This book & \hyperref[thm:sgd:sm-sc]{$O(d \sqrt{\beta n / \alpha})$} & $\sF^{\pu}_{\pb,\psm,\psc}$ & $O(d), \Pi$  & \ref{chap:sgd} \\
+    confidence: high
+    notes: ""
+  - id: U6
+    setting: S_bsm_adv
+    side: upper
+    algorithm: Follow-the-regularised-leader with ellipsoidal smoothing (Saha and Tewari)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: expectation
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "(vartheta*beta)**(1/3)*(D_K*d*n)**(2/3)"
+      expression_latex: '\tilde O([\vartheta \beta]^{1/3} [D d n]^{2/3})'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension, D_K: diameter of K, vartheta: self-concordance parameter, beta: smoothness parameter}
+    extra_assumptions: ["no noise"]
+    compute: 'O(d^2), \optsc, \svd'
+    book_chapter: 6
+    book_theorem:
+      label: thm:ftrl:smooth
+      number: Theorem 6.14
+      statement_summary: 'E[Reg_n] <= 1 + 3d sqrt(vartheta n log n) + (9/2)^{2/3} (vartheta beta diam(K)^2 log n)^{1/3} d^{2/3} n^{2/3}'
+      probability: expectation
+      assumptions: "losses in F_{b,sm}, no noise"
+    is_new: false
+    original_citation: {bib_key: Sah11, authors: [A. Saha, A. Tewari], year: 2011, title: Improved regret guarantees for online smooth convex optimization with bandit feedback}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 6
+      quote: |-
+        \cite{Sah11} & \hyperref[thm:ftrl:smooth]{$\tilde O([\vartheta \beta]^{1/3} [D d n]^{2/3})$} & $\sF_{\pb,\psm}$ & $O(d^2), \optsc, \svd$ & \ref{chap:ftrl} \\
+    confidence: high
+    notes: >-
+      Consistent with Theorem 6.14 ((diam(K)^2)^{1/3} = D^{2/3}). The theorem also has an additive
+      3d sqrt(vartheta n log n) term, lower order in n, which the table omits.
+  - id: U7
+    setting: S_blin_adv
+    side: upper
+    algorithm: Exponential weights for linear bandits (Algorithm 7.1, label alg:linear; Kiefer-Wolfowitz exploration on a cover)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: expectation
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "d*sqrt(n)"
+      expression_latex: '\tilde O(d \sqrt{n})'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension}
+    extra_assumptions: ["no noise (Assumption 7.14, ass:linear)"]
+    compute: 'O(\exp(d))'
+    book_chapter: 7
+    book_theorem:
+      label: thm:linear
+      number: Theorem 7.17
+      statement_summary: 'E[Reg_n] <= 1 + sqrt(8 n d log|C|); with log|C| <= d log(1+4n), E[Reg_n] = O(d sqrt(n log n))'
+      probability: expectation
+      assumptions: "no noise; f_t linear; f_t in F_b"
+    is_new: false
+    original_citation: {bib_key: BCK12, authors: [S. Bubeck, N. Cesa-Bianchi, S. Kakade], year: 2012, title: Towards minimax policies for online linear optimization with bandit feedback}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 7
+      quote: |-
+        \cite{BCK12} & \hyperref[thm:linear]{$\tilde O(d \sqrt{n})$} & $\sF_{\pb,\plin}$ & $O(\exp(d))$ & \ref{chap:lin} \\
+    confidence: high
+    notes: Matches lower bound L1 up to log factors (Section 2.4 says so).
+  - id: U8
+    setting: S_l_sto_d1
+    side: upper
+    algorithm: Bisection method (Algorithm 4.3)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: high_probability
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "sqrt(n)"
+      expression_latex: '\tilde O(\sqrt{n})'
+      regime: d = 1
+    symbols: {n: horizon (canonical T)}
+    extra_assumptions: ["d = 1", "loss not assumed bounded"]
+    compute: 'O(1)'
+    book_chapter: 4
+    book_theorem:
+      label: thm:bisection
+      number: Theorem 4.6
+      statement_summary: 'w.p. >= 1 - delta, Reg_n = O(vol(K) + sqrt(n log(n/delta) log(n)))'
+      probability: high_probability
+      assumptions: "Assumption 4.1: d = 1, K a nonempty interval, stochastic, f in F_l"
+    is_new: false
+    original_citation: {bib_key: AFHK13, authors: [A. Agarwal, D. P. Foster, D. Hsu, S. M. Kakade, A. Rakhlin], year: 2013, title: Stochastic convex optimization with bandit feedback}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 8
+      quote: |-
+        \cite{AFHK13} & \hyperref[thm:bisection]{$\tilde O(\sqrt{n})$} & $\sF_{\pl,d=1}^\ps$ & $O(1)$ & \ref{chap:bisection} \\ % d = 1
+    confidence: high
+    notes: probability taken from the book's Theorem 4.6 (high probability); the table itself does not say.
+  - id: U9
+    setting: S_bl_sto
+    side: upper
+    algorithm: ellipsoid method with pyramid construction (AFHK13)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: null
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "d**16*sqrt(n)"
+      expression_latex: '\tilde O(d^{16} \sqrt{n})'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension}
+    extra_assumptions: []
+    compute: 'O(1), \ellipsoid'
+    book_chapter: null
+    book_theorem: null
+    is_new: false
+    original_citation: {bib_key: AFHK13, authors: [A. Agarwal, D. P. Foster, D. Hsu, S. M. Kakade, A. Rakhlin], year: 2013, title: Stochastic convex optimization with bandit feedback}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 9
+      quote: |-
+        \cite{AFHK13} & $\tilde O(d^{16} \sqrt{n})$ & $\sF_{\pb,\pl}^\ps$ & $O(1)$, \ellipsoid & \textendash \\
+    confidence: high
+    notes: ""
+  - id: U10
+    setting: S_bsmsc_adv
+    side: upper
+    algorithm: Follow-the-regularised-leader with ellipsoidal smoothing (Algorithm 6.3, label alg:ftrl:basic-sc; HL14)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: expectation
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "d*sqrt((vartheta + beta/alpha)*n)"
+      expression_latex: '\tilde O(d \sqrt{(\vartheta + \beta/\alpha)n)}'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension, vartheta: self-concordance parameter, alpha: strong convexity parameter, beta: smoothness parameter}
+    extra_assumptions: ["no noise"]
+    compute: 'O(d^2), \optsc, \svd'
+    book_chapter: 6
+    book_theorem:
+      label: thm:ftrl:sc-smooth
+      number: Theorem 6.16
+      statement_summary: 'E[Reg_n] <= 1 + 4d sqrt(n (vartheta log n + (3 beta/(2 alpha))(1 + log n)))'
+      probability: expectation
+      assumptions: "losses in F_{b,sm,sc}, no noise"
+    is_new: false
+    original_citation: {bib_key: HL14, authors: [E. Hazan, K. Levy], year: 2014, title: "Bandit convex optimization: Towards tight bounds"}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 10
+      quote: |-
+        \cite{HL14} & \hyperref[thm:ftrl:sc-smooth]{$\tilde O(d \sqrt{(\vartheta + \beta/\alpha)n)}$} & $\sF_{\pb,\psm,\psc}$ & $O(d^2), \optsc, \svd$  & \ref{chap:ftrl} \\
+    confidence: high
+    notes: The LaTeX has a misplaced closing parenthesis inside the square root (typo in source); the intended expression is d sqrt((vartheta + beta/alpha) n), consistent with Theorem 6.16.
+  - id: U11
+    setting: S_convex_sto
+    side: upper
+    algorithm: simulated annealing (BLN15)
+    algorithm_class: null
+    quantity: sample_complexity
+    dependence: worst_case
+    probability: high_probability
+    horizon: not_applicable
+    bound:
+      notation: O_tilde
+      expression: "d**(15/2)/epsilon**2"
+      expression_latex: '\tilde O(d^{7.5} / \eps^2)'
+      regime: null
+    symbols: {d: dimension, epsilon: target accuracy}
+    extra_assumptions: []
+    compute: 'O(1)'
+    book_chapter: null
+    book_theorem: null
+    is_new: false
+    original_citation: {bib_key: BLN15, authors: [A. Belloni, T. Liang, H. Narayanan, A. Rakhlin], year: 2015, title: "Escaping the local minima via simulated annealing: Optimization of approximately convex functions"}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 11
+      quote: |-
+        \cite{BLN15} & $\tilde O(d^{7.5} / \eps^2)$ & $\sF^\ps$ & $O(1)$ & \textendash \\
+    conflicts:
+      - where: Note 2.v
+        quote: |-
+          \cite{BLN15} use an algorithm based on simulated annealing to prove a sample complexity bound of $O(\frac{d^{7.5}}{\eps^2})$
+          for losses in $\cF_\pb$. In its current form their algorithm is not suitable for regret minimisation though this minor deficiency may be correctable.
+        issue: Table class is F^(s) (no boundedness) and notation O_tilde; Note 2.v says F_b and writes O (not O_tilde).
+    confidence: low
+    notes: Sample complexity bound (depends on epsilon), so quantity = sample_complexity. Class label conflict recorded.
+  - id: U12
+    setting: S_b_adv_d1
+    side: upper
+    algorithm: non-constructive (information-directed sampling / Bayesian analysis + minimax duality; BDKP15)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: null
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "sqrt(n)"
+      expression_latex: '\tilde O(\sqrt{n})'
+      regime: d = 1
+    symbols: {n: horizon (canonical T)}
+    extra_assumptions: ["d = 1"]
+    compute: '\infty'
+    non_constructive: true
+    book_chapter: null
+    book_theorem: null
+    is_new: false
+    original_citation: {bib_key: BDKP15, authors: [S. Bubeck, O. Dekel, T. Koren, Y. Peres], year: 2015, title: "Bandit convex optimization: sqrt(T) regret in one dimension"}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 12
+      quote: |-
+        \cite{BDKP15} & $\tilde O(\sqrt{n})$ & $\sF_{\pb,d=1}$ & $\infty$ & \textendash \\ %d = 1
+    confidence: high
+    notes: Existence result only (compute = infinity).
+  - id: U13
+    setting: S_b_adv
+    side: upper
+    algorithm: HL16 algorithm
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: null
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "2**(d**4)*sqrt(n)"
+      expression_latex: '\tilde O(2^{(d^4)} \sqrt{n})'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension}
+    extra_assumptions: []
+    compute: 'O(\log(n)^{\poly(d)})'
+    book_chapter: null
+    book_theorem: null
+    is_new: false
+    original_citation: {bib_key: HL16, authors: [E. Hazan, Y. Li], year: 2016, title: An optimal algorithm for bandit convex optimization}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 13
+      quote: |-
+        \cite{HL16} & $\tilde O(2^{(d^4)} \sqrt{n})$ & $\sF_\pb$ & $O(\log(n)^{\poly(d)})$ & \textendash \\
+    confidence: high
+    notes: Section 2.2 calls the dimension dependence "super-exponential".
+  - id: U14
+    setting: S_b_adv
+    side: upper
+    algorithm: kernel-based continuous exponential weights (BEL16)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: null
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "d**(21/2)*sqrt(n)"
+      expression_latex: '\tilde O(d^{10.5} \sqrt{n})'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension}
+    extra_assumptions: []
+    compute: '\poly(d, n)'
+    book_chapter: null
+    book_theorem: null
+    is_new: false
+    original_citation: {bib_key: BEL16, authors: [S. Bubeck, Y.-T. Lee, R. Eldan], year: 2017, title: Kernel-based methods for bandit convex optimization}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 14
+      quote: |-
+        \cite{BEL16} & $\tilde O(d^{10.5} \sqrt{n})$ & $\sF_\pb$ & $\poly(d, n)$ & \textendash \\
+    confidence: high
+    notes: Bib key says 16 but the bib entry year is 2017 (STOC 2017).
+  - id: U15
+    setting: S_b_adv_d1
+    side: upper
+    algorithm: "Exponential weights for convex bandits: d = 1 (Algorithm 8.2, label alg:exp-1-disc)"
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: expectation
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "sqrt(n)"
+      expression_latex: '\tilde O(\sqrt{n})'
+      regime: d = 1
+    symbols: {n: horizon (canonical T)}
+    extra_assumptions: ["d = 1", "no noise"]
+    compute: 'O(\sqrt{n})'
+    book_chapter: 8
+    book_theorem:
+      label: thm:exp-1d
+      number: Theorem 8.4
+      statement_summary: 'E[Reg_n] <= 2 sqrt(n) log(n) + 7 sqrt(n)'
+      probability: expectation
+      assumptions: "Assumption 8.1: losses in F_b, no noise; d = 1"
+    is_new: false
+    original_citation: {bib_key: BEL16, authors: [S. Bubeck, Y.-T. Lee, R. Eldan], year: 2017, title: Kernel-based methods for bandit convex optimization}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 15
+      quote: |-
+        \cite{BEL16} & \hyperref[thm:exp-1d]{$\tilde O(\sqrt{n})$} & $\sF_{\pb,d=1}$ & $O(\sqrt{n})$ & \ref{chap:exp} \\ % d = 1
+    confidence: high
+    notes: Outlook 14.xii says the best bound for d = 1, F_b is O(sqrt(n) log(n)) vs lower bound Omega(sqrt(n)).
+  - id: U16
+    setting: S_b_adv
+    side: upper
+    algorithm: non-constructive (information-theoretic; cited as BEL18)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: null
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "d**18*sqrt(n)"
+      expression_latex: '\tilde O(d^{18} \sqrt{n})'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension}
+    extra_assumptions: []
+    compute: '\infty'
+    non_constructive: true
+    book_chapter: null
+    book_theorem: null
+    is_new: false
+    original_citation: {bib_key: BEL18, authors: [S. Bubeck, R. Eldan, J. Lehec], year: 2018, title: "Sampling from a log-concave distribution with projected Langevin Monte Carlo"}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 16
+      quote: |-
+        \cite{BEL18} & $\tilde O(d^{18} \sqrt{n})$ & $\sF_\pb$ & $\infty$ & \textendash \\
+    confidence: low
+    notes: >-
+      Citation suspicious: bib key BEL18 resolves to a Langevin Monte Carlo sampling paper, while Section 2.2 attributes
+      the first poly(d) sqrt(n) adversarial bound (non-constructive) to \cite{BE18} = Bubeck and Eldan, "Exploratory
+      distributions for convex functions" (2018). Likely the intended citation is BE18. Bound recorded as printed.
+  - id: U17
+    setting: S_lsmsc_sto_improper
+    side: upper
+    algorithm: gradient-free method exploiting smoothness (akhavan2020exploiting)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: null
+    horizon: known
+    bound:
+      notation: O
+      expression: "d*sqrt(beta*n/alpha)"
+      expression_latex: 'O(d \sqrt{\beta n / \alpha})'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension, alpha: strong convexity parameter, beta: smoothness parameter}
+    extra_assumptions: []
+    compute: 'O(d)'
+    book_chapter: null
+    book_theorem: null
+    is_new: false
+    original_citation: {bib_key: akhavan2020exploiting, authors: [A. Akhavan, M. Pontil, A. Tsybakov], year: 2020, title: Exploiting higher order smoothness in derivative-free optimization and continuous bandits}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 17
+      quote: |-
+        \cite{akhavan2020exploiting}$^2$ & $O(d \sqrt{\beta n / \alpha})$ & $\sF_{\pl,\psm,\psc}^{\ps,\pu}$ & $O(d)$ & \textendash \\
+      footnote: |-
+        $^2$These authors also show how to exploit the case where the noise is small as well as higher-order smoothness.
+    confidence: high
+    notes: Section 2.4 says this matches the Omega(d sqrt(n)) lower bound for quadratic sm+sc losses in the unconstrained and improper settings.
+  - id: U18
+    setting: S_b_adv
+    side: upper
+    algorithm: non-constructive (information ratio bound + minimax duality; Lat20-cvx)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: null
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "d**(5/2)*sqrt(n)"
+      expression_latex: '\tilde O(d^{2.5} \sqrt{n})'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension}
+    extra_assumptions: []
+    compute: '\infty'
+    non_constructive: true
+    book_chapter: 8
+    book_theorem:
+      label: null
+      number: Theorem 8.21
+      statement_summary: 'Reg*_n = bReg*_n <= C d^{2.5} sqrt(n) log(dn) (minimax regret; via Theorems 8.17, 8.19, 8.20)'
+      probability: expectation
+      assumptions: "losses in F_b (Bayesian / minimax adversarial)"
+    is_new: false
+    original_citation: {bib_key: Lat20-cvx, authors: [T. Lattimore], year: 2020, title: Improved regret for zeroth-order adversarial bandit convex optimisation}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 18
+      quote: |-
+        \cite{Lat20-cvx} & $\tilde O(d^{2.5} \sqrt{n})$ & $\sF_\pb$ & $\infty$ & \textendash \\
+    confidence: high
+    notes: The table row is not hyperlinked; Theorem 8.21 in the book states the same bound. Best known adversarial F_b bound (Section 2.2, Outlook 14.i).
+  - id: U19
+    setting: S_bsmsc_adv
+    side: upper
+    algorithm: Ito20 algorithm
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: null
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "d*sqrt(beta*n/alpha)"
+      expression_latex: '\tilde O(d \sqrt{\beta n / \alpha})'
+      regime: minimiser lies deep inside K
+    symbols: {n: horizon (canonical T), d: dimension, alpha: strong convexity parameter, beta: smoothness parameter}
+    extra_assumptions: ["the minimiser lies deep inside K (footnote 3)"]
+    compute: '\poly(d)'
+    book_chapter: null
+    book_theorem: null
+    is_new: false
+    original_citation: {bib_key: Ito20, authors: [S. Ito], year: 2020, title: An optimal algorithm for bandit convex optimization with strongly-convex and smooth loss}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 19
+      quote: |-
+        \cite{Ito20}$^3$ & $\tilde O(d \sqrt{\beta n / \alpha})$ & $\sF_{\pb,\psm,\psc}$ & $\poly(d)$ & \textendash \\ % min away from boundary
+      footnote: |-
+        $^3$This result holds when the minimiser lies deep inside $K$.
+    confidence: high
+    notes: "'deep inside' is not quantified in the book."
+  - id: U20
+    setting: S_bsmsc_adv
+    side: upper
+    algorithm: Ito20 algorithm
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: null
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "d**(3/2)*sqrt(beta*n/alpha)"
+      expression_latex: '\tilde O(d^{1.5} \sqrt{\beta n/\alpha})'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension, alpha: strong convexity parameter, beta: smoothness parameter}
+    extra_assumptions: []
+    compute: '\poly(d)'
+    book_chapter: null
+    book_theorem: null
+    is_new: false
+    original_citation: {bib_key: Ito20, authors: [S. Ito], year: 2020, title: An optimal algorithm for bandit convex optimization with strongly-convex and smooth loss}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 20
+      quote: |-
+        \cite{Ito20} & $\tilde O(d^{1.5} \sqrt{\beta n/\alpha})$ & $\sF_{\pb,\psm,\psc}$ & $\poly(d)$ & \textendash \\
+    confidence: high
+    notes: ""
+  - id: U21
+    setting: S_bquad_adv
+    side: upper
+    algorithm: online Newton step based method (SRN21)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: null
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "d**16*sqrt(n)"
+      expression_latex: '\tilde O(d^{16} \sqrt{n})'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension}
+    extra_assumptions: []
+    compute: '\poly(d)'
+    book_chapter: null
+    book_theorem: null
+    is_new: false
+    original_citation: {bib_key: SRN21, authors: [A. Suggala, P. Ravikumar, P. Netrapalli], year: 2021, title: "Efficient bandit convex optimization: Beyond linear losses"}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 21
+      quote: |-
+        \cite{SRN21} & $\tilde O(d^{16} \sqrt{n})$ & $\sF_{\pb,\pquad}$ & $\poly(d)$ & \textendash  \\
+    confidence: high
+    notes: ""
+  - id: U22
+    setting: S_b_sto
+    side: upper
+    algorithm: ellipsoid method with optimistic surrogate (LG21a)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: null
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "d**(9/2)*sqrt(n)"
+      expression_latex: '\tilde O(d^{4.5} \sqrt{n})'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension}
+    extra_assumptions: []
+    compute: 'O(d^2), \ellipsoid'
+    book_chapter: null
+    book_theorem: null
+    is_new: false
+    original_citation: {bib_key: LG21a, authors: [T. Lattimore, A. Gyorgy], year: 2021, title: Improved regret for zeroth-order stochastic convex bandits}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 22
+      quote: |-
+        \cite{LG21a} & $\tilde O(d^{4.5} \sqrt{n})$ & $\sF_\pb^\ps$ & $O(d^2)$, \ellipsoid & \textendash \\
+    confidence: high
+    notes: ""
+  - id: U23
+    setting: S_l_sto_improper
+    side: upper
+    algorithm: second-order (online Newton step) method (LG23)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: null
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "d**(3/2)*sqrt(n)"
+      expression_latex: '\tilde O(d^{1.5} \sqrt{n})'
+      regime: "K = B_1 (per Section 2.2)"
+    symbols: {n: horizon (canonical T), d: dimension}
+    constraint_set: '\ball_1'
+    extra_assumptions: ["K = B_1 (stated in Section 2.2, not in the table)"]
+    compute: 'O(d^2), \svd'
+    book_chapter: null
+    book_theorem: null
+    is_new: false
+    original_citation: {bib_key: LG23, authors: [T. Lattimore, A. Gyorgy], year: 2023, title: A second-order method for stochastic bandit convex optimisation}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 23
+      quote: |-
+        \cite{LG23} & $\tilde O(d^{1.5} \sqrt{n})$ & $\sF_{\pl}^{\ps,\pu}$ & $O(d^2), \svd$  & \textendash \\
+    confidence: high
+    notes: Section 2.2 writes O(d^{1.5} sqrt(n)) (no tilde) for the same result; table uses O_tilde.
+  - id: U24
+    setting: S_b_sto
+    side: upper
+    algorithm: Online Newton step for convex bandits (Algorithm 10.2)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: high_probability
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "d**(3/2)*sqrt(n)"
+      expression_latex: '\tilde O(d^{1.5} \sqrt{n})'
+      regime: "K positioned (K/d in Lowner's position), or K symmetric and in John's position or with isotropic polar"
+    symbols: {n: horizon (canonical T), d: dimension}
+    extra_assumptions:
+      - "K rounded: B_1 subset K subset B_{2d} (Assumption 10.1)"
+      - "requires putting K in Lowner's position (compute column)"
+    compute: 'O(d^2), \Pi, \svd, \low'
+    book_chapter: 10
+    book_theorem:
+      label: thm:ons:bandit
+      number: Theorem 10.8
+      statement_summary: "w.p. >= 1 - delta, Reg_n <= 480 d^2 M L^4 sqrt(n), M = max(d^{-1/2}, M(K)); if K/d in Lowner's position, M = O_tilde(d^{-1/2}) giving O_tilde(d^{1.5} sqrt(n))"
+      probability: high_probability
+      assumptions: "Assumption 10.1: stochastic; f in F_b; B_1 subset K subset B_{2d}"
+    is_new: false
+    original_citation: {bib_key: LFMV24, authors: [H. Fokkema, D. van der Hoeven, T. Lattimore, J. Mayo], year: 2024, title: Online Newton method for bandit convex optimisation}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 24
+      quote: |-
+        \cite{LFMV24}$^4$ & \hyperref[thm:ons:bandit]{$\tilde O(d^{1.5} \sqrt{n})$} & $\sF_\pb^\ps$ & $O(d^2), \Pi, \svd$, \low &  \ref{chap:ons} \\
+      footnote: |-
+        $^4$This also holds if $K$ is symmetric and either in John's position or its polar is isotropic.
+    confidence: high
+    notes: >-
+      Best known stochastic F_b upper bound (Outlook 14.i). L in Theorem 10.8 is a logarithmic factor
+      (book's notation), not the Lipschitz constant.
+  - id: U25
+    setting: S_b_sto
+    side: upper
+    algorithm: Online Newton step for convex bandits (Algorithm 10.2), K in isotropic position
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: high_probability
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "d**2*sqrt(n)"
+      expression_latex: '\tilde O(d^{2} \sqrt{n})'
+      regime: K in isotropic position
+    symbols: {n: horizon (canonical T), d: dimension}
+    extra_assumptions: ["requires putting K in isotropic position (compute column)"]
+    compute: 'O(d^2), \Pi, \svd, \iso'
+    book_chapter: 10
+    book_theorem:
+      label: thm:ons:bandit
+      number: Theorem 10.8
+      statement_summary: "Reg_n <= 480 d^2 M L^4 sqrt(n) w.p. >= 1 - delta"
+      probability: high_probability
+      assumptions: "Assumption 10.1"
+    is_new: false
+    original_citation: {bib_key: LFMV24, authors: [H. Fokkema, D. van der Hoeven, T. Lattimore, J. Mayo], year: 2024, title: Online Newton method for bandit convex optimisation}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 25
+      quote: |-
+        \cite{LFMV24} & \hyperref[thm:ons:bandit]{$\tilde O(d^{2} \sqrt{n})$} & $\sF_\pb^\ps$ & $O(d^2), \Pi, \svd$, \iso & \ref{chap:ons}\\
+    confidence: high
+    notes: Dominated by U24 in d (same setting); the trade-off is computational (isotropic vs Lowner positioning).
+  - id: U26
+    setting: S_b_adv
+    side: upper
+    algorithm: Online Newton step for adversarial convex bandits (Algorithm 11.3)
+    algorithm_class: null
+    quantity: regret
+    dependence: worst_case
+    probability: high_probability
+    horizon: known
+    bound:
+      notation: O_tilde
+      expression: "d**(5/2)*sqrt(n)"
+      expression_latex: '\tilde O(d^{2.5} \sqrt{n})'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension}
+    extra_assumptions: ["K rounded: B_1 subset K subset B_{2d} (Assumption 11.2), achieved via isotropic positioning"]
+    compute: '\poly(d,n), \iso'
+    book_chapter: 11
+    book_theorem:
+      label: thm:ons-adv:bandit
+      number: Theorem 11.8
+      statement_summary: "w.p. >= 1 - delta, Reg_n = O(d^{2.5} L^5 sqrt(n)) (L logarithmic)"
+      probability: high_probability
+      assumptions: "Assumption 11.2: f_t in F_b; B_1 subset K subset B_{2d}"
+    is_new: false
+    original_citation: {bib_key: LFMV24, authors: [H. Fokkema, D. van der Hoeven, T. Lattimore, J. Mayo], year: 2024, title: Online Newton method for bandit convex optimisation}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 26
+      quote: |-
+        \cite{LFMV24} & \hyperref[thm:ons:bandit]{$\tilde O(d^{2.5} \sqrt{n})$} & $\sF_\pb$ & $\poly(d,n)$, \iso & \ref{chap:ons-adv}\\
+    confidence: medium
+    notes: >-
+      The table hyperlink points to thm:ons:bandit (Theorem 10.8, stochastic), but the chapter column says Ch. 11;
+      the matching statement is Theorem 11.8 (thm:ons-adv:bandit). Probably a hyperlink slip in the source.
+      Matches the best non-constructive bound U18 up to logs while being polynomial time.
+  - id: U27
+    setting: S_b_sto
+    side: upper
+    algorithm: Centre of gravity for convex bandits (Algorithm 9.6)
+    algorithm_class: null
+    quantity: sample_complexity
+    dependence: worst_case
+    probability: high_probability
+    horizon: not_applicable
+    bound:
+      notation: O_tilde
+      expression: "d**4/epsilon**2"
+      expression_latex: '\tilde O(d^4/\eps^2)'
+      regime: null
+    symbols: {d: dimension, epsilon: target accuracy}
+    extra_assumptions: []
+    compute: 'O(d^2), \cog'
+    book_chapter: 9
+    book_theorem:
+      label: thm:cut:cog
+      number: Theorem 9.21
+      statement_summary: "w.p. >= 1 - delta outputs eps-optimal x; expected number of queries O(d^4/eps^2 log(d/eps) log(d log(1/eps)/delta))"
+      probability: high_probability
+      assumptions: "Assumption 9.1: stochastic, f in F_b"
+    is_new: false
+    original_citation: {bib_key: carpentier2024simple, authors: [A. Carpentier], year: 2025, title: "A simple and improved algorithm for noisy, convex, zeroth-order optimisation"}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 27
+      quote: |-
+        \cite{carpentier2024simple} & \hyperref[thm:cut:cog]{$\tilde O(d^4/\eps^2)$} & $\sF_\pb^\ps$ & $O(d^2)$, \cog & \ref{chap:ellipsoid} \\
+    confidence: high
+    notes: "Book theorem bounds the *expected* number of queries; correctness holds w.p. >= 1 - delta."
+  - id: U28
+    setting: S_b_sto
+    side: upper
+    algorithm: ellipsoid method for convex bandits (Section 9.7)
+    algorithm_class: null
+    quantity: sample_complexity
+    dependence: worst_case
+    probability: high_probability
+    horizon: not_applicable
+    bound:
+      notation: O_tilde
+      expression: "d**5/epsilon**2"
+      expression_latex: '\tilde O(d^5 / \eps^2)'
+      regime: null
+    symbols: {d: dimension, epsilon: target accuracy}
+    extra_assumptions: []
+    compute: 'O(d^2), \ellipsoid'
+    book_chapter: 9
+    book_theorem:
+      label: sec:cut:ellipsoid
+      number: Section 9.7 (sketch, no numbered theorem)
+      statement_summary: 'O(d^5 polylog(d, 1/delta, 1/eps)/eps^2) "After bashing out all the details"'
+      probability: high_probability
+      assumptions: "Assumption 9.1"
+    is_new: true
+    original_citation: {bib_key: null, authors: [T. Lattimore], year: 2025, title: "This book"}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 28
+      quote: |-
+        This book & \hyperref[sec:cut:ellipsoid]{$\tilde O(d^5 / \eps^2)$} & $\sF_\pb^\ps$ & $O(d^2)$, \ellipsoid & \ref{chap:ellipsoid} \\
+    confidence: medium
+    notes: Only a proof sketch in Section 9.7, not a numbered theorem.
+  - id: U29
+    setting: S_b_sto
+    side: upper
+    algorithm: Method of the inscribed ellipsoid for convex bandits (Algorithm 9.7)
+    algorithm_class: null
+    quantity: sample_complexity
+    dependence: worst_case
+    probability: high_probability
+    horizon: not_applicable
+    bound:
+      notation: O_tilde
+      expression: "d**4/epsilon**2"
+      expression_latex: '\tilde O(d^4 / \eps^2)'
+      regime: null
+    symbols: {d: dimension, epsilon: target accuracy}
+    extra_assumptions: []
+    compute: 'O(d^2), \inscribed'
+    book_chapter: 9
+    book_theorem:
+      label: thm:cut:inscribed
+      number: Theorem 9.25
+      statement_summary: "w.p. >= 1 - delta outputs eps-optimal x; expected queries O(d^4/eps^2 log(d/eps) log(d log(1/eps)/delta))"
+      probability: high_probability
+      assumptions: "Assumption 9.1"
+    is_new: true
+    original_citation: {bib_key: null, authors: [T. Lattimore], year: 2025, title: "This book"}
+    source:
+      label: tab:upper
+      number: Table 2.2 row 29
+      quote: |-
+        This book & \hyperref[thm:cut:inscribed]{$\tilde O(d^4 / \eps^2)$} & $\sF_\pb^\ps$ & $O(d^2)$, \inscribed & \ref{chap:ellipsoid} \\
+    confidence: high
+    notes: ""
+  # ------------------------------ Results in text, not in the tables ---------------------------
+  - id: X1
+    setting: S_b_adv
+    side: lower
+    algorithm: null
+    algorithm_class: all
+    quantity: expected_regret
+    dependence: worst_case
+    probability: expectation
+    horizon: known
+    bound:
+      notation: Omega
+      expression: "d*sqrt(n)"
+      expression_latex: '\Omega(d \sqrt{n})'
+      regime: null
+    symbols: {n: horizon (canonical T), d: dimension}
+    extra_assumptions: []
+    in_tables: false
+    derived: true
+    derivation: "L1 (stochastic linear) -> F_{b,lin} subset F_b (TR_class_inclusion) and stochastic -> adversarial (TR_sto_adv); the book states it directly"
+    is_new: false
+    original_citation: {bib_key: DHK08, authors: [V. Dani, T. P. Hayes, S. M. Kakade], year: 2008, title: Stochastic linear optimization under bandit feedback}
+    source:
+      label: sec:lower
+      number: Section 2.4, first paragraph
+      quote: |-
+        The best lower bound known when the losses are in $\cF_\pb$
+        is that the minimax regret is at least $\Omega(d \sqrt{n})$.
+        Interestingly, the lower bound was established using linear losses where the upper bound is $\tilde O(d \sqrt{n})$.
+    confidence: high
+    notes: Useful as an inference test case for D1 (the book states the propagated result explicitly).
+  - id: X2
+    setting: S_blin_sto
+    side: lower
+    algorithm: null
+    algorithm_class: all
+    quantity: simple_regret
+    dependence: worst_case
+    probability: expectation
+    horizon: known
+    bound:
+      notation: Omega
+      expression: "d/sqrt(n)"
+      expression_latex: '\Omega(d/\sqrt{n})'
+      regime: "K = [-1,1]^d"
+    symbols: {n: horizon (canonical T), d: dimension}
+    constraint_set: '[-1,1]^d'
+    extra_assumptions: []
+    in_tables: false
+    is_new: false
+    original_citation: {bib_key: LS20book, authors: [T. Lattimore, Cs. Szepesvari], year: 2020, title: Bandit algorithms}
+    source:
+      label: sec:lower
+      number: Section 2.4, bullet 5
+      quote: |-
+        As far as we know, no one has written a minimax simple regret lower bound for linear losses. At least when $K = [-1,1]^d$, the technique for bounding the cumulative
+        regret by \cite{LS20book} also yields a bound on the simple regret of $\Omega(d/\sqrt{n})$.
+    confidence: medium
+    notes: An informal claim ("the technique ... also yields"); no written proof. Setting S_blin_sto assumed (stochastic linear).
+  - id: X3
+    setting: S_smsc_sto_unconstrained
+    side: upper
+    algorithm: coordinate descent based method (jamieson2012query)
+    algorithm_class: null
+    quantity: sample_complexity
+    dependence: worst_case
+    probability: high_probability
+    horizon: not_applicable
+    bound:
+      notation: O
+      expression: "d**3/epsilon**2"
+      expression_latex: 'O(\frac{d^{3}}{\eps^2})'
+      regime: "K = R^d; polynomial dependence on alpha, beta hidden"
+    symbols: {d: dimension, epsilon: target accuracy}
+    extra_assumptions: ["polynomial dependence on the smoothness and strong convexity parameters hidden"]
+    in_tables: false
+    is_new: false
+    original_citation: {bib_key: jamieson2012query, authors: [K. Jamieson, R. Nowak, B. Recht], year: 2012, title: Query complexity of derivative-free optimization}
+    source:
+      label: null
+      number: Note 2.v
+      quote: |-
+        \cite{jamieson2012query} consider functions in $\cF_{\psm,\psc}$ and $K = \R^d$ and prove a sample complexity bound of $O(\frac{d^{3}}{\eps^2})$ for an algorithm
+        based on coordinate descent with polynomial dependence on the smoothness and strong convexity parameters hidden.
+    confidence: medium
+    notes: probability (high_probability) follows the book's definition of sample complexity; not stated for this result.
+  - id: X4
+    setting: S_b_sto
+    side: upper
+    algorithm: random-walk based method (liang2014zeroth)
+    algorithm_class: null
+    quantity: sample_complexity
+    dependence: worst_case
+    probability: high_probability
+    horizon: not_applicable
+    bound:
+      notation: O
+      expression: "d**14/epsilon**2"
+      expression_latex: 'O(\frac{d^{14}}{\eps^2})'
+      regime: null
+    symbols: {d: dimension, epsilon: target accuracy}
+    extra_assumptions: []
+    in_tables: false
+    is_new: false
+    original_citation: {bib_key: liang2014zeroth, authors: [T. Liang, H. Narayanan, A. Rakhlin], year: 2014, title: "On zeroth-order stochastic convex optimization via random walks"}
+    source:
+      label: null
+      number: Note 2.v
+      quote: |-
+        Slightly earlier, \cite{liang2014zeroth} also used a method based on random walks but obtained a worse rate of $O(\frac{d^{14}}{\eps^2})$.
+    confidence: low
+    notes: The function class is not stated explicitly; assumed the same as the preceding sentence (F_b, stochastic).
+  - id: X5
+    setting: S_quadsmsc_sto_improper
+    side: upper
+    algorithm: null
+    algorithm_class: null
+    quantity: simple_regret
+    dependence: worst_case
+    probability: null
+    horizon: known
+    bound:
+      notation: O
+      expression: "d**2/n"
+      expression_latex: 'O(d^2/n)'
+      regime: "unconstrained and improper settings only; alpha, beta = Theta(1)"
+    symbols: {n: horizon (canonical T), d: dimension}
+    extra_assumptions: ["unconstrained or improper (not constrained)", "alpha, beta = Theta(1)"]
+    in_tables: false
+    is_new: false
+    original_citation: {bib_key: null, authors: [], year: null, title: "not attributed in this sentence (context cites akhavan2020exploiting)"}
+    source:
+      label: sec:lower
+      number: Section 2.4, bullet 6
+      quote: |-
+        The quadratic case with smoothness and strong convexity ($\alpha, \beta = \Theta(1)$) is quite interesting.
+        The lower bound on the cumulative regret is $\Omega(d \sqrt{n})$, which is matched
+        by upper bounds in the unconstrained and improper settings \citep{akhavan2020exploiting} and nearly so in the constrained setting \citep{HL14}.
+        In the unconstrained and improper settings, however, the upper bound on the simple regret improves to $O(d^2/n)$.
+        This shows that the reduction in \cref{eq:simple} is not guaranteed to be tight.
+    confidence: medium
+    notes: >-
+      Holds in both the improper and the unconstrained settings (recorded on the improper node; the unconstrained twin
+      is not a separate node here). The book does not say whether boundedness/Lipschitzness are assumed for this
+      upper bound. This is a separation witness for TR_simple_to_cumulative (see that rule).
+
+# ---------------------------------------------------------------------------------------------
+# TRANSFER RULES (edges). Direction convention follows desiderata D1:
+#   from = the setting/quantity the result is proved in; to = where it transfers.
+#   transfers: which side of a bound moves along the edge.
+# ---------------------------------------------------------------------------------------------
+transfer_rules:
+  - id: TR_improper_constrained
+    from_setting: {domain: improper}
+    to_setting: {domain: constrained}
+    kind: easier_harder_ordering
+    transfers: lower
+    reverse_transfers: upper (an upper bound for constrained holds for improper)
+    statement: The improper setting is easier than the constrained setting, so lower bounds proved in the improper setting hold in the constrained setting.
+    order: "improper ⊑ constrained"
+    quote: |-
+      The unconstrained (Note~\ref{note:K}) and constrained settings are both harder than the improper setting (Note~\ref{note:improper}).
+      Hence, lower bounds that hold in the latter also hold in the unconstrained/constrained settings.
+    supporting_quote: |-
+      The definition ensures that the improper setting is easier
+      than both the constrained setting (the learner has more power) and the unconstrained setting (the adversary has less power).
+    section: "Section 2.4 (bullet 1); Note 1.iii"
+    validity_scope: >-
+      Same function-class labels, but in the improper setting b and l hold only inside K while sm and sc hold on R^d
+      (Table 2.1 convention). The parameter map is the identity.
+    confidence: high
+  - id: TR_improper_unconstrained
+    from_setting: {domain: improper}
+    to_setting: {domain: unconstrained}
+    kind: easier_harder_ordering
+    transfers: lower
+    reverse_transfers: upper
+    statement: The improper setting is easier than the unconstrained setting (the adversary has less power), so improper lower bounds hold in the unconstrained setting.
+    order: "improper ⊑ unconstrained"
+    quote: |-
+      The unconstrained (Note~\ref{note:K}) and constrained settings are both harder than the improper setting (Note~\ref{note:improper}).
+      Hence, lower bounds that hold in the latter also hold in the unconstrained/constrained settings.
+    section: "Section 2.4 (bullet 1); Note 1.iii"
+    validity_scope: Unconstrained means K = R^d, which is outside Assumption 1.2 (convex body).
+    confidence: high
+  - id: TR_simple_to_cumulative
+    from_setting: {environment: stochastic}
+    to_setting: {environment: stochastic}
+    kind: metric_transfer
+    transfers: "upper (cumulative regret -> simple regret, divide by n); lower (simple regret -> cumulative regret, multiply by n)"
+    parameter_map: "sReg_n <= Reg_n / n, with X_hat = average iterate"
+    statement: >-
+      By convexity, outputting the average iterate gives sReg_n <= Reg_n / n. So an upper bound R(n) on cumulative
+      regret gives simple regret R(n)/n, and a simple-regret lower bound g(n) gives a cumulative lower bound n g(n).
+    quote: |-
+      Thanks to convexity, there is a straightforward reduction from cumulative regret to simple regret:
+      simply let $\widehat X = \frac{1}{n} \sum_{t=1}^n X_t$. Then by convexity,
+      \begin{align}
+      \sReg_n \leq \frac{1}{n} \Reg_n\,.
+      \label{eq:simple}
+      \end{align}
+    supporting_quote: |-
+      The reduction in \cref{eq:simple} shows that lower bounds on the simple regret imply lower bounds on the cumulative regret.
+    section: "Section 1.3, eq. (1.4); Section 2.4 (bullet 2)"
+    validity_scope: Stochastic setting only (simple regret is defined for f_t = f). Needs convexity of f.
+    non_tightness_witness: >-
+      Section 2.4 bullet 6: quadratic sm+sc losses (alpha, beta = Theta(1)), unconstrained/improper: cumulative regret
+      Theta(d sqrt(n)) but simple regret O(d^2/n) (result X5). "This shows that the reduction in eq. (1.4) is not guaranteed to be tight."
+    converse: "The converse is not true (Section 1.3: 'bounds on the cumulative regret imply bounds on the simple regret and sample complexity. The converse is not true.')"
+    confidence: high
+  - id: TR_hp_regret_to_sample_complexity
+    from_setting: {environment: stochastic}
+    to_setting: {environment: stochastic}
+    kind: metric_transfer
+    transfers: upper (high-probability cumulative regret -> sample complexity)
+    parameter_map: "If Reg_n <= R(n) w.p. >= 1-delta, sample complexity <= min{n : R(n)/n <= eps}; for R(n) = A n^p, p in (0,1): <= 1 + (A/eps)^{1/(1-p)}"
+    statement: A high-probability regret bound gives a sample-complexity bound via the average iterate.
+    quote: |-
+      Suppose that with probability at least $1 - \delta$ the regret of some algorithm is bounded by $\Reg_n \leq R(n)$. Then, by the above conversion, the sample complexity can be bounded by
+      the smallest $n$ such that $R(n)/n \leq \eps$. Concretely, if $R(n) = A n^{p}$ for $p \in (0,1)$ and $A > 0$, then the sample complexity is at most
+      $1 + (A/\eps)^{1/(1-p)}$.
+    section: Fact 1.6
+    example: "Reg = O_tilde(d^{1.5} sqrt(n)) (U24) -> sample complexity O_tilde(d^3/eps^2)"
+    confidence: high
+  - id: TR_expected_regret_to_sample_complexity
+    from_setting: {environment: stochastic}
+    to_setting: {environment: stochastic}
+    kind: metric_transfer
+    transfers: upper (expected cumulative regret -> high-probability sample complexity)
+    parameter_map: "queries O((min{n : R(n)/n <= eps/4} + log(1/delta)/eps^2) log(1/delta))"
+    statement: >-
+      Restart the algorithm O(log(1/delta)) times, then run best-arm identification on the average iterates
+      (Algorithm 1.1). This turns E[Reg_n] <= R(n) into an (eps, delta) sample-complexity bound.
+    quote: |-
+      Suppose that $\E[\Reg_n] \leq R(n)$. Then
+      \item \cref{alg:reduction} queries the loss at most
+      O\left(\left(\min\left\{n \colon \frac{R(n)}{n} \leq \frac{\eps}{4}\right\} + \frac{\log(1/\delta)}{\eps^2}\right) \log(1/\delta)\right)
+      times; and
+      \item With probability at least $1 - \delta$, \cref{alg:reduction} returns an $\widehat X \in K$ such that
+      f(\widehat X) \leq \inf_{x \in K} f(x) + \eps \,.
+    section: Proposition 1.7 (label prop:conversion)
+    validity_scope: Stochastic setting; costs an extra log(1/delta) factor (log_factor_transfer flavour).
+    confidence: high
+  - id: TR_sto_adv
+    from_setting: {environment: stochastic}
+    to_setting: {environment: adversarial}
+    kind: inclusion
+    transfers: lower
+    reverse_transfers: upper (adversarial upper bounds hold in the stochastic setting)
+    order: "stochastic ⊑ adversarial"
+    statement: >-
+      With noise allowed in the adversarial setting (as the book defines it), the adversarial setting is strictly
+      harder than the stochastic one. All Table 2.1 lower bounds therefore apply to the adversarial setting.
+    quote: |-
+      The adversarial setting as defined here is strictly harder than the stochastic setting, which means that all the bounds in \cref{tab:lower} also apply to the adversarial setting.
+    supporting_quote: |-
+      For our purposes it is convenient to allow nonzero noise even in the adversarial case. This is sometimes essential in applications; for example,
+      in bandit submodular minimisation (\cref{chap:submod}). And besides, it feels natural that the adversarial setting should generalise the stochastic one.
+    section: "Section 2.4 (bullet 4); Section 1.3"
+    validity_scope: >-
+      Holds only for the book's noisy adversarial model. For noise-free adversarial with bounded losses (common in the
+      literature) the transfer holds only up to log factors (see TR_gaussian_to_noisefree_adv).
+    confidence: high
+  - id: TR_gaussian_to_bounded_noise
+    from_setting: {noise: gaussian}
+    to_setting: {noise: bounded}
+    kind: log_factor_transfer
+    transfers: lower
+    statement: Lower bounds proved with Gaussian noise carry over to bounded noise, losing at most log factors (scaling and truncation argument).
+    quote: |-
+      Lower bounds that are proven with Gaussian noise can be generalised to lower bounds with bounded noise at the price of at most logarithmic factors, which follows
+      by a scaling and truncation argument \citep{shamir2015complexity}.
+    section: Section 2.4 (bullet 3)
+    citation: {bib_key: shamir2015complexity, authors: [O. Shamir], year: 2015, title: On the complexity of bandit linear optimization}
+    confidence: high
+  - id: TR_gaussian_to_noisefree_adv
+    from_setting: {environment: stochastic, noise: gaussian}
+    to_setting: {environment: adversarial, noise: noise_free, function_class: bounded}
+    kind: log_factor_transfer
+    transfers: lower
+    statement: Stochastic lower bounds with Gaussian noise also hold for noise-free adversarial problems with bounded losses, up to log factors.
+    quote: |-
+      Many authors focus on the adversarial setting without noise and where the losses are assumed to be bounded.
+      The scaling and truncation argument by \cite{shamir2015complexity} shows that lower bounds proven with Gaussian noise also apply in this case except for logarithmic factors.
+    section: Section 2.4 (bullet 4)
+    citation: {bib_key: shamir2015complexity, authors: [O. Shamir], year: 2015, title: On the complexity of bandit linear optimization}
+    confidence: high
+  - id: TR_nonconvex_hull
+    from_setting: {function_class: linear, constraint_set: "non-convex K"}
+    to_setting: {function_class: linear, constraint_set: "conv(K)"}
+    kind: reduction
+    transfers: lower
+    statement: For linear losses, lower bounds on a non-convex action set imply lower bounds on its convex hull.
+    quote: |-
+      $^1$The product of spheres is not convex. As \cite{shamir2015complexity} argues, in the linear setting lower bounds for non-convex sets
+      imply lower bounds on $\conv(K)$ via a simple reduction.
+    section: Table 2.1 footnote 1
+    citation: {bib_key: shamir2015complexity, authors: [O. Shamir], year: 2015, title: On the complexity of bandit linear optimization}
+    confidence: high
+  - id: TR_class_inclusion
+    from_setting: {function_class: "F_P (property set P)"}
+    to_setting: {function_class: "F_Q with Q subset of P"}
+    kind: inclusion
+    transfers: lower (from the smaller class F_P to the larger F_Q); upper goes the other way
+    order: "F_P ⊑ F_Q iff Q ⊆ P (more properties = smaller class)"
+    statement: >-
+      Classes are subsets of the convex functions defined by property sets, so more properties give a smaller class.
+      Example given by the book: the Omega(d sqrt(n)) lower bound for F_b comes from linear losses.
+    quote: |-
+      We use the property symbols to define subsets of $\cF$. For example:
+      \item $\cF_\pb = \{f \in \cF \colon f(x)  \in[0,1] \text{ for all } x \in K\}$.
+      \item $\cF_{\pb,\psm,\psc}$ is the set of bounded convex functions that are smooth and strongly convex.
+    supporting_quote: |-
+      The best lower bound known when the losses are in $\cF_\pb$
+      is that the minimax regret is at least $\Omega(d \sqrt{n})$.
+      Interestingly, the lower bound was established using linear losses where the upper bound is $\tilde O(d \sqrt{n})$.
+    section: "Section 1.3 (after Definition 1.1); Section 2.4"
+    validity_scope: >-
+      Parameterised properties (sm with beta, sc with alpha) are monotone in the parameter (larger beta / smaller alpha
+      = larger class). Implications such as lin => quad and lin => sm (beta = 0) are not stated in the book as rules,
+      but follow from Definition 1.1. "d = 1" is a parameter restriction (special case of general d).
+    confidence: high
+  - id: TR_linear_in_smooth
+    from_setting: {function_class: [bounded, linear]}
+    to_setting: {function_class: [bounded, smooth], parameters: "beta = 0 (any beta >= 0)"}
+    kind: inclusion
+    transfers: lower
+    parameter_map: "linear = smooth with beta = 0"
+    statement: >-
+      Linear losses are beta-smooth with beta = 0, so the linear-bandit lower bound Omega(d sqrt(n)) also applies to
+      smooth losses. Smoothness alone cannot beat the sqrt(n) barrier; it takes higher-order smoothness plus strong convexity.
+    quote: |-
+      \item Even when $\beta = 0$, the regret upper bound of \cref{alg:ftrl:basic} is still $\Omega(\sqrt{n})$. Since
+      $\beta = 0$ corresponds to linear losses, the lower bounds for linear bandits (\cref{tab:lower}) show that this is not improvable.
+      Hence, no amount of smoothness by itself can improve the regret beyond the $\sqrt{n}$ barrier.
+    section: Note 6.vi
+    confidence: high
+  - id: TR_quadratic_as_linear
+    from_setting: {function_class: [bounded, quadratic], noise: noise_free, dimension: d}
+    to_setting: {function_class: [bounded, linear], dimension: "d_2 = (d^2 + 3d + 2)/2"}
+    kind: reduction
+    transfers: upper (linear bandit upper bounds give quadratic bandit upper bounds with d -> d_2; computation ignored)
+    parameter_map: "d -> d_2 = (d^2 + 3d + 2)/2 via the degree-2 polynomial feature map phi"
+    statement: Bounded quadratic bandits are linear bandits in the degree-2 polynomial feature space (ignoring computation).
+    quote: |-
+      Quadratic bandits seem much harder than linear bandits. But if you ignore the computation complexity then it turns out that quadratic bandits \textit{are} linear bandits.
+    supporting_quote: |-
+      Quadratic bandits can be viewed as linear bandits by introducing a kernel feature map.
+      Let $d_2 = \frac{d^2 + 3d + 2}{2}$ and
+      define a function $\phi(x) \colon \R^d \to \R^{d_2}$ by
+    section: "Section 7.6 (Assumption 7.18 there - no noise, losses in F_{b,quad})"
+    validity_scope: >-
+      The image phi(K) is not convex. The book uses a cover (Lemma 7.19) and discrete exponential weights, so
+      this is a statistical (not computational) reduction.
+    confidence: high
+  - id: TR_bayes_adversarial_minimax
+    from_setting: {objective: minimax_bayesian_regret}
+    to_setting: {objective: minimax_adversarial_regret}
+    kind: metric_transfer
+    transfers: both (equality of minimax values); upper bounds on Bayesian regret for every prior give adversarial minimax upper bounds, non-constructively
+    statement: The minimax adversarial regret equals the minimax Bayesian regret (over priors on F_b^n).
+    quote: |-
+      \begin{theorem}[\citealt{LS19pminfo}]\label{thm:minimax}
+      $\Reg_n^\star = \bReg_n^\star$.
+      \end{theorem}
+      \cref{thm:minimax} means that one way to bound the adversarial regret is via the Bayesian regret.
+    section: Theorem 8.17 (Section 8.6)
+    citation: {bib_key: LS19pminfo, authors: [T. Lattimore, Cs. Szepesvari], year: 2019, title: An information-theoretic approach to minimax regret in partial monitoring}
+    validity_scope: Gives existence only (no algorithm); this is why U12, U16, U18 have compute = infinity.
+    confidence: high
+  - id: TR_info_ratio_to_exp_by_opt
+    from_setting: {complexity_measure: minimax_information_ratio}
+    to_setting: {complexity_measure: exploration_by_optimisation_ratio}
+    kind: metric_transfer
+    transfers: upper
+    parameter_map: "Lambda* <= 14 Psi*"
+    statement: Bounds on the minimax information ratio transfer to the exploration-by-optimisation (mirror descent) complexity, up to a factor of 14.
+    quote: |-
+      Theorem 8.22 (Lattimore and György 2021b)
+      Λ★ ≤ 14 Ψ★.
+    quote_source: pdf_text
+    citation: {bib_key: lattimore2021mirror, authors: [T. Lattimore, A. Gyorgy], year: 2021, title: Mirror descent and the information ratio}
+    section: Theorem 8.22
+    non_transfer_note: |-
+      Importantly, however, lower bounds on the complexity measures do not imply lower bounds on the minimax regret.
+    confidence: medium
+  - id: TR_submodular_to_bco
+    from_setting: {problem: bandit_convex_optimisation, constraint_set: "[0,1]^d hypercube"}
+    to_setting: {problem: bandit_submodular_minimisation}
+    kind: reduction
+    transfers: upper
+    parameter_map: "Reg_n <= gReg_n + sqrt(2 n log(1/delta)) w.p. >= 1-delta; K = [0,1]^d so diam(K) = sqrt(d), vartheta = Theta(d), K in Lowner's position up to scaling"
+    statement: Any BCO algorithm on the hypercube, run on the Lovász extension with randomised rounding, solves bandit submodular minimisation with an additive sqrt(n log(1/delta)) overhead.
+    quote: |-
+      Consequently, any algorithm for bandit convex optimisation can be used for submodular minimisation with very little overhead.
+      When looking at the complete list of algorithms in \cref{sec:table}, remember that for the hypercube we have $\diam(K) = \sqrt{d}$ and the self-concordance parameter is $\vartheta = \Theta(d)$.
+    section: Section 13.2, Proposition 13.9
+    validity_scope: Needs the book's noise model, where noise may depend on the action (randomised rounding creates action-dependent noise).
+    confidence: high
+  - id: TR_scaling_invariance
+    from_setting: {constraint_set: K}
+    to_setting: {constraint_set: "gamma K"}
+    kind: reduction
+    transfers: both
+    parameter_map: "diam -> gamma diam; gradient -> gradient/gamma; Hessian -> Hessian/gamma^2; invariant: Lipschitz x diameter, alpha/beta"
+    statement: Rescaling coordinates should not change achievable regret; bounds must be invariant in Lip x diam and alpha/beta.
+    quote: |-
+      From this we see that the product of the Lipschitz constant and the diameter is invariant under scaling, as is the ratio of strong convexity and smoothness parameters.
+      You should always check that various results are compatible with these scaling results in the sense that the regret bound should be invariant to scale if the assumptions
+      permit scaling.
+    section: Section 3.3 (Proposition 3.8)
+    validity_scope: >-
+      The book's classes fix the Lipschitz constant to 1 and the range to [0,1], so scaling moves between parameter values
+      of a family. A sanity check for bound expressions rather than an edge between named settings.
+    confidence: medium
+  - id: TR_bounded_to_lipschitz_interior
+    from_setting: {function_class: [bounded], constraint_set: "K_eps = (1-eps)K"}
+    to_setting: {function_class: [bounded, lipschitz_1_over_eps_r], constraint_set: K_eps}
+    kind: reduction
+    transfers: upper (a Lipschitz-class algorithm on K_eps gives an F_b algorithm on K with additive eps n regret)
+    parameter_map: "Lipschitz constant 1/(eps r) on K_eps when B_r subset K; approximation cost min_{K_eps} f <= inf_K f + eps"
+    statement: >-
+      Bounded convex functions are Lipschitz on a shrunk body and nearly minimised there, so restricting play to K_eps
+      reduces F_b to a Lipschitz class at an additive cost eps per round.
+    quote: |-
+      \begin{corollary}\label{cor:lip2}
+      Suppose that $f \colon K \to [0,1]$ is convex and $\ball_r \subset K$ and $K_\eps = (1-\eps) K$. Then $\lip_{K_\eps}(f) \leq \frac{1}{\eps r}$.
+      \end{corollary}
+    supporting_quote: |-
+      Then
+      \begin{align*}
+      \min_{y \in K_\eps} f(y) \leq \inf_{y \in K} f(y) + \eps \,.
+      \end{align*}
+    section: Corollary 3.12, Proposition 3.13 (Sections 3.4-3.5)
+    validity_scope: The Lipschitz constant grows as 1/eps, so it is not an edge to F_{b,l} (Lipschitz constant 1) without rescaling.
+    confidence: medium
+  - id: TR_lipschitz_extension
+    from_setting: {function_class: [lipschitz], domain: constrained}
+    to_setting: {function_class: [lipschitz], domain: unconstrained}
+    kind: reduction
+    transfers: upper (unconstrained algorithms can be run on an extension of the loss)
+    parameter_map: "extension e with lip(e) = lip(f), e = f on K"
+    statement: Lipschitz convex functions on K extend to R^d with the same Lipschitz constant, which lets algorithms for unconstrained problems be used.
+    quote: |-
+      One way to mitigate these problems is to use an algorithm designed for unconstrained bandit convex optimisation on an extension of the loss function(s).
+    supporting_quote: |-
+      When $f$ is Lipschitz on its domain then an extension to $\R^d$ is always possible.
+    section: Section 3.7, Proposition 3.18
+    validity_scope: >-
+      The extension cannot always be evaluated (an evaluable extension is Proposition 3.20). Plays outside K must be
+      mapped back to K, so this is a tool, not a black-box setting edge.
+    confidence: low
+  - id: TR_two_point_feedback
+    from_setting: {feedback: two_point}
+    to_setting: {feedback: bandit_one_point}
+    kind: easier_harder_ordering
+    transfers: lower (a two-point lower bound holds for one-point feedback)
+    reverse_transfers: upper (a one-point upper bound holds with two-point feedback, ignoring the extra evaluation)
+    order: "two_point ⊑ bandit_one_point (more feedback = easier)"
+    statement: >-
+      Two evaluations per round make the problem behave like full information (directional derivatives can be computed),
+      so two-point feedback is much easier than one-point bandit feedback.
+    quote: |-
+      A number of authors have explored what changes if the learner is allowed to choose
+      \textit{two} points $X_{t,1}, X_{t,2} \in K$ and observes $f_t(X_{t,1})$ and $f_t(X_{t,2})$.
+      One might believe that such a modification would have only a mild effect but this is not at all the case.
+      Having access to two evaluations makes the bandit setup behave more like the full information setting \citep{ADX10,nesterov2017random,duchi2015optimal}.
+    section: Note 1.vi
+    validity_scope: Stated for the adversarial setting without noise.
+    confidence: medium
+
+# ---------------------------------------------------------------------------------------------
+# OPEN PROBLEMS
+# 14.i - 14.xiii: Chapter 14 "Outlook" (all items). EX-*: exercises marked with the "unsolved" icon
+# (\faQuestion; preface: "problems marked with \faQuestion\ have not been solved yet"). Two exercises
+# use \faQuestionCircle, which the preface legend does not define; they are included with confidence medium.
+# N-*: other places in the text that say something is open / not known.
+# kind: bound_gap | algorithmic | computational | modelling | analysis | conceptual
+# ---------------------------------------------------------------------------------------------
+open_problems:
+  - id: "14.i"
+    kind: bound_gap
+    settings: [S_b_sto, S_b_adv]
+    statement: Determine the minimax regret for F_b. The lower bound is Omega(d sqrt(n)); the upper bounds are O_tilde(d^1.5 sqrt(n)) (stochastic) and O_tilde(d^2.5 sqrt(n)) (adversarial).
+    known_lower_bound: {S_b_sto: "Omega(d*sqrt(n))", S_b_adv: "Omega(d*sqrt(n))"}
+    known_upper_bound: {S_b_sto: "O_tilde(d**(3/2)*sqrt(n))", S_b_adv: "O_tilde(d**(5/2)*sqrt(n))"}
+    gap_label: polynomial gap in d (d^0.5 stochastic, d^1.5 adversarial)
+    related_results: [L1, X1, U24, U18, U26]
+    quote: |-
+      The most fundamental problem is to understand the minimax regret for $\cF_\pb$. The lower bound is $\Omega(d \sqrt{n})$ and the upper bound is $\tilde O(d^{1.5} \sqrt{n})$
+      in the stochastic setting and $\tilde O(d^{2.5} \sqrt{n})§$ in the adversarial setting.
+    notes: The source has a stray "§" after the adversarial bound (typo, kept verbatim).
+    confidence: high
+  - id: "14.ii"
+    kind: algorithmic
+    settings: [S_b_sto, S_b_adv]
+    statement: Find a simple, practical algorithm that needs little tuning and gets the fast (sqrt(n)) rate for d > 1 without smoothness and strong convexity.
+    known_lower_bound: null
+    known_upper_bound: null
+    quote: |-
+      From a practical perspective the situation is still relatively dire for $d > 1$.
+      The algorithms that are simple and efficient to implement have slow convergence rates without smoothness and strong convexity.
+      Algorithms with fast convergence rates have awkward assumptions. For example, online Newton step learns fast for $\cF_\pb^\ps$ and
+      is difficult to tune.
+      Is there a simple algorithm that works well in practice without too much tuning and obtains the fast rate?
+    confidence: high
+  - id: "14.iii"
+    kind: computational
+    settings: [S_b_sto, S_b_adv]
+    statement: Prove or refute that Omega(d^2) memory is needed for O_tilde(poly(d) sqrt(n)) regret without smoothness and strong convexity.
+    known_lower_bound: null
+    known_upper_bound: "O(d^2) memory (all known poly(d) sqrt(n) algorithms)"
+    quote: |-
+      Algorithms that manage $\tilde O(\poly(d)\sqrt{n})$ regret without smoothness and strong convexity all estimate some kind of curvature or use continuous exponential weights.
+      In particular, they use $\Omega(d^2)$ memory. Can you prove this is necessary?
+    confidence: high
+  - id: "14.iv"
+    kind: analysis
+    settings: [S_b_sto]
+    statement: >-
+      Get regret bounds where the loss range B appears only in a lower-order term, not multiplied with the noise
+      scale sigma (naive analyses give a leading factor B + sigma).
+    known_lower_bound: null
+    known_upper_bound: "O_tilde((B + sigma) d^1.5 sqrt(n)) for online Newton step with K in Lowner's position (naive analysis)"
+    symbols: {B: "loss range, f in [0, B]", sigma: "Orlicz (psi_2) norm bound of the noise"}
+    quote: |-
+      In the stochastic setting both the range of the loss function and the Orlicz norm (or maybe variance) of the noise should appear in the regret. This is hidden throughout because
+      in most places we (questionably) opted to fix the range to $[0,1]$ and the Orlicz norm of the noise to $1$.
+      If you repeat the analysis naively for most settings you will find that for losses bounded in $[0,B]$ and Orlicz norm bound of $\sigma$, the leading term in the regret is $B + \sigma$.
+      For example, for online Newton step with $K$ in L\"owner's position we would have a regret of $\tilde O((B+\sigma) d^{1.5} \sqrt{n})$.
+      Really, however, the range of the losses should appear in a lower-order term, since over time an algorithm with sublinear regret will play in a region
+      where the range of the losses is small (otherwise
+      it would have high regret).
+    confidence: high
+  - id: "14.v"
+    kind: algorithmic
+    settings: all
+    statement: >-
+      Adaptivity: algorithms that adapt to the unknown function class (what does it cost?) and anytime algorithms
+      that do not need n in advance (decaying learning rates rather than a doubling trick).
+    known_lower_bound: null
+    known_upper_bound: null
+    quote: |-
+      More adaptive algorithms are needed. We have seen a plethora of results for this algorithm or that with such-and-such assumptions. But what if you don't know
+      what class the losses lie in. Can you adapt? What is the price? Very few works consider this or have serious limitations. A good place to start is the paper by \cite{LZZ22}.
+      We have also assumed that $n$ is known upfront and used this to tune learning rates or other parameters. You can always use a doubling trick \citep{BK18}, but generally speaking you would
+      expect better practical performance by using a decaying learning rate.
+    confidence: high
+  - id: "14.vi"
+    kind: modelling
+    settings: []
+    statement: >-
+      Extend the algorithms and analysis to non-convex losses (bounds relative to stationary points), or find global
+      minima under weaker assumptions (quasi-convexity, Polyak-Lojasiewicz).
+    known_lower_bound: null
+    known_upper_bound: null
+    quote: |-
+      There is scope to refine the algorithms and analysis in this text to the non-convex case;
+      of course, proving bounds relative to a stationary point rather than a global minimum.
+      Someone should push this program through. Alternatively, one may still focus on finding the global minimum but with weaker assumptions such as quasi-convexity
+      or losses that satisfy the Polyak--Lojasiewicz condition \citep{polyak1963gradient,karimi2016linear,akhavan2024gradient}.
+      Note that these function classes are not closed under addition and hence are not amenable to the adversarial setting.
+    notes: Introduces function classes outside Definition 1.1 (quasi-convex, PL, non-convex) and the observation that classes not closed under addition do not suit the adversarial setting.
+    confidence: high
+  - id: "14.vii"
+    kind: algorithmic
+    settings: [S_b_sto, S_b_adv]
+    statement: Build an optimistic surrogate from an exponential-weights distribution instead of a Gaussian, to better fit the geometry of the constraint set.
+    known_lower_bound: null
+    known_upper_bound: null
+    quote: |-
+      Almost all of the properties we proved for the optimistic surrogate relied on Gaussianity of the exploration distribution.
+      Two properties that do not rely on this, however, are optimism and convexity. This leaves hope that something may be possible using an exponential weights distribution
+      rather than a Gaussian and this may interact better with the geometry of the constraint set.
+    confidence: high
+  - id: "14.viii"
+    kind: conceptual
+    settings: [S_b_sto, S_b_adv]
+    statement: Is there a black-box reduction (restart when the adversary moves the minimum) that turns any stochastic-setting algorithm into an adversarial-setting algorithm?
+    known_lower_bound: null
+    known_upper_bound: null
+    quote: |-
+      \cite{SRN21} and \cite{BEL16} both handle adversarial problems by some sort of test to see if the adversary is moving the minimum and proving that if this occurs, then
+      the regret must be negative and it is safe to restart the algorithm. One might wonder if there is some black-box procedure to implement this program so that any algorithm
+      designed for the stochastic setting can be used in the adversarial setting.
+    notes: A positive answer would be a new transfer rule (stochastic upper -> adversarial upper), the reverse of TR_sto_adv.
+    confidence: high
+  - id: "14.ix"
+    kind: algorithmic
+    settings: [S_b_adv]
+    statement: Understand exploration by optimisation (Algorithm 8.3), e.g. its loss estimators; implement it for d = 1 or derive the estimators analytically in special cases.
+    known_lower_bound: null
+    known_upper_bound: null
+    quote: |-
+      It would be fascinating to gain a better understanding of \cref{alg:exp-by-opt}. What loss estimators does it use? Maybe you can somehow implement this
+      algorithm when $d = 1$ or derive analytically what the estimators look like for special cases.
+    confidence: high
+  - id: "14.x"
+    kind: conceptual
+    settings: [S_b_sto]
+    statement: Unify stochastic approximation (asymptotics) and bandit convex optimisation (minimax finite-time regret).
+    known_lower_bound: null
+    known_upper_bound: null
+    quote: |-
+      There is potential to unify the algorithms and analysis from stochastic approximation and bandit convex optimisation.
+      The former are generally focused on precise asymptotics while the latter concentrate on minimax finite-time regret.
+    confidence: high
+  - id: "14.xi"
+    kind: modelling
+    settings: []
+    statement: Generalise the noise model to heavy-tailed, heteroscedastic or multiplicative noise.
+    known_lower_bound: null
+    known_upper_bound: null
+    quote: |-
+      You could spend a huge amount of time generalising the conditions on the noise; for example, to heavy-tailed distributions. This has been widely
+      explored in the multi-armed bandit setting \citep[and citations to/from]{BCL13}.
+      Probably this should only be done if you have a particular application in mind.
+      Alternatively, you could investigate heteroscedastic or multiplicative noise, with an initial foray by \cite{zhan2025regularizedonlinenewtonmethod}.
+    confidence: high
+  - id: "14.xii"
+    kind: bound_gap
+    settings: [S_b_adv_d1]
+    statement: For d = 1 and F_b, are the log factors needed? The upper bound is O(sqrt(n) log(n)) and the lower bound is Omega(sqrt(n)).
+    known_lower_bound: "Omega(sqrt(n))"
+    known_upper_bound: "O(sqrt(n)*log(n))"
+    gap_label: log-factor gap
+    related_results: [U15, U12]
+    quote: |-
+      When $d = 1$ the best bound on the cumulative regret for losses in $\cF_\pb$ is $O(\sqrt{n} \log(n))$ while the lower bound is $\Omega(\sqrt{n})$.
+      Maybe this setting is the best place to start trying to understand whether or not the logarithmic factors are necessary.
+    notes: The source of the Omega(sqrt(n)) lower bound is not cited here. Setting is presumably adversarial (cumulative regret, F_b); not stated explicitly.
+    confidence: medium
+  - id: "14.xiii"
+    kind: modelling
+    settings: []
+    statement: Generalise BCO to Riemannian manifolds beyond the O(n^{2/3}) FTRL analogue of ao2025riemannian.
+    known_lower_bound: null
+    known_upper_bound: "O(n^(2/3)) (Riemannian analogue of Algorithm 6.2 under smoothness; ao2025riemannian)"
+    quote: |-
+      This entire book is about bandit convex optimisation on subsets of euclidean space.
+      Convexity and the convex bandit problem can be generalised to Riemannian manifolds.
+      \cite{ao2025riemannian} start this program by constructing the Riemannian analogue of \cref{alg:ftrl:basic} and proving that under appropriate smoothness conditions
+      its regret is $O(n^{2/3})$.
+    confidence: high
+  # ----------------------------- exercises marked unsolved --------------------------------------
+  - id: EX-4.5
+    kind: analysis
+    settings: [S_l_sto_d1]
+    statement: Find a slick proof replacing the case-by-case analysis in the proof of Proposition 4.3 (bisection).
+    known_lower_bound: null
+    known_upper_bound: null
+    quote: |-
+      \faStar \faStar \faQuestionCircle \quad
+      Find a slick proof to replace the ugly case-by-case analysis in the proof of \cref{prop:bisection}.
+    notes: Uses \faQuestionCircle (not defined in the preface legend). Proof-technique problem, not a bound gap. prop:bisection = Proposition 4.3.
+    confidence: medium
+  - id: EX-6.21
+    kind: analysis
+    settings: [S_b_sto]
+    statement: Use the Section 6.6 variance technique (stochastic setting) for other algorithms in the book.
+    known_lower_bound: null
+    known_upper_bound: null
+    quote: |-
+      \faStar\faStar\faQuestion\quad
+      Explore the possiblity of using the technique developed here for other algorithms in this book.
+    confidence: high
+  - id: EX-8.24
+    kind: bound_gap
+    settings: [S_b_adv]
+    statement: Prove that the exploration-by-optimisation complexity Lambda* = Omega_tilde(d^2), using ZL19 and the lower bound on Psi* by BLS25.
+    known_lower_bound: "Psi* = Omega_tilde(d^2) (BLS25)"
+    known_upper_bound: "Psi* <= C d^4 log(nd) (Theorem 8.20); Lambda* <= 14 Psi* (Theorem 8.22)"
+    quote: |-
+      \faStar \faStar \faBook \faQuestion \quad
+      Use the arguments by \cite{ZL19} and the lower bound on $\Psi^\star$ by \cite{BLS25} to prove that $\Lambda^\star = \tilde \Omega(d^2)$.
+    notes: About a complexity measure, not minimax regret. The book stresses that lower bounds on complexity measures do not imply regret lower bounds.
+    confidence: high
+  - id: EX-9.28
+    kind: computational
+    settings: [S_b_sto]
+    statement: >-
+      With K given by a separation oracle, get a polynomial-time method-of-inscribed-ellipsoid algorithm with
+      O_tilde(d^4/eps^2) sample complexity.
+    known_lower_bound: null
+    known_upper_bound: "O_tilde(d^4/eps^2) sample complexity (U29), not polynomial time with only a separation oracle"
+    quote: |-
+      \faStar\faStar\faStar \faQuestionCircle \quad
+      Suppose $K$ is represented by a separation oracle.
+      Use the separation oracle to construct a polytope $P$ such that $K \subset P$. Use the extension in \cref{prop:reg:bandit-extension} to extend the loss from a shrunk subset of $K$ to $P$.
+      Use the ideas in \cref{sec:cut:ellipsoid} to implement the method of the inscribed ellipsoid and obtain a polynomial time algorithm with $\tilde O(d^4/\eps^2)$ sample complexity.
+    notes: Uses \faQuestionCircle (legend undefined); may be a solvable research-level exercise rather than open.
+    confidence: medium
+  - id: EX-10.17
+    kind: computational
+    settings: [S_b_sto]
+    statement: Is there a polynomial-time way to position K so that B_1 ⊂ K ⊂ B_2d and M(K) = O_tilde(d^{-1/2}), when K is a polytope or given by a separation/membership oracle?
+    known_lower_bound: null
+    known_upper_bound: null
+    quote: |-
+      \faStar \faStar \faStar \faBook \faQuestion \quad
+      Does there exist a polynomial-time algorithm for positioning the constraint set such that $\ball_1 \subset K \subset \ball_{2d}$
+      and $M(K) = \tilde O(d^{-1/2})$ when
+      \item $K = \{x \colon Ax \leq b\}$ is a polytope?
+      \item $K$ is given by a separation or membership oracle?
+    notes: A positive answer would make U24's d^1.5 rate polynomial time for general K.
+    confidence: high
+  - id: EX-10.18
+    kind: computational
+    settings: [S_b_sto]
+    statement: Is there a polynomial-time way to position a polytope/separation-oracle K so that its polar is approximately isotropic, accurately enough for Table 10.1 (tab:widths)?
+    known_lower_bound: null
+    known_upper_bound: null
+    quote: |-
+      \faStar \faStar \faStar \faBook \faQuestion \quad
+      Suppose that $K$ is a polytope or represented by a separation oracle. Does there exist a polynomial time algorithm to position $K$ so that $K^\circ$ is approximately isotropic
+      with errors small enough that the relevant results in \cref{tab:widths} hold (approximately)?
+    confidence: high
+  - id: EX-10.19
+    kind: analysis
+    settings: [S_b_sto]
+    statement: Analyse the regret of online Newton step (Algorithm 10.2), or a variant, under Assumption 6.17 (ass:sgd-stoch; the stochastic setting with variance of Section 6.6).
+    known_lower_bound: null
+    known_upper_bound: null
+    quote: |-
+      \faStar \faStar \faStar \faQuestion \quad
+      Analyse the regret of \cref{alg:ons:bandit} or some modification thereof under \cref{ass:sgd-stoch}.
+    context_quote: |-
+      An interesting question is whether or not \cref{alg:ons:bandit} can be adapted to exploit low-variance noise, possibly using the idea in \cref{sec:sc:stoch}.
+    confidence: high
+  - id: EX-10.20
+    kind: computational
+    settings: [S_b_sto]
+    statement: Find an O_tilde(d^2)-time approximation of (Sigma^{-1} + u u^T)^{-1/2}, reducing ONS Gaussian sampling to O_tilde(d^2) per round.
+    known_lower_bound: null
+    known_upper_bound: "O(d^3 + m d^2) per round for a polytope with m constraints (current)"
+    quote: |-
+      \faStar \faStar \faBook \faQuestion \quad
+      Suppose that $\Sigma^{1/2}$ is stored in memory and $u \in \R^d$.
+      \item Find a high-quality approximation of $(\Sigma^{-1} + uu^\top)^{-1/2}$ that can be computed using $\tilde O(d^2)$ arithmetic operations.
+      \item Show how to use \ref{ex:ons:inc:inc} to reduce the complexity of the Gaussian sampling in \cref{alg:ons:bandit} to $\tilde O(d^2)$ arithmetic operations per round.
+    confidence: high
+  - id: EX-10.21
+    kind: analysis
+    settings: [S_b_sto]
+    statement: Does Theorem 10.8 still hold if Algorithm 10.2 drops the projection onto K_eps?
+    known_lower_bound: null
+    known_upper_bound: null
+    quote: |-
+      \faStar \faStar \faStar \faQuestion \quad
+      Modify \cref{alg:ons:bandit} by removing the projection onto $K_\eps$ and prove whether or not the regret bound in \cref{thm:ons:bandit} still holds.
+    confidence: high
+  - id: EX-11.23
+    kind: computational
+    settings: [S_b_adv]
+    statement: For a polytope/separation-oracle K, make adversarial ONS (Algorithm 11.3) run in O(poly(d, log n)) time per round.
+    known_lower_bound: null
+    known_upper_bound: "poly(d, n) per round (U26)"
+    quote: |-
+      \faStar \faStar \faStar \faQuestion \quad
+      Suppose that $K$ is represented as a polytope or via a separation oracle.
+      Modify \cref{alg:ons-adv:bandit} to have $O(\poly(d, \log(n)))$ running time per round.
+    confidence: high
+  # ----------------------------- other "not known" statements -----------------------------------
+  - id: N-2.4-simple-linear
+    kind: bound_gap
+    settings: [S_blin_sto]
+    statement: No written minimax simple-regret lower bound exists for linear losses; for K = [-1,1]^d the LS20book technique should give Omega(d/sqrt(n)).
+    known_lower_bound: "Omega(d/sqrt(n)) informally (X2)"
+    known_upper_bound: null
+    quote: |-
+      As far as we know, no one has written a minimax simple regret lower bound for linear losses. At least when $K = [-1,1]^d$, the technique for bounding the cumulative
+      regret by \cite{LS20book} also yields a bound on the simple regret of $\Omega(d/\sqrt{n})$.
+    section: Section 2.4
+    notes: A literature gap ("not written") rather than a hard open problem.
+    confidence: medium
+  - id: N-6.7-adaptive-ftrl
+    kind: algorithmic
+    settings: [S_b_adv, S_bsm_adv]
+    statement: Can one algorithm get the best of Theorems 6.13 and 6.14 by tuning the learning rate and smoothing adaptively?
+    known_lower_bound: null
+    known_upper_bound: "U3 (F_b) and U6 (F_{b,sm}) separately"
+    quote: |-
+      \cref{thm:ftrl:basic,thm:ftrl:smooth} bound the regret for the same algorithm with different learning rates and smoothing
+      parameters. You should wonder if it is possible to obtain the best of both bounds with a single algorithm by adaptively tuning the learning rates. At present this
+      is not known as far as we are aware.
+    section: Note 6.vii
+    confidence: high
+  - id: N-6.7-highly-smooth-beta
+    kind: bound_gap
+    settings: [S_lsmsc_sto_improper]
+    statement: >-
+      For highly smooth (order p) strongly convex functions in the unconstrained/improper settings, the right dependence
+      on the smoothness parameter beta is unknown. Simple regret is O((1/alpha)(d^2/n)^{(p-1)/p}) (upper) vs
+      Omega((d/alpha) n^{-(p-1)/p}) (lower), which match at p = 2.
+    known_lower_bound: "Omega((d/alpha)*n**(-(p-1)/p)) simple regret"
+    known_upper_bound: "O((1/alpha)*(d**2/n)**((p-1)/p)) simple regret"
+    symbols: {p: "smoothness order (Note 1.i)"}
+    quote: |-
+      Of these, the most refined is by
+      \cite{akhavan2024gradient}, who prove an upper bound on the simple regret $O(\frac{1}{\alpha}(d^2/n)^{(p-1)/p})$ and a lower bound on the same
+      of $\Omega(\frac{d}{\alpha} n^{-(p-1)/p})$, which match when $p = 2$. Note that the correct dependence on the smoothness parameter $\beta$ has not yet been nailed down
+      and there are some mild conditions on the magnitude of the parameters.
+    section: Note 6.vi
+    notes: Needs a "highly smooth of order p" function class (not in Definition 1.1). The setting reference is approximate.
+    confidence: medium
+  - id: N-8.8-thompson-adversarial
+    kind: bound_gap
+    settings: [S_b_adv_d1]
+    statement: In the Bayesian adversarial setting with d = 1, does Thompson sampling have O_tilde(sqrt(n)) regret? Its information ratio is unbounded (BDKP15), so new proof techniques would be needed.
+    known_lower_bound: null
+    known_upper_bound: "O_tilde(sqrt(n)) Bayesian regret in the stochastic d = 1 setting (BLS25)"
+    quote: |-
+      In the Bayesian adversarial setting with $d = 1$ it is not known
+      if Thompson sampling has $\tilde O(\sqrt{n})$ regret. \cite{BDKP15} showed that it does not have a bounded information ratio, which means that new proof techniques would be needed
+      to prove $\tilde O(\sqrt{n})$ regret.
+    section: Note 8.iii
+    notes: Algorithm-specific question (Thompson sampling), Bayesian regret.
+    confidence: high

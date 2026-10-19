@@ -1,0 +1,343 @@
+{
+ "schema_version": "0.2",
+ "ontology_version": "bandits-0.2",
+ "paper": {
+  "title": "Maillard Sampling: Boltzmann Exploration Done Optimally",
+  "arxiv_id": "2111.03290",
+  "arxiv_version": null,
+  "year": 2021,
+  "authors": [
+   "Jie Bian",
+   "Kwang-Sung Jun"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "K-armed bandit with sigma^2-sub-Gaussian rewards",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "sigma",
+    "K"
+   ],
+   "extras": [],
+   "parameters": {},
+   "unmapped": [],
+   "definition_quote": "In this paper, we focus on the assumption that $y_t - \\mu_{I_t}$ is $\\sig^2$-sub-Gaussian, i.e.,  $\\EE[\\exp(\\lam \\eta_t)] \\le \\exp(\\lam^2 \\sig^2/2)$, and that the algorithm knows $\\sig^2$, which is standard."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Maillard Sampling (MS)",
+   "is_new": false,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Maillard Sampling+ (MS+)",
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(2*sigma**2*(1+c)**2*log(T*Delta_i**2/sigma**2)/Delta_i + Max(Delta_i, (1+c)**2*sigma**2/(c**2*Delta_i)*log((1+c)**2*sigma**2/(c**2*Delta_i**2))))",
+    "expression_latex": "\\sum_{a\\in[K]: \\Delta_a > 0}\\Bigg(\\fr{2\\sigma^2(1+c)^2 \\ln(\\fr{T\\Delta_a^2}{\\sigma^2} )}{\\Delta_a} + O\\del{\\Delta_a \\vee \\del{\\fr{(1+c)^2\\sigma^2}{c^2\\Delta_a}\\ln\\fr{(1+c)^2\\sigma^2}{c^2\\Delta_a^2}}}\\Bigg)",
+    "regime": "for all T >= 1 and c > 0"
+   },
+   "symbols": {
+    "c": "free analysis parameter c > 0"
+   },
+   "extra_assumptions": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:ms",
+    "number": "Theorem 2",
+    "quote": "MS satisfies that, $\\forall T\\ge1$ and $c>0$, \\EE\\Reg_T \\le \\sum_{a\\in[K]: \\Delta_a > 0}\\Bigg(\\fr{2\\sigma^2(1+c)^2 \\ln(\\fr{T\\Delta_a^2}{\\sigma^2} )}{\\Delta_a} + O\\del{\\Delta_a \\vee \\del{\\fr{(1+c)^2\\sigma^2}{c^2\\Delta_a}\\ln\\fr{(1+c)^2\\sigma^2}{c^2\\Delta_a^2}}}\\Bigg)"
+   },
+   "confidence": "high",
+   "notes": "Leading term has explicit constant; only the second-order term is in O(). Implies sub-UCB and asymptotic optimality with c=1/o(ln^{1/2} T). Appendix version has ln(1+...) in second term."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sigma*sqrt(K*T*log(T))",
+    "expression_latex": "O(\\sigma\\sqrt{KT\\ln(T)})",
+    "regime": "for all T >= 1"
+   },
+   "symbols": {},
+   "extra_assumptions": [],
+   "is_new": true,
+   "source": {
+    "label": "thm1_cor",
+    "number": "Corollary 3",
+    "quote": "MS satisfies that that, $\\forall T\\ge1$, \\EE\\Reg_T \\le O(\\sigma\\sqrt{KT\\ln(T)})~."
+   },
+   "confidence": "high",
+   "notes": "Numbering assumes shared counter thm/cor."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(2*sigma**2*(1+c)**2*log(T*Delta_i**2/(2*sigma**2)*(1+log(1+T*Delta_i**2/(2*sigma**2))))/Delta_i + B_boost*sigma**2*(1+c)**2*log(1+log(T*Delta_i**2/(2*sigma**2)))/(c**2*Delta_i) + Delta_i)",
+    "expression_latex": "\\sum_{a:\\Delta_a>0} \\fr{2\\sigma^2(1+c)^2 \\ln(\\fr{T\\Delta_a^2}{2\\sigma^2}(1+\\ln(1+\\fr{T\\Delta_a^2}{2\\sigma^2})))}{\\Delta_a} + O\\del{ B\\fr{\\sigma^2(1+c)^2\\ln(1+\\ln(\\fr{T\\Delta_a^2}{2\\sigma^2}))}{c^2\\Delta_a} + \\Delta_a}",
+    "regime": "for every T >= 1 and c > 0"
+   },
+   "symbols": {
+    "c": "free analysis parameter c > 0",
+    "B_boost": "booster parameter B >= 1 of MS+"
+   },
+   "extra_assumptions": [
+    "dependence on algorithm parameters C in [0,1], D in (0,1] omitted"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm_IMS",
+    "number": "Theorem 4",
+    "quote": "\\MSP (Algorithm~\\ref{alg:ims}) satisfies that, for every $T\\ge1$ and $c>0$, \\EE \\Reg_T \\le \\sum_{a:\\Delta_a>0} \\fr{2\\sigma^2(1+c)^2 \\ln(\\fr{T\\Delta_a^2}{2\\sigma^2}(1+\\ln(1+\\fr{T\\Delta_a^2}{2\\sigma^2})))}{\\Delta_a} + O\\del{ B\\fr{\\sigma^2(1+c)^2\\ln(1+\\ln(\\fr{T\\Delta_a^2}{2\\sigma^2}))}{c^2\\Delta_a} + \\Delta_a} where we omit the dependence on $C$ and $D$ for brevity."
+   },
+   "confidence": "medium",
+   "notes": "Leading term explicit; O() term placed inside the sum (paper's typesetting ambiguous). Booster B renamed to avoid clash with canonical budget B."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sigma*sqrt(K*T*log(K))",
+    "expression_latex": "O(\\sigma\\sqrt{KT\\ln(K)})",
+    "regime": "for all T >= 1; B, C, D absolute constants"
+   },
+   "symbols": {},
+   "extra_assumptions": [
+    "algorithm parameters B, C, D are absolute constants"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm2_cor",
+    "number": "Corollary 5",
+    "quote": "\\MSP with absolute constants $B$, $C$, and $D$ satisfies that, $\\forall T\\ge1$, \\EE \\Reg_T\\le O(\\sigma\\sqrt{KT\\ln(K)})~."
+   },
+   "confidence": "high",
+   "notes": ""
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "maillard13apprentissage",
+   "cited_title": "APPRENTISSAGE SÉQUENTIEL: Bandits, Statistique et Renforcement.",
+   "algorithm_name": "Maillard Sampling",
+   "side": "upper",
+   "setting_description": "K-armed stochastic bandit, sub-Gaussian with sigma^2 = 1/4",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt((1+c)**2*log(T)/(2*Delta_i) + (1+c)**4*K/(c**4*Delta_i**3))",
+    "expression_latex": "\\sum_{a:\\Delta_a>0} \\del{\\frac{(1+c)^2}{2\\Delta_a}\\log(T) + O\\del{\\frac{(1+c)^4}{c^4\\Delta_a^3}K}}",
+    "regime": "for all T >= 1, c > 0"
+   },
+   "where": "Theorem 1"
+  },
+  {
+   "cited_key": "maillard13apprentissage",
+   "cited_title": "APPRENTISSAGE SÉQUENTIEL: Bandits, Statistique et Renforcement.",
+   "algorithm_name": "Maillard Sampling",
+   "side": "upper",
+   "setting_description": "K-armed stochastic sub-Gaussian bandit, minimax implied by Theorem 1",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K)*T**(3/4)",
+    "expression_latex": "O(\\sqrt{K} T^{3/4})",
+    "regime": null
+   },
+   "where": "Section 4 / Introduction"
+  },
+  {
+   "cited_key": "auer02finite",
+   "cited_title": "Finite-time Analysis of the Multiarmed Bandit Problem",
+   "algorithm_name": "UCB1",
+   "side": "upper",
+   "setting_description": "K-armed sub-Gaussian bandit, minimax ratio sqrt(log T)",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(T))",
+    "expression_latex": "\\sqrt{KT}\\sqrt{\\log T}",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "lattimore20bandit",
+   "cited_title": "Bandit Algorithms",
+   "algorithm_name": "AOUCB",
+   "side": "upper",
+   "setting_description": "K-armed sub-Gaussian bandit, minimax ratio sqrt(log T)",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(T))",
+    "expression_latex": "\\sqrt{KT}\\sqrt{\\log T}",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "agrawal17nearoptimal",
+   "cited_title": "Near-Optimal Regret Bounds for Thompson Sampling",
+   "algorithm_name": "TS-SG",
+   "side": "upper",
+   "setting_description": "K-armed sub-Gaussian bandit, minimax ratio sqrt(log K)",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(K))",
+    "expression_latex": "\\sqrt{KT}\\sqrt{\\log K}",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "lattimore20bandit",
+   "cited_title": "Bandit Algorithms",
+   "algorithm_name": "MOSS",
+   "side": "upper",
+   "setting_description": "K-armed sub-Gaussian bandit, known horizon, minimax ratio 1",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "\\sqrt{KT}",
+    "regime": "fixed budget (known T)"
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "lattimore15optimally",
+   "cited_title": "Optimally confident UCB: Improved regret for finite-armed bandits",
+   "algorithm_name": "UCB+",
+   "side": "upper",
+   "setting_description": "K-armed sub-Gaussian bandit, known horizon, minimax ratio sqrt(log K)",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(K))",
+    "expression_latex": "\\sqrt{KT}\\sqrt{\\log K}",
+    "regime": "fixed budget (known T)"
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "lattimore15optimally",
+   "cited_title": "Optimally confident UCB: Improved regret for finite-armed bandits",
+   "algorithm_name": "OCUCB",
+   "side": "upper",
+   "setting_description": "K-armed sub-Gaussian bandit, known horizon, minimax ratio 1",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "\\sqrt{KT}",
+    "regime": "fixed budget (known T)"
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "audibert09minimax",
+   "cited_title": "Minimax Policies for Adversarial and Stochastic Bandits.",
+   "algorithm_name": null,
+   "side": "lower",
+   "setting_description": "K-armed stochastic bandit minimax lower bound",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "\\Omega(\\sqrt{KT})",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "robbins85asymptotically",
+   "cited_title": "Asymptotically Efficient Adaptive Allocation Rules",
+   "algorithm_name": null,
+   "side": "lower",
+   "setting_description": "asymptotic optimality for sub-Gaussian K-armed bandit (definition of asymptotically optimal)",
+   "bound": {
+    "notation": "limsup",
+    "expression": "sum_subopt(2*sigma**2/Delta_i)",
+    "expression_latex": "\\lim \\sup_{T\\rarrow\\infty} \\fr{\\EE\\Reg_T}{\\log(T)}  = \\sum_{i: \\Delta_i > 0} \\fr{2\\sigma^2}{\\Delta_i}",
+    "regime": "T -> infinity, normalized by log T"
+   },
+   "where": "Section 2, Eq. (2)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "c6d1de293f21",
+  "schema_version": "0.2",
+  "ontology_version": "bandits-0.2",
+  "date": "2026-10-19T15:52:37",
+  "source_chars": 90732,
+  "input_tokens": 64794,
+  "output_tokens": 5927,
+  "cost_usd_equiv": 0.5512322,
+  "status": "extracted"
+ }
+}

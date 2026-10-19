@@ -1,0 +1,376 @@
+{
+ "schema_version": "0.2",
+ "ontology_version": "bandits-0.2",
+ "paper": {
+  "title": "Improved Analysis of the Tsallis-INF Algorithm in Stochastically Constrained Adversarial Bandits and Stochastic Bandits with Adversarial Corruptions",
+  "arxiv_id": "2103.12487",
+  "arxiv_version": null,
+  "year": 2021,
+  "authors": [
+   "Saeed Masoudian",
+   "Yevgeny Seldin"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "(adaptive) adversarial regime, multi-armed bandit",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_adaptive",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "not_applicable",
+   "learner_knows": [
+    "K"
+   ],
+   "extras": [],
+   "parameters": {},
+   "unmapped": [
+    "losses in [0,1]^K"
+   ],
+   "definition_quote": "At the same time the environment selects a loss vector $\\ell_t \\in [0,1]^K$ and the learner only observes and suffers the loss $\\ell_{t,I_t}$. ... In the former the losses at round $t$ are generated arbitrarily, potentially depending on the preceding actions of the learner"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "adversarial regime with a (Delta,C,T) self-bounding constraint",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_adaptive",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "not_applicable",
+   "learner_knows": [
+    "K"
+   ],
+   "extras": [],
+   "parameters": {},
+   "unmapped": [
+    "Adversary constrained by (Delta,C,T) self-bounding constraint: Reg_T >= sum_t sum_i P(I_t=i) Delta_i - C at time T; includes stochastic, stochastically constrained adversarial, and stochastic bandits with adversarial corruptions (corruption 2C) as special cases",
+    "losses in [0,1]^K",
+    "C not known to learner"
+   ],
+   "definition_quote": "In the latter the adversary selects losses, such that for some $\\Delta \\in [0,1]^K$ and $C\\geq 0$ the \\regret of any algorithm at time $T$ satisfies \\overline{Reg}_T \\geq  \\lr{\\sum_{t = 1}^{T} \\sum_{i =1}^K \\PP(I_t = i)  \\Delta_i} - C."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Tsallis-INF (eta_t = 4/sqrt(t), reduced-variance loss estimators)",
+   "is_new": false,
+   "techniques": [
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Any algorithm satisfying Reg_T <= B sum_t sum_{i != i*} sqrt(E[w_{t,i}]/t) + D",
+   "is_new": false,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*sqrt((K-1)*T) + sqrt(T)/2 + 14*K*log(T) + 3*sqrt(K)/4 + 15",
+    "expression_latex": "2\\sqrt{(K-1)T}+\\frac{1}{2}\\sqrt{T}+14K\\log(T) + \\frac{3}{4}\\sqrt{K} + 15",
+    "regime": null
+   },
+   "symbols": {},
+   "extra_assumptions": [],
+   "is_new": true,
+   "source": {
+    "label": "theorem:2",
+    "number": "Theorem 2",
+    "quote": "The \\regret of Tsallis-INF with $\\eta_t = \\frac{4}{\\sqrt{t}}$ and reduced variance loss estimators defined in equation \\eqref{eq:rv}, in any adversarial bandit problem satisfies \\Reg \\leq 2\\sqrt{(K-1)T}+\\frac{1}{2}\\sqrt{T}+14K\\log(T) + \\frac{3}{4}\\sqrt{K} + 15."
+   },
+   "confidence": "high",
+   "notes": "Learning rate does not depend on T, so anytime."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(1/Delta_i)*(log(T*(K-1)/sum_subopt(1/Delta_i)**2) + 6) + 28*K*log(T) + 3*sqrt(K)/2 + 30 + C",
+    "expression_latex": "\\sum_{i\\neq i*} \\frac{1}{\\Delta_i}\\lr{\\lr{\\log \\frac{T(K-1)}{\\lr{\\sum_{i\\neq i^*} \\frac{1}{\\Delta_i}}^2}} + 6} + 28K \\log(T) + \\frac{3}{2}\\sqrt{K} + 30 + C",
+    "regime": null
+   },
+   "symbols": {},
+   "extra_assumptions": [
+    "Delta has a unique zero entry i* (unique best arm)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "eq:sto",
+    "number": "Theorem 2",
+    "quote": "Furthermore, if there exists a vector $\\Delta \\in [0,1]^K$ with a unique zero entry $i^*$ ... and a constant $C\\geq 0$, such that the pseudo-regret at time $T$ satisfies the $(\\Delta, C, T)$ self-bounding constraint ..., then the \\regret additionally satisfies: \\overline{Reg}_T \\leq \\sum_{i\\neq i*} \\frac{1}{\\Delta_i}\\lr{\\lr{\\log \\frac{T(K-1)}{\\lr{\\sum_{i\\neq i^*} \\frac{1}{\\Delta_i}}^2}} + 6} + 28K \\log(T) + \\frac{3}{2}\\sqrt{K} + 30 + C."
+   },
+   "confidence": "high",
+   "notes": "Self-bounding constraint is at time T only; algorithm itself is anytime."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(C*sum_subopt(1/Delta_i))*(sqrt(log(T*(K-1)/(C*sum_subopt(1/Delta_i)))) + 5) + sum_subopt(1/Delta_i)*(log(T*(K-1)/(C*sum_subopt(1/Delta_i))) + sqrt(2*log(T*(K-1)/(C*sum_subopt(1/Delta_i)))) + 2) + 3*sqrt(K)/2 + 28*K*log(T) + 30",
+    "expression_latex": "\\sqrt{C \\sum_{i\\neq i^*} \\frac{1}{\\Delta_i}}\\lr{\\sqrt{\\log\\frac{T(K-1)}{C\\sum_{i\\neq i^*} \\frac{1}{\\Delta_i}}} + 5} + Q",
+    "regime": "sum_{i!=i*} 1/Delta_i (log(T(K-1)/(sum 1/Delta_i)^2) + 1) <= C <= T(K-1)/sum_{i!=i*} 1/Delta_i"
+   },
+   "symbols": {},
+   "extra_assumptions": [
+    "Delta has a unique zero entry i* (unique best arm)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "eq:stoC",
+    "number": "Theorem 2",
+    "quote": "Moreover, for $\\sum_{i\\neq i*} \\frac{1}{\\Delta_i}\\lr{\\lr{\\log\\frac{T(K-1)}{(\\sum_{i\\neq i*} \\frac{1}{\\Delta_i})^2}}+1} \\leq C \\leq \\frac{T(K-1)}{\\sum_{i\\neq i*} \\frac{1}{\\Delta_i}}$ the regret also satisfies: \\Reg \\leq \\sqrt{C \\sum_{i\\neq i^*} \\frac{1}{\\Delta_i}}\\lr{\\sqrt{\\log\\frac{T(K-1)}{C\\sum_{i\\neq i^*} \\frac{1}{\\Delta_i}}} + 5} + Q, where $Q = ...$"
+   },
+   "confidence": "high",
+   "notes": "Q expanded into expression."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*B_c*sqrt((K-1)*T) + D_c",
+    "expression_latex": "2B\\sqrt{(K-1)T} + D",
+    "regime": null
+   },
+   "symbols": {
+    "B_c": "constant B in the condition Reg_T <= B sum_t sum_{i!=i*} sqrt(E[w_{t,i}]/t) + D",
+    "D_c": "additive constant D in that condition (not delay)"
+   },
+   "extra_assumptions": [
+    "algorithm satisfies Reg_T <= B sum_t sum_{i!=i*} sqrt(E[w_{t,i}]/t) + D",
+    "arbitrary problem domain with K actions"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:3",
+    "number": "Theorem 3",
+    "quote": "For any algorithm for an arbitrary problem domain with $K$ possible actions that satisfies \\overline{Reg}_T  \\leq B \\sum_{t=1}^T \\sum_{i \\neq i^* } \\sqrt{\\frac{\\EE[w_{t,i}]}{t}} + D, ... the \\regret of the algorithm in any adversarial environment satisfies \\Reg \\leq 2B\\sqrt{(K-1)T} + D."
+   },
+   "confidence": "medium",
+   "notes": "Meta-result for a class of algorithms; setting mapped to K-armed adversarial bandit though theorem allows arbitrary domain."
+  },
+  {
+   "id": "r5",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "B_c**2*sum_subopt(1/Delta_i)*(log(T*(K-1)/sum_subopt(1/Delta_i)**2) + 3 - 2*log(B_c)) + C + 2*D_c",
+    "expression_latex": "B^2 \\sum_{i\\neq i*} \\frac{1}{\\Delta_i} \\lr{\\lr{\\log\\frac{T(K-1)}{\\lr{\\sum_{i\\neq i^*}\\frac{1}{\\Delta_i}}^2}} + 3 - 2\\log B} + C + 2D",
+    "regime": null
+   },
+   "symbols": {
+    "B_c": "constant B in the sqrt condition",
+    "D_c": "additive constant D in the sqrt condition"
+   },
+   "extra_assumptions": [
+    "algorithm satisfies Reg_T <= B sum_t sum_{i!=i*} sqrt(E[w_{t,i}]/t) + D",
+    "Delta has a unique zero entry i*"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "eq:Bsto",
+    "number": "Theorem 3",
+    "quote": "Furthermore, if there exists a vector $\\Delta \\in [0,1]^K$ with a unique zero entry $i^*$ ... then the \\regret additionally satisfies: \\overline{Reg}_T \\leq B^2 \\sum_{i\\neq i*} \\frac{1}{\\Delta_i} \\lr{\\lr{\\log\\frac{T(K-1)}{\\lr{\\sum_{i\\neq i^*}\\frac{1}{\\Delta_i}}^2}} + 3 - 2\\log B} + C + 2D."
+   },
+   "confidence": "medium",
+   "notes": "Meta-result for any algorithm satisfying the condition."
+  },
+  {
+   "id": "r6",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "B_c*sqrt(C*sum_subopt(1/Delta_i))*(sqrt(log(T*(K-1)/(C*sum_subopt(1/Delta_i)))) + 2) + B_c**2*sum_subopt(1/Delta_i)*(log(T*(K-1)/(C*sum_subopt(1/Delta_i))) + sqrt(2*log(T*(K-1)/(C*sum_subopt(1/Delta_i)))) + 2) + 2*D_c",
+    "expression_latex": "B\\sqrt{C \\sum_{i\\neq i^*}\\frac{1}{\\Delta_i}} \\lr{\\sqrt{\\log\\frac{T(K-1)}{C\\sum_{i\\neq i^*}\\frac{1}{\\Delta_i}}} + 2} + M",
+    "regime": "B^2 sum 1/Delta_i (log(T(K-1)/(B^2 (sum 1/Delta_i)^2)) + 1) <= C <= T(K-1)/sum 1/Delta_i"
+   },
+   "symbols": {
+    "B_c": "constant B in the sqrt condition",
+    "D_c": "additive constant D in the sqrt condition"
+   },
+   "extra_assumptions": [
+    "algorithm satisfies Reg_T <= B sum_t sum_{i!=i*} sqrt(E[w_{t,i}]/t) + D",
+    "Delta has a unique zero entry i*"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "eq:BstoC",
+    "number": "Theorem 3",
+    "quote": "Moreover, for $B^2 \\sum_{i\\neq i*} \\frac{1}{\\Delta_i}\\lr{\\lr{\\log\\frac{T(K-1)}{B^2(\\sum_{i\\neq i*} \\frac{1}{\\Delta_i})^2}}+1} \\leq C \\leq \\frac{T(K-1)}{\\sum_{i\\neq i*} \\frac{1}{\\Delta_i}}$ the \\regret also satisfies: \\overline{Reg}_T \\leq B\\sqrt{C \\sum_{i\\neq i^*}\\frac{1}{\\Delta_i}} \\lr{\\sqrt{\\log\\frac{T(K-1)}{C\\sum_{i\\neq i^*}\\frac{1}{\\Delta_i}}} + 2} + M"
+   },
+   "confidence": "medium",
+   "notes": "M expanded into expression."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "zimmert2020",
+   "cited_title": "Tsallis-INF: An optimal algorithm for stochastic and adversarial bandits",
+   "algorithm_name": "Tsallis-INF",
+   "side": "upper",
+   "setting_description": "adversarial (adaptive) K-armed bandit, losses in [0,1]",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*sqrt(K*T) + 10*K*log(T) + 16",
+    "expression_latex": "2\\sqrt{KT}+10K\\log(T)+16",
+    "regime": null
+   },
+   "where": "Theorem 1"
+  },
+  {
+   "cited_key": "zimmert2020",
+   "cited_title": "Tsallis-INF: An optimal algorithm for stochastic and adversarial bandits",
+   "algorithm_name": "Tsallis-INF",
+   "side": "upper",
+   "setting_description": "adversarial regime with (Delta,C,T) self-bounding constraint, unique best arm",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt((log(T)+3)/Delta_i) + 28*K*log(T) + 1/Delta_min + 3*sqrt(K)/2 + 32 + C",
+    "expression_latex": "\\left(\\sum_{i\\neq i^*}\\frac{\\log(T)+3}{\\Delta_i} \\right) + 28K\\log(T) + \\frac{1}{\\Delta_{min}} + \\frac{3}{2}\\sqrt{K} + 32 + C",
+    "regime": null
+   },
+   "where": "Theorem 1"
+  },
+  {
+   "cited_key": "zimmert2020",
+   "cited_title": "Tsallis-INF: An optimal algorithm for stochastic and adversarial bandits",
+   "algorithm_name": "Tsallis-INF",
+   "side": "upper",
+   "setting_description": "adversarial regime with (Delta,C,T) self-bounding constraint, unique best arm, large C",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*sqrt((sum_subopt((log(T)+3)/Delta_i) + 1/Delta_min)*C) + 28*K*log(T) + 3*sqrt(K)/2 + 32",
+    "expression_latex": "2\\sqrt{\\left(\\sum_{i\\neq i^*}\\frac{\\log(T)+3}{\\Delta_i} + \\frac{1}{\\Delta_{min}} \\right)C} + 28K\\log(T) + \\frac{3}{2}\\sqrt{K} + 32",
+    "regime": "C >= sum_{i!=i*}(log T+3)/Delta_i + 1/Delta_min"
+   },
+   "where": "Theorem 1"
+  },
+  {
+   "cited_key": "lykouris2018",
+   "cited_title": "Stochastic bandits robust to adversarial corruptions",
+   "algorithm_name": null,
+   "side": "upper",
+   "setting_description": "stochastic bandits with adversarial corruptions of magnitude C",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt((K*C + log(T))/Delta_i)*log(T)",
+    "expression_latex": "\\Ocal\\left( \\sum_{i: \\Delta_i > 0} \\frac{KC+\\log(T)}{\\Delta_i}\\log(T)\\right)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "gupta2019",
+   "cited_title": "Better algorithms for stochastic bandits with adversarial corruptions",
+   "algorithm_name": null,
+   "side": "upper",
+   "setting_description": "stochastic bandits with adversarial corruptions of magnitude C",
+   "bound": {
+    "notation": "O",
+    "expression": "K*C + sum_subopt(log(K*T)**2/Delta_i)",
+    "expression_latex": "\\Ocal\\left(KC + \\sum_{i: \\Delta_i > 0} \\frac{1}{\\Delta_i}\\log^2(KT)\\right)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "jin-luo-2020",
+   "cited_title": "Simultaneously learning stochastic and adversarial episodic mdps with known transition",
+   "algorithm_name": null,
+   "side": "upper",
+   "setting_description": "episodic MDPs with known transition, stochastic with adversarial corruptions",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T) + sqrt(C*log(T))",
+    "expression_latex": "\\Ocal\\lr{\\lr{\\log T} + \\sqrt{C \\log(T)}}",
+    "regime": null
+   },
+   "where": "Section 4.2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "c6d1de293f21",
+  "schema_version": "0.2",
+  "ontology_version": "bandits-0.2",
+  "date": "2026-10-19T15:54:42",
+  "source_chars": 61278,
+  "input_tokens": 45398,
+  "output_tokens": 7908,
+  "cost_usd_equiv": 0.4356842,
+  "status": "extracted"
+ }
+}

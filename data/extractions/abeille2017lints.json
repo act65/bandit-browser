@@ -1,0 +1,248 @@
+{
+ "schema_version": "0.2",
+ "ontology_version": "bandits-0.2",
+ "paper": {
+  "title": "Linear Thompson Sampling Revisited",
+  "arxiv_id": "1611.06534",
+  "arxiv_version": null,
+  "year": 2016,
+  "authors": [
+   "Marc Abeille",
+   "Alessandro Lazaric"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "stochastic linear bandit",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "S",
+    "sigma",
+    "d"
+   ],
+   "extras": [],
+   "parameters": {},
+   "unmapped": [
+    "Arm set is an arbitrary compact (finite or infinite) subset of R^d with ||x|| <= 1",
+    "Noise is a martingale difference sequence, conditionally R-subgaussian"
+   ],
+   "definition_quote": "Let $\\X \\subset \\Re^d$ be an arbitrary (finite or infinite) set of arms. When an arm $x\\in\\X$ is pulled, a reward is generated as $r(x) = x^\\transp \\theta^\\star + \\xi$, where $\\theta^\\star\\in\\Re^d$ is a fixed but unknown parameter and $\\xi$ is a zero-mean noise. ... The arm set $\\X$ is a bounded closed (and hence compact) subset of $\\mathbb{R}^d$ such that $\\|x\\| \\leq 1$ ... There exists $S\\in\\Re^+$ such that $\\|\\theta^\\star\\| \\leq S$ and $S$ is known."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "generalized linear bandit (GLM)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "generalized_linear",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "S",
+    "sigma",
+    "d"
+   ],
+   "extras": [],
+   "parameters": {},
+   "unmapped": [
+    "Link function mu continuously differentiable, k_mu-Lipschitz, derivative lower bounded by c_mu > 0",
+    "Arm set compact subset of unit ball"
+   ],
+   "definition_quote": "Every time an arm $x\\in\\X$ is pulled, a reward is generated as $r(x) = \\mu(x^\\transp \\theta^\\star) + \\xi$, where $\\mu$ is the so-called \\textit{link function} ... The link function $\\mu : \\mathbb{R} \\rightarrow \\mathbb{R}$ is continuously differentiable, Lipschitz with constant $k_\\mu$ and such that $c_\\mu = \\inf_{\\theta \\in \\mathbb{R}^d, x \\in \\mathcal{X}} (x^\\transp \\theta) > 0$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Linear Thompson Sampling (TS, with oversampling distribution D^TS)",
+   "is_new": false,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "delta",
+    "S",
+    "sigma",
+    "lam"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "TS for generalized linear bandit",
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "delta",
+    "S",
+    "sigma",
+    "c_mu"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "(beta_T + gamma_T*(1 + 4/p))*sqrt(2*T*d*log(1 + T/lam)) + 4*gamma_T/p*sqrt(8*T/lam*log(4/delta))",
+    "expression_latex": "\\big(\\beta_T(\\delta^\\prime) +  \\gamma_T(\\delta^\\prime)(1 + \\frac{4}{p}) \\big) \\sqrt{ 2 T d \\log \\big( 1 + \\frac{T}{\\lambda} \\big) } + \\frac{4 \\gamma_T(\\delta^\\prime)}{p} \\sqrt{\\frac{8 T } {\\lambda} \\log \\frac{4}{\\delta} }",
+    "regime": "T >= 1/(2p)"
+   },
+   "symbols": {
+    "beta_T": "sigma*sqrt(2*log((lam+T)^(d/2)*lam^(-d/2)/delta')) + sqrt(lam)*S, with delta' = delta/(4T)",
+    "gamma_T": "beta_T*sqrt(c*d*log(c'*d/delta')), c,c' concentration constants of D^TS",
+    "p": "anti-concentration probability of the TS sampling distribution D^TS"
+   },
+   "extra_assumptions": [
+    "||x|| <= 1 for all arms",
+    "||theta*|| <= S known",
+    "sampling distribution satisfies concentration/anti-concentration (Def. 1)",
+    "T >= 1/(2p) assumed in proof of Lemma 3"
+   ],
+   "is_new": false,
+   "source": {
+    "label": "th:regret_ts",
+    "number": "Theorem 1",
+    "quote": "Under assumptions~\\ref{asm:arm.set},\\ref{asm:param.set},\\ref{asm:subgaussian}, the regret of \\ts is bounded w.p. $1-\\delta$ as ($\\delta^\\prime = \\frac{\\delta}{4T}$) R(T) \\leq \\big(\\beta_T(\\delta^\\prime) +  \\gamma_T(\\delta^\\prime)(1 + \\frac{4}{p}) \\big) \\sqrt{ 2 T d \\log \\big( 1 + \\frac{T}{\\lambda} \\big) } + \\frac{4 \\gamma_T(\\delta^\\prime)}{p} \\sqrt{\\frac{8 T } {\\lambda} \\log \\frac{4}{\\delta} }."
+   },
+   "confidence": "medium",
+   "notes": "Paper presents this as an alternative proof matching Agrawal & Goyal; is_new set false since the bound itself is not new, though the proof is. R (noise) mapped to sigma. Order Õ(d^{3/2} sqrt(T))."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**(3/2)*sqrt(T)",
+    "expression_latex": "\\wt{O}(d^{3/2}\\sqrt{T})",
+    "regime": null
+   },
+   "symbols": {},
+   "extra_assumptions": [],
+   "is_new": false,
+   "source": {
+    "label": "th:regret_ts",
+    "number": "Theorem 1",
+    "quote": "As anticipated in introduction, this bound is of order $\\wt{O}(d^{3/2}\\sqrt{T})$ and it entirely matches the result of~\\citet{agrawal2012thompson}."
+   },
+   "confidence": "medium",
+   "notes": "Order-of-magnitude restatement of Theorem 1 given in text."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "k_mu/c_mu*(beta_T + gamma_T*(1 + 2/p))*sqrt(2*T*d*log(1 + T/lam)) + 2*k_mu*gamma_T/(p*c_mu)*sqrt(8*T/lam*log(4/delta))",
+    "expression_latex": "\\frac{k_\\mu}{c_\\mu} \\big(\\beta_T(\\delta^\\prime) +  \\gamma_T(\\delta^\\prime)(1 + 2/p) \\big) \\sqrt{ 2 T d \\log \\big( 1 + \\frac{T}{\\lambda} \\big) } + \\frac{2 k_\\mu\\gamma_T(\\delta^\\prime)}{p c_\\mu} \\sqrt{\\frac{8 T } {\\lambda} \\log \\frac{4}{\\delta} }",
+    "regime": null
+   },
+   "symbols": {
+    "k_mu": "Lipschitz constant of link function",
+    "c_mu": "lower bound on derivative of link function",
+    "beta_T": "sigma*sqrt(2*log((lam+T)^(d/2)*lam^(-d/2)/delta')) + sqrt(lam)*S, delta'=delta/(4T)",
+    "gamma_T": "beta_T*sqrt(c*d*log(c'*d/delta'))",
+    "p": "anti-concentration probability of D^TS"
+   },
+   "extra_assumptions": [
+    "Assumption 4 on link function",
+    "||x||<=1, ||theta*||<=S"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "p:generalized_regret",
+    "number": "Lemma 4",
+    "quote": "Under assumptions~\\ref{asm:arm.set},\\ref{asm:param.set},\\ref{asm:subgaussian} and~\\ref{asm:link.function}, the cumulative regret of \\ts over $T$ steps is bounded as R^{\\text{GLM}}(T) \\leq \\frac{k_\\mu}{c_\\mu} \\big(\\beta_T(\\delta^\\prime) +  \\gamma_T(\\delta^\\prime)(1 + 2/p) \\big) \\sqrt{ 2 T d \\log \\big( 1 + \\frac{T}{\\lambda} \\big) } + \\frac{2 k_\\mu\\gamma_T(\\delta^\\prime)}{p c_\\mu} \\sqrt{\\frac{8 T } {\\lambda} \\log \\frac{4}{\\delta} } with probability $1-\\delta$ where $\\delta^\\prime = \\frac{\\delta}{4T}$."
+   },
+   "confidence": "medium",
+   "notes": "Lemma numbering inferred from shared counter (4th lemma). Proof is a sketch; constants differ from Theorem 1 (2/p vs 4/p) as stated. Possibly whether gamma_T includes 1/c_mu factor is ambiguous."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "agrawal2012thompson",
+   "cited_title": "Thompson sampling for contextual bandits with linear payoffs",
+   "algorithm_name": "Linear Thompson Sampling",
+   "side": "upper",
+   "setting_description": "linear (contextual) bandit, frequentist regret",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**(3/2)*sqrt(T)",
+    "expression_latex": "\\wt O \\big(d^{3/2} \\sqrt{T} \\big)",
+    "regime": null
+   },
+   "where": "Section 1"
+  },
+  {
+   "cited_key": "abbasi-yadkori2011improved",
+   "cited_title": "Improved algorithms for linear stochastic bandits",
+   "algorithm_name": "OFUL",
+   "side": "upper",
+   "setting_description": "stochastic linear bandit",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\tilde{O} \\big( d \\sqrt{T} \\big)",
+    "regime": null
+   },
+   "where": "Section 7 (Discussion)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "c6d1de293f21",
+  "schema_version": "0.2",
+  "ontology_version": "bandits-0.2",
+  "date": "2026-10-19T15:55:17",
+  "source_chars": 107429,
+  "input_tokens": 65279,
+  "output_tokens": 5079,
+  "cost_usd_equiv": 0.5381522,
+  "status": "extracted"
+ }
+}

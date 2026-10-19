@@ -1,0 +1,511 @@
+{
+ "schema_version": "0.2",
+ "ontology_version": "bandits-0.2",
+ "paper": {
+  "title": "On Frequentist Regret of Linear Thompson Sampling",
+  "arxiv_id": "2006.06790",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Nima Hamidi",
+   "Mohsen Bayati"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Stochastic linear bandit with changing action sets",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T"
+   ],
+   "extras": [],
+   "parameters": {},
+   "unmapped": [
+    "Action sets A_t are random compact subsets of R^d that change over time",
+    "Parameter Theta* may be random (Bayesian regret); frequentist regret obtained with point-mass prior",
+    "||A||_2 <= a for all actions a.s.; ||Theta*||_2 <= theta (used in confidence radius rho)"
+   ],
+   "definition_quote": "Let $(\\ArmSet_t)_{t=1}^T$ be a sequence of $T$ random compact subsets of $\\IR^d$ where $T\\in\\IN$ is the time horizon. We further assume that $\\Norm{\\Arm}_2\\leq\\ArmBound$ for all $\\Arm\\in\\ArmSet_t$ almost surely. ... receives a stochastic reward $\\RewardValue_t=\\Inner[\\big]{\\Param,\\ChosenArm_t}+\\eps_t$ where $\\eps_t$ is the reward noise and $\\Param$ is an unknown (and potentially random) vector of parameters."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Examples 1 and 2: linear bandit with Gaussian prior/noise mismatched to LinTS's assumed N(0,1)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "subgaussian",
+   "learner_knows": [],
+   "extras": [],
+   "parameters": {},
+   "unmapped": [
+    "Bayesian regret with Gaussian prior Theta* ~ N(0, sigma^2 I) (Ex.1) or N(mu 1, sigma^2 I) / N(0, sigma^2 I + rho 11^T) (Ex.2)",
+    "Gaussian noise N(0, tau^2); LinTS assumes prior and noise variance 1 (misspecified)",
+    "Action sets constructed in advance (Example 1: changing; Example 2: fixed set {0, A', A})",
+    "Lower bounds are specific to LinTS without inflation"
+   ],
+   "definition_quote": "Fix $\\sigma^2,\\tau^2\\geq 0$ and let $\\Param\\sim\\Normal{0,\\sigma^2\\II_2}$ be the vector of unobserved parameters. ... Assume that reward $Y_t=\\Param_t+\\eps_t$ is revealed to the algorithm where $\\eps_t\\sim\\Normal{0,\\tau^2}$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "LinTS (Linear Thompson sampling with inflation iota)",
+   "is_new": false,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "iota"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "TS-AI (Thompson Sampling with Adaptive Inflation)",
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "iota",
+    "Psi (thinness threshold)",
+    "T"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "ROFUL (Randomized OFUL, modified)",
+   "is_new": false,
+   "techniques": [
+    "optimism",
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "worth functions",
+    "Psi"
+   ]
+  },
+  {
+   "id": "a4",
+   "name": "OFUL with smaller confidence sets (ROFUL instance)",
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "nu",
+    "omega",
+    "Psi",
+    "rho"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "rho*iota/p_opt*sqrt(d*T)",
+    "expression_latex": "\\OrderLog*{\\frac{\\Radius\\Inflation}{\\OptProb}\\sqrt{\\Dim T}}",
+    "regime": null
+   },
+   "symbols": {
+    "rho": "confidence radius with ||hat Theta_t - Theta*||_{Sigma_t^{-1}} <= rho",
+    "iota": "posterior inflation parameter",
+    "p_opt": "lower bound on probability of optimism"
+   },
+   "extra_assumptions": [
+    "Optimism condition: P(sup <A,tilde Theta_t> >= sup <A,Theta*> | Theta*, F_t) >= p whenever ||hat Theta_t - Theta*||_{Sigma_t^{-1}} <= rho"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:expected-regret-bound",
+    "number": "Theorem 1",
+    "quote": "If \\cref{alg:proper-ts} satisfies \\Prob*{ \\sup_{\\Arm\\in\\ArmSet_t}\\Inner{\\Arm,\\TsSample_t} \\geq \\sup_{\\Arm\\in\\ArmSet_t}\\Inner{\\Arm,\\Param} \\Given \\Param,\\HistoryPlus_t } \\geq \\OptProb, whenever $\\Norm{\\Estimator_t-\\Param}_{\\SymCovMatrix_t^{-1}}\\leq\\Radius$, we then have \\Regret(T,\\PolicyTS) \\leq \\OrderLog*{\\frac{\\Radius\\Inflation}{\\OptProb}\\sqrt{\\Dim T}}."
+   },
+   "confidence": "medium",
+   "notes": "Regret defined as Bayesian regret (expectation including prior). Conditional sufficient-condition result."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T",
+    "expression_latex": "\\Regret(T,\\PolicyTS) \\geq \\LowerOrder{T}",
+    "regime": "sigma != tau and T <= exp(Omega(d))"
+   },
+   "symbols": {
+    "tau": "true noise std",
+    "sigma": "true prior std (in this paper sigma is the prior std, not noise)"
+   },
+   "extra_assumptions": [
+    "Example 1 action sets",
+    "LinTS with iota=1, lambda=1 (assumes unit prior and noise variance)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:noise-reduction-failure",
+    "number": "Proposition 1",
+    "quote": "In Example 1, when $\\sigma\\neq\\tau$ and $T\\leq\\exp(\\LowerOrder{d})$, we have $\\Regret(T,\\PolicyTS) \\geq \\LowerOrder{T}\\,.$"
+   },
+   "confidence": "high",
+   "notes": "Lower bound applies to LinTS without inflation only."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T",
+    "expression_latex": "\\Regret(T,\\PolicyTS)\\geq\\LowerOrder{T}",
+    "regime": "d = Omega(log T), sigma != tau"
+   },
+   "symbols": {},
+   "extra_assumptions": [
+    "Example 1 action sets",
+    "LinTS without inflation"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:noise-reduction-failure",
+    "number": "Corollary 1",
+    "quote": "In Example 1, when $d=\\LowerOrder{\\log T}$ and $\\sigma\\neq\\tau$, we have \\Regret(T,\\PolicyTS) \\geq \\LowerOrder{T}\\,."
+   },
+   "confidence": "high",
+   "notes": "Specific to LinTS."
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T*sqrt(d)",
+    "expression_latex": "\\Regret(T,\\PolicyTS)\\geq\\LowerOrder{T\\sqrt d}",
+    "regime": "T <= exp(Omega(d)), d sufficiently large, fixed mu, sigma > 0"
+   },
+   "symbols": {
+    "mu": "prior mean shift"
+   },
+   "extra_assumptions": [
+    "Example 2: fixed action set {0, A', A}, prior N(mu 1, sigma^2 I)",
+    "LinTS without inflation"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:mean-shift-failure",
+    "number": "Proposition 2 (item 5)",
+    "quote": "For fixed $\\mu,\\sigma>0$, and for sufficiently large $d$, we have ... For all $T\\leq\\exp(\\LowerOrder{d})$, $\\Regret(T,\\PolicyTS)\\geq\\LowerOrder{T\\sqrt d}$."
+   },
+   "confidence": "high",
+   "notes": "Actions have norm up to sqrt(3), rewards scale with sqrt(d)."
+  },
+  {
+   "id": "r5",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T",
+    "expression_latex": "\\Regret(T,\\PolicyTS)\\geq\\LowerOrder{T}",
+    "regime": "d = Omega(log T)"
+   },
+   "symbols": {},
+   "extra_assumptions": [
+    "Example 2, prior N(mu 1, sigma^2 I) or N(0, sigma^2 I + rho 11^T)",
+    "LinTS without inflation"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:mean-shift-failure",
+    "number": "Corollary 2",
+    "quote": "In Example 2, when $d=\\LowerOrder{\\log T}$ and the true prior $\\Prior$ is either $\\Normal{\\mu\\One_{3d},\\sigma^2\\II_{3d}}$ or $\\Prior=\\Normal{0,\\sigma^2\\II_{3d}+\\rho\\One_{3d}\\One_{3d}^\\top}$, we have \\Regret(T,\\PolicyTS) \\geq \\LowerOrder{T}\\,."
+   },
+   "confidence": "high",
+   "notes": "Specific to LinTS."
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "iota*d*sqrt(T) + 2*N_thin",
+    "expression_latex": "\\OrderLog{\\Inflation\\Dim\\sqrt{T}} + 2 \\sum_{t=1}^{T}\\Indicator(\\Thinness(\\SymCovMatrix_t)>\\ThinnessBound)",
+    "regime": "iota >= (nu*Psi/omega)*O_tilde(1); probability >= 1-3/T"
+   },
+   "symbols": {
+    "iota": "inflation parameter",
+    "N_thin": "number of rounds with thinness psi(Sigma_t) > Psi",
+    "nu": "diversity parameter (Assumption 1)",
+    "omega": "explore ratio (Assumption 2)",
+    "Psi": "thinness threshold"
+   },
+   "extra_assumptions": [
+    "<A,Theta*> in [-1,1] a.s.",
+    "Assumption 1 (optimal-arm diversity)",
+    "Assumption 2 (random-friendly optimal arm)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:lin-ts-regret-informal",
+    "number": "Theorem 2 (Informal)",
+    "quote": "Assume that $\\Inner{\\Arm,\\Param}\\in[-1,1]$ for all $\\Arm\\in\\ArmSet_t$ almost surely. Then, under \\cref{as:optimal-diversity,as:optimal-random-friendly}, we have \\sum_{t=1}^T \\Inner{\\OptimalArm_t,\\Param}-\\Inner{\\ChosenArm_t,\\Param} \\leq \\OrderLog{\\Inflation\\Dim\\sqrt{T}} + 2 \\sum_{t=1}^{T}\\Indicator(\\Thinness(\\SymCovMatrix_t)>\\ThinnessBound)\\,, with probability at least $1-\\frac3T$, provided that ... $\\Inflation\\geq\\frac{\\DivParam\\ThinnessBound}{\\ExploreRatio}\\cdot\\OrderLog{1}$."
+   },
+   "confidence": "medium",
+   "notes": "Informal statement; bound contains data-dependent term N_thin. Realized regret sum w.r.t. means."
+  },
+  {
+   "id": "r7",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*(rho_star + rho_worth)*sqrt(T)/p_opt*(sqrt(d*log(1 + lam*T*L_feat**2/d)) + sqrt(log(T))) + 2*N_thin",
+    "expression_latex": "\\frac{4(\\RadiusParam+\\RadiusWorth)\\sqrt T}{\\OptProb} \\left( \\sqrt{\\Dim\\log\\left(1+\\frac{\\lambda T\\ArmBound^2}{\\Dim}\\right)} + \\sqrt{\\log T} \\right) +2\\sum_{t=1}^{T}\\Indicator(\\Thinness(\\SymCovMatrix_t)>\\ThinnessBound)",
+    "regime": "probability >= 1-3/T"
+   },
+   "symbols": {
+    "rho_star": "typical-condition radius for Theta*",
+    "rho_worth": "worth-function radius",
+    "p_opt": "optimism probability of worth function",
+    "N_thin": "number of rounds with thinness psi(Sigma_t) > Psi"
+   },
+   "extra_assumptions": [
+    "Worth function optimistic with parameter p",
+    "Assumptions 1 and 2",
+    "<A,Theta*> in [-1,1] a.s."
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:lin-ts-regret",
+    "number": "Theorem 3",
+    "quote": "Let $\\Worth_t(\\cdot)$ be optimistic with parameter $\\OptProb$ whenever $\\ITypical_t=1$, $\\ITypicalM_t=1$, and $\\IWellPosed_t=1$. When \\cref{as:optimal-diversity,as:optimal-random-friendly} hold, and $\\Inner{\\Arm,\\Param}\\in[-1,1]$, ... Then, we have that \\sum_{t=1}^{T}\\Inner[\\big]{\\Param,\\OptimalArm_t}-\\Inner[\\big]{\\Param,\\ChosenArm_t} \\leq \\frac{4(\\RadiusParam+\\RadiusWorth)\\sqrt T}{\\OptProb} (...) +2\\sum_{t=1}^{T}\\Indicator(\\Thinness(\\SymCovMatrix_t)>\\ThinnessBound)\\,, with probability at least $1-\\frac3T$."
+   },
+   "confidence": "medium",
+   "notes": "Generic ROFUL meta-algorithm bound. L_feat = a (action norm bound)."
+  },
+  {
+   "id": "r8",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*(rho_star + rho_worth)*sqrt(T)/Phi(-1)*(sqrt(d*log(1 + lam*T*L_feat**2/d)) + sqrt(log(T))) + 2*N_thin",
+    "expression_latex": "\\frac{4(\\RadiusParam+\\RadiusWorth)\\sqrt T}{\\Phi(-1)} \\left( \\sqrt{\\Dim\\log\\left(1+\\frac{\\lambda T\\ArmBound^2}{\\Dim}\\right)} + \\sqrt{\\log T} \\right) +2\\sum_{t=1}^{T}\\Indicator(\\Thinness(\\SymCovMatrix_t)>\\ThinnessBound)",
+    "regime": "iota = (nu*Psi/omega)*rho/sqrt(d), rho_worth/iota = Omega(sqrt(log T)); probability >= 1-3/T"
+   },
+   "symbols": {
+    "rho_star": "typical-condition radius for Theta*",
+    "rho_worth": "worth-function radius",
+    "Phi": "standard normal CDF",
+    "N_thin": "number of rounds with thinness psi(Sigma_t) > Psi"
+   },
+   "extra_assumptions": [
+    "Assumptions 1 and 2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:lin-ts-regret",
+    "number": "Corollary 5",
+    "quote": "Consider \\LinTS{} with inflation parameter $\\Inflation$ satisfying \\Inflation=\\frac{\\DivParam\\ThinnessBound}{\\ExploreRatio}\\cdot\\frac{\\Radius}{\\sqrt{d}} and \\frac{\\RadiusWorth}{\\Inflation}=\\LowerOrder{\\sqrt{\\log T}}. Then, when \\cref{as:optimal-diversity,as:optimal-random-friendly} hold, the regret is at most ... with probability at least $1-\\frac3T$."
+   },
+   "confidence": "medium",
+   "notes": "Corollary numbering approximate. LinTS run within ROFUL (arbitrary action when thinness exceeds Psi)."
+  },
+  {
+   "id": "r9",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a4",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*(rho_star + rho_worth)*sqrt(T)*(sqrt(d*log(1 + lam*T*L_feat**2/d)) + sqrt(log(T))) + 2*N_thin",
+    "expression_latex": "4(\\RadiusParam+\\RadiusWorth)\\sqrt T \\left( \\sqrt{\\Dim\\log\\left(1+\\frac{\\lambda T\\ArmBound^2}{\\Dim}\\right)} + \\sqrt{\\log T} \\right) +2\\sum_{t=1}^{T}\\Indicator(\\Thinness(\\SymCovMatrix_t)>\\ThinnessBound)",
+    "regime": "rho_worth = (nu*Psi/omega)*rho/sqrt(d); probability >= 1-3/T"
+   },
+   "symbols": {
+    "rho_star": "typical-condition radius for Theta*",
+    "rho_worth": "reduced confidence width of OFUL",
+    "N_thin": "number of rounds with thinness psi(Sigma_t) > Psi"
+   },
+   "extra_assumptions": [
+    "Assumptions 1 and 2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:oful-regret",
+    "number": "Corollary 6",
+    "quote": "Consider a version of OFUL which is an instance of ROFUL with worth function $\\Worth_t(\\Arm)=\\Inner{\\Arm,\\Estimator_t}+\\RadiusWorth\\Norm{\\Arm}_{\\SymCovMatrix_t}$ such that $\\RadiusWorth=\\frac{\\DivParam\\ThinnessBound}{\\ExploreRatio}\\cdot\\frac{\\Radius}{\\sqrt{d}}$. Then, when \\cref{as:optimal-diversity,as:optimal-random-friendly} hold, the regret is at most ... with probability at least $1-\\frac3T$."
+   },
+   "confidence": "medium",
+   "notes": "Corollary numbering approximate."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "russo2014learning",
+   "cited_title": "Learning to optimize via posterior sampling",
+   "algorithm_name": "LinTS",
+   "side": "upper",
+   "setting_description": "Stochastic linear bandit, Bayesian regret with correct prior and noise",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\OrderLog[\\big]{d\\sqrt{T}}",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "agrawal2013thompson",
+   "cited_title": "Thompson sampling for contextual bandits with linear payoffs",
+   "algorithm_name": "Frequentist LinTS (inflated posterior)",
+   "side": "upper",
+   "setting_description": "Stochastic linear bandit, frequentist regret",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(d*T)",
+    "expression_latex": "\\OrderLog[\\big]{d\\sqrt{dT}}",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "abeille2017linear",
+   "cited_title": "Linear thompson sampling revisited",
+   "algorithm_name": "Frequentist LinTS (inflated posterior)",
+   "side": "upper",
+   "setting_description": "Stochastic linear bandit, frequentist regret",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(d*T)",
+    "expression_latex": "\\OrderLog[\\big]{d\\sqrt{dT}}",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "abbasi2011improved",
+   "cited_title": "Improved algorithms for linear stochastic bandits",
+   "algorithm_name": "OFUL",
+   "side": "upper",
+   "setting_description": "Stochastic linear bandit, frequentist regret",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\OrderLog[\\big]{d\\sqrt{T}}",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "dani2008stochastic",
+   "cited_title": "Stochastic linear optimization under bandit feedback",
+   "algorithm_name": null,
+   "side": "lower",
+   "setting_description": "Stochastic linear bandit, minimax lower bound (optimism-based approach minimax optimal up to logs)",
+   "bound": {
+    "notation": "Omega_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "d\\sqrt{T}",
+    "regime": null
+   },
+   "where": "Introduction"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "c6d1de293f21",
+  "schema_version": "0.2",
+  "ontology_version": "bandits-0.2",
+  "date": "2026-10-19T15:56:00",
+  "source_chars": 107206,
+  "input_tokens": 67001,
+  "output_tokens": 10299,
+  "cost_usd_equiv": 0.6563282,
+  "status": "extracted"
+ }
+}

@@ -11,7 +11,7 @@ Theory papers state results of a regular shape: *in setting S, algorithm X achie
 
 Bandits are the test domain; the goal is a domain-agnostic engine for ML, CS and maths theory.
 
-**Status:** design phase. No code yet.
+**Status:** Phase 1 (pilot). 59-paper corpus; 53 papers extracted by an LLM (354 results across 60 canonical settings, not yet human-verified); ground truth from Lattimore's *Bandit Convex Optimisation*. Browse at <https://act65.github.io/bandit-browser/>.
 
 ## Documents
 
@@ -22,6 +22,10 @@ Bandits are the test domain; the goal is a domain-agnostic engine for ML, CS and
 | [related-work.md](related-work.md) | Existing databases, zoos and extraction systems, and how this differs |
 | [schema.md](schema.md) | Draft LLM extraction prompt, output schema and bandits ontology v0.1 |
 | [plan.md](plan.md) | Phased plan with go / no-go checks |
+| [pipeline/README.md](pipeline/README.md) | Fetch → preprocess → extract → validate |
+| [site/README.md](site/README.md) | Static site build and GitHub Pages deploy |
+| [ontology/](ontology/) | Machine-readable ontology versions and review notes |
+| [data/](data/) | Extractions, ground truth, validation report |
 
 ## License
 
