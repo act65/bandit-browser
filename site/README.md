@@ -1,6 +1,6 @@
 # Site
 
-A static browser over the data. `build.py` reads the data files and writes plain HTML to `_site/` (gitignored). Display only: no bound comparison or inference.
+A static browser over the data. `build.py` reads the data files and writes plain HTML to `_site/` (gitignored). Display only: no bound comparison or inference happens here; inherited bounds are read from `data/canonical/inferred.json` (written by `pipeline/infer.py`) and shown separately from extracted ones.
 
 ## Build locally
 
@@ -22,7 +22,8 @@ Inputs (any may be missing; the build still succeeds):
 ## Layout
 
 - `build.py`: pages and the data model (stdlib + PyYAML)
-- `ontology.py`: dimension list, readable value labels and setting names, transitive `order` closure
+- `ontology.py`: dimension list, readable value labels and setting names
+- `pipeline/order.py` (imported via `sys.path`): the specialisation order `Order.leq`, the single source of truth for directed edges
 - `bounds.py`: canonical SymPy bound string -> LaTeX (`sympy.latex` with `sum_subopt`/`sum_arms`, symbol names from `variables.yaml`, notation wrappers O/Õ/Ω/Θ, lim inf/lim sup as ratios to log T). If parsing fails the paper's `expression_latex` is shown instead, muted. The paper's LaTeX is always under a result's *details*.
 - `static/style.css`, `static/site.js`: styling (light and dark), KaTeX rendering, filter boxes, settings grouping
 - `static/graph.js`: the settings graph (`graph.html`)
@@ -32,7 +33,7 @@ External scripts, all pinned: KaTeX 0.16.11 (jsdelivr), Cytoscape.js 3.30.2 and 
 
 ## Neighbours and the graph
 
-Two settings are neighbours when their assumption vectors differ in exactly one dimension (`action_set` fields count as separate dimensions). If the ontology orders the two values (transitively, through `order`, a multi-valued dimension's subset `order_rule`, or an action-space `reduction`), the edge is directed from the special case to the general one: upper bounds flow against the arrow, lower bounds along it. Otherwise it is an undirected "other neighbour". The graph draws the transitive reduction of the directed edges with a dagre layout (or a force layout), colours nodes by action space or environment, and sizes them by number of results. `graph.html?focus=<setting id>` highlights one setting; each setting page links there and lists its more general, more special and other neighbours.
+Directed edges come from `pipeline/order.py`: S → S′ whenever `Order.leq(S, S′)` holds (product order over all dimensions, including subset `order_rule`s, action-space `reduction`s and fixed `parameters`), so upper bounds flow against the arrow, lower bounds along it. Settings that differ in exactly one dimension with no order are undirected "other neighbours". Each setting page has collapsed "Inherited upper/lower bounds" sections built from `inferred.json` (deduplicated, sorted by quantity, dependence, then hops along covering edges), each row showing its source setting, changed dimensions, substitutions and caveats; they are skipped when `data/canonical` is absent (fixtures). The graph draws the transitive reduction of the directed edges with a dagre layout (or a force layout), colours nodes by action space or environment, and sizes them by number of results. `graph.html?focus=<setting id>` highlights one setting; each setting page links there and lists its more general, more special and other neighbours.
 
 All links are relative, so the site works under `https://act65.github.io/bandit-browser/`.
 

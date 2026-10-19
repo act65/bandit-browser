@@ -7,6 +7,7 @@ corpus/manifest.yaml ──fetch.py──▶ corpus/src/<arxiv_id>/      (LaTeX 
                      ──validate.py──▶ data/validation-report.md
                      ──resolve.py──▶ data/canonical/  (stable ids: settings S-<hash>, algorithms,
                                                         citations, normalised bounds; report.md)
+                     ──infer.py──▶ data/canonical/inferred.json  (inherited bounds + derivations)
 site/build.py ──▶ _site/   (static site; deployed by .github/workflows/pages.yml)
 ```
 
@@ -17,6 +18,7 @@ CLAUDE_CLI_USAGE_LOG=data/extract.usage.jsonl \
   uv run python pipeline/extract.py --workers 3
 uv run python pipeline/validate.py
 uv run python pipeline/resolve.py           # canonicalisation (D13)
+uv run python pipeline/infer.py             # propagate bounds along the order (D1) -> data/canonical/inferred.json
 uv run python site/build.py && python3 -m http.server -d _site 8000
 ```
 
@@ -45,6 +47,14 @@ Every extraction records `_run` (models, prompt hash, ontology version, token us
 - `seed_algorithms.py` seeded the algorithm registry by LLM clustering of the v0.2 algorithm mentions (148 mentions → 132 algorithms). It is a proposal to review by hand.
 - `resolve.py` never edits extractions. It derives `data/canonical/` and a report: declared symbols recurring in 2+ papers are registry proposals; unregistered algorithms get provisional `new:<paper>:<name>` ids; unresolved citations become ranked corpus candidates (`candidates.yaml`), the input to the next snowball round.
 - Setting ids hash the full canonical key (all dimensions, `action_set` minus `access`, `parameters`; `learner_knows` minus T, K, d), so they are stable across runs and re-extractions.
+
+## Inference (D1)
+
+`order.py` defines the specialisation order as a product order over the ontology: per-dimension orders, reductions with composed parameter maps, the subset rule for multi-valued dimensions, and fixed `parameters` as special cases. `infer.py` propagates every extracted result one hop over this (transitively closed) order:
+- upper bounds go to special cases, with reduction maps and fixed parameters substituted;
+- lower bounds go to generalisations, with reduction maps inverted.
+
+Each record carries its derivation and caveats. Inferred results never feed further inference.
 
 ## Sources are not redistributed
 

@@ -98,6 +98,14 @@ document.addEventListener("DOMContentLoaded", function () {
     regroup(initial);
   }
 
+  // A link to a collapsed section (e.g. #inherited-upper) opens it.
+  var openTarget = function () {
+    var t = window.location.hash && document.getElementById(window.location.hash.slice(1));
+    if (t && t.tagName === "DETAILS") { t.open = true; t.scrollIntoView(); }
+  };
+  window.addEventListener("hashchange", openTarget);
+  openTarget();
+
   // Only one source popover open at a time; Escape or outside click closes it.
   var pops = document.querySelectorAll("details.pop");
   pops.forEach(function (d) {

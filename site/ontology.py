@@ -1,4 +1,6 @@
-"""Ontology helpers for the site: dimensions, readable names, specialisation orders.
+"""Ontology helpers for the site: dimensions and readable names.
+
+The specialisation order itself lives in pipeline/order.py (single source of truth).
 
 Reads the highest-version ``ontology/bandits-*.yaml`` so new dimensions (e.g. v0.3's
 ``action_set``) and new order pairs show up without code changes.
@@ -45,7 +47,7 @@ VALUE_LABEL = {
     },
     "context": {"stochastic_contexts": "stochastic contexts", "adversarial_contexts": "adversarial contexts"},
     "noise": {
-        "bounded_01": "bounded rewards", "bernoulli": "Bernoulli", "subgaussian": "sub-Gaussian",
+        "bounded_01": "bounded rewards", "bounded_pm1": "rewards in [-1, 1]", "bernoulli": "Bernoulli", "subgaussian": "sub-Gaussian",
         "gaussian_known_variance": "Gaussian", "conditionally_subgaussian": "cond. sub-Gaussian noise",
         "noise_free": "noise-free", "exponential_family": "exponential family", "heavy_tailed": "heavy-tailed",
     },
@@ -108,65 +110,13 @@ class Ontology:
                 data = yaml.safe_load(self.path.read_text(encoding="utf-8")) or {}
             except yaml.YAMLError:
                 data = {}
+        self.data: dict = data if isinstance(data, dict) else {}
         self.version = str(data.get("version", "?"))
         self.dimensions: dict = data.get("dimensions") or {}
         self.dims = [d for d in self.dimensions if d not in NOT_KEY] or list(FALLBACK_DIMS)
         self.quantities = list((data.get("vocabularies") or {}).get("quantity") or QUANTITY_LABEL)
-        self._order = {d: _closure([tuple(p) for p in (spec or {}).get("order") or [] if len(p) == 2])
-                       for d, spec in self.dimensions.items() if isinstance(spec, dict)}
-        for name, spec in (data.get("node_parameters") or {}).items():
-            for field, fspec in ((spec or {}).get("fields") or {}).items():
-                pairs = [tuple(p) for p in (fspec or {}).get("order") or [] if len(p) == 2]
-                self._order[f"{name}.{field}"] = _closure(pairs)
-        self._reductions = {}
-        for d, spec in self.dimensions.items():
-            if isinstance(spec, dict) and spec.get("reductions"):
-                pairs = [(r["from"], r["to"]) for r in spec["reductions"] if isinstance(r, dict) and "from" in r]
-                self._reductions[d] = _closure(pairs)
 
     def describe(self, dim: str, value) -> str:
         spec = self.dimensions.get(dim) or {}
         vals = spec.get("values") if isinstance(spec, dict) else None
         return str((vals or {}).get(value) or "") if isinstance(vals, dict) else ""
-
-    def relation(self, dim: str, a: str, b: str) -> tuple[str, bool] | None:
-        """How setting value a relates to b in one dimension.
-
-        Returns ("order", True) if a ⊑ b, ("order", False) if b ⊑ a, ("reduction", ...) for an
-        action-space style reduction, or None if they are unordered.
-        """
-        spec = self.dimensions.get(dim) or {}
-        if dim == "parameters" or (isinstance(spec, dict) and spec.get("multi") and spec.get("order_rule")):
-            # "more properties = smaller class": P ⊑ Q iff Q ⊂ P
-            sa, sb = _set(a), _set(b)
-            if sb < sa:
-                return ("order", True)
-            if sa < sb:
-                return ("order", False)
-            return None
-        order = self._order.get(dim, set())
-        if (a, b) in order:
-            return ("order", True)
-        if (b, a) in order:
-            return ("order", False)
-        red = self._reductions.get(dim, set())
-        if (a, b) in red:
-            return ("reduction", True)
-        if (b, a) in red:
-            return ("reduction", False)
-        return None
-
-
-def _set(v: str) -> frozenset:
-    """Multi-valued dimensions are keyed as "a+b"; parameters as "K=2, sigma=1"."""
-    sep = ", " if "=" in str(v) else "+"
-    return frozenset(x for x in str(v).split(sep) if x and x not in EMPTY)
-
-
-def _closure(pairs) -> set:
-    rel = set(pairs)
-    while True:
-        new = {(a, d) for a, b in rel for c, d in rel if b == c and a != d} - rel
-        if not new:
-            return rel
-        rel |= new

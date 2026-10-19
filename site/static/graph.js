@@ -113,6 +113,7 @@ document.addEventListener("DOMContentLoaded", function () {
   cy.on("mouseover", "node", function (ev) {
     var d = ev.target.data();
     showTip("<b>" + esc(d.name) + "</b>" + d.up + " upper · " + d.lo + " lower · " + d.papers + " paper" + (d.papers === 1 ? "" : "s") +
+            ((d.iu || d.il) ? '<div class="muted">+' + d.iu + " upper · +" + d.il + " lower inherited</div>" : "") +
             '<div class="muted">' + esc(d.action_space) + " · " + esc(d.environment) + "</div>", ev.renderedPosition);
     highlight(ev.target);
   });

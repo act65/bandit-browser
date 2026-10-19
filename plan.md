@@ -46,7 +46,7 @@ Staged so that each phase ends with a **go / no-go check**. We do not scale extr
   - `ontology/variables.yaml`: a symbol registry with precise definitions, aliases and conversion rules (e.g. ‖x‖² ≤ L ⇒ L_feat = √L; σ as std vs sub-Gaussian parameter). It generates the prompt's variable table; declared `symbols` are clustered into registry proposals.
   - `data/algorithms.yaml`: an algorithm registry (canonical id, aliases, introducing paper, techniques), resolved by name normalisation, then LLM adjudication, then human confirmation.
   - Citation resolution: `cited_key` → .bbl title → arXiv/DOI → manifest id. Unmatched cited papers become corpus candidates.
-- [ ] **Next:** inherited results on setting pages. The v0.3 key is exact (124 nodes from 175 settings, many with one paper), so each node should show its own results plus those inherited along specialisation edges, with derivation paths. Product-order edges are already computed for the graph view.
+- [x] Inherited results (D1): `pipeline/order.py` (product order with reduction parameter maps) + `pipeline/infer.py` → `data/canonical/inferred.json` (upper bounds to special cases, lower bounds to generalisations, with derivation paths and caveats); shown on setting pages.
 - [ ] Build the setting poset: per-dimension orders → product order, plus explicit cross-dimension reductions with parameter maps.
 - [ ] Inference: propagate upper bounds down and lower bounds up, translating through parameter maps and storing derivation paths separately from extracted results.
 - [ ] Bound comparison (D2): normalise to regime-specific forms (e.g. exponent vectors plus a polylog flag), compute dominance and the Pareto front, and assign a tightness status per setting and regime.
@@ -54,6 +54,26 @@ Staged so that each phase ends with a **go / no-go check**. We do not scale extr
 - [ ] Gap triage: run a targeted retrieval search for each candidate gap before labelling it open; mark it open vs blank; log negative searches.
 
 **Exit check:** the acceptance tests from Phase 1 pass, i.e. known gaps and tight results are rediscovered from extracted data alone.
+
+## Phase 3b: Tools for the motivation (requested 2026-10-19)
+
+Everything here builds on one piece of machinery: **D2 bound comparison**. Each bound is reduced to its asymptotic profile, i.e. exponents in (T, K, d, 1/Δ, …) plus a polylog flag, per quantity and regime. With that we can compute dominance, the best upper and best lower bound per setting and regime, and a tightness status.
+
+### d) Plots of bounds (instead of only tables)
+- [ ] **Rate plots per setting:** each bound (own and inherited, upper and lower) plotted against one variable (T by default, log-log), with sliders for the others (K, d, Δ, δ).
+  - SymPy → JS at build time (`sympy.printing.jscode`), plotted client-side.
+  - Instance-dependent sums use a uniform-gap instance: `sum_subopt(f(Delta_i))` → (K−1)·f(Δ).
+  - O/Θ/Ω bounds have no constants, so plot their shape with constant 1 and style them differently from exact bounds.
+  - Asymptotic (lim inf / lim sup) bounds are drawn as c·log T.
+- [ ] **Rate-plane view:** each bound as a point (T-exponent, K- or d-exponent), with upper and lower bounds in different colours. Gaps are visible as the distance between the best upper and best lower point.
+- [ ] **Consistency check for free:** an extracted upper bound below an extracted lower bound in the same setting and regime is an extraction error or a genuine conflict (D5). Flag it.
+
+### e) Search and filtering for motivation 1–4
+- [ ] **Faceted search** over settings (dimension facets) and results (quantity, regime, algorithm, technique family, paper, year, own/inherited, confidence), client-side from a JSON index. Saved queries such as "adversarial settings with no lower bound".
+- [ ] **1. Gap finder:** a per-setting, per-regime tightness status (tight / log gap / poly gap / no lower bound / no upper bound). It feeds a "Gaps" page sorted by importance (number of papers, gap size), a graph colouring by status, and a filter on the settings index. Before a gap is called open it goes through gap triage (open vs blank).
+- [ ] **2. Unstudied neighbours:** enumerate keys one order step away from well-studied settings (change one dimension to an adjacent value) that have no extracted results, ranked by how studied the source is. Skip combinations flagged ill-posed (e.g. an adversarial environment with a non-additive function class).
+- [ ] **3. Technique transfer:** for a setting with a gap, list algorithm families (registry `family` / techniques) that achieve the best bound in neighbouring settings but don't appear here.
+- [ ] **4. Redundancy:** an own result that is dominated by an inherited result from an *earlier* paper is "implied by prior work". List these with the derivation path.
 
 ## Phase 4: Scale to the full bandit literature (~1000–3000 papers)
 

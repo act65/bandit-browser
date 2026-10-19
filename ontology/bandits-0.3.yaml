@@ -87,7 +87,8 @@ dimensions:
     order:
       - [linear_finite, linear_infinite]   # a finite set is a compact set: compact-set algorithms run on it
     reductions:
-      - {from: finite_K, to: linear_finite, map: {d: K}, note: "canonical basis actions"}
+      - {from: finite_K, to: linear_finite, map: {d: K}, note: "canonical basis actions",
+         implies: {instance_assumptions: [arms_span_Rd]}}   # the K basis vectors span R^K
       - {from: linear_finite, to: generalized_linear, map: {}, note: "identity link"}
       - {from: linear_infinite, to: generalized_linear, map: {}, note: "identity link"}
       - {from: finite_K, to: structured_general, map: {}, note: "unstructured arms are trivially structured"}
@@ -134,6 +135,10 @@ dimensions:
     order:
       - [none, stochastic_contexts]
       - [stochastic_contexts, adversarial_contexts]
+    # symbols that take fixed values in a setting with this value (applied when an
+    # upper bound is transferred INTO such a setting)
+    value_maps:
+      none: {M_ctx: 1}
 
   noise:
     multi: false
@@ -178,6 +183,9 @@ dimensions:
 
   extras:
     multi: true
+    # values whose presence makes a setting MORE general (absence is a special case);
+    # all other extras must match exactly
+    generalizing_values: [time_varying_action_sets]
     values:
       delayed_feedback: ""
       batched: ""
@@ -208,13 +216,14 @@ node_parameters:
     fields:
       shape:
         values: [not_applicable, unspecified, finite, arbitrary_compact, unit_ball, sphere, hypercube, simplex, l1_ball, polytope, convex_body, nonconvex]
-        order: [[unit_ball, arbitrary_compact], [sphere, arbitrary_compact], [hypercube, arbitrary_compact],
+        # not_applicable ⊑ finite: K arms embed as the canonical basis (the finite_K -> linear_finite reduction)
+        order: [[not_applicable, finite], [unit_ball, arbitrary_compact], [sphere, arbitrary_compact], [hypercube, arbitrary_compact],
                 [simplex, arbitrary_compact], [l1_ball, arbitrary_compact], [polytope, arbitrary_compact],
                 [finite, arbitrary_compact], [convex_body, arbitrary_compact]]
         note: "lower bounds proved on a specific shape transfer only to more general shapes"
       time_varying:
         values: [not_applicable, fixed, oblivious_sequence, adaptive_sequence]
-        order: [[fixed, oblivious_sequence], [oblivious_sequence, adaptive_sequence]]
+        order: [[not_applicable, fixed], [fixed, oblivious_sequence], [oblivious_sequence, adaptive_sequence]]
       access:
         values: [not_applicable, explicit, linear_optimization_oracle, membership_oracle, separation_oracle]
         note: "computational only: does not change statistical rates"

@@ -15,8 +15,12 @@ Inputs (all optional; missing files/dirs are treated as empty):
     data/ground_truth/{bco,pilot-facts}.yaml
     ontology/bandits-<highest version>.yaml, ontology/variables.yaml
 
-Modules: ontology.py (dimensions, names, orders), bounds.py (SymPy -> LaTeX).
-Display only: no bound comparison or inference happens here.
+    data/canonical/inferred.json                         bounds propagated by pipeline/infer.py
+
+Modules: ontology.py (dimensions, names), bounds.py (SymPy -> LaTeX), and
+pipeline/order.py (the specialisation order; single source of truth for edges).
+Display only: no bound comparison or inference happens here; inherited bounds are
+read from inferred.json and shown separately from extracted ones (D1, D4).
 """
 
 from __future__ import annotations
@@ -34,8 +38,10 @@ import yaml
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 sys.path.insert(0, str(HERE))
+sys.path.insert(1, str(REPO / "pipeline"))
 
 import bounds  # noqa: E402
+from order import Order  # noqa: E402  (pipeline/order.py: the specialisation order, D1)
 from ontology import (QUANTITY_LABEL, Ontology, dim_label, is_default, value_label)  # noqa: E402
 
 KATEX = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist"
@@ -246,6 +252,11 @@ class Site:
             n["papers"] = sorted({m[0] for m in n["members"]} | {it["paper"] for it in n["results"]})
         self._dedupe_names()
         self.edges = self._edges()
+        for n in self.nodes.values():
+            n["inherited"] = []
+        self.n_inferred_raw = 0
+        if self.canonical:
+            self._load_inferred(canon)
 
     # -- canonical layer (preferred)
     def _load_canonical(self, canon: Path) -> None:
@@ -255,7 +266,7 @@ class Site:
             key = flat_key(s.get("key") or {}, self.onto.dims, include=("learner_knows", "parameters"))
             members = [(m.get("paper"), m.get("local_id"), m.get("name_in_paper")) for m in listify(s, "members")]
             self.nodes[s["id"]] = {"id": s["id"], "slug": s["id"] if re.fullmatch(r"[A-Za-z0-9_.-]+", s["id"]) else slugify(s["id"]), "key": key, "label": s.get("label"),
-                                   "members": members, "results": []}
+                                   "raw": s.get("key") or {}, "members": members, "results": []}
             for pid, lid, _ in members:
                 self.local_to_node[(pid, lid)] = s["id"]
         for r in listify(load_json(canon / "results.json"), "results"):
@@ -273,7 +284,9 @@ class Site:
                     continue
                 key = flat_key(s, self.onto.dims)
                 nid = slugify("--".join(v or "none" for v in key.values()))
-                node = self.nodes.setdefault(nid, {"id": nid, "slug": nid, "key": key, "label": None,
+                # learner_knows/parameters are not part of a raw-mode node's identity
+                raw = {k: v for k, v in s.items() if k not in ("learner_knows", "parameters")}
+                node = self.nodes.setdefault(nid, {"id": nid, "slug": nid, "key": key, "label": None, "raw": raw,
                                                    "members": [], "results": []})
                 node["members"].append((pid, sid, s.get("name_in_paper")))
                 self.local_to_node[(pid, sid)] = nid
@@ -310,31 +323,108 @@ class Site:
 
     # -- neighbourhood structure
     def _edges(self) -> list[dict]:
+        """Directed specialisation edges from pipeline/order.py (Order.leq), plus undirected
+        "neighbour" edges between settings that differ in exactly one unordered dimension."""
+        try:
+            order = Order(self.onto.data) if self.onto.data.get("dimensions") else None
+        except Exception as exc:  # noqa: BLE001 - a malformed ontology still yields a site
+            warn(f"could not build the specialisation order: {exc}")
+            order = None
         ids = sorted(self.nodes)
         out = []
         for i, a in enumerate(ids):
-            ka = self.nodes[a]["key"]
+            na, ka = self.nodes[a], self.nodes[a]["key"]
             for b in ids[i + 1:]:
-                kb = self.nodes[b]["key"]
-                diff = [d for d in dict.fromkeys(list(ka) + list(kb)) if ka.get(d, "") != kb.get(d, "")]
-                if not diff:
+                nb, kb = self.nodes[b], self.nodes[b]["key"]
+                ch, s, tg = None, a, b
+                if order is not None:
+                    ch = order.leq(na["raw"], nb["raw"])
+                    if not ch:
+                        ch, s, tg = order.leq(nb["raw"], na["raw"]), b, a
+                if ch:
+                    ks, kt = self.nodes[s]["key"], self.nodes[tg]["key"]
+                    changes = [(c.dim, ks.get(c.dim, flat_value(c.special)), kt.get(c.dim, flat_value(c.general)))
+                               for c in ch]
+                    kind = "reduction" if any(c.kind == "reduction" for c in ch) else "order"
+                    out.append({"source": s, "target": tg, "kind": kind, "dim": changes[0][0],
+                                "from": changes[0][1], "to": changes[0][2], "changes": changes,
+                                "maps": {k: v for c in ch for k, v in c.param_map.items()} if kind == "reduction" else {}})
                     continue
-                rels = [self.onto.relation(d, ka.get(d, ""), kb.get(d, "")) for d in diff]
-                if len(diff) == 1 and rels[0] is None:
+                diff = [d for d in dict.fromkeys(list(ka) + list(kb)) if ka.get(d, "") != kb.get(d, "")]
+                if len(diff) == 1:
                     d = diff[0]
                     out.append({"source": a, "target": b, "kind": "neighbour", "dim": d,
                                 "from": ka.get(d, ""), "to": kb.get(d, ""), "changes": [(d, ka.get(d, ""), kb.get(d, ""))]})
-                    continue
-                # Product order (D1): a ⊑ b iff every differing dimension is ordered a ⊑ b.
-                if any(r is None for r in rels) or len({r[1] for r in rels}) != 1:
-                    continue
-                a_le_b = rels[0][1]
-                kind = "reduction" if any(r[0] == "reduction" for r in rels) else "order"
-                s, tg, ks, kt = (a, b, ka, kb) if a_le_b else (b, a, kb, ka)
-                changes = [(d, ks.get(d, ""), kt.get(d, "")) for d in diff]
-                out.append({"source": s, "target": tg, "kind": kind, "dim": diff[0],
-                            "from": changes[0][1], "to": changes[0][2], "changes": changes})
         return out
+
+    # -- inherited bounds (pipeline/infer.py)
+    def _load_inferred(self, canon: Path) -> None:
+        recs = listify(load_json(canon / "inferred.json"), "inferred")
+        self.n_inferred_raw = len(recs)
+        by_id = {r["id"]: r for r in listify(load_json(canon / "results.json"), "results") if r.get("id")}
+        dropped = {"own": 0, "dup": 0, "missing": 0}
+        # Hops along covering (Hasse) edges, special -> general: 1 = an immediate cover.
+        succ: dict[str, list] = {}
+        for x in self.hasse():
+            if x["kind"] != "neighbour":
+                succ.setdefault(x["source"], []).append(x["target"])
+        hops: dict[str, dict] = {}
+
+        def hop(a: str, b: str) -> int:
+            if a not in hops:
+                dist, frontier = {a: 0}, [a]
+                while frontier:
+                    nxt = []
+                    for y in frontier:
+                        for z in succ.get(y, ()):
+                            if z not in dist:
+                                dist[z] = dist[y] + 1
+                                nxt.append(z)
+                    frontier = nxt
+                hops[a] = dist
+            return hops[a].get(b, 99)
+
+        for rec in recs:
+            n = self.nodes.get(rec.get("setting_id") or "")
+            src = by_id.get(rec.get("from_result") or "")
+            if n is None or src is None or rec.get("from_setting") not in self.nodes:
+                dropped["missing"] += 1
+                continue
+            b = dict(src.get("bound") or {})
+            orig = bounds.canonical_expr(b)
+            b["expression_normalised"] = rec.get("expression") or bounds.canonical_expr(b)
+            r = {**src, "bound": b}
+            it = self._item(src.get("paper"), r, rec["from_setting"])
+            it["inf"] = rec
+            it["orig_expr"] = orig
+            upper = str(rec.get("rule", "")).startswith("upper")
+            special, general = (rec["setting_id"], rec["from_setting"]) if upper else (rec["from_setting"], rec["setting_id"])
+            it["hops"] = hop(special, general)
+            it["dist"] = (it["hops"], len(rec.get("changes") or []))
+            n["inherited"].append(it)
+        for n in self.nodes.values():
+            # Already proved directly here by the same paper: not worth repeating.
+            own = {self._sig(it) for it in n["results"]}
+            seen: dict[tuple, dict] = {}
+            for it in sorted(n["inherited"], key=lambda it: it["dist"]):
+                sig = self._sig(it)
+                if sig in own:
+                    dropped["own"] += 1
+                elif sig in seen:
+                    seen[sig].setdefault("also", []).append(it)
+                    dropped["dup"] += 1
+                else:
+                    seen[sig] = it
+            n["inherited"] = list(seen.values())
+        self.inferred_dropped = dropped
+
+    @staticmethod
+    def _sig(it: dict) -> tuple:
+        """Identity of a bound for deduplication: same paper, side, quantity and canonical form."""
+        r = it["r"]
+        b = r.get("bound") or {}
+        return (it["paper"], (r.get("side") or "").lower(), r.get("quantity"), r.get("dependence"),
+                b.get("notation"), str(bounds.canonical_expr(b) or "").replace(" ", ""))
 
     def hasse(self) -> list[dict]:
         """Edges with transitive specialisation edges removed (for drawing). Cached."""
@@ -384,9 +474,9 @@ class Site:
     def title(self, pid: str) -> str:
         return self.paper_info(pid).get("title") or pid
 
-    def counts(self, n: dict) -> tuple[int, int]:
-        up = sum(1 for it in n["results"] if (it["r"].get("side") or "").lower() == "upper")
-        lo = sum(1 for it in n["results"] if (it["r"].get("side") or "").lower() == "lower")
+    def counts(self, n: dict, key: str = "results") -> tuple[int, int]:
+        up = sum(1 for it in n[key] if (it["r"].get("side") or "").lower() == "upper")
+        lo = sum(1 for it in n[key] if (it["r"].get("side") or "").lower() == "lower")
         return up, lo
 
 
@@ -536,6 +626,8 @@ def result_details(it: dict) -> str:
     canon = bounds.canonical_expr(b)
     if canon:
         pairs.append(("Canonical", f"<code>{e(str(canon))}</code>"))
+    if it.get("inf") and it.get("orig_expr") and str(it["orig_expr"]) != str(canon):
+        pairs.append(("In source setting", f"<code>{e(str(it['orig_expr']))}</code>"))
     if b.get("expression_normalised") and b.get("expression") and b["expression"] != b["expression_normalised"]:
         pairs.append(("As extracted", f"<code>{e(str(b['expression']))}</code>"))
     if b.get("conversions"):
@@ -551,8 +643,8 @@ def result_details(it: dict) -> str:
     return f'<details class="more"><summary>details</summary>{dl(pairs, "kv")}</details>'
 
 
-def result_badges(r: dict, extra: str = "") -> str:
-    out = []
+def result_badges(r: dict, extra: str = "", lead: str = "") -> str:
+    out = [lead] if lead else []
     dep = DEPENDENCE.get(r.get("dependence") or "")
     if dep:
         out.append(badge(dep[0], dep[1]))
@@ -582,6 +674,34 @@ def sort_items(site: Site, items: list[dict]) -> list[dict]:
                                          site.paper_info(it["paper"]).get("year") or 0))
 
 
+def alg_html(it: dict) -> str:
+    r = it["r"]
+    if it.get("alg"):
+        full = it["alg"]
+        tip = full + (f" (also: {', '.join(it['alg_aliases'][:4])})" if it.get("alg_aliases") else "")
+        return f'<span class="alg" title="{e(tip, quote=True)}">{e(short(full))}</span>'
+    if r.get("algorithm_class"):
+        return f'<span class="muted" title="{e(str(r["algorithm_class"]), quote=True)}">{e(short("class: " + str(r["algorithm_class"])))}</span>'
+    return '<span class="muted">any algorithm</span>' if (r.get("side") or "") == "lower" else NONE
+
+
+def source_html(r: dict) -> str:
+    src = r.get("source") or {}
+    num = str(src.get("number") or src.get("label") or "source")
+    if src.get("quote"):
+        return (f'<details class="pop"><summary>{e(num)}</summary>'
+                f'<blockquote>{e(str(src["quote"]))}</blockquote></details>')
+    return e(num)
+
+
+def paper_html(site: Site, pid: str, root: str) -> str:
+    return f'<a href="{root}papers/{slugify(pid)}.html" title="{e(site.title(pid), quote=True)}">{e(site.cite(pid))}</a>'
+
+
+def group_row(q, ncol: int) -> str:
+    return f'<tr class="group"><th colspan="{ncol}">{e(QUANTITY_LABEL.get(q, label(q) or "Unspecified quantity"))}</th></tr>'
+
+
 def results_table(items: list[dict], site: Site, root: str, show_setting: bool = False) -> str:
     if not items:
         return '<p class="muted">None extracted.</p>'
@@ -595,23 +715,9 @@ def results_table(items: list[dict], site: Site, root: str, show_setting: bool =
         q = r.get("quantity")
         if q != current:
             current = q
-            body.append(f'<tr class="group"><th colspan="{ncol}">{e(QUANTITY_LABEL.get(q, label(q) or "Unspecified quantity"))}</th></tr>')
-        if it.get("alg"):
-            full = it["alg"]
-            tip = full + (f" (also: {', '.join(it['alg_aliases'][:4])})" if it.get("alg_aliases") else "")
-            alg = f'<span class="alg" title="{e(tip, quote=True)}">{e(short(full))}</span>'
-        elif r.get("algorithm_class"):
-            alg = f'<span class="muted" title="{e(str(r["algorithm_class"]), quote=True)}">{e(short("class: " + str(r["algorithm_class"])))}</span>'
-        else:
-            alg = '<span class="muted">any algorithm</span>' if (r.get("side") or "") == "lower" else NONE
-        src = r.get("source") or {}
-        num = str(src.get("number") or src.get("label") or "source")
-        source = e(num)
-        if src.get("quote"):
-            source = (f'<details class="pop"><summary>{e(num)}</summary>'
-                      f'<blockquote>{e(str(src["quote"]))}</blockquote></details>')
-        paper = f'<a href="{root}papers/{slugify(pid)}.html" title="{e(site.title(pid), quote=True)}">{e(site.cite(pid))}</a>'
-        cells = [bound_html(r) + result_badges(r, result_details(it)), alg, paper, source]
+            body.append(group_row(q, ncol))
+        alg, source = alg_html(it), source_html(r)
+        cells = [bound_html(r) + result_badges(r, result_details(it)), alg, paper_html(site, pid, root), source]
         if show_setting:
             n = site.nodes.get(it.get("node") or "")
             cells = [f'<a href="{root}settings/{n["slug"]}.html">{e(n["name"])}</a>' if n else text(r.get("setting")),
@@ -622,6 +728,132 @@ def results_table(items: list[dict], site: Site, root: str, show_setting: bool =
     return (filter_box("Filter by algorithm, paper, quantity…") +
             f'<div class="scroll"><table class="results filterable{" with-setting" if show_setting else ""}">'
             f'<thead><tr>{th}</tr></thead><tbody>\n' + "\n".join(body) + "\n</tbody></table></div>")
+
+
+# ---------------------------------------------------------------- inherited bounds (data/canonical/inferred.json)
+
+
+def subst_html(rec: dict) -> str:
+    """{d: K} -> d ↦ K for a reduction map (parameters fixed in the special case are listed as changes)."""
+    fixed = {}
+    for c in rec.get("changes") or []:
+        if c.get("kind") == "parameter" and isinstance(c.get("special"), dict):
+            fixed.update({str(k): str(v) for k, v in c["special"].items()})
+    out = []
+    for sym, val in (rec.get("substitutions") or {}).items():
+        try:
+            lhs, rhs = bounds.symbol_tex(sym), bounds.expr_tex(str(val))
+        except Exception:  # noqa: BLE001
+            lhs, rhs = sym, str(val)
+        if fixed.get(sym) == str(val):
+            continue  # a fixed parameter is already shown in the changed-dimension list
+        out.append(math(f"{lhs} \\mapsto {rhs}"))
+    return ", ".join(out)
+
+
+def derivation_change(c: dict, upper: bool) -> str:
+    """One changed dimension, written in the direction the bound travels (source → this setting)."""
+    d, kind = c.get("dim", ""), c.get("kind")
+
+    def v(x):
+        if kind == "parameter":
+            return pretty_vars(", ".join(f"{k} = {y}" for k, y in x.items())) if x else "any"
+        if isinstance(x, list):
+            return value_label(d, x) if x else "none"
+        return value_label(d, x) if x not in (None, "") else "none"
+
+    name = "fixed parameters" if kind == "parameter" else dim_label(d)
+    if kind == "subset":  # multi-valued: the special case adds elements; show only the difference
+        extra = [x for x in c.get("special") or [] if x not in (c.get("general") or [])]
+        sign = "+" if upper else "drop"
+        return f'<span class="dim">{e(name)}:</span> {sign} {e(value_label(d, extra) if d != "learner_knows" else pretty_vars(", ".join(extra)))}'
+    src, dst = (c.get("general"), c.get("special")) if upper else (c.get("special"), c.get("general"))
+    red = ' <span class="badge muted-badge" title="cross-value reduction with a parameter map">reduction</span>' if kind == "reduction" else ""
+    return f'<span class="dim">{e(name)}:</span> {e(v(src))} <span class="arrow">→</span> {e(v(dst))}{red}'
+
+
+def derivation_html(site: Site, it: dict, root: str) -> str:
+    rec = it["inf"]
+    upper = rec.get("rule", "").startswith("upper")
+    src = site.nodes[rec["from_setting"]]
+    rel = "more general" if upper else "special case"
+    changes = rec.get("changes") or []
+    # A reduction drags along action_set fields (e.g. finite shape -> not applicable): fold them away.
+    folded = [c for c in changes if any(x.get("kind") == "reduction" for x in changes)
+              and c.get("dim", "").startswith("action_set.")]
+    via = "".join(f"<li>{derivation_change(c, upper)}</li>" for c in changes if c not in folded)
+    h = it.get("hops", 99)
+    steps = "immediate" if h == 1 else f"{h} steps {'up' if upper else 'down'}" if h < 99 else ""
+    steps = f' <span class="hops" title="covering edges between the two settings">({steps})</span>' if steps else ""
+    out = [f'<div class="from">from <a href="{root}settings/{src["slug"]}.html" title="{rel}">{e(src["name"])}</a>{steps}</div>',
+           f'<ul class="via">{via}</ul>']
+    subs = subst_html(rec)
+    if subs:
+        out.append(f'<div class="subs">substitute {subs}</div>')
+    extra = []
+    if rec.get("caveats"):
+        extra.append(("Caveats", "<ul>" + "".join(f"<li>{e(str(c))}</li>" for c in rec["caveats"]) + "</ul>"))
+    if it.get("also"):
+        extra.append(("Also from", "<ul>" + "".join(
+            f'<li><a href="{root}settings/{site.nodes[a["inf"]["from_setting"]]["slug"]}.html">'
+            f'{e(site.nodes[a["inf"]["from_setting"]]["name"])}</a></li>' for a in it["also"]) + "</ul>"))
+    if folded:
+        extra.append(("Also changes", "<ul>" + "".join(f"<li>{derivation_change(c, upper)}</li>" for c in folded) + "</ul>"))
+    extra.append(("Rule", e("upper bound on a generalisation holds on this special case" if upper
+                            else "lower bound on a special case holds on this generalisation")))
+    extra.append(("Derived id", f'<code>{e(str(rec.get("id")))}</code>'))
+    n_cav = len(rec.get("caveats") or [])
+    summ = f"caveats ({n_cav})" if n_cav else "derivation"
+    out.append(f'<details class="more{" cav" if n_cav else ""}"><summary>{summ}</summary>{dl(extra, "kv")}</details>')
+    return "".join(out)
+
+
+def sort_inherited(site: Site, items: list[dict]) -> list[dict]:
+    dep = {"worst_case": 0, "instance_dependent": 1}
+    return sorted(items, key=lambda it: (quantity_rank(site, it["r"].get("quantity")),
+                                         dep.get(it["r"].get("dependence"), 2),
+                                         it["dist"], len(it["inf"].get("caveats") or []),
+                                         str((it["r"].get("bound") or {}).get("notation")),
+                                         -(site.paper_info(it["paper"]).get("year") or 0)))
+
+
+def inherited_table(items: list[dict], site: Site, root: str) -> str:
+    headers = ["Bound", "Derived from", "Algorithm", "Paper", "Source"]
+    body, current = [], object()
+    for it in sort_inherited(site, items):
+        r = it["r"]
+        q = r.get("quantity")
+        if q != current:
+            current = q
+            body.append(group_row(q, len(headers)))
+        tag = badge("inherited", "inh", "derived along the specialisation order; not proved for this setting directly")
+        cells = [bound_html(r) + result_badges(r, result_details(it), lead=tag), derivation_html(site, it, root),
+                 alg_html(it), paper_html(site, it["paper"], root), source_html(r)]
+        tds = "".join(f'<td class="c-{slugify(h)}" data-label="{h}">{c}</td>' for h, c in zip(headers, cells))
+        body.append(f'<tr class="inh">{tds}</tr>')
+    th = "".join(f'<th class="c-{slugify(h)}">{h}</th>' for h in headers)
+    return (filter_box("Filter by algorithm, paper, source setting…") +
+            '<div class="scroll"><table class="results inherited filterable">'
+            f'<thead><tr>{th}</tr></thead><tbody>\n' + "\n".join(body) + "\n</tbody></table></div>")
+
+
+def inherited_section(site: Site, items: list[dict], side: str, anchor: str) -> str:
+    if not items:
+        return ""
+    upper = side == "upper"
+    title = "Inherited upper bounds" if upper else "Inherited lower bounds"
+    whence = "from more general settings" if upper else "from special cases"
+    hint = ("Upper bounds proved on a more general setting hold here too, after the parameter map and any fixed "
+            "parameters are substituted." if upper else
+            "Lower bounds proved on a special case hold here too (the hard instances are still available).")
+    nsrc = len({it["inf"]["from_setting"] for it in items})
+    return f"""
+<details class="inherited-sec" id="{anchor}">
+<summary><h2>{title} <span class="muted">{whence}</span></h2><span class="count">{len(items)} from {nsrc} setting{"s" if nsrc != 1 else ""}</span></summary>
+<p class="hint">{hint} Derived automatically by <code>pipeline/infer.py</code> and <b>never proved for this setting
+directly</b>; check the caveats. Closest sources (fewest changed assumptions) are listed first within each group.</p>
+{inherited_table(items, site, "../")}
+</details>"""
 
 
 def split_sides(items):
@@ -636,12 +868,15 @@ def split_sides(items):
 
 def home_page(site: Site) -> str:
     n_res = sum(len(n["results"]) for n in site.nodes.values())
+    n_inh = sum(len(n["inherited"]) for n in site.nodes.values())
+    iu = sum(site.counts(n, "inherited")[0] for n in site.nodes.values())
     n_ex = sum(1 for pid in site.paper_ids() if pid in site.extractions)
     n_dir = sum(1 for x in site.edges if x["kind"] != "neighbour")
     tiles = [
         ("papers/index.html", len(site.paper_ids()), "papers", f"{n_ex} extracted"),
         ("settings/index.html", len(site.nodes), "canonical settings", "assumption vectors"),
         ("settings/index.html", n_res, "results", "upper and lower bounds"),
+        *([("settings/index.html", f"+{n_inh}", "inherited bounds", f"{iu} upper, {n_inh - iu} lower")] if n_inh else []),
         ("graph.html", n_dir, "specialisation edges", f"{len(site.edges) - n_dir} other neighbours"),
     ]
     tiles_html = "".join(f'<a class="tile" href="{h}"><b>{n}</b><span>{lbl}</span><small>{sub}</small></a>'
@@ -663,7 +898,8 @@ Arrows point from a special case to its generalisation.</p></a>
 and the pilot facts the graph should rediscover.</p></a>
 </div>
 <p class="muted small">Ontology {e(site.onto.version)}{" · canonical layer (data/canonical)" if site.canonical else " · grouped from raw extractions"}.
-Bounds are shown in canonical notation; the paper's own LaTeX is under each result's <em>details</em>. No bounds are compared or inferred yet.</p>
+Bounds are shown in canonical notation; the paper's own LaTeX is under each result's <em>details</em>.
+{"Inherited bounds are propagated along the specialisation order by <code>pipeline/infer.py</code> and shown separately, with their derivation." if n_inh else "No bounds are inferred yet."} No bounds are compared yet.</p>
 """
     return page("Home", body, "", "home")
 
@@ -680,11 +916,18 @@ def colour_slots(values: list[str]) -> dict[str, int]:
     return {v: (i + 1 if i < PALETTE_SLOTS else 0) for i, v in enumerate(ranked)}
 
 
+def count_cell(own: int, inh: int) -> str:
+    """'33 +12' with the inherited part muted; own count first."""
+    o = str(own) if own else NONE
+    return o + (f' <span class="inh-n" title="{inh} inherited along the specialisation order">+{inh}</span>' if inh else "")
+
+
 def settings_index(site: Site) -> str:
     act_slots = colour_slots([n["key"].get("action_space", "") for n in site.nodes.values()])
     rows = []
     for n in sorted(site.nodes.values(), key=lambda n: (-len(n["results"]), n["name"])):
         up, lo = site.counts(n)
+        iu, il = site.counts(n, "inherited")
         k = n["key"]
         env, act = k.get("environment", ""), k.get("action_space", "")
         rows.append(
@@ -692,13 +935,14 @@ def settings_index(site: Site) -> str:
             f'data-action_space="{e(value_label("action_space", act) if act else "unspecified")}" data-n="{len(n["results"])}">'
             f'<td data-label="Setting"><span class="dot s{act_slots.get(act, 0)}" aria-hidden="true"></span>'
             f'<a href="{n["slug"]}.html">{e(n["name"])}</a></td>'
-            f'<td class="num" data-label="Upper">{up or NONE}</td><td class="num" data-label="Lower">{lo or NONE}</td>'
+            f'<td class="num" data-label="Upper">{count_cell(up, iu)}</td><td class="num" data-label="Lower">{count_cell(lo, il)}</td>'
             f'<td class="num" data-label="Papers">{len(n["papers"])}</td></tr>'
         )
     body = f"""
 <h1>Settings</h1>
 <p class="lede">{len(site.nodes)} canonical settings. A name lists only the assumptions that differ from the plain
 stochastic-regret defaults (bandit feedback, no context, no extras). Also see the <a href="../graph.html">graph</a>.</p>
+{'<p class="small muted">Counts are bounds extracted for the setting itself; <span class="inh-n">+n</span> are inherited along the specialisation order (upper bounds from more general settings, lower bounds from special cases).</p>' if site.canonical else ""}
 <div class="toolbar">
 {filter_box("Filter settings…")}
 <div class="seg" role="group" aria-label="Group by">
@@ -752,9 +996,11 @@ def neighbourhood(site: Site, n: dict) -> str:
         for o, x in sorted(items, key=lambda t: (t[1]["dim"], -len(site.nodes[t[0]]["results"]))):
             m = site.nodes[o]
             up, lo = site.counts(m)
+            iu, il = site.counts(m, "inherited")
+            inh = f' <span class="inh-n" title="inherited">(+{iu}↑ +{il}↓)</span>' if iu or il else ""
             kind = ' <span class="badge muted-badge" title="reduction (e.g. K-armed as linear with d = K)">reduction</span>' if x["kind"] == "reduction" else ""
             lis.append(f'<li><a href="{m["slug"]}.html">{e(m["name"])}</a>'
-                       f'<div class="chg">{change_html(x)}{kind} <span class="cnt">{up}↑ {lo}↓</span></div></li>')
+                       f'<div class="chg">{change_html(x)}{kind} <span class="cnt">{up}↑ {lo}↓{inh}</span></div></li>')
         return "<ul class=\"nb\">" + "".join(lis) + "</ul>"
 
     return f"""
@@ -788,15 +1034,19 @@ def setting_page(site: Site, n: dict) -> str:
             ("<ul class=\"tight\">" + "".join(f"<li>{e(str(u))}</li>" for u in as_list(s.get("unmapped"))) + "</ul>") if s.get("unmapped") else NONE,
         ])
     up, lo, other = split_sides(n["results"])
+    iup, ilo, _ = split_sides(n.get("inherited") or [])
+    inh = f' · inherited: <a href="#inherited-upper"><b>{len(iup)}</b> upper</a> · <a href="#inherited-lower"><b>{len(ilo)}</b> lower</a>' if iup or ilo else ""
     canon_id = f' / <code class="small">{e(n["id"])}</code>' if site.canonical else ""
     body = f"""
 <p class="crumbs"><a href="index.html">Settings</a>{canon_id}</p>
 <h1>{e(n["name"])}</h1>
 <div class="chips">{"".join(chips)}</div>
-<p class="summary"><b>{len(up)}</b> upper · <b>{len(lo)}</b> lower bounds from <b>{len(n["papers"])}</b> paper{"s" if len(n["papers"]) != 1 else ""}.</p>
+<p class="summary"><b>{len(up)}</b> upper · <b>{len(lo)}</b> lower bounds from <b>{len(n["papers"])}</b> paper{"s" if len(n["papers"]) != 1 else ""}{inh}.</p>
 <h2 id="neighbours">Neighbourhood</h2>{neighbourhood(site, n)}
 <h2 id="upper">Upper bounds <span class="muted">({len(up)})</span></h2>{results_table(up, site, "../")}
 <h2 id="lower">Lower bounds <span class="muted">({len(lo)})</span></h2>{results_table(lo, site, "../")}
+{inherited_section(site, iup, "upper", "inherited-upper")}
+{inherited_section(site, ilo, "lower", "inherited-lower")}
 {f'<h2>Other <span class="muted">({len(other)})</span></h2>' + results_table(other, site, "../") if other else ""}
 <h2 id="papers">As stated in papers</h2>{table(["Paper", "Name in paper", "Learner knows", "Unmapped"], inst_rows, "compact")}
 """
@@ -937,9 +1187,10 @@ def graph_page(site: Site) -> str:
     nodes = []
     for n in site.nodes.values():
         up, lo = site.counts(n)
+        iu, il = site.counts(n, "inherited")
         act, env = n["key"].get("action_space", ""), n["key"].get("environment", "")
         nodes.append({"id": n["id"], "url": f'settings/{n["slug"]}.html', "slug": n["slug"], "name": n["name"],
-                      "up": up, "lo": lo, "papers": len(n["papers"]),
+                      "up": up, "lo": lo, "iu": iu, "il": il, "papers": len(n["papers"]),
                       "action_space": value_label("action_space", act) if act else "unspecified",
                       "environment": value_label("environment", env) if env else "unspecified",
                       "sa": act_slots.get(act, 0), "se": env_slots.get(env, 0)})
