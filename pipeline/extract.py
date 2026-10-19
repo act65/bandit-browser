@@ -25,6 +25,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import claude_cli  # noqa: E402
 import schema  # noqa: E402
+from preprocess import pre_path  # noqa: E402
 
 ROOT = schema.ROOT
 SCHEMA_MD = ROOT / "schema.md"
@@ -79,7 +80,10 @@ def render_ontology(ont: dict) -> str:
                 line += f" ({fs['note']})"
             lines.append(line)
     for name, values in ont["vocabularies"].items():
-        lines.append(f"\n### {name}\n" + ", ".join(f"`{v}`" for v in values))
+        if isinstance(values, dict):  # vocabulary with definitions
+            lines.append(f"\n### {name}\n" + "\n".join(f"- `{v}`: {d}" for v, d in values.items()))
+        else:
+            lines.append(f"\n### {name}\n" + ", ".join(f"`{v}`" for v in values))
     return "\n".join(lines)
 
 
@@ -113,8 +117,7 @@ def system_prompt(ont: dict, var: dict, algos: list[dict]) -> str:
 
 def extract_one(paper: dict, ont: dict, sys_prompt: str, js: dict, model: str | None,
                 effort: str | None) -> dict:
-    pre_path = PRE / f"{paper['arxiv_id'].replace('/', '_')}.tex"
-    source = pre_path.read_text(encoding="utf-8")
+    source = pre_path(paper).read_text(encoding="utf-8")
     meta = {k: paper.get(k) for k in ("title", "authors", "year", "arxiv_id", "venue")}
     user = USER_TEMPLATE.format(meta=json.dumps(meta, ensure_ascii=False), source=source)
     out, env = claude_cli.call_structured(sys_prompt, user, js, model=model, effort=effort,
@@ -156,13 +159,13 @@ def main() -> None:
     VARIABLES_VERSION, ALGO_REGISTRY_SIZE = var["version"], len(algos)
     sys_prompt = system_prompt(ont, var, algos)
     js = schema.json_schema(ont, [a["id"] for a in algos])
-    papers = [p for p in yaml.safe_load(MANIFEST.read_text())["papers"] if p.get("arxiv_id")]
+    papers = yaml.safe_load(MANIFEST.read_text())["papers"]
     if args.only:
         papers = [p for p in papers if p["id"] in set(args.only)]
     OUT.mkdir(parents=True, exist_ok=True)
     todo = []
     for p in papers:
-        pre_ok = (PRE / f"{p['arxiv_id'].replace('/', '_')}.tex").exists()
+        pre_ok = pre_path(p).exists()
         if not pre_ok:
             print(f"skip {p['id']}: not preprocessed")
         elif (OUT / f"{p['id']}.json").exists() and not args.force:

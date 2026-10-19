@@ -17,8 +17,10 @@ uv run python pipeline/preprocess.py
 CLAUDE_CLI_USAGE_LOG=data/extract.usage.jsonl \
   uv run python pipeline/extract.py --workers 3
 uv run python pipeline/validate.py
-uv run python pipeline/resolve.py           # canonicalisation (D13)
-uv run python pipeline/infer.py             # propagate bounds along the order (D1) -> data/canonical/inferred.json
+uv run python pipeline/fetch_pdf.py         # non-arXiv papers: PDF -> text (manifest pdf_url)
+uv run python pipeline/derive.py            # resolve -> infer -> compare -> report -> acceptance
+uv run python pipeline/verify.py            # second-reading verification -> data/extractions_verified/ (never edits extractions)
+uv run python pipeline/triage.py            # web search per candidate gap -> data/reports/triage.yaml
 uv run python site/build.py && python3 -m http.server -d _site 8000
 ```
 
@@ -55,6 +57,35 @@ Every extraction records `_run` (models, prompt hash, ontology version, token us
 - lower bounds go to generalisations, with reduction maps inverted.
 
 Each record carries its derivation and caveats. Inferred results never feed further inference.
+
+## Extraction quality (see data/extraction-tests.md)
+
+- **Run-to-run agreement:**
+  - bound expressions agree 95% (allowing renamed symbols);
+  - notation, quantity and probability agree 98–100%;
+  - full setting keys agree only 45%, driven by `instance_assumptions` and `learner_knows`.
+- **Theorem numbers** were wrong 8 of 30 times. `preprocess.py` now replays LaTeX's theorem counters, including `.sty` definitions, shared counters, per-section numbering and `\appendix`, and annotates `% [printed: Theorem 3.2]`; the prompt says to copy it.
+- **`verify.py`** caught 12/12 planted copying errors, but misses convention errors (quantity definitions, missing knowledge). Use it to rank records for human review, not as ground truth.
+- **Repeat runs** are good disagreement detectors for building the gold set. 2-of-3 voting is not recommended.
+
+## Bound comparison (D2)
+
+`compare.py` reduces every bound (extracted and inferred) to a profile, a growth rate v^a (log v)^b per variable:
+- T is scanned alone. K, d, 1/Δ and 1/ε are scanned in the regime "T large" (along T = v⁴), and the bound's own T-profile is subtracted, so √(KT) has K-exponent ½.
+- Profiles are fitted numerically: a high-precision, exact 3-point solve at v = 10^500…10^2000, so additive lower-order terms vanish.
+- Instance-dependent bounds are evaluated on a uniform-gap instance, and KL-type divergences are taken as ~Δ².
+- Data-dependent bounds (L*, Q_T, Λ_T) form their own regime, `data_dependent`.
+- Bounds with paper-specific symbols are not profiled; about 64% of bounds are profiled.
+
+Within a regime (quantity family × dependence):
+- the best upper bounds form a Pareto front, and so do the best lower bounds;
+- each variable gets a status: tight / log gap / poly gap / **conflict** (an upper bound below a lower bound, which usually means an extraction error).
+
+Two transfer rules between quantity families:
+- high-probability upper bounds count as expected-regret bounds with δ = 1/T;
+- Bayesian lower bounds count as worst-case lower bounds (set in `infer.py`).
+
+`report.py` writes `data/canonical/poset.json` (the covering edges, with justifications) and `data/reports/*.md`: gaps, missing lower bounds, conflicts, unstudied neighbours, already-known results. `acceptance.py` checks the pilot facts and writes `data/acceptance-report.md`.
 
 ## Sources are not redistributed
 

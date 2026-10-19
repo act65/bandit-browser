@@ -1,0 +1,806 @@
+# Gap triage (pipeline/triage.py). Verdicts: closed | open_known | blank.
+triage:
+  S-fea93b33|regret|worst_case:
+    verdict: closed
+    summary: 'The log K gap closes by combining published results. The database''s upper bound √(2KMT log K) comes
+      from running Exp3 separately for each context (Bubeck & Cesa-Bianchi 2012, Theorem 4.1). Running a log-free
+      bandit algorithm separately for each context instead gives O(√(K·T_s)) per context, and by Cauchy–Schwarz
+      the sum is O(√(KMT)). Two such algorithms: INF (Audibert & Bubeck, COLT 2009 / JMLR 2010), which is minimax-optimal
+      at O(√(KT)), and Tsallis-INF (Zimmert & Seldin), which also gets O(√(KT)) without needing T in advance; that
+      matters because the number of rounds per context, T_s, is unknown. This matches the Ω(√(KT)) lower bound in
+      K and T. A matching Ω(√(KMT)) lower bound should follow by splitting the rounds into M blocks, one per context,
+      but I did not check a source for it. Caveat: I found no paper stating the contextual Θ(√(KMT)) bound directly;
+      this is a reduction from per-context results, and the searches confirmed the O(√(KT)) order but not the exact
+      constants.'
+    papers:
+    - title: Minimax Policies for Adversarial and Stochastic Bandits
+      year: 2009
+      arxiv_id: null
+      claim: The INF algorithm (Audibert & Bubeck) achieves O(√(nK)) pseudo-regret for adversarial bandits, removing
+        the extra log factor in Exp3's bound; a JMLR 2010 version states the same result.
+    - title: 'Tsallis-INF: An Optimal Algorithm for Stochastic and Adversarial Bandits'
+      year: 2018
+      arxiv_id: '1807.07623'
+      claim: Tsallis-INF (Zimmert & Seldin) achieves O(√(KT)) adversarial regret, within a constant factor of the
+        minimax lower bound, without needing T in advance; running it separately for each context and applying Cauchy–Schwarz
+        gives O(√(KMT)).
+    - title: Regret Analysis of Stochastic and Nonstochastic Multi-armed Bandit Problems
+      year: 2012
+      arxiv_id: '1204.5721'
+      claim: Source of the database's √(2KMT log K) upper bound (Exp3 run separately for each context, Theorem 4.1)
+        and of the Ω(√(KT)) lower bound (Theorem 3.4).
+    searches:
+    - Minimax policies for adversarial and stochastic bandits Audibert Bubeck INF sqrt(KT) removes log K
+    - Tsallis-INF optimal algorithm stochastic and adversarial bandits anytime regret 4 sqrt(KT)
+    date: '2026-10-19'
+    models:
+    - claude-opus-5-5[1m]
+    - claude-haiku-5-5
+    setting: adversarial (oblivious) · K-armed · adversarial contexts · rewards in [0,1]
+    regime: regret|worst_case
+    status: log_gap
+  S-6123da72|hp_regret|worst_case:
+    verdict: closed
+    summary: 'A recent preprint appears to close this gap by proving a stronger lower bound, rather than by improving
+      the upper bound. The paper is arXiv:2608.12231 ("An Efficient Minimax-Optimal Algorithm for Adversarial m-Set
+      Bandits", Bacchiocchi, Cesari & Colomboni; v2 dated 25 Aug 2026). Its Corollary 1 sets m=1 and d=K. It says
+      there are universal constants c>0 and δ0∈(0,1) such that, for all δ≤δ0 and all T above a threshold polynomial
+      in K and log(1/δ), every randomized policy faces some loss process that makes P(R_T ≥ c·sqrt(KT(log K + log(1/δ))))
+      ≥ δ. The loss process is deterministic, adaptive and non-anticipating: ℓ_t may depend on the history through
+      round t−1, which includes the learner''s current distribution p_t, but not on the draw X_t. This is the standard
+      adaptive-adversary model, and our setting is the adaptive case. The bound matches the upper bound O(sqrt(KT
+      log(K/δ))) from the database''s best_upper (bubeck2012survey Thm 3.2) and from Neu''s EXP3-IX, up to constants.
+      The paper says explicitly that this closes the remaining sqrt(log K) gap left by Gerchinovitz & Lattimore,
+      but only against adaptive adversaries. For oblivious adversaries the gap may still be open. Caveats: (i) the
+      paper is an unreviewed 2026 preprint; (ii) δ0, c and the T threshold are not given numerically, so the bound
+      covers only small enough δ and large enough T; (iii) I read only the abstract and the first ~100k characters
+      of the HTML, not the proof.'
+    papers:
+    - title: An Efficient Minimax-Optimal Algorithm for Adversarial m-Set Bandits
+      year: 2026
+      arxiv_id: '2608.12231'
+      claim: 'Theorem 2 / Corollary 1 (m=1, d=K): for δ≤δ0 and T≥poly(K, log 1/δ), every policy faces a deterministic
+        adaptive non-anticipating loss process with P(R_T ≥ c·sqrt(KT(log K + log(1/δ)))) ≥ δ. This matches the
+        O(sqrt(KT log(K/δ))) high-probability upper bound and, per the authors, closes the sqrt(log K) gap left
+        by Gerchinovitz–Lattimore for adaptive adversaries.'
+    - title: Refined Lower Bounds for Adversarial Bandits
+      year: 2016
+      arxiv_id: '1605.07416'
+      claim: Lower bound of order sqrt(KT log(1/δ)) on high-probability regret, holding even for an oblivious (fixed-in-advance)
+        loss sequence; at constant δ this is sqrt(log K) below the upper bound.
+    - title: 'Explore no more: Improved high-probability regret bounds for non-stochastic bandits'
+      year: 2015
+      arxiv_id: '1506.03271'
+      claim: EXP3-IX achieves high-probability regret O(sqrt(KT)(sqrt(log K) + log(1/δ)/sqrt(log K))) uniformly
+        over δ.
+    searches:
+    - high-probability regret adversarial bandits optimal sqrt(KT log(1/delta)) without log K (extended)
+    - fetch arxiv.org/abs/2608.12231
+    - fetch arxiv.org/html/2608.12231
+    date: '2026-10-19'
+    models:
+    - claude-opus-5-5[1m]
+    - claude-haiku-5-5
+    setting: adversarial (adaptive) · K-armed · rewards in [0,1]
+    regime: hp_regret|worst_case
+    status: log_gap
+  S-3048cfe8|regret|worst_case:
+    verdict: closed
+    summary: 'Probably closed, but verified only from the abstract. The likely closing result is Shinji Ito, "On
+      the Minimax Regret for Contextual Linear Bandits and Multi-Armed Bandits with Expert Advice" (NeurIPS 2024;
+      DOI 10.52202/079017-1974; no arXiv version found). Its abstract gives an algorithm with regret O(sqrt(dT log(K
+      min{1,S/d}))), where S is the size of the context space, and states a matching lower bound. With S=1 (a fixed
+      finite set of K arms) this is Theta(sqrt(dT log(K/d))). That equals sqrt(dT log K) up to constants once K
+      >= d^2, so it would match the Bubeck–Cesa-Bianchi–Kakade O(sqrt(dT log K)) upper bound and remove the sqrt(log
+      K) gap in K. For K close to d, the true rate would be log(K/d), so the sqrt(dT log K) upper bound would itself
+      be loose. Caveat: both fetches of the full PDF returned compressed bytes and the OpenReview page was blocked.
+      I therefore could not check that the lower bound covers S=1 rather than only large S, or that its loss normalization
+      matches bounded_pm1. This needs checking against the paper''s lower-bound theorem. Other leads do not close
+      the gap. Li, Wang & Zhou 2019 prove Omega(sqrt(dT log T log n)), but with action sets that change each round.
+      arXiv 2608.12231 gives Omega(sqrt(dT log(K/delta))) only as a with-probability-delta lower bound against adaptive
+      adversaries.'
+    papers:
+    - title: On the Minimax Regret for Contextual Linear Bandits and Multi-Armed Bandits with Expert Advice (Shinji
+        Ito)
+      year: 2024
+      arxiv_id: null
+      claim: 'Abstract: for contextual linear bandits, an algorithm with regret O(sqrt(dT log(K min{1,S/d}))) and
+        a matching lower bound (S = size of the context space). With S=1 this gives Theta(sqrt(dT log(K/d))) for
+        a fixed set of K arms, if the lower bound covers S=1 (not verified).'
+    - title: Nearly Minimax-Optimal Regret for Linearly Parameterized Bandits (Li, Wang, Zhou)
+      year: 2019
+      arxiv_id: '1904.00242'
+      claim: Lower bound Omega(sqrt(dT log T log n)) for n <= 2^{d/2} arms per round, with action sets that change
+        over time (contextual setting); does not directly apply to a fixed action set.
+    - title: An Efficient Minimax-Optimal Algorithm for Adversarial m-Set Bandits
+      year: 2026
+      arxiv_id: '2608.12231'
+      claim: High-probability bound of order sqrt(dT log(K/delta)) with a matching with-probability-delta lower
+        bound against adaptive adversaries; this is not the expected-regret, oblivious-adversary setting.
+    searches:
+    - lower bound adversarial linear bandit finite action set sqrt(d T log K) tight
+    - Ito "On the Minimax Regret for Contextual Linear Bandits and Multi-Armed Bandits with Expert Advice" arXiv
+    - adversarial linear bandit K arms lower bound Omega(sqrt(d T log(K/d))) finite action set minimax (extended)
+    - Shinji Ito contextual linear bandits lower bound sqrt(dT log(K min{1,S/d})) arxiv 2024 expert advice
+    - '"linear bandits" finite "K arms" lower bound "log(K/d)" adversarial minimax regret sqrt(dT log(K/d))'
+    date: '2026-10-19'
+    models:
+    - claude-opus-5-5[1m]
+    - claude-haiku-5-5
+    setting: adversarial (oblivious) · linear (finite actions) · bounded_pm1 · arms_span_Rd · finite
+    regime: regret|worst_case
+    status: log_gap
+  S-acdb6735|hp_regret|worst_case:
+    verdict: closed
+    summary: 'For oblivious adversaries the √(log K) gap appears closed, but the upper-bound evidence is secondhand.
+      Nguyen & Mehta (arXiv:2403.01315, 2024, Sec. 3.2) state that in standard bandits FTRL with Tsallis entropy
+      (INF, Audibert & Bubeck COLT 2009 / JMLR 2010; also Luo 2017 lecture notes) achieves an O(√(TK ln(1/δ))) high-probability
+      bound against an oblivious adversary, versus O(√(TK ln(K/δ))) against a non-oblivious one. Gerchinovitz &
+      Lattimore (2016) give a lower bound of Ω(√(KT log(1/δ))), which, as Bacchiocchi et al. (2026) report, holds
+      for a loss sequence fixed in advance (oblivious). Together these give Θ(√(KT log(1/δ))) in the oblivious setting.
+      The database''s upper bound (Exp3.P/Exp3-IX style, √(KT log(K/δ))) is loose by √(log K) here. Caveat: I could
+      not read the Audibert-Bubeck PDFs or Luo''s notes (the fetches returned unreadable compressed PDF data), so
+      I did not see the original theorem statement or its conditions on δ; the upper bound rests on Nguyen & Mehta''s
+      citation. Contrast: Bacchiocchi, Cesari & Colomboni (arXiv:2608.12231, Aug 2026) prove an Ω(√(dT(log C(d,m)+log(1/δ))))
+      high-probability lower bound against adaptive non-anticipating adversaries; with m=1 this shows log K is unavoidable
+      in the adaptive K-armed case. They do not discuss the oblivious case.'
+    papers:
+    - title: Near-optimal Per-Action Regret Bounds for Sleeping Bandits (Nguyen, Mehta)
+      year: 2024
+      arxiv_id: '2403.01315'
+      claim: 'Sec. 3.2: in standard bandits, FTRL with Tsallis entropy obtains an O(√(TK ln(1/δ))) high-probability
+        bound against an oblivious adversary and O(√(TK ln(K/δ))) against a non-oblivious adversary, citing Audibert
+        & Bubeck 2009 and Luo 2017.'
+    - title: 'Minimax policies for adversarial and stochastic bandits (Audibert, Bubeck), COLT 2009; journal version:
+        Regret Bounds and Minimax Policies under Partial Monitoring, JMLR 11, 2010'
+      year: 2010
+      arxiv_id: null
+      claim: Introduces the INF (Tsallis-type) forecaster and gives high-probability bounds. Cited by Nguyen & Mehta
+        as the source of the O(√(TK ln(1/δ))) oblivious high-probability bound; the exact theorem was not read in
+        this session (PDF fetch failed).
+    - title: Refined Lower Bounds for Adversarial Bandits (Gerchinovitz, Lattimore)
+      year: 2016
+      arxiv_id: '1605.07416'
+      claim: High-probability lower bound Ω(√(KT log(1/δ))); reported by Bacchiocchi et al. to hold even when the
+        loss sequence is fixed in advance (oblivious).
+    - title: An Efficient Minimax-Optimal Algorithm for Adversarial m-Set Bandits (Bacchiocchi, Cesari, Colomboni)
+      year: 2026
+      arxiv_id: '2608.12231'
+      claim: High-probability lower bound Ω(√(dT(log C(d,m)+log(1/δ)))) against deterministic adaptive non-anticipating
+        adversaries, for δ ≤ δ0 and large T; with m=1, log K is unavoidable for K-armed bandits against adaptive
+        adversaries. The oblivious case is not addressed.
+    searches:
+    - optimal high-probability regret adversarial multi-armed bandit sqrt(KT log(1/delta)) without log K (extended)
+    - Gerchinovitz Lattimore refined lower bounds adversarial bandits high probability sqrt(KT log(1/delta)) open
+    - high probability regret oblivious adversary K-armed bandit log K necessary "oblivious" sqrt(KT log(1/delta))
+      upper bound Tsallis
+    - Audibert Bubeck "Regret bounds and minimax policies under partial monitoring" high probability INF oblivious
+      sqrt(nK log(1/delta))
+    - 'fetched: arxiv.org/abs/2608.12231 and arxiv.org/html/2608.12231 (both parts); arxiv.org/html/2403.01315;
+      failed: arxiv.org/pdf/2403.01315 (unreadable PDF), arxiv.org/abs/2403.01315v3 (404), JMLR 2010 PDF and COLT
+      2009 PDF of Audibert-Bubeck (unreadable PDF), haipeng-luo.net/courses/CSCI699/lecture13.pdf (unreadable PDF)'
+    date: '2026-10-19'
+    models:
+    - claude-opus-5-5[1m]
+    - claude-haiku-5-5
+    setting: adversarial (oblivious) · K-armed · rewards in [0,1]
+    regime: hp_regret|worst_case
+    status: log_gap
+  S-046cb977|regret|instance_dependent:
+    verdict: closed
+    summary: 'With K=2 fixed there is only one suboptimal arm, so Bubeck et al.''s upper bound 5Δ + 8(4/Δ)^{1/ε}
+      log T and lower bound 0.4 log T/Δ^{1/ε} match up to constants that depend only on ε. The ''poly_gap in K''
+      is an artifact of treating K as a variable when the setting fixes K=2. Agrawal, Juneja & Koolen (COLT 2021)
+      go further: under a known bound on the (1+ε)-th moment, their algorithm matches the instance-dependent lower
+      bound exactly in the first-order term. Caveat: the Bubeck et al. PDF didn''t extract, so I couldn''t read
+      Theorem 2''s exact statement and relied on the database''s version of it.'
+    papers:
+    - title: Bandits with heavy tail
+      year: 2013
+      arxiv_id: '1209.1727'
+      claim: Robust-UCB regret upper bounds under bounded (1+ε)-th moments, plus matching lower bounds showing that
+        regret degrades when ε<1. With K=2 the upper and lower bounds coincide up to ε-dependent constants.
+    - title: Regret Minimization in Heavy-Tailed Bandits
+      year: 2021
+      arxiv_id: '2102.03734'
+      claim: Under (1+ε)-th moments uniformly bounded by a known B, proposes an algorithm that matches the lower
+        bound exactly in the first-order term, and gives a finite-time regret bound.
+    searches:
+    - Bubeck Cesa-Bianchi Lugosi Bandits with heavy tail lower bound log T / Delta^{1/epsilon}
+    - Agrawal Juneja Koolen regret minimization heavy-tailed bandits asymptotically optimal
+    date: '2026-10-19'
+    models:
+    - claude-opus-5-5[1m]
+    - claude-haiku-5-5
+    setting: stochastic · K-armed · heavy_tailed · knows moment_bound · K=2, u_mom=1
+    regime: regret|instance_dependent
+    status: poly_gap
+  S-b457bea9|regret|worst_case:
+    verdict: closed
+    summary: 'The gap is essentially closed, up to iterated-logarithm factors, by Li, Wang and Zhou (COLT 2019,
+      arXiv:1904.00242). They study linear contextual bandits with n = K finite actions per round (time-varying
+      action sets). They prove a minimax lower bound of Ω(√(dT log T log K)) for K ≤ 2^{d/2}. Their VCL-SupLinUCB
+      algorithm matches it up to iterated-log factors, removing two √(log T) factors from the Chu et al. 2011 SupLinUCB
+      analysis. The lower bound improves earlier bounds by a √(log T) factor. Caveats: the lower bound needs K ≤
+      2^{d/2}; log log factors remain; the paper''s noise and normalization assumptions may differ slightly from
+      [0,1] rewards. I saw these claims only in search results and abstract summaries and did not open the full
+      text.'
+    papers:
+    - title: Nearly Minimax-Optimal Regret for Linearly Parameterized Bandits
+      year: 2019
+      arxiv_id: '1904.00242'
+      claim: 'Linear contextual bandit with n ≤ 2^{d/2} actions per round: the minimax regret is Ω(√(dT log T log
+        n)), and VCL SupLinUCB matches it up to iterated logarithmic factors (saving two √(log T) factors over the
+        earlier SupLinUCB analysis).'
+    searches:
+    - Nearly Minimax-Optimal Regret for Linearly Parameterized Bandits Li Wang Zhou sqrt(dT log T log n)
+    date: '2026-10-19'
+    models:
+    - claude-opus-5-5[1m]
+    - claude-haiku-5-5
+    setting: stochastic · linear (finite actions) · adversarial contexts · rewards in [0,1] · time_varying_action_sets
+      · finite
+    regime: regret|worst_case
+    status: log_gap
+  S-0e1ac51c|regret|worst_case:
+    verdict: closed
+    summary: 'I''m treating the gap as closed: worst-case regret here is Θ(√(KT)), up to constants.
+
+
+      **Upper bound:** Tsallis-INF (Zimmert & Seldin) has an O(√(KT)) guarantee against any adversary, and the corrupted
+      stochastic setting is a special case of that. Your database already lists this as 4√(KT)+1. My search confirmed
+      the paper and its result up to constants, but not the exact constant 4.
+
+
+      **Lower bound:** The database''s lower bound is Ω(C), which says nothing about how regret scales with K or
+      T. But the class of corrupted instances includes the uncorrupted ones (C=0). So the classical minimax lower
+      bound Ω(√(KT)) for K-armed stochastic bandits applies directly, as given by Auer, Cesa-Bianchi, Freund & Schapire
+      (SIAM J. Comput. 2002).
+
+
+      **Unique optimal arm:** I''m relying on the standard construction of that lower bound, from memory rather
+      than from a page I opened. In it, one arm has mean 1/2+ε and the rest have mean 1/2, so there is exactly one
+      optimal arm and the extra assumption doesn''t weaken the bound. I did not confirm the construction or its
+      constant in this session; the search only showed the paper''s abstract stating a matching Ω(√T)-rate lower
+      bound.
+
+
+      **Result:** Both K and T have exponent 1/2 in the upper and lower bounds. Combined with Gupta et al.''s Ω(C),
+      the worst-case rate is Θ(√(KT) + C). It''s on the order of √(KT) when regret is measured as in the adversarial-regime
+      analysis, which is how the C-free upper bound is stated.
+
+
+      **Caveat:** I couldn''t find a single paper that states this exact corrupted, unique-optimal-arm worst-case
+      result. The verdict comes from putting together the classical results above.'
+    papers:
+    - title: The Nonstochastic Multiarmed Bandit Problem (Auer, Cesa-Bianchi, Freund, Schapire), SIAM J. Computing
+        32:48-77
+      year: 2002
+      arxiv_id: null
+      claim: The abstract states a matching lower bound showing the O(T^{-1/2}) per-round rate (i.e., Θ(√(KT)) regret)
+        cannot be improved. According to the standard construction (from memory, not checked this session), it uses
+        stochastic rewards with a unique best arm, so it applies to the C=0 corrupted setting.
+    - title: 'Tsallis-INF: An Optimal Algorithm for Stochastic and Adversarial Bandits (Zimmert, Seldin), JMLR 22'
+      year: 2021
+      arxiv_id: '1807.07623'
+      claim: The algorithm is optimal up to constants in both the adversarial and stochastic regimes, which gives
+        O(√(KT)) worst-case regret, including for stochastic bandits with corruptions.
+    searches:
+    - Auer Cesa-Bianchi Freund Schapire nonstochastic multiarmed bandit problem lower bound sqrt(KT)
+    - Tsallis-INF optimal algorithm for stochastic and adversarial bandits Zimmert Seldin worst-case 4 sqrt(KT)
+    date: '2026-10-19'
+    models:
+    - claude-opus-5-5[1m]
+    - claude-haiku-5-5
+    setting: corrupted stochastic · K-armed · rewards in [0,1] · unique_optimal_arm
+    regime: regret|worst_case
+    status: poly_gap
+  S-bc618b70|regret|worst_case:
+    verdict: open_known
+    summary: 'For a fixed, arbitrary compact action set in a stochastic linear bandit, the gap is not closed, but
+      it is smaller than the database says. The database upper bound (Dani et al. 2008, about d√T·log^1.5 T) has
+      been improved. Bubeck, Cesa-Bianchi & Kakade (COLT 2012) give O(d√(T log T)) for any compact action set and
+      call it "minimax optimal up to a logarithmic factor." Their setting is adversarial with losses bounded by
+      1; applying it to bounded ±1 stochastic noise is my inference (bounded observed rewards, unbiased loss estimates),
+      not something the paper states. The best lower bound for a fixed set is still Ω(d√T): Dani et al., Rusmevichientong–Tsitsiklis
+      for the unit ball, and Banerjee–Gopalan 2023 for ℓp balls. Banerjee–Gopalan describe characterising minimax
+      regret across action spaces as an open problem from Lattimore–Szepesvári (2020) and leave general convex bodies
+      as a conjecture; I did not open the book''s notes to check the wording. Partial results that do not close
+      the gap: Li–Wang–Zhou (2019) prove Ω(d√(T log T)) only when an adversary picks a different action set each
+      round (Gaussian noise), so it does not cover a fixed set. Zhang–Hadiji–Combes (2025) get Θ(d√T) only for ellipsoids.
+      Wei (2026) gives Õ(d√T) for general sets, but the hidden log factors are not stated on the abstract page.
+      Lattimore (COLT 2023) shows adaptive-regression concentration bounds cannot be tightened in general (proved
+      in continuous time), which suggests confidence-ellipsoid methods cannot drop the log. The remaining gap is
+      about √log T and still appears open.'
+    papers:
+    - title: Towards Minimax Policies for Online Linear Optimization with Bandit Feedback (Bubeck, Cesa-Bianchi,
+        Kakade)
+      year: 2012
+      arxiv_id: '1202.3079'
+      claim: Regret O(d sqrt(n log n)) for any compact action set, described as minimax optimal up to a logarithmic
+        factor; d sqrt(n) on the hypercube; sqrt(d n log N) for N actions. Setting is adversarial with losses bounded
+        by 1.
+    - title: Nearly Minimax-Optimal Regret for Linearly Parameterized Bandits (Li, Wang, Zhou)
+      year: 2019
+      arxiv_id: '1904.00242'
+      claim: Upper bound O(d sqrt(T log T))·poly(log log T) for infinite action sets, and a matching lower bound
+        Omega(d sqrt(T log T)). The lower bound needs adversarially chosen action sets that change over time and
+        Gaussian noise, so it does not apply to a fixed set.
+    - title: On the Minimax Regret for Linear Bandits in a Wide Variety of Action Spaces (Banerjee, Gopalan)
+      year: 2023
+      arxiv_id: '2301.03597'
+      claim: Lower bound d sqrt(n)/(16 sqrt 3) for lp balls (1<p<inf). Cites characterising minimax regret across
+        action spaces as an open problem from Lattimore-Szepesvari; general convex bodies left as a conjecture.
+    - title: 'Linear Bandits on Ellipsoids: Minimax Optimal Algorithms (Zhang, Hadiji, Combes)'
+      year: 2025
+      arxiv_id: '2502.17175'
+      claim: Minimax-optimal Theta(d sigma sqrt T) up to a universal constant, but only for ellipsoid action sets.
+    - title: A Lower Bound for Linear and Kernel Regression with Adaptive Covariates (Lattimore)
+      year: 2023
+      arxiv_id: null
+      claim: Concentration bounds for adaptive linear regression cannot be tightened in general (proved in continuous
+        time); suggests confidence-ellipsoid analyses are tight.
+    - title: 'Follow the Perturbed Leader for Linear Bandits: sqrt(T) Regret over General Action Sets (Wei)'
+      year: 2026
+      arxiv_id: '2610.17818'
+      claim: O~(d sqrt T) over general action sets when an optimal-design exploration distribution is available;
+        the log factors hidden by O~ are not stated on the abstract page.
+    searches:
+    - stochastic linear bandit minimax regret d sqrt(T) log T gap open infinite action set
+    - Lattimore lower bound linear and kernel regression with adaptive covariates
+    - '"Nearly Minimax-Optimal Regret for Linearly Parameterized Bandits" lower bound fixed action set time-varying
+      contexts Gaussian noise'
+    - linear bandit unit ball regret upper bound d sqrt(n) log n lower bound d sqrt(n) "logarithmic factor" open
+      problem Lattimore Szepesvari chapter 24 notes
+    - linear bandit fixed action set minimax regret O(d sqrt(T log T)) removing logarithmic factor optimal d sqrt
+      T upper bound compact action set
+    date: '2026-10-19'
+    models:
+    - claude-opus-5-5[1m]
+    - claude-haiku-5-5
+    setting: stochastic · linear · bounded_pm1 · arms_span_Rd · arbitrary compact
+    regime: regret|worst_case
+    status: log_gap
+  S-a945275c|regret|worst_case:
+    verdict: blank
+    summary: 'The gap is narrowed but I could not confirm it is closed, and found no paper calling it open. (1)
+      Zimmert & Lattimore (COLT 2022) give O(sqrt(dT log(kT))) regret against adaptive adversaries for k actions
+      via exponential weights. This beats the database upper bound sqrt(dT log T log(KT)) from Kong et al. 2023.
+      (2) Ito (NeurIPS 2024) gives O(sqrt(dT log(K min{1,S/d}))) for contextual linear bandits with a matching lower
+      bound. Search snippets say this also improves the non-contextual bound to about sqrt(dT log(K/d)). If the
+      lower bound covers S=1, minimax regret is Θ(sqrt(dT log(K/d))) at least for oblivious adversaries, and a lower
+      bound for oblivious adversaries also applies to adaptive ones. That would make the K-dependence tight. I could
+      not verify the S=1 case or the adversary model: the paper PDF was not readable via fetch and OpenReview was
+      blocked, so I saw only the abstract and summaries. For adaptive adversaries a gap of about sqrt(log T) remains
+      (upper log(KT) vs lower log(K/d)). I found no published result removing it, and no explicit statement that
+      it is open. Bacchiocchi, Cesari & Colomboni (2026) prove a tight high-probability Θ(sqrt(dT log(K/δ))) bound,
+      but only for m-set bandits, so it does not settle worst-case expected regret for general finite-action linear
+      bandits.'
+    papers:
+    - title: 'Return of the bias: Almost minimax optimal high probability bounds for adversarial linear bandits'
+      year: 2022
+      arxiv_id: null
+      claim: 'Zimmert & Lattimore (COLT 2022): regret against adaptive adversaries O(d sqrt(T log T)) in general;
+        with exponential weights O(sqrt(dT log(kT))) when the action set has size k. Also high-probability bounds.'
+    - title: On the Minimax Regret for Contextual Linear Bandits and Multi-Armed Bandits with Expert Advice
+      year: 2024
+      arxiv_id: null
+      claim: 'Ito (NeurIPS 2024): algorithm with O(sqrt(dT log(K min{1,S/d}))) regret for contextual linear bandits
+        and a matching lower bound. Snippets say it slightly improves the non-contextual linear bandit bound to
+        about sqrt(dT log(K/d)), versus the earlier sqrt(dT log K). Whether the lower bound covers S=1 was not verified.'
+    - title: An Efficient Minimax-Optimal Algorithm for Adversarial m-Set Bandits
+      year: 2026
+      arxiv_id: '2608.12231'
+      claim: 'Bacchiocchi, Cesari & Colomboni: against adaptive adversaries, high-probability regret sqrt(dT log(K/δ))
+        with a matching high-probability lower bound, for m-set bandits only (K = C(d,m)).'
+    - title: An Improved Algorithm for Adversarial Linear Contextual Bandits via Reduction
+      year: 2025
+      arxiv_id: '2508.11931'
+      claim: van Erven, Mayo, Olkhovskaya & Wei describe O~(min{d sqrt(T), sqrt(dT log K)}) as near-optimal for
+        adversarial linear bandits.
+    searches:
+    - 'Return of the bias: almost minimax optimal high probability bounds adversarial linear bandits Zimmert Lattimore'
+    - lower bound adversarial linear bandit finite K actions sqrt(dT log K)
+    - contextual linear bandits sqrt(dT log(K min{1,S/d})) matching lower bound NeurIPS 2024
+    - Ito "On the Minimax Regret for Contextual Linear Bandits" arXiv lower bound Omega sqrt(dT log(K/d)) linear
+      bandits
+    - arxiv Shinji Ito 2024 minimax regret contextual linear bandits expert advice lower bound log(K/d) linear bandit
+    - '"linear bandit" lower bound "log(K/d)" finite action set minimax adversarial'
+    - Ito 2024 contextual linear bandits "S/d" lower bound non-contextual linear bandit "log(K/d)" Exp2 improvement
+    date: '2026-10-19'
+    models:
+    - claude-opus-5-5[1m]
+    - claude-haiku-5-5
+    setting: adversarial (adaptive) · linear (finite actions) · bounded_pm1 · arms_span_Rd · finite
+    regime: regret|worst_case
+    status: log_gap
+  S-41fd6c92|regret|worst_case:
+    verdict: closed
+    summary: The gap is closed up to iterated-log factors, and the paper that closes it is already the source of
+      your lower bound. Li, Wang and Zhou (COLT 2019, arXiv:1904.00242) study linear bandits with n candidate actions
+      per round that can change arbitrarily from round to round (the SupLinUCB setting, which covers adversarial
+      contexts). Their abstract, which I fetched, states a lower bound of Ω(√(dT·log T·log n)) for n ≤ 2^{d/2}.
+      The same paper gives an algorithm, Variable-Confidence-Level SupLinUCB, whose regret matches that lower bound
+      up to iterated logarithmic factors, i.e. O(√(dT·log T·log n)·poly(log log T)). Taking n = 2^{d/2} gives O(d√(T
+      log T)·poly(log log T)) against your lower bound Ω(d√(T log T)), so the T-exponent of log T is 0.5 on both
+      sides. The database's upper bound (inherited from Agrawal–Goyal's LinTS, about d√T·log T) is loose. Only a
+      poly(log log T) factor separates the bounds. I took the upper bound's exact form from the abstract's 'matches
+      up to iterated logarithmic factors' wording and a talk abstract; I did not check the theorem statement in
+      the paper itself.
+    papers:
+    - title: Nearly Minimax-Optimal Regret for Linearly Parameterized Bandits (Yingkai Li, Yining Wang, Yuan Zhou)
+      year: 2019
+      arxiv_id: '1904.00242'
+      claim: With n ≤ 2^{d/2} actions per period (time-varying), the minimax regret is Ω(√(dT log T log n)); the
+        Variable-Confidence-Level SupLinUCB algorithm matches this up to iterated logarithmic factors. This gives
+        O(d√(T log T)·poly(log log T)) when log n ≍ d.
+    searches:
+    - Li Wang Zhou Nearly minimax-optimal regret for linearly parameterized bandits upper bound d sqrt(T log T)
+      log log
+    - fetch arxiv.org/abs/1904.00242
+    date: '2026-10-19'
+    models:
+    - claude-opus-5-5[1m]
+    - claude-haiku-5-5
+    setting: stochastic · linear (finite actions) · adversarial contexts · subgaussian · time_varying_action_sets
+      · knows sigma · finite · L_feat=1, S=1, sigma=1
+    regime: regret|worst_case
+    status: log_gap
+  S-2f7e7dff|regret|worst_case:
+    verdict: closed
+    summary: 'The gap is closed up to logarithmic factors. It looks wide only because the database is missing two
+      pieces: the standard minimax lower bound for uncorrupted linear bandits, and the corruption term in the upper
+      bound.
+
+
+      Upper bound: an adversarial linear-bandit algorithm (Exp3 / GeometricHedge with John''s exploration) run on
+      the corrupted rewards gets regret O(sqrt(dT log K)). Converting back to the uncorrupted rewards adds at most
+      2C, so regret is O(sqrt(dT log K) + C). The database entry 2*sqrt(3)*sqrt(T d log K) leaves out this +O(C)
+      term. Note that this conversion step is my own standard reasoning; I did not see it in a source. An explicit
+      stochastic-plus-corruption algorithm on a fixed finite action set that spans R^d is in Lee, Luo, Wei, Zhang
+      & Zhang (ICML 2021, arXiv 2102.05858). Fetching its arXiv/ar5iv page showed instance-independent regret O(d√T
+      log(T|X|/δ) + C) (their Theorem 2) and instance-dependent regret O(c(X,θ) log²T + C). That paper also restates
+      that the minimax adversarial regret is Θ(d√T).
+
+
+      Lower bound: corruption alone forces Ω(C) (Gupta et al. 2019; the database already has this). The uncorrupted
+      case C=0 is a special case of the setting, so the standard stochastic linear-bandit minimax lower bound applies.
+      This is Ω(d√T) using the hypercube construction with K = 2^d arms (Lattimore & Szepesvári 2020, Ch. 24; Dani
+      et al. 2008). For K = 2^d we have sqrt(dT log K) = d√T, so the worst-case exponents match: T^{1/2}, d^{1/2}
+      (times log^{1/2} K), and linear in C.
+
+
+      Bogunovic et al. (AISTATS 2021) and He et al. (NeurIPS 2022) also give algorithm-independent lower bounds
+      on the corruption term, which they show are near-optimal. A NeurIPS 2022 paper describes the Bogunovic bound
+      as Ω(dC), but the setting it applies to is not visible in the snippet. I could not read the PDFs of either
+      paper, so I have not checked their exact lower-bound statements.
+
+
+      What remains open: whether the dependence on K is tight for every K separately, i.e. a sqrt(dT log K) lower
+      bound for non-contextual finite-armed linear bandits with arbitrary K. Ito (NeurIPS 2024) gives a matching
+      sqrt(dT log(K·min{1,S/d}))-type bound with a lower bound for the contextual problem (S is the context-space
+      size), but that is a different setting. So the verdict is "closed" in the worst-case sense of polynomial exponents,
+      up to log factors.
+
+
+      Tool notes: the arXiv PDFs came back as unreadable compressed binary. I relied on the abstract pages, the
+      ar5iv HTML page of 2102.05858 (only the first ~100k characters were read), and search snippets.'
+    papers:
+    - title: Achieving Near Instance-Optimality and Minimax-Optimality in Stochastic and Adversarial Linear Bandits
+        Simultaneously
+      year: 2021
+      arxiv_id: '2102.05858'
+      claim: Uses a finite action set X that spans R^d. Under stochastic losses with corruption C it gets regret
+        O(c(X,θ) log²T + C) and instance-independent regret O(d√T log(T|X|/δ) + C). It states that the minimax adversarial
+        regret is Θ(d√T), citing Dani et al. 2008 and Bubeck et al. 2012.
+    - title: Stochastic Linear Bandits Robust to Adversarial Attacks (Bogunovic, Losalka, Krause, Scarlett)
+      year: 2021
+      arxiv_id: '2007.03285'
+      claim: 'Robust Phased Elimination: near-optimal regret when C=0, plus an additive term linear in C if C is
+        known and quadratic in C if it is not. Algorithm-independent lower bounds show these additive terms are
+        near-optimal. A NeurIPS 2022 paper cites this as Ω(dC); I could not read the exact statement.'
+    - title: Nearly Optimal Algorithms for Linear Contextual Bandits with Adversarial Corruptions (He, Zhou, Zhang,
+        Gu)
+      year: 2022
+      arxiv_id: '2205.06811'
+      claim: A weighted-OFUL algorithm whose regret nearly matches the lower bounds for both known and unknown C,
+        up to log factors, and is also near-optimal when C=0.
+    - title: On the Minimax Regret for Contextual Linear Bandits and Multi-Armed Bandits with Expert Advice (Ito)
+      year: 2024
+      arxiv_id: null
+      claim: Gives a sqrt(dT log(K·min{1,S/d}))-type regret bound with a matching lower bound for contextual linear
+        bandits with K arms and a context space of size S. This is relevant to whether the log K factor is tight.
+    searches:
+    - stochastic linear bandits robust to adversarial attacks corruption lower bound Bogunovic
+    - finite-armed linear bandit minimax lower bound sqrt(dT log K) Lattimore Szepesvari
+    - Nearly Optimal Algorithms for Linear Contextual Bandits with Adversarial Corruptions lower bound Omega(dC)
+      d sqrt T
+    - corrupted linear bandit finite arms regret sqrt(dT log K) + C best-of-both-worlds linear bandits corruption
+    date: '2026-10-19'
+    models:
+    - claude-opus-5-5[1m]
+    - claude-haiku-5-5
+    setting: corrupted stochastic · linear (finite actions) · bounded_pm1 · arms_span_Rd, unique_optimal_arm · finite
+    regime: regret|worst_case
+    status: poly_gap
+  S-96e4adce|regret|worst_case:
+    verdict: closed
+    summary: In the worst case the gap is closed at Θ(√(KT)). The adversarial regime with a self-bounding constraint
+      contains stochastic bandits (C=0). The standard minimax hard instance (one arm with mean 1/2+ε, the rest 1/2,
+      ε≈√(K/T)) is stochastic and has a unique optimal arm, so the classical lower bound of Auer, Cesa-Bianchi,
+      Freund & Schapire (2002), Ω(√(KT)) for T≥K, applies directly. The database's 'C' lower bound is only the corruption
+      term. The applicability argument is my own reasoning, and I did not open the full Auer et al. PDF to read
+      the exact theorem; the abstract seen says the T^{-1/2} per-round rate is optimal, and Bubeck's tutorial gives
+      √(Tn) for n arms. Tsallis-INF (Zimmert & Seldin) gets 4√(KT)+1, which matches up to constants. Per-variable
+      lower exponents should be 0.5 for both K and T.
+    papers:
+    - title: The Nonstochastic Multiarmed Bandit Problem (Auer, Cesa-Bianchi, Freund, Schapire), SIAM J. Computing
+      year: 2002
+      arxiv_id: null
+      claim: The abstract says the O(T^{-1/2}) per-round rate is the best possible by a matching lower bound. Bubeck's
+        MLSS 2016 tutorial credits this paper with √(Tn) for n arms. Exact theorem and constant not checked in the
+        PDF. The hard instance is stochastic with a unique optimal arm, so it lies in the self-bounding regime with
+        C=0.
+    - title: 'Tsallis-INF: An Optimal Algorithm for Stochastic and Adversarial Bandits (Zimmert, Seldin)'
+      year: 2021
+      arxiv_id: '1807.07623'
+      claim: Optimal adversarial regret O(√(KT)), and logarithmic regret in the adversarial regime with a self-bounding
+        constraint, which includes stochastic bandits.
+    searches:
+    - The nonstochastic multiarmed bandit problem Auer Cesa-Bianchi Freund Schapire lower bound sqrt(KT)
+    - Tsallis-INF optimal algorithm stochastic and adversarial bandits Zimmert Seldin minimax optimal adversarial
+      regime self-bounding
+    date: '2026-10-19'
+    models:
+    - claude-opus-5-5[1m]
+    - claude-haiku-5-5
+    setting: adversarial_self_bounding · K-armed · rewards in [0,1] · unique_optimal_arm
+    regime: regret|worst_case
+    status: poly_gap
+  S-7264b322|regret|instance_dependent:
+    verdict: closed
+    summary: 'The gap is closed: your database''s upper bound is out of date. The upper bound it lists, Lykouris
+      et al. 2018, is O(Σ(KC + log T)·log T/Δ_i). It has since been improved twice.
+
+
+      **Improved upper bounds**
+
+      - Gupta, Koren & Talwar (COLT 2019) improved it to O(KC + Σ log²(KT)/Δ_i). I know this from Masoudian–Seldin''s
+      summary of it, not from their own paper.
+
+      - Zimmert & Seldin''s Tsallis-INF, as refined by Masoudian & Seldin (COLT 2021, arXiv 2103.12487), achieves
+      O(Σ_i (1/Δ_i)·log₊((K−1)T/(Σ_i 1/Δ_i)²) + √(C·(Σ_i 1/Δ_i)·log₊((K−1)T/(C Σ_i 1/Δ_i)))). I saw this bound on
+      the arXiv abstract page.
+
+
+      **Why this closes the gap**
+
+      - The new bound''s dependence is linear in K, linear in 1/Δ, and a single log T. That matches the lower bound
+      in your database, liminf Σ_i (1/Δ_i)·log T/2 (Zimmert–Seldin, Appendix A). So the per-variable gaps (K: exponent
+      2 vs 1; T: log² vs log) disappear.
+
+      - By AM–GM, the √(C·Σ log T/Δ_i) term is at most C + Σ log T/Δ_i. An Ω(C) lower bound for corruption is standard.
+      I only saw it stated second-hand (Hu & Chen 2025, arXiv 2502.07514, quoting it for comparison with Gupta et
+      al.), not in the original paper.
+
+
+      **What remains open**
+
+      A finer gap is left, and only in the C-interaction term. Ito (NeurIPS 2021, arXiv 2109.10963) shows the √C
+      rate is exactly tight for the experts problem. For bandits, his lower bound is Ω(K/Δ + √(CK/Δ)), with no log
+      T. That leaves a gap of about a √(log T) factor in the corruption term against the O(K log T/Δ + √(CK log
+      T/Δ)) upper bound. This is from a search snippet quoting the paper''s Table 1 / Theorem 6; I couldn''t read
+      Theorem 6 itself because the PDF wouldn''t extract.
+
+
+      For the per-variable rates you''re tracking (Δ, K, T), the leading term is resolved up to constants.'
+    papers:
+    - title: Improved Analysis of the Tsallis-INF Algorithm in Stochastically Constrained Adversarial Bandits and
+        Stochastic Bandits with Adversarial Corruptions
+      year: 2021
+      arxiv_id: '2103.12487'
+      claim: 'Masoudian & Seldin (COLT 2021): Tsallis-INF achieves O(Σ_i (1/Δ_i)·log₊((K−1)T/(Σ_i 1/Δ_i)²) + √(C·(Σ_i
+        1/Δ_i)·log₊((K−1)T/(C Σ_i 1/Δ_i)))) regret in stochastic bandits with adversarial corruptions; their summary
+        also gives Gupta et al.''s O(KC + Σ log²(KT)/Δ_i).'
+    - title: Better Algorithms for Stochastic Bandits with Adversarial Corruptions
+      year: 2019
+      arxiv_id: '1902.08647'
+      claim: 'Gupta, Koren & Talwar (COLT 2019): the BARBAR algorithm needs no knowledge of C; per Masoudian–Seldin''s
+        summary its regret is O(KC + Σ log²(KT)/Δ_i), improving on Lykouris et al.'
+    - title: On Optimal Robustness to Adversarial Corruption in Online Decision Problems
+      year: 2021
+      arxiv_id: '2109.10963'
+      claim: 'Ito (NeurIPS 2021): bandit lower bound Ω(K/Δ + √(CK/Δ)) (Theorem 6, as quoted from the paper''s Table
+        1 in a search snippet), nearly tight up to a log factor against the O(K log T/Δ + √(CK log T/Δ)) upper bound
+        of Zimmert & Seldin.'
+    - title: BARBAT (Hu & Chen, 2025)
+      year: 2025
+      arxiv_id: '2502.07514'
+      claim: Says BARBAR's O(KC) regret does not match the Ω(C) corruption lower bound, and that BARBAT removes
+        the factor of K to reach optimal regret up to a log factor.
+    searches:
+    - Tsallis-INF optimal algorithm stochastic adversarial bandits corruption regret sqrt(C sum log T / Delta)
+    - Gupta Koren Talwar better algorithms stochastic bandits adversarial corruptions lower bound Omega(C)
+    - Ito "On Optimal Robustness to Adversarial Corruption in Multi-armed Bandits and Beyond" lower bound
+    - fetch arxiv.org/abs/2103.12487
+    - 'fetch NeurIPS 2021 Ito PDF (failed: PDF text not extractable)'
+    date: '2026-10-19'
+    models:
+    - claude-opus-5-5[1m]
+    - claude-haiku-5-5
+    setting: corrupted stochastic · K-armed · rewards in [0,1]
+    regime: regret|instance_dependent
+    status: poly_gap
+  S-fb4f603e|bayesian_regret|worst_case:
+    verdict: closed
+    summary: 'The log gap appears closed by Zhang, Hadiji and Combes (arXiv:2502.17175, 2025). Their algorithm E2TC
+      handles ellipsoidal action sets, and the unit ball (A = I) is a special case. It only ever plays actions on
+      the boundary sphere. Their Theorem 3.1 (read in the arXiv HTML) holds for every θ under sub-Gaussian noise
+      with known σ: R_T(θ) ≤ 6dσ√T + 984σ²d²/‖θ‖·loḡ(T‖θ‖²/(σ²d²)) + 290d‖θ‖ + 2T‖θ‖·exp(−…). The paper claims
+      this is minimax optimal and matches its lower bound Ω(min(dσ√T + d‖θ‖, ‖θ‖T)). The step to Bayesian regret
+      is my own reasoning, not a stated result. Under a Gaussian prior with d ≥ 2, E[1/‖θ‖] is finite, so Bayesian
+      regret ≤ 6dσ√T + O(d² log T) + O(d). That is O(d√T) once T ≳ d² log² T, and the trivial bound T·E‖θ‖ already
+      gives O(d√T) when T ≤ d². This matches the Rusmevichientong–Tsitsiklis Ω(d√T) lower bound up to constants
+      and removes the log T in the Russo–Van Roy upper bound. Caveats: a log T factor can remain in the narrow range
+      d² ≲ T ≲ d² log² T, and constants are not matched (6 vs 0.006). PEGE (Rusmevichientong & Tsitsiklis 2010,
+      seen only in search snippets) gets O((‖θ‖ + 1/‖θ‖)d√T) without a log on the unit ball, which would also roughly
+      close the gap after averaging over the prior. I found no published log-free Bayesian bound for Thompson sampling
+      itself on the sphere; arXiv:2502.02140 still has O(d√(T log T)).'
+    papers:
+    - title: 'Linear Bandits on Ellipsoids: Minimax Optimal Algorithms'
+      year: 2025
+      arxiv_id: '2502.17175'
+      claim: 'E2TC (explore-then-commit with sequential norm estimation) on centred ellipsoids, including the unit
+        ball with all actions on the sphere. Theorem 3.1: R_T(θ) ≤ 6dσ√T + 984σ²d²/‖θ‖·loḡ(T‖θ‖²/(σ²d²)) + 290d‖θ‖
+        + exponentially small term, for every θ under sub-Gaussian noise. Claimed minimax optimal, matching Ω(min(dσ√T
+        + d‖θ‖, ‖θ‖T)). Averaging over a Gaussian prior with d ≥ 2 (my reasoning) gives O(d√T) Bayesian regret for
+        T ≳ d² log² T.'
+    - title: An Information-Theoretic Analysis of Thompson Sampling with Infinite Action Spaces
+      year: 2025
+      arxiv_id: '2502.02140'
+      claim: 'Thompson sampling on the unit sphere: recovers the O(d√(T log T)) Bayesian regret rate of Dong & Van
+        Roy with better constants; the log factor remains.'
+    - title: Nearly Minimax-Optimal Regret for Linearly Parameterized Bandits
+      year: 2019
+      arxiv_id: '1904.00242'
+      claim: Search snippets from this paper quote that PEGE (Rusmevichientong & Tsitsiklis) gets O((‖θ‖ + 1/‖θ‖)d√T)
+        on the unit ball with no log factor, and restate the Ω(d√T) unit-ball lower bound.
+    searches:
+    - Bayesian regret linear bandit unit sphere d sqrt(T) without logarithmic factor Thompson sampling optimal
+    - minimax regret linear bandits unit ball d sqrt(T) tight no log factor upper bound
+    date: '2026-10-19'
+    models:
+    - claude-opus-5-5[1m]
+    - claude-haiku-5-5
+    setting: stochastic · linear · Gaussian · bayesian_prior · sphere · d=>=2
+    regime: bayesian_regret|worst_case
+    status: log_gap
+  S-fb82f905|bayesian_regret|worst_case:
+    verdict: blank
+    summary: "I found no published result that closes the gap. I also found no paper that explicitly calls it an\
+      \ open problem, so the verdict is \"blank\". The gap is smaller than the database shows, though: it is now\
+      \ a √(log T) factor, not a full log T.\n\n1. **Tighter upper bound.** Hamidi & Bayati (arXiv 2102.07987, Theorem\
+      \ 3.1) bound the Bayesian regret of linear Thompson sampling by √(2·max(σ²,1)·d·T·log det(I+TΓ₁)) ≤ d·√(2·max(σ²,1)·T·log(1+T)).\n\
+      \   - **Assumptions:** the action sets \U0001D49C_t may change every round, the prior is bounded with ‖θ*‖\
+      \ ≤ 1, and the noise only needs bounded conditional variance, which is weaker than subgaussian.\n   - **Relation\
+      \ to Russo & Van Roy (2014):** the paper says it improves their Õ(d·log T·√T) bound by a √(log T) factor.\n\
+      \   - So in the database's notation the upper bound is now d·√(T log T), versus the d√T lower bound (Dani\
+      \ et al. 2008; Rusmevichientong & Tsitsiklis 2010).\n\n2. **Tight d√T bound only for a fixed action set.**\
+      \ The chaining paper by Gouverneur, Rodríguez-Gálvez, Oechtering & Skoglund (arXiv 2403.03361) proves an O(d√T)\
+      \ bound (7·d√T on the unit ball) for a two-step Thompson sampling variant. Its action set is a single fixed\
+      \ compact set and it needs a continuity (subgaussian process) condition. It does not cover time-varying or\
+      \ adaptively chosen action sets, so it does not close this cell. The d√(T log T) bound of Dong & Van Roy (1805.11845)\
+      \ is also for a fixed action set.\n\n3. **No log-factor lower bound found.** I found no lower bound of order\
+      \ d√(T log T) for changing action sets. Lattimore (COLT 2023) shows that least-squares confidence bounds under\
+      \ adaptive covariates cannot be improved in continuous time, but that is about confidence sets, not a regret\
+      \ lower bound. A 2025-26 paper on arbitrary adaptive menus (arXiv 2609.15170) leaves open questions about\
+      \ worst-case optimality, but only up to log factors.\n\nOverall, whether d√T Bayesian regret is achievable\
+      \ with adaptively chosen compact action sets is still unresolved in what I found."
+    papers:
+    - title: The Elliptical Potential Lemma for General Distributions with an Application to Linear Thompson Sampling
+      year: 2021
+      arxiv_id: '2102.07987'
+      claim: 'Theorem 3.1: Bayesian regret of LinTS with changing action sets ≤ d·sqrt(2·max(σ²,1)·T·log(1+T)) under
+        bounded prior (‖θ*‖ ≤ 1) and bounded conditional noise variance; improves Russo & Van Roy 2014''s Õ(d·log
+        T·√T) by a √(log T) factor.'
+    - title: Chained Information-Theoretic bounds and Tight Regret Rate for Linear Bandit Problems
+      year: 2024
+      arxiv_id: '2403.03361'
+      claim: Two-step Thompson sampling variant gets O(d√T) Bayesian regret (7·d√T on the unit ball), matching the
+        Ω(d√T) lower bound, but only for a fixed compact action set under a subgaussian-process continuity assumption.
+    - title: An Information-Theoretic Analysis for Thompson Sampling with Many Actions
+      year: 2018
+      arxiv_id: '1805.11845'
+      claim: Bayesian regret O(d√(T log T)) for linear bandits; within a √(log T) factor of the Ω(d√T) lower bound.
+    - title: A Lower Bound for Linear and Kernel Regression with Adaptive Covariates
+      year: 2023
+      arxiv_id: null
+      claim: Shows the continuous-time version of the Abbasi-Yadkori et al. confidence bounds for adaptive covariates
+        cannot be improved in general. This concerns confidence sets, not a regret lower bound.
+    searches:
+    - Bayesian regret linear bandits changing action sets optimal d sqrt(T) without log factor Thompson sampling
+    - Lattimore lower bound linear and kernel regression with adaptive covariates changing action sets regret log
+      factor
+    - linear bandit changing action sets lower bound Omega(d sqrt(T log T)) regret adversarial action sets
+    date: '2026-10-19'
+    models:
+    - claude-opus-5-5[1m]
+    - claude-haiku-5-5
+    setting: stochastic · linear · conditionally_subgaussian · time_varying_action_sets · bayesian_prior · arbitrary
+      compact
+    regime: bayesian_regret|worst_case
+    status: log_gap
+  S-ebd2c4fd|regret|worst_case:
+    verdict: closed
+    summary: The √(log K) gap was closed in 2009. Audibert & Bubeck (COLT 2009) introduced INF/Poly-INF; per the
+      abstract it removes the extra log factor from EXP3's bound and reaches the minimax rate of order √(KT) against
+      oblivious adversaries. The JMLR 2010 version says the same for pseudo-regret, which equals expected regret
+      against an oblivious adversary. Zimmert & Seldin's Tsallis-INF (arXiv:1807.07623) also gets O(√(KT)) adversarial
+      regret; the abstract says this is within a factor of about 15 of the minimax lower bound. Both use losses
+      in [0,1]; rescaling to [-1,1] only changes constants. This matches the Ω(√(KT)) lower bound up to constants,
+      so the √(log K) gap is closed, but the exact constant (about 4 vs about 1/20) is not. Checked from search-result
+      snippets and abstracts, not full theorem statements; the 4√(KT)+1 constant for Tsallis-INF is from memory
+      and was not confirmed this session.
+    papers:
+    - title: Minimax Policies for Adversarial and Stochastic Bandits
+      year: 2009
+      arxiv_id: null
+      claim: Audibert & Bubeck (COLT 2009). The abstract says the INF algorithm closes a long-standing gap in the
+        minimax rate by removing the extraneous log factor from EXP3's ~√(nK log K) bound, giving order √(nK) regret
+        against oblivious adversaries.
+    - title: Regret Bounds and Minimax Policies under Partial Monitoring
+      year: 2010
+      arxiv_id: null
+      claim: Audibert & Bubeck (JMLR 11, 2010). The abstract says INF with a suitable choice of ψ removes the extraneous
+        log factor in pseudo-regret bounds for bandit games (minimax rate of order √(nK)).
+    - title: 'Tsallis-INF: An Optimal Algorithm for Stochastic and Adversarial Bandits'
+      year: 2019
+      arxiv_id: '1807.07623'
+      claim: Zimmert & Seldin. Tsallis entropy with power 1/2 gives O(√(KT)) adversarial regret, which the abstract
+        says is within a factor of about 15 of the minimax lower bound.
+    searches:
+    - Audibert Bubeck Minimax policies for adversarial and stochastic bandits sqrt(nK) INF
+    - Tsallis-INF optimal algorithm for stochastic and adversarial bandits regret 4 sqrt(KT)
+    date: '2026-10-19'
+    models:
+    - claude-opus-5-5[1m]
+    - claude-haiku-5-5
+    setting: adversarial (oblivious) · K-armed · bounded_pm1
+    regime: regret|worst_case
+    status: log_gap
+  S-98720fd6|regret|worst_case:
+    verdict: closed
+    summary: The √(log K) gap is closed by known results. Audibert & Bubeck (COLT 2009 / JMLR 2010) replace Exp3
+      with INF, which gets O(√(TK)) regret against an oblivious adversary with no log factor; I saw this claim in
+      search snippets but did not read the full theorem. Running one INF instance per context gives total regret
+      at most a constant times the sum over contexts of √(K·T_c), which by Cauchy–Schwarz is at most √(K·M_ctx·T).
+      The Bubeck–Cesa-Bianchi survey gives a matching Ω(√(K·M_ctx·T)) lower bound when a constant fraction of contexts
+      each appear in a constant fraction of rounds. So the minimax regret is Θ(√(K·M_ctx·T)). Bernoulli rewards
+      don't change this, since the INF bound holds for any oblivious rewards in [0,1]. No single paper I found states
+      the finite-context Θ result explicitly; it is an elementary combination of the two results.
+    papers:
+    - title: Minimax Policies for Adversarial and Stochastic Bandits (Audibert, Bubeck)
+      year: 2009
+      arxiv_id: null
+      claim: INF policies achieve O(sqrt(nK)) regret in adversarial bandits, removing the log factor of Exp3. Run
+        per context, this gives O(sqrt(K M T)) for finite adversarial contexts.
+    - title: Regret, Minimax Policies for Bandits with Partial Monitoring / Regret Bounds and Minimax Policies under
+        Partial Monitoring (Audibert, Bubeck, JMLR 2010)
+      year: 2010
+      arxiv_id: null
+      claim: 'Journal version: INF with a polynomial potential removes the extra log factor from the bandit pseudo-regret
+        bound.'
+    - title: Regret Analysis of Stochastic and Nonstochastic Multi-armed Bandit Problems (Bubeck, Cesa-Bianchi)
+      year: 2012
+      arxiv_id: '1204.5721'
+      claim: Per-context Exp3 for S contexts, plus an Omega(sqrt(nSK)) lower bound.
+    searches:
+    - Audibert Bubeck Minimax policies for adversarial and stochastic bandits INF sqrt(nK) regret
+    - contextual bandit finite contexts adversarial lower bound sqrt(KMT) Exp3 per context minimax
+    date: '2026-10-19'
+    models:
+    - claude-opus-5-5[1m]
+    - claude-haiku-5-5
+    setting: adversarial (oblivious) · K-armed · adversarial contexts · bernoulli
+    regime: regret|worst_case
+    status: log_gap

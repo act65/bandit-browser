@@ -36,6 +36,13 @@ THM_ENVS = ("theorem", "thm", "corollary", "cor", "proposition", "prop", "lemma"
 ENV_RE = re.compile(r"\\begin\{(\w+)\*?\}(?:\[[^\]]*\])?.*?\\end\{\1\*?\}", re.S)
 
 
+def pre_path(paper: dict) -> Path:
+    """Preprocessed source for a manifest entry: keyed by arXiv id, else by manifest id
+    (non-arXiv papers are converted from PDF by pipeline/fetch_pdf.py)."""
+    key = paper.get("arxiv_id") or paper["id"]
+    return PRE / f"{key.replace('/', '_')}.tex"
+
+
 def strip_comments(text: str) -> str:
     return "\n".join(COMMENT_RE.sub("", line) for line in text.splitlines())
 
@@ -69,6 +76,55 @@ def find_main(d: Path) -> Path | None:
     return cands[0] if cands else None
 
 
+NEWTHM_RE = re.compile(r"\\newtheorem\{(\w+)\}(?:\[(\w+)\])?\{([^}]*)\}(?:\[(\w+)\])?")
+NUMBER_EVENTS_RE = re.compile(r"\\section(\*?)\s*\{|\\appendix\b|\\begin\{(\w+)\}")
+
+
+def theorem_defs(preamble: str, paper_dir: Path) -> dict:
+    """env -> (counter, printed name, reset-within) from \newtheorem in the preamble and .sty files."""
+    # style files first so the paper's own definitions take precedence
+    text = "\n".join(read_tex(s) for s in sorted(paper_dir.rglob("*.sty"))) + "\n" + preamble
+    defs = {}
+    for env, shared, name, within in NEWTHM_RE.findall(text):
+        defs[env] = (shared or env, name, within)
+    # an env sharing another's counter inherits that counter's reset-within
+    for env, (c, name, within) in list(defs.items()):
+        if c != env and c in defs and not within:
+            defs[env] = (c, name, defs[c][2])
+    return defs
+
+
+def annotate_numbers(body: str, defs: dict) -> tuple[str, int]:
+    r"""Insert "% [printed: Theorem 3.2]" before each numbered theorem-like environment by
+    replaying LaTeX's counters, so the extractor copies numbers instead of counting.
+    Approximate: \iffalse blocks are skipped; unknown environments are not annotated."""
+    body = re.sub(r"\\iffalse\b.*?\\fi\b", "", body, flags=re.S)
+    counters, sec, appendix, out, last, n = {}, 0, False, [], 0, 0
+    for m in NUMBER_EVENTS_RE.finditer(body):
+        tok = m.group(0)
+        if tok.startswith("\\appendix"):
+            appendix, sec = True, 0
+            continue
+        if tok.startswith("\\section"):
+            if not m.group(1):
+                sec += 1
+                for c, _, w in defs.values():
+                    if w == "section":
+                        counters[c] = 0
+            continue
+        env = m.group(2)
+        if env not in defs:
+            continue
+        c, name, within = defs[env]
+        counters[c] = counters.get(c, 0) + 1
+        prefix = ((chr(64 + sec) if appendix else str(sec)) + ".") if within == "section" else ""
+        out.append(body[last:m.start()])
+        out.append(f"% [printed: {name} {prefix}{counters[c]}]\n")
+        last, n = m.start(), n + 1
+    out.append(body[last:])
+    return "".join(out), n
+
+
 def theorem_envs(text: str) -> list[str]:
     return [m.group(0) for m in ENV_RE.finditer(text) if m.group(1).lower() in THM_ENVS]
 
@@ -84,6 +140,7 @@ def preprocess(arxiv_id: str) -> dict:
     pre, _, body = full.partition("\\begin{document}")
     body = body.split("\\end{document}")[0]
     macros = "\n".join(m.group(0).strip() for m in MACRO_RE.finditer(pre))
+    body, n_numbered = annotate_numbers(body, theorem_defs(pre, d))
 
     truncated = False
     if len(body) > MAX_BODY_CHARS and "\\appendix" in body:
@@ -106,7 +163,7 @@ def preprocess(arxiv_id: str) -> dict:
     PRE.mkdir(parents=True, exist_ok=True)
     (PRE / f"{arxiv_id.replace('/', '_')}.tex").write_text(out, encoding="utf-8")
     return {"status": "ok", "chars": len(out), "truncated": truncated, "has_bbl": bool(bbl),
-            "n_thm_envs": len(theorem_envs(body))}
+            "n_thm_envs": len(theorem_envs(body)), "n_numbered": n_numbered}
 
 
 def main() -> None:

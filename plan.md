@@ -15,11 +15,12 @@ Staged so that each phase ends with a **go / no-go check**. We do not scale extr
 
 - [x] Select about 50 papers in this slice: [`corpus/manifest.yaml`](corpus/manifest.yaml) has 59 papers (53 on arXiv, 6 non-arXiv classics), all with verified ids.
 - [x] Extract all 53 arXiv papers with the pipeline (Phase 2 tooling, built early): 166 settings → 60 canonical nodes, 354 results, 282 cited results. 48/53 files pass all automatic checks ([`data/validation-report.md`](data/validation-report.md)). About $34 at API prices, run on the subscription through `claude -p`.
-- [ ] The 6 non-arXiv classics (Lai & Robbins, UCB1, EXP3, MOSS/INF, Dani et al., SupLinUCB) are not extracted yet. They hold key lower bounds for the acceptance facts (F01, F05), so add a PDF path or enter them by hand.
+- [x] Non-arXiv classics: `pipeline/fetch_pdf.py` (pdftotext, with two-column detection) → 5 of 6 extracted from PDF text (UCB1, EXP3, MOSS, Dani et al., SupLinUCB).
+- [ ] Lai & Robbins 1985: Elsevier open archive blocks scripted downloads. Save the PDF by hand to `corpus/src/lai1985asymptotically/paper.pdf`, then run `fetch_pdf.py --only lai1985asymptotically` and extract.
 - [ ] Gold set: **human-verify** 15–20 of the LLM extractions instead of annotating from scratch (cheaper), and record corrections. Suggested first: OFUL, KL-UCB, Tsallis-INF, Lattimore & Szepesvári 2017, Li et al. 2019, Garivier et al. 2016.
 - [x] Ontology v0.2 ([`ontology/bandits-0.2.yaml`](ontology/bandits-0.2.yaml)): function_class and domain dimensions, new noise/feedback/objective/quantity values, node parameters, `compute` field.
 - [x] Ontology v0.3 ([`ontology/bandits-0.3.yaml`](ontology/bandits-0.3.yaml)): applies [`ontology/review-v0.2.md`](ontology/review-v0.2.md) (action_set, instance_assumptions, learner knowledge, adversary refinements, comparator, in_scope), plus registries in the prompt. Corpus re-extracted.
-- [ ] Fix the per-dimension orders together with their justification and validity scope (D1).
+- [x] Per-dimension orders with justification, caveats, comparator scope and value maps (`order_notes`, `value_maps` in the ontology), used by `pipeline/order.py` along the chain of edges.
 - [x] Write down 5–10 **known facts the system should rediscover** ([`data/ground_truth/pilot-facts.yaml`](data/ground_truth/pilot-facts.yaml), 14 facts, still to be verified by hand) (e.g. which settings are tight up to constants, up to logs, or open; historic gaps and the papers that closed them). These are the Phase 3 acceptance tests.
 - [ ] Ready-made ground truth from related work:
   - [x] Lattimore's *Bandit Convex Optimisation* → [`data/ground_truth/bco.yaml`](data/ground_truth/bco.yaml) (19 settings, 40 results, 20 transfer rules, 27 open problems; v5): Tables 2.1 and 2.2 (bounds), §2.4 (transfer rules) and Chapter 14 (open problems).
@@ -34,7 +35,10 @@ Staged so that each phase ends with a **go / no-go check**. We do not scale extr
 - [x] Corpus fetcher: arXiv LaTeX source (plus metadata from Semantic Scholar / OpenAlex), stored per paper with a manifest. Downloaded sources are treated as untrusted data and never executed.
 - [x] Pre-processor: flatten `\input`s, expand user macros, pull theorem-like environments, the setting/problem-formulation section, comparison tables and the bibliography.
 - [x] Extractor (single pass, `claude -p --json-schema`, all tools disabled).
-- [ ] Extractor improvements: compare single-pass and two-pass designs. Add ChatExtract-style follow-up questions for bound expressions, and use self-consistency across repeated runs.
+- [x] Extraction tests (`data/extraction-tests.md`): self-consistency on 6 papers × 3 runs, and the `pipeline/verify.py` verification pass (planted-error recall 12/12; on real data 6 right / 2 debatable / 3 wrong corrections, the wrong ones low-confidence).
+- [x] Improvements adopted: printed theorem numbers computed in preprocessing; prompt rules 5–6 and 17–20 (case splits, corollary policy, upper/lower-bound knowledge, instance assumptions, quantity by definition, symbol naming); quantity definitions in the ontology; algorithm knowledge merged into upper-bound settings in `resolve.py`.
+- [ ] **Next:** re-extract the corpus with the improved prompt (~$40 equivalent), then run `verify.py` over all of it (~$30) to rank records for human review.
+- [ ] Not adopted (for now): two-pass extraction, 2-of-3 voting (it outvoted the one correct run in the tests). Original item: compare single-pass and two-pass designs. Add ChatExtract-style follow-up questions for bound expressions, and use self-consistency across repeated runs.
 - [x] Validator: JSON schema (pydantic), vocabulary checks, SymPy parse of every expression, and checks that every quote occurs in the source (shingle overlap ≥ 0.5, tolerant of LaTeX reflow). Bound values are the known weak point of extraction (related-work §3), so most checking effort goes there.
 - [ ] Evaluation harness against the gold set: per-field precision and recall for settings, bounds (expression equivalence via SymPy) and assumptions.
 
@@ -47,13 +51,15 @@ Staged so that each phase ends with a **go / no-go check**. We do not scale extr
   - `data/algorithms.yaml`: an algorithm registry (canonical id, aliases, introducing paper, techniques), resolved by name normalisation, then LLM adjudication, then human confirmation.
   - Citation resolution: `cited_key` → .bbl title → arXiv/DOI → manifest id. Unmatched cited papers become corpus candidates.
 - [x] Inherited results (D1): `pipeline/order.py` (product order with reduction parameter maps) + `pipeline/infer.py` → `data/canonical/inferred.json` (upper bounds to special cases, lower bounds to generalisations, with derivation paths and caveats); shown on setting pages.
-- [ ] Build the setting poset: per-dimension orders → product order, plus explicit cross-dimension reductions with parameter maps.
-- [ ] Inference: propagate upper bounds down and lower bounds up, translating through parameter maps and storing derivation paths separately from extracted results.
-- [ ] Bound comparison (D2): normalise to regime-specific forms (e.g. exponent vectors plus a polylog flag), compute dominance and the Pareto front, and assign a tightness status per setting and regime.
-- [ ] Reports: gaps, missing lower bounds, unstudied neighbours, redundant results (D8).
-- [ ] Gap triage: run a targeted retrieval search for each candidate gap before labelling it open; mark it open vs blank; log negative searches.
+- [x] Build the setting poset (`pipeline/order.py`; covering edges in `data/canonical/poset.json`): per-dimension orders → product order, plus explicit cross-dimension reductions with parameter maps.
+- [x] Inference: propagate upper bounds down and lower bounds up, translating through parameter maps and storing derivation paths separately from extracted results.
+- [x] Bound comparison (D2) (`pipeline/compare.py`; see pipeline/README.md for the method): normalise to regime-specific forms (e.g. exponent vectors plus a polylog flag), compute dominance and the Pareto front, and assign a tightness status per setting and regime.
+- [x] Reports: gaps, missing lower bounds, unstudied neighbours, redundant results, conflicts (D8) → `data/reports/` (`pipeline/report.py`).
+- [x] Gap triage (`pipeline/triage.py` → `data/reports/triage.yaml`): one web-search call per candidate gap; verdicts closed / open_known / blank. **First run (17 candidate gaps, 54 searches):** 14 closed by papers outside the corpus (INF/Tsallis-INF, Li et al. 2019, newer corruption-robust bounds, …), 1 known open (stochastic linear on general compact sets: d√T log T vs d√T), 2 blank. Most apparent gaps are coverage holes. Feed the papers cited in `triage.yaml` into the next snowball round. Original item: run a targeted retrieval search for each candidate gap before labelling it open; mark it open vs blank; log negative searches.
 
 **Exit check:** the acceptance tests from Phase 1 pass, i.e. known gaps and tight results are rediscovered from extracted data alone.
+
+- Status (`pipeline/acceptance.py` → `data/acceptance-report.md`): **4 PASS** (F01 Θ(√KT) stochastic; F02 Lai–Robbins tight; F05 Θ(√KT) adversarial; F06 high-probability log gap), **2 PASS_STATUS** (F09 linear log gap via Dani et al.'s bounds; F13), **4 PARTIAL** (missing lower bounds in matching settings), **4 MANUAL** (algorithm-specific facts), **0 FAIL**.
 
 ## Phase 3b: Tools for the motivation (requested 2026-10-19)
 
@@ -108,24 +114,26 @@ Everything here builds on one piece of machinery: **D2 bound comparison**. Each 
 Found while building and reviewing the pilot (2026-10-19). Inference issues are flagged as caveats in `data/canonical/inferred.json` but not yet fixed.
 
 ### Inference validity (D1)
-- [ ] **Adversarial → stochastic transfers** depend on the regret notion. 375 upper-bound transfers (268 expected regret, 107 high-probability) rely on a single generic caveat. The high-probability ones are the shakiest: a bound against the best arm in hindsight is not directly a high-probability pseudo-regret bound. Fix with per-quantity validity rules on each order edge, part of the D2 work.
+- [x] ~~Adversarial → stochastic transfers depend on the regret notion~~: resolved by argument and recorded as an order note (pseudo-regret ≤ expected regret vs the best action in hindsight; Yao's principle for lower bounds), restricted to comparator = best fixed action. Original concern: 375 upper-bound transfers (268 expected regret, 107 high-probability) rely on a single generic caveat. The high-probability ones are the shakiest: a bound against the best arm in hindsight is not directly a high-probability pseudo-regret bound. Fix with per-quantity validity rules on each order edge, part of the D2 work.
 - [ ] **Lower bounds proved only for a fixed parameter** (e.g. K = 2) reach general-K settings with a "holds for K = 2 only" caveat. That is valid but weak and easy to misread. Consider showing them separately or hiding them by default.
 - [ ] **Missing parameter maps:**
   - graph feedback → bandit: graph quantities such as `vartheta` and `V_pred` stay in bandit settings, where they should become K-armed values (independence number = K);
   - generalised linear → linear: link-function constants (`c_mu`, `k_mu`) should become 1.
 
   Both are currently caveated as "symbols defined only in the source setting".
-- [ ] **Instance-dependent lower bounds via reductions** (e.g. Lai–Robbins sent to linear settings) remain written in per-arm terms (Δ_i, kl_i). They are valid on the embedded instances only, which should be stated explicitly or the transfer restricted.
-- [ ] **Bayesian ↔ frequentist:** Bayesian lower bounds currently do not propagate to settings without a prior, but a Bayesian lower bound does imply a worst-case lower bound. Add that as an explicit rule.
+- [x] **Instance-dependent lower bounds via reductions** are no longer transferred: per-arm bounds hold only on the embedded instances.
+- [x] **Bayesian ↔ frequentist:** a Bayesian lower bound sent to a setting without a prior becomes a worst-case lower bound (sup ≥ average).
 
 ### Ontology and setting resolution
 - [ ] **Fragmentation:** 175 extracted settings → 124 canonical ones, many with a single paper. Inheritance mitigates this. Revisit whether some key fields (e.g. `learner_knows: sigma`) are too fine-grained.
-- [ ] **Learner knowledge in lower-bound papers is implicit.** Lower bounds usually allow the learner to know everything, but extractions often leave `learner_knows` empty, which blocks valid transfers. Add a prompt rule, or default lower-bound settings to "knows all".
+- [~] **Learner knowledge in lower-bound papers is implicit.** Prompt rule 17 added (applies to the next extraction). Lower bounds usually allow the learner to know everything, but extractions often leave `learner_knows` empty, which blocks valid transfers. Add a prompt rule, or default lower-bound settings to "knows all".
 - [ ] **36 settings have no specialisation edge**, mostly through deliberately unordered values (`unspecified` shapes, `adversarial_unspecified`, expert advice, dueling). Revisit once there are more papers.
 - [ ] One "stochastic · K-armed" setting has `noise: not_applicable`, which looks like an extraction or resolution leftover.
-- [ ] The `bounded_01 ⊑ bounded_pm1` order holds only up to constants (caveated).
+- [x] `bounded_01 ⊑ bounded_pm1` is exact ([0,1] ⊂ [−1,1]); `bounded_pm1 ⊑ subgaussian` (σ = 1) added.
 
 ### Extraction and data quality
+- [ ] **`extra_assumptions` mixes tuning and conditions.** 71% of results have free-text extra assumptions, mostly tuning ("c = 3") or regime conditions, but some restrict the instance class (e.g. Hao et al.'s "optimal arms span R^d"). Transfers ignore them, which produced 2 of the conflicts. Schema change for the next extraction: split into `conditions` (restrict instances or the setting; must be mapped into the setting or flagged) and `tuning`.
+- [ ] **Conflict review queue** (`data/reports/conflicts.md`): Tsallis-INF r5 (probably a dropped leading term) and Hao et al. r3 (a missing setting assumption).
 - [ ] **Validation:** 6 of 53 files have issues (`data/validation-report.md`), e.g. an `O(...)` inside an exact expression and 11 quotes below the match threshold.
 - [ ] **Unmapped:** 133 of 175 settings still have `unmapped` items. Review them for ontology v0.4.
 - [ ] **The algorithm registry** (`data/algorithms.yaml`, 132 entries) was seeded by an LLM and has not been reviewed.

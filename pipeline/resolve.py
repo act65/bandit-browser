@@ -203,8 +203,10 @@ def main() -> None:
             node["members"].append({"paper": paper, "local_id": s["id"], "name_in_paper": s.get("name_in_paper")})
             local_setting[s["id"]] = (sid, s)
 
-        local_algo = {}
+        local_algo, algo_needs = {}, {}
+        knowable = set(ont["dimensions"]["learner_knows"]["values"]) - TRIVIAL_KNOWLEDGE
         for a in o["algorithms"]:
+            algo_needs[a["id"]] = {x for x in a.get("requires_knowledge_of") or [] if x in knowable}
             aid = a.get("registry_id") or alias_to_id.get((paper, a["name"]))
             if not aid:
                 aid = f"new:{paper}:{re.sub(r'[^a-z0-9]+', '_', a['name'].lower()).strip('_')[:40]}"
@@ -217,6 +219,16 @@ def main() -> None:
             if r["setting"] not in local_setting:
                 continue
             sid, s = local_setting[r["setting"]]
+            need = algo_needs.get(r.get("algorithm"), set()) if r["side"] == "upper" else set()
+            if need - set(s.get("learner_knows") or []):
+                # an upper bound for an algorithm that needs inputs holds where the learner knows them
+                s = {**s, "learner_knows": sorted(set(s.get("learner_knows") or []) | need)}
+                key = setting_key(s, ont)
+                sid = setting_id(key)
+                node = settings.setdefault(sid, {"id": sid, "label": setting_label(key), "key": key, "members": []})
+                if not any(m["paper"] == paper and m["local_id"] == s["id"] for m in node["members"]):
+                    node["members"].append({"paper": paper, "local_id": s["id"], "name_in_paper": s.get("name_in_paper"),
+                                            "derived": "learner knows the algorithm's inputs"})
             expr = r["bound"]["expression"]
             norm_expr, applied = normalise(expr, s, var.get("conversions", []))
             for name, meaning in (r.get("symbols") or {}).items():

@@ -27,6 +27,7 @@ from sympy.parsing.sympy_parser import parse_expr, standard_transformations
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import schema  # noqa: E402
+from preprocess import pre_path  # noqa: E402
 
 ROOT = schema.ROOT
 EXT = ROOT / "data" / "extractions"
@@ -41,7 +42,11 @@ FUNCS = {"sum_subopt": sympy.Function("sum_subopt"), "sum_arms": sympy.Function(
          "Min": sympy.Min, "Max": sympy.Max, "min": sympy.Min, "max": sympy.Max}
 
 
-LATEX_NOISE = re.compile(r"\\[\[\]()]|\$|~|\\[,;!: ]|\\(?:left|right|big|Big|bigg|Bigg)\b|[{}]")
+# Dropped from both quote and source before matching: maths delimiters, spacing, braces, sizing
+# macros, and revision/emphasis wrappers such as \rev{...} or \emph{...} (keeping their arguments).
+# (Dropping *all* macro names was tried and matched fewer quotes.)
+LATEX_NOISE = re.compile(r"\\[\[\]()]|\$|~|\\[,;!: ]|\\(?:left|right|big|Big|bigg|Bigg)\b"
+                         r"|\\(?:rev|new|old|changed|emph|textbf|textit|textcolor\{\w+\}|color\{\w+\}|blue|red|hl)\b|[{}]")
 QUOTE_THRESHOLD = 0.5  # faithful-but-reflowed quotes score 0.55-0.8; invented ones ~0. Fraction of the quote's 25-char windows that must occur in the source
 
 
@@ -61,8 +66,11 @@ def quote_score(quote: str, source_norm: str, w: int = 25) -> float:
     return sum(x in source_norm for x in wins) / len(wins) if wins else 0.0
 
 
-def quote_found(quote: str, source_norm: str) -> bool:
-    return quote_score(quote, source_norm) >= QUOTE_THRESHOLD
+PDF_QUOTE_THRESHOLD = 0.25  # PDF-converted sources: displayed maths is lossy, the model re-typesets it
+
+
+def quote_found(quote: str, source_norm: str, threshold: float = QUOTE_THRESHOLD) -> bool:
+    return quote_score(quote, source_norm, ) >= threshold
 
 
 IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
@@ -102,13 +110,18 @@ def validate_file(path: Path, Model, manifest: dict) -> tuple[list[str], dict]:
     setting_ids = {s.get("id") for s in raw.get("settings", [])}
     algo_ids = {a.get("id") for a in raw.get("algorithms", [])}
     paper = manifest.get(path.stem, {})
-    pre_path = PRE / f"{(paper.get('arxiv_id') or '').replace('/', '_')}.tex"
-    source_norm = norm(pre_path.read_text(encoding="utf-8")) if pre_path.exists() else None
+    pp = pre_path({"id": path.stem, **paper})
+    source_text = pp.read_text(encoding="utf-8") if pp.exists() else None
+    source_norm = norm(source_text) if source_text else None
+    from_pdf = bool(source_text) and "converted from PDF" in source_text[:300]
+    thr = PDF_QUOTE_THRESHOLD if from_pdf else QUOTE_THRESHOLD
+    if from_pdf:
+        stats["from_pdf"] = 1
 
     for s in raw.get("settings", []):
         if s.get("unmapped"):
             stats["settings_with_unmapped"] += 1
-        if source_norm and not quote_found(s.get("definition_quote", ""), source_norm):
+        if source_norm and not quote_found(s.get("definition_quote", ""), source_norm, thr):
             stats["setting_quote_not_found"] += 1
     for r in raw.get("results", []):
         stats["results"] += 1
@@ -122,7 +135,7 @@ def validate_file(path: Path, Model, manifest: dict) -> tuple[list[str], dict]:
             stats["expr_issues"] += 1
             issues.append(f"{rid}: expression {err}: `{r['bound']['expression']}`")
         if source_norm is not None:
-            if quote_found(r.get("source", {}).get("quote", ""), source_norm):
+            if quote_found(r.get("source", {}).get("quote", ""), source_norm, thr):
                 stats["quotes_ok"] += 1
             else:
                 stats["quote_not_found"] += 1

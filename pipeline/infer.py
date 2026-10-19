@@ -44,9 +44,23 @@ def transferable(r: dict, target_key: dict) -> bool:
         return False
     if r["side"] == "lower" and r.get("quantity") in SKIP_LOWER_QUANTITIES:
         return False
-    if r.get("quantity") == "bayesian_regret" and "bayesian_prior" not in (target_key.get("instance_assumptions") or []):
-        return False  # Bayesian regret is undefined without a prior
     return True
+
+
+def bayes_to_worst_case(r: dict, target_key: dict) -> bool:
+    """A Bayesian-regret lower bound sent to a setting without a prior becomes a worst-case
+    lower bound: sup over instances >= average over the prior."""
+    return (r["side"] == "lower" and r.get("quantity") == "bayesian_regret"
+            and "bayesian_prior" not in (target_key.get("instance_assumptions") or []))
+
+
+def pinned(v) -> bool:
+    """True if a parameter value pins a number (K = 2), not a constraint (d even, K >= 2)."""
+    try:
+        float(sympy.sympify(str(v)))
+        return True
+    except (sympy.SympifyError, TypeError, ValueError):
+        return False
 
 
 def foreign_symbols(expr: str | None, canonical: set[str]) -> list[str]:
@@ -100,12 +114,17 @@ def main() -> None:
                 up_map.update({v: k for k, v in ch.param_map.items() if isinstance(v, str) and v.isidentifier()})
             if ch.kind == "parameter":
                 fixed.update(ch.param_map)
-            if ch.dim in CAVEATS and CAVEATS[ch.dim] not in caveats:
-                caveats.append(CAVEATS[ch.dim])
-        change_list = [{"dim": c.dim, "special": c.special, "general": c.general, "kind": c.kind} for c in changes]
+            for cv in ch.caveats + ([CAVEATS[ch.dim]] if ch.kind == "reduction" and ch.dim in CAVEATS else []):
+                if cv not in caveats:
+                    caveats.append(cv)
+        scopes = [c.valid_for_comparator for c in changes if c.valid_for_comparator is not None]
+        comparators = set.intersection(*scopes) if scopes else None
+        change_list = [{"dim": c.dim, "special": c.special, "general": c.general, "kind": c.kind,
+                        "justification": c.justification} for c in changes]
 
         for r in by_setting.get(general, []):
-            if r["side"] != "upper" or not transferable(r, settings[special]["key"]):
+            if r["side"] != "upper" or not transferable(r, settings[special]["key"]) \
+                    or (comparators is not None and r.get("comparator") not in comparators):
                 continue
             expr, subs = substitute(r["bound"].get("expression_normalised") or r["bound"]["expression"],
                                     {**down_map, **fixed})
@@ -114,17 +133,25 @@ def main() -> None:
                              "setting_id": special, "from_setting": general, "from_result": r["id"],
                              "expression": expr, "substitutions": subs, "changes": change_list,
                              "caveats": caveats + ([f"uses symbols defined only in the source setting: {', '.join(foreign)}"] if foreign else [])})
+        via_reduction = any(c.kind == "reduction" for c in changes)
         for r in by_setting.get(special, []):
-            if r["side"] != "lower" or not transferable(r, settings[general]["key"]):
+            if r["side"] != "lower" or not transferable(r, settings[general]["key"]) \
+                    or (comparators is not None and r.get("comparator") not in comparators):
                 continue
+            if via_reduction and r.get("dependence") == "instance_dependent":
+                continue  # per-arm bounds hold only on the embedded instances (e.g. K = d basis arms)
             expr, subs = substitute(r["bound"].get("expression_normalised") or r["bound"]["expression"], up_map)
             foreign = foreign_symbols(expr, canonical)
-            note = [f"holds for {k} = {v} only" for k, v in fixed.items()]
+            note = [f"holds for {k} = {v} only" if pinned(v) else f"holds when {k}: {v}" for k, v in fixed.items()]
             note += [f"uses symbols defined only in the source setting: {', '.join(foreign)}"] if foreign else []
-            inferred.append({"id": f"{r['id']}>{general}", "rule": "lower_bound_to_generalisation",
-                             "setting_id": general, "from_setting": special, "from_result": r["id"],
-                             "expression": expr, "substitutions": subs, "changes": change_list,
-                             "caveats": caveats + note})
+            rec = {"id": f"{r['id']}>{general}", "rule": "lower_bound_to_generalisation",
+                   "setting_id": general, "from_setting": special, "from_result": r["id"],
+                   "expression": expr, "substitutions": subs, "changes": change_list,
+                   "caveats": caveats + note}
+            if bayes_to_worst_case(r, settings[general]["key"]):
+                rec.update(quantity="pseudo_regret", dependence="worst_case")
+                rec["caveats"] = rec["caveats"] + ["Bayesian lower bound read as a worst-case lower bound (sup >= average)"]
+            inferred.append(rec)
 
     (OUT / "inferred.json").write_text(json.dumps(inferred, indent=1, ensure_ascii=False))
     got = collections.Counter(x["setting_id"] for x in inferred)

@@ -63,20 +63,25 @@ def _is_quota_error(envelope: dict) -> bool:
 
 def call_structured(system: str, user: str, schema: dict, model: str | None = None,
                     effort: str | None = None, timeout: int = 900, retries: int = 2,
-                    label: str = "") -> tuple[dict, dict]:
+                    label: str = "", tools: str = "") -> tuple[dict, dict]:
     """Run one structured call; return (structured_output, envelope).
 
     The system prompt replaces Claude Code's default one, which extraction does not
     need and which would otherwise be sent on every call. The user message goes on
     stdin: a whole paper exceeds Linux's 128 KB limit on a single argv string.
+    `tools` is empty (no tools) except for retrieval calls that never see paper text,
+    e.g. tools="WebSearch,WebFetch" for gap triage.
     """
     cmd = ["claude", "-p",
            "--system-prompt", system,
            "--json-schema", json.dumps(schema),
            "--output-format", "json",
-           "--tools", "",
+           "--tools", tools,
            "--strict-mcp-config",
            "--no-session-persistence"]
+    if tools:
+        # headless mode needs the tools pre-approved as well as made available
+        cmd += ["--allowedTools", *tools.split(",")]
     if model:
         cmd += ["--model", model]
     if effort:

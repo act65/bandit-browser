@@ -29,6 +29,13 @@ dimensions:
 
   feedback:
     multi: false
+    order_notes:
+      - {pair: [full_information, graph_feedback], justification: "full information is the complete feedback graph"}
+      - {pair: [graph_feedback, bandit], justification: "a bandit algorithm can ignore side observations"}
+      - {pair: [full_information, two_point], justification: "two evaluations are a subset of the full loss function"}
+      - {pair: [two_point, bandit], justification: "a one-point algorithm can ignore the second evaluation"}
+      - {pair: [semi_bandit, bandit], justification: "a bandit algorithm can ignore per-arm feedback"}
+      - {pair: [bandit, partial_monitoring], justification: "bandit feedback is a partial-monitoring game whose feedback matrix reveals the loss of the chosen action"}
     values:
       full_information: "experts setting: all losses observed"
       two_point: "two (or a few) function evaluations per round"
@@ -47,6 +54,23 @@ dimensions:
 
   environment:
     multi: false
+    # A transfer along these edges keeps the quantity. Stochastic vs adversarial: with an oblivious
+    # adversary, stochastic pseudo-regret <= expected regret against the best fixed action in
+    # hindsight, so adversarial upper bounds hold in the stochastic setting; by Yao's principle
+    # stochastic (randomised-instance) lower bounds hold against oblivious adversaries.
+    order_notes:
+      - {pair: [stochastic_iid, adversarial_oblivious], justification: "i.i.d. losses are a randomised oblivious adversary: pseudo-regret <= expected regret vs the best fixed action in hindsight (upper bounds); Yao's principle (lower bounds)", valid_for_comparator: [best_fixed_action, not_applicable]}
+      - {pair: [stochastic_iid, stochastic_corrupted], justification: "no corruption is C = 0"}
+      - {pair: [stochastic_iid, nonstationary_switching], justification: "no switches", caveat: "check how the paper counts switches/segments before reading S_T at its no-switch value"}
+      - {pair: [nonstationary_switching, adversarial_oblivious], justification: "a switching stochastic environment is one oblivious adversary (randomised)", valid_for_comparator: [best_fixed_action, best_switching_sequence]}
+      - {pair: [adversarial_oblivious, adversarial_adaptive], justification: "an oblivious adversary is an adaptive one that ignores the history"}
+      - {pair: [stochastic_iid, adversarial_self_bounding], justification: "i.i.d. losses satisfy the self-bounding constraint with C = 0"}
+      - {pair: [stochastic_corrupted, adversarial_self_bounding], justification: "corrupted stochastic satisfies the self-bounding constraint with C_sb = 2C"}
+      - {pair: [adversarial_self_bounding, adversarial_oblivious], justification: "a constrained adversary"}
+      - {pair: [adversarial_restricted, adversarial_oblivious], justification: "a restricted loss sequence is a particular oblivious sequence"}
+    value_maps:
+      stochastic_iid: {C: 0, C_sb: 0}
+      stochastic_corrupted: {C_sb: 2*C}
     values:
       stochastic_iid: "rewards i.i.d. from fixed distributions"
       stochastic_corrupted: "stochastic with adversarial corruption budget C"
@@ -73,6 +97,8 @@ dimensions:
 
   action_space:
     multi: false
+    order_notes:
+      - {pair: [linear_finite, linear_infinite], justification: "a finite action set is a compact set", caveat: "a lower bound stated in the number of actions K holds for compact action sets of K points"}
     values:
       finite_K: "K arms, no structure"
       linear_finite: "finite action set in R^d, linear reward"
@@ -117,6 +143,9 @@ dimensions:
 
   domain:
     multi: false
+    order_notes:
+      - {pair: [improper, constrained], justification: "an improper learner may also play inside K", caveat: "in the improper setting boundedness/Lipschitzness hold only on K (BCO book Note 1.iii)"}
+      - {pair: [improper, unconstrained], justification: "as above, with K = R^d", caveat: "in the improper setting boundedness/Lipschitzness hold only on K"}
     values:
       not_applicable: "finite or unstructured action sets"
       constrained: "learner queries and is compared within K"
@@ -128,6 +157,13 @@ dimensions:
 
   context:
     multi: false
+    order_notes:
+      - {pair: [none, stochastic_contexts], justification: "a single context (M = 1)"}
+      - {pair: [stochastic_contexts, adversarial_contexts], justification: "an adversary may draw contexts i.i.d."}
+    # value_maps: symbols that take fixed values in a setting with this value; applied
+    # when an upper bound is transferred INTO such a setting
+    value_maps:
+      none: {M_ctx: 1}
     values:
       none: ""
       stochastic_contexts: ""
@@ -135,13 +171,25 @@ dimensions:
     order:
       - [none, stochastic_contexts]
       - [stochastic_contexts, adversarial_contexts]
-    # symbols that take fixed values in a setting with this value (applied when an
-    # upper bound is transferred INTO such a setting)
-    value_maps:
-      none: {M_ctx: 1}
+
 
   noise:
     multi: false
+    order_notes:
+      - {pair: [bernoulli, bounded_01], justification: "Bernoulli rewards are in [0,1]"}
+      - {pair: [gaussian_known_variance, subgaussian], justification: "N(mu, sigma^2) is sigma-sub-Gaussian"}
+      - {pair: [bounded_01, subgaussian], justification: "rewards in [0,1] are 1/2-sub-Gaussian (Hoeffding)"}
+      - {pair: [subgaussian, heavy_tailed], justification: "sub-Gaussian rewards have variance <= sigma^2, so the (1+eps)-moment condition holds with eps = 1"}
+      - {pair: [subgaussian, conditionally_subgaussian], justification: "independent noise is a martingale difference"}
+      - {pair: [noise_free, conditionally_subgaussian], justification: "zero noise is 0-sub-Gaussian"}
+      - {pair: [bounded_01, bounded_pm1], justification: "[0,1] is a subset of [-1,1]; an algorithm for [-1,1] runs unchanged"}
+      - {pair: [bounded_pm1, subgaussian], justification: "rewards in [-1,1] are 1-sub-Gaussian (Hoeffding)"}
+    value_maps:
+      bounded_01: {sigma: 1/2}
+      bounded_pm1: {sigma: 1}
+      bernoulli: {sigma: 1/2}
+      gaussian_known_variance: {sigma: sigma_std}
+      subgaussian: {eps_m: 1, v_mom: sigma**2}
     values:
       bounded_01: "rewards in [0,1]; for adversarial settings: losses/rewards in [0,1]"
       bounded_pm1: "rewards or losses in [-1,1] (or a symmetric bounded range)"
@@ -160,7 +208,8 @@ dimensions:
       - [subgaussian, heavy_tailed]
       - [subgaussian, conditionally_subgaussian]
       - [noise_free, conditionally_subgaussian]
-      - [bounded_01, bounded_pm1]          # up to rescaling constants
+      - [bounded_01, bounded_pm1]
+      - [bounded_pm1, subgaussian]
 
   learner_knows:
     multi: true
@@ -219,7 +268,7 @@ node_parameters:
         # not_applicable ⊑ finite: K arms embed as the canonical basis (the finite_K -> linear_finite reduction)
         order: [[not_applicable, finite], [unit_ball, arbitrary_compact], [sphere, arbitrary_compact], [hypercube, arbitrary_compact],
                 [simplex, arbitrary_compact], [l1_ball, arbitrary_compact], [polytope, arbitrary_compact],
-                [finite, arbitrary_compact], [convex_body, arbitrary_compact]]
+                [finite, arbitrary_compact], [convex_body, arbitrary_compact], [nonconvex, arbitrary_compact]]
         note: "lower bounds proved on a specific shape transfer only to more general shapes"
       time_varying:
         values: [not_applicable, fixed, oblivious_sequence, adaptive_sequence]
@@ -233,9 +282,20 @@ vocabularies:
                exponential_weights, ftrl_or_mirror_descent, information_directed_sampling,
                track_and_stop, gittins_or_bayes_optimal, doubling_trick, restarts_or_sliding_window,
                lower_bound_change_of_measure, lower_bound_minimax_construction, other]
-  quantity: [pseudo_regret, expected_regret, high_probability_regret, bayesian_regret, simple_regret,
-             sample_complexity, error_probability, dynamic_regret, switching_regret,
-             regret_unspecified, minimax_bayesian_regret, realized_regret, other]
+  quantity:
+    pseudo_regret: "E[sum_t (mu_star - mu_{A_t})] (regret through means; also <theta, x* - x_t> in expectation), whatever the paper calls it"
+    expected_regret: "E[max_a sum_t X_{a,t} - sum_t X_{A_t,t}] (expectation of regret against the best action in hindsight)"
+    high_probability_regret: "a bound on regret holding with probability >= 1 - delta"
+    bayesian_regret: "regret averaged over a prior on the instance"
+    simple_regret: "gap of the action recommended at the end"
+    sample_complexity: "number of samples to reach a target accuracy / confidence"
+    error_probability: "probability of a wrong answer (pure exploration, fixed budget)"
+    dynamic_regret: "regret against the best action at each round (non-stationary)"
+    switching_regret: "regret against the best sequence of actions with a bounded number of switches"
+    regret_unspecified: "a regret bound whose expectation / probability type the paper does not state"
+    minimax_bayesian_regret: "worst-case over priors of the Bayesian regret"
+    realized_regret: "the random regret itself (bounds holding with constant or vanishing probability)"
+    other: "any other guarantee (pull counts, estimation error, ...)"
   comparator: [best_fixed_action, best_action_per_round, best_switching_sequence, best_expert, best_policy, not_applicable]
 
 # CHANGELOG

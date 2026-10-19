@@ -18,11 +18,8 @@ from __future__ import annotations
 import itertools
 from dataclasses import dataclass, field
 
-# Caveats attached to transfers along a dimension: the order holds, but the strength
-# of the transfer depends on details the ontology does not yet encode.
+# Generic caveats for edges without a pair-specific note in the ontology.
 CAVEATS = {
-    "environment": "validity depends on the regret notion (e.g. stochastic ⊑ adversarial holds for pseudo-regret; check for expected / high-probability regret)",
-    "noise": "noise-model orders may hold only up to constants (e.g. rescaling [0,1] to [-1,1])",
     "action_space": "reduction: check that the embedding preserves the regret notion and parameter ranges",
 }
 
@@ -34,6 +31,9 @@ class Change:
     general: object          # value in the general setting
     kind: str                # "order" | "reduction" | "subset" | "parameter"
     param_map: dict = field(default_factory=dict)  # general-setting symbol -> special-setting expr
+    justification: list = field(default_factory=list)  # one entry per ontology edge on the path
+    caveats: list = field(default_factory=list)
+    valid_for_comparator: set | None = None    # None = all comparators
 
 
 def _closure(pairs) -> set:
@@ -59,6 +59,8 @@ class Order:
                     self.implies[(d, r["from"], r["to"])] = r["implies"]
             self.reductions[d] = self._compose(direct, self.orders[d])
         self.value_maps = {d: spec.get("value_maps") or {} for d, spec in self.dims.items()}
+        self.notes = {d: {tuple(n["pair"]): n for n in spec.get("order_notes") or []}
+                      for d, spec in self.dims.items()}
         for name, spec in (ontology.get("node_parameters") or {}).items():
             for f, fspec in spec["fields"].items():
                 self.orders[f"{name}.{f}"] = _closure(tuple(p) for p in fspec.get("order") or [])
@@ -81,10 +83,35 @@ class Order:
                         changed = True
         return closed
 
+    def _path_notes(self, dim: str, a, b) -> list[dict]:
+        """Ontology notes along a shortest chain of direct order pairs from a to b."""
+        direct = self.notes.get(dim, {})
+        frontier, prev = [a], {a: None}
+        while frontier:
+            nxt = []
+            for x in frontier:
+                for (u, v) in direct:
+                    if u == x and v not in prev:
+                        prev[v] = (u, v)
+                        nxt.append(v)
+            frontier = nxt
+        if b not in prev:
+            return []
+        out, x = [], b
+        while prev[x] is not None:
+            out.append(direct[prev[x]])
+            x = prev[x][0]
+        return out[::-1]
+
     def _scalar(self, dim: str, a, b) -> Change | None:
         """Change if a ⊑ b in a scalar dimension (a in the special setting)."""
         if (a, b) in self.orders.get(dim, set()):
-            return Change(dim, a, b, "order")
+            notes = self._path_notes(dim, a, b)
+            scopes = [set(n["valid_for_comparator"]) for n in notes if n.get("valid_for_comparator")]
+            return Change(dim, a, b, "order",
+                          justification=[n["justification"] for n in notes if n.get("justification")],
+                          caveats=[n["caveat"] for n in notes if n.get("caveat")],
+                          valid_for_comparator=set.intersection(*scopes) if scopes else None)
         red = self.reductions.get(dim, {})
         if (a, b) in red:
             return Change(dim, a, b, "reduction", red[(a, b)])
