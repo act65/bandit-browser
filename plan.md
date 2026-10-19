@@ -103,6 +103,41 @@ Everything here builds on one piece of machinery: **D2 bound comparison**. Each 
 - LLM: Claude via the Anthropic API, with prompt caching for the long fixed prompt and the Batch API for corpus-scale runs.
 - Site: a static site generator built from the data directory.
 
+## Known weak spots (TODO)
+
+Found while building and reviewing the pilot (2026-10-19). Inference issues are flagged as caveats in `data/canonical/inferred.json` but not yet fixed.
+
+### Inference validity (D1)
+- [ ] **Adversarial → stochastic transfers** depend on the regret notion. 375 upper-bound transfers (268 expected regret, 107 high-probability) rely on a single generic caveat. The high-probability ones are the shakiest: a bound against the best arm in hindsight is not directly a high-probability pseudo-regret bound. Fix with per-quantity validity rules on each order edge, part of the D2 work.
+- [ ] **Lower bounds proved only for a fixed parameter** (e.g. K = 2) reach general-K settings with a "holds for K = 2 only" caveat. That is valid but weak and easy to misread. Consider showing them separately or hiding them by default.
+- [ ] **Missing parameter maps:**
+  - graph feedback → bandit: graph quantities such as `vartheta` and `V_pred` stay in bandit settings, where they should become K-armed values (independence number = K);
+  - generalised linear → linear: link-function constants (`c_mu`, `k_mu`) should become 1.
+
+  Both are currently caveated as "symbols defined only in the source setting".
+- [ ] **Instance-dependent lower bounds via reductions** (e.g. Lai–Robbins sent to linear settings) remain written in per-arm terms (Δ_i, kl_i). They are valid on the embedded instances only, which should be stated explicitly or the transfer restricted.
+- [ ] **Bayesian ↔ frequentist:** Bayesian lower bounds currently do not propagate to settings without a prior, but a Bayesian lower bound does imply a worst-case lower bound. Add that as an explicit rule.
+
+### Ontology and setting resolution
+- [ ] **Fragmentation:** 175 extracted settings → 124 canonical ones, many with a single paper. Inheritance mitigates this. Revisit whether some key fields (e.g. `learner_knows: sigma`) are too fine-grained.
+- [ ] **Learner knowledge in lower-bound papers is implicit.** Lower bounds usually allow the learner to know everything, but extractions often leave `learner_knows` empty, which blocks valid transfers. Add a prompt rule, or default lower-bound settings to "knows all".
+- [ ] **36 settings have no specialisation edge**, mostly through deliberately unordered values (`unspecified` shapes, `adversarial_unspecified`, expert advice, dueling). Revisit once there are more papers.
+- [ ] One "stochastic · K-armed" setting has `noise: not_applicable`, which looks like an extraction or resolution leftover.
+- [ ] The `bounded_01 ⊑ bounded_pm1` order holds only up to constants (caveated).
+
+### Extraction and data quality
+- [ ] **Validation:** 6 of 53 files have issues (`data/validation-report.md`), e.g. an `O(...)` inside an exact expression and 11 quotes below the match threshold.
+- [ ] **Unmapped:** 133 of 175 settings still have `unmapped` items. Review them for ontology v0.4.
+- [ ] **The algorithm registry** (`data/algorithms.yaml`, 132 entries) was seeded by an LLM and has not been reviewed.
+- [ ] **The pilot facts** (`data/ground_truth/pilot-facts.yaml`) were written from memory and need checking.
+- [ ] **The 6 non-arXiv classics** (Lai & Robbins, UCB1, EXP3, MOSS/INF, Dani et al., SupLinUCB) are not extracted. They hold the key lower bounds for acceptance facts F01 and F05.
+- [ ] **Paper identity:** `alt_titles` is maintained by hand. 49 cited papers outside the corpus are listed in `data/canonical/candidates.yaml` for the next snowball round.
+
+### Site
+- [ ] GitHub Pages must be enabled (Settings → Pages → Source: GitHub Actions); a private repo needs a paid plan.
+- [ ] The BCO ground-truth page still uses the generic YAML renderer.
+- [ ] Very long exact bounds need horizontal scrolling; add a compact view.
+
 ## Open decisions
 
 1. The accuracy bar for Phase 2 to Phase 3.
