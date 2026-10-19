@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "The best of both worlds: stochastic and adversarial bandits",
@@ -37,8 +37,10 @@
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
-   "unmapped": [],
-   "definition_quote": "Known parameters: $K$ arms; $n$ rounds $(n \\geq K \\geq 2)$. Unknown parameters (stochastic model): $K$ probability distributions $\\nu_1,\\ldots,\\nu_K$ on $[0,1]$ ... in the stochastic model, each reward $g_{i,t} \\sim \\nu_i$ is drawn independently."
+   "unmapped": [
+    "n >= K >= 2"
+   ],
+   "definition_quote": "Unknown parameters (stochastic model): K probability distributions \\nu_1,\\ldots,\\nu_K on [0,1] with resp. means \\mu_1, \\hdots, \\mu_K. ... in the stochastic model, each reward g_{i,t} \\sim \\nu_i is drawn independently. ... \\oR_n = \\sum_{t=1}^n (\\max_i \\mu_i - \\mu_{I_t})."
   },
   {
    "id": "s2",
@@ -65,8 +67,10 @@
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
-   "unmapped": [],
-   "definition_quote": "adversary simultaneously selects rewards $g_t=(g_{1,t},\\hdots,g_{K,t}) \\in [0,1]^K$ ... In this section we treat the general case: $K$ arms and adaptive adversary."
+   "unmapped": [
+    "n >= K >= 2"
+   ],
+   "definition_quote": "adversary simultaneously selects rewards g_t=(g_{1,t},\\hdots,g_{K,t}) \\in [0,1]^K ... R_n = \\max_i \\sum_t g_{i,t} - \\sum_t g_{I_t,t}. ... In this section we treat the general case: K arms and adaptive adversary."
   },
   {
    "id": "s3",
@@ -96,7 +100,7 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [],
-   "definition_quote": "We will derive a (slightly weaker version of) the main result for the special case of $K=2$ arms and oblivious adversary, using a simplified algorithm."
+   "definition_quote": "We will derive a (slightly weaker version of) the main result for the special case of K=2 arms and oblivious adversary, using a simplified algorithm."
   },
   {
    "id": "s4",
@@ -126,7 +130,7 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [],
-   "definition_quote": "$\\tilde{O}(\\tfrac{1}{\\Delta})$ regret in the stochastic model, where $\\Delta = |\\mu_1-\\mu_2|$ is the gap."
+   "definition_quote": "\\tilde{O}(1/\\Delta) regret in the stochastic model, where \\Delta = |\\mu_1-\\mu_2| is the gap."
   }
  ],
  "algorithms": [
@@ -163,37 +167,6 @@
  "results": [
   {
    "id": "r1",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "pseudo_regret",
-   "dependence": "instance_dependent",
-   "comparator": "best_fixed_action",
-   "probability": "expectation",
-   "horizon": "known",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "O",
-    "expression": "K*log(K)*log(T)**2/Delta_min",
-    "expression_latex": "O \\left( \\frac{K \\log(K) \\log^2(n)}{\\Delta} \\right)",
-    "regime": null
-   },
-   "symbols": {},
-   "extra_assumptions": [
-    "beta = n^4"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "th:1",
-    "number": "Theorem 2",
-    "quote": "{\\alg} with $\\beta=n^4$ satisfies $\\E[\\oR_n] \\leq O ( \\frac{K \\log(K) \\log^2(n)}{\\Delta} )$ in the stochastic model"
-   },
-   "confidence": "high",
-   "notes": "Same as Theorem 1(b) in the intro. Delta is the minimal gap. Numbered Theorem 2 by counting (thm:intro, thm:2-arms, Chernoff, th:1); the number may be off."
-  },
-  {
-   "id": "r2",
    "setting": "s2",
    "side": "upper",
    "algorithm": "a1",
@@ -206,22 +179,59 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "log(K)*log(T)**(3/2)*sqrt(T*K)",
-    "expression_latex": "O \\left( \\log(K) \\log^{3/2}(n) \\sqrt{n K} \\right)",
+    "expression": "sqrt(T*K)*log(T)**(3/2)*log(K)",
+    "expression_latex": "\\E[R_n] \\leq O(\\sqrt{nK}\\, \\log^{3/2}(n)\\, \\log K)",
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
+   "conditions": [
+    "T >= K >= 2"
+   ],
+   "tuning": [
     "beta = n^4"
    ],
    "is_new": true,
    "source": {
-    "label": "th:1",
-    "number": "Theorem 2",
-    "quote": "$\\E[ R_n ] \\leq O ( \\log(K) \\log^{3/2}(n) \\sqrt{n K} )$ in the adversarial model."
+    "label": "thm:intro",
+    "number": "Theorem 1.1",
+    "quote": "There exists an algorithm {\\alg} for the MAB problem such that: (a) in the adversarial model, {\\alg} achieves regret $\\E[R_n] \\leq O(\\sqrt{nK}\\, \\log^{3/2}(n)\\, \\log K)$. (b) in the stochastic model, {\\alg} achieves regret $\\E[\\oR_n] \\leq O(\\tfrac{K}{\\Delta}\\, \\log^2(n) \\log K )$."
    },
    "confidence": "high",
-   "notes": "Same as Theorem 1(a). Regret is against the best fixed arm on the realized rewards; the general case allows an adaptive adversary."
+   "notes": "Restated as the expectation part of Theorem 4.2 (SAO with beta=n^4). Section 4 handles adaptive adversaries."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "K*log(T)**2*log(K)/Delta_min",
+    "expression_latex": "\\E[\\oR_n] \\leq O(\\tfrac{K}{\\Delta}\\, \\log^2(n) \\log K )",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "T >= K >= 2"
+   ],
+   "tuning": [
+    "beta = n^4"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:intro",
+    "number": "Theorem 1.1",
+    "quote": "(b) in the stochastic model, {\\alg} achieves regret $\\E[\\oR_n] \\leq O(\\tfrac{K}{\\Delta}\\, \\log^2(n) \\log K )$."
+   },
+   "confidence": "high",
+   "notes": "Delta is the minimal gap. Also restated in Theorem 4.2."
   },
   {
    "id": "r3",
@@ -238,21 +248,24 @@
    "bound": {
     "notation": "exact",
     "expression": "260*K*(1 + log(K))*log(10*K*T**3/delta)**2/Delta_min",
-    "expression_latex": "\\oR_n \\leq\\frac{260 K (1+ \\log K) \\log^2(\\beta)}{\\Delta},\\ \\beta=10 K n^3 \\delta^{-1}",
+    "expression_latex": "\\oR_n \\leq\\frac{260 K (1+ \\log K) \\log^2(\\beta)}{\\Delta}",
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
+   "conditions": [
+    "T >= K >= 2"
+   ],
+   "tuning": [
     "beta = 10 K n^3 / delta"
    ],
    "is_new": true,
    "source": {
     "label": "th:1",
-    "number": "Theorem 2",
-    "quote": "for any $\\delta \\in (0,1)$, with probability at least $1-\\delta$, {\\alg} with $\\beta=10 K n^3 \\delta^{-1}$ satisfies in the stochastic model: $$\\oR_n \\leq\\frac{260 K (1+ \\log K) \\log^2(\\beta)}{\\Delta},$$"
+    "number": "Theorem 4.2",
+    "quote": "More precisely, for any $\\delta \\in (0,1)$, with probability at least $1-\\delta$, {\\alg} with $\\beta=10 K n^3 \\delta^{-1}$ satisfies in the stochastic model: $$\\oR_n \\leq\\frac{260 K (1+ \\log K) \\log^2(\\beta)}{\\Delta},$$"
    },
    "confidence": "high",
-   "notes": "This is a bound on the random quantity oR_n = sum_t (mu* - mu_{I_t})."
+   "notes": "Regret here is the pseudo-regret oR_n (via means), holding w.p. 1-delta."
   },
   {
    "id": "r4",
@@ -273,17 +286,20 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
+   "conditions": [
+    "T >= K >= 2"
+   ],
+   "tuning": [
     "beta = 10 K n^3 / delta"
    ],
    "is_new": true,
    "source": {
     "label": "th:1",
-    "number": "Theorem 2",
+    "number": "Theorem 4.2",
     "quote": "and in the adversarial model: $$R_n \\leq 60 (1+\\log K) (1+\\log n) \\sqrt{n K \\log(\\beta) + 5 K^2 \\log^2(\\beta)} + 200 K^2 \\log^2(\\beta).$$"
    },
    "confidence": "high",
-   "notes": "The proof's final line has K^2 log^2 without the factor 5; I recorded the theorem statement."
+   "notes": "Theorem's expectation part (beta=n^4) duplicates Theorem 1.1. Proof ends with K^2 log^2 (no factor 5) inside the sqrt; theorem statement recorded."
   },
   {
    "id": "r5",
@@ -304,18 +320,53 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [
+    "C_crn = 12 ln(n)"
+   ],
    "is_new": true,
    "source": {
     "label": "thm:2-arms",
-    "number": "Theorem 2",
-    "quote": "Consider a MAB problem with two arms. There exists an algorithm such that: (a) against an oblivious adversary, its expected regret is $\\E[R_n] \\leq O(\\sqrt{n}\\, \\log^2 n)$."
+    "number": "Theorem 3.1",
+    "quote": "Consider a MAB problem with two arms. There exists an algorithm such that: (a) against an oblivious adversary, its expected regret is $\\E[R_n] \\leq O(\\sqrt{n}\\, \\log^2 n)$. (b) in the stochastic model, its expected regret satisfies $\\E[\\oR_n] \\leq O(\\tfrac{1}{\\Delta}\\, \\log^3 n  )$. Both regret bounds also hold with probability at least $1-\\tfrac{1}{n}$."
    },
-   "confidence": "medium",
-   "notes": "The theorem number is uncertain; I took it as the second theorem printed."
+   "confidence": "high",
+   "notes": "Algorithm is SimpleSAO (Section 3.1)."
   },
   {
    "id": "r6",
+   "setting": "s3",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)*log(T)**2",
+    "expression_latex": "R_n \\leq O(\\sqrt{n}\\, \\log^2 n)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [
+    "C_crn = 12 ln(n)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:2-arms",
+    "number": "Theorem 3.1",
+    "quote": "Both regret bounds also hold with probability at least $1-\\tfrac{1}{n}$."
+   },
+   "confidence": "medium",
+   "notes": "High-probability version with delta = 1/n."
+  },
+  {
+   "id": "r7",
    "setting": "s4",
    "side": "upper",
    "algorithm": "a2",
@@ -333,44 +384,18 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [
+    "C_crn = 12 ln(n)"
+   ],
    "is_new": true,
    "source": {
     "label": "thm:2-arms",
-    "number": "Theorem 2",
-    "quote": "(b) in the stochastic model, its expected regret satisfies $\\E[\\oR_n] \\leq O(\\tfrac{1}{\\Delta}\\, \\log^3 n )$."
+    "number": "Theorem 3.1",
+    "quote": "(b) in the stochastic model, its expected regret satisfies $\\E[\\oR_n] \\leq O(\\tfrac{1}{\\Delta}\\, \\log^3 n  )$."
    },
-   "confidence": "medium",
+   "confidence": "high",
    "notes": "Delta = |mu_1 - mu_2|."
-  },
-  {
-   "id": "r7",
-   "setting": "s3",
-   "side": "upper",
-   "algorithm": "a2",
-   "algorithm_class": null,
-   "quantity": "high_probability_regret",
-   "dependence": "worst_case",
-   "comparator": "best_fixed_action",
-   "probability": "high_probability",
-   "horizon": "known",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "O",
-    "expression": "sqrt(T)*log(T)**2",
-    "expression_latex": "O(\\sqrt{n}\\, \\log^2 n)",
-    "regime": "with probability at least 1 - 1/n"
-   },
-   "symbols": {},
-   "extra_assumptions": [],
-   "is_new": true,
-   "source": {
-    "label": "thm:2-arms",
-    "number": "Theorem 2",
-    "quote": "Both regret bounds also hold with probability at least $1-\\tfrac{1}{n}$."
-   },
-   "confidence": "medium",
-   "notes": "High-probability version of part (a)."
   },
   {
    "id": "r8",
@@ -387,19 +412,22 @@
    "bound": {
     "notation": "O",
     "expression": "log(T)**3/Delta",
-    "expression_latex": "O(\\tfrac{1}{\\Delta}\\, \\log^3 n )",
-    "regime": "with probability at least 1 - 1/n"
+    "expression_latex": "\\oR_n \\leq O(\\tfrac{1}{\\Delta}\\, \\log^3 n )",
+    "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [
+    "C_crn = 12 ln(n)"
+   ],
    "is_new": true,
    "source": {
     "label": "thm:2-arms",
-    "number": "Theorem 2",
+    "number": "Theorem 3.1",
     "quote": "Both regret bounds also hold with probability at least $1-\\tfrac{1}{n}$."
    },
    "confidence": "medium",
-   "notes": "High-probability version of part (b)."
+   "notes": "High-probability version (delta = 1/n) of the pseudo-regret bound."
   }
  ],
  "cited_results": [
@@ -415,9 +443,27 @@
    "setting_description": "stochastic K-armed bandit, rewards in [0,1]",
    "bound": {
     "notation": "O",
+    "expression": "K*log(T)/Delta_min",
+    "expression_latex": "O(\\tfrac{K}{\\Delta} \\log n)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "bandits-ucb1",
+   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
+   "cited_first_author": "Peter Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB1",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "stochastic K-armed bandit, rewards in [0,1], high probability",
+   "bound": {
+    "notation": "O",
     "expression": "sum_subopt(log(T)/Delta_i)",
     "expression_latex": "\\oR_n = O(\\sum_{i:\\, \\mu_i<\\mu^*} \\frac{\\log n}{\\mu^*-\\mu_i} )",
-    "regime": "with high probability"
+    "regime": null
    },
    "where": "Related work"
   },
@@ -448,7 +494,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "adversarial K-armed bandit",
+   "setting_description": "adversarial K-armed bandit, rewards in [0,1]",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(K*T)",
@@ -463,8 +509,8 @@
    "cited_first_author": "J.Y. Audibert",
    "cited_year": 2010,
    "cited_arxiv_id": null,
-   "algorithm_name": "INF",
-   "algorithm_registry_id": "inf",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
    "side": "upper",
    "setting_description": "adversarial K-armed bandit, oblivious adversary",
    "bound": {
@@ -484,32 +530,14 @@
    "algorithm_name": "Exp3.P",
    "algorithm_registry_id": "exp3_p",
    "side": "upper",
-   "setting_description": "adversarial K-armed bandit, high-probability regret",
+   "setting_description": "adversarial K-armed bandit, high-probability regret w.p. 1-delta",
    "bound": {
     "notation": "exact",
     "expression": "5.15*sqrt(T*K*log(K/delta))",
     "expression_latex": "5.15 \\sqrt{(n-\\tau_0) K \\log(K \\delta^{-1})}",
-    "regime": "with probability at least 1-delta; applied over n - tau_0 rounds"
-   },
-   "where": "Lemma 4"
-  },
-  {
-   "cited_key": "Hazan-soda09",
-   "cited_title": "Better algorithms for benign bandits",
-   "cited_first_author": "Elad Hazan",
-   "cited_year": 2009,
-   "cited_arxiv_id": null,
-   "algorithm_name": null,
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "adversarial K-armed bandit, bound in terms of temporal variation V*_n",
-   "bound": {
-    "notation": "O_tilde",
-    "expression": "sqrt(K*V_star)",
-    "expression_latex": "\\tilde{O}(\\sqrt{K V^*_n})",
     "regime": null
    },
-   "where": "Related work"
+   "where": "Lemma 4.9 (restated over the n - tau_0 remaining rounds)"
   }
  ],
  "_run": {
@@ -518,16 +546,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:22:45",
-  "source_chars": 88708,
-  "input_tokens": 68293,
-  "output_tokens": 7143,
-  "cost_usd_equiv": 0.5122296,
+  "date": "2026-10-19T17:31:30",
+  "source_chars": 89221,
+  "input_tokens": 70142,
+  "output_tokens": 7816,
+  "cost_usd_equiv": 0.5284696,
   "status": "extracted"
  }
 }

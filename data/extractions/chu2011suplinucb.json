@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Contextual Bandits with Linear Payoff Functions",
@@ -16,7 +16,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Contextual bandit problem with linear payoffs",
+   "name_in_paper": "Contextual bandit with linear payoffs",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -43,10 +43,44 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "||x_{t,a}|| <= 1 and ||theta*|| <= 1 (L_feat = 1, S = 1)",
-    "K feature vectors per round chosen by an oblivious adversary; rewards independent given contexts (linear realizability)"
+    "||x_{t,a}|| <= 1 and ||theta*|| <= 1 (realizability: E[r_{t,a}|x_{t,a}] = x_{t,a}^T theta*)",
+    "rewards independent given contexts; contexts chosen by an oblivious adversary",
+    "learner also needs delta to set alpha"
    ],
-   "definition_quote": "Let r_{t,a} \\in [0,1] be the reward of action a on round t. On each round t for each action a the learner observes K feature vectors x_{t,a} \\in R^d, with ||x_{t,a}|| \\le 1 ... there exists an unknown weight vector \\theta^* \\in R^d with ||\\theta^*|| \\le 1 so that E[r_{t,a} | x_{t,a}] = x_{t,a}^\\top \\theta^* ... the context vectors x_{t,a} can be chosen arbitrarily by an oblivious adversary as long as the rewards r_{t,a} are independent given the context."
+   "definition_quote": "Let r_{t,a} \\in [0,1] be the reward of action a on round t. On each round t for each action a the learner observes K feature vectors x_{t,a} \\in R^d, with \\|x_{t,a}\\| \\le 1 ... there exists an unknown weight vector \\theta^* \\in R^d with \\|\\theta^*\\| \\le 1 so that E[r_{t,a} | x_{t,a}] = x_{t,a}^\\top \\theta^* ... the context vectors x_{t,a} can be chosen arbitrarily by an oblivious adversary as long as the rewards r_{t,a} are independent given the context."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Contextual bandit with linear payoffs (lower bound)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "oblivious_sequence",
+    "access": "explicit"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "||x_{t,a}|| <= 1 and ||theta*|| <= 1 (realizability)"
+   ],
+   "definition_quote": "For the contextual bandit problem with linear payoff functions, for any number of trials T and K actions (where T \\ge K \\ge 2), for any any algorithm A ... there is ... a sequence of d-dimensional vectors x_{t,a}"
   }
  ],
  "algorithms": [
@@ -86,25 +120,31 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "alpha = sqrt(0.5 ln(2TK/delta))"
+   "conditions": [
+    "||x_{t,a}|| <= 1",
+    "||theta*|| <= 1",
+    "rewards in [0,1] with E[r_{t,a}|x_{t,a}] = x_{t,a}^T theta*"
+   ],
+   "tuning": [
+    "alpha = sqrt((1/2) ln(2TK/delta))",
+    "S = ln T levels"
    ],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Theorem 1",
-    "quote": "If SupLinUCB is run with \\alpha = \\sqrt{\\frac12 \\ln\\frac{2TK}{\\delta}}, then with probability at least 1-\\delta, the regret of the algorithm is O(\\sqrt{T d \\ln^3 (KT\\ln(T)/\\delta)})."
+    "quote": "If SupLinUCB is run with \\alpha = \\sqrt{\\frac12 \\ln\\frac{2TK}{\\delta}}, then with probability at least 1 - \\delta, the regret of the algorithm is O(\\sqrt{T d \\ln^3 (KT\\ln(T)/\\delta)})."
    },
    "confidence": "high",
-   "notes": "Regret measured against per-round best action under theta*. Source is pdftotext; ln^3 placement inferred from abstract."
+   "notes": "Regret defined with realized rewards r_{t,a*_t} - r_{t,a_t}, a*_t best by expected reward per round."
   },
   {
    "id": "r2",
-   "setting": "s1",
+   "setting": "s2",
    "side": "lower",
    "algorithm": null,
    "algorithm_class": "all",
-   "quantity": "expected_regret",
+   "quantity": "pseudo_regret",
    "dependence": "worst_case",
    "comparator": "best_action_per_round",
    "probability": "expectation",
@@ -113,24 +153,28 @@
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(T*d)",
-    "expression_latex": "\\gamma\\sqrt{Td}",
+    "expression_latex": "\\gamma \\sqrt{T d}",
     "regime": "T >= K >= 2, d^2 <= T"
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [
+    "T >= K >= 2",
+    "d^2 <= T"
+   ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Theorem 2",
-    "quote": "For the contextual bandit problem with linear payoff functions, for any number of trials T and K actions (where T \\ge K \\ge 2), for any any algorithm A choosing action a_t at time t, there is a constant \\gamma > 0, for d^2 \\le T a sequence of d-dimensional vectors x_{t,a}, such that E[\\sum_t \\max x_{t,a}^\\top\\theta^* - \\sum_t r_{t,a_t}] \\ge \\gamma\\sqrt{Td}."
+    "quote": "For the contextual bandit problem with linear payoff functions, for any number of trials T and K actions (where T \\ge K \\ge 2), for any any algorithm A choosing action a_t at time t, there is a constant \\gamma > 0, for d^2 \\le T a sequence of d-dimensional vectors x_{t,a}, such that E[\\sum_t \\max_a x_{t,a}^\\top\\theta^* - \\sum_t r_{t,a_t}] \\ge \\gamma\\sqrt{Td}."
    },
-   "confidence": "high",
-   "notes": "Stated with an unspecified constant gamma; recorded as Omega."
+   "confidence": "medium",
+   "notes": "Expectation of max mean minus realized reward equals pseudo-regret. Construction uses Bernoulli rewards and context sequences fixed in advance."
   }
  ],
  "cited_results": [
   {
-   "cited_key": "Auer2002b",
+   "cited_key": "Auer et al. 2002b",
    "cited_title": "The nonstochastic multiarmed bandit problem",
    "cited_first_author": "Peter Auer",
    "cited_year": 2002,
@@ -138,7 +182,7 @@
    "algorithm_name": "Exp4",
    "algorithm_registry_id": "exp4",
    "side": "upper",
-   "setting_description": "Bandits with expert advice, N experts, K actions",
+   "setting_description": "Bandits with N experts (e.g. epsilon-net of linear hypotheses)",
    "bound": {
     "notation": "O",
     "expression": "sqrt(K*T*log(N_exp))",
@@ -148,15 +192,15 @@
    "where": "Section 2"
   },
   {
-   "cited_key": "Auer2002",
+   "cited_key": "Auer 2002",
    "cited_title": "Using confidence bounds for exploitation-exploration trade-offs",
    "cited_first_author": "Peter Auer",
    "cited_year": 2002,
    "cited_arxiv_id": null,
-   "algorithm_name": "LinRel",
+   "algorithm_name": "LinRel (SupLinRel)",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Contextual bandit with linear payoffs (associative RL with linear value functions)",
+   "setting_description": "Contextual bandit with linear payoffs",
    "bound": {
     "notation": "O_tilde",
     "expression": "sqrt(T*d)",
@@ -166,7 +210,7 @@
    "where": "Section 2"
   },
   {
-   "cited_key": "Abe2003",
+   "cited_key": "Abe et al. 2003",
    "cited_title": "Reinforcement learning with immediate rewards and linear hypotheses",
    "cited_first_author": "Naoki Abe",
    "cited_year": 2003,
@@ -184,7 +228,7 @@
    "where": "Section 2 and Section 6"
   },
   {
-   "cited_key": "Abe2003",
+   "cited_key": "Abe et al. 2003",
    "cited_title": "Reinforcement learning with immediate rewards and linear hypotheses",
    "cited_first_author": "Naoki Abe",
    "cited_year": 2003,
@@ -202,7 +246,7 @@
    "where": "Section 6"
   },
   {
-   "cited_key": "Auer2002b",
+   "cited_key": "Auer et al. 2002b",
    "cited_title": "The nonstochastic multiarmed bandit problem",
    "cited_first_author": "Peter Auer",
    "cited_year": 2002,
@@ -210,7 +254,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "K-armed bandit, Bernoulli rewards, one arm with mean 1/2 + 1/4 sqrt(K/T)",
+   "setting_description": "K-armed Bernoulli bandit, one arm with mean 1/2 + (1/4)sqrt(K/T), others 1/2; T >= K >= 2",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(K*T)",
@@ -220,7 +264,7 @@
    "where": "Lemma 7"
   },
   {
-   "cited_key": "Dani2008",
+   "cited_key": "Dani et al. 2008",
    "cited_title": "Stochastic linear optimization under bandit feedback",
    "cited_first_author": "Varsha Dani",
    "cited_year": 2008,
@@ -228,7 +272,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic linear bandit with infinite decision set (matching upper and lower bounds)",
+   "setting_description": "Stochastic linear bandit with infinite decision space (matching upper and lower bounds)",
    "bound": {
     "notation": "Theta",
     "expression": "d*sqrt(T)",
@@ -244,16 +288,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "b3dc2055bde0",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T17:08:13",
+  "date": "2026-10-19T17:36:49",
   "source_chars": 24342,
-  "input_tokens": 35718,
-  "output_tokens": 3792,
-  "cost_usd_equiv": 0.18246459999999998,
+  "input_tokens": 36983,
+  "output_tokens": 4625,
+  "cost_usd_equiv": 0.1993776,
   "status": "extracted"
  }
 }

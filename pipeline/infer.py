@@ -63,6 +63,28 @@ def pinned(v) -> bool:
         return False
 
 
+REGIME_POINT = {"T": 10**6, "K": 10, "d": 10, "Delta_i": 0.1, "Delta_min": 0.1, "Delta_max": 0.1, "Delta": 0.1,
+                "delta": 0.01, "epsilon": 0.1}
+
+
+def regime_survives(regime: str | None, mapping: dict) -> bool | None:
+    """After substituting `mapping`, can the bound's regime condition still hold?
+    False if it becomes false (e.g. "C_sb > R" with C_sb = 0), True if it holds or no
+    substituted symbol occurs in it, None if it cannot be evaluated."""
+    if not regime or not mapping or not set(resolve.IDENT_RE.findall(regime)) & set(mapping):
+        return True
+    try:
+        cond = resolve.parse(regime)
+        cond = cond.subs({sympy.Symbol(k): resolve.parse(str(v)) for k, v in mapping.items()})
+        cond = cond.replace(lambda x: isinstance(x, sympy.Function) and x.func.__name__ in ("sum_subopt", "sum_arms"),
+                            lambda x: x.args[0])
+        point = {s: REGIME_POINT.get(str(s), 1) for s in cond.free_symbols}
+        val = cond.subs(point)
+        return bool(val) if val in (sympy.true, sympy.false) else None
+    except Exception:  # prose regimes ("T large enough") cannot be evaluated
+        return None
+
+
 def foreign_symbols(expr: str | None, canonical: set[str]) -> list[str]:
     """Symbols defined only in the source paper (declared, not canonical)."""
     if not expr:
@@ -126,13 +148,18 @@ def main() -> None:
             if r["side"] != "upper" or not transferable(r, settings[special]["key"]) \
                     or (comparators is not None and r.get("comparator") not in comparators):
                 continue
+            survives = regime_survives(r["bound"].get("regime"), {**down_map, **fixed})
+            if survives is False:
+                continue  # the bound's own regime excludes the target (e.g. needs C > R, target has C = 0)
             expr, subs = substitute(r["bound"].get("expression_normalised") or r["bound"]["expression"],
                                     {**down_map, **fixed})
             foreign = foreign_symbols(expr, canonical)
             inferred.append({"id": f"{r['id']}>{special}", "rule": "upper_bound_to_special_case",
                              "setting_id": special, "from_setting": general, "from_result": r["id"],
                              "expression": expr, "substitutions": subs, "changes": change_list,
-                             "caveats": caveats + ([f"uses symbols defined only in the source setting: {', '.join(foreign)}"] if foreign else [])})
+                             "caveats": caveats + ([f"uses symbols defined only in the source setting: {', '.join(foreign)}"] if foreign else [])
+                                        + ([f"conditional on: {'; '.join(r['conditions'])}"] if r.get("conditions") else [])
+                                        + ([f"regime involves substituted symbols: {r['bound']['regime']}"] if survives is None else [])})
         via_reduction = any(c.kind == "reduction" for c in changes)
         for r in by_setting.get(special, []):
             if r["side"] != "lower" or not transferable(r, settings[general]["key"]) \

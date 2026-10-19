@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Improved Regret Analysis for Variance-Adaptive Linear Bandits and Horizon-Free Linear Mixture MDPs",
@@ -22,18 +22,19 @@
    "action_space": "linear_infinite",
    "function_class": [],
    "domain": "not_applicable",
-   "context": "adversarial_contexts",
+   "context": "none",
    "noise": "bounded_pm1",
    "learner_knows": [
-    "T"
+    "T",
+    "d"
    ],
    "instance_assumptions": [],
    "extras": [
     "time_varying_action_sets"
    ],
    "action_set": {
-    "shape": "arbitrary_compact",
-    "time_varying": "adaptive_sequence",
+    "shape": "unspecified",
+    "time_varying": "oblivious_sequence",
     "access": "explicit"
    },
    "parameters": {
@@ -43,11 +44,11 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Rewards satisfy |r_k| <= 1/2 almost surely; noise is a martingale difference with unknown conditional variance sigma_k^2 (heteroscedastic, variance not known to learner)",
-    "Arm sets X_k subset of unit l2 ball, theta* in unit l2 ball",
-    "Arm sets X_k may be arbitrary subsets (not necessarily compact) chosen each round"
+    "Action set X_k is an arbitrary subset of the unit l2 ball, revealed each round (the paper does not say whether it may be chosen adaptively)",
+    "Rewards satisfy |r_k| <= 1/2 almost surely; noise is a martingale difference with unknown, time-varying conditional variance sigma_k^2",
+    "theta* lies in the unit l2 ball"
    ],
-   "definition_quote": "At time step $k$, the learner observes an arm set $\\mathcal{X}_k \\subseteq \\mathbb{B}_2^d(1)$, chooses an arm $x_k \\in \\mathcal{X}_k$, pulls it. The learner then receives a stochastic reward $r_k = x_k^\\T \\th^*+\\eps_k$ ... we assume that $(i)$ $|r_k|\\le [-\\fr12,\\fr12]$ almost surely, $(ii)$ $\\mathbb{E}[\\eps_k | \\mathcal{F}_k]=0$ ..., and $(iii)$ $\\mathbb{E}[\\eps_k^2|\\mathcal{F}_k]=\\sigma_k^2$."
+   "definition_quote": "At time step $k$, the learner observes an arm set $\\mathcal{X}_k \\subseteq \\mathbb{B}_2^d(1)$, chooses an arm $x_k \\in \\mathcal{X}_k$, pulls it. The learner then receives a stochastic reward $r_k = x_k^\\T \\th^*+\\eps_k$ where $\\th^* \\in \\mathbb{B}_2^d(1)$ ... $(i)$ $|r_k|\\le [-1/2,1/2]$ almost surely, $(ii)$ $\\mathbb{E}[\\eps_k | \\mathcal{F}_k]=0$ ..., and $(iii)$ $\\mathbb{E}[\\eps_k^2|\\mathcal{F}_k]=\\sigma_k^2$."
   },
   {
    "id": "s2",
@@ -61,7 +62,8 @@
    "context": "none",
    "noise": "bounded_01",
    "learner_knows": [
-    "T"
+    "T",
+    "d"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -72,13 +74,13 @@
    },
    "parameters": {},
    "in_scope": false,
-   "out_of_scope_reason": "Episodic reinforcement learning (linear mixture MDP), not a bandit problem",
+   "out_of_scope_reason": "Episodic reinforcement learning (linear mixture MDP), not a bandit problem.",
    "unmapped": [
-    "Episodic MDP with transition P = sum_i theta*_i P^i, theta* in unit l1 ball, d base models",
-    "Unit cumulative rewards: sum_h r_h^k in [0,1]; known reward function; time-homogeneous transitions",
-    "Regret over K episodes; horizon-free (polylog in H)"
+    "Transition P = sum_i theta*_i P^i with known base models, theta* in the l1 unit ball",
+    "Total reward per episode lies in [0,1] (unit cumulative rewards); known reward function",
+    "Horizon-free: bound has no polynomial dependence on H"
    ],
-   "definition_quote": "The key modeling assumption of linear mixture MDPs is that the transition probability $P$ is a linear combination of a known set of models $\\{P^i\\}$, namely, $P=\\sum_{i=1}^d \\th_i^* P^i$ where $\\th^* \\in \\mathbb{B}_1^d(1)$ ... Unit cumulative rewards:$\\sum_{h=1}^H r_h^k \\in [0,1]$ for any policy $\\pi^k$."
+   "definition_quote": "The key modeling assumption of linear mixture MDPs is that the transition probability $P$ is a linear combination of a known set of models $\\{P^i\\}$, namely, $P=\\sum_{i=1}^d \\th_i^* P^i$ where $\\th^* \\in \\mathbb{B}_1^d(1)$ ... Unit cumulative rewards: $\\sum_{h=1}^H r_h^k \\in [0,1]$ for any policy $\\pi^k$."
   }
  ],
  "algorithms": [
@@ -92,6 +94,7 @@
    ],
    "requires_knowledge_of": [
     "T",
+    "d",
     "delta"
    ]
   },
@@ -105,6 +108,7 @@
    ],
    "requires_knowledge_of": [
     "T",
+    "d",
     "delta"
    ]
   },
@@ -118,6 +122,7 @@
    ],
    "requires_knowledge_of": [
     "T",
+    "d",
     "H",
     "delta"
    ]
@@ -140,20 +145,24 @@
     "notation": "O_tilde",
     "expression": "d**1.5*sqrt(Lambda_T*log(1/delta)) + d**2*log(1/delta)",
     "expression_latex": "\\tilde O\\del{d^{1.5} \\sqrt{\\sum_{k=1}^K \\sig_k^2\\ln(1/\\dt)} + d^2 \\ln(1/\\dt)}",
-    "regime": "probability at least 1-2 delta, delta <= 1/e"
+    "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "delta <= e^{-1}"
+   "conditions": [
+    "delta <= 1/e"
+   ],
+   "tuning": [
+    "L = 1 v floor(log2 K)",
+    "iota = 128 ln((12K 2^L)^(d+2)/delta)"
    ],
    "is_new": true,
    "source": {
     "label": "main-thm-bandit",
     "number": "Theorem 1",
-    "quote": "VOFUL2 satisfies, with probability at least $1-2\\dt$, $\\mathcal{R}^K =\\tilde O\\del{d^{1.5} \\sqrt{\\sum_{k=1}^K \\sig_k^2\\ln(1/\\dt)} + d^2 \\ln(1/\\dt)}$ where $\\tilde O$ hides poly-logarithmic dependence on $\\{d,K,\\sum_{k=1}^K \\sig_k^{2},  \\ln(1/\\dt)\\}$."
+    "quote": "VOFUL2 satisfies, with probability at least $1-2\\dt$, \\mathcal{R}^K =\\tilde O\\del{d^{1.5} \\sqrt{\\sum_{k=1}^K \\sig_k^2\\ln(1/\\dt)} + d^2 \\ln(1/\\dt)} where $\\tilde O$ hides poly-logarithmic dependence on $\\{d,K,\\sum_{k=1}^K \\sig_k^{2},  \\ln(1/\\dt)\\}$."
    },
    "confidence": "high",
-   "notes": "Paper's K is horizon T; sum of sigma_k^2 is Lambda_T. Algorithm uses K in L and iota, so horizon known. Paper notes algorithms not computationally tractable."
+   "notes": "Holds with probability 1-2delta. Paper's K is the horizon T. Variances unknown to the learner. The conclusion says the algorithms are not computationally tractable, so compute is not polynomial as far as is known."
   },
   {
    "id": "r2",
@@ -171,20 +180,24 @@
     "notation": "O_tilde",
     "expression": "Min(d*sqrt(T*log(1/delta)), d**1.5*sqrt(Lambda_T*log(1/delta))) + d**2*log(1/delta)",
     "expression_latex": "\\tilde O\\del[1]{  \\min\\cbr[1]{d\\sqrt{K\\ln(1/\\dt)}, d^{1.5} \\sqrt{\\sum_{k=1}^K \\sig_k^2\\ln(1/\\dt)}} + d^2 \\ln(1/\\dt)}",
-    "regime": "K >= (e-1)d"
+    "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "delta <= e^{-1}"
+   "conditions": [
+    "K >= (e-1) d (used in Lemma 11)",
+    "delta <= 1/e"
+   ],
+   "tuning": [
+    "confidence set also includes the ell = 0 level"
    ],
    "is_new": true,
    "source": {
     "label": "sec:dsqrtK",
-    "number": "Section A.4 (claim, no theorem number)",
+    "number": "Section (sec:dsqrtK)",
     "quote": "Note that one can also show that VOFUL2 can be slightly modified to achieve the regret bound of $\\tilde O\\del[1]{  \\min\\cbr[1]{d\\sqrt{K\\ln(1/\\dt)}, d^{1.5} \\sqrt{\\sum_{k=1}^K \\sig_k^2\\ln(1/\\dt)}} + d^2 \\ln(1/\\dt)} $, thus being no worse than OFUL."
    },
    "confidence": "medium",
-   "notes": "Not a formal theorem; proof sketch in appendix relying on OFUL analysis. Lemma used assumes K >= (e-1)d."
+   "notes": "Not stated as a formal theorem: it is a claim in the main text, argued in Appendix sec:dsqrtK by reduction to the OFUL analysis. The exact failure probability is not stated."
   },
   {
    "id": "r3",
@@ -202,25 +215,27 @@
     "notation": "O_tilde",
     "expression": "d*sqrt(K_ep*log(1/delta)**2) + d**2*log(1/delta)",
     "expression_latex": "\\tilde O(d\\sqrt{K\\log^2(1/\\dt)} + d^2\\log (1/\\dt))",
-    "regime": "probability at least 1-delta"
+    "regime": null
    },
    "symbols": {
-    "K_ep": "number of episodes",
-    "d": "number of base models"
+    "K_ep": "number of episodes"
    },
-   "extra_assumptions": [
-    "unit cumulative rewards",
-    "time-homogeneous transitions",
-    "delta <= e^{-1}"
+   "conditions": [
+    "unit cumulative rewards: sum_h r_h^k in [0,1]",
+    "delta <= 1/e"
+   ],
+   "tuning": [
+    "L = floor(log2 HK)+1",
+    "iota = 3 ln((2HK)^(2(d+3))/delta)"
    ],
    "is_new": true,
    "source": {
     "label": "main-rl",
     "number": "Theorem 2",
-    "quote": "With probability at least 1-$\\dt$, $\\mathcal{R}^K =\\sum_{k=1}^K [V^*(s_1^k)-V^k(s_1^k)] = \\tilde O(d\\sqrt{K\\log^2(1/\\dt)} + d^2\\log (1/\\dt))$ where $\\tilde O$ hides poly-logarithmic dependence on $\\{d,K,H, \\ln(1/\\dt)\\}$."
+    "quote": "With probability at least 1-$\\dt$, \\mathcal{R}^K =\\sum_{k=1}^K [V^*(s_1^k)-V^k(s_1^k)] = \\tilde O(d\\sqrt{K\\log^2(1/\\dt)} + d^2\\log (1/\\dt))~. where $\\tilde O$ hides poly-logarithmic dependence on $\\{d,K,H, \\ln(1/\\dt)\\}$."
    },
    "confidence": "high",
-   "notes": "Out-of-scope RL setting; horizon-free up to polylog H."
+   "notes": "Horizon-free bound for linear mixture MDPs (out of scope: RL). Here d is the number of base models."
   }
  ],
  "cited_results": [
@@ -233,7 +248,7 @@
    "algorithm_name": "VOFUL",
    "algorithm_registry_id": "voful",
    "side": "upper",
-   "setting_description": "Variance-adaptive linear bandits with unknown noise variances",
+   "setting_description": "Variance-adaptive linear bandits, unknown variances",
    "bound": {
     "notation": "O_tilde",
     "expression": "d**4.5*sqrt(Lambda_T) + d**5",
@@ -251,7 +266,7 @@
    "algorithm_name": "VARLin",
    "algorithm_registry_id": "varlin",
    "side": "upper",
-   "setting_description": "Linear mixture MDP with unit cumulative rewards, K episodes (horizon-free)",
+   "setting_description": "Linear mixture MDP with unit cumulative rewards (K episodes)",
    "bound": {
     "notation": "O_tilde",
     "expression": "d**4.5*sqrt(K_ep) + d**9",
@@ -269,7 +284,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic linear bandits, d dimensions",
+   "setting_description": "Stochastic linear bandits",
    "bound": {
     "notation": "Omega",
     "expression": "d*sqrt(T)",
@@ -321,16 +336,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:28:57",
-  "source_chars": 105086,
-  "input_tokens": 87825,
-  "output_tokens": 5704,
-  "cost_usd_equiv": 0.6397056,
+  "date": "2026-10-19T17:36:44",
+  "source_chars": 105546,
+  "input_tokens": 89638,
+  "output_tokens": 6299,
+  "cost_usd_equiv": 0.6540976,
   "status": "extracted"
  }
 }

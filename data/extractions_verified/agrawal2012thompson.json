@@ -1,0 +1,264 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Analysis of Thompson Sampling for the multi-armed bandit problem",
+  "arxiv_id": "1111.1797",
+  "arxiv_version": null,
+  "year": 2011,
+  "authors": [
+   "Shipra Agrawal",
+   "Navin Goyal"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "two-armed stochastic bandit problem",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
+   "parameters": {
+    "K": "2"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [],
+   "definition_quote": "Each arm $i$, when played, yields a random real-valued reward according to some fixed (unknown) distribution with support in $[0,1]$. ... For the two-armed stochastic bandit problem ($N=2$)"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "N-armed stochastic bandit problem",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [],
+   "definition_quote": "We are given a slot machine with $N$ arms; ... Each arm $i$, when played, yields a random real-valued reward according to some fixed (unknown) distribution with support in $[0,1]$. ... From now on we will assume that the first arm is the unique optimal arm"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Thompson Sampling for general stochastic bandits (Beta priors with Bernoulli-trial reduction)",
+   "registry_id": "thompson_sampling_bernoulli_reduction",
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": []
+  },
+  {
+   "id": "a2",
+   "name": "Thompson Sampling for Bernoulli bandits",
+   "registry_id": "thompson_sampling_beta",
+   "is_new": false,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)/Delta + 1/Delta**3",
+    "expression_latex": "O\\left(\\frac{\\ln T}{\\Delta}+\\frac{1}{\\Delta^3}\\right)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [
+    "Beta(1,1) priors"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:two-arms",
+    "number": "Theorem 1",
+    "quote": "For the two-armed stochastic bandit problem ($N=2$), Thompson Sampling algorithm has expected regret $$\\Ex[{\\cal R}(T)] = O\\left(\\frac{\\ln T}{\\Delta}+\\frac{1}{\\Delta^3}\\right)$$ in time $T$, where $\\Delta = \\mu_1-\\mu_2$."
+   },
+   "confidence": "high",
+   "notes": "Regret defined via means (pseudo-regret). Proof gives explicit bound 40 ln T/Delta + 48/Delta^3 + 18 Delta. The algorithm does not use T, but the analysis thresholds depend on T; bound holds for every T. Proved for Bernoulli and transferred to [0,1] rewards via Bernoulli-trial reduction."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(1/Delta_i**2)**2*log(T)",
+    "expression_latex": "O\\left(\\left(\\sum_{a=2}^N\\frac{1}{\\Delta_a^2}\\right)^2 \\ln T\\right)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [
+    "Beta(1,1) priors"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:N-arms",
+    "number": "Theorem 2",
+    "quote": "For the $N$-armed stochastic bandit problem, Thompson Sampling algorithm has expected regret $$\\Ex[{\\cal R}(T)] \\leq O\\left(\\left(\\sum_{a=2}^N\\frac{1}{\\Delta_a^2}\\right)^2 \\ln T\\right)$$ in time $T$, where $\\Delta_i=\\mu_1-\\mu_i$."
+   },
+   "confidence": "high",
+   "notes": "Unique optimal arm assumed (paper argues WLOG in Appendix A). Explicit constants in appendix: 1152 (ln T)(sum 1/Delta^2)^2 + lower-order terms."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "Delta_max/Delta_min**3*sum_subopt(1/Delta_i**2)*log(T)",
+    "expression_latex": "O\\left(\\frac{\\Delta_{max}}{\\Delta_{min}^3}\\left(\\sum_{a=2}^N\\frac{1}{\\Delta_a^2}\\right) \\ln T\\right)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [
+    "Beta(1,1) priors"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "rem:N-arms",
+    "number": "Remark 1",
+    "quote": "For the $N$-armed bandit problem, we can obtain an alternate bound of $$\\Ex[{\\cal R}(T)] \\leq O\\left(\\frac{\\Delta_{max}}{\\Delta_{min}^3}\\left(\\sum_{a=2}^N\\frac{1}{\\Delta_a^2}\\right) \\ln T\\right)$$ by slight modification to the proof."
+   },
+   "confidence": "medium",
+   "notes": "Stated in a Remark with proof sketch in appendix."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "LaiR",
+   "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_first_author": "T. L. Lai",
+   "cited_year": 1985,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "stochastic N-armed bandit, any (consistent) algorithm",
+   "bound": {
+    "notation": "liminf",
+    "expression": "sum_subopt(Delta_i/KL_i)*log(T)",
+    "expression_latex": "\\left[\\sum_{i=2}^{N} \\frac{\\Delta_i}{D(\\mu_i || \\mu)} + o(1) \\right] \\ln{T}",
+    "regime": "asymptotic"
+   },
+   "where": "Section 1.3"
+  },
+  {
+   "cited_key": "Aueretal",
+   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
+   "cited_first_author": "P. Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB1",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "stochastic N-armed bandit with rewards in [0,1]",
+   "bound": {
+    "notation": "exact",
+    "expression": "8*sum_subopt(1/Delta_i)*log(T) + (1 + pi**2/3)*sum_subopt(Delta_i)",
+    "expression_latex": "\\left[8 \\sum_{i=2}^N \\frac{1}{\\Delta_i} \\right] \\ln{T} + (1+\\pi^2/3)\\left(\\sum_{i=2}^{N} \\Delta_i\\right)",
+    "regime": null
+   },
+   "where": "Section 1.3"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.3",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-19T17:25:26",
+  "source_chars": 87644,
+  "input_tokens": 72112,
+  "output_tokens": 4165,
+  "cost_usd_equiv": 0.660188,
+  "status": "extracted"
+ },
+ "_verify": {
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "prompt_sha": "81d04c3b9fd7",
+  "date": "2026-10-19T17:38:41",
+  "applied_on": "2026-10-19T17:42:58",
+  "min_confidence": "medium",
+  "applied": [],
+  "rejected": [],
+  "flags": {
+   "hallucinated": [],
+   "not_a_guarantee": [],
+   "unverifiable": [],
+   "missing_results": []
+  },
+  "summary": "The extraction is accurate. It covers both theorems and the remark's alternate bound, with correct expressions, quantities, settings and provenance. The algorithm registry mapping and cited results are consistent with the source, and I found no errors that need correcting."
+ }
+}

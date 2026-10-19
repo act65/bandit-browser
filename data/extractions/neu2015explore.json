@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Explore no more: Improved high-probability regret bounds for non-stochastic bandits",
@@ -13,7 +13,37 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Non-stochastic multi-armed bandits (loss game)",
+   "name_in_paper": "Multi-armed bandits (loss game), known horizon",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_unspecified",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Regret is the realized regret against the best fixed arm, bounded with high probability"
+   ],
+   "definition_quote": "In each round $t=1,2,\\dots,T$, the two players interact as follows: The learner picks an arm $I_t\\in[K]$ and the environment selects a loss function $\\loss_t: [K] \\ra [0,1]$ ... $R_T = \\sum_{t=1}^T \\loss_{t,I_t} - \\min_{i\\in[K]}\\sum_{t=1}^T \\loss_{t,i}$."
+  },
+  {
+   "id": "s1b",
+   "name_in_paper": "Multi-armed bandits (loss game), unknown horizon (anytime)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "adversarial_unspecified",
@@ -35,10 +65,8 @@
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
-   "unmapped": [
-    "Regret is the realized regret against the best fixed arm, bounded with high probability"
-   ],
-   "definition_quote": "In each round $t=1,2,\\dots,T$, the two players interact as follows: The learner picks an arm $I_t\\in[K]$ and the environment selects a loss function $\\loss_t: [K] \\ra [0,1]$ ... Subsequently, the learner incurs and observes the loss $\\loss_{t,I_t}$."
+   "unmapped": [],
+   "definition_quote": "In each round $t=1,2,\\dots,T$, the two players interact as follows: The learner picks an arm $I_t\\in[K]$ and the environment selects a loss function $\\loss_t: [K] \\ra [0,1]$ ..."
   },
   {
    "id": "s2",
@@ -68,9 +96,9 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Experts give probability distributions over K arms each round"
+    "learner knows the number of experts N"
    ],
-   "definition_quote": "the learner observes a set of $N$ probability distributions $\\bxp_{t}(1),\\dots,\\bxp_{t}(N)\\in[0,1]^K$ over the $K$ arms ... The goal of the learner in this setting is to pick a sequence of arms so as to minimize the regret against the best expert"
+   "definition_quote": "the learner observes a set of $N$ probability distributions $\\bxp_{t}(1),\\dots,\\bxp_{t}(N)\\in[0,1]^K$ over the $K$ arms ... $R_T^{\\xp} = \\sum_{t=1}^T \\loss_{t,I_t} - \\min_{n\\in[N]} \\sum_{t=1}^T \\sum_{i=1}^K \\xp_{t,i}(n)\\loss_{t,i}$"
   },
   {
    "id": "s3",
@@ -85,8 +113,8 @@
    "noise": "bounded_01",
    "learner_knows": [
     "T",
-    "S_T",
-    "K"
+    "K",
+    "S_T"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -99,7 +127,7 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [],
-   "definition_quote": "we consider the class of sequences that switch at most $S$ times between actions. We measure the performance of the learner in this setting in terms of the regret against the best sequence from this class $C(S)\\subseteq[K]^T$"
+   "definition_quote": "we consider the class of sequences that switch at most $S$ times between actions ... $R_T^S= \\sum_{t=1}^T \\loss_{t,I_t} - \\min_{\\pa{J_t}\\in C(S)} \\sum_{t=1}^T \\loss_{t,J_t}$."
   },
   {
    "id": "s4",
@@ -127,7 +155,8 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Learner knows the independence number of the (fixed, directed) feedback graph G to tune parameters"
+    "learner knows the independence number alpha of the observation graph G (used to tune eta)",
+    "fixed directed observation graph G"
    ],
    "definition_quote": "The structure of the side observations is described by the directed graph $G$: nodes of $G$ correspond to individual arms, and the presence of arc $i\\ra j$ implies that the learner will observe $\\loss_{t,j}$ upon selecting $I_t = i$."
   }
@@ -142,7 +171,8 @@
     "exponential_weights"
    ],
    "requires_knowledge_of": [
-    "K"
+    "K",
+    "T"
    ]
   },
   {
@@ -154,8 +184,8 @@
     "exponential_weights"
    ],
    "requires_knowledge_of": [
-    "T",
     "K",
+    "T",
     "N_exp"
    ]
   },
@@ -168,8 +198,8 @@
     "exponential_weights"
    ],
    "requires_knowledge_of": [
-    "T",
     "K",
+    "T",
     "S_T"
    ]
   },
@@ -182,8 +212,8 @@
     "exponential_weights"
    ],
    "requires_knowledge_of": [
-    "T",
     "K",
+    "T",
     "alpha_G"
    ]
   }
@@ -208,8 +238,9 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "eta_t = 2 gamma_t = sqrt(2 log K/(KT)) (requires known T)"
+   "conditions": [],
+   "tuning": [
+    "eta_t = 2*gamma_t = sqrt(2 log K/(K T))"
    ],
    "is_new": true,
    "source": {
@@ -218,11 +249,11 @@
     "quote": "Fix an arbitrary $\\delta>0$. With $\\eta_t = 2\\gamma_t = \\sqrt{\\frac{2\\log K}{KT}}$ for all $t$, \\exphix guarantees $R_T \\le 2\\sqrt{2KT\\log K} + \\pa{\\sqrt{\\frac{2KT}{\\log K}} + 1} \\log\\pa{2/\\delta}$ with probability at least $1-\\delta$."
    },
    "confidence": "high",
-   "notes": "Realized regret; parameters do not depend on delta so bound holds for all delta simultaneously."
+   "notes": "Holds simultaneously for all delta (parameters do not depend on delta). Adversary type not specified."
   },
   {
    "id": "r2",
-   "setting": "s1",
+   "setting": "s1b",
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
@@ -239,8 +270,9 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "eta_t = 2 gamma_t = sqrt(log K/(Kt))"
+   "conditions": [],
+   "tuning": [
+    "eta_t = 2*gamma_t = sqrt(log K/(K t))"
    ],
    "is_new": true,
    "source": {
@@ -249,7 +281,7 @@
     "quote": "Furthermore, setting $\\eta_t = 2\\gamma_t = \\sqrt{\\frac{\\log K}{Kt}}$ for all $t$, the bound becomes $R_T \\le 4\\sqrt{KT\\log K} + \\pa{2\\sqrt{\\frac{KT}{\\log K}} +1 } \\log\\pa{2/\\delta}$."
    },
    "confidence": "high",
-   "notes": "Anytime version with decreasing parameters."
+   "notes": "Anytime version with time-varying parameters."
   },
   {
    "id": "r3",
@@ -270,8 +302,9 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "eta = 2 gamma = sqrt(2 log N/(KT))"
+   "conditions": [],
+   "tuning": [
+    "eta = 2*gamma = sqrt(2 log N/(K T))"
    ],
    "is_new": true,
    "source": {
@@ -280,7 +313,7 @@
     "quote": "Fix an arbitrary $\\delta>0$ and set $\\eta = 2\\gamma = \\sqrt{\\frac{2\\log N}{KT}}$ for all $t$. Then, with probability at least $1-\\delta$, the regret of \\expnix satisfies $R_T^\\xi \\le 2\\sqrt{2KT\\log N} + \\pa{\\sqrt{\\frac{2KT}{\\log N}} +1 }\\log\\pa{2/\\delta}$."
    },
    "confidence": "high",
-   "notes": "Compute is linear in N per round."
+   "notes": ""
   },
   {
    "id": "r4",
@@ -288,7 +321,7 @@
    "side": "upper",
    "algorithm": "a3",
    "algorithm_class": null,
-   "quantity": "high_probability_regret",
+   "quantity": "switching_regret",
    "dependence": "worst_case",
    "comparator": "best_switching_sequence",
    "probability": "high_probability",
@@ -301,8 +334,10 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "eta = 2 gamma = sqrt(2 (S+1) log K/(KT)), alpha = S/(T-1)"
+   "conditions": [],
+   "tuning": [
+    "eta = 2*gamma = sqrt(2 (S+1) log K/(K T))",
+    "alpha = S/(T-1)"
    ],
    "is_new": true,
    "source": {
@@ -311,7 +346,7 @@
     "quote": "Fix an arbitrary $\\delta>0$ and set $\\eta = 2\\gamma = \\sqrt{\\frac{2\\bar{S}\\log K }{KT}}$ and $\\alpha = \\frac{S}{T-1}$, where $\\bar{S} = S + 1$. Then, with probability at least $1-\\delta$, the regret of \\exphsix satisfies $R_T^S \\le 2\\sqrt{2KT\\bar{S}\\log \\pa{\\frac{eKT}{S}}} + \\pa{\\sqrt{\\frac{2KT}{\\bar{S}\\log K}} + 1} \\log\\pa{2/\\delta}$."
    },
    "confidence": "high",
-   "notes": "Paper's S (max number of switches of the comparator) mapped to S_T."
+   "notes": "Paper's S (number of switches) mapped to S_T; bar S = S+1. High-probability bound on switching regret."
   },
   {
    "id": "r5",
@@ -332,8 +367,11 @@
     "regime": "T >= K^2/(8*alpha_G)"
    },
    "symbols": {},
-   "extra_assumptions": [
-    "eta = 2 gamma = sqrt(log K/(2 alpha T log(KT))), requires knowing independence number alpha of G"
+   "conditions": [
+    "T >= K^2/(8 alpha), alpha the independence number of G"
+   ],
+   "tuning": [
+    "eta = 2*gamma = sqrt(log K/(2 alpha T log(KT)))"
    ],
    "is_new": true,
    "source": {
@@ -341,8 +379,8 @@
     "number": "Theorem 4",
     "quote": "Fix an arbitrary $\\delta>0$. Assume that $T\\ge K^2/(8\\alpha)$ and set $\\eta = 2\\gamma = \\sqrt{\\frac{\\log K}{2\\alpha T \\log(KT)}}$, where $\\alpha$ is the \\emph{independence number} of $G$. With probability at least $1-\\delta$, \\exphix guarantees $R_T \\le \\pa{4 + 2\\sqrt{\\log\\pa{4/\\delta}}}\\cdot\\sqrt{2\\alpha T \\pa{\\log^2 K + \\log KT}} + 2\\sqrt{\\frac{\\alpha T\\log(KT)}{\\log K}}\\log\\pa{4/\\delta} + \\sqrt{\\frac{T\\log(4/\\delta)}{2}}$."
    },
-   "confidence": "medium",
-   "notes": "Interpreted 'log^2 K + log KT' as log(K)^2 + log(K*T). Algorithm proposed in KNVM14 but this high-prob bound is new."
+   "confidence": "high",
+   "notes": "Paper's alpha is the independence number alpha_G. Algorithm needs alpha for tuning."
   }
  ],
  "cited_results": [
@@ -409,7 +447,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Tracking the best arm (S switches), adversarial bandits, high-probability regret",
+   "setting_description": "Tracking the best arm (S switches), high-probability regret",
    "bound": {
     "notation": "exact",
     "expression": "7*sqrt(K*T*S_T*log(K*T/(delta*S_T)))",
@@ -427,7 +465,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Bandits with side-observations (graph feedback), high-probability regret; m is size of maximal acyclic subgraph of G",
+   "setting_description": "Bandits with side-observations (graph feedback), high-probability regret; m is size of maximal acyclic subgraph",
    "bound": {
     "notation": "O_tilde",
     "expression": "sqrt(m_acyc*T)",
@@ -443,16 +481,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:21:48",
-  "source_chars": 63592,
-  "input_tokens": 57465,
-  "output_tokens": 7811,
-  "cost_usd_equiv": 0.4389656,
+  "date": "2026-10-19T17:30:43",
+  "source_chars": 63730,
+  "input_tokens": 59083,
+  "output_tokens": 8039,
+  "cost_usd_equiv": 0.4444576,
   "status": "extracted"
  }
 }

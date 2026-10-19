@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "On Explore-Then-Commit Strategies",
@@ -27,7 +27,8 @@
    "learner_knows": [
     "T",
     "Delta",
-    "sigma"
+    "sigma",
+    "K"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -43,9 +44,9 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Gap Delta=|mu_1-mu_2| known to the learner; means unrestricted in R otherwise"
+    "Learner knows the gap Delta = |mu_1 - mu_2| but not which arm is better (mu in H_Delta)"
    ],
-   "definition_quote": "In time-step $t$ the agent chooses an action $A_t \\in \\{1,2\\}$ and receives a normally distributed reward $Z_t \\sim \\mathcal N(\\mu_{A_t}, 1)$ ... $\\mathcal H_{\\Delta} = \\{\\mu \\in \\R^2 : |\\mu_1 - \\mu_2| = \\Delta\\}$. We assume that the horizon $T$ is known to the agent."
+   "definition_quote": "In time-step $t \\in 1,2,\\ldots,T$ the agent chooses an action $A_t \\in \\set{1,2}$ and receives a normally distributed reward $Z_t \\sim \\mathcal N(\\mu_{A_t}, 1)$ ... $\\mathcal H_{\\Delta} = \\set{\\mu \\in \\R^2 : |\\mu_1 - \\mu_2| = \\Delta}$. We assume that the horizon $T$ is known to the agent."
   },
   {
    "id": "s2",
@@ -60,7 +61,8 @@
    "noise": "gaussian_known_variance",
    "learner_knows": [
     "T",
-    "sigma"
+    "sigma",
+    "K"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -76,7 +78,7 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [],
-   "definition_quote": "Let $\\mathcal H = \\R^2$ be the set of all possible pairs of means ... receives a normally distributed reward $Z_t \\sim \\mathcal N(\\mu_{A_t}, 1)$. We assume that the horizon $T$ is known to the agent."
+   "definition_quote": "receives a normally distributed reward $Z_t \\sim \\mathcal N(\\mu_{A_t}, 1)$ where $\\mu_1, \\mu_2 \\in \\R$ are the unknown mean rewards ... Let $\\mathcal H = \\R^2$ be the set of all possible pairs of means. We assume that the horizon $T$ is known to the agent."
   },
   {
    "id": "s3",
@@ -91,6 +93,7 @@
    "noise": "exponential_family",
    "learner_knows": [
     "T",
+    "K",
     "reward_family"
    ],
    "instance_assumptions": [
@@ -106,7 +109,7 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [],
-   "definition_quote": "This is actually possible not only for Gaussian distributions, but more generally for one-parameter exponential families ... For $\\mu$ such that $\\mu_1 > \\max_{a\\neq 1} \\mu_a$"
+   "definition_quote": "This is actually possible not only for Gaussian distributions, but more generally for one-parameter exponential families, for which \\cite{GK16} propose the asymptotically optimal Track-and-Stop strategy."
   }
  ],
  "algorithms": [
@@ -114,7 +117,7 @@
    "id": "a1",
    "name": "FB-ETC",
    "registry_id": "fb_etc",
-   "is_new": true,
+   "is_new": false,
    "techniques": [
     "explore_then_commit"
    ],
@@ -142,7 +145,8 @@
    "registry_id": "bai_etc",
    "is_new": true,
    "techniques": [
-    "explore_then_commit"
+    "explore_then_commit",
+    "elimination"
    ],
    "requires_knowledge_of": [
     "T"
@@ -183,7 +187,8 @@
     "track_and_stop"
    ],
    "requires_knowledge_of": [
-    "T"
+    "T",
+    "reward_family"
    ]
   }
  ],
@@ -204,18 +209,21 @@
     "notation": "exact",
     "expression": "4/Delta*log(T*Delta**2/4.46) - 2/Delta*log(log(T*Delta**2/(4*sqrt(2*pi)))) + Delta",
     "expression_latex": "\\frac{4}{\\Delta}\\log\\left(\\frac{T\\Delta^2}{4.46}\\right) - \\frac{2}{\\Delta}\\log\\log\\left(\\frac{T\\Delta^2}{4\\sqrt{2\\pi}}\\right)+ \\Delta",
-    "regime": "T*Delta^2 > 4*sqrt(2*pi*e)"
+    "regime": "T*Delta**2 > 4*sqrt(2*pi*e)"
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [
+    "n = ceil(2 W(T^2 Delta^4/(32 pi))/Delta^2)"
+   ],
    "is_new": true,
    "source": {
     "label": "th:FB:DeltaKnown",
     "number": "Theorem 1",
-    "quote": "Let $\\mu\\in\\HDelta$, and let $\\overline{n}=\\lceil \\frac{2}{\\Delta^2}W(\\frac{T^2\\Delta^4}{32\\pi}) \\rceil$. Then $R_\\mu^{\\overline{n}}(T)\\leq\\frac{4}{\\Delta}\\log(\\frac{T\\Delta^2}{4.46}) - \\frac{2}{\\Delta}\\log\\log(\\frac{T\\Delta^2}{4\\sqrt{2\\pi}})+ \\Delta$ whenever $T\\Delta^2 > 4\\sqrt{2\\pi e}$, and $R_\\mu^{\\overline{n}}(T)\\leq T\\Delta/2 + \\Delta$ otherwise."
+    "quote": "Let $\\mu\\in\\HDelta$, and let $\\overline{n}=\\left\\lceil \\frac{2}{\\Delta^2}W\\left(\\frac{T^2\\Delta^4}{32\\pi}\\right) \\right\\rceil$. Then $R_\\mu^{\\overline{n}}(T)\\leq\\frac{4}{\\Delta}\\log\\left(\\frac{T\\Delta^2}{4.46}\\right) - \\frac{2}{\\Delta}\\log\\log\\left(\\frac{T\\Delta^2}{4\\sqrt{2\\pi}}\\right)+ \\Delta$ whenever $T\\Delta^2 > 4\\sqrt{2\\pi e}$"
    },
    "confidence": "high",
-   "notes": ""
+   "notes": "Regret defined via means: pseudo-regret."
   },
   {
    "id": "r2",
@@ -233,10 +241,13 @@
     "notation": "exact",
     "expression": "T*Delta/2 + Delta",
     "expression_latex": "T\\Delta/2 + \\Delta",
-    "regime": "T*Delta^2 <= 4*sqrt(2*pi*e)"
+    "regime": "T*Delta**2 <= 4*sqrt(2*pi*e)"
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [
+    "n = ceil(2 W(T^2 Delta^4/(32 pi))/Delta^2)"
+   ],
    "is_new": true,
    "source": {
     "label": "th:FB:DeltaKnown",
@@ -265,7 +276,10 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [
+    "n = ceil(2 W(T^2 Delta^4/(32 pi))/Delta^2)"
+   ],
    "is_new": true,
    "source": {
     "label": "th:FB:DeltaKnown",
@@ -291,22 +305,24 @@
     "notation": "exact",
     "expression": "(1 - 2/(n_explore*Delta**2))*(1 - 8*log(T)/(Delta**2*T))*Delta*T**eps_alg/(2*sqrt(pi*log(T)))",
     "expression_latex": "\\left( 1 - \\frac{2}{n\\Delta^2} \\right) \\left(1-\\frac{8\\log(T)}{\\Delta^2T}\\right) \\frac{\\Delta T^\\epsilon}{2\\sqrt{\\pi\\log(T)}}",
-    "regime": "n <= 4(1-eps)log(T)/Delta^2, eps>0, T>=1"
+    "regime": "n_explore <= 4*(1-eps_alg)*log(T)/Delta**2"
    },
    "symbols": {
-    "n_explore": "number of exploration pulls per arm of the fixed-design strategy"
+    "n_explore": "number of exploration samples per arm of the fixed-design strategy",
+    "eps_alg": "free parameter epsilon > 0"
    },
-   "extra_assumptions": [
-    "applies to fixed-design ETC strategy with n pulls per arm and empirical-best commit"
+   "conditions": [
+    "T >= 1"
    ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:FB:DeltaKnown",
     "number": "Theorem 1",
-    "quote": "Furthermore, for all $\\epsilon>0, T\\geq 1$ and $n\\leq 4(1-\\epsilon)\\log(T)/\\Delta^2$, $R_\\mu^n(T)\\geq ( 1 - \\frac{2}{n\\Delta^2} ) (1-\\frac{8\\log(T)}{\\Delta^2T}) \\frac{\\Delta T^\\epsilon}{2\\sqrt{\\pi\\log(T)}}$."
+    "quote": "Furthermore, for all $\\epsilon>0, T\\geq 1$ and $n\\leq 4(1-\\epsilon)\\log(T)/\\Delta^2$, \\[R_\\mu^n(T)\\geq \\left( 1 - \\frac{2}{n\\Delta^2} \\right) \\left(1-\\frac{8\\log(T)}{\\Delta^2T}\\right) \\frac{\\Delta T^\\epsilon}{2\\sqrt{\\pi\\log(T)}} \\;.\\]"
    },
    "confidence": "medium",
-   "notes": "Lower bound for the specific fixed-design strategy with too small exploration n."
+   "notes": "Lower bound for the class of fixed-design ETC strategies with exploration length n per arm."
   },
   {
    "id": "r5",
@@ -324,12 +340,11 @@
     "notation": "liminf",
     "expression": "4*log(T)/Delta",
     "expression_latex": "\\inf_{1\\leq n\\leq T} R_\\mu^n(T) \\sim 4\\log(T)/\\Delta",
-    "regime": "T -> infinity"
+    "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "class: fixed-design (DETC) strategies"
-   ],
+   "conditions": [],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:FB:DeltaKnown",
@@ -337,7 +352,7 @@
     "quote": "As $R_\\mu^n(T)\\geq n\\Delta$, this entails that $\\displaystyle\\inf_{1\\leq n\\leq T} R_\\mu^n(T) \\sim 4\\log(T)/\\Delta$."
    },
    "confidence": "medium",
-   "notes": "Asymptotic equivalence; recorded as lower side over fixed-design strategies (matching upper bound r1)."
+   "notes": "Class: fixed-design strategies (Pi_DETC). Statement is an asymptotic equivalence; recorded as liminf lower bound (the upper side is given by r1)."
   },
   {
    "id": "r6",
@@ -355,21 +370,52 @@
     "notation": "exact",
     "expression": "log(E*T*Delta**2)/Delta + (4*sqrt(log(T*Delta**2)) + 4)/Delta + Delta",
     "expression_latex": "\\frac{\\log(eT\\Delta^2)}{\\Delta} + \\frac{4\\sqrt{\\log(T\\Delta^2)}+4}{\\Delta} + \\Delta",
-    "regime": "T*Delta^2 >= 1"
+    "regime": "T*Delta**2 >= 1"
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:SPRT:DeltaKnown",
     "number": "Theorem 2",
-    "quote": "If $T\\Delta^2\\geq 1$, then the regret of the SPRT-ETC algorithm is upper-bounded as $R_\\mu^{\\sprtetc}(T)\\leq \\frac{\\log(eT\\Delta^2)}{\\Delta} + \\frac{4\\sqrt{\\log(T\\Delta^2)}+4}{\\Delta} + \\Delta$. Otherwise it is upper bounded by $T\\Delta/2+\\Delta$, and for all $T$ and $\\Delta$ the regret is less than $10\\sqrt{T/e} + \\Delta$."
+    "quote": "If $T\\Delta^2\\geq 1$, then the regret of the SPRT-ETC algorithm is upper-bounded as $R_\\mu^{\\sprtetc}(T)\\leq \\frac{\\log(eT\\Delta^2)}{\\Delta} + \\frac{4\\sqrt{\\log(T\\Delta^2)}+4}{\\Delta} + \\Delta$."
    },
    "confidence": "high",
    "notes": ""
   },
   {
    "id": "r7",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "T*Delta/2 + Delta",
+    "expression_latex": "T\\Delta/2+\\Delta",
+    "regime": "T*Delta**2 < 1"
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "th:SPRT:DeltaKnown",
+    "number": "Theorem 2",
+    "quote": "Otherwise it is upper bounded by $T\\Delta/2+\\Delta$"
+   },
+   "confidence": "high",
+   "notes": ""
+  },
+  {
+   "id": "r8",
    "setting": "s1",
    "side": "upper",
    "algorithm": "a2",
@@ -387,18 +433,19 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:SPRT:DeltaKnown",
     "number": "Theorem 2",
-    "quote": "for all $T$ and $\\Delta$ the regret is less than $10\\sqrt{T/e} + \\Delta$."
+    "quote": "and for all $T$ and $\\Delta$ the regret is less than $10\\sqrt{T/e} + \\Delta$."
    },
    "confidence": "high",
    "notes": ""
   },
   {
-   "id": "r8",
+   "id": "r9",
    "setting": "s1",
    "side": "lower",
    "algorithm": null,
@@ -413,23 +460,22 @@
     "notation": "liminf",
     "expression": "log(T)/Delta",
     "expression_latex": "\\liminf_{T\\to\\infty} \\frac{R^\\pi_\\mu(T)}{\\log(T)}\\geq \\frac{1}{\\Delta}",
-    "regime": "T -> infinity"
+    "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "class: ETC strategies (uniform sampling then commit) uniformly efficient on H_Delta"
-   ],
+   "conditions": [],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:lowerBoundEC:DeltaKnown",
     "number": "Theorem 3",
-    "quote": "Let $\\pi$ be an ETC strategy that is uniformly efficient on $\\HDelta$. Then for all $\\mu \\in \\HDelta$, $\\liminf_{T\\to\\infty} \\frac{R^\\pi_\\mu(T)}{\\log(T)}\\geq \\frac{1}{\\Delta}$."
+    "quote": "Let $\\pi$ be an ETC strategy that is uniformly efficient on $\\HDelta$. Then for all $\\mu \\in \\HDelta$, \\[\\liminf_{T\\to\\infty} \\frac{R^\\pi_\\mu(T)}{\\log(T)}\\geq \\frac{1}{\\Delta}\\;.\\]"
    },
    "confidence": "high",
-   "notes": "Expression gives coefficient times log(T) of liminf R/log T."
+   "notes": "Class: uniformly efficient ETC strategies with uniform (alternating) sampling on H_Delta."
   },
   {
-   "id": "r9",
+   "id": "r10",
    "setting": "s2",
    "side": "lower",
    "algorithm": null,
@@ -444,23 +490,22 @@
     "notation": "liminf",
     "expression": "4*log(T)/Delta",
     "expression_latex": "\\liminf_{T\\to\\infty} \\frac{R_\\mu^{\\pi}(T)}{\\log(T)} \\geq\\frac{4}{\\Delta}",
-    "regime": "T -> infinity"
+    "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "class: ETC strategies uniformly efficient on H=R^2"
-   ],
+   "conditions": [],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:lowerBoundEC:DeltaUnKnown",
     "number": "Theorem 4",
-    "quote": "Let $\\pi$ be a uniformly efficient ETC strategy on $\\Hall$. For all $\\mu\\in\\Hall$, if $\\Delta=|\\mu_1-\\mu_2|$ then $\\liminf_{T\\to\\infty} \\frac{R_\\mu^{\\pi}(T)}{\\log(T)} \\geq\\frac{4}{\\Delta}$."
+    "quote": "Let $\\pi$ be a uniformly efficient ETC strategy on $\\Hall$. For all $\\mu\\in\\Hall$, if $\\Delta=|\\mu_1-\\mu_2|$ then \\[ \\liminf_{T\\to\\infty} \\frac{R_\\mu^{\\pi}(T)}{\\log(T)} \\geq\\frac{4}{\\Delta}\\;.\\]"
    },
    "confidence": "high",
-   "notes": ""
+   "notes": "Class: uniformly efficient ETC strategies (uniform sampling) on R^2."
   },
   {
-   "id": "r10",
+   "id": "r11",
    "setting": "s2",
    "side": "upper",
    "algorithm": "a3",
@@ -475,21 +520,54 @@
     "notation": "exact",
     "expression": "4*log(T*Delta**2/4)/Delta + 334*sqrt(log(T*Delta**2/4))/Delta + 178/Delta + 2*Delta",
     "expression_latex": "\\frac{4\\log\\left(\\frac{T\\Delta^2}{4}\\right)}{\\Delta} + \\frac{334\\sqrt{\\log\\left(\\frac{T\\Delta^2}{4}\\right)}}{\\Delta} + \\frac{178}{\\Delta} + 2\\Delta",
-    "regime": "T*Delta^2 > 4*e^2"
+    "regime": "T*Delta**2 > 4*E**2"
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [
+    "T >= 3"
+   ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:optimBAI:DeltaUnKnown",
     "number": "Theorem 5",
-    "quote": "If $T\\Delta^2 > 4e^2$, the regret of the BAI-ETC algorithm is upper bounded as $R_\\mu^{\\baietc}(T) \\leq \\frac{4\\log(\\frac{T\\Delta^2}{4})}{\\Delta} + \\frac{334\\sqrt{\\log(\\frac{T\\Delta^2}{4})}}{\\Delta} + \\frac{178}{\\Delta} + 2\\Delta.$ It is upper bounded by $T\\Delta$ otherwise, and by $32\\sqrt{T} + 2\\Delta$ in any case."
+    "quote": "If $T\\Delta^2 > 4e^2$, the regret of the BAI-ETC algorithm is upper bounded as $R_\\mu^{\\baietc}(T) \\leq \\frac{4\\log\\left(\\frac{T\\Delta^2}{4}\\right)}{\\Delta} + \\frac{334\\sqrt{\\log\\left(\\frac{T\\Delta^2}{4}\\right)}}{\\Delta} + \\frac{178}{\\Delta} + 2\\Delta.$"
    },
    "confidence": "high",
-   "notes": ""
+   "notes": "Algorithm input requires T >= 3."
   },
   {
-   "id": "r11",
+   "id": "r12",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "T*Delta",
+    "expression_latex": "T\\Delta",
+    "regime": "T*Delta**2 <= 4*E**2"
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "th:optimBAI:DeltaUnKnown",
+    "number": "Theorem 5",
+    "quote": "It is upper bounded by $T\\Delta$ otherwise"
+   },
+   "confidence": "high",
+   "notes": "Trivial branch."
+  },
+  {
+   "id": "r13",
    "setting": "s2",
    "side": "upper",
    "algorithm": "a3",
@@ -507,7 +585,8 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:optimBAI:DeltaUnKnown",
@@ -518,11 +597,11 @@
    "notes": ""
   },
   {
-   "id": "r12",
+   "id": "r14",
    "setting": "s1",
    "side": "lower",
    "algorithm": null,
-   "algorithm_class": "uniformly_good",
+   "algorithm_class": "consistent",
    "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
    "comparator": "best_fixed_action",
@@ -533,23 +612,22 @@
     "notation": "liminf",
     "expression": "log(T)/(2*Delta)",
     "expression_latex": "\\liminf_{T\\rightarrow \\infty} \\frac{R_\\mu^\\pi(T)}{\\log T} \\geq \\frac{1}{2\\Delta}",
-    "regime": "T -> infinity"
+    "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "uniformly efficient on H_Delta"
-   ],
+   "conditions": [],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:lowerBound:DeltaKnown",
     "number": "Theorem 6",
-    "quote": "Let $\\pi$ be a strategy that is uniformly efficient on $\\HDelta$. Then for all $\\mu \\in \\HDelta$, $\\liminf_{T\\rightarrow \\infty} \\frac{R_\\mu^\\pi(T)}{\\log T} \\geq \\frac{1}{2\\Delta}$"
+    "quote": "Let $\\pi$ be a strategy that is uniformly efficient on $\\HDelta$. Then for all $\\mu \\in \\HDelta$, \\[\\liminf_{T\\rightarrow \\infty} \\frac{R_\\mu^\\pi(T)}{\\log T} \\geq \\frac{1}{2\\Delta}\\]"
    },
    "confidence": "high",
-   "notes": ""
+   "notes": "Uniformly efficient on H_Delta: R = o(T^alpha) for all alpha>0."
   },
   {
-   "id": "r13",
+   "id": "r15",
    "setting": "s1",
    "side": "upper",
    "algorithm": "a4",
@@ -564,12 +642,15 @@
     "notation": "exact",
     "expression": "log(2*T*Delta**2)/(2*Delta*(1 - 3*eps_T/(2*Delta))**2) + sqrt(pi*log(2*T*Delta**2))/(2*Delta*(1 - 3*eps_T/Delta)**2) + Delta*(30*E*sqrt(log(eps_T**2*T))/eps_T**2 + 80/eps_T**2 + 2/(2*Delta - 3*eps_T)**2) + 5*Delta",
     "expression_latex": "\\frac{\\log\\left(2T\\Delta^2\\right)}{2\\Delta(1 - 3\\epsilon_T/(2\\Delta))^2} + \\frac{\\sqrt{\\pi\\log\\left(2T\\Delta^2\\right)}}{2\\Delta(1 - 3\\epsilon_T/\\Delta)^2} + \\Delta\\left[\\frac{30e \\sqrt{\\log(\\epsilon^2_T T)}}{\\epsilon_T^2} + \\frac{80}{\\epsilon_T^2}+ \\frac{2}{(2\\Delta - 3\\epsilon_T)^2}\\right] + 5\\Delta",
-    "regime": "T(2Delta-3eps_T)^2 >= 2 and T eps_T^2 >= e^2"
+    "regime": "T*(2*Delta - 3*eps_T)**2 >= 2 and T*eps_T**2 >= E**2"
    },
    "symbols": {
-    "eps_T": "Delta*log(e + T*Delta^2)^(-1/8)/4, algorithm's internal slack"
+    "eps_T": "algorithm parameter eps_T = Delta*log(e + T*Delta^2)^(-1/8)/4"
    },
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [
+    "eps_T = Delta * log^{-1/8}(e + T Delta^2)/4"
+   ],
    "is_new": true,
    "source": {
     "label": "th:GAUCB:Deltaknown",
@@ -580,7 +661,7 @@
    "notes": ""
   },
   {
-   "id": "r14",
+   "id": "r16",
    "setting": "s1",
    "side": "upper",
    "algorithm": "a4",
@@ -595,10 +676,13 @@
     "notation": "limsup",
     "expression": "log(T)/(2*Delta)",
     "expression_latex": "\\limsup_{T\\to\\infty} R_\\mu^{\\ducb}(T) / \\log(T) \\leq (2\\Delta)^{-1}",
-    "regime": "T -> infinity"
+    "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [
+    "eps_T = Delta * log^{-1/8}(e + T Delta^2)/4"
+   ],
    "is_new": true,
    "source": {
     "label": "th:GAUCB:Deltaknown",
@@ -606,10 +690,10 @@
     "quote": "Moreover $\\limsup_{T\\to\\infty} R_\\mu^{\\ducb}(T) / \\log(T) \\leq (2\\Delta)^{-1}$"
    },
    "confidence": "high",
-   "notes": ""
+   "notes": "Matches Theorem 6 lower bound."
   },
   {
-   "id": "r15",
+   "id": "r17",
    "setting": "s1",
    "side": "upper",
    "algorithm": "a4",
@@ -627,18 +711,21 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [
+    "eps_T = Delta * log^{-1/8}(e + T Delta^2)/4"
+   ],
    "is_new": true,
    "source": {
     "label": "th:GAUCB:Deltaknown",
     "number": "Theorem 7",
-    "quote": "$\\forall\\mu \\in \\mathcal H_\\Delta, \\ R_\\mu^{\\ducb}(T) \\leq 328\\sqrt{T} + 5\\Delta$."
+    "quote": "and $\\forall\\mu \\in \\mathcal H_\\Delta, \\ R_\\mu^{\\ducb}(T) \\leq 328\\sqrt{T} + 5\\Delta$."
    },
    "confidence": "high",
    "notes": ""
   },
   {
-   "id": "r16",
+   "id": "r18",
    "setting": "s2",
    "side": "upper",
    "algorithm": "a5",
@@ -651,12 +738,15 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "2*log(T*Delta**2/2)/(Delta*(1 - eps_alg/Delta)**2) + 2*sqrt(pi*log(T*Delta**2/2))/(Delta*(1 - eps_alg/Delta)**2) + Delta*(30*E*sqrt(log(eps_alg**2*T)) + 16*E)/eps_alg**2 + 2/(Delta*(1 - eps_alg/Delta)**2) + Delta",
+    "expression": "2*log(T*Delta**2/2)/(Delta*(1 - eps_alg/Delta)**2) + 2*sqrt(pi*log(T*Delta**2/2))/(Delta*(1 - eps_alg/Delta)**2) + Delta*((30*E*sqrt(log(eps_alg**2*T)) + 16*E)/eps_alg**2) + 2/(Delta*(1 - eps_alg/Delta)**2) + Delta",
     "expression_latex": "\\frac{2\\log\\left(\\frac{T\\Delta^2}{2}\\right)}{\\Delta\\left(1 - \\frac{\\epsilon}{\\Delta}\\right)^2} + \\frac{2\\sqrt{\\pi\\log\\left(\\frac{T\\Delta^2}{2}\\right)}}{\\Delta\\left(1 - \\frac{\\epsilon}{\\Delta}\\right)^2} + \\Delta\\left(\\frac{30e \\sqrt{\\log(\\epsilon^2 T)}+16e}{\\epsilon^2} \\right) + \\frac{2}{\\Delta\\left(1 - \\frac{\\epsilon}{\\Delta}\\right)^2} +\\Delta",
-    "regime": "eps in (0,Delta), T(Delta-eps)^2 >= 2, T eps^2 >= e^2"
+    "regime": "0 < eps_alg < Delta, T*(Delta - eps_alg)**2 >= 2, T*eps_alg**2 >= E**2"
    },
-   "symbols": {},
-   "extra_assumptions": [],
+   "symbols": {
+    "eps_alg": "free analysis parameter epsilon in (0, Delta)"
+   },
+   "conditions": [],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:ucb",
@@ -667,7 +757,7 @@
    "notes": ""
   },
   {
-   "id": "r17",
+   "id": "r19",
    "setting": "s2",
    "side": "upper",
    "algorithm": "a5",
@@ -682,10 +772,11 @@
     "notation": "limsup",
     "expression": "2*log(T)/Delta",
     "expression_latex": "\\limsup_{T\\to\\infty} R^\\pi_\\mu(T) / \\log(T) = 2/\\Delta",
-    "regime": "T -> infinity"
+    "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:ucb",
@@ -693,10 +784,10 @@
     "quote": "Moreover, $\\limsup_{T\\to\\infty} R^\\pi_\\mu(T) / \\log(T) = 2/\\Delta$"
    },
    "confidence": "high",
-   "notes": "Stated as equality."
+   "notes": "Stated as equality; recorded as limsup upper bound."
   },
   {
-   "id": "r18",
+   "id": "r20",
    "setting": "s2",
    "side": "upper",
    "algorithm": "a5",
@@ -714,18 +805,19 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:ucb",
     "number": "Theorem 8",
-    "quote": "for all $\\mu\\in\\Hall$, $R_\\mu^\\pi(T) \\leq 33 \\sqrt{T} + \\Delta$."
+    "quote": "and for all $\\mu\\in\\Hall$, $R_\\mu^\\pi(T) \\leq 33 \\sqrt{T} + \\Delta$."
    },
    "confidence": "high",
    "notes": ""
   },
   {
-   "id": "r19",
+   "id": "r21",
    "setting": "s3",
    "side": "upper",
    "algorithm": "a6",
@@ -739,46 +831,30 @@
    "bound": {
     "notation": "limsup",
     "expression": "T_star*sum_subopt(w_star_i*Delta_i)*log(T)",
-    "expression_latex": "\\limsup_{T\\rightarrow \\infty} \\frac{R_\\mu^{\\rm TaS}(T)}{\\log T} \\leq T^*(\\mu) \\left(\\sum_{a=2}^K w_a^*(\\mu)(\\mu_1-\\mu_a)\\right)",
-    "regime": "T -> infinity"
+    "expression_latex": "\\limsup_{T\\rightarrow \\infty} \\frac{R_\\mu^{\\text{TaS}}(T)}{\\log T} \\leq T^*(\\mu) \\left(\\sum_{a=2}^K w_a^*(\\mu)(\\mu_1-\\mu_a)\\right)",
+    "regime": null
    },
    "symbols": {
-    "T_star": "value T^*(mu) of the optimal BAI allocation problem (Garivier & Kaufmann 2016)",
-    "w_star_i": "optimal BAI allocation weight of arm i"
+    "T_star": "T^*(mu), value (as defined in the paper) of the optimal BAI allocation problem max_w inf_a [...]",
+    "w_star_i": "optimal BAI allocation weight w_a^*(mu) of arm a"
    },
-   "extra_assumptions": [
-    "unique optimal arm",
-    "Track-and-Stop with risk 1/T"
+   "conditions": [
+    "mu_1 > max_{a != 1} mu_a"
+   ],
+   "tuning": [
+    "Track-and-Stop risk delta = 1/T"
    ],
    "is_new": true,
    "source": {
     "label": "thm:TaSRegret",
     "number": "Proposition 1",
-    "quote": "For $\\mu$ such that $\\mu_1 > \\max_{a\\neq 1} \\mu_a$, the regret of the ETC strategy using Track-and-Stop exploration with risk $1/T$ satisfies $\\limsup_{T\\rightarrow \\infty} \\frac{R_\\mu^{TaS}(T)}{\\log T} \\leq T^*(\\mu) (\\sum_{a=2}^K w_a^*(\\mu)(\\mu_1-\\mu_a))$"
+    "quote": "For $\\mu$ such that $\\mu_1 > \\max_{a\\neq 1} \\mu_a$, the regret of the ETC strategy using Track-and-Stop exploration with risk $1/T$ satisfies \\[\\limsup_{T\\rightarrow \\infty} \\frac{R_\\mu^{\\text{\\scalebox{0.8}{\\rm TaS}}}(T)}{\\log T} \\leq T^*(\\mu) \\left(\\sum_{a=2}^K w_a^*(\\mu)(\\mu_1-\\mu_a)\\right),\\]"
    },
    "confidence": "medium",
-   "notes": "Adapted from GK16; no proof in paper."
+   "notes": "Paper calls T*(mu) the maximum of the optimisation problem (in GK16 it is the inverse); recorded as stated. The text derives for Gaussian equal-gap case limsup <= (1+1/sqrt(K-1)) 2(K-1)/Delta (informal)."
   }
  ],
  "cited_results": [
-  {
-   "cited_key": "LR85",
-   "cited_title": "Asymptotically efficient adaptive allocation rules",
-   "cited_first_author": "Tze Leung Lai",
-   "cited_year": 1985,
-   "cited_arxiv_id": null,
-   "algorithm_name": null,
-   "algorithm_registry_id": null,
-   "side": "lower",
-   "setting_description": "Two-armed Gaussian bandit, unknown gap, uniformly efficient strategies",
-   "bound": {
-    "notation": "liminf",
-    "expression": "2*log(T)/Delta",
-    "expression_latex": "C=2 for (H, Pi_ALL)",
-    "regime": "T -> infinity"
-   },
-   "where": "Section 2 table and Section 4"
-  },
   {
    "cited_key": "KR95",
    "cited_title": "Sequential choice from several populations",
@@ -793,9 +869,9 @@
     "notation": "limsup",
     "expression": "2*log(T)/Delta",
     "expression_latex": "R_\\mu^{UCB}(T) \\sim 2\\log(T)/\\Delta",
-    "regime": "T -> infinity"
+    "regime": null
    },
-   "where": "Section 1 / Section 4"
+   "where": "Introduction; Section 4 (Unknown Gaps)"
   },
   {
    "cited_key": "LR85",
@@ -806,14 +882,32 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "K-armed one-parameter exponential family bandit, consistent strategies",
+   "setting_description": "K-armed bandit, one-parameter exponential family, uniformly efficient strategies",
    "bound": {
     "notation": "liminf",
     "expression": "sum_subopt(Delta_i/KL_i)*log(T)",
     "expression_latex": "\\liminf_{T\\rightarrow \\infty} \\frac{R_\\mu^{\\pi} (T)}{\\log T} \\geq \\sum_{a=2}^K\\frac{\\mu_1-\\mu_a}{d(\\mu_a,\\mu_1)}",
-    "regime": "T -> infinity"
+    "regime": null
    },
-   "where": "Section 6"
+   "where": "Section 6 (Conclusion)"
+  },
+  {
+   "cited_key": "COLT14",
+   "cited_title": "On the Complexity of A/B Testing",
+   "cited_first_author": "Emilie Kaufmann",
+   "cited_year": 2014,
+   "cited_arxiv_id": null,
+   "algorithm_name": "uniform sampling delta-PAC BAI stopping rule",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Fixed-confidence best-arm identification, two Gaussian arms",
+   "bound": {
+    "notation": "limsup",
+    "expression": "8/Delta**2*log(1/delta)",
+    "expression_latex": "\\E_\\mu[\\tau_\\delta] \\sim (8/\\Delta^2)\\log(1/\\delta)",
+    "regime": "delta -> 0"
+   },
+   "where": "Section 3 (ETC for unknown gaps)"
   }
  ],
  "_run": {
@@ -822,16 +916,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:18:57",
-  "source_chars": 82816,
-  "input_tokens": 70182,
-  "output_tokens": 13812,
-  "cost_usd_equiv": 0.6607216,
+  "date": "2026-10-19T17:28:30",
+  "source_chars": 76450,
+  "input_tokens": 67573,
+  "output_tokens": 15304,
+  "cost_usd_equiv": 0.6576776,
   "status": "extracted"
  }
 }

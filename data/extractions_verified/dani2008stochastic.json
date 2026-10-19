@@ -1,0 +1,431 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Stochastic Linear Optimization under Bandit Feedback",
+  "arxiv_id": null,
+  "arxiv_version": null,
+  "year": 2008,
+  "authors": [
+   "Varsha Dani",
+   "Thomas P. Hayes",
+   "Sham M. Kakade"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Stochastic linear optimization under bandit feedback (compact decision set D in R^n)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "d"
+   ],
+   "instance_assumptions": [],
+   "action_set": {
+    "shape": "arbitrary_compact",
+    "time_varying": "fixed",
+    "access": "explicit"
+   },
+   "extras": [],
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Costs need only satisfy E(c_t(x)|H_t) = mu.x for all histories (martingale-difference noise), costs in [-1,1] and mu.x in [-1,1]",
+    "Learner needs access to a barycentric spanner of D",
+    "Losses (costs) minimised rather than rewards"
+   ],
+   "definition_quote": "Let D ⊂ R^n be a compact (but otherwise arbitrary) set of decisions... Each such choice results in a cost ℓ_t = c_t(x_t) ∈ [−1, 1]. We assume that, regardless of the history H_t, the conditional expectation of c_t is a fixed linear function, i.e., for all x ∈ D, E(c_t(x) | H_t) = µ · x ∈ [−1, 1]."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Stochastic linear optimization, product of circles D_n = (S^1)^{n/2} (lower bound)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "T",
+    "d",
+    "reward_family"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "action_set": {
+    "shape": "nonconvex",
+    "time_varying": "fixed",
+    "access": "explicit"
+   },
+   "extras": [],
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Decision set is the Cartesian product of n/2 unit circles; costs in {-1,+1}; mu uniform on D_n/n"
+   ],
+   "definition_quote": "Assume n is even. Let D_n = (S^1)^{n/2} be the Cartesian product of n/2 circles... Our cost functions take values in {−1, +1}, and for every x ∈ D_n, the expected cost is µ · x, where nµ ∈ D_n."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "ConfidenceBall2 (LinRel of Auer 2002)",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "d",
+    "delta"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "ConfidenceBall1",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "d",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "8*d*Max(128*d*log(T)*log(T**2/delta), (8*log(T**2/delta)/3)**2)*log(T)/Delta_lin",
+    "expression_latex": "Prob(\\forall T, R_T \\le \\frac{8n\\beta_T \\ln(T)}{\\Delta}) \\ge 1-\\delta, \\beta_T = \\max(128 n \\ln T \\ln(T^2/\\delta), (\\frac{8}{3}\\ln\\frac{T^2}{\\delta})^2)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "gap Delta > 0 (in the extremal-point sense)",
+    "0 < delta < 1"
+   ],
+   "tuning": [
+    "beta_t = max(128 n ln t ln(t^2/delta), (8/3 ln(t^2/delta))^2)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "Theorem 1(Problem Dependent Upper Bound) ... Suppose the decision set D and the true mean µ have a gap ∆ > 0. We have: • ConfidenceBall2 : For all sufficiently large T , the cumulative regret RT of ConfidenceBall2 (D,δ) is with high probability at most O(n^2/∆ log^3 T). More precisely, Prob(∀T, RT ≤ 8nβT ln(T)/∆) ≥ 1 − δ"
+   },
+   "confidence": "high",
+   "notes": "n = d. Regret R_T defined via means (random variable); bound holds w.p. 1-delta uniformly over T. Equivalent to O(n^2 log^3 T / Delta). Paper says results extend to time-varying decision sets (Section 7)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "8*d**2*Max(128*d*log(T)*log(T**2/delta), (8*log(T**2/delta)/3)**2)*log(T)/Delta_lin",
+    "expression_latex": "Prob(\\forall T, R_T \\le \\frac{8n^2\\beta_T \\ln(T)}{\\Delta}) \\ge 1-\\delta",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "gap Delta > 0",
+    "0 < delta < 1"
+   ],
+   "tuning": [
+    "implemented to only choose extremal points of D",
+    "beta_t as in Algorithm 3.2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "• ConfidenceBall1 : If ConfidenceBall1 is implemented so that it only chooses extremal points xt ∈ D (which is always possible) then, for all sufficiently large T , the cumulative regret RT of ConfidenceBall1 (D,δ) is with high probability at most O(n^3/∆ log^3 T). More precisely, Prob(∀T, RT ≤ 8n^2 βT ln(T)/∆) ≥ 1 − δ"
+   },
+   "confidence": "high",
+   "notes": "Polynomial time given a linear optimization oracle over D (O(n) oracle calls per round)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(8*d*T*Max(128*d*log(T)*log(T**2/delta), (8*log(T**2/delta)/3)**2)*log(T))",
+    "expression_latex": "Prob(\\forall T, R_T \\le \\sqrt{8nT\\beta_T \\ln T}) \\ge 1-\\delta",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "0 < delta < 1"
+   ],
+   "tuning": [
+    "beta_t as in Algorithm 3.1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 2",
+    "quote": "Theorem 2(Problem Independent Upper Bound) ... • ConfidenceBall2 : For all sufficiently large T , the cumulative regret RT of ConfidenceBall2 (D,δ) is with high probability at most O∗(n√T)... More precisely, Prob(∀T, RT ≤ sqrt(8nTβT ln T)) ≥ 1 − δ."
+   },
+   "confidence": "high",
+   "notes": "O*(n sqrt T). Holds also when Delta = 0."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(8*d**2*T*Max(128*d*log(T)*log(T**2/delta), (8*log(T**2/delta)/3)**2)*log(T))",
+    "expression_latex": "Prob(\\forall T, R_T \\le \\sqrt{8n^2T\\beta_T \\ln T}) \\ge 1-\\delta",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "0 < delta < 1"
+   ],
+   "tuning": [
+    "beta_t as in Algorithm 3.2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 2",
+    "quote": "• ConfidenceBall1 : For all sufficiently large T , the cumulative regret RT of ConfidenceBall1 (D,δ) is with high probability at most O∗(n^{3/2}√T)... More precisely, Prob(∀T, RT ≤ sqrt(8n^2 TβT ln T)) ≥ 1 − δ."
+   },
+   "confidence": "high",
+   "notes": "O*(n^{3/2} sqrt T); efficient with linear optimization oracle."
+  },
+  {
+   "id": "r5",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "d*sqrt(T)/10",
+    "expression_latex": "E R = E_\\mu E(R|\\mu) \\ge \\frac{1}{10} n\\sqrt{T}",
+    "regime": "T >= 1"
+   },
+   "symbols": {},
+   "conditions": [
+    "n even",
+    "decision set D_n = (S^1)^{n/2}",
+    "mu uniform on D_n/n",
+    "costs in {-1,+1} with mean mu.x"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 3",
+    "quote": "Theorem 3 (Lower Bound) If µ is chosen uniformly at random from the set Dn /n, and the cost for each x ∈ Dn is in {−1, +1} with mean µ · x, then, for every algorithm, for every T ≥ 1, E R = E_µ E (R | µ) ≥ (1/10) n √T. where the inner expectation is with respect to observed costs."
+   },
+   "confidence": "medium",
+   "notes": "Bayesian regret with uniform prior on the scaled product of circles; regret through means. Instance has Delta = 0. Since it is a Bayesian average, it also implies a minimax pseudo-regret lower bound."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Auer [2002]",
+   "cited_title": "Using confidence bounds for exploitation-exploration trade-offs",
+   "cited_first_author": "Peter Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "LinRel master algorithm (SupLinRel)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic linear bandit, finite decision set D",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "log(K)**(3/2)*sqrt(T)",
+    "expression_latex": "O^*((\\log|D|)^{3/2} poly(n)\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "Dani et al. [2008]",
+   "cited_title": "The price of bandit information for online optimization",
+   "cited_first_author": "V. Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online linear optimization, full information",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(d*T)",
+    "expression_latex": "O^*(\\sqrt{nT})",
+    "regime": null
+   },
+   "where": "Section 1.2"
+  },
+  {
+   "cited_key": "Dani et al. [2008]",
+   "cited_title": "The price of bandit information for online optimization",
+   "cited_first_author": "V. Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Adversarial linear bandit",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**(3/2)*sqrt(T)",
+    "expression_latex": "O(n^{3/2}\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 1.2"
+  },
+  {
+   "cited_key": "Dani et al. [2008]",
+   "cited_title": "The price of bandit information for online optimization",
+   "cited_first_author": "V. Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Linear bandit on hypercube, instance chosen as a function of T",
+   "bound": {
+    "notation": "Omega",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\Omega(n\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "Auer et al. [2002]",
+   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
+   "cited_first_author": "P. Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB1",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic K-armed bandit",
+   "bound": {
+    "notation": "O",
+    "expression": "K*log(T)/Delta",
+    "expression_latex": "\\frac{K}{\\Delta}\\log T",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "Abe and Long [1999]",
+   "cited_title": "Associative reinforcement learning using linear probabilistic concepts",
+   "cited_first_author": "Naoki Abe",
+   "cited_year": 1999,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Linear bandit with time-varying decision sets, dimension growing with T",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T**(3/4)",
+    "expression_latex": "\\Omega(T^{3/4})",
+    "regime": "n is a function of T"
+   },
+   "where": "Section 7"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.3",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-19T17:34:03",
+  "source_chars": 52271,
+  "input_tokens": 104735,
+  "output_tokens": 12403,
+  "cost_usd_equiv": 0.5156582,
+  "status": "extracted"
+ },
+ "_verify": {
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "prompt_sha": "81d04c3b9fd7",
+  "date": "2026-10-19T17:40:02",
+  "applied_on": "2026-10-19T17:42:58",
+  "min_confidence": "medium",
+  "applied": [],
+  "rejected": [],
+  "flags": {
+   "hallucinated": [],
+   "not_a_guarantee": [],
+   "unverifiable": [],
+   "missing_results": []
+  },
+  "summary": "The extraction is accurate. All four upper-bound results (Theorems 1 and 2, each for both algorithms) and the Bayesian lower bound (Theorem 3) match the paper, with the correct constants, beta_T, mapping of n to d, and high-probability anytime form. The settings and algorithm entries are reasonable, and the technical results (Theorems 4–6 and the supporting lemmas) were correctly left out."
+ }
+}

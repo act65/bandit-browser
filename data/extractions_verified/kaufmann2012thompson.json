@@ -1,0 +1,231 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Thompson Sampling: An Asymptotically Optimal Finite Time Analysis",
+  "arxiv_id": "1205.4217",
+  "arxiv_version": null,
+  "year": 2012,
+  "authors": [
+   "Emilie Kaufmann",
+   "Nathaniel Korda",
+   "Rémi Munos"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Stochastic multi-armed bandit with Bernoulli rewards",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [],
+   "definition_quote": "Associated with each action, $a$, is an unknown Bernoulli distribution $\\cB\\left(\\mu_a\\right)$, whose expectation is $\\mu_a$. At each time $t$ the agent chooses to observe an action $A_t\\in\\{1,\\dots,K\\}$ and receives a reward $R_t$ drawn from the distribution $\\cB\\left(\\mu_{A_t}\\right)$. ... For the rest of this paper, we assume action $1$ is the unique optimal action."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Thompson Sampling (Beta-Bernoulli, uniform prior)",
+   "registry_id": "thompson_sampling_beta",
+   "is_new": false,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(1 + eps_alg)*sum_subopt(Delta_i*(log(T) + log(log(T)))/kl_i) + C_eps",
+    "expression_latex": "(1+\\epsilon)\\sum_{a\\in A:\\mu_a\\neq\\mu^*}\\frac{\\Delta_a(\\ln(T)+\\ln\\ln(T))}{K(\\mu_a,\\mu^*)}+ C(\\epsilon,\\mu_1,\\dots,\\mu_K)",
+    "regime": null
+   },
+   "symbols": {
+    "C_eps": "problem-dependent constant C(epsilon, mu_1, ..., mu_K) independent of T"
+   },
+   "conditions": [
+    "unique optimal arm (assumed WLOG in the analysis)"
+   ],
+   "tuning": [
+    "uniform Beta(1,1) prior"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "For every $\\epsilon>0$ there exists a problem-dependent constant $C(\\epsilon,\\mu_1,\\dots,\\mu_K)$ such that the regret of Thompson Sampling satisfies: \\[ \\cR(T)\\leq(1+\\epsilon)\\sum_{a\\in A:\\mu_a\\neq\\mu^*}\\frac{\\Delta_a(\\ln(T)+\\ln\\ln(T))}{K(\\mu_a,\\mu^*)}+ C(\\epsilon,\\mu_1,\\dots,\\mu_K). \\]"
+   },
+   "confidence": "high",
+   "notes": "Regret defined as T mu* - E[sum R_t] = sum Delta_a E[N_a], i.e. pseudo-regret. Algorithm does not use T (T only appears in analysis quantities), so anytime. eps is a free analysis parameter. Implies asymptotic optimality (matches Lai-Robbins)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(1 + eps_alg)*(log(T) + log(log(T)))/kl_i + D_eps + N_const + N_0 + 5 + 2*C_b",
+    "expression_latex": "(1+\\epsilon)\\frac{\\ln(T) + \\ln\\ln (T) }{K(\\mu_a,\\mu_1)} + D(\\epsilon,\\mu_1,\\mu_a) + N(b,\\epsilon,\\mu_1,\\mu_a)+N_0(b) + 5 + 2C_b",
+    "regime": null
+   },
+   "symbols": {
+    "D_eps": "constant D(epsilon,mu_1,mu_a) = (1+eps/2)^2/(eps^2 min(mu_a(1-mu_a), mu_1(1-mu_1))^2)",
+    "N_const": "constant N(b,epsilon,mu_1,mu_a)",
+    "N_0": "constant N_0(b)",
+    "C_b": "constant C_b(mu_1,mu_2) from Proposition 1",
+    "b": "constant b(mu_1,mu_2) in (0,1) from Proposition 1"
+   },
+   "conditions": [
+    "unique optimal arm"
+   ],
+   "tuning": [
+    "uniform Beta(1,1) prior"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "Thm2Arm",
+    "number": "Theorem 2",
+    "quote": "Let $\\epsilon>0$. With $b$ as in Proposition \\ref{important:lemma}, for every suboptimal arm $a$, there exist constants $D(\\epsilon,\\mu_1,\\mu_a)$, $N(b,\\epsilon,\\mu_1,\\mu_a)$ and $N_0(b)$ such that: \\bE[N_{a,T}] \\leq (1+\\epsilon)\\frac{\\ln(T) + \\ln\\ln (T) }{K(\\mu_a,\\mu_1)} + D(\\epsilon,\\mu_1,\\mu_a) + N(b,\\epsilon,\\mu_1,\\mu_a)+N_0(b) + 5 + 2C_b ."
+   },
+   "confidence": "high",
+   "notes": "Bound on expected number of pulls E[N_{a,T}] of a suboptimal arm a (quantity 'other'); kl_i here is kl(mu_a, mu_1)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_b",
+    "expression_latex": "\\sum_{t=1}^{\\infty}\\bP\\left(N_{1,t} \\leq  t^b\\right) \\leq C_b",
+    "regime": null
+   },
+   "symbols": {
+    "C_b": "finite constant C_b(mu_1,mu_2)",
+    "b": "constant b(mu_1,mu_2) in (0,1)"
+   },
+   "conditions": [
+    "unique optimal arm"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "important:lemma",
+    "number": "Proposition 1",
+    "quote": "There exists constants $b=b(\\mu_1,\\mu_2)\\in(0,1)$ and $C_b=C_b(\\mu_1,\\mu_2)<\\infty$ such that \\[ \\sum_{t=1}^{\\infty}\\bP\\left(N_{1,t} \\leq  t^b\\right) \\leq C_b. \\]"
+   },
+   "confidence": "medium",
+   "notes": "Tail control on the number of pulls of the optimal arm: sum over t of P(N_{1,t} <= t^b) bounded by a constant. Not a regret bound; recorded as 'other'."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "LaiRobbins85bandits",
+   "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_first_author": "T.L. Lai",
+   "cited_year": 1985,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Stochastic Bernoulli K-armed bandit, strongly consistent policies; lower bound on E[N_{a,T}] for each suboptimal arm",
+   "bound": {
+    "notation": "liminf",
+    "expression": "log(T)/kl_i",
+    "expression_latex": "\\liminf_{T\\ra\\infty}\\frac{\\bE[N_{a,T}]}{\\ln T}\\geq \\frac{1}{K(\\mu_a,\\mu^*)}",
+    "regime": "T -> infinity"
+   },
+   "where": "Introduction, Eq. (LaiRobbins)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.3",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-19T17:25:55",
+  "source_chars": 51066,
+  "input_tokens": 53676,
+  "output_tokens": 3807,
+  "cost_usd_equiv": 0.3165616,
+  "status": "extracted"
+ },
+ "_verify": {
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "prompt_sha": "81d04c3b9fd7",
+  "date": "2026-10-19T17:41:08",
+  "applied_on": "2026-10-19T17:42:58",
+  "min_confidence": "medium",
+  "applied": [],
+  "rejected": [],
+  "flags": {
+   "hallucinated": [],
+   "not_a_guarantee": [
+    {
+     "target": "results.r3",
+     "verdict": "not_a_guarantee",
+     "comment": "Proposition 1 is a technical tail-control lemma on N_{1,t} used in the proof of Theorem 2, not a performance guarantee."
+    }
+   ],
+   "unverifiable": [],
+   "missing_results": []
+  },
+  "summary": "The extraction is accurate. Theorems 1 and 2 are faithfully recorded with correct symbol mappings, setting, quantity and horizon. The only issue is that Proposition 1 is a technical tail bound rather than a performance guarantee, so it should not be stored as a result. Settings, the algorithm's registry id and the cited Lai–Robbins bound are correct."
+ }
+}

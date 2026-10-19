@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Improved Variance-Aware Confidence Sets for Linear Bandits and Linear Mixture MDP",
@@ -16,37 +16,35 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Linear Bandits (with per-round context/action sets, unknown variances)",
+   "name_in_paper": "Linear Bandits (with unknown per-round variance)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
    "action_space": "linear_infinite",
    "function_class": [],
    "domain": "not_applicable",
-   "context": "none",
+   "context": "adversarial_contexts",
    "noise": "bounded_pm1",
    "learner_knows": [
+    "T",
     "d"
    ],
    "instance_assumptions": [],
    "action_set": {
-    "shape": "unspecified",
-    "time_varying": "oblivious_sequence",
+    "shape": "arbitrary_compact",
+    "time_varying": "adaptive_sequence",
     "access": "explicit"
    },
    "extras": [
     "time_varying_action_sets"
    ],
-   "parameters": {
-    "S": "1",
-    "L_feat": "1"
-   },
+   "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Noise is a martingale difference with unknown, round-dependent conditional variance sigma_k^2 (not i.i.d.); |r_k|<=1",
-    "Action sets A_k subset of unit ball given each round; paper does not specify whether they are chosen obliviously or adaptively",
-    "theta* in unit l2 ball"
+    "Noise is a martingale difference with unknown, round-dependent conditional variance sigma_k^2; |r_k| <= 1",
+    "theta* in unit l2 ball, action sets A_k subset of unit l2 ball",
+    "How the action sets A_k are generated is not specified; filtration includes next action"
    ],
    "definition_quote": "At each round $k = 1, \\ldots, K,$ the algorithm is first given the context set $\\gA_k \\subseteq \\sB_2^d(1),$ then the algorithm chooses an action $\\vx_k \\in \\gA_k$ and receives the noisy reward $r_k = \\vx_k \\vtheta^* + \\varepsilon_k,$ where $\\vtheta^* \\in \\sB^d_2(1)$ ... We assume that $\\abs{r_k} \\le 1$ and that the noise $\\varepsilon_k$ satisfies $\\E[\\varepsilon_k \\mid \\gF_k] = 0$ and $\\E[\\varepsilon_k^2 \\mid \\gF_k] = \\sigma_k^2.$"
   },
@@ -62,6 +60,7 @@
    "context": "none",
    "noise": "bounded_01",
    "learner_knows": [
+    "T",
     "d"
    ],
    "instance_assumptions": [],
@@ -75,9 +74,10 @@
    "in_scope": false,
    "out_of_scope_reason": "Episodic reinforcement learning (linear mixture MDP), not a bandit problem",
    "unmapped": [
-    "Transition P = sum_i theta_i P_i with known base models, theta in l1 ball",
-    "Known reward function, sum of rewards per episode <= 1",
-    "Time-homogeneous transitions, horizon H, K episodes"
+    "Transition P = sum_i theta_i P_i with known base models, theta* in l1 unit ball",
+    "Time-homogeneous transitions, known reward function",
+    "Sum of rewards per episode <= 1 (Assumption 2)",
+    "K episodes of horizon H"
    ],
    "definition_quote": "A linear mixture MDP is an episodic MDP with the extra assumption that its transition model is an unknown linear combination of a known set of models. Specifically, there is an unknown parameter $\\vtheta^* \\in \\sB^d_1(1)$, such that $P = \\sum_{i = 1}^d \\theta_i^* P_i$ where based models $P_1,\\ldots,P_d$ are given."
   }
@@ -94,8 +94,7 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "d",
-    "delta"
+    "d"
    ]
   },
   {
@@ -108,10 +107,8 @@
     "elimination"
    ],
    "requires_knowledge_of": [
-    "K",
-    "H",
-    "d",
-    "delta"
+    "T",
+    "d"
    ]
   }
  ],
@@ -135,17 +132,21 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "variances sigma_k^2 unknown to learner"
+   "conditions": [
+    "|r_k| <= 1",
+    "||theta*||_2 <= 1, action sets in unit ball"
+   ],
+   "tuning": [
+    "delta = O((K log K)^{-1})"
    ],
    "is_new": true,
    "source": {
     "label": "thm:oful",
-    "number": "Theorem 1",
+    "number": "Theorem 3",
     "quote": "The expected regret of Algorithm~\\ref{algo:bandit} is bounded by $\\E[\\Reg^K] \\le \\widetilde{O}( d^{4.5} \\sqrt{\\sum_{k=1}^K \\sigma_k^2} + d^5)$."
    },
    "confidence": "high",
-   "notes": "Paper's K is horizon T; Lambda_T = sum of conditional variances. Algorithm uses K (in iota and the net) so horizon known. Paper states algorithm is not computationally efficient (elimination over net)."
+   "notes": "Regret defined via theta*, so pseudo-regret. Variance unknown to learner. Algorithm is elimination-based, not computationally efficient (paper says so); marked exponential as not polynomial. Lambda_T = sum of sigma_k^2."
   },
   {
    "id": "r2",
@@ -163,18 +164,21 @@
     "notation": "O",
     "expression": "d**4.5*log(d*T)**4*log(d*T/delta)*(sqrt(d) + sqrt(Lambda_T))",
     "expression_latex": "O\\Bigg( d^{4.5} \\big(\\log^4 dK\\big) \\big(\\log \\frac{dK}{\\delta}\\big) \\bigg( \\sqrt d + \\sqrt{\\sum_{k=1}^K \\sigma_k^2}\\bigg)\\Bigg)",
-    "regime": "with probability 1 - O(delta log K)"
+    "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [
+    "|r_k| <= 1"
+   ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "lem:bandit-conf-sum",
-    "number": "Lemma 18",
-    "quote": "With probability $1 - O(\\delta \\log K),$ we have \\sum_{k} \\vx_k \\vmu_k \\le O\\Bigg( d^{4.5} \\big(\\log^4 dK\\big) \\big(\\log \\frac{dK}{\\delta}\\big) \\bigg( \\sqrt d + \\sqrt{\\sum_{k=1}^K \\sigma_k^2}\\bigg)\\Bigg)."
+    "number": "Lemma 19",
+    "quote": "With probability $1 - O(\\delta \\log K),$ we have \\begin{align*} \\sum_{k} \\vx_k \\vmu_k \\le O\\Bigg( d^{4.5} \\big(\\log^4 dK\\big) \\big(\\log \\frac{dK}{\\delta}\\big) \\bigg( \\sqrt d + \\sqrt{\\sum_{k=1}^K \\sigma_k^2}\\bigg)\\Bigg). \\end{align*}"
    },
    "confidence": "medium",
-   "notes": "Lemma bounds sum x_k mu_k which upper-bounds the regret on the high-probability event of Lemma (theta* in confidence sets); failure probability is O(delta log K). Lemma numbering estimated."
+   "notes": "Lemma bounds sum_k x_k mu_k, which upper-bounds regret on the event theta* in Theta_k (Lemma 18); failure probability is O(delta log K) rather than delta. K (rounds) mapped to T."
   },
   {
    "id": "r3",
@@ -182,7 +186,7 @@
    "side": "upper",
    "algorithm": "a2",
    "algorithm_class": null,
-   "quantity": "expected_regret",
+   "quantity": "pseudo_regret",
    "dependence": "worst_case",
    "comparator": "best_policy",
    "probability": "expectation",
@@ -197,19 +201,23 @@
    "symbols": {
     "K_ep": "number of episodes"
    },
-   "extra_assumptions": [
+   "conditions": [
+    "sum of rewards per episode <= 1 almost surely (Assumption 2)",
     "time-homogeneous transitions",
-    "sum of rewards per episode <= 1",
-    "known reward function"
+    "known reward function",
+    "theta* in l1 unit ball"
+   ],
+   "tuning": [
+    "delta = 1/K"
    ],
    "is_new": true,
    "source": {
     "label": "thm:main_rl",
-    "number": "Theorem 3",
+    "number": "Theorem 5",
     "quote": "The expected regret of Algorithm~\\ref{alg:main} is bounded by $\\E[\\Reg^K ] \\leq  \\widetilde{O}\\left(d^{4.5}\\sqrt{ K }+d^9\\right)$."
    },
    "confidence": "high",
-   "notes": "O-tilde hides polylog(H) factors (bound is logarithmic in H). Out-of-scope RL setting."
+   "notes": "Õ hides polylog(H) factors (logarithmic in planning horizon H). Regret = sum_k V*(s_1) - V^{pi_k}(s_1) in expectation. Out-of-scope RL setting."
   }
  ],
  "cited_results": [
@@ -222,7 +230,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Linear bandits with known variances",
+   "setting_description": "Linear bandits with known per-round variance sigma_i^2",
    "bound": {
     "notation": "O_tilde",
     "expression": "sqrt(d*T) + d*sqrt(Lambda_T)",
@@ -240,7 +248,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Linear mixture MDP, time-inhomogeneous (RL, out of scope); K episodes",
+   "setting_description": "Linear mixture MDP, time-inhomogeneous model (K episodes, horizon H)",
    "bound": {
     "notation": "O_tilde",
     "expression": "sqrt(d**2*H + d*H**2)*sqrt(K_ep) + d**2*H**2 + d**3*H",
@@ -258,32 +266,14 @@
    "algorithm_name": "UCRL-VTR",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Linear mixture MDP, time-inhomogeneous (RL, out of scope); K episodes",
+   "setting_description": "Linear mixture MDP, time-inhomogeneous model (K episodes, horizon H)",
    "bound": {
     "notation": "O_tilde",
     "expression": "d*H**2*sqrt(K_ep)",
     "expression_latex": "\\widetilde{O}(dH^2\\sqrt{K})",
     "regime": null
    },
-   "where": "Section 2"
-  },
-  {
-   "cited_key": "dani2008Stochastic",
-   "cited_title": "Stochastic linear optimization under bandit feedback",
-   "cited_first_author": "Varsha Dani",
-   "cited_year": 2008,
-   "cited_arxiv_id": null,
-   "algorithm_name": null,
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Infinite-action stochastic linear bandits, minimax regret (with abbasi2011improved)",
-   "bound": {
-    "notation": "O_tilde",
-    "expression": "d*sqrt(T)",
-    "expression_latex": "\\widetilde{\\Theta}(d\\sqrt{K})",
-    "regime": null
-   },
-   "where": "Section 1"
+   "where": "Section 2 (Related Work)"
   },
   {
    "cited_key": "abbasi2011improved",
@@ -291,17 +281,17 @@
    "cited_first_author": "Yasin Abbasi-Yadkori",
    "cited_year": 2011,
    "cited_arxiv_id": null,
-   "algorithm_name": "OFUL",
-   "algorithm_registry_id": "oful",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Infinite-action stochastic linear bandits, minimax regret",
+   "setting_description": "Infinite-actioned linear bandits, minimax-optimal rate (also attributed to dani2008Stochastic)",
    "bound": {
     "notation": "O_tilde",
     "expression": "d*sqrt(T)",
     "expression_latex": "\\widetilde{\\Theta}(d\\sqrt{K})",
     "regime": null
    },
-   "where": "Section 1"
+   "where": "Section 1 (Introduction)"
   }
  ],
  "_run": {
@@ -310,16 +300,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:28:45",
-  "source_chars": 136907,
-  "input_tokens": 103323,
-  "output_tokens": 5618,
-  "cost_usd_equiv": 0.7619695999999999,
+  "date": "2026-10-19T17:36:39",
+  "source_chars": 137547,
+  "input_tokens": 105235,
+  "output_tokens": 6305,
+  "cost_usd_equiv": 0.7789936,
   "status": "extracted"
  }
 }

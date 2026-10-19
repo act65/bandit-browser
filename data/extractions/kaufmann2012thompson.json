@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Thompson Sampling: An Asymptotically Optimal Finite Time Analysis",
@@ -44,7 +44,7 @@
  "algorithms": [
   {
    "id": "a1",
-   "name": "Thompson Sampling (Beta posterior, uniform prior)",
+   "name": "Thompson Sampling (Beta-Bernoulli, uniform prior)",
    "registry_id": "thompson_sampling_beta",
    "is_new": false,
    "techniques": [
@@ -68,15 +68,18 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "(1 + eps_alg)*sum_subopt(Delta_i*(log(T) + log(log(T)))/kl_i) + C_const",
+    "expression": "(1 + eps_alg)*sum_subopt(Delta_i*(log(T) + log(log(T)))/kl_i) + C_eps",
     "expression_latex": "(1+\\epsilon)\\sum_{a\\in A:\\mu_a\\neq\\mu^*}\\frac{\\Delta_a(\\ln(T)+\\ln\\ln(T))}{K(\\mu_a,\\mu^*)}+ C(\\epsilon,\\mu_1,\\dots,\\mu_K)",
-    "regime": "for every eps>0"
+    "regime": null
    },
    "symbols": {
-    "C_const": "problem-dependent constant C(epsilon, mu_1, ..., mu_K), independent of T"
+    "C_eps": "problem-dependent constant C(epsilon, mu_1, ..., mu_K) independent of T"
    },
-   "extra_assumptions": [
-    "unique optimal arm (stated WLOG)"
+   "conditions": [
+    "unique optimal arm (assumed WLOG in the analysis)"
+   ],
+   "tuning": [
+    "uniform Beta(1,1) prior"
    ],
    "is_new": true,
    "source": {
@@ -85,7 +88,7 @@
     "quote": "For every $\\epsilon>0$ there exists a problem-dependent constant $C(\\epsilon,\\mu_1,\\dots,\\mu_K)$ such that the regret of Thompson Sampling satisfies: \\[ \\cR(T)\\leq(1+\\epsilon)\\sum_{a\\in A:\\mu_a\\neq\\mu^*}\\frac{\\Delta_a(\\ln(T)+\\ln\\ln(T))}{K(\\mu_a,\\mu^*)}+ C(\\epsilon,\\mu_1,\\dots,\\mu_K). \\]"
    },
    "confidence": "high",
-   "notes": "Regret defined as sum of gaps times expected pulls, i.e. pseudo-regret. TS does not use T, so anytime. K(.,.) is Bernoulli KL, mapped to kl_i."
+   "notes": "Regret defined as T mu* - E[sum R_t] = sum Delta_a E[N_a], i.e. pseudo-regret. Algorithm does not use T (T only appears in analysis quantities), so anytime. eps is a free analysis parameter. Implies asymptotic optimality (matches Lai-Robbins)."
   },
   {
    "id": "r2",
@@ -101,18 +104,22 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "(1 + eps_alg)*(log(T) + log(log(T)))/kl_i + D_const + N_const + N_0 + 5 + 2*C_b",
+    "expression": "(1 + eps_alg)*(log(T) + log(log(T)))/kl_i + D_eps + N_const + N_0 + 5 + 2*C_b",
     "expression_latex": "(1+\\epsilon)\\frac{\\ln(T) + \\ln\\ln (T) }{K(\\mu_a,\\mu_1)} + D(\\epsilon,\\mu_1,\\mu_a) + N(b,\\epsilon,\\mu_1,\\mu_a)+N_0(b) + 5 + 2C_b",
-    "regime": "for every eps>0, every suboptimal arm a"
+    "regime": null
    },
    "symbols": {
-    "D_const": "D(eps,mu_1,mu_a) = (1+eps/2)^2/(eps^2 * min(mu_a(1-mu_a), mu_1(1-mu_1))^2)",
-    "N_const": "problem-dependent constant N(b,eps,mu_1,mu_a)",
-    "N_0": "constant N_0(b) depending on b",
-    "C_b": "constant from Proposition 1 bounding sum_t P(N_{1,t} <= t^b)"
+    "D_eps": "constant D(epsilon,mu_1,mu_a) = (1+eps/2)^2/(eps^2 min(mu_a(1-mu_a), mu_1(1-mu_1))^2)",
+    "N_const": "constant N(b,epsilon,mu_1,mu_a)",
+    "N_0": "constant N_0(b)",
+    "C_b": "constant C_b(mu_1,mu_2) from Proposition 1",
+    "b": "constant b(mu_1,mu_2) in (0,1) from Proposition 1"
    },
-   "extra_assumptions": [
+   "conditions": [
     "unique optimal arm"
+   ],
+   "tuning": [
+    "uniform Beta(1,1) prior"
    ],
    "is_new": true,
    "source": {
@@ -120,8 +127,43 @@
     "number": "Theorem 2",
     "quote": "Let $\\epsilon>0$. With $b$ as in Proposition \\ref{important:lemma}, for every suboptimal arm $a$, there exist constants $D(\\epsilon,\\mu_1,\\mu_a)$, $N(b,\\epsilon,\\mu_1,\\mu_a)$ and $N_0(b)$ such that: \\bE[N_{a,T}] \\leq (1+\\epsilon)\\frac{\\ln(T) + \\ln\\ln (T) }{K(\\mu_a,\\mu_1)} + D(\\epsilon,\\mu_1,\\mu_a) + N(b,\\epsilon,\\mu_1,\\mu_a)+N_0(b) + 5 + 2C_b ."
    },
+   "confidence": "high",
+   "notes": "Bound on expected number of pulls E[N_{a,T}] of a suboptimal arm a (quantity 'other'); kl_i here is kl(mu_a, mu_1)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_b",
+    "expression_latex": "\\sum_{t=1}^{\\infty}\\bP\\left(N_{1,t} \\leq  t^b\\right) \\leq C_b",
+    "regime": null
+   },
+   "symbols": {
+    "C_b": "finite constant C_b(mu_1,mu_2)",
+    "b": "constant b(mu_1,mu_2) in (0,1)"
+   },
+   "conditions": [
+    "unique optimal arm"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "important:lemma",
+    "number": "Proposition 1",
+    "quote": "There exists constants $b=b(\\mu_1,\\mu_2)\\in(0,1)$ and $C_b=C_b(\\mu_1,\\mu_2)<\\infty$ such that \\[ \\sum_{t=1}^{\\infty}\\bP\\left(N_{1,t} \\leq  t^b\\right) \\leq C_b. \\]"
+   },
    "confidence": "medium",
-   "notes": "Bound on the expected number of pulls of a suboptimal arm a (quantity 'other'); kl_i refers to K(mu_a, mu_1). Proof uses T>=e."
+   "notes": "Tail control on the number of pulls of the optimal arm: sum over t of P(N_{1,t} <= t^b) bounded by a constant. Not a regret bound; recorded as 'other'."
   }
  ],
  "cited_results": [
@@ -134,14 +176,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic Bernoulli K-armed bandit, strongly consistent policies; lower bound on expected number of pulls of each suboptimal arm",
+   "setting_description": "Stochastic Bernoulli K-armed bandit, strongly consistent policies; lower bound on E[N_{a,T}] for each suboptimal arm",
    "bound": {
     "notation": "liminf",
-    "expression": "1/kl_i",
+    "expression": "log(T)/kl_i",
     "expression_latex": "\\liminf_{T\\ra\\infty}\\frac{\\bE[N_{a,T}]}{\\ln T}\\geq \\frac{1}{K(\\mu_a,\\mu^*)}",
-    "regime": "T -> infinity; bound on E[N_{a,T}]/ln T"
+    "regime": "T -> infinity"
    },
-   "where": "Introduction, eq. (LaiRobbins)"
+   "where": "Introduction, Eq. (LaiRobbins)"
   }
  ],
  "_run": {
@@ -150,16 +192,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:15:40",
-  "source_chars": 50861,
-  "input_tokens": 52021,
-  "output_tokens": 3304,
-  "cost_usd_equiv": 0.48224,
+  "date": "2026-10-19T17:25:55",
+  "source_chars": 51066,
+  "input_tokens": 53676,
+  "output_tokens": 3807,
+  "cost_usd_equiv": 0.3165616,
   "status": "extracted"
  }
 }

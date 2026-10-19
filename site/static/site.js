@@ -3,12 +3,55 @@ document.addEventListener("DOMContentLoaded", function () {
   if (window.katex) {
     document.querySelectorAll(".math[data-tex]").forEach(function (el) {
       try {
-        katex.render(el.dataset.tex, el, { throwOnError: false, errorColor: "#8a8a8f", displayMode: false, strict: "ignore" });
+        katex.render(el.dataset.tex, el, { throwOnError: false, errorColor: "#8a8a8f", displayMode: false, strict: "ignore",
+                                           macros: Object.assign({}, window.BB_MACROS || {}) });
       } catch (err) {
         /* leave the raw TeX in place */
       }
     });
   }
+
+  // Long bounds: clip to the column with a fade and a "show full" toggle instead of scrolling sideways.
+  // Measured lazily, since formulas inside closed <details> have no width yet.
+  var clampFormulas = function (scope) {
+    scope.querySelectorAll(".formula").forEach(function (f) {
+      if (f.classList.contains("open") || !f.clientWidth) return;
+      var long = f.scrollWidth > f.clientWidth + 4;
+      f.classList.toggle("clamp", long);
+      var btn = f.nextElementSibling && f.nextElementSibling.classList.contains("fx") ? f.nextElementSibling : null;
+      if (long && !btn) {
+        btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "fx";
+        btn.textContent = "show full";
+        btn.setAttribute("aria-expanded", "false");
+        btn.addEventListener("click", function (ev) {
+          ev.stopPropagation();
+          var open = !f.classList.contains("open");
+          f.classList.toggle("open", open);
+          f.classList.toggle("clamp", !open);
+          btn.textContent = open ? "show less" : "show full";
+          btn.setAttribute("aria-expanded", String(open));
+        });
+        f.addEventListener("click", function () { if (f.classList.contains("clamp")) btn.click(); });
+        f.parentNode.insertBefore(btn, f.nextSibling);
+      } else if (!long && btn) {
+        btn.remove();
+      }
+    });
+  };
+  clampFormulas(document);
+  // KaTeX fonts arrive after first render and change the widths: measure again.
+  window.addEventListener("load", function () { clampFormulas(document); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { clampFormulas(document); });
+  document.querySelectorAll("details").forEach(function (d) {
+    d.addEventListener("toggle", function () { if (d.open) clampFormulas(d); });
+  });
+  var resizeTimer = null;
+  window.addEventListener("resize", function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () { clampFormulas(document); }, 150);
+  });
 
   // A filter box filters the rows of the next table.filterable (or .filterable-cards) after it.
   document.querySelectorAll("input.filter").forEach(function (input) {

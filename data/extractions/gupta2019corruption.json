@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Better Algorithms for Stochastic Bandits with Adversarial Corruptions",
@@ -25,28 +25,30 @@
    "context": "none",
    "noise": "bounded_01",
    "learner_knows": [
-    "T"
+    "T",
+    "K"
    ],
    "instance_assumptions": [
     "unique_optimal_arm"
    ],
-   "extras": [],
    "action_set": {
     "shape": "not_applicable",
     "time_varying": "not_applicable",
     "access": "not_applicable"
    },
+   "extras": [],
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Adaptive adversary corrupts rewards after observing the stochastic draws; corruption C = sum_t ||R~^t - R^t||_inf is a random variable and unknown to the learner"
+    "Adaptive adversary: corruptions on round t may depend on past player choices and current/past stochastic rewards",
+    "C = sum_t ||tilde R^t - R^t||_inf is a realized random variable, unknown to the learner"
    ],
-   "definition_quote": "A stochastic reward $\\rew^t_i \\in [0,1]$ is drawn for each arm $i$ from its reward distribution; The adversary observes the vector $\\rew^t$ and generates corrupted rewards $\\wt{\\rew}^t \\in [0,1]^K$; The player picks $i_t \\in [K]$ ... we measure the level of corruption $C$ as: $C = \\sum_{t=1}^T \\norm{\\wt{\\rew}^t - \\rew^t}_\\infty$."
+   "definition_quote": "A stochastic reward $\\rew^t_i \\in [0,1]$ is drawn for each arm $i$ from its reward distribution; The adversary observes the vector $\\rew^t$ and generates corrupted rewards $\\wt{\\rew}^t \\in [0,1]^K$; The player picks $i_t \\in [K]$, possibly at random, and observes the corrupted reward $\\wt{\\rew}^t_{i_t}$. ... $C = \\sum_{t=1}^T \\norm{\\wt{\\rew}^t - \\rew^t}_\\infty$."
   },
   {
    "id": "s2",
-   "name_in_paper": "Stochastic MAB with adversarial corruptions, known maximal reward",
+   "name_in_paper": "Stochastic MAB with Adversarial Corruptions (lower bound)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_corrupted",
@@ -57,28 +59,31 @@
    "noise": "bounded_01",
    "learner_knows": [
     "T",
-    "mu_star"
+    "K",
+    "C"
    ],
-   "instance_assumptions": [
-    "unique_optimal_arm"
-   ],
-   "extras": [],
+   "instance_assumptions": [],
    "action_set": {
     "shape": "not_applicable",
     "time_varying": "not_applicable",
     "access": "not_applicable"
    },
-   "parameters": {},
+   "extras": [],
+   "parameters": {
+    "K": "2"
+   },
    "in_scope": true,
    "out_of_scope_reason": null,
-   "unmapped": [],
-   "definition_quote": "Finally, consider the case where the player knows the value of $\\mu^\\star$."
+   "unmapped": [
+    "Lower-bound instance uses deterministic rewards 0 and 1 with an adversary randomly swapping them"
+   ],
+   "definition_quote": "Consider the case of two arms with deterministic rewards $0$ and $1$, and consider an adversary that at each time step swaps the rewards of the arms with probability $1/2$."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "BARBAR",
+   "name": "BARBAR (Bandit Algorithm with Robustness: Bad Arms get Recourse)",
    "registry_id": "barbar",
    "is_new": true,
    "techniques": [
@@ -87,22 +92,8 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "delta"
-   ]
-  },
-  {
-   "id": "a2",
-   "name": "BARBAR variant with known mu_star",
-   "registry_id": null,
-   "is_new": true,
-   "techniques": [
-    "elimination",
-    "other"
-   ],
-   "requires_knowledge_of": [
-    "T",
     "delta",
-    "mu_star"
+    "K"
    ]
   }
  ],
@@ -113,7 +104,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "pseudo_regret",
+   "quantity": "high_probability_regret",
    "dependence": "instance_dependent",
    "comparator": "best_fixed_action",
    "probability": "high_probability",
@@ -121,13 +112,16 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "K*C + sum_subopt(log(T)/Delta_i)*log(K*log(T)/delta)",
+    "expression": "K*C + sum_subopt(log(T)/Delta_i*log(K/delta*log(T)))",
     "expression_latex": "O\\Bigg(KC + \\sum_{i \\neq i^\\star} \\frac{\\log{T}}{\\Delta_i} \\log\\!\\Big(\\frac{K}{\\delta}\\log{T}\\Big) \\!\\Bigg)",
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "C is the realized (random) corruption level, unknown to the learner"
+   "conditions": [
+    "C is the realized corruption level (random variable)"
+   ],
+   "tuning": [
+    "lambda = 1024 ln((8K/delta) log2 T)"
    ],
    "is_new": true,
    "source": {
@@ -136,7 +130,7 @@
     "quote": "With probability at least $1-\\delta$, the regret of \\cref{alg:barbar} is bounded by \\[ O\\Bigg(KC + \\sum_{i \\neq i^\\star} \\frac{\\log{T}}{\\Delta_i} \\log\\!\\Big(\\frac{K}{\\delta}\\log{T}\\Big) \\!\\Bigg). \\]"
    },
    "confidence": "high",
-   "notes": "Algorithm takes T and delta as parameters; agnostic to C."
+   "notes": "Regret is pseudo-regret sum_t (mu* - mu_{i_t}), bounded with probability 1-delta. Agnostic to C. Appendix B shows Omega(KC) is tight for this algorithm."
   },
   {
    "id": "r2",
@@ -152,28 +146,29 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "K*C_exp + sum_subopt(1/Delta_i)*log(K*T)**2",
+    "expression": "K*C_exp + sum_subopt(log(K*T)**2/Delta_i)",
     "expression_latex": "O\\Bigg(K\\,\\Ex[C] + \\sum_{i \\neq i^\\star} \\frac{1}{\\Delta_i} \\log^2(KT) \\Bigg)",
     "regime": null
    },
    "symbols": {
     "C_exp": "expected corruption level E[C]"
    },
-   "extra_assumptions": [
+   "conditions": [],
+   "tuning": [
     "delta = 1/T"
    ],
    "is_new": true,
    "source": {
-    "label": null,
-    "number": "Text following Theorem 1",
-    "quote": "To convert the bound of \\cref{thm:main} into a bound on the expected regret of the algorithm, one can set $\\delta = 1 / T$ ... Thus, the expected regret is bounded by $O(K\\,\\Ex[C] + \\sum_{i \\neq i^\\star} \\frac{1}{\\Delta_i} \\log^2(KT))$."
+    "label": "thm:main",
+    "number": "Theorem 1 (expected-regret consequence)",
+    "quote": "To convert the bound of \\cref{thm:main} into a bound on the expected regret of the algorithm, one can set $\\delta = 1 / T$; ... Thus, the expected regret is bounded by O(K\\,\\Ex[C] + \\sum_{i \\neq i^\\star} \\frac{1}{\\Delta_i} \\log^2(KT))."
    },
    "confidence": "medium",
-   "notes": "Corollary stated in prose, not a formal theorem."
+   "notes": "Derived informally in text after Theorem 1, not a separately numbered statement."
   },
   {
    "id": "r3",
-   "setting": "s1",
+   "setting": "s2",
    "side": "lower",
    "algorithm": null,
    "algorithm_class": "all",
@@ -181,55 +176,27 @@
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
-   "horizon": "not_applicable",
+   "horizon": "known",
    "compute": "not_stated",
    "bound": {
     "notation": "Omega",
     "expression": "C",
     "expression_latex": "\\Omega(C)",
-    "regime": "C <= T/2; holds even for known C; K = 2 instance"
+    "regime": "C <= T/2"
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [
+    "C <= T/2"
+   ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": null,
-    "number": "Section 5.1",
-    "quote": "We show an $\\Omega(C)$ lower bound for the pseudo-regret of any algorithm. ... for the pseudo-regret under this contamination model there is a lower bound of $\\Omega(C)$ that holds for all $C$ up to $T \\div 2$. Moreover this lower bound holds even for the case of known $C$."
+    "number": "Section 5.1 (A Lower bound)",
+    "quote": "We show an $\\Omega(C)$ lower bound for the pseudo-regret of any algorithm. ... In other words, for the pseudo-regret under this contamination model there is a lower bound of $\\Omega(C)$ that holds for all $C$ up to $T \\div 2$. Moreover this lower bound holds even for the case of known $C$."
    },
    "confidence": "medium",
-   "notes": "Informal argument; 'with constant probability' regret Omega(C); recorded as expectation-level."
-  },
-  {
-   "id": "r4",
-   "setting": "s2",
-   "side": "upper",
-   "algorithm": "a2",
-   "algorithm_class": null,
-   "quantity": "pseudo_regret",
-   "dependence": "instance_dependent",
-   "comparator": "best_fixed_action",
-   "probability": "high_probability",
-   "horizon": "known",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "O_tilde",
-    "expression": "C + sum_subopt(1/Delta_i)",
-    "expression_latex": "O(C) + \\wt{O}\\big( \\!\\sum_{i \\neq i^\\star}\\! 1\\div\\Delta_i \\big)",
-    "regime": null
-   },
-   "symbols": {},
-   "extra_assumptions": [
-    "learner knows mu_star"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "lem:deltaji_lb_changed",
-    "number": "Section 4.5",
-    "quote": "Hence, if we know $\\mu^\\star$, the total regret is at most $ O(C) + \\wt{O}\\big( \\!\\sum_{i \\neq i^\\star}\\! 1\\div\\Delta_i \\big). $"
-   },
-   "confidence": "low",
-   "notes": "Proof sketch in prose; holds on event E (prob >= 1-delta). C term is O(C) without logs, Õ applies to the sum term."
+   "notes": "Informal argument in discussion; says 'with constant probability the algorithm will suffer pseudo-regret Omega(C)', so the probability type is loosely stated."
   }
  ],
  "cited_results": [
@@ -242,32 +209,14 @@
    "algorithm_name": "Multi-layer Active Arm Elimination Race",
    "algorithm_registry_id": "multi_layer_aae_race",
    "side": "upper",
-   "setting_description": "Stochastic K-armed bandits with adversarial corruption C, agnostic to C",
+   "setting_description": "Stochastic MAB with adversarial corruptions, unknown corruption level C",
    "bound": {
     "notation": "O_tilde",
     "expression": "K*C*sum_subopt(1/Delta_i)",
     "expression_latex": "\\wt{O}\\big( KC \\sum_{i \\neq i^\\star}\\! 1\\div\\Delta_i \\big)",
     "regime": null
    },
-   "where": "Section 1.1"
-  },
-  {
-   "cited_key": "LykourisMPL18",
-   "cited_title": "Stochastic bandits robust to adversarial corruptions",
-   "cited_first_author": "T. Lykouris",
-   "cited_year": 2018,
-   "cited_arxiv_id": null,
-   "algorithm_name": null,
-   "algorithm_registry_id": null,
-   "side": "lower",
-   "setting_description": "Realized regret under corruption, for any algorithm achieving O(log^{2-eps}(T)/Delta) regret in the uncorrupted case",
-   "bound": {
-    "notation": "Omega",
-    "expression": "C**(1 - delta_exp)",
-    "expression_latex": "\\Omega(C^{1-\\delta})",
-    "regime": "any delta_exp, eps > 0"
-   },
-   "where": "Section 5.2"
+   "where": "Section 1"
   }
  ],
  "_run": {
@@ -276,16 +225,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:23:48",
-  "source_chars": 55095,
-  "input_tokens": 50458,
-  "output_tokens": 4129,
-  "cost_usd_equiv": 0.30926960000000003,
+  "date": "2026-10-19T17:32:13",
+  "source_chars": 55312,
+  "input_tokens": 52128,
+  "output_tokens": 4428,
+  "cost_usd_equiv": 0.3165976,
   "status": "extracted"
  }
 }

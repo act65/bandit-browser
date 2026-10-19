@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Best-of-three-worlds Analysis for Linear Bandits with Follow-the-regularized-leader Algorithm",
@@ -42,13 +42,14 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "||x||_2<=1 for all arms and ||theta_t||_2<=1; noise assumed zero in adversarial environment"
+    "||x||_2 <= 1 for all arms and ||theta_t||_2 <= 1, so losses <theta_t,x> lie in [-1,1]; noise assumed zero in adversarial setting",
+    "K denotes |D|, the number of arms in the finite arm set D"
    ],
-   "definition_quote": "We denote by $D\\subseteq \\mathbb{R}^d$ the \\textit{finite} arm set ... $D$ spans $\\mathbb{R}^d$ and $\\|x\\|_2\\leq 1$ ... we assume $\\norm{\\theta_t}_2 \\le 1$ ... In this work, we consider the non-oblivious adversary"
+   "definition_quote": "We denote by $D\\subseteq \\mathbb{R}^d$ the \\textit{finite} arm set ... we further assume that $D$ spans $\\mathbb{R}^d$ and $\\|x\\|_2\\leq 1$ ... $\\norm{\\theta_t}_2 \\le 1$ ... In this work, we consider the non-oblivious adversary ... we assume $\\epsilon_t\\left(x_t\\right)=0$ for all $t$ in the adversarial environment."
   },
   {
    "id": "s2",
-   "name_in_paper": "Stochastic linear bandits with corruption level C (adversarial regime with self-bounding constraint)",
+   "name_in_paper": "Stochastic linear bandits with corruption (adversarial regime with (Delta, C, T) self-bounding constraint)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_corrupted",
@@ -76,8 +77,9 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Corruption c_t is arbitrary (not necessarily linear in x_t), adaptive to history; C = sum_t |c_t|",
-    "||x||_2<=1, ||theta||_2<=1"
+    "Corruption c_t added to the observed loss is arbitrary (not necessarily linear in x_t), may depend on history; C = sum_t |c_t|",
+    "Noise is described only as independent zero-mean, but the analysis uses |ell_t(x_t)| <= 1",
+    "K denotes |D|"
    ],
    "definition_quote": "For the corrupted stochastic environment, it is also satisfied that $\\theta_t=\\theta$ for some \\textit{unknown} $\\theta$, but the learner now receives loss $\\ell_t(x_t)=\\left\\langle x_t,\\theta \\right\\rangle+\\epsilon_t\\left(x_t\\right)+c_t$ ... let $C=\\sum_{t=1}^T|c_t|$ be the corruption level"
   }
@@ -94,8 +96,8 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "d",
-    "K"
+    "K",
+    "d"
    ]
   }
  ],
@@ -119,15 +121,22 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [
+    "||x||_2 <= 1, ||theta_t||_2 <= 1"
+   ],
+   "tuning": [
+    "psi_t(p) = -beta_t H(p)",
+    "gamma_t = min{g(pi)/beta_t, 1/2}",
+    "beta_t = 2g(pi) + sqrt(d ln T/ln|D|) + sum_{tau<t} sqrt(d ln T/ln|D|)/sqrt(1+(ln|D|)^{-1} sum_{s<=tau} H(q_s))"
+   ],
    "is_new": true,
    "source": {
     "label": "thm:thmregret",
-    "number": "Theorem 1",
+    "number": "Theorem (thm:thmregret)",
     "quote": "Choose $\\psi_t(p) = -\\beta_t H(p)$ and $\\gamma_t = \\min\\sets{g(\\pi)/\\beta_t,1/2 }$ ... In the adversarial environment, regret can be upper bounded by $R(T) \\le O\\bracket{\\sqrt{dT\\ln T \\ln(|D|T)}}$"
    },
    "confidence": "high",
-   "notes": "K = |D|. Learning rate uses ln T, so horizon known. Regret is expected pseudo-regret vs best arm in expectation."
+   "notes": "R(T) defined vs best arm in expectation in hindsight; recorded as pseudo-regret. K = |D|. Learning rate uses ln T, so T known."
   },
   {
    "id": "r2",
@@ -148,18 +157,22 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
+   "conditions": [
     "unique optimal arm",
-    "losses bounded |l_t(x_t)|<=1 (used in proof)"
+    "||x||_2 <= 1, ||theta||_2 <= 1",
+    "C = sum_t |c_t| corruption level"
+   ],
+   "tuning": [
+    "same beta_t, gamma_t as in Theorem"
    ],
    "is_new": true,
    "source": {
     "label": "thm:thmregret",
-    "number": "Theorem 1",
-    "quote": "In the stochastic environment with corruption level $C$, the regret can be bounded by $R(T) \\le O \\bracket{\\frac{ d\\ln T \\ln (|D|T) }{ \\Delta_{\\min}} + \\sqrt{\\frac{Cd\\ln T \\ln (|D|T)}{\\Delta_{\\min}}} }$"
+    "number": "Theorem (thm:thmregret)",
+    "quote": "In the stochastic environment with corruption level $C$, the regret can be bounded by $R(T) \\le O \\bracket{\\frac{ d\\ln T \\ln (|D|T) }{ \\Delta_{\\min}} + \\sqrt{\\frac{Cd\\ln T \\ln (|D|T)}{\\Delta_{\\min}}} }$, where $\\Delta_{\\min}=\\min_{x\\in D,x\\neq x^*}\\Delta(x)$"
    },
-   "confidence": "medium",
-   "notes": "Proof goes via the (Delta,C,T) self-bounding constraint; so also applies to that regime. C=0 gives the stochastic case. Noise boundedness implicitly assumed in proof (l_t^2<=1)."
+   "confidence": "high",
+   "notes": "C=0 gives the stochastic case. Proof goes via the self-bounding framework."
   }
  ],
  "cited_results": [
@@ -187,15 +200,15 @@
    "cited_first_author": "Tor Lattimore",
    "cited_year": 2017,
    "cited_arxiv_id": null,
-   "algorithm_name": "Optimal Algorithm (end of optimism)",
+   "algorithm_name": "Optimal Algorithm (warm-up / success / recovery phases)",
    "algorithm_registry_id": "end_of_optimism_optimal",
    "side": "upper",
    "setting_description": "Stochastic finite-armed linear bandits (C=0)",
    "bound": {
     "notation": "O",
     "expression": "C_lin*log(T)",
-    "expression_latex": "O\\bracket{c(D,\\ell)\\log T}",
-    "regime": "C=0"
+    "expression_latex": "O\\bracket{c(D,\\ell)\\log T}~(C=0)",
+    "regime": null
    },
    "where": "Table 1"
   },
@@ -205,7 +218,7 @@
    "cited_first_author": "Chung-Wei Lee",
    "cited_year": 2021,
    "cited_arxiv_id": null,
-   "algorithm_name": "detect-switch algorithm",
+   "algorithm_name": "detect-switch algorithm of Lee et al.",
    "algorithm_registry_id": null,
    "side": "upper",
    "setting_description": "Corrupted stochastic finite-armed linear bandits (linear corruption)",
@@ -223,7 +236,7 @@
    "cited_first_author": "Chung-Wei Lee",
    "cited_year": 2021,
    "cited_arxiv_id": null,
-   "algorithm_name": "detect-switch algorithm",
+   "algorithm_name": "detect-switch algorithm of Lee et al.",
    "algorithm_registry_id": null,
    "side": "upper",
    "setting_description": "Adversarial finite-armed linear bandits",
@@ -262,7 +275,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Corrupted stochastic linear bandits (worst case of data-dependent bound)",
+   "setting_description": "Corrupted stochastic linear bandits",
    "bound": {
     "notation": "O",
     "expression": "d**3*log(T)/Delta_min + sqrt(C*d**3*log(T)/Delta_min)",
@@ -278,16 +291,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:29:51",
-  "source_chars": 55781,
-  "input_tokens": 51726,
-  "output_tokens": 4634,
-  "cost_usd_equiv": 0.32951359999999996,
+  "date": "2026-10-19T17:37:40",
+  "source_chars": 55954,
+  "input_tokens": 53369,
+  "output_tokens": 5091,
+  "cost_usd_equiv": 0.3397856,
   "status": "extracted"
  }
 }

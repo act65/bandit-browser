@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Optimally Confident UCB: Improved Regret for Finite-Armed Bandits",
@@ -13,7 +13,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Stochastic finite-armed bandit with 1-subgaussian noise",
+   "name_in_paper": "stochastic finite-armed bandit with 1-subgaussian noise",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -35,19 +35,17 @@
     "time_varying": "not_applicable",
     "access": "not_applicable"
    },
-   "parameters": {
-    "sigma": "1"
-   },
+   "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "noise is 1-subgaussian and may depend on the chosen arm"
+    "noise is 1-subgaussian (sigma = 1) and may depend on the chosen arm"
    ],
-   "definition_quote": "I study the simplest setting with $K$ arms and a subgaussian noise model. In each time step $t$ the learner chooses an action $I_t \\in \\set{1,\\ldots,K}$ and receives a reward $\\mu_{I_t} + \\eta_t$ where $\\mu_i$ is the unknown expected reward of arm $i$ and the noise term $\\eta_t$ is sampled from some $1$-subgaussian distribution that may depend on $I_t$."
+   "definition_quote": "In each time step $t$ the learner chooses an action $I_t \\in \\set{1,\\ldots,K}$ and receives a reward $\\mu_{I_t} + \\eta_t$ where $\\mu_i$ is the unknown expected reward of arm $i$ and the noise term $\\eta_t$ is sampled from some $1$-subgaussian distribution that may depend on $I_t$."
   },
   {
    "id": "s2",
-   "name_in_paper": "Finite-armed bandit with standard Gaussian noise (lower bound instances)",
+   "name_in_paper": "Gaussian K-armed bandit (lower bound)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -58,7 +56,9 @@
    "noise": "gaussian_known_variance",
    "learner_knows": [
     "T",
-    "K"
+    "K",
+    "sigma",
+    "reward_family"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -67,13 +67,14 @@
     "time_varying": "not_applicable",
     "access": "not_applicable"
    },
-   "parameters": {
-    "sigma_std": "1"
-   },
+   "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
-   "unmapped": [],
-   "definition_quote": "Let $\\E_i$ denote the expectation with respect to the measure on outcomes induced by the combination of the fixed strategy with environment $\\mu^i$ and standard Gaussian noise."
+   "unmapped": [
+    "standard Gaussian noise (unit variance)",
+    "instances mu^i with mu_1 = Delta, mu_i = 2 Delta, others 0"
+   ],
+   "definition_quote": "let $\\Delta > 0$ and define $\\mu^i \\in \\R^K$ ... $\\mu^i_k = \\Delta$ if $k = 1$, $2\\Delta$ if $k = i$, $0$ otherwise. Let $\\E_i$ denote the expectation with respect to the measure on outcomes induced by the combination of the fixed strategy with environment $\\mu^i$ and standard Gaussian noise."
   }
  ],
  "algorithms": [
@@ -119,26 +120,29 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "C1*sum_subopt(Max(1, log(T/H_i))/Delta_i)",
+    "expression": "sum_subopt(C_1*Max(1, log(T/H_i))/Delta_i)",
     "expression_latex": "\\sum_{i=2}^K \\frac{C_1(\\alpha, \\psi)}{\\Delta_i} \\logp \\left(\\frac{n}{H_i}\\right)",
-    "regime": "alpha > 2, psi >= 2, Delta_K <= 1"
+    "regime": null
    },
    "symbols": {
-    "C1": "unspecified constant C_1(alpha, psi) depending only on algorithm parameters alpha and psi",
-    "H_i": "sum_{j=1}^K min(1/Delta_i^2, 1/Delta_j^2)"
+    "C_1": "unspecified constant depending only on alpha and psi",
+    "H_i": "sum_{j=1}^K min{1/Delta_i^2, 1/Delta_j^2}"
    },
-   "extra_assumptions": [
-    "Delta_K <= 1 (all gaps at most 1)",
-    "alpha > 2, psi >= 2"
+   "conditions": [
+    "Delta_K <= 1 (largest gap at most 1)"
+   ],
+   "tuning": [
+    "alpha > 2",
+    "psi >= 2"
    ],
    "is_new": true,
    "source": {
     "label": "thm:prob-dep",
     "number": "Theorem 1",
-    "quote": "If $\\Delta_K \\leq 1$ and $\\alpha > 2$ and $\\psi \\geq 2$, then there exists a constant $C_1(\\alpha, \\psi)$ depending only on $\\alpha$ and $\\psi$ such that R_\\mu^{\\text{ocucb}}(n) \\leq \\sum_{i=2}^K \\frac{C_1(\\alpha, \\psi)}{\\Delta_i} \\logp \\left(\\frac{n}{H_i}\\right), H_i = \\sum_{j=1}^K \\min\\set{\\frac{1}{\\Delta_i^2}, \\frac{1}{\\Delta_j^2}}."
+    "quote": "If $\\Delta_K \\leq 1$ and $\\alpha > 2$ and $\\psi \\geq 2$, then there exists a constant $C_1(\\alpha, \\psi)$ depending only on $\\alpha$ and $\\psi$ such that $R_\\mu^{\\text{ocucb}}(n) \\leq \\sum_{i=2}^K \\frac{C_1(\\alpha, \\psi)}{\\Delta_i} \\logp \\left(\\frac{n}{H_i}\\right)$, $H_i = \\sum_{j=1}^K \\min\\set{\\frac{1}{\\Delta_i^2}, \\frac{1}{\\Delta_j^2}}$."
    },
    "confidence": "high",
-   "notes": "logp(x)=max(1,log x). Constant unspecified so effectively an O bound but stated as explicit inequality with C1."
+   "notes": "logp(x)=max{1,log x}. Regret defined via means: pseudo-regret. Paper notes Delta_K<=1 can be dropped with additive O(sum Delta_i)."
   },
   {
    "id": "r2",
@@ -154,25 +158,28 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "C2*sqrt(T*K)",
+    "expression": "C_2*sqrt(T*K)",
     "expression_latex": "\\sup_\\mu R_\\mu^{\\text{ocucb}}(n) \\leq C_2(\\alpha, \\psi) \\sqrt{nK}",
-    "regime": "alpha > 2, psi >= 2, Delta_K <= 1"
+    "regime": null
    },
    "symbols": {
-    "C2": "unspecified constant C_2(alpha, psi) depending only on alpha and psi"
+    "C_2": "unspecified constant depending only on alpha and psi"
    },
-   "extra_assumptions": [
-    "Delta_K <= 1 (all gaps at most 1)",
-    "alpha > 2, psi >= 2"
+   "conditions": [
+    "Delta_K <= 1 (largest gap at most 1)"
+   ],
+   "tuning": [
+    "alpha > 2",
+    "psi >= 2"
    ],
    "is_new": true,
    "source": {
     "label": "thm:prob-ind",
     "number": "Theorem 2",
-    "quote": "If $\\Delta_K \\leq 1$ and $\\alpha > 2$ and $\\psi \\geq 2$, then there exists a constant $C_2(\\alpha, \\psi)$ depending only on $\\alpha$ and $\\psi$ such that \\sup_\\mu R_\\mu^{\\text{ocucb}}(n) \\leq C_2(\\alpha, \\psi) \\sqrt{nK}."
+    "quote": "If $\\Delta_K \\leq 1$ and $\\alpha > 2$ and $\\psi \\geq 2$, then there exists a constant $C_2(\\alpha, \\psi)$ depending only on $\\alpha$ and $\\psi$ such that $\\sup_\\mu R_\\mu^{\\text{ocucb}}(n) \\leq C_2(\\alpha, \\psi) \\sqrt{nK}$."
    },
    "confidence": "high",
-   "notes": ""
+   "notes": "Sup over instances with Delta_K <= 1."
   },
   {
    "id": "r3",
@@ -188,23 +195,24 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "(K - 1)/(4*Delta)*log(T*Delta**2/(K - 1))",
+    "expression": "(1/4)*(K - 1)/Delta*log(T*Delta**2/(K - 1))",
     "expression_latex": "R^\\pi_{\\mu^i}(n) \\geq \\frac{1}{4} \\cdot \\frac{K-1}{\\Delta} \\log\\left(\\frac{n}{H}\\right)",
     "regime": "H = (K-1)/Delta^2 <= T/e"
    },
    "symbols": {},
-   "extra_assumptions": [
-    "Holds for at least one instance mu^i in the family: arm 1 mean Delta, arm i mean 2Delta, others 0",
-    "standard Gaussian noise"
+   "conditions": [
+    "H = (K-1)/Delta^2 <= n/e",
+    "bound holds for at least one of the instances mu^i (mu_1 = Delta, mu_i = 2 Delta, others 0)"
    ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:lower",
-    "number": "Theorem 3",
-    "quote": "Assume $H = (K-1)/\\Delta^2 \\leq n/e$. Then there exists an $i$ such that R^\\pi_{\\mu^i}(n) \\geq \\frac{1}{4} \\cdot \\frac{K-1}{\\Delta} \\log\\left(\\frac{n}{H}\\right)."
+    "number": "Theorem 19",
+    "quote": "Assume $H = (K-1)/\\Delta^2 \\leq n/e$. Then there exists an $i$ such that $R^\\pi_{\\mu^i}(n) \\geq \\frac{1}{4} \\cdot \\frac{K-1}{\\Delta} \\log\\left(\\frac{n}{H}\\right)$."
    },
-   "confidence": "high",
-   "notes": "Delta here is the uniform gap parameter of the construction; H substituted as (K-1)/Delta^2. Minimax-over-small-family style lower bound for any fixed policy."
+   "confidence": "medium",
+   "notes": "Holds for any fixed policy pi; the bound is attained on one instance among a family of K instances with uniform gaps (Delta in mu^1). Not strictly instance-wise; it is a local minimax lower bound."
   },
   {
    "id": "r4",
@@ -220,23 +228,24 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "T*delta_thr + C3*sum_subopt(Max(1, log(T*Delta_i**2))/Delta_i)",
+    "expression": "T*delta_thr + C_3*sum_subopt(Max(1, log(T*Delta_i**2))/Delta_i)",
     "expression_latex": "R_\\mu^{\\text{aocucb}}(n) \\leq n\\delta + \\sum_{i: \\Delta_i > \\delta} \\frac{C_3}{\\Delta_i} \\logp\\left(n\\Delta_i^2\\right)",
     "regime": "for all delta_thr >= 0; sum restricted to arms with Delta_i > delta_thr"
    },
    "symbols": {
-    "delta_thr": "arbitrary gap threshold delta >= 0 (sum only over arms with Delta_i > delta_thr)",
-    "C3": "unspecified universal constant"
+    "C_3": "universal constant",
+    "delta_thr": "arbitrary gap threshold delta >= 0 (paper's delta, not a failure probability)"
    },
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:aocucb",
-    "number": "Theorem 4",
-    "quote": "There exist universal constants $C_3$ and $C_4$ such that for all $\\delta \\geq 0$, R_\\mu^{\\text{aocucb}}(n) \\leq n\\delta + \\sum_{i: \\Delta_i > \\delta} \\frac{C_3}{\\Delta_i} \\logp\\left(n\\Delta_i^2\\right)"
+    "number": "Theorem 21",
+    "quote": "There exist universal constants $C_3$ and $C_4$ such that for all $\\delta \\geq 0$, $R_\\mu^{\\text{aocucb}}(n) \\leq n\\delta + \\sum_{i: \\Delta_i > \\delta} \\frac{C_3}{\\Delta_i} \\logp\\left(n\\Delta_i^2\\right)$ and $R_\\mu^{\\text{aocucb}}(n) \\leq C_4 \\sqrt{nK \\log K}$."
    },
    "confidence": "medium",
-   "notes": "sum_subopt used loosely: actual sum is only over arms with Delta_i > delta_thr. The paper's delta is not a failure probability, renamed delta_thr."
+   "notes": "sum_subopt in the expression should be read as restricted to arms with Delta_i > delta_thr. Proof is sketched."
   },
   {
    "id": "r5",
@@ -252,22 +261,23 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "C4*sqrt(T*K*log(K))",
+    "expression": "C_4*sqrt(T*K*log(K))",
     "expression_latex": "R_\\mu^{\\text{aocucb}}(n) \\leq C_4 \\sqrt{nK \\log K}",
     "regime": null
    },
    "symbols": {
-    "C4": "unspecified universal constant"
+    "C_4": "universal constant"
    },
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:aocucb",
-    "number": "Theorem 4",
-    "quote": "... \\quad \\text{ and }\\quad R_\\mu^{\\text{aocucb}}(n) \\leq C_4 \\sqrt{nK \\log K}."
+    "number": "Theorem 21",
+    "quote": "There exist universal constants $C_3$ and $C_4$ such that ... $R_\\mu^{\\text{aocucb}}(n) \\leq C_4 \\sqrt{nK \\log K}$."
    },
    "confidence": "high",
-   "notes": ""
+   "notes": "Worst-case bound of the same theorem."
   }
  ],
  "cited_results": [
@@ -280,14 +290,14 @@
    "algorithm_name": "UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "stochastic K-armed bandit, subgaussian noise, problem-dependent pseudo-regret",
+   "setting_description": "stochastic K-armed subgaussian bandit, pseudo-regret",
    "bound": {
     "notation": "O",
     "expression": "sum_subopt(log(T)/Delta_i)",
     "expression_latex": "O\\left(\\sum_{i=2}^K \\frac{1}{\\Delta_i} \\log(n)\\right)",
     "regime": null
    },
-   "where": "Introduction, Eq. (1)"
+   "where": "Introduction, Eq. (ucb)"
   },
   {
    "cited_key": "AB09",
@@ -302,7 +312,7 @@
    "bound": {
     "notation": "O",
     "expression": "sqrt(T*K)",
-    "expression_latex": "O(\\sqrt{nK})",
+    "expression_latex": "\\sup_\\mu R^{\\text{moss}}_\\mu(n) \\in O\\left(\\sqrt{nK}\\right)",
     "regime": null
    },
    "where": "Introduction"
@@ -316,14 +326,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "stochastic K-armed bandit, worst-case regret lower bound",
+   "setting_description": "K-armed bandit, minimax lower bound on regret",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(T*K)",
     "expression_latex": "\\Omega(\\sqrt{nK})",
     "regime": null
    },
-   "where": "Introduction"
+   "where": "Introduction (MOSS matches up to constants the lower bound of ACFS95)"
   },
   {
    "cited_key": "AO10",
@@ -338,7 +348,7 @@
    "bound": {
     "notation": "O",
     "expression": "sqrt(T*K*log(K))",
-    "expression_latex": "O(\\sqrt{nK \\log K})",
+    "expression_latex": "\\sup_\\mu R^{\\text{improved ucb}}_\\mu(n) \\in O\\left(\\sqrt{nK \\log K}\\right)",
     "regime": null
    },
    "where": "Introduction"
@@ -368,16 +378,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:16:55",
-  "source_chars": 88330,
-  "input_tokens": 72408,
-  "output_tokens": 5856,
-  "cost_usd_equiv": 0.5194096,
+  "date": "2026-10-19T17:26:44",
+  "source_chars": 84603,
+  "input_tokens": 71435,
+  "output_tokens": 6493,
+  "cost_usd_equiv": 0.5123536,
   "status": "extracted"
  }
 }

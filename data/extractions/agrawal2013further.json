@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Further Optimal Regret Bounds for Thompson Sampling",
@@ -24,9 +24,7 @@
    "context": "none",
    "noise": "bernoulli",
    "learner_knows": [],
-   "instance_assumptions": [
-    "unique_optimal_arm"
-   ],
+   "instance_assumptions": [],
    "extras": [],
    "action_set": {
     "shape": "not_applicable",
@@ -36,16 +34,14 @@
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
-   "unmapped": [
-    "Analysis done for Bernoulli rewards; paper states it extends to rewards with support [0,1] via the Bernoulli-trial reduction of Agrawal & Goyal 2012"
-   ],
-   "definition_quote": "We are given a slot machine with $N$ arms; ... Each arm $i$, when played, yields a random real-valued reward according to some fixed (unknown) distribution with support in $[0,1]$. ... We provide the details of Thompson Sampling algorithm and our analysis for the Bernoulli bandit problem"
+   "unmapped": [],
+   "definition_quote": "We provide the details of Thompson Sampling algorithm and our analysis for the Bernoulli bandit problem, i.e. when the rewards are either $0$ or $1$, and for arm $i$ the probability of success (reward =$1$) is $\\mu_i$. ... A simple extension of this algorithm to general reward distributions with support $[0,1]$ is described in \\cite{AgrawalG12}, which seamlessly extends our analysis for Bernoulli bandits to general stochastic bandit problem."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Thompson Sampling for Bernoulli bandits (Beta(1,1) priors)",
+   "name": "Thompson Sampling for Bernoulli bandits",
    "registry_id": "thompson_sampling_beta",
    "is_new": false,
    "techniques": [
@@ -71,20 +67,22 @@
     "notation": "O",
     "expression": "(1 + eps_alg)*sum_subopt(Delta_i*log(T)/kl_i) + K/eps_alg**2",
     "expression_latex": "(1+\\epsilon) \\sum_{i=2}^N \\frac{\\ln T}{d(\\mu_i,\\mu_1)} \\Delta_i+ O(\\frac{N}{\\epsilon^2})",
-    "regime": "0 < epsilon <= 1; O hides functions of mu_i, Delta_i (treated as constants)"
+    "regime": "0 < eps_alg <= 1"
    },
    "symbols": {},
-   "extra_assumptions": [
-    "unique optimal arm (stated WLOG)"
+   "conditions": [
+    "unique optimal arm assumed w.l.o.g. (arm 1)",
+    "mu_i, Delta_i treated as constants in the O(N/eps^2) term"
    ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:problem-dependent",
     "number": "Theorem 1",
-    "quote": "For the $N$-armed stochastic bandit problem, Thompson Sampling algorithm has expected regret $$\\Ex[{\\cal R}(T)] \\leq (1+\\epsilon) \\sum_{i=2}^N \\frac{\\ln T}{d(\\mu_i,\\mu_1)} \\Delta_i+ O(\\frac{N}{\\epsilon^2})$$ in time $T$, where $d(\\mu_i,\\mu_1)=...$. The big-Oh notation in above assumes $\\mu_i, \\Delta_i, i=1, \\ldots, N$ to be constants."
+    "quote": "For the $N$-armed stochastic bandit problem, Thompson Sampling algorithm has expected regret $$\\Ex[{\\cal R}(T)] \\leq (1+\\epsilon) \\sum_{i=2}^N \\frac{\\ln T}{d(\\mu_i,\\mu_1)} \\Delta_i+ O(\\frac{N}{\\epsilon^2})  $$ in time $T$, where $d(\\mu_i,\\mu_1)=\\mu_i \\log \\frac{\\mu_i}{\\mu_1} + (1-\\mu_i) \\log \\frac{(1-\\mu_i)}{(1-\\mu_1)}$. The big-Oh notation in above assumes $\\mu_i, \\Delta_i, i=1, \\ldots, N$ to be constants."
    },
-   "confidence": "high",
-   "notes": "Leading term is exact with constant (1+eps); only the additive N/eps^2 term is big-O, recorded with notation O. Paper's epsilon is a free analysis parameter (eps_alg). Expected regret defined via expected pull counts, i.e. pseudo-regret."
+   "confidence": "medium",
+   "notes": "Leading term has exact constant (1+eps); only the additive N/eps^2 term is inside O(), which hides functions of mu_i and Delta_i. eps in (0,1] from proof. Analysis given for Bernoulli rewards; paper says it extends to [0,1] rewards via the AgrawalG12 reduction. Regret defined via means (pseudo-regret)."
   },
   {
    "id": "r2",
@@ -105,7 +103,8 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:problem-independent",
@@ -113,7 +112,7 @@
     "quote": "For the $N$-armed stochastic bandit problem, Thompson Sampling algorithm has expected regret $$\\Ex[{\\cal R}(T)] \\leq O(\\sqrt{NT\\ln T})$$ in time $T$, where the big-Oh notation hides only the absolute constants."
    },
    "confidence": "high",
-   "notes": "Algorithm does not use T, so anytime."
+   "notes": "Paper's N is K. Proof is for Bernoulli rewards; extension to [0,1] claimed via reduction. Algorithm does not need T."
   }
  ],
  "cited_results": [
@@ -126,9 +125,9 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic Bernoulli N-armed bandit, consistent algorithms",
+   "setting_description": "Stochastic N-armed Bernoulli bandit, consistent algorithms, asymptotic",
    "bound": {
-    "notation": "liminf",
+    "notation": "Omega",
     "expression": "sum_subopt(Delta_i/kl_i)*log(T)",
     "expression_latex": "\\left[\\sum_{i=2}^{N} \\frac{\\Delta_i}{d(\\mu_i, \\mu_1)} + o(1) \\right] \\ln{T}",
     "regime": "asymptotic"
@@ -216,7 +215,7 @@
    "algorithm_name": "Thompson Sampling",
    "algorithm_registry_id": "thompson_sampling_beta",
    "side": "upper",
-   "setting_description": "Stochastic N-armed bandit, problem-independent bound implied by earlier analysis",
+   "setting_description": "Stochastic N-armed bandit, implied problem-independent bound",
    "bound": {
     "notation": "O",
     "expression": "T**(2/3)",
@@ -232,16 +231,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:16:08",
-  "source_chars": 49735,
-  "input_tokens": 51953,
-  "output_tokens": 3833,
-  "cost_usd_equiv": 0.3153096,
+  "date": "2026-10-19T17:26:02",
+  "source_chars": 50029,
+  "input_tokens": 53655,
+  "output_tokens": 4370,
+  "cost_usd_equiv": 0.3276536,
   "status": "extracted"
  }
 }

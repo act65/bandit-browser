@@ -1,0 +1,301 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Thompson Sampling for Contextual Bandits with Linear Payoffs",
+  "arxiv_id": "1209.3352",
+  "arxiv_version": null,
+  "year": 2012,
+  "authors": [
+   "Shipra Agrawal",
+   "Navin Goyal"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Stochastic contextual bandit with linear payoffs, adaptive adversarial contexts",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "sigma",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "adaptive_sequence",
+    "access": "linear_optimization_oracle"
+   },
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "||b_i(t)|| <= 1, ||mu|| <= 1, Delta_i(t) <= 1",
+    "N arms each with a context vector chosen by an adaptive adversary; regret against optimal arm at each round",
+    "noise is conditionally R-sub-Gaussian with R known to the algorithm (used in v_t)"
+   ],
+   "definition_quote": "There are $N$ arms. At time $t = 1, 2, \\ldots $, a context vector $b_i(t) \\in {\\mathbb R}^d$, is revealed for every arm $i$. These context vectors are chosen by an adversary in an adaptive manner after observing the arms played and their rewards up to time $t-1$... Given $b_i(t)$, the reward for arm $i$ at time $t$ is generated from an (unknown) distribution with mean $b_i(t)^T\\mu$... We assume that $\\eta_{i,t}=r_i(t)-b_i(t)^T\\mu$ is conditionally $R$-sub-Gaussian... We will also assume that $||b_i(t)||\\le 1$, $||\\mu||\\le 1$, and $\\Delta_i(t) \\le 1$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Thompson Sampling for Contextual bandits (Gaussian prior)",
+   "registry_id": "lin_ts",
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "d",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "d**(3/2)*sqrt(T)*(log(T) + sqrt(log(T)*log(1/delta)))",
+    "expression_latex": "O\\left(d^{3/2}\\sqrt{T} \\left( \\ln (T) + \\sqrt{\\ln(T) \\ln(\\frac{1}{\\delta})}\\right)\\right)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "||b_i(t)|| <= 1, ||mu|| <= 1, Delta_i(t) <= 1"
+   ],
+   "tuning": [
+    "v_t = R*sqrt(9 d ln(t/delta)) (or v = R*sqrt(9 d ln(T/delta)) if T known)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:dep",
+    "number": "Theorem 1",
+    "quote": "With probability $1-\\delta$, the total regret for Thompson Sampling algorithm in time $T$ is bounded as ${\\cal R}(T) = O\\left(d^{3/2}\\sqrt{T} \\left( \\ln (T) + \\sqrt{\\ln(T) \\ln(\\frac{1}{\\delta})}\\right)\\right)$, or, ${\\cal R}(T) = O\\left(d\\sqrt{T \\log(N)} (...)\\right)$ whichever is smaller, for any $0<\\delta<1$, where $\\delta$ is a parameter used by the algorithm."
+   },
+   "confidence": "high",
+   "notes": "Regret defined via means, Delta_{a(t)}(t). Analyzed version uses v_t, so anytime. Bound independent of N (Remark 2: applies to infinite arms). Remark 1 states same order for regret defined with realized rewards."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(T*log(n_act))*(log(T) + sqrt(log(T)*log(1/delta)))",
+    "expression_latex": "O\\left(d\\sqrt{T \\log(N)} \\left( \\ln (T) + \\sqrt{\\ln(T) \\ln(\\frac{1}{\\delta})}\\right)\\right)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "||b_i(t)|| <= 1, ||mu|| <= 1, Delta_i(t) <= 1",
+    "finite number N of arms"
+   ],
+   "tuning": [
+    "v_t = R*sqrt(9 d ln(t/delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:dep",
+    "number": "Theorem 1",
+    "quote": "or, ${\\cal R}(T) = O\\left(d\\sqrt{T \\log(N)} \\left( \\ln (T) + \\sqrt{\\ln(T) \\ln(\\frac{1}{\\delta})}\\right)\\right)$, whichever is smaller, for any $0<\\delta<1$"
+   },
+   "confidence": "high",
+   "notes": "Paper's N (number of arms per round) mapped to n_act."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "DBLP:conf/colt/DaniHK08",
+   "cited_title": "Stochastic Linear Optimization under Bandit Feedback",
+   "cited_first_author": "Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Linear bandit with infinite arms (sphere intersect cube)",
+   "bound": {
+    "notation": "Omega",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\Omega(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 2.4 Related Work"
+  },
+  {
+   "cited_key": "DBLP:conf/colt/DaniHK08",
+   "cited_title": "Stochastic Linear Optimization under Bandit Feedback",
+   "cited_first_author": "Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic linear bandit with fixed action set",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\tilde{O}(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 2.4 Related Work"
+  },
+  {
+   "cited_key": "DBLP:conf/colt/DaniHK08",
+   "cited_title": "Stochastic Linear Optimization under Bandit Feedback",
+   "cited_first_author": "Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Algorithm 3.2 (efficient)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic linear bandit, computationally efficient algorithm",
+   "bound": {
+    "notation": "O",
+    "expression": "d**(3/2)*sqrt(T)",
+    "expression_latex": "O(d^{3/2} \\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 2.4 Related Work"
+  },
+  {
+   "cited_key": "DBLP:conf/nips/Abbasi-YadkoriPS11",
+   "cited_title": "Improved Algorithms for Linear Stochastic Bandits",
+   "cited_first_author": "Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "OFUL (UCB-style)",
+   "algorithm_registry_id": "oful",
+   "side": "upper",
+   "setting_description": "Stochastic linear bandit",
+   "bound": {
+    "notation": "O",
+    "expression": "d*log(T)*sqrt(T) + sqrt(d*T*log(T/delta))",
+    "expression_latex": "O(d \\log{(T)} \\sqrt{T} + \\sqrt{dT\\log{(T/\\delta)}})",
+    "regime": null
+   },
+   "where": "Section 2.4 Related Work"
+  },
+  {
+   "cited_key": "DBLP:journals/jmlr/ChuLRS11",
+   "cited_title": "Contextual Bandits with Linear Payoff Functions",
+   "cited_first_author": "Chu",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Linear contextual bandit with finite N arms",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(T*d)",
+    "expression_latex": "\\Omega(\\sqrt{Td})",
+    "regime": "d^2 <= T"
+   },
+   "where": "Section 2.4 Related Work"
+  },
+  {
+   "cited_key": "DBLP:journals/jmlr/ChuLRS11",
+   "cited_title": "Contextual Bandits with Linear Payoff Functions",
+   "cited_first_author": "Chu",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SupLinUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Linear contextual bandit, finite N arms, oblivious adversarial contexts, high probability",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*d*log(n_act*T*log(T)/delta)**3)",
+    "expression_latex": "O(\\sqrt{T d \\ln^3(NT\\ln(T)/\\delta)})",
+    "regime": null
+   },
+   "where": "Section 2.4 Related Work"
+  },
+  {
+   "cited_key": "bubeck12",
+   "cited_title": "Towards minimax policies for online linear optimization with bandit feedback",
+   "cited_first_author": "Bubeck",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Exp2 with John's exploration",
+   "algorithm_registry_id": "exp2_john",
+   "side": "upper",
+   "setting_description": "Linear bandit with finite set of N actions",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(d*T*log(n_act))",
+    "expression_latex": "\\sqrt{dT\\log N}",
+    "regime": null
+   },
+   "where": "Section 2.4 Related Work"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.3",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-19T17:34:25",
+  "source_chars": 71615,
+  "input_tokens": 63309,
+  "output_tokens": 4561,
+  "cost_usd_equiv": 0.4087056,
+  "status": "extracted"
+ },
+ "_verify": {
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "prompt_sha": "81d04c3b9fd7",
+  "date": "2026-10-19T17:38:53",
+  "applied_on": "2026-10-19T17:42:58",
+  "min_confidence": "medium",
+  "applied": [],
+  "rejected": [],
+  "flags": {
+   "hallucinated": [],
+   "not_a_guarantee": [],
+   "unverifiable": [],
+   "missing_results": []
+  },
+  "summary": "The paper has one main guarantee, Theorem 1, which gives two high-probability bounds, and the extraction records both correctly. The setting, the algorithm's registry id and the cited results all match the source. I found no errors or missing results."
+ }
+}

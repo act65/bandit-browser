@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "KL-UCB-switch: optimal regret bounds for stochastic bandits from both a distribution-dependent and a distribution-free viewpoints",
@@ -16,7 +16,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Bounded stochastic K-armed bandit over [0,1], known horizon T",
+   "name_in_paper": "K-armed stochastic bandit over [0,1], known horizon T",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -40,13 +40,13 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Non-parametric model: all distributions over [0,1]"
+    "non-parametric model: all distributions over [0,1]"
    ],
-   "definition_quote": "We consider the simplest case of a bounded stochastic bandit problem with finitely many arms indexed by $a \\in \\{1,\\ldots,K\\}$ and with rewards in~$[0,1]$. ... We first consider a fixed and beforehand-known value of~$T$."
+   "definition_quote": "We consider the simplest case of a bounded stochastic bandit problem with finitely many arms indexed by $a \\in \\{1,\\ldots,K\\}$ and with rewards in~$[0,1]$."
   },
   {
    "id": "s2",
-   "name_in_paper": "Bounded stochastic K-armed bandit over [0,1], anytime (unknown horizon)",
+   "name_in_paper": "K-armed stochastic bandit over [0,1], unknown horizon (anytime)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -69,9 +69,9 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Non-parametric model: all distributions over [0,1]"
+    "non-parametric model: all distributions over [0,1]"
    ],
-   "definition_quote": "Adaptation to the Horizon $T$ (an Anytime Version of KL-UCB-Switch) ... each arm $a$ is associated with an unknown probability distribution $\\nu_a \\in \\pset$."
+   "definition_quote": "We consider the simplest case of a bounded stochastic bandit problem with finitely many arms indexed by $a \\in \\{1,\\ldots,K\\}$ and with rewards in~$[0,1]$."
   }
  ],
  "algorithms": [
@@ -138,16 +138,17 @@
    "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "known",
-   "compute": "polynomial",
+   "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "(K - 1) + 23*sqrt(K*T)",
+    "expression": "(K-1) + 23*sqrt(K*T)",
     "expression_latex": "R_T \\leq (K-1) + 23 \\sqrt{KT}",
-    "regime": "T >= 1"
+    "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "switch function f(T,K) = floor((T/K)^{1/5})"
+   "conditions": [],
+   "tuning": [
+    "f(T,K) = floor((T/K)^{1/5})"
    ],
    "is_new": true,
    "source": {
@@ -156,7 +157,7 @@
     "quote": "Given $T \\geq 1$, the regret of the KL-UCB-Switch algorithm, tuned with the knowledge of $T$ and the switch function $f(T, K) = \\lfloor (T/K)^{1/5} \\rfloor$, is uniformly bounded over all bandit problems $\\unu$ over $[0,1]$ by $R_T \\leq (K-1) + 23 \\sqrt{KT}$."
    },
    "confidence": "high",
-   "notes": "Regret defined as sum_a Delta_a E[N_a(T)], i.e., pseudo-regret."
+   "notes": "Regret defined via means (sum Delta_a E[N_a]), so pseudo-regret."
   },
   {
    "id": "r2",
@@ -169,19 +170,23 @@
    "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "known",
-   "compute": "polynomial",
+   "compute": "not_stated",
    "bound": {
     "notation": "exact",
     "expression": "(log(T) - log(log(T)))/Kinf_i + R_rem",
     "expression_latex": "\\E[N_a(T)] \\leq \\frac{\\ln T - \\ln \\ln T}{\\Kinf(\\nu_a, \\mu^\\star)} + \\O_T(1)",
-    "regime": "mu_star in (0,1), T >= K/min{1-mu_star, (Delta_a/9)^12}"
+    "regime": "T >= K/min{1-mu_star, (Delta_a/9)^12}"
    },
    "symbols": {
-    "R_rem": "remainder term that is O_T(1) (bounded in T), closed form given in eq. detailedboundTh3"
+    "R_rem": "remainder term that is O_T(1) (closed form given in Eq. detailedboundTh3)"
    },
-   "extra_assumptions": [
+   "conditions": [
     "mu_star in (0,1)",
-    "switch function f(T,K) = floor((T/K)^{1/5})"
+    "bound is on E[N_a(T)] for each suboptimal arm a",
+    "T >= K/min{1-mu_star, (Delta_a/9)^12}"
+   ],
+   "tuning": [
+    "f(T,K) = floor((T/K)^{1/5})"
    ],
    "is_new": true,
    "source": {
@@ -190,7 +195,7 @@
     "quote": "Given $T \\geq 1$, the KL-UCB-Switch algorithm, tuned with the knowledge of $T$ and the switch function $f(T, K) = \\lfloor (T/K)^{1/5} \\rfloor$, ensures that for all bandit problems $\\unu$ over $[0,1]$ with $\\mu^\\star \\in (0,1)$, for all sub-optimal arms~$a$, for all $T \\geq K/\\min\\big\\{1-\\mu^\\star, \\,(\\Delta_a/9)^{12}\\big\\}$, $\\E[N_a(T)] \\leq \\frac{\\ln T - \\ln \\ln T}{\\Kinf(\\nu_a, \\mu^\\star)} + \\O_T(1)$"
    },
    "confidence": "medium",
-   "notes": "Bound on expected number of pulls of a sub-optimal arm (quantity 'other'); the O_T(1) remainder represented by symbol R_rem."
+   "notes": "Bound on expected pull count of a suboptimal arm; O_T(1) remainder represented by symbol R_rem. Kinf is relative to all distributions on [0,1]."
   },
   {
    "id": "r3",
@@ -203,16 +208,18 @@
    "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
-   "compute": "polynomial",
+   "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "(K - 1) + 44*sqrt(K*T)",
+    "expression": "(K-1) + 44*sqrt(K*T)",
     "expression_latex": "R_T \\leq (K-1) + 44 \\sqrt{KT}",
-    "regime": "all T >= 1"
+    "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "switch function f(t,K) = floor((t/K)^{1/5}), augmented exploration function"
+   "conditions": [],
+   "tuning": [
+    "f(t,K) = floor((t/K)^{1/5})",
+    "augmented exploration function phi(x) = ln_+(x(1+ln_+^2 x))"
    ],
    "is_new": true,
    "source": {
@@ -234,18 +241,22 @@
    "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
-   "compute": "polynomial",
+   "compute": "not_stated",
    "bound": {
     "notation": "exact",
     "expression": "log(T)/Kinf_i + R_rem",
     "expression_latex": "\\E[N_a(T)] \\leq \\frac{\\ln T }{\\Kinf(\\nu_a, \\mu^\\star)} + \\O_T\\bigl( (\\ln T)^{6/7} \\bigr)",
-    "regime": "all T >= 1"
+    "regime": null
    },
    "symbols": {
-    "R_rem": "remainder term of order O_T((log T)^{6/7}), closed form in eq. thdistrdep:precisebound:anytime"
+    "R_rem": "remainder term that is O_T((log T)^{6/7}) (closed form in Eq. thdistrdep:precisebound:anytime)"
    },
-   "extra_assumptions": [
-    "switch function f(t,K) = floor((t/K)^{1/5})"
+   "conditions": [
+    "bound is on E[N_a(T)] for each suboptimal arm a"
+   ],
+   "tuning": [
+    "f(t,K) = floor((t/K)^{1/5})",
+    "augmented exploration function phi(x) = ln_+(x(1+ln_+^2 x))"
    ],
    "is_new": true,
    "source": {
@@ -254,7 +265,69 @@
     "quote": "The anytime version of KL-UCB-Switch algorithm above, tuned with the switch function $f(t, K) = \\lfloor (t/K)^{1/5} \\rfloor$, ensures that for all bandit problems $\\unu$ over $[0,1]$, for all sub-optimal arms $a$, for all $T \\geq 1$, $\\E[N_a(T)] \\leq \\frac{\\ln T }{\\Kinf(\\nu_a, \\mu^\\star)} + \\O_T\\bigl( (\\ln T)^{6/7} \\bigr)$"
    },
    "confidence": "medium",
-   "notes": "Bound on expected pulls of sub-optimal arm; remainder symbol R_rem is O((ln T)^{6/7})."
+   "notes": "Pull-count bound; remainder O_T((ln T)^{6/7}) represented by symbol R_rem."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(K-1) + 17*sqrt(K*T)",
+    "expression_latex": "R_T \\leq (K-1) + 17 \\sqrt{KT}",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [],
+   "is_new": false,
+   "source": {
+    "label": "prop:MOSS",
+    "number": "Proposition 7",
+    "quote": "For a known horizon $T \\geq 1$, for all bandit problems $\\unu$ over $[0,1]$, MOSS achieves a regret bound smaller than $R_T \\leq (K-1) + 17 \\sqrt{KT}$."
+   },
+   "confidence": "medium",
+   "notes": "The paper says the result is known (Audibert & Bubeck 2009) and it only re-proves it, but the explicit constant 17 comes from this paper's proof."
+  },
+  {
+   "id": "r6",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a4",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(K-1) + 30*sqrt(K*T)",
+    "expression_latex": "R_T \\leq (K-1) + c \\sqrt{KT},\\ c=30 \\text{ for } \\varphi=\\ln_+",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [
+    "phi = ln_+ (c=30); with augmented phi(x)=ln_+(x(1+ln_+^2 x)) the constant is c=33"
+   ],
+   "is_new": false,
+   "source": {
+    "label": "prop:MOSS-adaptive",
+    "number": "Proposition 9",
+    "quote": "For all horizons $T \\geq 1$, for all bandit problems $\\unu$ over $[0,1]$, MOSS-anytime achieves a regret bound smaller than $R_T \\leq (K-1) + c \\sqrt{KT}$ where $c = 30$ for $\\varphi = \\ln_+$ and $c = 33$ for the augmented exploration function"
+   },
+   "confidence": "medium",
+   "notes": "Known result (Degenne & Perchet 2016) re-proved here. The same proposition gives c=33 for the augmented exploration function."
   }
  ],
  "cited_results": [
@@ -267,14 +340,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic K-armed bandits with rewards in [0,1], distribution-free minimax lower bound for all strategies, K>=2, T>=1",
+   "setting_description": "K-armed stochastic bandits over [0,1], distribution-free minimax lower bound, all strategies, T>=1, K>=2",
    "bound": {
     "notation": "exact",
     "expression": "Min(sqrt(K*T), T)/20",
-    "expression_latex": "\\sup_{\\unu} R_T \\geq \\frac{1}{20} \\min\\Bigl\\{ \\sqrt{KT}, \\, T \\Bigr\\}",
-    "regime": "K >= 2, T >= 1"
+    "expression_latex": "\\sup_{\\unu} R_T \\geq \\frac{1}{20} \\min\\{ \\sqrt{KT}, T \\}",
+    "regime": null
    },
-   "where": "Section 2, eq. distrfree-LB-reminder"
+   "where": "Section 2, Eq. (distrfree-LB-reminder)"
   },
   {
    "cited_key": "burnetas1996optimal",
@@ -285,14 +358,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic K-armed bandits, model of all distributions over [0,1], uniformly fast convergent strategies; liminf of E[N_a(T)]/ln T for sub-optimal arm a (also attributed to Lai & Robbins 1985)",
+   "setting_description": "uniformly fast convergent strategies on all distributions over [0,1]; liminf E[N_a(T)]/ln T >= 1/Kinf(nu_a, mu_star) for each suboptimal arm (also Lai & Robbins 1985)",
    "bound": {
     "notation": "liminf",
-    "expression": "1/Kinf_i",
+    "expression": "log(T)/Kinf_i",
     "expression_latex": "\\liminf_{T \\to \\infty} \\frac{\\E [ N_{a}(T) ]}{\\ln T} \\geq \\frac{1}{\\Kinf(\\nu_a,\\mu^\\star)}",
-    "regime": "T -> infinity"
+    "regime": null
    },
-   "where": "Section 2, eq. distrdep-LB-reminder1"
+   "where": "Section 2, Eq. (distrdep-LB-reminder1)"
   },
   {
    "cited_key": "garivier_explore_2016",
@@ -303,68 +376,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic K-armed bandits over [0,1], uniformly super-fast convergent strategies; second-order term in pull count lower bound",
+   "setting_description": "uniformly super-fast convergent strategies on distributions over [0,1]; E[N_a(T)] >= ln T/Kinf - Omega(ln ln T)",
    "bound": {
-    "notation": "exact",
-    "expression": "log(T)/Kinf_i - R_lnln",
+    "notation": "Omega",
+    "expression": "log(T)/Kinf_i - log(log(T))",
     "expression_latex": "\\E [ N_{a}(T) ] \\geq \\frac{\\ln T}{\\Kinf(\\nu_a,\\mu^\\star)} - \\Omega(\\ln \\ln T)",
-    "regime": "R_lnln is of order Omega(ln ln T)"
+    "regime": null
    },
-   "where": "Section 2, eq. distrdep-LB-reminder2"
-  },
-  {
-   "cited_key": "audibert_minimax_2009",
-   "cited_title": "Minimax policies for adversarial and stochastic bandits",
-   "cited_first_author": "J.-Y. Audibert",
-   "cited_year": 2009,
-   "cited_arxiv_id": null,
-   "algorithm_name": "MOSS",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Stochastic K-armed bandits with rewards in [0,1], known horizon T; distribution-free regret (constant 17 from this paper's re-proof, Proposition 1)",
-   "bound": {
-    "notation": "exact",
-    "expression": "(K - 1) + 17*sqrt(K*T)",
-    "expression_latex": "R_T \\leq (K-1) + 17 \\sqrt{KT}",
-    "regime": "T >= 1"
-   },
-   "where": "Proposition 1 (prop:MOSS)"
-  },
-  {
-   "cited_key": "degenne_anytime_2016",
-   "cited_title": "Anytime optimal algorithms in stochastic multi-armed bandits",
-   "cited_first_author": "R. Degenne",
-   "cited_year": 2016,
-   "cited_arxiv_id": null,
-   "algorithm_name": "MOSS-anytime (phi = ln_+)",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Stochastic K-armed bandits with rewards in [0,1], anytime; distribution-free regret (constant from this paper's re-proof, Proposition 2)",
-   "bound": {
-    "notation": "exact",
-    "expression": "(K - 1) + 30*sqrt(K*T)",
-    "expression_latex": "R_T \\leq (K-1) + 30 \\sqrt{KT}",
-    "regime": "all T >= 1"
-   },
-   "where": "Proposition 2 (prop:MOSS-adaptive)"
-  },
-  {
-   "cited_key": "degenne_anytime_2016",
-   "cited_title": "Anytime optimal algorithms in stochastic multi-armed bandits",
-   "cited_first_author": "R. Degenne",
-   "cited_year": 2016,
-   "cited_arxiv_id": null,
-   "algorithm_name": "MOSS-anytime (augmented exploration phi(x)=ln_+(x(1+ln_+^2 x)))",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Stochastic K-armed bandits with rewards in [0,1], anytime; distribution-free regret with augmented exploration (Proposition 2)",
-   "bound": {
-    "notation": "exact",
-    "expression": "(K - 1) + 33*sqrt(K*T)",
-    "expression_latex": "R_T \\leq (K-1) + 33 \\sqrt{KT}",
-    "regime": "all T >= 1"
-   },
-   "where": "Proposition 2 (prop:MOSS-adaptive)"
+   "where": "Section 2, Eq. (distrdep-LB-reminder2)"
   },
   {
    "cited_key": "auer_finite-time_2002",
@@ -375,14 +394,14 @@
    "algorithm_name": "UCB1",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic K-armed bandits with rewards in [0,1]; bound on expected pulls of sub-optimal arm",
+   "setting_description": "K-armed stochastic bandits over [0,1], pull count of each suboptimal arm",
    "bound": {
     "notation": "exact",
     "expression": "8*log(T)/Delta_i**2 + 2",
-    "expression_latex": "\\E[N_a(T)] \\leq c\\,\\frac{\\ln T }{\\Delta_a^2} + r_T, \\; c=8,\\ r_T=2",
-    "regime": "T >= 1"
+    "expression_latex": "\\E[N_a(T)] \\leq c\\,\\frac{\\ln T }{\\Delta_a^2} + r_T, \\ c=8, r_T=2",
+    "regime": null
    },
-   "where": "Section 1.1, eq. (star)"
+   "where": "Section 1.1, Eq. (star)"
   }
  ],
  "_run": {
@@ -391,16 +410,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:18:37",
-  "source_chars": 199987,
-  "input_tokens": 134808,
-  "output_tokens": 6957,
-  "cost_usd_equiv": 1.0406296,
+  "date": "2026-10-19T17:27:50",
+  "source_chars": 200705,
+  "input_tokens": 136729,
+  "output_tokens": 7672,
+  "cost_usd_equiv": 1.0582856,
   "status": "extracted"
  }
 }

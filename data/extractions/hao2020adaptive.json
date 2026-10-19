@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Adaptive Exploration in Linear Contextual Bandit",
@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Stochastic K-armed contextual linear bandit with M discrete contexts",
+   "name_in_paper": "stochastic K-armed contextual linear bandit with M contexts",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -25,6 +25,7 @@
    "context": "stochastic_contexts",
    "noise": "gaussian_known_variance",
    "learner_knows": [
+    "T",
     "d"
    ],
    "instance_assumptions": [
@@ -42,12 +43,51 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Finite set of M contexts drawn i.i.d. from an unknown distribution p with p(m)>0 for all m",
-    "Each context m has a known finite action set A^m in R^d with |A^m|=K that spans R^d",
-    "Actions satisfy ||x||_2 <= 1",
-    "Noise is standard Gaussian (variance 1)"
+    "finite set of M contexts drawn i.i.d. from an unknown distribution p with p(m)>0 for all m",
+    "each context has a known action set A^m of size K with ||x||_2<=1",
+    "noise is standard Gaussian (variance 1)"
    ],
-   "definition_quote": "We consider the stochastic $K$-armed contextual linear bandit with a horizon of $n$ rounds and $M$ possible contexts. ... For each context $m \\in [M]$ there is a known feature/action set $\\cA^m\\subset \\mathbb R^d$ with $|\\cA^m| = K$. ... the environment samples a sequence of independent contexts $(c_t)_{t=1}^n$ from an unknown distribution $p$ over $[M]$ ... The reward is $Y_t = \\langle X_t,\\theta \\rangle + \\eta_t$, where $(\\eta_t)$ is a sequence of independent standard Gaussian random variables ... we assume each $\\cA^{m}$ spans $\\mathbb R^d$ and $\\|x\\|_2\\leq1$."
+   "definition_quote": "We consider the stochastic $K$-armed contextual linear bandit with a horizon of $n$ rounds and $M$ possible contexts. ... For each context $m \\in [M]$ there is a known feature/action set $\\cA^m\\subset \\mathbb R^d$ with $|\\cA^m| = K$. ... $Y_t = \\langle X_t,\\theta \\rangle + \\eta_t$, where $(\\eta_t)$ is a sequence of independent standard Gaussian random variables ... we assume each $\\cA^{m}$ spans $\\mathbb R^d$ and $\\|x\\|_2\\leq1$"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "stochastic K-armed contextual linear bandit with M contexts (lower bound)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "T",
+    "K",
+    "d",
+    "sigma",
+    "reward_family"
+   ],
+   "instance_assumptions": [
+    "arms_span_Rd",
+    "unique_optimal_arm"
+   ],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "oblivious_sequence",
+    "access": "explicit"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "finite set of M contexts drawn i.i.d. from an unknown distribution p with p(m)>0 for all m",
+    "each context has a known action set A^m of size K",
+    "noise is standard Gaussian"
+   ],
+   "definition_quote": "We consider the stochastic $K$-armed contextual linear bandit with a horizon of $n$ rounds and $M$ possible contexts. ... $(\\eta_t)_{t=1}^n$ is a sequence of independent standard Gaussian random variables"
   }
  ],
  "algorithms": [
@@ -59,7 +99,7 @@
    "techniques": [
     "track_and_stop",
     "optimism",
-    "explore_then_commit"
+    "other"
    ],
    "requires_knowledge_of": [
     "T",
@@ -68,7 +108,7 @@
   },
   {
    "id": "a2",
-   "name": "LinUCB (optimistic policy with beta_t = O(d log t))",
+   "name": "LinUCB (optimistic policy)",
    "registry_id": "lin_ucb",
    "is_new": false,
    "techniques": [
@@ -82,11 +122,11 @@
  "results": [
   {
    "id": "r1",
-   "setting": "s1",
+   "setting": "s2",
    "side": "lower",
    "algorithm": null,
    "algorithm_class": "consistent",
-   "quantity": "expected_regret",
+   "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
    "comparator": "best_action_per_round",
    "probability": "asymptotic",
@@ -96,24 +136,24 @@
     "notation": "liminf",
     "expression": "C_lin*log(T)",
     "expression_latex": "\\liminf_{n\\to\\infty}\\frac{R_{\\theta}^{\\pi}(n)}{\\log(n)}\\geq \\cC(\\theta,\\cA^1,\\ldots, \\cA^M)",
-    "regime": "n -> infinity"
+    "regime": null
    },
    "symbols": {
-    "C_lin": "C(theta, A^1,...,A^M): value of inf sum_{m,x} alpha_{x,m} Delta_x^m subject to x^T (sum alpha_{x,m} x x^T)^{-1} x <= (Delta_x^m)^2/2 for all suboptimal x"
+    "C_lin": "optimal value C(theta, A^1..A^M) of the allocation optimisation problem inf sum alpha_{x,m} Delta_x^m s.t. ||x||^2_{(sum alpha xx^T)^{-1}} <= (Delta_x^m)^2/2"
    },
-   "extra_assumptions": [
+   "conditions": [
     "p(m) > 0 for all contexts m",
-    "optimal arm x_m^* unique for each context",
-    "Gaussian noise"
+    "optimal arm x_m^* unique for each context m"
    ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:lower_bound",
-    "number": "Theorem 1",
-    "quote": "Under the same conditions as \\cref{lemma:confidence_width}, \\liminf_{n\\to\\infty}\\frac{R_{\\theta}^{\\pi}(n)}{\\log(n)}\\geq \\cC(\\theta,\\cA^1,\\ldots, \\cA^M), where $\\cC$ is defined as the optimal value of the following optimisation problem: \\inf_{\\alpha_{x,m}\\in[0, \\infty]}\\sum_{m}\\sum_{x}\\alpha_{x,m}\\Delta_x^m subject to ... x^{\\top}(\\sum\\alpha_{x,m}xx^{\\top})^{-1}x \\leq \\frac{(\\Delta_x^m)^2}{2}."
+    "number": "Theorem 3",
+    "quote": "Under the same conditions as \\cref{lemma:confidence_width}, \\liminf_{n\\to\\infty}\\frac{R_{\\theta}^{\\pi}(n)}{\\log(n)}\\geq \\cC(\\theta,\\cA^1,\\ldots, \\cA^M), where $\\cC$ is defined as the optimal value of the following optimisation problem: \\inf_{\\alpha_{x,m}\\in[0, \\infty]}\\sum_{m}\\sum_{x}\\alpha_{x,m}\\Delta_x^m subject to ... x^{\\top}(\\sum\\alpha_{x,m}xx^{\\top})^{-1}x \\leq (\\Delta_x^m)^2/2."
    },
    "confidence": "high",
-   "notes": "Expression means liminf R(n)/log(n) >= C_lin. Constant does not depend on context distribution p. Proof says it follows Corollary 2 of Lattimore & Szepesvari (2017)."
+   "notes": "Consistent = regret o(n^eps) for all theta and context distributions. Constant is 0 when optimal arms span R^d (sub-logarithmic regret)."
   },
   {
    "id": "r2",
@@ -121,7 +161,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "expected_regret",
+   "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
    "comparator": "best_action_per_round",
    "probability": "asymptotic",
@@ -131,24 +171,26 @@
     "notation": "limsup",
     "expression": "C_lin*log(T)",
     "expression_latex": "\\limsup_{n\\to \\infty}\\frac{R_{\\theta}^{\\pi_{\\text{oam}}}(n)}{\\log (n)}\\leq \\cC(\\theta, \\cA^1,\\ldots, \\cA^M)",
-    "regime": "n -> infinity"
+    "regime": null
    },
    "symbols": {
-    "C_lin": "C(theta, A^1,...,A^M): optimal value of the lower-bound allocation problem of Theorem 1"
+    "C_lin": "optimal value C(theta, A^1..A^M) of the lower-bound allocation optimisation problem"
    },
-   "extra_assumptions": [
-    "T_x^m(Delta) uniquely defined and continuous at Delta (uniqueness implies continuity)",
-    "epsilon_t = 1/log(log(t))",
-    "p(m) > 0 for all m"
+   "conditions": [
+    "T_x^m(Delta) uniquely defined and continuous at Delta for all contexts m and actions x",
+    "p(m) > 0 for all contexts m"
+   ],
+   "tuning": [
+    "epsilon_t = 1/log(log(t))"
    ],
    "is_new": true,
    "source": {
     "label": "thm:upper_bound",
-    "number": "Theorem 2",
+    "number": "Theorem 12",
     "quote": "Suppose that $T_x^m(\\Delta)$ is uniquely defined and $T_x^m(\\cdot)$ is continuous at $\\Delta$ for all contexts $m$ and actions $x \\in \\cA^m$. Then the policy $\\pi_{\\text{oam}}$ proposed in Algorithm \\ref{alg:main} with $\\epsilon_t = 1/\\log(\\log(t))$ satisfies \\limsup_{n\\to \\infty}\\frac{R_{\\theta}^{\\pi_{\\text{oam}}}(n)}{\\log (n)}\\leq \\cC(\\theta, \\cA^1,\\ldots, \\cA^M)."
    },
    "confidence": "high",
-   "notes": "Expression means limsup R(n)/log(n) <= C_lin. Algorithm uses f_n which depends on n, so horizon treated as known. Compute: solves a convex program (CVXPY) per round, so polynomial is implied."
+   "notes": "Algorithm uses f_n depending on n, so horizon known. Solves a convex program each round (polynomial). Paper notes continuity follows from uniqueness (Lemma 27)."
   },
   {
    "id": "r3",
@@ -156,31 +198,35 @@
    "side": "upper",
    "algorithm": "a2",
    "algorithm_class": null,
-   "quantity": "expected_regret",
+   "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
    "comparator": "best_action_per_round",
    "probability": "asymptotic",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
-    "notation": "O",
-    "expression": "1",
+    "notation": "limsup",
+    "expression": "C_fin",
     "expression_latex": "\\limsup_{n\\to\\infty} R_\\theta^\\pi(n) < \\infty",
-    "regime": "optimal arms {x_1^*,...,x_M^*} span R^d; n -> infinity"
+    "regime": null
    },
-   "symbols": {},
-   "extra_assumptions": [
-    "the set of optimal arms {x_1^*, ..., x_M^*} spans R^d",
-    "beta_t = O(d log t) suitably chosen"
+   "symbols": {
+    "C_fin": "some finite instance-dependent constant (bounded regret)"
+   },
+   "conditions": [
+    "the optimal arms {x_1^*, ..., x_M^*} span R^d"
+   ],
+   "tuning": [
+    "beta_t = O(d log(t)) chosen suitably"
    ],
    "is_new": true,
    "source": {
     "label": "thm:ucb",
-    "number": "Theorem 3",
+    "number": "Theorem 9",
     "quote": "Consider the policy $\\pi$ that plays optimistically by $X_t = \\argmax_{x \\in \\cA^{c_t}} \\ip{\\hat \\theta_{t-1}, x} + \\|x\\|_{G_t^{-1}} \\beta_t^{1/2}$. Suppose that $\\theta$ is such that $\\{x_1^*, \\ldots, x_M^*\\}$ spans $\\mathbb R^d$. Then, for suitable $(\\beta_t)_{t=1}^n$ with $\\beta_t = O(d \\log(t))$, it holds that $\\limsup_{n\\to\\infty} R_\\theta^\\pi(n) < \\infty$."
    },
    "confidence": "medium",
-   "notes": "Bounded regret (limsup finite) recorded as O(1); constant is instance-dependent and unspecified."
+   "notes": "Bounded regret statement; no explicit constant given, encoded as symbol C_fin."
   }
  ],
  "cited_results": [
@@ -193,14 +239,32 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Classical K-armed Gaussian bandit (unit variance), consistent policies; special case M=1, A^1 = standard basis",
+   "setting_description": "Classical K-armed Gaussian bandit (M=1, standard basis actions), consistent policies",
    "bound": {
     "notation": "liminf",
     "expression": "sum_subopt(2/Delta_i)*log(T)",
     "expression_latex": "\\cC(\\theta, \\cA^1) = \\sum_{x \\in \\cA^1, \\Delta_x > 0} 2/\\Delta_x",
-    "regime": "n -> infinity"
+    "regime": null
    },
-   "where": "Example after Theorem 1"
+   "where": "Example 7"
+  },
+  {
+   "cited_key": "abbasi2011improved",
+   "cited_title": "Improved algorithms for linear stochastic bandits",
+   "cited_first_author": "Yasin Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "LinUCB",
+   "algorithm_registry_id": "lin_ucb",
+   "side": "upper",
+   "setting_description": "Stochastic linear (contextual) bandit, minimax regret",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\tilde O(d \\sqrt{n})",
+    "regime": null
+   },
+   "where": "Section 3.1, after Theorem 9"
   }
  ],
  "_run": {
@@ -209,16 +273,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:28:03",
-  "source_chars": 103355,
-  "input_tokens": 80116,
-  "output_tokens": 4526,
-  "cost_usd_equiv": 0.5544736,
+  "date": "2026-10-19T17:35:50",
+  "source_chars": 103965,
+  "input_tokens": 81995,
+  "output_tokens": 4865,
+  "cost_usd_equiv": 0.5642735999999999,
   "status": "extracted"
  }
 }

@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "A minimax and asymptotically optimal algorithm for stochastic bandits",
@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Stochastic K-armed bandit with one-dimensional canonical exponential family arms (bounded means, bounded variance)",
+   "name_in_paper": "Stochastic K-armed bandit with one-dimensional exponential family arms (bounded means, bounded variance)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -42,9 +42,10 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Variance bounded uniformly over the family by V, giving Pinsker-like inequality kl(mu,mu') >= (mu-mu')^2/(2V)"
+    "Variance of the family uniformly bounded by V, giving Pinsker-like inequality kl(mu,mu') >= (mu-mu')^2/(2V)",
+    "Means restricted to a fixed interval [mu^-, mu^+] inside the family's mean range"
    ],
-   "definition_quote": "Each arm is assumed to be a probability distribution of some canonical one-dimensional exponential family $\\nu_{\\theta}$ ... we suppose that each arm $\\nu_\\theta$ satisfies $\\mu=b'(\\theta)\\in [\\mu-,\\mu+]\\subset I$ ... there exists $V>0$ such that $\\sup_{\\mu\\in I} b''( {b'}^{-1}(\\mu))\\leq V<+\\infty$."
+   "definition_quote": "Each arm is assumed to be a probability distribution of some canonical one-dimensional exponential family ... we suppose that each arm $\\nu_\\theta$ satisfies $\\mu=b'(\\theta)\\in [\\mu-,\\mu+]\\subset I$ ... there exists $V>0$ such that $\\sup_{\\mu\\in I} b''( {b'}^{-1}(\\mu))\\leq V<+\\infty$."
   }
  ],
  "algorithms": [
@@ -78,16 +79,21 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "76*sqrt(v_mom*K*T) + (mu_plus - mu_minus)*K",
+    "expression": "76*sqrt(V_var*K*T) + (mu_plus - mu_minus)*K",
     "expression_latex": "R_T\\leq 76 \\sqrt{ V K T}+(\\mu^+-\\mu^-)K",
     "regime": null
    },
    "symbols": {
-    "v_mom": "uniform upper bound V on the variance within the exponential family",
-    "mu_plus": "upper end of the known interval of means",
-    "mu_minus": "lower end of the known interval of means"
+    "V_var": "uniform upper bound on the variance of distributions in the exponential family",
+    "mu_plus": "upper end of the interval containing all arm means",
+    "mu_minus": "lower end of the interval containing all arm means"
    },
-   "extra_assumptions": [],
+   "conditions": [
+    "K >= 2"
+   ],
+   "tuning": [
+    "exploration function g(n) = log_+((T/(K n))(log_+^2(T/(K n)) + 1))"
+   ],
    "is_new": true,
    "source": {
     "label": "th:minimax_bound",
@@ -95,7 +101,7 @@
     "quote": "For any family $\\mathcal{F}$ satisfying the assumptions detailed in Section~\\ref{sec:settings}, and for any bandit model $\\nu\\in\\mathcal{F}$, the expected regret of the kl-UC$\\Bpp$ algorithm is upper-bounded as R_T\\leq 76 \\sqrt{ V K T}+(\\mu^+-\\mu^-)K\\,."
    },
    "confidence": "high",
-   "notes": "Regret defined as sum of gaps times expected pull counts (pseudo-regret). Paper also notes it applies to [0,1]-valued bandits with V=1/4."
+   "notes": "Regret defined via means (pseudo-regret). Paper notes the bound also applies to [0,1]-valued rewards with V=1/4."
   },
   {
    "id": "r2",
@@ -110,24 +116,30 @@
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
-    "notation": "O",
-    "expression": "log(T)/kl(mu_i + delta_a, mu_star - delta_a) + log(log(T))/delta_a**2",
-    "expression_latex": "\\E\\big[N_a(T)\\big]\\leq \\frac{\\log(T)}{\\kl(\\mu_a+\\delta,\\mu^\\star-\\delta)}+O\\left(\\frac{\\loglog(T)}{\\delta^2}\\right)",
-    "regime": "sqrt(22 V K / T) <= delta_a <= (mu_star - mu_a)/3"
+    "notation": "exact",
+    "expression": "log(T)/kl_fam(mu_i + delta_p, mu_star - delta_p) + log((1/K)*(1 + log(T/K)**2))/kl_fam(mu_i + delta_p, mu_star - delta_p) + (16*E**2 + 2)*2*V_var*K/delta_p**2 + 1",
+    "expression_latex": "\\E[N_a(T)]\\leq \\frac{\\log(T)}{\\kl(\\mu_a+\\delta,\\mu^*-\\delta)}+ \\frac{\\log(1/K(1+\\log^2(T/K)))}{\\kl(\\mu_a+\\delta,\\mu^*-\\delta)}+(16e^2+2)\\frac{2 V K}{\\delta^2}+1",
+    "regime": "sqrt(22*V_var*K/T) <= delta_p <= Delta_i/3"
    },
    "symbols": {
-    "delta_a": "free analysis parameter delta in [sqrt(22VK/T), (mu*-mu_a)/3]",
-    "kl": "KL divergence of the exponential family expressed in means"
+    "kl_fam": "KL divergence between members of the exponential family parametrised by their means",
+    "delta_p": "free analysis parameter delta of Theorem 2 (not a failure probability)",
+    "V_var": "uniform upper bound on the variance of distributions in the exponential family"
    },
-   "extra_assumptions": [],
+   "conditions": [
+    "arm i is suboptimal"
+   ],
+   "tuning": [
+    "exploration function g(n) = log_+((T/(K n))(log_+^2(T/(K n)) + 1))"
+   ],
    "is_new": true,
    "source": {
     "label": "th:asymptotic_bound",
     "number": "Theorem 2",
-    "quote": "For any bandit model $\\nu\\in\\mathcal{F}$, for any suboptimal arm $a$ and any $\\delta$ such that $\\sqrt{22 V K / T}\\leq \\delta\\leq(\\mustar-\\mu_a)/3$, \\E[N_a(T)]\\leq \\frac{\\log(T)}{\\kl(\\mu_a+\\delta,\\mu^\\star-\\delta)}+O(\\loglog(T)/\\delta^2) which implies the asymptotic optimality"
+    "quote": "For any bandit model $\\nu\\in\\mathcal{F}$, for any suboptimal arm $a$ and any $\\delta$ such that $\\sqrt{22 V K / T}\\leq \\delta\\leq(\\mustar-\\mu_a)/3$, \\E[N_a(T)]\\leq \\frac{\\log(T)}{\\kl(\\mu_a+\\delta,\\mu^\\star-\\delta)}+O\\left(\\frac{\\loglog(T)}{\\delta^2}\\right) which implies the asymptotic optimality (see the end of the proof ... for an explicit bound)."
    },
    "confidence": "medium",
-   "notes": "Bound on expected number of pulls of a suboptimal arm, not regret directly. Leading term has constant 1, only second term is O(.). Explicit version from proof: log T/kl + log((1+log^2(T/K))/K)/kl + (16e^2+2)2VK/delta^2 + 1. Choosing delta ~ (loglog T)^{-1/2} gives asymptotic optimality (Lai-Robbins)."
+   "notes": "Bound on expected number of pulls of a suboptimal arm. Theorem states log(T)/kl(mu_a+delta,mu*-delta) + O(loglog T/delta^2); the expression recorded is the explicit bound given at the end of the proof, which the theorem refers to. Choosing delta ~ (loglog T)^{-1/2} yields asymptotic optimality limsup E[N_a(T)]/log T <= 1/kl(mu_a, mu*), i.e. matching Lai-Robbins."
   }
  ],
  "cited_results": [
@@ -140,10 +152,10 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic K-armed bandits in exponential family; uniformly efficient strategies; expected pulls of suboptimal arm",
+   "setting_description": "Stochastic K-armed bandit, one-dimensional exponential family; uniformly efficient strategies; E[N_a(T)] >= log(T)/kl(mu_a, mu*)(1-o(1)), implying regret lower bound",
    "bound": {
     "notation": "liminf",
-    "expression": "log(T)/kl_i",
+    "expression": "sum_subopt(Delta_i/KL_i)*log(T)",
     "expression_latex": "\\E[N_a(T)] \\geq \\frac{\\log(T)}{\\kl(\\mu_a,\\mustar)}(1-o(1))",
     "regime": "T -> infinity"
    },
@@ -158,7 +170,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Minimax lower bound over the exponential-family bandit class F (adaptation of Theorem A.2)",
+   "setting_description": "Minimax lower bound over family F of exponential-family bandits (adaptation of Theorem A.2 of Auer et al.)",
    "bound": {
     "notation": "Omega",
     "expression": "Min(sqrt(K*T), T)",
@@ -174,16 +186,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:17:42",
-  "source_chars": 48455,
-  "input_tokens": 50508,
-  "output_tokens": 3460,
-  "cost_usd_equiv": 0.2962896,
+  "date": "2026-10-19T17:27:18",
+  "source_chars": 47839,
+  "input_tokens": 51560,
+  "output_tokens": 4190,
+  "cost_usd_equiv": 0.3072936,
   "status": "extracted"
  }
 }

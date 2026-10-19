@@ -817,7 +817,15 @@ def sort_inherited(site: Site, items: list[dict]) -> list[dict]:
                                          -(site.paper_info(it["paper"]).get("year") or 0)))
 
 
-def inherited_table(items: list[dict], site: Site, root: str) -> str:
+PINNED = re.compile(r"^holds for (.+?=.+?) only$")
+
+
+def pinned(it: dict) -> list[str]:
+    """Parameter values the source bound was proved for only (caveat 'holds for K = 2 only'): valid here, but weak."""
+    return [m.group(1) for c in it["inf"].get("caveats") or [] if (m := PINNED.match(str(c).strip()))]
+
+
+def inherited_table(items: list[dict], site: Site, root: str, weak: bool = False) -> str:
     headers = ["Bound", "Derived from", "Algorithm", "Paper", "Source"]
     body, current = [], object()
     for it in sort_inherited(site, items):
@@ -827,13 +835,16 @@ def inherited_table(items: list[dict], site: Site, root: str) -> str:
             current = q
             body.append(group_row(q, len(headers)))
         tag = badge("inherited", "inh", "derived along the specialisation order; not proved for this setting directly")
+        for pv in pinned(it):
+            tag += badge(f"pinned {pretty_vars(pv)}", "pinned",
+                         f"the source bound was proved only for {pv}; it holds here but says nothing about other values")
         cells = [bound_html(r) + result_badges(r, result_details(it), lead=tag), derivation_html(site, it, root),
                  alg_html(it), paper_html(site, it["paper"], root), source_html(r)]
         tds = "".join(f'<td class="c-{slugify(h)}" data-label="{h}">{c}</td>' for h, c in zip(headers, cells))
-        body.append(f'<tr class="inh">{tds}</tr>')
+        body.append(f'<tr class="inh{" weak" if weak else ""}">{tds}</tr>')
     th = "".join(f'<th class="c-{slugify(h)}">{h}</th>' for h in headers)
     return (filter_box("Filter by algorithm, paper, source setting…") +
-            '<div class="scroll"><table class="results inherited filterable">'
+            f'<div class="scroll"><table class="results inherited filterable{" weak" if weak else ""}">'
             f'<thead><tr>{th}</tr></thead><tbody>\n' + "\n".join(body) + "\n</tbody></table></div>")
 
 
@@ -847,12 +858,24 @@ def inherited_section(site: Site, items: list[dict], side: str, anchor: str) -> 
             "parameters are substituted." if upper else
             "Lower bounds proved on a special case hold here too (the hard instances are still available).")
     nsrc = len({it["inf"]["from_setting"] for it in items})
+    strong = [it for it in items if not pinned(it)]
+    weak = [it for it in items if pinned(it)]
+    vals = sorted({pretty_vars(v) for it in weak for v in pinned(it)})
+    nweak = f' <span class="weak-n">· {len(weak)} weak</span>' if weak else ""
+    weak_html = f"""
+<details class="weak-sec"{"" if strong else " open"}>
+<summary>Weak transfers <span class="muted">({len(weak)}) · proved only for {e(", ".join(vals))}</span></summary>
+<p class="hint">The source bound was proved for one pinned parameter value (e.g. a two-armed instance). It still holds
+here, but it is usually far weaker than the bounds above and says nothing about how the bound scales with that parameter.</p>
+{inherited_table(weak, site, "../", weak=True)}
+</details>""" if weak else ""
+    main = inherited_table(strong, site, "../") if strong else '<p class="muted">Only weak transfers (below).</p>'
     return f"""
 <details class="inherited-sec" id="{anchor}">
-<summary><h2>{title} <span class="muted">{whence}</span></h2><span class="count">{len(items)} from {nsrc} setting{"s" if nsrc != 1 else ""}</span></summary>
+<summary><h2>{title} <span class="muted">{whence}</span></h2><span class="count">{len(items)} from {nsrc} setting{"s" if nsrc != 1 else ""}{nweak}</span></summary>
 <p class="hint">{hint} Derived automatically by <code>pipeline/infer.py</code> and <b>never proved for this setting
 directly</b>; check the caveats. Closest sources (fewest changed assumptions) are listed first within each group.</p>
-{inherited_table(items, site, "../")}
+{main}{weak_html}
 </details>"""
 
 
@@ -1124,22 +1147,359 @@ def paper_page(site: Site, pid: str) -> str:
     return page(pid, body, "../", "papers")
 
 
+# ---------------------------------------------------------------- ground truth (data/ground_truth/bco.yaml)
+
+# The book's LaTeX macros (cvx.tex), so KaTeX can render its notation, compute column and quotes.
+BCO_MACROS = {
+    r"\cF": r"\mathcal{F}", r"\sF": r"\mathscr{F}", r"\pb": r"\mathtt{b}", r"\pl": r"\mathtt{l}",
+    r"\psm": r"\mathtt{sm}", r"\psc": r"\mathtt{sc}", r"\plin": r"\mathtt{lin}", r"\pquad": r"\mathtt{quad}",
+    r"\ps": r"\mathtt{s}", r"\pu": r"\mathtt{i}", r"\R": r"\mathbb{R}", r"\E": r"\mathbb{E}",
+    r"\eps": r"\varepsilon", r"\ball": r"\mathbb{B}", r"\conv": r"\operatorname{conv}",
+    r"\diam": r"\operatorname{diam}", r"\poly": r"\operatorname{poly}", r"\Reg": r"\mathrm{Reg}",
+    r"\sReg": r"\mathrm{sReg}", r"\norm": r"\left\|#1\right\|", r"\ISO": r"\textsf{iso}", r"\iso": r"\textsf{iso}",
+    r"\optsc": r"\textsf{optsc}", r"\svd": r"\textsf{svd}", r"\ellipsoid": r"\textsf{ellipsoid}",
+    r"\cog": r"\textsf{cog}", r"\inscribed": r"\textsf{inscribed}", r"\low": r"\textsf{lowner}",
+}
+GT_DIMS = ["environment", "domain", "feedback", "dimension", "noise"]
+GT_HORIZON = re.compile(r"(?<![A-Za-z_])n(?![A-Za-z_0-9])")  # the book's horizon n is canonical T
+GT_WRAPPED = re.compile(r"^\s*(O_tilde|Omega_tilde|Theta_tilde|O|Omega|Theta)\((.*)\)\s*$")
+
+
+def gt_n_to_t(expr) -> str:
+    return GT_HORIZON.sub("T", str(expr))
+
+
+def gt_bound(r: dict) -> str:
+    """bound.expression (n -> T) via bounds.py; the book's expression_latex if that fails."""
+    b = dict(r.get("bound") or {})
+    if b.get("expression"):
+        b["expression"] = gt_n_to_t(b["expression"])
+    return bound_html({**r, "bound": b})
+
+
+def gt_formula(s, side: str) -> str:
+    """A free-form bound string from open_problems: 'Omega(d*sqrt(n))' -> formula, anything else -> text."""
+    if s in (None, ""):
+        return NONE
+    m = GT_WRAPPED.match(str(s))
+    if m:  # 'Omega(...) simple regret': the balanced wrapper is the bound, the rest a note
+        depth, end = 0, None
+        for i, ch in enumerate(s, start=0):
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+                if depth == 0:
+                    end = i
+                    break
+        inner, rest = s[s.index("(") + 1:end], s[end + 1:].strip() if end else ""
+        tex, ok = bounds.bound_tex({"expression": gt_n_to_t(inner), "notation": m.group(1)}, side, None)
+        if ok and end:
+            note = f'<span class="muted small">{e(rest)}</span>' if rest else ""
+            return f'<div class="formula">{math(tex)}</div>{note}'
+    return f'<span class="small">{e(str(s))}</span>'
+
+
+def gt_nota(s: dict) -> str:
+    """The book's class notation, or the plain-text name when the LaTeX field is really prose."""
+    tex = str(s.get("notation_latex") or "")
+    if not tex or re.search(r"(?<![\\A-Za-z])[A-Za-z]{4,}", tex):
+        return f'<span class="nota-plain">{e(str(s.get("notation_plain") or s.get("id")))}</span>'
+    return math(tex)
+
+
+def gt_setting_link(sid, sets: dict) -> str:
+    s = sets.get(sid)
+    if not s:
+        return e(str(sid))
+    return (f'<a class="gt-set" href="#s-{slugify(sid)}" title="{e(str(s.get("notation_plain") or sid), quote=True)}">'
+            f'{gt_nota(s)}</a> <code class="small muted">{e(sid)}</code>')
+
+
+def gt_chips(av: dict, params=None) -> str:
+    chips = []
+    fc = av.get("function_class")
+    if isinstance(fc, dict):
+        on = [label(k) for k, v in fc.items() if v is True and k != "convex"]
+        chips.append(f'<span class="chip"><b>class</b> convex{", " + e(", ".join(on)) if on else ""}</span>')
+    for d in GT_DIMS + [k for k in av if k not in GT_DIMS and k != "function_class"]:
+        v = av.get(d)
+        if v in (None, "", [], {}):
+            continue
+        shown = ", ".join(map(str, v)) if isinstance(v, list) else str(v)
+        chips.append(f'<span class="chip"><b>{e(label(d))}</b> {e(label(shown))}</span>')
+    if params:
+        chips.append(f'<span class="chip"><b>parameters</b> {e(", ".join(map(str, as_list(params))))}</span>')
+    return '<div class="chips">' + "".join(chips) + "</div>"
+
+
+def gt_settings(settings: list[dict]) -> str:
+    cards = []
+    for s in settings:
+        sid = str(s.get("id"))
+        extra = []
+        if s.get("definition_quote"):
+            extra.append(("Definition", f'<blockquote>{e(str(s["definition_quote"]))}</blockquote>'))
+        if isinstance(s.get("ontology_v0_1_mapping"), dict):
+            extra.append(("Ontology v0.1", text(s["ontology_v0_1_mapping"])))
+        if s.get("unmapped"):
+            extra.append(("Unmapped", '<ul class="tight">' + "".join(f"<li>{e(str(u))}</li>" for u in as_list(s["unmapped"])) + "</ul>"))
+        for k in ("definition_source", "notes"):
+            if s.get(k):
+                extra.append((label(k).capitalize(), text(s[k])))
+        used = " ".join(f'<a href="#r-{slugify(u)}">{e(str(u))}</a>' for u in as_list(s.get("used_in")))
+        conf = s.get("confidence")
+        cards.append(f"""<article class="fact gt-setting" id="s-{slugify(sid)}">
+<header><span class="gt-nota">{gt_nota(s)}</span> <code class="small muted">{e(sid)}</code>
+{badge(f"{conf} confidence", f"conf-{conf}") if conf in ("low", "medium") else ""}
+{badge("not in tables", "muted-badge") if s.get("in_tables") is False else ""}</header>
+{f'<p class="small muted">{e(str(s["name_in_book"]))}</p>' if s.get("name_in_book") else ""}
+{gt_chips(s.get("assumption_vector") or {}, s.get("parameters"))}
+{f'<p class="small">Results: {used}</p>' if used else ""}
+<details class="more"><summary>definition and mapping</summary>{dl(extra, "kv")}</details>
+</article>""")
+    return filter_box("Filter settings…") + '<div class="facts gt-open filterable-cards">' + "".join(cards) + "</div>"
+
+
+def gt_citation(r: dict) -> str:
+    c = r.get("original_citation") or {}
+    authors = as_list(c.get("authors"))
+    who = (surname(authors[0]) + (" et al." if len(authors) > 2 else f" and {surname(authors[1])}" if len(authors) == 2 else "")
+           ) if authors else ""
+    year = f" ({c['year']})" if c.get("year") else ""
+    tip = e(str(c.get("title") or ""), quote=True)
+    if not who:
+        return f'<span class="muted small" title="{tip}">{e(short(str(c.get("title") or "–"), 40))}</span>'
+    key = f'<code class="raw">{e(str(c["bib_key"]))}</code>' if c.get("bib_key") else ""
+    return f'<span title="{tip}">{e(who)}{e(year)}</span>{key}'
+
+
+def gt_book(r: dict) -> str:
+    t = r.get("book_theorem")
+    ch = f'<span class="muted small">Ch. {e(str(r["book_chapter"]))}</span>' if r.get("book_chapter") else ""
+    if not isinstance(t, dict):
+        return ch or NONE
+    quote = "\n".join(x for x in (t.get("statement_summary"), f"Assumptions: {t['assumptions']}" if t.get("assumptions") else "") if x)
+    num = e(str(t.get("number") or "theorem"))
+    head = f'<details class="pop"><summary>{num}</summary><blockquote>{e(quote)}</blockquote></details>' if quote else num
+    return head + ch
+
+
+def gt_details(r: dict) -> str:
+    b = r.get("bound") or {}
+    pairs = []
+    if b.get("regime"):
+        pairs.append(("Regime", text(b["regime"])))
+    if r.get("constraint_set"):
+        pairs.append(("Constraint set", math(r["constraint_set"])))
+    if r.get("extra_assumptions"):
+        pairs.append(("Assumptions", '<ul class="tight">' + "".join(f"<li>{e(str(x))}</li>" for x in as_list(r["extra_assumptions"])) + "</ul>"))
+    pairs.append(("Quantity", text(label(r.get("quantity")))))
+    if r.get("probability"):
+        pairs.append(("Probability", text(label(r["probability"]))))
+    if b.get("expression"):
+        pairs.append(("Canonical", f'<code>{e(str(b["expression"]))}</code> <span class="muted">(n = T)</span>'))
+    if b.get("expression_latex"):
+        pairs.append(("Book's LaTeX", math(b["expression_latex"], "paper") + f'<code class="raw">{e(str(b["expression_latex"]))}</code>'))
+    if r.get("symbols"):
+        pairs.append(("Symbols", '<ul class="tight">' + "".join(f"<li><code>{e(str(k))}</code>: {e(str(v))}</li>" for k, v in r["symbols"].items()) + "</ul>"))
+    for k in ("erratum", "derivation", "notes"):
+        if r.get(k):
+            pairs.append((k.capitalize(), text(r[k])))
+    for c in as_list(r.get("conflicts")):
+        if isinstance(c, dict):
+            pairs.append((f"Conflict ({c.get('where', '')})", f'<blockquote>{e(str(c.get("quote") or c))}</blockquote>'))
+    return f'<details class="more"><summary>details</summary>{dl(pairs, "kv")}</details>'
+
+
+def gt_results(results: list[dict], side: str, sets: dict) -> str:
+    rows = [r for r in results if (r.get("side") or "").lower() == side]
+    if not rows:
+        return '<p class="muted">None.</p>'
+    cols = ["Setting", "Bound", "Algorithm", "Original", "Compute", "Book", "Source"]
+    if not any(r.get("compute") for r in rows):
+        cols.remove("Compute")
+    if not any(r.get("book_theorem") or r.get("book_chapter") for r in rows):
+        cols.remove("Book")
+    # Table rows first (book order), then bounds quoted from the text; grouped by quantity.
+    qs = list(dict.fromkeys(r.get("quantity") for r in rows))
+    body = []
+    for q in qs:
+        body.append(group_row(q, len(cols)) if q in QUANTITY_LABEL else
+                    f'<tr class="group"><th colspan="{len(cols)}">{e(label(q).capitalize())}</th></tr>')
+        for r in sorted((r for r in rows if r.get("quantity") == q), key=lambda r: r.get("in_tables") is False):
+            extra = []
+            if r.get("in_tables") is False:
+                extra.append(badge("text, not table", "muted-badge", str((r.get("source") or {}).get("number") or "")))
+            if r.get("non_constructive"):
+                extra.append(badge("non-constructive", "muted-badge"))
+            if r.get("erratum"):
+                extra.append(badge("erratum", "conf-medium", str(r["erratum"])))
+            if r.get("conflicts"):
+                extra.append(badge("conflict", "conf-low"))
+            if r.get("derived"):
+                extra.append(badge("derived", "inh"))
+            lead = badge(str(r.get("id")), "nota")
+            alg = (f'<span class="alg" title="{e(str(r["algorithm"]), quote=True)}">{e(short(str(r["algorithm"]), 48))}</span>'
+                   if r.get("algorithm") else alg_html({"r": r}))
+            comp = r.get("compute")
+            cells = {
+                "Setting": gt_setting_link(r.get("setting"), sets),
+                "Bound": gt_bound(r) + result_badges(r, "".join(extra) + gt_details(r), lead=lead),
+                "Algorithm": alg,
+                "Original": gt_citation(r),
+                "Compute": ", ".join(math(x) for x in re.split(r",\s*(?![^()]*\))", str(comp))) if comp else NONE,
+                "Book": gt_book(r),
+                "Source": source_html(r),
+            }
+            tds = "".join(f'<td class="c-{slugify(h)}" data-label="{h}">{cells[h]}</td>' for h in cols)
+            body.append(f'<tr id="r-{slugify(str(r.get("id")))}">{tds}</tr>')
+    th = "".join(f'<th class="c-{slugify(h)}">{h}</th>' for h in cols)
+    return (filter_box("Filter by setting, algorithm, citation…") +
+            f'<div class="scroll"><table class="results gt filterable">'
+            f'<thead><tr>{th}</tr></thead><tbody>\n' + "\n".join(body) + "\n</tbody></table></div>")
+
+
+def gt_side_spec(v) -> str:
+    if isinstance(v, dict):
+        return ", ".join(f"{label(k)}: {', '.join(map(str, x)) if isinstance(x, list) else x}" for k, x in v.items())
+    return "" if v is None else str(v)
+
+
+def gt_rules(rules: list[dict]) -> str:
+    shown = {"id", "kind", "from_setting", "to_setting", "transfers", "reverse_transfers", "statement", "quote",
+             "supporting_quote", "quote_source", "section", "confidence", "order"}
+    items = []
+    for t in rules:
+        tr = str(t.get("transfers") or "")
+        head = tr.split(" ", 1)[0]
+        cls = {"lower": "worst", "upper": "inst"}.get(head, "")
+        pairs = [(label(k).capitalize(), text(v))
+                 for k, v in t.items() if k not in shown and v not in (None, "")]
+        if t.get("reverse_transfers"):
+            pairs.insert(0, ("Reverse", text(t["reverse_transfers"])))
+        if " " in tr:
+            pairs.insert(0, ("Transfers", text(tr)))
+        q = "".join(f'<p class="small muted">{e(lbl)}</p><blockquote>{e(str(t[k]))}</blockquote>'
+                    for k, lbl in (("quote", "Quote"), ("supporting_quote", "Supporting quote")) if t.get(k))
+        conf = t.get("confidence")
+        items.append(f"""<li class="rule" id="t-{slugify(str(t.get("id")))}">
+<div class="rule-head"><code>{e(str(t.get("id")))}</code> {badge(label(t.get("kind")))} {badge(head + " bounds" if head in ("lower", "upper", "both") else head, cls)}
+{badge(f"{conf} confidence", f"conf-{conf}") if conf in ("low", "medium") else ""}
+<span class="muted small">{e(str(t.get("section") or ""))}</span></div>
+<div class="rule-ft"><span class="from">{e(gt_side_spec(t.get("from_setting")))}</span> <span class="arrow">→</span> <span class="to">{e(gt_side_spec(t.get("to_setting")))}</span>
+{f'<span class="muted small">({e(str(t["order"]))})</span>' if t.get("order") else ""}</div>
+<p>{e(str(t.get("statement") or ""))}</p>
+{f'<details class="more"><summary>scope and parameters</summary>{dl(pairs, "kv")}</details>' if pairs else ""}
+{f'<details class="more"><summary>quote{"s" if t.get("supporting_quote") else ""}</summary>{q}</details>' if q else ""}
+</li>""")
+    return filter_box("Filter rules…") + '<ul class="rules filterable-cards">' + "".join(items) + "</ul>"
+
+
+def gt_known(v, side: str, sets: dict) -> str:
+    if isinstance(v, dict):
+        return "".join(f'<div class="kb"><a class="small" href="#s-{slugify(k)}">{gt_nota(sets[k]) if k in sets else e(k)}</a>'
+                       f'{gt_formula(x, side)}</div>' for k, x in v.items())
+    return gt_formula(v, side)
+
+
+def gt_open(problems: list[dict], sets: dict) -> str:
+    cards = []
+    for o in problems:
+        ss = o.get("settings")
+        if ss == "all":
+            slinks = '<span class="chip">all settings</span>'
+        else:
+            slinks = "".join(f'<a class="chip" href="#s-{slugify(s)}">{gt_nota(sets[s]) if s in sets else e(s)}</a>'
+                             for s in as_list(ss))
+        lo, up = o.get("known_lower_bound"), o.get("known_upper_bound")
+        bnds = (f'<div class="ul2"><div><span class="side">Known lower</span>{gt_known(lo, "lower", sets)}</div>'
+                f'<div><span class="side">Known upper</span>{gt_known(up, "upper", sets)}</div></div>') if lo or up else ""
+        rel = " ".join(f'<a href="#r-{slugify(x)}">{e(str(x))}</a>' for x in as_list(o.get("related_results")))
+        conf = o.get("confidence")
+        quote = "".join(f'<blockquote>{e(str(o[k]))}</blockquote>' for k in ("context_quote", "quote") if o.get(k))
+        cards.append(f"""<article class="fact" id="op-{slugify(str(o.get("id")))}">
+<header><b>{e(str(o.get("id")))}</b> {badge(label(o.get("kind")), "status")}
+{badge(f"{conf} confidence", f"conf-{conf}") if conf in ("low", "medium") else ""}
+{f'<span class="muted small">{e(str(o["gap_label"]))}</span>' if o.get("gap_label") else ""}</header>
+<p>{e(str(o.get("statement") or ""))}</p>
+{f'<div class="chips">{slinks}</div>' if slinks else ""}
+{bnds}
+{f'<p class="small">Related: {rel}</p>' if rel else ""}
+{f'<p class="small muted">{e(str(o["notes"]))}</p>' if o.get("notes") else ""}
+{f'<details class="more"><summary>quote{" · " + e(str(o["section"])) if o.get("section") else ""}</summary>{quote}</details>' if quote else ""}
+</article>""")
+    return filter_box("Filter open problems…") + '<div class="facts gt-open filterable-cards">' + "".join(cards) + "</div>"
+
+
+def gt_source(src: dict) -> str:
+    pairs = []
+    if src.get("title"):
+        pairs.append(("Book", f'<em>{e(str(src["title"]))}</em>, {e(", ".join(map(str, as_list(src.get("authors")))))}'))
+    if src.get("arxiv_id"):
+        aid = str(src["arxiv_id"])
+        pairs.append(("arXiv", f'<a href="https://arxiv.org/abs/{e(aid, quote=True)}{e(str(src.get("arxiv_version") or ""), quote=True)}">'
+                               f'{e(aid)}{e(str(src.get("arxiv_version") or ""))}</a> <span class="muted">({e(str(src.get("arxiv_version_date") or ""))})</span>'))
+    ex_ = src.get("extraction") or {}
+    if ex_:
+        pairs.append(("Extraction", f'{e(str(ex_.get("produced_by") or ""))} · status {e(str(ex_.get("status")))} · '
+                                    f'human verified: {text(ex_.get("human_verified"))}'))
+    conv = src.get("conventions") or {}
+    cpairs = []
+    for k, v in conv.items():
+        if isinstance(v, dict):
+            cpairs.append((label(k), dl([(label(a), text(b)) for a, b in v.items()], "kv")))
+        elif k.endswith("_quote"):
+            cpairs.append((label(k.removesuffix("_quote")), f"<blockquote>{e(str(v))}</blockquote>"))
+        else:
+            cpairs.append((label(k), text(v)))
+    ga = "".join(f'<li><b>{e(str(a.get("number") or a.get("id")))}</b><blockquote>{e(str(a.get("quote") or ""))}</blockquote>'
+                 + (f'<p class="small">{e(str(a["note"]))}</p>' if a.get("note") else "") + "</li>"
+                 for a in as_list(src.get("global_assumptions")) if isinstance(a, dict))
+    tc = src.get("table_conventions") or {}
+    tcs = "".join(f'<p><b>{e(label(k))}</b>{": " + e(str(v.get("caption"))) if isinstance(v, dict) and v.get("caption") else ""}</p>'
+                  + (f'<blockquote>{e(str(v.get("quote")))}</blockquote>' if isinstance(v, dict) else f"<p>{e(str(v))}</p>")
+                  for k, v in tc.items())
+    out = dl(pairs)
+    if cpairs:
+        out += f'<details class="more"><summary>conventions</summary>{dl(cpairs, "kv")}</details>'
+    if ga:
+        out += f'<details class="more"><summary>global assumptions</summary><ul class="tight gt-ga">{ga}</ul></details>'
+    if tcs:
+        out += f'<details class="more"><summary>table conventions</summary>{tcs}</details>'
+    return out
+
+
 def ground_truth_page(site: Site) -> str:
     bco = site.bco
     body = "<h1>Ground truth: bandit convex optimisation</h1>"
     if not isinstance(bco, dict):
         body += '<p class="notice">No ground-truth file yet (<code>data/ground_truth/bco.yaml</code>).</p>'
         return page("Ground truth", body, "", "gt")
-    body += '<p class="lede">Hand-curated reference data from Lattimore\'s <em>Bandit Convex Optimisation</em>, rendered as-is.</p>'
-    order = ["source", "settings", "results", "transfer_rules", "open_problems"]
-    keys = [k for k in order if k in bco] + [k for k in bco if k not in order]
-    toc = " · ".join(f'<a href="#{slugify(k)}">{e(k.replace("_", " "))}</a>' for k in keys)
-    body += f'<p class="crumbs">{toc}</p>'
-    for k in keys:
-        v = bco[k]
-        inner = generic(v) if isinstance(v, (dict, list)) else f"<p>{text(v)}</p>"
-        body += f'<h2 id="{slugify(k)}">{e(k.replace("_", " ").capitalize())}</h2>' + inner
-    return page("Ground truth", body, "", "gt", wide=True)
+    sets = {str(s.get("id")): s for s in listify(bco, "settings") if isinstance(s, dict)}
+    results = [r for r in listify(bco, "results") if isinstance(r, dict)]
+    rules = [t for t in listify(bco, "transfer_rules") if isinstance(t, dict)]
+    probs = [o for o in listify(bco, "open_problems") if isinstance(o, dict)]
+    nlo = sum(1 for r in results if r.get("side") == "lower")
+    body += ('<p class="lede">Hand-curated reference data from Lattimore\'s <em>Bandit Convex Optimisation</em> '
+             '(LLM-assisted, not yet human-verified). Bounds are rendered from the canonical expression with the '
+             'book\'s horizon <i>n</i> written as <i>T</i>; the book\'s own LaTeX is under each row\'s <i>details</i>.</p>')
+    toc = [("source", "Source"), ("settings", f"Settings ({len(sets)})"), ("lower", f"Lower bounds ({nlo})"),
+           ("upper", f"Upper bounds ({len(results) - nlo})"), ("transfer-rules", f"Transfer rules ({len(rules)})"),
+           ("open-problems", f"Open problems ({len(probs)})")]
+    body += '<p class="crumbs">' + " · ".join(f'<a href="#{a}">{e(t)}</a>' for a, t in toc) + "</p>"
+    if isinstance(bco.get("source"), dict):
+        body += '<h2 id="source">Source</h2>' + gt_source(bco["source"])
+    body += ('<h2 id="settings">Settings</h2><p class="hint muted small">Function classes of Definition 1.1 with '
+             'their assumption vectors. Notation as in the book: superscript s = stochastic, i = improper.</p>' + gt_settings(list(sets.values())))
+    body += ('<h2 id="lower">Lower bounds <span class="muted">(Table 2.1)</span></h2>' + gt_results(results, "lower", sets))
+    body += ('<h2 id="upper">Upper bounds <span class="muted">(Table 2.2)</span></h2>'
+             '<p class="muted small">Compute is the per-round complexity (∞ = non-constructive).</p>' + gt_results(results, "upper", sets))
+    body += ('<h2 id="transfer-rules">Transfer rules</h2><p class="muted small">How bounds move between settings: '
+             'from → to, and which side of the bound transfers.</p>' + gt_rules(rules))
+    body += '<h2 id="open-problems">Open problems</h2>' + gt_open(probs, sets)
+    head = f"<script>window.BB_MACROS = {json.dumps(BCO_MACROS)};</script>"
+    return page("Ground truth", body, "", "gt", head=head, wide=True)
 
 
 def fact_bound(side: str, spec) -> str:

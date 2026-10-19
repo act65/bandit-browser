@@ -243,3 +243,20 @@ Additions to the Rules list:
    - This is a policy choice. The alternative ("always record") is fine too, but the prompt should pick one, because runs currently disagree.
 7. *(declared symbols)*
    > Name a declared symbol after the paper's own symbol, transliterated with underscores (C_2, not C2_eps; n_explore for the paper's exploration length n), and reuse canonical names such as `eps_alg` whenever the meaning matches.
+
+## 5. Full-corpus run after adopting the recommendations (schema 0.4)
+
+Re-extracted all 58 papers, about $38 equivalent. The new run used:
+- printed theorem numbers (counter emulation in `preprocess.py`);
+- prompt rules for case splits, corollary policy, upper- and lower-bound knowledge, instance assumptions, quantity by definition and symbol naming;
+- `conditions` vs `tuning`.
+
+| Metric | Before | After |
+|---|---|---|
+| Theorem numbers matching counter emulation | ~73% (sample) | **268/270** |
+| Validation: clean files | 49/58 | **51/58** |
+| `verify.py` corrections | 11 on 6 papers (v0.3 sample) | **4 on 58 papers** (1 major, 3 minor) |
+| Flagged missing results | — | 7 |
+| Conflicts in `data/reports/conflicts.md` | — | **0** |
+
+The 6 papers with a major correction or a missing-result flag make the first human-review queue: auer2002exp3, baudry2023recipe, bubeck2013bounded, dann2023blackbox, gerchinovitz2016refined, qin2023klms. Verifier reports are in `data/extractions_verified/*.verify.json`. Corrections are never auto-applied to `data/extractions/`.

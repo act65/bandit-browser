@@ -84,7 +84,7 @@ def check_expression(expr: str, declared: set[str]) -> str | None:
     local = {}
     for m in IDENT_RE.finditer(expr):
         name = m.group(0)
-        if name in local or name in KNOWN_FUNCS or name == "pi":
+        if name in local or name in KNOWN_FUNCS or name in {"Integer", "Rational", "Float", "oo"} or name == "pi":
             continue
         is_call = expr[m.end():m.end() + 1] == "("
         local[name] = sympy.Function(name) if is_call else sympy.Symbol(name)

@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Minimal Exploration in Structured Stochastic Bandits",
@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Generic structured stochastic MAB (finite arms, known structure Theta, known observation family nu)",
+   "name_in_paper": "Generic structured stochastic MAB (lower bound)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -25,11 +25,10 @@
    "context": "none",
    "noise": "not_applicable",
    "learner_knows": [
+    "K",
     "reward_family"
    ],
-   "instance_assumptions": [
-    "unique_optimal_arm"
-   ],
+   "instance_assumptions": [],
    "extras": [],
    "action_set": {
     "shape": "not_applicable",
@@ -40,15 +39,15 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Observation distribution nu(theta(x)) from a generic known family (not restricted to a named noise class)",
-    "Reward mu(x,theta) is deterministic and unobserved; only Y(x,t) with mean theta(x) is observed",
-    "Parameter theta lies in a known compact set Theta encoding the structure"
+    "Observation Y(x,t) ~ nu(theta(x)) from a known general parametric family; reward mu(x,theta) is deterministic, known function, unobserved",
+    "theta lies in a known compact set Theta encoding the structure",
+    "Finite arm set X"
    ],
    "definition_quote": "In each round, the decision maker selects an arm from a finite set $\\cX$. Each arm $x\\in\\cX$ has an unknown parameter $\\theta(x)\\in \\mathbb{R}$, and when this arm is chosen in round $t$, the decision maker observes a real-valued random variable $Y(x,t)$ with expectation $\\theta(x)$ and distribution $\\nu(\\theta(x))$. ... The parameter $\\theta$ lies in a compact set $\\Theta$ that encodes the structural properties of the problem."
   },
   {
    "id": "s2",
-   "name_in_paper": "Generic structured stochastic MAB with Bernoulli observations (Assumption 2)",
+   "name_in_paper": "Generic structured stochastic MAB with Bernoulli observations",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -58,6 +57,7 @@
    "context": "none",
    "noise": "bernoulli",
    "learner_knows": [
+    "K",
     "reward_family"
    ],
    "instance_assumptions": [
@@ -73,15 +73,14 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Parameter theta lies in a known compact set Theta encoding the structure",
-    "Reward mu(x,theta) deterministic, known function of theta, continuous in theta",
-    "Divergence D continuous where finite (Assumption 4); unique solution of the lower-bound optimisation problem (Assumption 6)"
+    "Known compact structure set Theta and known reward map mu(x,theta)",
+    "Finite arm set X"
    ],
    "definition_quote": "(Bernoulli observations) $\\theta(x) \\in [0,1]$ and $\\nu(\\theta(x)) =$Ber$(\\theta(x))$ for all $x \\in \\cX$."
   },
   {
    "id": "s3",
-   "name_in_paper": "Generic structured stochastic MAB with Gaussian observations (Assumption 3)",
+   "name_in_paper": "Generic structured stochastic MAB with Gaussian observations",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -91,6 +90,7 @@
    "context": "none",
    "noise": "gaussian_known_variance",
    "learner_knows": [
+    "K",
     "reward_family",
     "sigma"
    ],
@@ -109,9 +109,8 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Parameter theta lies in a known compact set Theta encoding the structure",
-    "Reward mu(x,theta) deterministic, known function of theta, continuous in theta",
-    "Divergence D continuous where finite (Assumption 4); unique solution of the lower-bound optimisation problem (Assumption 6)"
+    "Known compact structure set Theta and known reward map mu(x,theta)",
+    "Finite arm set X"
    ],
    "definition_quote": "(Gaussian observations) $\\theta(x) \\in \\RR$ and $\\nu(\\theta(x)) =\\cN(\\theta(x),1)$ for all $x \\in \\cX$."
   }
@@ -127,11 +126,8 @@
     "other"
    ],
    "requires_knowledge_of": [
-    "Theta (structure)",
-    "observation family nu",
-    "mu(x,theta) mapping",
-    "epsilon",
-    "gamma"
+    "reward_family",
+    "K"
    ]
   }
  ],
@@ -154,20 +150,19 @@
     "expression_latex": "\\lim\\inf_{T\\to\\infty} \\frac{R^\\pi(T,\\theta)}{\\ln~T} \\ge C(\\theta)",
     "regime": "T -> infinity"
    },
-   "symbols": {
-    "C_lin": "C(theta): value of the semi-infinite LP min sum_x eta(x)(mu*-mu(x,theta)) s.t. sum_x eta(x) D(theta,lambda,x) >= 1 for all confusing lambda in Lambda(theta)"
-   },
-   "extra_assumptions": [
-    "unique optimal arm (Assumption 1)"
+   "symbols": {},
+   "conditions": [
+    "unique optimal arm x*(theta) (Assumption 1, stated just before the theorem)"
    ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:low",
     "number": "Theorem 1",
-    "quote": "Let $\\pi\\in \\Pi$ be a uniformly good algorithm. For any $\\theta\\in \\Theta$, we have: \\lim\\inf_{T\\to\\infty} \\frac{R^\\pi(T,\\theta)}{\\ln~T} \\ge C(\\theta), where $C(\\theta)$ is the value of the optimization problem ..."
+    "quote": "Let $\\pi\\in \\Pi$ be a uniformly good algorithm. For any $\\theta\\in \\Theta$, we have: \\lim\\inf_{T\\to\\infty} \\frac{R^\\pi(T,\\theta)}{\\ln~T} \\ge C(\\theta), where $C(\\theta)$ is the value of the optimization problem: minimize \\sum_x \\eta(x)(\\mu^\\star(\\theta)-\\mu(x,\\theta)) subject to \\sum_x \\eta(x) D(\\theta,\\lambda,x) \\ge 1, \\forall \\lambda \\in \\Lambda(\\theta)"
    },
    "confidence": "high",
-   "notes": "Proof applies Graves & Lai (1997). Regret is defined with deterministic rewards, i.e. pseudo-regret."
+   "notes": "C(theta) is the Graves-Lai semi-infinite LP value (C_lin). Proof applies Graves & Lai (1997); appendix has a typo (<=). Regret is defined through means, hence pseudo-regret."
   },
   {
    "id": "r2",
@@ -183,26 +178,31 @@
    "compute": "not_stated",
    "bound": {
     "notation": "limsup",
-    "expression": "C_lin*F_eg*log(T)",
+    "expression": "C_lin*F_eps_gamma*log(T)",
     "expression_latex": "\\lim\\sup_{T\\to\\infty} {R^\\pi(T) \\over \\ln~T} \\le C(\\theta) F(\\varepsilon,\\gamma,\\theta)",
-    "regime": "T -> infinity; epsilon < 1/K"
+    "regime": "T -> infinity"
    },
    "symbols": {
-    "C_lin": "C(theta): value of the lower-bound semi-infinite LP",
-    "F_eg": "F(epsilon,gamma,theta), function tending to 1 as epsilon,gamma -> 0"
+    "F_eps_gamma": "function F(epsilon,gamma,theta) -> 1 as epsilon, gamma -> 0; the proof gives (1 + 2*epsilon*psi(theta)/C(theta))*(1+gamma)"
    },
-   "extra_assumptions": [
-    "Assumptions 1,4,5,6: unique optimal arm, continuity of D and mu, unique solution of the optimisation problem",
-    "OSSB parameter epsilon < 1/|X|"
+   "conditions": [
+    "Assumption 1: unique optimal arm",
+    "Assumption 4: KL divergence continuous where finite",
+    "Assumption 5: theta -> mu(x,theta) continuous",
+    "Assumption 6: unique solution of the optimization problem"
+   ],
+   "tuning": [
+    "epsilon < 1/|X|",
+    "gamma > 0"
    ],
    "is_new": true,
    "source": {
     "label": "th:optimal",
     "number": "Theorem 2",
-    "quote": "If Assumptions~\\ref{ass:unique}, \\ref{as:div_continuous}, \\ref{as:mu_continuous} and \\ref{ass:unique_sol} hold and either Assumption~\\ref{ass:bernoulli} or \\ref{ass:gaussian} holds, then under the algorithm $\\pi=$OSSB($\\varepsilon,\\gamma$) with $\\varepsilon < {1 \\over |\\cX|}$ we have: \\lim\\sup_{T\\to\\infty} {R^\\pi(T) \\over \\ln~T} \\le C(\\theta) F(\\varepsilon,\\gamma,\\theta), with $F$ a function such that ... $F(\\varepsilon,\\gamma,\\theta) \\to 1$ as $\\varepsilon\\to 0$ and $\\gamma \\to 0$."
+    "quote": "If Assumptions~\\ref{ass:unique}, \\ref{as:div_continuous}, \\ref{as:mu_continuous} and \\ref{ass:unique_sol} hold and either Assumption~\\ref{ass:bernoulli} or \\ref{ass:gaussian} holds, then under the algorithm $\\pi=$OSSB($\\varepsilon,\\gamma$) with $\\varepsilon < {1 \\over |\\cX|}$ we have: \\lim\\sup_{T\\to\\infty} {R^\\pi(T) \\over \\ln~T} \\le C(\\theta) F(\\varepsilon,\\gamma,\\theta), with $F$ a function such that for all $\\theta$, we have $F(\\varepsilon,\\gamma,\\theta) \\to 1$ as $\\varepsilon\\to 0$ and $\\gamma \\to 0$."
    },
    "confidence": "high",
-   "notes": "Bernoulli case of Theorem 2. Proof gives F = (1+2 eps psi/C)(1+gamma). Per-round computation requires solving a semi-infinite LP; complexity not stated in general."
+   "notes": "Bernoulli case of Theorem 2. Appendix gives the explicit limsup <= (C(theta) + 2 eps psi(theta))(1+gamma), psi(theta)=|X| ||c(theta)||_inf sum_x Delta(theta,x)."
   },
   {
    "id": "r3",
@@ -218,23 +218,28 @@
    "compute": "not_stated",
    "bound": {
     "notation": "limsup",
-    "expression": "C_lin*F_eg*log(T)",
+    "expression": "C_lin*F_eps_gamma*log(T)",
     "expression_latex": "\\lim\\sup_{T\\to\\infty} {R^\\pi(T) \\over \\ln~T} \\le C(\\theta) F(\\varepsilon,\\gamma,\\theta)",
-    "regime": "T -> infinity; epsilon < 1/K"
+    "regime": "T -> infinity"
    },
    "symbols": {
-    "C_lin": "C(theta): value of the lower-bound semi-infinite LP",
-    "F_eg": "F(epsilon,gamma,theta), function tending to 1 as epsilon,gamma -> 0"
+    "F_eps_gamma": "function F(epsilon,gamma,theta) -> 1 as epsilon, gamma -> 0; the proof gives (1 + 2*epsilon*psi(theta)/C(theta))*(1+gamma)"
    },
-   "extra_assumptions": [
-    "Assumptions 1,4,5,6: unique optimal arm, continuity of D and mu, unique solution of the optimisation problem",
-    "OSSB parameter epsilon < 1/|X|"
+   "conditions": [
+    "Assumption 1: unique optimal arm",
+    "Assumption 4: KL divergence continuous where finite",
+    "Assumption 5: theta -> mu(x,theta) continuous",
+    "Assumption 6: unique solution of the optimization problem"
+   ],
+   "tuning": [
+    "epsilon < 1/|X|",
+    "gamma > 0"
    ],
    "is_new": true,
    "source": {
     "label": "th:optimal",
     "number": "Theorem 2",
-    "quote": "If Assumptions~\\ref{ass:unique}, \\ref{as:div_continuous}, \\ref{as:mu_continuous} and \\ref{ass:unique_sol} hold and either Assumption~\\ref{ass:bernoulli} or \\ref{ass:gaussian} holds, then under the algorithm $\\pi=$OSSB($\\varepsilon,\\gamma$) with $\\varepsilon < {1 \\over |\\cX|}$ we have: \\lim\\sup_{T\\to\\infty} {R^\\pi(T) \\over \\ln~T} \\le C(\\theta) F(\\varepsilon,\\gamma,\\theta) ..."
+    "quote": "If Assumptions ... hold and either Assumption~\\ref{ass:bernoulli} or \\ref{ass:gaussian} holds, then under the algorithm $\\pi=$OSSB($\\varepsilon,\\gamma$) with $\\varepsilon < {1 \\over |\\cX|}$ we have: \\lim\\sup_{T\\to\\infty} {R^\\pi(T) \\over \\ln~T} \\le C(\\theta) F(\\varepsilon,\\gamma,\\theta)"
    },
    "confidence": "high",
    "notes": "Gaussian unit-variance case of Theorem 2."
@@ -253,31 +258,32 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "mu_star*(G_gK + 2*K/(eps_alg*delta_k**2)) + (C_lin*(1 + kappa) + 2*eps_alg*psi_th)*(1 + gamma_alg)*log(T)",
-    "expression_latex": "R^{\\pi}(T) \\le \\mu^\\star(\\theta) \\left( G(\\gamma,|\\cX|) +  {2 |\\cX| \\over \\varepsilon \\delta^2(\\kappa)}\\right) + (C(\\theta)(1 + \\kappa) + 2 \\varepsilon \\psi(\\theta) ) (1+\\gamma) \\ln~T",
-    "regime": "any kappa > 0; epsilon < 1/K"
+    "expression": "mu_star*(G_fn + 2*K/(eps_alg*delta_kappa**2)) + (C_lin*(1 + kappa) + 2*eps_alg*psi_theta)*(1 + gamma_alg)*log(T)",
+    "expression_latex": "R^{\\pi}(T) \\le \\mu^\\star(\\theta) \\left( G(\\gamma,|\\cX|) + {2 |\\cX| \\over \\varepsilon \\delta^2(\\kappa)}\\right) + (C(\\theta)(1 + \\kappa) + 2 \\varepsilon \\psi(\\theta) ) (1+\\gamma) \\ln~T",
+    "regime": null
    },
    "symbols": {
-    "C_lin": "C(theta)",
-    "G_gK": "G(gamma,|X|), finite constant from concentration Lemma 2",
-    "eps_alg": "OSSB parameter epsilon",
-    "gamma_alg": "OSSB parameter gamma",
-    "kappa": "free analysis parameter > 0",
-    "delta_k": "delta(kappa) > 0, continuity radius such that C(lambda)<=C(theta)(1+kappa) etc.",
-    "psi_th": "psi(theta) = |X| ||c(theta)||_inf sum_x (mu*(theta)-mu(x,theta))"
+    "G_fn": "finite function G(gamma,|X|) from the concentration lemma",
+    "delta_kappa": "delta(kappa)>0 such that ||theta-lambda||_inf <= delta(kappa) implies C(lambda) <= (1+kappa)C(theta), psi(lambda)<=2psi(theta), same optimal arm",
+    "kappa": "arbitrary positive analysis parameter",
+    "psi_theta": "|X| * ||c(theta)||_inf * sum_x (mu_star - mu(x,theta))",
+    "gamma_alg": "OSSB parameter gamma"
    },
-   "extra_assumptions": [
-    "Assumptions 1,4,5,6",
-    "epsilon < 1/|X|"
+   "conditions": [
+    "Assumptions 1, 4, 5, 6"
+   ],
+   "tuning": [
+    "epsilon < 1/|X| (eps_alg = OSSB epsilon)",
+    "gamma > 0"
    ],
    "is_new": true,
    "source": {
     "label": null,
-    "number": "Section 6 / Appendix B (finite-time bound in proof of Theorem 2)",
-    "quote": "Putting everything together we obtain the finite-time regret upper bound: R^{\\pi}(T) \\le \\mu^\\star(\\theta) \\left( G(\\gamma,|\\cX|) +  {2 |\\cX| \\over \\varepsilon \\delta^2(\\kappa)}\\right) + (C(\\theta)(1 + \\kappa) + 2 \\varepsilon \\psi(\\theta) ) (1+\\gamma) \\ln~T."
+    "number": "Section 6 (finite-time bound, proof of Theorem 2)",
+    "quote": "Putting everything together we obtain the finite-time regret upper bound: R^{\\pi}(T) \\le \\mu^\\star(\\theta) \\left( G(\\gamma,|\\cX|) + {2 |\\cX| \\over \\varepsilon \\delta^2(\\kappa)}\\right) + (C(\\theta)(1 + \\kappa) + 2 \\varepsilon \\psi(\\theta) ) (1+\\gamma) \\ln~T."
    },
    "confidence": "medium",
-   "notes": "Not in a formal theorem environment; derived in proof sketch and appendix. Holds under Bernoulli or Gaussian assumption; recorded here for Bernoulli and as r5 for Gaussian. G and delta(kappa) not explicit."
+   "notes": "Not a formal theorem environment; stated in Section 6 text and appendix proof. K denotes |X|. G and delta(kappa) are not explicit."
   },
   {
    "id": "r5",
@@ -293,52 +299,35 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "mu_star*(G_gK + 2*K/(eps_alg*delta_k**2)) + (C_lin*(1 + kappa) + 2*eps_alg*psi_th)*(1 + gamma_alg)*log(T)",
-    "expression_latex": "R^{\\pi}(T) \\le \\mu^\\star(\\theta) \\left( G(\\gamma,|\\cX|) +  {2 |\\cX| \\over \\varepsilon \\delta^2(\\kappa)}\\right) + (C(\\theta)(1 + \\kappa) + 2 \\varepsilon \\psi(\\theta) ) (1+\\gamma) \\ln~T",
-    "regime": "any kappa > 0; epsilon < 1/K"
+    "expression": "mu_star*(G_fn + 2*K/(eps_alg*delta_kappa**2)) + (C_lin*(1 + kappa) + 2*eps_alg*psi_theta)*(1 + gamma_alg)*log(T)",
+    "expression_latex": "R^{\\pi}(T) \\le \\mu^\\star(\\theta) \\left( G(\\gamma,|\\cX|) + {2 |\\cX| \\over \\varepsilon \\delta^2(\\kappa)}\\right) + (C(\\theta)(1 + \\kappa) + 2 \\varepsilon \\psi(\\theta) ) (1+\\gamma) \\ln~T",
+    "regime": null
    },
    "symbols": {
-    "C_lin": "C(theta)",
-    "G_gK": "G(gamma,|X|), finite constant from concentration Lemma 2",
-    "eps_alg": "OSSB parameter epsilon",
-    "gamma_alg": "OSSB parameter gamma",
-    "kappa": "free analysis parameter > 0",
-    "delta_k": "delta(kappa) > 0, continuity radius",
-    "psi_th": "psi(theta) = |X| ||c(theta)||_inf sum_x (mu*(theta)-mu(x,theta))"
+    "G_fn": "finite function G(gamma,|X|) from the concentration lemma",
+    "delta_kappa": "delta(kappa)>0 continuity radius",
+    "kappa": "arbitrary positive analysis parameter",
+    "psi_theta": "|X| * ||c(theta)||_inf * sum_x (mu_star - mu(x,theta))",
+    "gamma_alg": "OSSB parameter gamma"
    },
-   "extra_assumptions": [
-    "Assumptions 1,4,5,6",
-    "epsilon < 1/|X|"
+   "conditions": [
+    "Assumptions 1, 4, 5, 6"
+   ],
+   "tuning": [
+    "epsilon < 1/|X|",
+    "gamma > 0"
    ],
    "is_new": true,
    "source": {
     "label": null,
-    "number": "Section 6 / Appendix B (finite-time bound in proof of Theorem 2)",
-    "quote": "Putting everything together we obtain the finite-time regret upper bound: R^{\\pi}(T) \\le \\mu^\\star(\\theta) \\left( G(\\gamma,|\\cX|) +  {2 |\\cX| \\over \\varepsilon \\delta^2(\\kappa)}\\right) + (C(\\theta)(1 + \\kappa) + 2 \\varepsilon \\psi(\\theta) ) (1+\\gamma) \\ln~T."
+    "number": "Section 6 (finite-time bound, proof of Theorem 2)",
+    "quote": "Putting everything together we obtain the finite-time regret upper bound: R^{\\pi}(T) \\le \\mu^\\star(\\theta) \\left( G(\\gamma,|\\cX|) + {2 |\\cX| \\over \\varepsilon \\delta^2(\\kappa)}\\right) + (C(\\theta)(1 + \\kappa) + 2 \\varepsilon \\psi(\\theta) ) (1+\\gamma) \\ln~T."
    },
    "confidence": "medium",
-   "notes": "Gaussian case of the finite-time bound; same caveats as r4."
+   "notes": "Gaussian case; same as r4."
   }
  ],
  "cited_results": [
-  {
-   "cited_key": "graves1997",
-   "cited_title": "Asymptotically efficient adaptive choice of control laws in controlled markov chains",
-   "cited_first_author": "T. L. Graves",
-   "cited_year": 1997,
-   "cited_arxiv_id": null,
-   "algorithm_name": null,
-   "algorithm_registry_id": null,
-   "side": "lower",
-   "setting_description": "Generic structured bandits / controlled Markov chains; uniformly good algorithms",
-   "bound": {
-    "notation": "liminf",
-    "expression": "C_lin*log(T)",
-    "expression_latex": "C(\\theta)\\ln T",
-    "regime": "T -> infinity"
-   },
-   "where": "Related work"
-  },
   {
    "cited_key": "lai1985",
    "cited_title": "Asymptotically efficient adaptive allocation rules",
@@ -351,11 +340,47 @@
    "setting_description": "Unstructured stochastic MAB, uniformly good algorithms: each suboptimal arm played at least ln T / d(theta(x),theta(x*)) times",
    "bound": {
     "notation": "liminf",
-    "expression": "sum_subopt(Delta_i*log(T)/KL_i)",
+    "expression": "sum_subopt(Delta_i/KL_i)*log(T)",
     "expression_latex": "\\ln~T/d(\\theta(x),\\theta(x^\\star))",
     "regime": "T -> infinity"
    },
    "where": "Section 4"
+  },
+  {
+   "cited_key": "graves1997",
+   "cited_title": "Asymptotically efficient adaptive choice of control laws in controlled markov chains",
+   "cited_first_author": "T. L. Graves",
+   "cited_year": 1997,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Generic structured bandits / controlled Markov chains: regret scales as C(theta) ln T",
+   "bound": {
+    "notation": "liminf",
+    "expression": "C_lin*log(T)",
+    "expression_latex": "C(\\theta)\\ln~T",
+    "regime": "T -> infinity"
+   },
+   "where": "Section 2 (Related work)"
+  },
+  {
+   "cited_key": "lattimore2016end",
+   "cited_title": "The end of optimism? an asymptotic analysis of finite-armed linear bandits",
+   "cited_first_author": "T. Lattimore",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Optimal algorithm of Lattimore & Szepesvari",
+   "algorithm_registry_id": "end_of_optimism_optimal",
+   "side": "upper",
+   "setting_description": "Finite-armed linear bandits, Gaussian noise; asymptotically optimal algorithm",
+   "bound": {
+    "notation": "limsup",
+    "expression": "C_lin*log(T)",
+    "expression_latex": "C(\\theta)\\ln T",
+    "regime": "T -> infinity"
+   },
+   "where": "Sections 1, 4"
   }
  ],
  "_run": {
@@ -364,16 +389,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:27:30",
-  "source_chars": 62768,
-  "input_tokens": 54027,
-  "output_tokens": 7142,
-  "cost_usd_equiv": 0.3980816,
+  "date": "2026-10-19T17:35:41",
+  "source_chars": 63033,
+  "input_tokens": 55710,
+  "output_tokens": 7957,
+  "cost_usd_equiv": 0.4158336,
   "status": "extracted"
  }
 }

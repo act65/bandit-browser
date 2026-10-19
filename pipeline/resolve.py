@@ -40,6 +40,8 @@ TRIVIAL_KNOWLEDGE = {"T", "K", "d"}
 DEFAULT_ACTION_SET = {"shape": "not_applicable", "time_varying": "not_applicable", "access": "not_applicable"}
 IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 FUNC_NAMES = {"log", "sqrt", "exp", "Min", "Max", "min", "max", "LambertW", "sum_subopt", "sum_arms", "kl"}
+# SymPy names the parser itself emits (numbers become Integer(...), Rational(...)); never rebind them
+SYMPY_RESERVED = {"Integer", "Rational", "Float", "Symbol", "Function", "oo", "I"}
 
 
 # ---------------------------------------------------------------- settings
@@ -54,6 +56,8 @@ def setting_key(s: dict, ont: dict) -> dict:
             if dim == "learner_knows":
                 v = [x for x in v if x not in TRIVIAL_KNOWLEDGE]
         key[dim] = v if v is not None else ("not_applicable" if dim == "domain" else None)
+    if key.get("noise") == "not_applicable" and str(key.get("environment", "")).startswith("stochastic"):
+        key["noise"] = "general_model_class"  # extractions before ontology 0.3.1 had no value for this
     key["action_set"] = {**DEFAULT_ACTION_SET, **(s.get("action_set") or {})}
     # access is computational only: it does not separate statistical settings
     key["action_set"] = {k: v for k, v in key["action_set"].items() if k != "access"}
@@ -105,7 +109,7 @@ def parse(expr: str):
     local = {}
     for m in IDENT_RE.finditer(expr):
         name = m.group(0)
-        if name in local or name in FUNC_NAMES or name == "pi":
+        if name in local or name in FUNC_NAMES or name in SYMPY_RESERVED or name == "pi":
             continue
         local[name] = sympy.Function(name) if expr[m.end():m.end() + 1] == "(" else sympy.Symbol(name)
     funcs = {"log": sympy.log, "sqrt": sympy.sqrt, "exp": sympy.exp, "Min": sympy.Min, "Max": sympy.Max,
@@ -239,7 +243,12 @@ def main() -> None:
                 "algorithm_id": local_algo.get(r.get("algorithm")),
                 **{k: r.get(k) for k in ("side", "algorithm_class", "quantity", "dependence", "probability",
                                           "horizon", "comparator", "compute", "confidence", "notes",
-                                          "extra_assumptions", "symbols", "is_new")},
+                                          "symbols", "is_new")},
+                # schema 0.4 splits extra_assumptions into conditions + tuning; older files keep
+                # extra_assumptions (unclassified, treated as conditions)
+                "conditions": r.get("conditions", r.get("extra_assumptions", [])),
+                "tuning": r.get("tuning", []),
+                "extra_assumptions": r.get("conditions", r.get("extra_assumptions", [])) + r.get("tuning", []),
                 "bound": {**r["bound"], "expression_normalised": norm_expr, "conversions": applied},
                 "source": r["source"],
             })

@@ -1,0 +1,258 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Better Algorithms for Stochastic Bandits with Adversarial Corruptions",
+  "arxiv_id": "1902.08647",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Anupam Gupta",
+   "Tomer Koren",
+   "Kunal Talwar"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Stochastic MAB with Adversarial Corruptions",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_corrupted",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
+   "extras": [],
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Adaptive adversary: corruptions on round t may depend on past player choices and current/past stochastic rewards",
+    "C = sum_t ||tilde R^t - R^t||_inf is a realized random variable, unknown to the learner"
+   ],
+   "definition_quote": "A stochastic reward $\\rew^t_i \\in [0,1]$ is drawn for each arm $i$ from its reward distribution; The adversary observes the vector $\\rew^t$ and generates corrupted rewards $\\wt{\\rew}^t \\in [0,1]^K$; The player picks $i_t \\in [K]$, possibly at random, and observes the corrupted reward $\\wt{\\rew}^t_{i_t}$. ... $C = \\sum_{t=1}^T \\norm{\\wt{\\rew}^t - \\rew^t}_\\infty$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Stochastic MAB with Adversarial Corruptions (lower bound)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_corrupted",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K",
+    "C"
+   ],
+   "instance_assumptions": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
+   "extras": [],
+   "parameters": {
+    "K": "2"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Lower-bound instance uses deterministic rewards 0 and 1 with an adversary randomly swapping them"
+   ],
+   "definition_quote": "Consider the case of two arms with deterministic rewards $0$ and $1$, and consider an adversary that at each time step swaps the rewards of the arms with probability $1/2$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "BARBAR (Bandit Algorithm with Robustness: Bad Arms get Recourse)",
+   "registry_id": "barbar",
+   "is_new": true,
+   "techniques": [
+    "elimination",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "delta",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "K*C + sum_subopt(log(T)/Delta_i*log(K/delta*log(T)))",
+    "expression_latex": "O\\Bigg(KC + \\sum_{i \\neq i^\\star} \\frac{\\log{T}}{\\Delta_i} \\log\\!\\Big(\\frac{K}{\\delta}\\log{T}\\Big) \\!\\Bigg)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "C is the realized corruption level (random variable)"
+   ],
+   "tuning": [
+    "lambda = 1024 ln((8K/delta) log2 T)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1",
+    "quote": "With probability at least $1-\\delta$, the regret of \\cref{alg:barbar} is bounded by \\[ O\\Bigg(KC + \\sum_{i \\neq i^\\star} \\frac{\\log{T}}{\\Delta_i} \\log\\!\\Big(\\frac{K}{\\delta}\\log{T}\\Big) \\!\\Bigg). \\]"
+   },
+   "confidence": "high",
+   "notes": "Regret is pseudo-regret sum_t (mu* - mu_{i_t}), bounded with probability 1-delta. Agnostic to C. Appendix B shows Omega(KC) is tight for this algorithm."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "K*C_exp + sum_subopt(log(K*T)**2/Delta_i)",
+    "expression_latex": "O\\Bigg(K\\,\\Ex[C] + \\sum_{i \\neq i^\\star} \\frac{1}{\\Delta_i} \\log^2(KT) \\Bigg)",
+    "regime": null
+   },
+   "symbols": {
+    "C_exp": "expected corruption level E[C]"
+   },
+   "conditions": [],
+   "tuning": [
+    "delta = 1/T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1 (expected-regret consequence)",
+    "quote": "To convert the bound of \\cref{thm:main} into a bound on the expected regret of the algorithm, one can set $\\delta = 1 / T$; ... Thus, the expected regret is bounded by O(K\\,\\Ex[C] + \\sum_{i \\neq i^\\star} \\frac{1}{\\Delta_i} \\log^2(KT))."
+   },
+   "confidence": "medium",
+   "notes": "Derived informally in text after Theorem 1, not a separately numbered statement."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "C",
+    "expression_latex": "\\Omega(C)",
+    "regime": "C <= T/2"
+   },
+   "symbols": {},
+   "conditions": [
+    "C <= T/2"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Section 5.1 (A Lower bound)",
+    "quote": "We show an $\\Omega(C)$ lower bound for the pseudo-regret of any algorithm. ... In other words, for the pseudo-regret under this contamination model there is a lower bound of $\\Omega(C)$ that holds for all $C$ up to $T \\div 2$. Moreover this lower bound holds even for the case of known $C$."
+   },
+   "confidence": "medium",
+   "notes": "Informal argument in discussion; says 'with constant probability the algorithm will suffer pseudo-regret Omega(C)', so the probability type is loosely stated."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "LykourisMPL18",
+   "cited_title": "Stochastic bandits robust to adversarial corruptions",
+   "cited_first_author": "T. Lykouris",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Multi-layer Active Arm Elimination Race",
+   "algorithm_registry_id": "multi_layer_aae_race",
+   "side": "upper",
+   "setting_description": "Stochastic MAB with adversarial corruptions, unknown corruption level C",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "K*C*sum_subopt(1/Delta_i)",
+    "expression_latex": "\\wt{O}\\big( KC \\sum_{i \\neq i^\\star}\\! 1\\div\\Delta_i \\big)",
+    "regime": null
+   },
+   "where": "Section 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.3",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-19T17:32:13",
+  "source_chars": 55312,
+  "input_tokens": 52128,
+  "output_tokens": 4428,
+  "cost_usd_equiv": 0.3165976,
+  "status": "extracted"
+ },
+ "_verify": {
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "prompt_sha": "81d04c3b9fd7",
+  "date": "2026-10-19T17:40:33",
+  "applied_on": "2026-10-19T17:42:58",
+  "min_confidence": "medium",
+  "applied": [],
+  "rejected": [],
+  "flags": {
+   "hallucinated": [],
+   "not_a_guarantee": [],
+   "unverifiable": [],
+   "missing_results": []
+  },
+  "summary": "The extraction is accurate. The main high-probability bound (Theorem 1), its expected-regret version and the informal Ω(C) lower bound are all recorded faithfully, with appropriate settings and the correct registry mapping. The Section 4 special-case bounds are informal remarks, not formal theorems, so leaving them out is acceptable."
+ }
+}

@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_ONTOLOGY = ROOT / "ontology" / "bandits-0.3.yaml"
 VARIABLES = ROOT / "ontology" / "variables.yaml"
 ALGORITHMS = ROOT / "data" / "algorithms.yaml"
-SCHEMA_VERSION = "0.3"
+SCHEMA_VERSION = "0.4"
 
 
 def load_ontology(path: Path = DEFAULT_ONTOLOGY) -> dict:
@@ -128,7 +128,8 @@ def build_models(ontology: dict, algorithm_ids: list[str] | None = None):
         compute=(Literal["polynomial", "exponential", "non_constructive", "not_stated"], ...),
         bound=(Bound, ...),
         symbols=(dict[str, str], ...),
-        extra_assumptions=(list[str], ...),
+        conditions=(list[str], ...),      # restrict the instances / setting beyond the setting's key
+        tuning=(list[str], ...),          # algorithm parameter choices; do not restrict the problem
         is_new=(bool, ...),
         source=(Source, ...),
         confidence=(Literal["high", "medium", "low"], ...),

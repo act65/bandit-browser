@@ -1,0 +1,398 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Towards minimax policies for online linear optimization with bandit feedback",
+  "arxiv_id": "1202.3079",
+  "arxiv_version": null,
+  "year": 2012,
+  "authors": [
+   "Sébastien Bubeck",
+   "Nicolò Cesa-Bianchi",
+   "Sham M. Kakade"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online linear optimization with bandit feedback, finite action set of N actions",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_unspecified",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "T",
+    "K",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Dual setting: |a^T z| <= 1 for all a in A, z in Z (instantaneous loss bounded by 1)",
+    "Number of actions N mapped to K"
+   ],
+   "definition_quote": "In this paper we are interested in the dual setting, where the adversary plays on a dual action set, i.e., $\\cA$ and $\\cZ$ are such that $|a^{\\top} z| \\leq 1, \\forall (a,z) \\in \\cA \\times \\cZ$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Bandit linear optimization on the hypercube with cross-polytope losses",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_unspecified",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "T",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "hypercube",
+    "time_varying": "fixed",
+    "access": "explicit"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Loss set Z = {z: ||z||_1 <= 1} (cross-polytope)"
+   ],
+   "definition_quote": "Consider the online linear optimization problem with bandit feedback on $\\cA = \\{x \\in \\R^d: \\|x\\|_{\\infty} \\leq 1 \\}$, and with $\\cZ = \\{x \\in \\R^d: \\|x\\|_{1} \\leq 1 \\}$."
+  },
+  {
+   "id": "s3",
+   "name_in_paper": "Bandit linear optimization on the Euclidean ball with Euclidean-ball losses",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_unspecified",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "T",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "unit_ball",
+    "time_varying": "fixed",
+    "access": "explicit"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Loss set Z = unit Euclidean ball"
+   ],
+   "definition_quote": "Consider the online linear optimization problem with bandit feedback on $\\cA = \\{x \\in \\R^d: \\|x\\| \\leq 1 \\}$, and with $\\cZ = \\{x \\in \\R^d: \\|x\\| \\leq 1 \\}$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "exp2 with John's exploration",
+   "registry_id": "exp2_john",
+   "is_new": true,
+   "techniques": [
+    "exponential_weights"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "d"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "OSMD with entropic regularizer (hypercube)",
+   "registry_id": "osmd_negentropy",
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "OSMD with F(x) = -log(1-||x||) - ||x|| (Euclidean ball)",
+   "registry_id": "osmd_euclidean_ball",
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*gamma_mix*T + log(K)/eta + eta*T*d",
+    "expression_latex": "R_n \\leq 2 \\gamma n + \\frac{\\log N}{\\eta} + \\eta n d",
+    "regime": null
+   },
+   "symbols": {
+    "gamma_mix": "mixing coefficient of exploration distribution"
+   },
+   "conditions": [],
+   "tuning": [
+    "eta*d/gamma_mix <= 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:exp2john",
+    "number": "Theorem 4",
+    "quote": "{\\sc exp2} with John's exploration and estimate \\eqref{eq:banditestimate} satisfies, for $\\frac{\\eta d}{\\gamma} \\leq 1$, $$R_n \\leq 2 \\gamma n + \\frac{\\log N}{\\eta} + \\eta n d.$$"
+   },
+   "confidence": "high",
+   "notes": "General parametric bound; N actions mapped to K. Regret defined with min outside expectation (pseudo-regret)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*sqrt(3*T*d*log(K))",
+    "expression_latex": "R_n \\leq 2 \\sqrt{3 n d \\log N}",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [
+    "gamma = eta*d",
+    "eta = sqrt(log(N)/(3*n*d))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:exp2john",
+    "number": "Theorem 4",
+    "quote": "In particular with $\\gamma = \\eta d$ and $\\eta = \\sqrt{\\frac{\\log N}{3 n d}}$ we have that $$R_n \\leq 2 \\sqrt{3 n d \\log N} .$$"
+   },
+   "confidence": "high",
+   "notes": "N = number of actions mapped to K. Per-round computation linear in N; John's ellipsoid approximable in poly time for finite sets per paper."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*d*sqrt(3*T*log(2))",
+    "expression_latex": "R_n \\leq 2 d \\sqrt{3 n \\log 2}",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [
+    "gamma = 2*d*sqrt(log(2)/(3*n))",
+    "eta = sqrt(log(2)/(3*n))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:hypercube",
+    "number": "Theorem 5",
+    "quote": "Then {\\sc osmd} on $\\cA$ with regularizer~(\\ref{eq:entro-reg}) satisfies, for any $\\eta$ and $\\gamma \\in (0,1)$ such that $\\frac{\\eta d}{\\gamma} \\leq \\frac12$, ... In particular, with $\\gamma = 2 d \\sqrt{\\frac{\\log 2}{3 n}}$ and $\\eta= \\sqrt{\\frac{\\log 2}{3 n}}$, $R_n \\leq 2 d \\sqrt{3 n \\log 2}$."
+   },
+   "confidence": "high",
+   "notes": "Intermediate bound (eq. hypercuberegret1) involves algorithm-dependent expectations; not recorded separately. Computational complexity linear in d per paper. gamma in (0,1) implicitly requires n large relative to d^2."
+  },
+  {
+   "id": "r4",
+   "setting": "s3",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "3*sqrt(d*T*log(T))",
+    "expression_latex": "R_n \\leq 3 \\sqrt{d n \\log n}",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [
+    "gamma = 1/sqrt(n)",
+    "eta = sqrt(log(n)/(2*n*d))",
+    "eta*d <= 1/2",
+    "play on shrunk ball of radius 1-gamma"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:ball",
+    "number": "Theorem 6",
+    "quote": "Then {\\sc osmd} on $\\cA' = \\{x \\in \\R^d: \\|x\\| \\leq 1-\\gamma \\}$ with the estimate \\eqref{eq:ballestimate}, and $F(x) = - \\log (1 - \\|x\\|) - \\|x\\|$ satisfies, for any $\\eta$ such that $\\eta d \\leq \\frac12$, ... In particular, with $\\gamma = \\frac{1}{\\sqrt{n}}$ and $\\eta= \\sqrt{\\frac{\\log n}{2 n d}}$, $R_n \\leq  3 \\sqrt{d n \\log n}$."
+   },
+   "confidence": "high",
+   "notes": "Intermediate bound (eq. ballregret1) involves algorithm-dependent expectations; not recorded separately."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "AHR08",
+   "cited_title": "Competing in the dark: An efficient algorithm for bandit linear optimization",
+   "cited_first_author": "J. Abernethy",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SCRiBLe (Mirror Descent with self-concordant barrier)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Adversarial bandit linear optimization on convex compact set admitting a theta-self-concordant barrier",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(vartheta*T*log(T))",
+    "expression_latex": "d \\sqrt{ \\theta n \\log n}",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "AHR08",
+   "cited_title": "Competing in the dark: An efficient algorithm for bandit linear optimization",
+   "cited_first_author": "J. Abernethy",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SCRiBLe (Mirror Descent with self-concordant barrier)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Adversarial bandit linear optimization on the hypercube (theta = O(d))",
+   "bound": {
+    "notation": "O",
+    "expression": "d**(3/2)*sqrt(T*log(T))",
+    "expression_latex": "d^{3/2} \\sqrt{n \\log n}",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "DHK08",
+   "cited_title": "The price of bandit information for online optimization",
+   "cited_first_author": "V. Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Adversarial bandit linear optimization on the hypercube (minimax lower bound)",
+   "bound": {
+    "notation": "Omega",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "d \\sqrt{n}",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "ACFS03",
+   "cited_title": "The non-stochastic multi-armed bandit problem",
+   "cited_first_author": "P. Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "EXP4",
+   "algorithm_registry_id": "exp4",
+   "side": "upper",
+   "setting_description": "d-armed adversarial bandit with N experts",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(d*T*log(N_exp))",
+    "expression_latex": "\\sqrt{d n \\ln N}",
+    "regime": null
+   },
+   "where": "Section 3.2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.3",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-19T17:37:01",
+  "source_chars": 46090,
+  "input_tokens": 48754,
+  "output_tokens": 5708,
+  "cost_usd_equiv": 0.31520560000000003,
+  "status": "extracted"
+ },
+ "_verify": {
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "prompt_sha": "81d04c3b9fd7",
+  "date": "2026-10-19T17:39:26",
+  "applied_on": "2026-10-19T17:42:58",
+  "min_confidence": "medium",
+  "applied": [],
+  "rejected": [],
+  "flags": {
+   "hallucinated": [],
+   "not_a_guarantee": [],
+   "unverifiable": [],
+   "missing_results": []
+  },
+  "summary": "The extraction is accurate. All four results (Theorem 4 general and tuned, Theorem 5, Theorem 6) match the source in constants, notation and qualifiers. Settings, registry ids and cited results are consistent with the paper. I did not count the general template bounds of Theorems 1 and 2 as missing: they depend on algorithm-dependent quantities and act as technical tools."
+ }
+}

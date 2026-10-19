@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Asymptotically Optimal Information-Directed Sampling",
@@ -32,27 +32,66 @@
     "unique_optimal_arm",
     "arms_span_Rd"
    ],
-   "extras": [],
    "action_set": {
     "shape": "finite",
     "time_varying": "fixed",
     "access": "explicit"
    },
-   "parameters": {},
+   "extras": [],
+   "parameters": {
+    "sigma": "1"
+   },
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "diam(X) <= 1 for the action set",
-    "theta* lies in a known convex polytope M with diam(M) <= 1",
-    "noise is Gaussian with unit variance in the main model; upper bounds hold for conditionally 1-subgaussian noise"
+    "diam(X) <= 1",
+    "unknown parameter lies in a known convex polytope M with diam(M) <= 1",
+    "noise is unit-variance Gaussian; upper bounds hold for conditionally 1-subgaussian noise"
    ],
-   "definition_quote": "Let $\\xX \\subset \\RR^d$ be a finite set of $k$ actions. We assume that $\\xX$ spans $\\RR^d$ and $\\diam(\\xX) \\leq 1$. Denote by $\\thetaopt \\in \\mM$ an unknown parameter vector, where $\\mM \\subset \\RR^d$ is a known convex polytope with $\\diam(\\mM) \\leq 1$. ... observes the reward $\\y_t = \\ip{x_t, \\theta} + \\epsilon_t$ where $\\epsilon_t$ is sampled independently from a Gaussian with zero mean and unit variance. All our upper bounds hold without modification for conditionally $1$-subgaussian noise."
+   "definition_quote": "Let $\\xX \\subset \\RR^d$ be a finite set of $k$ actions. We assume that $\\xX$ spans $\\RR^d$ and $\\diam(\\xX) \\leq 1$. Denote by $\\thetaopt \\in \\mM$ an unknown parameter vector, where $\\mM \\subset \\RR^d$ is a known convex polytope with $\\diam(\\mM) \\leq 1$. ... $\\epsilon_t$ is sampled independently from a Gaussian with zero mean and unit variance. All our upper bounds hold without modification for conditionally $1$-subgaussian noise."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Linear bandit with Gaussian noise (lower bound)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "sigma",
+    "K",
+    "d",
+    "T"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm",
+    "arms_span_Rd"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit"
+   },
+   "extras": [],
+   "parameters": {
+    "sigma": "1"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "parameter in known convex polytope M"
+   ],
+   "definition_quote": "Any consistent algorithm $\\pi$ for the linear bandit setting with Gaussian noise has regret ..."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Asymptotically Optimal Information-Directed Sampling (Algorithm 1)",
+   "name": "Asymptotically Optimal Information-Directed Sampling",
    "registry_id": "ids_asymptotically_optimal",
    "is_new": true,
    "techniques": [
@@ -60,7 +99,9 @@
     "exponential_weights",
     "optimism"
    ],
-   "requires_knowledge_of": []
+   "requires_knowledge_of": [
+    "sigma"
+   ]
   }
  ],
  "results": [
@@ -83,17 +124,22 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "diam(X) <= 1, diam(M) <= 1"
+   "conditions": [
+    "diam(X) <= 1",
+    "theta in known convex polytope with diam <= 1"
+   ],
+   "tuning": [
+    "beta from Abbasi-Yadkori et al.",
+    "eta_s = min_{l<=s} m_l^{-1/2} log(k)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:regret-worstcase",
-    "number": "Theorem 1",
-    "quote": "\\begin{theorem}[Worst-case regret]\\label{thm:regret-worstcase} The regret of Algorithm \\ref{alg:ids-anytime} is bounded by $R_n \\leq \\oO\\big(d \\sqrt{n} \\log(n)\\big)$."
+    "number": "Theorem 2",
+    "quote": "The regret of Algorithm \\ref{alg:ids-anytime} is bounded by $R_n \\leq \\oO\\big(d \\sqrt{n} \\log(n)\\big)$."
    },
    "confidence": "high",
-   "notes": "Regret is expected regret with fixed theta*, i.e. pseudo-regret. Horizon n unknown to the algorithm (anytime)."
+   "notes": "Regret defined as E[max_x sum <x-x_t,theta*>] (pseudo-regret). Horizon unknown to the algorithm."
   },
   {
    "id": "r2",
@@ -114,15 +160,16 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "unique optimal action",
-    "diam(X) <= 1, diam(M) <= 1"
+   "conditions": [
+    "diam(X) <= 1",
+    "theta in known convex polytope with diam <= 1"
    ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:regret-log",
-    "number": "Theorem 2",
-    "quote": "\\begin{theorem}[Gap-dependent regret]\\label{thm:regret-log} The regret of Algorithm \\ref{alg:ids-anytime} is bounded by $R_n \\leq \\oO\\left(\\Delta_{\\min}^{-1} d^3\\log(n)^2 \\right)$."
+    "number": "Theorem 3",
+    "quote": "The regret of Algorithm \\ref{alg:ids-anytime} is bounded by $R_n \\leq \\oO\\left(\\Delta_{\\min}^{-1} d^3\\log(n)^2 \\right)$."
    },
    "confidence": "high",
    "notes": "O hides universal constants and boundedness constants of X and M."
@@ -141,43 +188,61 @@
    "compute": "polynomial",
    "bound": {
     "notation": "limsup",
-    "expression": "C_lin",
+    "expression": "C_lin*log(T)",
     "expression_latex": "\\lim_{n \\rightarrow \\infty} \\frac{R_n}{\\log(n)} = c^*",
-    "regime": "n -> infinity; limit of R_n/log(n)"
+    "regime": "n -> infinity"
    },
    "symbols": {},
-   "extra_assumptions": [
-    "||x*|| > 0",
-    "unique optimal action"
+   "conditions": [
+    "||x^*|| > 0"
    ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:regret-asymptotic",
-    "number": "Theorem 3",
-    "quote": "\\begin{theorem}[Asymptotic regret]\\label{thm:regret-asymptotic} Algorithm \\ref{alg:ids-anytime} is asymptotically optimal, $\\lim_{n \\rightarrow \\infty} \\frac{R_n}{\\log(n)} = c^*$, where $c^*$ is the solution to the lower bound \\eqref{eq:lower-linear} and we assume that $\\|x^*\\| > 0$."
+    "number": "Theorem 4",
+    "quote": "Algorithm \\ref{alg:ids-anytime} is asymptotically optimal, $\\lim_{n \\rightarrow \\infty} \\frac{R_n}{\\log(n)} = c^*$, where $c^*$ is the solution to the lower bound \\eqref{eq:lower-linear} and we assume that $\\|x^*\\| > 0$."
    },
    "confidence": "high",
-   "notes": "Paper states an exact limit equal to c* (Graves-Lai constant); recorded as limsup R_n/log(T) <= C_lin, matching the lower bound."
+   "notes": "Statement is an exact limit equal to c* (Graves-Lai constant); recorded as limsup upper bound, matching lower bound of Theorem 1."
   }
  ],
  "cited_results": [
   {
    "cited_key": "graves1997asymptotically",
-   "cited_title": "Asymptotically efficient adaptive choice of control laws in controlled markov chains",
+   "cited_title": "Asymptotically efficient adaptive choice of control laws incontrolled markov chains",
    "cited_first_author": "Todd L Graves",
    "cited_year": 1997,
    "cited_arxiv_id": null,
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic linear bandit, finite actions, Gaussian noise, consistent policies",
+   "setting_description": "Finite-armed stochastic linear bandit with Gaussian noise, consistent algorithms",
    "bound": {
     "notation": "liminf",
-    "expression": "C_lin",
+    "expression": "C_lin*log(T)",
     "expression_latex": "\\liminf_{n\\rightarrow \\infty} \\frac{R_n(\\thetaopt, \\pi)}{\\log(n)} \\geq c^*(\\thetaopt)",
-    "regime": "consistent policies, n -> infinity"
+    "regime": "n -> infinity"
    },
-   "where": "Section 1.1, Theorem (Graves and Lai; Combes et al.)"
+   "where": "Theorem 1"
+  },
+  {
+   "cited_key": "combes2017minimal",
+   "cited_title": "Minimal exploration in structured stochastic bandits",
+   "cited_first_author": "Richard Combes",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Finite-armed stochastic linear bandit with Gaussian noise, consistent algorithms",
+   "bound": {
+    "notation": "liminf",
+    "expression": "C_lin*log(T)",
+    "expression_latex": "\\liminf_{n\\rightarrow \\infty} \\frac{R_n(\\thetaopt, \\pi)}{\\log(n)} \\geq c^*(\\thetaopt)",
+    "regime": "n -> infinity"
+   },
+   "where": "Theorem 1"
   },
   {
    "cited_key": "Lattimore2019",
@@ -185,17 +250,17 @@
    "cited_first_author": "Tor Lattimore",
    "cited_year": 2019,
    "cited_arxiv_id": null,
-   "algorithm_name": "phased elimination",
+   "algorithm_name": "elimination algorithms",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic linear bandit with k actions in R^d",
+   "setting_description": "Finite-armed stochastic linear bandit, k actions",
    "bound": {
     "notation": "O",
     "expression": "sqrt(log(K)*d*T)",
     "expression_latex": "R_n \\leq \\oO(\\sqrt{\\log(k) d n} )",
     "regime": null
    },
-   "where": "Section 2.1, after Theorem 1"
+   "where": "Section 2.1, after Theorem 2"
   }
  ],
  "_run": {
@@ -204,16 +269,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:28:18",
-  "source_chars": 145598,
-  "input_tokens": 102493,
-  "output_tokens": 3806,
-  "cost_usd_equiv": 0.7190896,
+  "date": "2026-10-19T17:36:12",
+  "source_chars": 146143,
+  "input_tokens": 104358,
+  "output_tokens": 4233,
+  "cost_usd_equiv": 0.7305376,
   "status": "extracted"
  }
 }

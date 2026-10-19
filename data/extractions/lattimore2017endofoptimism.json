@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "The End of Optimism? An Asymptotic Analysis of Finite-Armed Linear Bandits",
@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Stochastic finite-armed linear bandit with Gaussian noise",
+   "name_in_paper": "Finite-armed stochastic linear bandit with Gaussian noise",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -24,7 +24,8 @@
    "context": "none",
    "noise": "gaussian_known_variance",
    "learner_knows": [
-    "T"
+    "T",
+    "sigma"
    ],
    "instance_assumptions": [
     "unique_optimal_arm",
@@ -40,10 +41,47 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Action norms bounded by 1 (||x||_2 <= 1)",
-    "Noise is standard Gaussian N(0,1); upper bound said to extend to 1-subgaussian"
+    "actions have Euclidean norm at most 1",
+    "noise is standard Gaussian N(0,1)"
    ],
-   "definition_quote": "Let $\\mathcal A \\subset \\R^d$ be a finite set that spans $\\R^d$ with $|\\mathcal A| = k$ and $\\norm{x}_2 \\leq 1$ for all $x \\in \\cA$. A learner interacts with the bandit over $n$ rounds. In each round $t$ the learner chooses an action (arm) $A_t \\in \\mathcal A$ and observes a payoff $Y_t = \\inner{A_t, \\theta} + \\eta_t$ where $\\eta_t \\sim \\mathcal N(0,1)$ is Gaussian noise"
+   "definition_quote": "Let $\\mathcal A \\subset \\R^d$ be a finite set that spans $\\R^d$ with $|\\mathcal A| = k$ and $\\norm{x}_2 \\leq 1$ for all $x \\in \\cA$. A learner interacts with the bandit over $n$ rounds. In each round $t$ the learner chooses an action (arm) $A_t \\in \\mathcal A$ and observes a payoff $Y_t = \\inner{A_t, \\theta} + \\eta_t$ where $\\eta_t \\sim \\mathcal N(0,1)$"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Finite-armed stochastic linear bandit with Gaussian noise (lower bound)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "T",
+    "K",
+    "d",
+    "sigma",
+    "reward_family"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm",
+    "arms_span_Rd"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "actions have Euclidean norm at most 1",
+    "noise is standard Gaussian N(0,1)"
+   ],
+   "definition_quote": "Let $\\mathcal A \\subset \\R^d$ be a finite set that spans $\\R^d$ with $|\\mathcal A| = k$ and $\\norm{x}_2 \\leq 1$ for all $x \\in \\cA$. ... observes a payoff $Y_t = \\inner{A_t, \\theta} + \\eta_t$ where $\\eta_t \\sim \\mathcal N(0,1)$"
   }
  ],
  "algorithms": [
@@ -58,14 +96,15 @@
     "other"
    ],
    "requires_knowledge_of": [
-    "T"
+    "T",
+    "sigma"
    ]
   }
  ],
  "results": [
   {
    "id": "r1",
-   "setting": "s1",
+   "setting": "s2",
    "side": "lower",
    "algorithm": null,
    "algorithm_class": "consistent",
@@ -79,23 +118,24 @@
     "notation": "limsup",
     "expression": "C_lin*log(T)",
     "expression_latex": "\\limsup_{n\\to\\infty} \\frac{R_\\theta^\\pi(n)}{\\log(n)} \\geq c(\\mathcal A, \\theta)",
-    "regime": "n -> infinity"
+    "regime": null
    },
    "symbols": {
-    "C_lin": "c(A,theta): value of inf_alpha sum_{x suboptimal} alpha(x) Delta_x s.t. ||x||^2_{H(alpha)^{-1}} <= Delta_x^2/2 for all suboptimal x"
+    "C_lin": "c(A, theta): value of inf_alpha sum_{x suboptimal} alpha(x) Delta_x s.t. ||x||^2_{H(alpha)^{-1}} <= Delta_x^2/2 for all suboptimal x, H(alpha)=sum alpha(x) x x^T"
    },
-   "extra_assumptions": [
+   "conditions": [
     "unique optimal arm",
-    "Gaussian noise required"
+    "Gram matrix bar G_n eventually invertible (shown to hold for consistent policies in appendix)"
    ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "cor:regretlb",
     "number": "Corollary 2",
-    "quote": "Let $\\pi$ be a consistent policy, $\\theta\\in \\R^d$ such that there is a unique optimal arm in $\\cA$. Then ... and also $\\displaystyle \\limsup_{n\\to\\infty} \\frac{R_\\theta^\\pi(n)}{\\log(n)} \\geq c(\\mathcal A, \\theta)$, where $c(\\mathcal A, \\theta)$ is defined as the solution to the following optimisation problem: inf_{alpha} sum alpha(x) Delta_x subject to ||x||^2_{H^{-1}(alpha)} <= Delta_x^2/2"
+    "quote": "Let $\\pi$ be a consistent policy, $\\theta\\in \\R^d$ such that there is a unique optimal arm in $\\cA$. Then $\\limsup_{n\\to\\infty} \\log(n) \\norm{x}_{\\bar G_n^{-1}}^2 \\leq \\frac{\\Delta_x^2}{2}$ and also $\\limsup_{n\\to\\infty} \\frac{R_\\theta^\\pi(n)}{\\log(n)} \\geq c(\\mathcal A, \\theta)$, where $c(\\mathcal A, \\theta)$ is defined as the solution to the following optimisation problem..."
    },
    "confidence": "high",
-   "notes": "Statement uses limsup; the appendix proof actually establishes the liminf version. Expression is asymptotic regret ~ C_lin log T."
+   "notes": "Derived from Theorem 1 (allocation constraint limsup log(n)||x-x*||^2_{G_n^{-1}} <= Delta_x^2/2 for consistent policies), which is not recorded separately as it is not directly a regret bound. Appendix proof actually gives the stronger liminf version. For standard basis action sets, c(A,theta)=sum 2/Delta_x (Lai-Robbins, Example 3)."
   },
   {
    "id": "r2",
@@ -113,22 +153,23 @@
     "notation": "limsup",
     "expression": "C_lin*log(T)",
     "expression_latex": "\\limsup_{n\\to\\infty} \\frac{R^\\pi_\\theta(n)}{\\log(n)} \\leq c(\\mathcal A, \\theta)",
-    "regime": "n -> infinity"
+    "regime": null
    },
    "symbols": {
-    "C_lin": "c(A,theta): value of the lower-bound optimisation problem of Corollary 2"
+    "C_lin": "c(A, theta): value of the optimisation problem in Corollary 2"
    },
-   "extra_assumptions": [
+   "conditions": [
     "unique optimal arm x*"
    ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:upper",
-    "number": "Theorem 4",
+    "number": "Theorem 10",
     "quote": "Assuming that $x^*$ is unique, the strategy given in Algorithm \\ref{alg:optimal} satisfies \\limsup_{n\\to\\infty} \\frac{R^\\pi_\\theta(n)}{\\log(n)} \\leq c(\\mathcal A, \\theta) for all \\theta \\in \\R^d."
    },
    "confidence": "high",
-   "notes": "Algorithm takes horizon n as input. Matches lower bound of Corollary 2. Theorem numbering assumed from shared counter."
+   "notes": "Algorithm takes A and n as input (known horizon). Matches the lower bound of Corollary 2. Paper says Gaussian assumption can be relaxed to 1-subgaussian for the upper bound. Algorithm solves an optimisation problem per run; computational cost not stated."
   }
  ],
  "cited_results": [
@@ -138,15 +179,15 @@
    "cited_first_author": "Rajeev Agrawal",
    "cited_year": 1995,
    "cited_arxiv_id": null,
-   "algorithm_name": "UCB (finite-armed, ignoring linear structure)",
+   "algorithm_name": "UCB (ignoring linear structure)",
    "algorithm_registry_id": null,
    "side": "upper",
    "setting_description": "Finite-armed linear bandit with Gaussian noise, treated as unstructured K-armed bandit",
    "bound": {
     "notation": "limsup",
     "expression": "sum_subopt(2/Delta_i)*log(T)",
-    "expression_latex": "\\limsup_{n\\to\\infty} \\frac{R^{UCB}_\\theta(n)}{\\log(n)} = \\sum_{x \\in \\mathcal A:\\Delta_x > 0} \\frac{2}{\\Delta_x}",
-    "regime": "n -> infinity"
+    "expression_latex": "\\limsup_{n\\to\\infty} \\frac{R^{\\smallsc{ucb}}_\\theta(n)}{\\log(n)} = \\sum_{x \\in \\mathcal A:\\Delta_x > 0} \\frac{2}{\\Delta_x}",
+    "regime": null
    },
    "where": "Section 3"
   },
@@ -159,14 +200,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Finite-armed Gaussian bandit (standard basis action set), consistent policies",
+   "setting_description": "Finite-armed Gaussian bandit (unit variance), consistent policies; recovered as special case A = standard basis",
    "bound": {
-    "notation": "liminf",
+    "notation": "limsup",
     "expression": "sum_subopt(2/Delta_i)*log(T)",
     "expression_latex": "c(\\mathcal A, \\theta) = \\sum_{x \\in \\mathcal A : \\Delta_x > 0} \\frac{2}{\\Delta_x}",
-    "regime": "n -> infinity"
+    "regime": null
    },
-   "where": "Example (Finite armed bandits), Section 3"
+   "where": "Example 3"
   }
  ],
  "_run": {
@@ -175,16 +216,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:26:56",
-  "source_chars": 75706,
-  "input_tokens": 64032,
-  "output_tokens": 3641,
-  "cost_usd_equiv": 0.40810159999999995,
+  "date": "2026-10-19T17:34:59",
+  "source_chars": 73417,
+  "input_tokens": 64390,
+  "output_tokens": 4278,
+  "cost_usd_equiv": 0.4116936,
   "status": "extracted"
  }
 }

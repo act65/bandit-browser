@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Improved Best-of-Both-Worlds Guarantees for Multi-Armed Bandits: FTRL with General Regularizers and Multiple Optimal Arms",
@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "MAB, adversarial setting",
+   "name_in_paper": "Adversarial setting (MAB)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "adversarial_unspecified",
@@ -39,14 +39,13 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Environment chooses losses arbitrarily with knowledge of the learner's algorithm; regret is pseudo-regret against best arm in expectation",
     "T >= K"
    ],
    "definition_quote": "In the adversarial setting, the environment decides the loss vectors in an arbitrary way with the knowledge of the learner's algorithm."
   },
   {
    "id": "s2",
-   "name_in_paper": "MAB, stochastic setting / adversarial regime with a self-bounding constraint (Condition 1), without uniqueness",
+   "name_in_paper": "Stochastic setting / adversarial regime with a self-bounding constraint (Condition 1), without uniqueness",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "adversarial_self_bounding",
@@ -70,13 +69,14 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Multiple optimal (zero-gap) arms allowed; bounds depend on |U| (number of zero-gap arms) and on D, an upper bound on E[sum_t max_{i in U} E^t[l_i^t - l_{i*}^t]] (0 in iid, <= C in corrupted)"
+    "Multiple optimal (zero-gap) arms allowed; no uniqueness assumption",
+    "Bound depends on D, an upper bound on E[sum_t max_{i: Delta_i=0} E^t[l_i - l_{i*}]] (0 in iid, <= C in corrupted)"
    ],
-   "definition_quote": "there exists a gap vector $\\gap \\in [0,1]^{K}$ and a constant $C\\geq0$ such that $\\Reg^T \\geq \\E\\sbr{ \\sum_{t=1}^{T} \\sum_{i \\in [K]} \\Pr\\sbr{i^t=i} \\gap_i  } - C$"
+   "definition_quote": "there exists a gap vector $\\gap \\in [0,1]^{K}$ and a constant $C\\geq0$ such that $\\Reg^T \\geq \\E\\sbr{ \\sum_{t=1}^{T} \\sum_{i \\in [K]} \\Pr\\sbr{i^t=i} \\gap_i } - C$"
   },
   {
    "id": "s3",
-   "name_in_paper": "Decoupled Exploration and Exploitation MAB (DEE-MAB), adversarial setting",
+   "name_in_paper": "DEE-MAB, adversarial setting",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "adversarial_unspecified",
@@ -99,13 +99,13 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Decoupled feedback: learner exploits arm i^t (suffers its loss) and observes loss of a separately chosen exploration arm j^t"
+    "Decoupled exploration and exploitation: learner exploits arm i^t (suffers loss) and observes loss of a separately chosen exploration arm j^t"
    ],
    "definition_quote": "a variant of MAB where in each round $t$, the learner picks an arm $i^t$ to exploit and an arm $j^t$ to explore, and then suffers the loss $\\ell^t_{i^t}$ while observing the feedback $\\ell^t_{j^t}$."
   },
   {
    "id": "s4",
-   "name_in_paper": "DEE-MAB under self-bounding Condition 1",
+   "name_in_paper": "DEE-MAB under Condition (1) (self-bounding), without uniqueness",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "adversarial_self_bounding",
@@ -128,8 +128,9 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Decoupled feedback: exploitation arm i^t and observed exploration arm j^t",
-    "Multiple optimal arms allowed; bound depends on D"
+    "Decoupled exploration and exploitation feedback",
+    "Multiple optimal arms allowed",
+    "Bound depends on D (zero-gap arms' excess loss)"
    ],
    "definition_quote": "The Decoupled Exploration and Exploitation MAB (DEE-MAB) problem ... the learner picks an arm $i^t$ to exploit and an arm $j^t$ to explore"
   }
@@ -207,17 +208,22 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "C_log = 162, theta = sqrt(1/log T)"
+   "conditions": [
+    "T >= K"
+   ],
+   "tuning": [
+    "C_log = 162",
+    "alpha = 0",
+    "theta = sqrt(1/log T)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:main_log_barrier",
     "number": "Theorem 1",
-    "quote": "When using the log-barrier regularizer with $\\clog = 162$, $\\alpha=0$, and $\\theta=\\sqrt{1/\\log T}$, Algorithm 1 ensures $\\Reg^T = \\order\\rbr{\\sqrt{KT\\log T}}$ always"
+    "quote": "When using the log-barrier regularizer with $\\clog = \\cloglog$, $\\alpha=0$, and $\\theta=\\sqrt{\\nicefrac{1}{\\log T}}$, \\pref{alg:main_alg} ensures $\\Reg^T = \\order\\rbr{\\sqrt{KT\\log T}}$ always"
    },
    "confidence": "high",
-   "notes": "Horizon T used in learning rate; doubling trick mentioned as alternative."
+   "notes": "Regret defined against i* = argmin E[sum losses], i.e. pseudo-regret."
   },
   {
    "id": "r2",
@@ -233,27 +239,31 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "G_cplx*log(T) + sqrt(C_sb*G_cplx*log(T)) + K**2/sqrt(log(T)) + K*log(T) + D_bias",
-    "expression_latex": "\\order\\rbr{\\gapcomp \\log T + \\sqrt{C \\gapcomp \\log T} +  \\frac{K^2}{\\sqrt{\\log T}}  + K\\log T + D}",
+    "expression": "G_inst*log(T) + sqrt(C_sb*G_inst*log(T)) + K**2/sqrt(log(T)) + K*log(T) + D_U",
+    "expression_latex": "\\order\\rbr{\\gapcomp \\log T + \\sqrt{C \\gapcomp \\log T} + \\frac{K^2}{\\sqrt{\\log T}} + K\\log T + D}",
     "regime": null
    },
    "symbols": {
-    "G_cplx": "|U|/Delta_min + sum_{i in V} 1/Delta_i, with U the zero-gap arms and V the positive-gap arms",
-    "D_bias": "upper bound on E[sum_t max_{i: Delta_i=0} E^t[l_i^t - l_{i*}^t]] (0 in iid, at most C in corrupted)",
-    "U_size": "|U|, number of zero-gap arms"
+    "G_inst": "|U|/Delta_min + sum_{i in V} 1/Delta_i, U = zero-gap arms, V = positive-gap arms",
+    "D_U": "upper bound on E[sum_t max_{i: Delta_i=0} E^t[l_i^t - l_{i*}^t]] (0 in iid setting, <= C in corrupted)"
    },
-   "extra_assumptions": [
-    "Condition (1) self-bounding constraint",
-    "no uniqueness of optimal arm required"
+   "conditions": [
+    "Condition (1) holds",
+    "T >= K"
+   ],
+   "tuning": [
+    "C_log = 162",
+    "alpha = 0",
+    "theta = sqrt(1/log T)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:main_log_barrier",
     "number": "Theorem 1",
-    "quote": "and simultaneously the following regret bound when Condition~(1) holds: $\\Reg^T = \\order\\rbr{\\gapcomp \\log T + \\sqrt{C \\gapcomp \\log T} +  \\frac{K^2}{\\sqrt{\\log T}}  + K\\log T + D}$."
+    "quote": "and simultaneously the following regret bound when Condition~(\\ref{eq:main_stoc_condition}) holds: $\\Reg^T = \\order\\rbr{\\gapcomp \\log T + \\sqrt{C \\gapcomp \\log T} +  \\Wlog + D}$."
    },
    "confidence": "high",
-   "notes": "C is the self-bounding constant, mapped to C_sb."
+   "notes": "No uniqueness assumption. C mapped to C_sb (self-bounding constant)."
   },
   {
    "id": "r3",
@@ -274,14 +284,19 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "C_log = 162 log K, theta = sqrt(1/log T)"
+   "conditions": [
+    "T >= K"
+   ],
+   "tuning": [
+    "C_log = 162 log K",
+    "alpha = 1",
+    "theta = sqrt(1/log T)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:main_shannon",
     "number": "Theorem 2",
-    "quote": "When using the Shannon entropy regularizer with $\\clog = 162\\log K$, $\\alpha=1$, and $\\theta=\\sqrt{1/\\log T}$, Algorithm 1 ensures $\\Reg^T = \\order\\big(\\sqrt{KT}\\log T\\big)$ always"
+    "quote": "When using the Shannon entropy regularizer with $\\clog = \\clogsha$, $\\alpha=1$, and $\\theta=\\sqrt{\\nicefrac{1}{\\log T}}$, \\pref{alg:main_alg} ensures $\\Reg^T = \\order\\big(\\sqrt{KT}\\log T\\big)$ always"
    },
    "confidence": "high",
    "notes": ""
@@ -300,23 +315,28 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "G_cplx*log(T)**2 + sqrt(C_sb*G_cplx*log(T)**2) + K**2*log(T)**(3/2) + D_bias",
+    "expression": "G_inst*log(T)**2 + sqrt(C_sb*G_inst*log(T)**2) + K**2*log(T)**(3/2) + D_U",
     "expression_latex": "\\order  \\Big(\\gapcomp \\rbr{\\log T}^2 + \\sqrt{C \\gapcomp \\rbr{\\log T}^2} + K^2 \\log^{3/2} T + D \\Big)",
     "regime": null
    },
    "symbols": {
-    "G_cplx": "|U|/Delta_min + sum_{i in V} 1/Delta_i",
-    "D_bias": "upper bound on E[sum_t max_{i: Delta_i=0} E^t[l_i^t - l_{i*}^t]]"
+    "G_inst": "|U|/Delta_min + sum_{i in V} 1/Delta_i",
+    "D_U": "upper bound on E[sum_t max_{i: Delta_i=0} E^t[l_i^t - l_{i*}^t]]"
    },
-   "extra_assumptions": [
-    "Condition (1)",
-    "no uniqueness required"
+   "conditions": [
+    "Condition (1) holds",
+    "T >= K"
+   ],
+   "tuning": [
+    "C_log = 162 log K",
+    "alpha = 1",
+    "theta = sqrt(1/log T)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:main_shannon",
     "number": "Theorem 2",
-    "quote": "and simultaneously the following regret bound under Condition~(1): $\\Reg^T = \\order  \\Big(\\gapcomp \\rbr{\\log T}^2 + \\sqrt{C \\gapcomp \\rbr{\\log T}^2} + K^2 \\log^{3/2} T + D \\Big).$"
+    "quote": "and simultaneously the following regret bound under Condition~(\\ref{eq:main_stoc_condition}): $\\Reg^T = \\order  \\Big(\\gapcomp \\rbr{\\log T}^2 + \\sqrt{C \\gapcomp \\rbr{\\log T}^2} + \\Wsha + D \\Big).$"
    },
    "confidence": "high",
    "notes": ""
@@ -335,28 +355,68 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(K*T*log(T)**iota_beta/(alpha_ts*(1 - alpha_ts)))",
+    "expression": "sqrt(K*T*log(T)/(alpha_ts*(1 - alpha_ts)))",
     "expression_latex": "\\order \\Big(\\sqrt{\\frac{1}{\\beta\\rbr{1-\\beta}}KT\\rbr{\\log T}^{\\ind\\cbr{\\beta \\neq \\frac{1}{2}}} }\\Big)",
-    "regime": "beta in (0,1)"
+    "regime": "beta != 1/2"
    },
-   "symbols": {
-    "iota_beta": "indicator I{beta != 1/2}",
-    "alpha_ts": "Tsallis parameter beta in (0,1)"
-   },
-   "extra_assumptions": [
-    "C_log = 162 beta/(1-beta), theta = sqrt((1-beta)/beta)"
+   "symbols": {},
+   "conditions": [
+    "T >= K"
+   ],
+   "tuning": [
+    "beta = alpha_ts in (0,1)",
+    "C_log = 162 beta/(1-beta)",
+    "alpha = beta",
+    "theta = sqrt((1-beta)/beta)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:main_tsallis",
     "number": "Theorem 3",
-    "quote": "For any $\\beta \\in (0,1)$, when using the $\\beta$-Tsallis entropy regularizer with $\\clog = \\frac{162 \\beta }{1-\\beta}$, $\\alpha=\\beta$, and $\\theta=\\sqrt{(1-\\beta)/\\beta}$, Algorithm 1 ensures $\\Reg^T = \\order \\Big(\\sqrt{\\frac{1}{\\beta\\rbr{1-\\beta}}KT\\rbr{\\log T}^{\\ind\\cbr{\\beta \\neq \\frac{1}{2}}} }\\Big)$ always"
+    "quote": "For any $\\beta \\in (0,1)$, when using the $\\beta$-Tsallis entropy regularizer with $\\clog = \\clogtsa$, $\\alpha=\\beta$, and $\\theta=\\sqrt{(1-\\beta)/\\beta}$, \\pref{alg:main_alg} ensures $\\Reg^T = \\order \\Big(\\sqrt{\\frac{1}{\\beta\\rbr{1-\\beta}}KT\\rbr{\\log T}^{\\ind\\cbr{\\beta \\neq \\frac{1}{2}}} }\\Big)$ always"
    },
    "confidence": "high",
-   "notes": "Proof in appendix only shows sqrt(KT log T/(beta(1-beta))); the beta=1/2 log-free case relies on remark."
+   "notes": "Paper's beta mapped to alpha_ts. Case beta != 1/2."
   },
   {
    "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "\\order \\Big(\\sqrt{\\frac{1}{\\beta\\rbr{1-\\beta}}KT}\\Big)",
+    "regime": "beta = 1/2"
+   },
+   "symbols": {},
+   "conditions": [
+    "T >= K"
+   ],
+   "tuning": [
+    "beta = 1/2",
+    "C_log = 162",
+    "alpha = 1/2",
+    "theta = 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main_tsallis",
+    "number": "Theorem 3",
+    "quote": "ensures $\\Reg^T = \\order \\Big(\\sqrt{\\frac{1}{\\beta\\rbr{1-\\beta}}KT\\rbr{\\log T}^{\\ind\\cbr{\\beta \\neq \\frac{1}{2}}} }\\Big)$ always"
+   },
+   "confidence": "medium",
+   "notes": "beta = 1/2 branch of Theorem 3; 1/(beta(1-beta)) = 4 absorbed into the constant. Note the proof in the appendix only explicitly derives sqrt(KT log T/(beta(1-beta))); the log-free beta=1/2 case relies on Remark 37."
+  },
+  {
+   "id": "r7",
    "setting": "s2",
    "side": "upper",
    "algorithm": "a3",
@@ -369,30 +429,35 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "G_cplx*log(T)/(alpha_ts*(1 - alpha_ts)) + sqrt(C_sb*G_cplx*log(T)/(alpha_ts*(1 - alpha_ts))) + D_bias + K**2*sqrt(alpha_ts)/(1 - alpha_ts)**(3/2) + alpha_ts*K*log(T)/(1 - alpha_ts)",
+    "expression": "G_inst*log(T)/(alpha_ts*(1 - alpha_ts)) + sqrt(C_sb*G_inst*log(T)/(alpha_ts*(1 - alpha_ts))) + D_U + K**2*sqrt(alpha_ts)/(1 - alpha_ts)**(3/2) + alpha_ts*K*log(T)/(1 - alpha_ts)",
     "expression_latex": "\\order\\rbr{\\frac{\\gapcomp \\log T}{\\beta\\rbr{1-\\beta}} + \\sqrt{\\frac{C\\gapcomp \\log T}{\\beta\\rbr{1-\\beta}}} + D + \\frac{K^2\\sqrt{\\beta} }{ \\rbr{1-\\beta}^{3/2}} + \\frac{\\beta K \\log T}{1-\\beta} }",
-    "regime": "beta in (0,1)"
+    "regime": null
    },
    "symbols": {
-    "G_cplx": "|U|/Delta_min + sum_{i in V} 1/Delta_i",
-    "D_bias": "upper bound on E[sum_t max_{i: Delta_i=0} E^t[l_i^t - l_{i*}^t]]",
-    "alpha_ts": "Tsallis parameter beta"
+    "G_inst": "|U|/Delta_min + sum_{i in V} 1/Delta_i",
+    "D_U": "upper bound on E[sum_t max_{i: Delta_i=0} E^t[l_i^t - l_{i*}^t]]"
    },
-   "extra_assumptions": [
-    "Condition (1)",
-    "no uniqueness required"
+   "conditions": [
+    "Condition (1) holds",
+    "T >= K"
+   ],
+   "tuning": [
+    "beta = alpha_ts in (0,1)",
+    "C_log = 162 beta/(1-beta)",
+    "alpha = beta",
+    "theta = sqrt((1-beta)/beta)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:main_tsallis",
     "number": "Theorem 3",
-    "quote": "and simultaneously the following regret bound under Condition~(1): $\\Reg^T = \\order\\rbr{\\frac{\\gapcomp \\log T}{\\beta\\rbr{1-\\beta}} + \\sqrt{\\frac{C\\gapcomp \\log T}{\\beta\\rbr{1-\\beta}}} + D + \\frac{K^2\\sqrt{\\beta} }{ \\rbr{1-\\beta}^{3/2}} + \\frac{\\beta K \\log T}{1-\\beta} }$."
+    "quote": "and simultaneously the following regret bound under Condition~(\\ref{eq:main_stoc_condition}): $\\Reg^T = \\order\\rbr{\\frac{\\gapcomp \\log T}{\\beta\\rbr{1-\\beta}} + \\sqrt{\\frac{C\\gapcomp \\log T}{\\beta\\rbr{1-\\beta}}} + D + \\Wtsa }$."
    },
    "confidence": "high",
    "notes": ""
   },
   {
-   "id": "r7",
+   "id": "r8",
    "setting": "s3",
    "side": "upper",
    "algorithm": "a4",
@@ -410,8 +475,13 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "C_log=0, theta=K^{1/6}, alpha=1/2, beta=2/3; exploration arm sampled with g_i proportional to p_i^{2/3}"
+   "conditions": [],
+   "tuning": [
+    "C_log = 0",
+    "theta = K^{1/6}",
+    "alpha = 1/2",
+    "beta = 2/3",
+    "exploration distribution g_i proportional to p_i^{2/3}"
    ],
    "is_new": true,
    "source": {
@@ -419,11 +489,11 @@
     "number": "Theorem 4",
     "quote": "For the DEE-MAB problem, the algorithm described above ensures $\\Reg^T = \\order(\\sqrt{KT})$ always"
    },
-   "confidence": "medium",
-   "notes": "Learning rate K^{1/6} sqrt(t) does not depend on T, so treated as anytime. Adversarial bound also previously known from Rouyer & Seldin."
+   "confidence": "high",
+   "notes": "Learning rate K^{1/6} sqrt(t), no dependence on T, so anytime."
   },
   {
-   "id": "r8",
+   "id": "r9",
    "setting": "s4",
    "side": "upper",
    "algorithm": "a4",
@@ -436,25 +506,30 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(K*sum_subopt(1/Delta_i**2)) + sqrt(C_sb)*(K*sum_subopt(1/Delta_i**2))**(1/4) + K + D_bias",
+    "expression": "sqrt(sum_subopt(K/Delta_i**2)) + sqrt(C_sb)*sum_subopt(K/Delta_i**2)**(1/4) + K + D_U",
     "expression_latex": "\\order \\Big(\\sqrt{\\sum_{i \\in V} \\frac{K}{\\Delta_i^2}} + \\sqrt{C} \\cdot \\rbr{\\sum_{i \\in V} \\frac{K}{\\Delta_i^2}}^{1/4} + K + D \\Big)",
     "regime": null
    },
    "symbols": {
-    "D_bias": "upper bound on E[sum_t max_{i: Delta_i=0} E^t[l_i^t - l_{i*}^t]]"
+    "D_U": "upper bound on E[sum_t max_{i: Delta_i=0} E^t[l_i^t - l_{i*}^t]]"
    },
-   "extra_assumptions": [
-    "Condition (1)",
-    "no uniqueness required"
+   "conditions": [
+    "Condition (1) holds"
+   ],
+   "tuning": [
+    "C_log = 0",
+    "theta = K^{1/6}",
+    "alpha = 1/2",
+    "beta = 2/3"
    ],
    "is_new": true,
    "source": {
     "label": "thm:main_dee",
     "number": "Theorem 4",
-    "quote": "and simultaneously the following regret bound under Condition~(1): $\\Reg^T = \\order \\Big(\\sqrt{\\sum_{i \\in V} \\frac{K}{\\Delta_i^2}} + \\sqrt{C} \\cdot \\rbr{\\sum_{i \\in V} \\frac{K}{\\Delta_i^2}}^{1/4} + K + D \\Big)$."
+    "quote": "and simultaneously the following regret bound under Condition~(\\ref{eq:main_stoc_condition}): $\\Reg^T = \\order \\Big(\\sqrt{\\sum_{i \\in V} \\frac{K}{\\Delta_i^2}} + \\sqrt{C} \\cdot \\rbr{\\sum_{i \\in V} \\frac{K}{\\Delta_i^2}}^{\\nicefrac{1}{4}} + K + D \\Big)$."
    },
    "confidence": "high",
-   "notes": "Sum over V (positive-gap arms) mapped to sum_subopt."
+   "notes": "sum over V = positive-gap arms, mapped to sum_subopt. T-independent."
   }
  ],
  "cited_results": [
@@ -472,7 +547,7 @@
     "notation": "O",
     "expression": "sum_subopt(log(T)/Delta_i) + sqrt(C_sb*sum_subopt(log(T)/Delta_i))",
     "expression_latex": "\\order\\rbr{ \\sum_{i\\neq \\opti }\\frac{\\log T}{\\gap_i} + \\sqrt{C\\sum_{i \\neq \\opti }\\frac{\\log T}{\\gap_i}}}",
-    "regime": "uniqueness assumption"
+    "regime": null
    },
    "where": "Section 2 (Uniqueness assumption)"
   },
@@ -482,13 +557,13 @@
    "cited_first_author": "S. Ito",
    "cited_year": 2021,
    "cited_arxiv_id": null,
-   "algorithm_name": "Tsallis-INF (refined analysis)",
+   "algorithm_name": "Tsallis-INF",
    "algorithm_registry_id": "tsallis_inf",
    "side": "upper",
-   "setting_description": "MAB, adversarial regime with self-bounding constraint, without uniqueness",
+   "setting_description": "MAB, adversarial regime with self-bounding constraint, no uniqueness assumption; D bounds excess loss of zero-gap arms",
    "bound": {
     "notation": "O",
-    "expression": "sum_subopt(log(T)/Delta_i) + sqrt(C_sb*sum_subopt(log(T)/Delta_i)) + D_bias + K",
+    "expression": "sum_subopt(log(T)/Delta_i) + sqrt(C_sb*sum_subopt(log(T)/Delta_i)) + D_U + K",
     "expression_latex": "\\order\\rbr{ \\sum_{i:\\gap_i>0}\\frac{\\log T}{\\gap_i} + \\sqrt{C\\sum_{i:\\gap_i>0}\\frac{\\log T}{\\gap_i}}+D+K}",
     "regime": null
    },
@@ -503,12 +578,12 @@
    "algorithm_name": "Decoupled-Tsallis-INF",
    "algorithm_registry_id": "decoupled_tsallis_inf",
    "side": "upper",
-   "setting_description": "DEE-MAB, stochastic i.i.d. with unique optimal arm",
+   "setting_description": "DEE-MAB, i.i.d. stochastic with unique optimal arm",
    "bound": {
     "notation": "O",
     "expression": "sqrt(sum_subopt(K/(Delta_i*Delta_min)))",
     "expression_latex": "\\order\\Big(\\sqrt{\\sum_{i\\in V} \\frac{K}{\\gap_i \\cdot \\gapmin} }\\Big)",
-    "regime": "uniqueness"
+    "regime": null
    },
    "where": "Table 2"
   },
@@ -539,9 +614,9 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Adversarial MAB, minimax regret",
+   "setting_description": "adversarial MAB, minimax regret",
    "bound": {
-    "notation": "Theta",
+    "notation": "Omega",
     "expression": "sqrt(K*T)",
     "expression_latex": "\\Theta(\\sqrt{KT})",
     "regime": null
@@ -557,14 +632,32 @@
    "algorithm_name": "UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic i.i.d. MAB",
+   "setting_description": "stochastic i.i.d. MAB",
    "bound": {
     "notation": "O",
     "expression": "sum_subopt(log(T)/Delta_i)",
     "expression_latex": "\\order(\\sum_{i:\\gap_i>0}\\frac{\\log T}{\\gap_i} )",
     "regime": null
    },
-   "where": "Section 1/2"
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "itonearly",
+   "cited_title": "Nearly optimal best-of-both-worlds algorithms for online learning with feedback graphs",
+   "cited_first_author": "S. Ito",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "FTRL with Shannon entropy",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "MAB (specialized from feedback graphs), stochastic/self-bounding with unique optimal arm",
+   "bound": {
+    "notation": "O",
+    "expression": "K*log(T)**2/Delta_min",
+    "expression_latex": "\\order\\rbr{\\gapcomp (\\log T)^2}, \\gapcomp = K/\\gapmin",
+    "regime": null
+   },
+   "where": "Table 1 / Section 1"
   }
  ],
  "_run": {
@@ -573,16 +666,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:25:04",
-  "source_chars": 249711,
-  "input_tokens": 175087,
-  "output_tokens": 10170,
-  "cost_usd_equiv": 1.4271216,
+  "date": "2026-10-19T17:33:37",
+  "source_chars": 250777,
+  "input_tokens": 177250,
+  "output_tokens": 11114,
+  "cost_usd_equiv": 1.4512935999999999,
   "status": "extracted"
  }
 }

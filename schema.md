@@ -28,7 +28,7 @@ Also extract:
 
 1. **Use only the controlled vocabulary** for setting dimensions. If a feature of the setting cannot be expressed with the vocabulary, describe it in `unmapped` in plain words. Never stretch a vocabulary term to cover something it doesn't mean.
 2. **Do not infer or strengthen.** Record exactly what the theorem states. If the theorem says "with probability at least 1−δ", the bound is high-probability; do not convert it to expectation. If constants are given, keep them. If the paper writes Õ, record Õ.
-3. **Hidden assumptions matter.** Assumptions stated anywhere that the theorem depends on (in the theorem, in a referenced "Assumption 2", in the setting section, in footnotes) go into the setting or into `extra_assumptions`. Common ones: known horizon T, rewards in [0,1], sub-Gaussian noise with known σ, unique optimal arm, bounded parameter norm ‖θ‖ ≤ S, a finite or bounded action set.
+3. **Hidden assumptions matter.** Assumptions stated anywhere that the theorem depends on (in the theorem, in a referenced "Assumption 2", in the setting section, in footnotes) go into the setting (preferably as vocabulary values) or into the result's `conditions`. `conditions` are restrictions on the *problem* that the setting does not express (e.g. "the optimal arms span R^d", "T >= K", "losses are non-negative"); `tuning` are choices of *algorithm* parameters (e.g. "c = 3", "eta_t = 1/sqrt(t)"). Never put a restriction on the problem into `tuning`: a bound with conditions is only claimed for the instances satisfying them. Common ones: known horizon T, rewards in [0,1], sub-Gaussian noise with known σ, unique optimal arm, bounded parameter norm ‖θ‖ ≤ S, a finite or bounded action set.
 4. **Expressions** must be SymPy-parseable strings using the canonical variables below. If the bound uses a quantity not in the vocabulary, define it in `symbols` with a one-line meaning, and use that symbol. If a canonical symbol is used with a different meaning in the paper (e.g. the paper's L is a log factor), rename it and declare the new name in `symbols`. Use the conventions below for sums over arms.
 5. **One result per formal statement and per bound.** If one theorem gives both a gap-dependent and a minimax bound, produce two results with the same `source.label`. If a statement gives different bounds in different regimes (e.g. one expression when TΔ² ≥ c and another otherwise), record one result per case, each with its condition in `bound.regime`, including trivial branches such as `T*Delta`. Do not record a corollary that only restates an earlier result of the same paper for a special case already covered by the ontology order (e.g. Bernoulli rewards as a case of [0,1] rewards) unless it gives a different expression; mention it in the parent result's `notes`.
 6. **Provenance is mandatory.** Every result gets the LaTeX label (if any), the number as printed (e.g. "Theorem 3.2"), and a verbatim quote of the statement (the LaTeX is fine, truncated to ~600 characters if needed). Theorem numbers come from counters that are often shared between theorems, lemmas, remarks and definitions, sometimes defined in style files you cannot see: if a `% [printed: …]` annotation precedes the environment, copy it exactly. Otherwise copy a number only if the text itself prints it; else write the environment name followed by the label, e.g. `"Theorem (thm:upper)"`. Never count environments yourself.
@@ -66,7 +66,7 @@ Known algorithms, as `id: name (aliases)`. For each algorithm in the paper, set 
 ## Output schema (JSON)
 
 {
-  "schema_version": "0.3",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "paper": {
     "title": str,
@@ -128,7 +128,8 @@ Known algorithms, as `id: name (aliases)`. For each algorithm in the paper, set 
         "regime": str | null            // conditions such as "T >= K", "d <= K", "for T large enough"
       },
       "symbols": { str: str },          // any symbol used that is not in the canonical table
-      "extra_assumptions": [str],       // beyond the setting, e.g. "unique optimal arm"
+      "conditions": [str],              // restrictions on the problem beyond the setting, e.g. "the optimal arms span R^d", "T >= K"
+      "tuning": [str],                  // algorithm parameter choices, e.g. "c = 3", "alpha >= 4"
       "is_new": true,
       "source": {
         "label": str | null,            // LaTeX \label, e.g. "thm:main"
@@ -179,7 +180,7 @@ Output result:
       "regime": null
     },
     "symbols": {},
-    "extra_assumptions": [],
+    "conditions": [], "tuning": [],
     "is_new": true,
     "source": {"label": "thm:ucb1", "number": "Theorem 1", "quote": "For all K>1, if policy UCB1 is run on K machines ..."},
     "confidence": "high",

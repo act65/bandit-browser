@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Bounded regret in stochastic multi-armed bandits",
@@ -26,7 +26,8 @@
    "noise": "subgaussian",
    "learner_knows": [
     "mu_star",
-    "Delta"
+    "Delta",
+    "K"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -57,7 +58,8 @@
    "noise": "subgaussian",
    "learner_knows": [
     "mu_star",
-    "Delta_lower_bound"
+    "Delta_lower_bound",
+    "K"
    ],
    "instance_assumptions": [
     "gap_bounded_below"
@@ -88,7 +90,8 @@
    "context": "none",
    "noise": "subgaussian",
    "learner_knows": [
-    "mu_star"
+    "mu_star",
+    "K"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -107,7 +110,7 @@
   },
   {
    "id": "s4",
-   "name_in_paper": "Two-armed Gaussian bandit, distributions known up to permutation",
+   "name_in_paper": "Two-armed Gaussian bandit, distributions known up to permutation (lower bound)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -117,8 +120,12 @@
    "context": "none",
    "noise": "gaussian_known_variance",
    "learner_knows": [
+    "T",
+    "K",
+    "sigma",
     "mu_star",
-    "Delta"
+    "Delta",
+    "reward_family"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -134,44 +141,13 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "arm distributions known up to a permutation"
+    "Lower bound holds even with full-information feedback"
    ],
    "definition_quote": "Let $\\nu= \\cN(0,1) \\otimes \\cN(- \\Delta,1)$ and $\\nu' = \\cN(-\\Delta,1) \\otimes \\cN(0,1)$."
   },
   {
    "id": "s5",
-   "name_in_paper": "Two-armed bandit with known gap only (one deterministic arm, one Gaussian arm)",
-   "objective": "cumulative_regret",
-   "feedback": "bandit",
-   "environment": "stochastic_iid",
-   "action_space": "finite_K",
-   "function_class": [],
-   "domain": "not_applicable",
-   "context": "none",
-   "noise": "subgaussian",
-   "learner_knows": [
-    "Delta"
-   ],
-   "instance_assumptions": [],
-   "extras": [],
-   "action_set": {
-    "shape": "not_applicable",
-    "time_varying": "not_applicable",
-    "access": "not_applicable"
-   },
-   "parameters": {
-    "K": "2"
-   },
-   "in_scope": true,
-   "out_of_scope_reason": null,
-   "unmapped": [
-    "hard instances: arm 1 is a Dirac at 0, arm 2 is N(+-Delta,1)"
-   ],
-   "definition_quote": "Let $\\nu= \\delta_0 \\otimes \\cN(- \\Delta,1)$ and $\\nu' = \\delta_0 \\otimes \\cN(\\Delta,1)$."
-  },
-  {
-   "id": "s6",
-   "name_in_paper": "Two-armed Gaussian bandit with known mu_star only",
+   "name_in_paper": "Two-armed bandit with known gap Delta but unknown mu_star (lower bound)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -181,7 +157,11 @@
    "context": "none",
    "noise": "gaussian_known_variance",
    "learner_knows": [
-    "mu_star"
+    "T",
+    "K",
+    "sigma",
+    "Delta",
+    "reward_family"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -196,14 +176,52 @@
    },
    "in_scope": true,
    "out_of_scope_reason": null,
-   "unmapped": [],
+   "unmapped": [
+    "Arm 1 is a deterministic Dirac mass at 0; arm 2 is N(+/-Delta,1)"
+   ],
+   "definition_quote": "Let $\\nu= \\delta_0 \\otimes \\cN(- \\Delta,1)$ and $\\nu' = \\delta_0 \\otimes \\cN(\\Delta,1)$."
+  },
+  {
+   "id": "s6",
+   "name_in_paper": "Two-armed Gaussian bandit with known mu_star = 0 but unknown gap (lower bound)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "T",
+    "K",
+    "sigma",
+    "mu_star",
+    "reward_family"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
+   "parameters": {
+    "K": "2",
+    "sigma_std": "1"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Guarantee is on the rescaled regret Delta*R_n, worst case over Delta in (0,1]"
+   ],
    "definition_quote": "Let $\\nu_0 = \\cN(0,1) \\otimes \\cN(-1,1)$, and $\\nu_{\\Delta} = \\cN(-\\Delta,1) \\otimes \\cN(0,1)$, $\\Delta \\in (0,1]$."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Policy 1 (threshold policy for two-armed bandit)",
+   "name": "Policy 1 (threshold policy for the two-armed bandit)",
    "registry_id": "bounded_regret_threshold_policy",
    "is_new": true,
    "techniques": [
@@ -216,7 +234,7 @@
   },
   {
    "id": "a2",
-   "name": "Policy 2 with psi(x)=x^2",
+   "name": "Policy 2 with potential psi(x)=x^2",
    "registry_id": "bounded_regret_potential_policy",
    "is_new": true,
    "techniques": [
@@ -224,12 +242,13 @@
    ],
    "requires_knowledge_of": [
     "mu_star",
-    "Delta_lower_bound"
+    "Delta_lower_bound",
+    "K"
    ]
   },
   {
    "id": "a3",
-   "name": "Policy 2 with psi(x)=x^2/log(4x/epsilon)",
+   "name": "Policy 2 with potential psi(x)=x^2/log(4x/epsilon)",
    "registry_id": "bounded_regret_potential_policy_log",
    "is_new": true,
    "techniques": [
@@ -237,7 +256,8 @@
    ],
    "requires_knowledge_of": [
     "mu_star",
-    "Delta_lower_bound"
+    "Delta_lower_bound",
+    "K"
    ]
   }
  ],
@@ -258,12 +278,13 @@
     "notation": "exact",
     "expression": "Delta + 16/Delta",
     "expression_latex": "R_n \\leq \\Delta + 16/\\Delta",
-    "regime": "uniformly in n"
+    "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
+   "conditions": [
     "1-sub-Gaussian rewards"
    ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:alg1",
@@ -271,7 +292,7 @@
     "quote": "Policy~\\ref{fig:alg1} has regret bounded as $R_n \\leq \\Delta + 16/\\Delta$, uniformly in $n$."
    },
    "confidence": "high",
-   "notes": "Regret defined as n mu* - sum E mu^{(I_t)} (pseudo-regret)."
+   "notes": "Regret defined as n mu* - sum E mu^{(I_t)}, i.e. pseudo-regret. Uniform in n."
   },
   {
    "id": "r2",
@@ -287,15 +308,19 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "sum_subopt(Delta_i + 32*log(5/eps_gap)/Delta_i)",
+    "expression": "sum_subopt(Delta_i + 32/Delta_i*log(5/eps_lb))",
     "expression_latex": "R_n \\leq \\sum_{i: \\Delta_i > 0} \\Big\\{ \\Delta_i+\\frac{32}{\\Delta_i}\\log\\big(\\frac{5}{\\epsilon}\\big) \\Big\\}",
-    "regime": "eps_gap in (0, min(1, Delta_min)], all n >= 1"
+    "regime": null
    },
    "symbols": {
-    "eps_gap": "known lower bound epsilon on the smallest gap, 0 < eps_gap <= min(1, Delta_min)"
+    "eps_lb": "known lower bound epsilon on the smallest gap, eps_lb in (0, min(1, Delta_min)]"
    },
-   "extra_assumptions": [
+   "conditions": [
+    "eps_lb in (0, 1 ∧ Delta_min]",
     "1-sub-Gaussian rewards"
+   ],
+   "tuning": [
+    "psi(x) = x^2"
    ],
    "is_new": true,
    "source": {
@@ -304,7 +329,7 @@
     "quote": "Fix $\\epsilon \\in (0, 1 \\wedge \\Delta]$, then Policy~\\ref{fig:alg3} associated with the potential $\\psi(x)=x^2$ satisfies for all $n \\geq 1$, R_n \\leq \\sum_{i: \\Delta_i > 0} \\Big\\{ \\Delta_i+\\frac{32}{\\Delta_i}\\log\\big(\\frac{5}{\\epsilon}\\big) \\Big\\}"
    },
    "confidence": "high",
-   "notes": "Bounded uniformly in n."
+   "notes": "Derived from the general Theorem 3 (bound in terms of the potential psi, not recorded separately since it involves an integral of psi')."
   },
   {
    "id": "r3",
@@ -320,16 +345,19 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "sum_subopt(Delta_i + Max(1, v_star)*4*log(9*T)/Delta_i)",
+    "expression": "sum_subopt(Delta_i + Max(1, v)*4*log(9*T)/Delta_i)",
     "expression_latex": "R_n \\leq \\sum_{i : \\Delta_i >0}  \\Big\\{\\Delta_i + (1 \\vee v)\\frac{4 \\log(9 n)}{\\Delta_i} \\Big\\}",
-    "regime": "epsilon = 0"
+    "regime": null
    },
    "symbols": {
-    "v_star": "second moment E (Y_1^{(star)})^2 of the optimal arm's reward (with mu_star = 0)"
+    "v": "second moment E (Y_1^{(star)})^2 of the optimal arm's reward"
    },
-   "extra_assumptions": [
-    "1-sub-Gaussian rewards",
-    "mu_star = 0 known"
+   "conditions": [
+    "1-sub-Gaussian rewards"
+   ],
+   "tuning": [
+    "epsilon = 0",
+    "psi(x) = x^2"
    ],
    "is_new": true,
    "source": {
@@ -337,8 +365,8 @@
     "number": "Theorem 2",
     "quote": "Furthermore for $\\epsilon = 0$, let $v = \\E \\left(Y_1^{(\\star)}\\right)^2$, then the regret is bounded as R_n \\leq \\sum_{i : \\Delta_i >0}  \\Big\\{\\Delta_i + (1 \\vee v)\\frac{4 \\log(9 n)}{\\Delta_i} \\Big\\}"
    },
-   "confidence": "high",
-   "notes": "Policy does not use n, so anytime."
+   "confidence": "medium",
+   "notes": "Policy does not use n, so anytime. Learner uses only mu_star (normalized to 0)."
   },
   {
    "id": "r4",
@@ -354,24 +382,28 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "sum_subopt(Delta_i + 32*log(2*Delta_i/eps_gap)/Delta_i*(3 + log(log(4/eps_gap))))",
+    "expression": "sum_subopt(Delta_i + 32*log(2*Delta_i/eps_lb)/Delta_i*(3 + log(log(4/eps_lb))))",
     "expression_latex": "R_n \\leq \\sum_{i: \\Delta_i > 0}\\Big\\{ \\Delta_i+\\frac{32\\log\\big(\\frac{2\\Delta_i}{\\varepsilon}\\big)}{\\Delta_i}\\big[3+   \\log\\log\\big(\\frac{4}{\\epsilon}\\big)\\big]\\Big\\}",
-    "regime": "eps_gap in (0, min(1, Delta_min)]"
+    "regime": null
    },
    "symbols": {
-    "eps_gap": "known lower bound epsilon on the smallest gap"
+    "eps_lb": "known lower bound epsilon on the smallest gap, eps_lb in (0, min(1, Delta_min)]"
    },
-   "extra_assumptions": [
+   "conditions": [
+    "eps_lb in (0, 1 ∧ Delta_min]",
     "1-sub-Gaussian rewards"
+   ],
+   "tuning": [
+    "psi(x) = x^2/log(4x/eps_lb)"
    ],
    "is_new": true,
    "source": {
-    "label": "eq:psilog",
+    "label": "th:algPsi",
     "number": "Theorem 2",
     "quote": "The dependency in $\\epsilon$ can be reduced by using the potential $\\psi(x) = \\frac{x^2}{\\log(4 x/\\epsilon)}$ since it yields R_n \\leq \\sum_{i: \\Delta_i > 0}\\Big\\{ \\Delta_i+\\frac{32\\log\\big(\\frac{2\\Delta_i}{\\varepsilon}\\big)}{\\Delta_i}\\big[3+   \\log\\log\\big(\\frac{4}{\\epsilon}\\big)\\big]\\Big\\}"
    },
    "confidence": "high",
-   "notes": "Same theorem as r2, third display."
+   "notes": ""
   },
   {
    "id": "r5",
@@ -389,18 +421,21 @@
     "notation": "exact",
     "expression": "1/(4*Delta)",
     "expression_latex": "\\max\\left(R_n(\\nu), R_n(\\nu')\\right) \\ge \\frac{1}{4\\Delta}",
-    "regime": "every n >= 1"
+    "regime": "n >= 1"
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [
+    "Gaussian unit-variance arms, instance pair {N(0,1)⊗N(-Delta,1), N(-Delta,1)⊗N(0,1)}"
+   ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:LB1",
-    "number": "Theorem 4",
+    "number": "Theorem 5",
     "quote": "Let $\\nu= \\cN(0,1) \\otimes \\cN(- \\Delta,1)$ and $\\nu' = \\cN(-\\Delta,1) \\otimes \\cN(0,1)$. Then for any policy, and for every $n \\geq 1$, $$\\max\\left(R_n(\\nu), R_n(\\nu')\\right) \\ge \\frac{1}{4\\Delta}\\,.$$"
    },
    "confidence": "high",
-   "notes": "Theorem number inferred from shared counter (Theorems 1-3, Lemma, then this). Holds even with full information."
+   "notes": "Holds even under full information. Matches Theorem 1 up to constants."
   },
   {
    "id": "r6",
@@ -418,18 +453,21 @@
     "notation": "exact",
     "expression": "log(T*Delta**2/2)/(4*Delta)",
     "expression_latex": "\\max\\left(R_n(\\nu), R_n(\\nu')\\right) \\geq \\frac{\\log(n \\Delta^2 / 2)}{4 \\Delta}",
-    "regime": "any n >= 1"
+    "regime": "n >= 1"
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [
+    "instance pair {delta_0⊗N(-Delta,1), delta_0⊗N(Delta,1)}"
+   ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:LB2",
-    "number": "Theorem 5",
+    "number": "Theorem 6",
     "quote": "Let $\\nu= \\delta_0 \\otimes \\cN(- \\Delta,1)$ and $\\nu' = \\delta_0 \\otimes \\cN(\\Delta,1)$. Then for any policy, and any $n \\geq 1$, $$\\max\\left(R_n(\\nu), R_n(\\nu')\\right) \\geq \\frac{\\log(n \\Delta^2 / 2)}{4 \\Delta} .$$"
    },
    "confidence": "high",
-   "notes": "Theorem number inferred from shared counter. Learner effectively knows Delta but not mu_star."
+   "notes": "Learner knows Delta but not mu_star (which is 0 or Delta)."
   },
   {
    "id": "r7",
@@ -437,7 +475,7 @@
    "side": "lower",
    "algorithm": null,
    "algorithm_class": "all",
-   "quantity": "other",
+   "quantity": "pseudo_regret",
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
@@ -447,18 +485,21 @@
     "notation": "exact",
     "expression": "log(T/139)/2",
     "expression_latex": "\\max\\left(R_n(\\nu_0), \\sup_{\\Delta \\in (0,1]} \\Delta R_n(\\nu_{\\Delta})\\right) \\geq \\frac{1}{2} \\log(n / 139)",
-    "regime": "any n >= 1"
+    "regime": "n >= 1"
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [
+    "instances nu_0 = N(0,1)⊗N(-1,1) and nu_Delta = N(-Delta,1)⊗N(0,1), Delta in (0,1]; mu_star = 0 in all"
+   ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:LB3",
-    "number": "Theorem 7",
+    "number": "Theorem 8",
     "quote": "Let $\\nu_0 = \\cN(0,1) \\otimes \\cN(-1,1)$, and $\\nu_{\\Delta} = \\cN(-\\Delta,1) \\otimes \\cN(0,1)$, $\\Delta \\in (0,1]$. Then for any policy, and any $n \\geq 1$, $$\\max\\left(R_n(\\nu_0), \\sup_{\\Delta \\in (0,1]} \\Delta R_n(\\nu_{\\Delta})\\right) \\geq \\frac{1}{2} \\log(n / 139) .$$"
    },
    "confidence": "medium",
-   "notes": "Quantity is the rescaled regret Delta*R_n (max over instances); equivalently there exists Delta with R_n >= log(n/139)/(2 Delta). Theorem number inferred (Lemma 6 precedes it; appendix says 'Proof of Lemma 7' so numbering may be off by one)."
+   "notes": "Bound is on the rescaled regret max(R_n(nu_0), sup_Delta Delta*R_n(nu_Delta)); equivalently some instance with gap Delta has R_n >= log(n/139)/(2 Delta)."
   }
  ],
  "cited_results": [],
@@ -468,16 +509,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:17:12",
-  "source_chars": 44705,
-  "input_tokens": 47618,
-  "output_tokens": 7564,
-  "cost_usd_equiv": 0.3552496,
+  "date": "2026-10-19T17:26:45",
+  "source_chars": 44885,
+  "input_tokens": 49262,
+  "output_tokens": 8345,
+  "cost_usd_equiv": 0.3720096,
   "status": "extracted"
  }
 }

@@ -59,6 +59,7 @@ KL_LIKE = {"KL_i", "kl_i", "Kinf_i"}
 WORST_CASE_T = {"L_star", "Q_T", "Lambda_T"}   # data-dependent, at most ~T
 OPAQUE = {"C_lin"}                              # instance constants with unknown scaling
 PATH_POWER = 4                                  # regime T = v^4 when scanning K, d, 1/Delta, 1/eps
+INSTANCE_TIED_PARAMS = {"eps_alg"}              # free analysis parameters usually required to be < Delta
 
 # Quantity families: bounds comparable for tightness. Upper bounds on expected regret
 # (vs best in hindsight) imply upper bounds on pseudo-regret; lower bounds on
@@ -105,7 +106,7 @@ def _eval(f, point: dict):
 def _fit(f, args: list, base: dict, path) -> tuple[float, float] | None:
     """Fit f ~ x^a (log x)^b along x -> infinity, with all arguments given by path(x)."""
     pts = []
-    for k in (500, 1000, 2000):  # huge scales so additive lower-order logs vanish
+    for k in (10**8, 10**9, 10**10):  # astronomically large scales: lower-order terms with big constants vanish
         x = mpmath.mpf(10) ** k
         val = _eval(f, {**base, **path(x)})
         if val is None:
@@ -222,6 +223,8 @@ def main() -> None:
             failures["no_profile"] += 1
         elif dep == "instance_dependent" and nota in ("O", "O_tilde", "Theta") and "Delta" not in p:
             p = {**p, "_unknown": {"Delta"}}  # hidden instance-dependent constant
+        elif "Delta" in p and set(resolve.IDENT_RE.findall(expr)) & INSTANCE_TIED_PARAMS:
+            p = {**p, "_unknown": {"Delta"}}  # tuning parameter constrained by the gap (e.g. eps < Delta)
         profiles[eid] = p
 
     regimes = collections.defaultdict(lambda: {"upper": [], "lower": []})

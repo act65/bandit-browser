@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Bias no more: high-probability data-dependent regret bounds for adversarial bandits and MDPs",
@@ -40,9 +40,10 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Paper uses d for the number of arms"
+    "Learning rate tuned with the best arm's loss L*; paper says a doubling trick removes this (Remark 1)",
+    "Regret is the realized regret sum_t l_{t,i_t} - min_i sum_t l_{t,i}"
    ],
-   "definition_quote": "For each round $t = 1, \\ldots, T$, the learner selects one of the $d$ available actions $i_t \\in [d]$, while simultaneously the adversary decides a loss vector $\\ell_t \\in [0,1]^d$ ... An adaptive adversary can choose $\\ell_t$ based on the learner's previous actions"
+   "definition_quote": "For each round $t = 1, \\ldots, T$, the learner selects one of the $d$ available actions $i_t \\in [d]$, while simultaneously the adversary decides a loss vector $\\ell_t \\in [0,1]^d$ ... An adaptive adversary can choose $\\ell_t$ based on the learner's previous actions ... $\\Reg = \\sum_{t=1}^T \\ell_{t, i_t} - \\min_{i \\in [d]} \\sum_{t=1}^T \\ell_{t,i}$"
   },
   {
    "id": "s2",
@@ -70,10 +71,11 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Learner is given a nu-self-concordant barrier for the convex body Omega",
-    "Loss normalization max_{w in Omega} |<w, l_t>| <= 1"
+    "Losses normalized so that max_{w in Omega} |<w, l_t>| <= 1",
+    "Learner is given a nu-self-concordant barrier for Omega",
+    "Regret is realized regret against best fixed action in Omega"
    ],
-   "definition_quote": "Linear bandits generalize MAB from the simplex decision set $\\Delta_d$ to an arbitrary convex body $\\Omega \\subseteq \\fR^d$. ... the adversary decides a loss vector $\\ell_t \\in \\fR^d$, assumed to be normalized such that $\\max_{w\\in\\Omega} |\\inner{w, \\ell_t}| \\leq 1$."
+   "definition_quote": "Linear bandits generalize MAB from the simplex decision set $\\Delta_d$ to an arbitrary convex body $\\Omega \\subseteq \\fR^d$. For each round $t$, the learner selects an action $\\wtilde_t \\in \\Omega$ while simultaneously the adversary decides a loss vector $\\ell_t \\in \\fR^d$, assumed to be normalized such that $\\max_{w\\in\\Omega} |\\inner{w, \\ell_t}| \\leq 1$. ... $\\Reg = \\max_{u\\in\\Omega}\\sum_{t=1}^T \\inner{\\wtilde_t - u, \\ell_t}$"
   },
   {
    "id": "s3",
@@ -101,10 +103,11 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Learner is given a nu-self-concordant barrier for the convex body Omega",
-    "Loss normalization max_{w in Omega} |<w, l_t>| <= 1"
+    "Losses normalized so that max_{w in Omega} |<w, l_t>| <= 1",
+    "Learner is given a nu-self-concordant barrier for Omega",
+    "Regret is realized regret against best fixed action in Omega"
    ],
-   "definition_quote": "Again, an adaptive adversary can choose $\\ell_t$ based on the learner's previous actions, while an oblivious adversary cannot."
+   "definition_quote": "Again, an adaptive adversary can choose $\\ell_t$ based on the learner's previous actions, while an oblivious adversary cannot. At the end of round $t$, the learner suffers and only observes loss $\\inner{\\wtilde_t, \\ell_t}$."
   },
   {
    "id": "s4",
@@ -129,12 +132,13 @@
    },
    "parameters": {},
    "in_scope": false,
-   "out_of_scope_reason": "Episodic reinforcement learning (layered MDP with unknown transitions), not a bandit problem",
+   "out_of_scope_reason": "Episodic reinforcement learning (adversarial tabular MDP), not a bandit problem",
    "unmapped": [
-    "Layered episodic MDP with J layers, state space X, action space A, unknown transition kernel",
-    "Holds for both oblivious and adaptive adversaries"
+    "Layered state space with J+1 layers, unknown transition kernel",
+    "Regret against best policy measured via expected loss ell_t(pi)",
+    "Confidence parameter delta is an input"
    ],
-   "definition_quote": "We consider an episodic MDP setting with finite horizon, unknown transition kernel, bandit feedback, and adversarial losses ... the adversary decides a loss function $\\ell_t: X\\times A \\rightarrow[0,1]$"
+   "definition_quote": "We consider an episodic MDP setting with finite horizon, unknown transition kernel, bandit feedback, and adversarial losses ... $\\Reg = \\sum_{t=1}^T \\ell_t(\\pi_t) - \\min_{\\pi}\\sum_{t=1}^T \\ell_t(\\pi)$"
   }
  ],
  "algorithms": [
@@ -148,7 +152,8 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "L_star"
+    "L_star",
+    "delta"
    ]
   },
   {
@@ -162,7 +167,8 @@
    "requires_knowledge_of": [
     "T",
     "d",
-    "nu-self-concordant barrier"
+    "delta",
+    "self-concordant barrier for Omega"
    ]
   },
   {
@@ -197,12 +203,15 @@
    "bound": {
     "notation": "O_tilde",
     "expression": "sqrt(K*L_star*log(K/delta)) + K*log(K/delta)",
-    "expression_latex": "\\widetilde{\\mathcal{O}}\\big(\\sqrt{d\\Lstar\\ln(d/\\delta)}+d\\ln(d/\\delta)\\big)",
+    "expression_latex": "\\widetilde{\\mathcal{O}}\\big(\\sqrt{d\\Lstar\\ln(\\nicefrac{d}{\\delta})}+d\\ln(\\nicefrac{d}{\\delta})\\big)",
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "eta tuned using L_star (removable by doubling trick per Remark)"
+   "conditions": [],
+   "tuning": [
+    "eta = min{sqrt(d ln(1/delta')/L*), 1/(40 C ln T ln(C/delta')), 1/2}",
+    "kappa = e^{1/ln T}",
+    "delta' = delta/d"
    ],
    "is_new": true,
    "source": {
@@ -211,7 +220,7 @@
     "quote": "\\pref{alg:mab} with a suitable choice of $\\eta$ ensures that with probability at least $1-\\delta$, $\\Reg=\\widetilde{\\mathcal{O}}\\big(\\sqrt{d\\Lstar\\ln(\\nicefrac{d}{\\delta})}+d\\ln(\\nicefrac{d}{\\delta})\\big)$, where $\\Lstar = \\min_i \\sum_{t=1}^T \\ell_{t,i}$ is the loss of the best arm."
    },
    "confidence": "high",
-   "notes": "Paper's d is number of arms K. Regret is realized regret against adaptive adversary (union bound over arms)."
+   "notes": "Paper's d is number of arms K. Holds against adaptive adversary (union bound over arms in proof). Eta tuning depends on L*; Remark 1 says doubling trick removes this."
   },
   {
    "id": "r2",
@@ -232,15 +241,18 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [
+    "eta = min{1/(640 a C d^2 ln(nu T) ln(C/delta)), 1/(1610 a C d^2 ln(nu T) sqrt(T ln(C/delta)))}"
+   ],
    "is_new": true,
    "source": {
     "label": "thm:LB",
     "number": "Theorem 3.1",
-    "quote": "\\pref{alg:linear bandit d+1} with a suitable choice of $\\eta$ ensures that with probability at least $1-\\delta$: \\Reg = \\otil(d^2\\nu\\sqrt{ T\\ln\\frac{1}{\\delta}}+d^2\\nu\\ln\\frac{1}{\\delta}), against an oblivious adversary; ..."
+    "quote": "\\pref{alg:linear bandit d+1} with a suitable choice of $\\eta$ ensures that with probability at least $1-\\delta$: $\\Reg = \\otil\\left(d^2\\nu\\sqrt{ T\\ln\\frac{1}{\\delta}}+d^2\\nu\\ln\\frac{1}{\\delta}\\right)$, against an oblivious adversary; ..."
    },
    "confidence": "high",
-   "notes": "nu is the self-concordance parameter of the barrier (vartheta)."
+   "notes": "nu is the self-concordance parameter of the barrier (vartheta). Restated as Theorem B.16."
   },
   {
    "id": "r3",
@@ -261,15 +273,18 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [],
+   "conditions": [],
+   "tuning": [
+    "eta tuned as in oblivious case with delta replaced by delta/(B_Omega T)^d"
+   ],
    "is_new": true,
    "source": {
     "label": "thm:LB",
     "number": "Theorem 3.1",
-    "quote": "\\otil\\left(d^2\\nu\\sqrt{dT\\ln\\frac{1}{\\delta}}+d^3\\nu\\ln\\frac{1}{\\delta}\\right), against an adaptive adversary."
+    "quote": "$\\otil\\left(d^2\\nu\\sqrt{dT\\ln\\frac{1}{\\delta}}+d^3\\nu\\ln\\frac{1}{\\delta}\\right)$, against an adaptive adversary."
    },
    "confidence": "high",
-   "notes": "Adaptive case via discretization and union bound."
+   "notes": "Obtained via discretization of Omega and union bound; log factors of B_Omega hidden in O_tilde."
   },
   {
    "id": "r4",
@@ -286,22 +301,24 @@
    "bound": {
     "notation": "O_tilde",
     "expression": "d**2*vartheta*sqrt(L_star*log(1/delta)) + d**2*vartheta*log(1/delta)",
-    "expression_latex": "\\mathcal{\\tilde{O}}\\left(d^2\\nu\\sqrt{L^\\star\\ln\\frac{1}{\\delta}}+d^2\\nu\\ln\\frac{1}{\\delta}\\right)",
+    "expression_latex": "\\otil\\left(d^2\\nu\\sqrt{L^\\star\\ln\\frac{1}{\\delta}}+d^2\\nu\\ln\\frac{1}{\\delta}\\right)",
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "<w, l_t> >= 0 for all w in Omega and all t (nonnegative losses)",
-    "eta tuned with unknown L_T (removable by doubling trick per Remark)"
+   "conditions": [
+    "<w, l_t> >= 0 for all w in Omega and all t"
+   ],
+   "tuning": [
+    "eta depends on the learner's loss L_T (doubling trick suggested in Remark 2)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:LB",
     "number": "Theorem 3.1",
-    "quote": "Moreover, if $\\inner{w, \\ell_t} \\geq 0$ for all $w\\in\\Omega$ and all $t$, then $T$ in the bounds above can be replaced by $L^\\star = \\min_{u\\in\\Omega}\\sum_{t=1}^T \\inner{u, \\ell_t}$"
+    "quote": "Moreover, if $\\inner{w, \\ell_t} \\geq 0$ for all $w\\in\\Omega$ and all $t$, then $T$ in the bounds above can be replaced by $L^\\star = \\min_{u\\in\\Omega}\\sum_{t=1}^T \\inner{u, \\ell_t}$, that is, the total loss of the best action."
    },
    "confidence": "high",
-   "notes": "Small-loss version of oblivious bound obtained by replacing T with L*."
+   "notes": "Small-loss version of r2 obtained by replacing T with L*."
   },
   {
    "id": "r5",
@@ -322,17 +339,20 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "<w, l_t> >= 0 for all w in Omega and all t (nonnegative losses)"
+   "conditions": [
+    "<w, l_t> >= 0 for all w in Omega and all t"
+   ],
+   "tuning": [
+    "eta depends on the learner's loss L_T (doubling trick suggested in Remark 2)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:LB",
     "number": "Theorem 3.1",
-    "quote": "Moreover, if $\\inner{w, \\ell_t} \\geq 0$ for all $w\\in\\Omega$ and all $t$, then $T$ in the bounds above can be replaced by $L^\\star$"
+    "quote": "Moreover, if $\\inner{w, \\ell_t} \\geq 0$ for all $w\\in\\Omega$ and all $t$, then $T$ in the bounds above can be replaced by $L^\\star$ ..."
    },
    "confidence": "medium",
-   "notes": "Obtained by substituting L* for T in the adaptive bound as the theorem states; expression not written explicitly in paper."
+   "notes": "Expression obtained by substituting L* for T in the adaptive bound, as the theorem states."
   },
   {
    "id": "r6",
@@ -348,26 +368,28 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O_tilde",
-    "expression": "X_states*sqrt(J_layers*A_act*L_star*log(1/delta)) + X_states**5*A_act**2*log(1/delta)**2",
+    "expression": "X_size*sqrt(J*A_size*L_star*log(1/delta)) + X_size**5*A_size**2*log(1/delta)**2",
     "expression_latex": "\\otil\\left(|X|\\sqrt{\\Lyr|A| L^{\\star}\\ln \\frac{1}{\\delta}}+|X|^5 |A|^2\\ln^2 \\frac{1}{\\delta}\\right)",
     "regime": null
    },
    "symbols": {
-    "X_states": "number of states |X|",
-    "A_act": "number of actions |A|",
-    "J_layers": "number of layers (episode length) J"
+    "X_size": "number of states |X|",
+    "A_size": "number of actions |A|",
+    "J": "number of layers (episode length)"
    },
-   "extra_assumptions": [
-    "eta tuned using L_star (removable by doubling trick)"
+   "conditions": [],
+   "tuning": [
+    "eta = min{sqrt(|X|^2|A|/(L* ln(1/delta))), 1/(280 C ln(C|X||A|/delta) ln T)}",
+    "kappa = e^{1/(7 ln T)}"
    ],
    "is_new": true,
    "source": {
     "label": "thm:MDP",
     "number": "Theorem 4.1",
-    "quote": "\\pref{alg:MDP} with a suitable choice of $\\eta$ ensures that with probability at least $1-\\delta$, $\\Reg = \\otil\\left(|X|\\sqrt{\\Lyr|A| L^{\\star}\\ln \\frac{1}{\\delta}}+|X|^5 |A|^2\\ln^2 \\frac{1}{\\delta}\\right)$, where $\\Lstar = \\min_{\\pi}\\sum_{t=1}^T \\ell_t(\\pi) \\leq \\Lyr T$"
+    "quote": "\\pref{alg:MDP} with a suitable choice of $\\eta$ ensures that with probability at least $1-\\delta$, $\\Reg = \\otil\\left(|X|\\sqrt{\\Lyr|A| L^{\\star}\\ln \\frac{1}{\\delta}}+|X|^5 |A|^2\\ln^2 \\frac{1}{\\delta}\\right)$, where $\\Lstar = \\min_{\\pi}\\sum_{t=1}^T \\ell_t(\\pi) \\leq \\Lyr T$ is the total loss of the best policy."
    },
    "confidence": "high",
-   "notes": "Regret is in terms of expected loss of policies; holds for oblivious and adaptive adversaries."
+   "notes": "Holds for both oblivious and adaptive adversaries. L* here is the best policy's loss. Regret uses expected losses ell_t(pi_t)."
   }
  ],
  "cited_results": [
@@ -377,35 +399,35 @@
    "cited_first_author": "Peter Auer",
    "cited_year": 2002,
    "cited_arxiv_id": null,
-   "algorithm_name": "Exp3.P",
-   "algorithm_registry_id": "exp3_p",
+   "algorithm_name": "Exp3",
+   "algorithm_registry_id": "exp3",
    "side": "upper",
-   "setting_description": "Adversarial MAB with d arms, adaptive adversary, high-probability regret",
+   "setting_description": "Adversarial MAB, oblivious adversary, expected regret",
    "bound": {
     "notation": "O_tilde",
-    "expression": "sqrt(K*T*log(K/delta))",
-    "expression_latex": "\\otil(\\sqrt{dT\\ln(d/\\delta)})",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "\\E[\\Reg] = \\otil(\\sqrt{dT})",
     "regime": null
    },
    "where": "Section 2"
   },
   {
-   "cited_key": "bartlett2008high",
-   "cited_title": "High-probability regret bounds for bandit online linear optimization",
-   "cited_first_author": "Peter L Bartlett",
-   "cited_year": 2008,
+   "cited_key": "audibert2009minimax",
+   "cited_title": "Minimax policies for adversarial and stochastic bandits",
+   "cited_first_author": "Jean-Yves Audibert",
+   "cited_year": 2009,
    "cited_arxiv_id": null,
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Adversarial linear bandits, high-probability regret (inefficient algorithm)",
+   "setting_description": "Adversarial MAB, adaptive adversary, high-probability regret with biased estimators (also auer2002nonstochastic, neu2015explore)",
    "bound": {
     "notation": "O_tilde",
-    "expression": "sqrt(d**3*T)*log(1/delta)",
-    "expression_latex": "\\otil(\\sqrt{d^3T}\\ln(1/\\delta))",
+    "expression": "sqrt(K*T*log(K/delta))",
+    "expression_latex": "\\Reg = \\otil(\\sqrt{dT\\ln(d/\\delta)})",
     "regime": null
    },
-   "where": "Section 3"
+   "where": "Section 2"
   },
   {
    "cited_key": "abernethy2008competing",
@@ -426,15 +448,33 @@
    "where": "Section 3"
   },
   {
-   "cited_key": "dani2008price",
-   "cited_title": "The price of bandit information for online optimization",
-   "cited_first_author": "Varsha Dani",
+   "cited_key": "bartlett2008high",
+   "cited_title": "High-probability regret bounds for bandit online linear optimization",
+   "cited_first_author": "Peter L Bartlett",
    "cited_year": 2008,
    "cited_arxiv_id": null,
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Minimax regret of adversarial linear bandits (expected)",
+   "setting_description": "Adversarial linear bandits, high-probability regret, inefficient algorithm",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(d**3*T)*log(1/delta)",
+    "expression_latex": "\\otil(\\sqrt{d^3T}\\ln(1/\\delta))",
+    "regime": null
+   },
+   "where": "Section 3"
+  },
+  {
+   "cited_key": "bubeck2012towards",
+   "cited_title": "Towards minimax policies for online linear optimization with bandit feedback",
+   "cited_first_author": "Sébastien Bubeck",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Adversarial linear bandits, minimax expected regret (with dani2008price)",
    "bound": {
     "notation": "O_tilde",
     "expression": "d*sqrt(T)",
@@ -452,7 +492,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Adversarial linear bandits over polytopes, efficient, high-probability",
+   "setting_description": "Adversarial linear bandits on polytopes, efficient high-probability algorithms (also braun2016efficient)",
    "bound": {
     "notation": "O_tilde",
     "expression": "T**(2/3)",
@@ -470,10 +510,10 @@
    "algorithm_name": "UOB-REPS",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Episodic adversarial MDP with unknown transition, bandit feedback, high-probability regret",
+   "setting_description": "Episodic adversarial MDP, unknown transition, bandit feedback, high-probability regret",
    "bound": {
     "notation": "O_tilde",
-    "expression": "J_layers*X_states*sqrt(A_act*T)",
+    "expression": "J*X_size*sqrt(A_size*T)",
     "expression_latex": "\\otil(\\Lyr|X|\\sqrt{|A|T})",
     "regime": null
    },
@@ -486,16 +526,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:29:53",
-  "source_chars": 162502,
-  "input_tokens": 115945,
-  "output_tokens": 7773,
-  "cost_usd_equiv": 0.9060456000000001,
+  "date": "2026-10-19T17:37:55",
+  "source_chars": 159675,
+  "input_tokens": 115460,
+  "output_tokens": 9065,
+  "cost_usd_equiv": 0.9159936000000001,
   "status": "extracted"
  }
 }

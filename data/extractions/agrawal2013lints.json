@@ -1,5 +1,5 @@
 {
- "schema_version": "0.3",
+ "schema_version": "0.4",
  "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Thompson Sampling for Contextual Bandits with Linear Payoffs",
@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Stochastic contextual bandit with linear payoffs, contexts chosen by an adaptive adversary",
+   "name_in_paper": "Stochastic contextual bandit with linear payoffs, adaptive adversarial contexts",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -24,13 +24,14 @@
    "context": "adversarial_contexts",
    "noise": "conditionally_subgaussian",
    "learner_knows": [
-    "sigma"
+    "sigma",
+    "d"
    ],
    "instance_assumptions": [],
    "action_set": {
     "shape": "finite",
     "time_varying": "adaptive_sequence",
-    "access": "explicit"
+    "access": "linear_optimization_oracle"
    },
    "extras": [
     "time_varying_action_sets"
@@ -40,10 +41,10 @@
    "out_of_scope_reason": null,
    "unmapped": [
     "||b_i(t)|| <= 1, ||mu|| <= 1, Delta_i(t) <= 1",
-    "N arms per round (n_act); the N-free bound also claimed for infinite arms",
-    "regret against the best arm at each round given the contexts (realizable linear model)"
+    "N arms each with a context vector chosen by an adaptive adversary; regret against optimal arm at each round",
+    "noise is conditionally R-sub-Gaussian with R known to the algorithm (used in v_t)"
    ],
-   "definition_quote": "There are $N$ arms. At time $t = 1, 2, \\ldots $, a context vector $b_i(t) \\in {\\mathbb R}^d$, is revealed for every arm $i$. These context vectors are chosen by an adversary in an adaptive manner after observing the arms played and their rewards up to time $t-1$ ... Given $b_i(t)$, the reward for arm $i$ at time $t$ is generated from an (unknown) distribution with mean $b_i(t)^T\\mu$ ... We assume that $\\eta_{i,t}=r_i(t)-b_i(t)^T\\mu$ is conditionally $R$-sub-Gaussian ... We will also assume that $||b_i(t)||\\le 1$, $||\\mu||\\le 1$, and $\\Delta_i(t) \\le 1$"
+   "definition_quote": "There are $N$ arms. At time $t = 1, 2, \\ldots $, a context vector $b_i(t) \\in {\\mathbb R}^d$, is revealed for every arm $i$. These context vectors are chosen by an adversary in an adaptive manner after observing the arms played and their rewards up to time $t-1$... Given $b_i(t)$, the reward for arm $i$ at time $t$ is generated from an (unknown) distribution with mean $b_i(t)^T\\mu$... We assume that $\\eta_{i,t}=r_i(t)-b_i(t)^T\\mu$ is conditionally $R$-sub-Gaussian... We will also assume that $||b_i(t)||\\le 1$, $||\\mu||\\le 1$, and $\\Delta_i(t) \\le 1$"
   }
  ],
  "algorithms": [
@@ -57,8 +58,8 @@
    ],
    "requires_knowledge_of": [
     "sigma",
-    "delta",
-    "d"
+    "d",
+    "delta"
    ]
   }
  ],
@@ -82,19 +83,20 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "||b_i(t)||<=1, ||mu||<=1, Delta_i(t)<=1",
-    "delta is an input parameter of the algorithm",
-    "R treated as constant inside O"
+   "conditions": [
+    "||b_i(t)|| <= 1, ||mu|| <= 1, Delta_i(t) <= 1"
+   ],
+   "tuning": [
+    "v_t = R*sqrt(9 d ln(t/delta)) (or v = R*sqrt(9 d ln(T/delta)) if T known)"
    ],
    "is_new": true,
    "source": {
     "label": "th:dep",
     "number": "Theorem 1",
-    "quote": "With probability $1-\\delta$, the total regret for Thompson Sampling algorithm in time $T$ is bounded as ${\\cal R}(T) = O\\left(d^{3/2}\\sqrt{T} \\left( \\ln (T) + \\sqrt{\\ln(T) \\ln(\\frac{1}{\\delta})}\\right)\\right)$, or, ${\\cal R}(T) = O\\left(d\\sqrt{T \\log(N)} \\left( \\ln (T) + \\sqrt{\\ln(T) \\ln(\\frac{1}{\\delta})}\\right)\\right)$, whichever is smaller, for any $0<\\delta<1$, where $\\delta$ is a parameter used by the algorithm."
+    "quote": "With probability $1-\\delta$, the total regret for Thompson Sampling algorithm in time $T$ is bounded as ${\\cal R}(T) = O\\left(d^{3/2}\\sqrt{T} \\left( \\ln (T) + \\sqrt{\\ln(T) \\ln(\\frac{1}{\\delta})}\\right)\\right)$, or, ${\\cal R}(T) = O\\left(d\\sqrt{T \\log(N)} (...)\\right)$ whichever is smaller, for any $0<\\delta<1$, where $\\delta$ is a parameter used by the algorithm."
    },
    "confidence": "high",
-   "notes": "Regret is sum of Delta_{a(t)}(t) (pseudo-regret w.r.t. per-round best arm) with high probability. Analyzed version uses v_t depending on t, so anytime. Bound independent of N; remark says applies to infinite arms."
+   "notes": "Regret defined via means, Delta_{a(t)}(t). Analyzed version uses v_t, so anytime. Bound independent of N (Remark 2: applies to infinite arms). Remark 1 states same order for regret defined with realized rewards."
   },
   {
    "id": "r2",
@@ -115,32 +117,34 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "||b_i(t)||<=1, ||mu||<=1, Delta_i(t)<=1",
-    "delta is an input parameter of the algorithm",
-    "R treated as constant inside O"
+   "conditions": [
+    "||b_i(t)|| <= 1, ||mu|| <= 1, Delta_i(t) <= 1",
+    "finite number N of arms"
+   ],
+   "tuning": [
+    "v_t = R*sqrt(9 d ln(t/delta))"
    ],
    "is_new": true,
    "source": {
     "label": "th:dep",
     "number": "Theorem 1",
-    "quote": "or, ${\\cal R}(T) = O\\left(d\\sqrt{T \\log(N)} \\left( \\ln (T) + \\sqrt{\\ln(T) \\ln(\\frac{1}{\\delta})}\\right)\\right)$, whichever is smaller"
+    "quote": "or, ${\\cal R}(T) = O\\left(d\\sqrt{T \\log(N)} \\left( \\ln (T) + \\sqrt{\\ln(T) \\ln(\\frac{1}{\\delta})}\\right)\\right)$, whichever is smaller, for any $0<\\delta<1$"
    },
    "confidence": "high",
-   "notes": "Paper's N = number of arms per round, mapped to n_act."
+   "notes": "Paper's N (number of arms per round) mapped to n_act."
   }
  ],
  "cited_results": [
   {
    "cited_key": "DBLP:conf/colt/DaniHK08",
    "cited_title": "Stochastic Linear Optimization under Bandit Feedback",
-   "cited_first_author": "Varsha Dani",
+   "cited_first_author": "Dani",
    "cited_year": 2008,
    "cited_arxiv_id": null,
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic linear bandit with infinite arms (sphere intersected with cube)",
+   "setting_description": "Linear bandit with infinite arms (sphere intersect cube)",
    "bound": {
     "notation": "Omega",
     "expression": "d*sqrt(T)",
@@ -152,10 +156,10 @@
   {
    "cited_key": "DBLP:conf/colt/DaniHK08",
    "cited_title": "Stochastic Linear Optimization under Bandit Feedback",
-   "cited_first_author": "Varsha Dani",
+   "cited_first_author": "Dani",
    "cited_year": 2008,
    "cited_arxiv_id": null,
-   "algorithm_name": "ConfidenceBall",
+   "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
    "setting_description": "Stochastic linear bandit with fixed action set",
@@ -170,7 +174,7 @@
   {
    "cited_key": "DBLP:conf/colt/DaniHK08",
    "cited_title": "Stochastic Linear Optimization under Bandit Feedback",
-   "cited_first_author": "Varsha Dani",
+   "cited_first_author": "Dani",
    "cited_year": 2008,
    "cited_arxiv_id": null,
    "algorithm_name": "Algorithm 3.2 (efficient)",
@@ -188,13 +192,13 @@
   {
    "cited_key": "DBLP:conf/nips/Abbasi-YadkoriPS11",
    "cited_title": "Improved Algorithms for Linear Stochastic Bandits",
-   "cited_first_author": "Yasin Abbasi-Yadkori",
+   "cited_first_author": "Abbasi-Yadkori",
    "cited_year": 2011,
    "cited_arxiv_id": null,
-   "algorithm_name": "OFUL",
+   "algorithm_name": "OFUL (UCB-style)",
    "algorithm_registry_id": "oful",
    "side": "upper",
-   "setting_description": "Stochastic linear bandit, UCB-style algorithm",
+   "setting_description": "Stochastic linear bandit",
    "bound": {
     "notation": "O",
     "expression": "d*log(T)*sqrt(T) + sqrt(d*T*log(T/delta))",
@@ -206,13 +210,13 @@
   {
    "cited_key": "DBLP:journals/jmlr/ChuLRS11",
    "cited_title": "Contextual Bandits with Linear Payoff Functions",
-   "cited_first_author": "Wei Chu",
+   "cited_first_author": "Chu",
    "cited_year": 2011,
    "cited_arxiv_id": null,
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Contextual linear bandit with finite N arms",
+   "setting_description": "Linear contextual bandit with finite N arms",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(T*d)",
@@ -224,13 +228,13 @@
   {
    "cited_key": "DBLP:journals/jmlr/ChuLRS11",
    "cited_title": "Contextual Bandits with Linear Payoff Functions",
-   "cited_first_author": "Wei Chu",
+   "cited_first_author": "Chu",
    "cited_year": 2011,
    "cited_arxiv_id": null,
    "algorithm_name": "SupLinUCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Contextual linear bandit, finite N arms, oblivious adversary contexts, w.p. 1-delta",
+   "setting_description": "Linear contextual bandit, finite N arms, oblivious adversarial contexts, high probability",
    "bound": {
     "notation": "O",
     "expression": "sqrt(T*d*log(n_act*T*log(T)/delta)**3)",
@@ -242,7 +246,7 @@
   {
    "cited_key": "bubeck12",
    "cited_title": "Towards minimax policies for online linear optimization with bandit feedback",
-   "cited_first_author": "Sébastien Bubeck",
+   "cited_first_author": "Bubeck",
    "cited_year": 2012,
    "cited_arxiv_id": null,
    "algorithm_name": "Exp2 with John's exploration",
@@ -251,7 +255,7 @@
    "setting_description": "Linear bandit with finite set of N actions",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(d*T*log(K))",
+    "expression": "sqrt(d*T*log(n_act))",
     "expression_latex": "\\sqrt{dT\\log N}",
     "regime": null
    },
@@ -264,16 +268,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "83b9f19fac84",
-  "schema_version": "0.3",
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
   "ontology_version": "bandits-0.3",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T16:26:08",
-  "source_chars": 71053,
-  "input_tokens": 61468,
-  "output_tokens": 4559,
-  "cost_usd_equiv": 0.4059496,
+  "date": "2026-10-19T17:34:25",
+  "source_chars": 71615,
+  "input_tokens": 63309,
+  "output_tokens": 4561,
+  "cost_usd_equiv": 0.4087056,
   "status": "extracted"
  }
 }

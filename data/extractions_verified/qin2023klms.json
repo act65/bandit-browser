@@ -1,0 +1,628 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Kullback-Leibler Maillard Sampling for Multi-armed Bandits with Bounded Rewards",
+  "arxiv_id": "2304.14989",
+  "arxiv_version": null,
+  "year": 2023,
+  "authors": [
+   "Hao Qin",
+   "Kwang-Sung Jun",
+   "Chicheng Zhang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "K-armed bandit with reward distributions supported on [0,1]",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [],
+   "definition_quote": "In this paper, we study the multi-armed bandit setting where reward distributions of all arms are supported on $[0,1]$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "K-armed bandit with [0,1] rewards (KL-UCB++, known horizon)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K",
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [],
+   "definition_quote": "For any $K$-arm bandit problem with reward distributions supported on $[0,1]$, KL-UCB++"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "KL Maillard Sampling (KL-MS)",
+   "registry_id": "kl_ms",
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "KL-UCB",
+   "registry_id": "kl_ucb",
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "KL-UCB++",
+   "registry_id": "kl_ucb_plus_plus",
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "T"
+   ]
+  },
+  {
+   "id": "a4",
+   "name": "UCB-V",
+   "registry_id": "ucb_v",
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "T*Delta_thr + sum_subopt(Delta_i*log(Max(T*kl(mu_i + c_alg*Delta_i, mu_star - c_alg*Delta_i), E**2))/kl(mu_i + c_alg*Delta_i, mu_star - c_alg*Delta_i)) + 392*sum_subopt(((mu_star*(1 - mu_star) + Delta_i)/(c_alg**2*Delta_i))*log(Max(Min((mu_star*(1 - mu_star) + Delta_i)/(c_alg**2*Delta_i**2), c_alg**2*T*Delta_i**2/(mu_star*(1 - mu_star) + Delta_i)), E**2)))",
+    "expression_latex": "T\\Delta + \\sum_{a: \\Delta_a > \\Delta} \\frac{\\Delta_a \\ln(T \\kl(\\mu_a + c \\Delta_a, \\mu_1 - c \\Delta_a) \\vee e^2 )}{\\kl(\\mu_a + c \\Delta_a, \\mu_1 - c \\Delta_a)} + 392 \\sum_{a: \\Delta_a > \\Delta} (\\frac{\\dmu_1 + \\Delta_a}{c^2 \\Delta_a}) \\ln( ( \\frac{\\dmu_1 + \\Delta_a}{c^2 \\Delta_a^2} \\wedge \\frac{c^2 T \\Delta_a^2}{\\dmu_1 + \\Delta_a }) \\vee e^2 )",
+    "regime": null
+   },
+   "symbols": {
+    "Delta_thr": "arbitrary threshold Delta >= 0; sums run only over arms with Delta_i > Delta_thr"
+   },
+   "conditions": [],
+   "tuning": [
+    "Delta_thr >= 0 free analysis parameter",
+    "c_alg in (0, 1/4]"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:expected-regret-total",
+    "number": "Theorem 1",
+    "quote": "For any $K$-arm bandit problem with reward distribution supported on $[0,1]$, KL-MS has regret bounded as follows. For any $\\Delta \\geq 0$ and $c \\in (0, \\frac14]$: \\Reg(T) \\leq T\\Delta + \\sum_{a: \\Delta_a > \\Delta} \\frac{\\Delta_a \\ln(T \\kl(\\mu_a + c \\Delta_a, \\mu_1 - c \\Delta_a) \\vee e^2 )}{\\kl(...)} + 392 \\sum_{a: \\Delta_a > \\Delta} ..."
+   },
+   "confidence": "medium",
+   "notes": "mu_1 = mu_star; dot mu_1 = mu_star(1-mu_star). Sums restricted to arms with gap > Delta_thr (written as sum_subopt). The appendix proof yields constant (24/c^2+4/(1-2c)^2) without the extra 1/c^2 factor; printed statement recorded as is."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "Delta_thr*T + sum_subopt(((mu_star*(1 - mu_star) + Delta_i)/Delta_i)*log(Max(T*Delta_i**2/(mu_star*(1 - mu_star) + Delta_i), E**2)))",
+    "expression_latex": "T\\Delta + O( \\sum_{a: \\Delta_a > \\Delta} (\\frac{\\dmu_1 + \\Delta_a}{\\Delta_a}) \\ln( \\frac{T\\Delta_a^2}{\\dmu_1 + \\Delta_a} \\vee e^2 ) )",
+    "regime": null
+   },
+   "symbols": {
+    "Delta_thr": "arbitrary threshold Delta >= 0; sum over arms with Delta_i > Delta_thr"
+   },
+   "conditions": [],
+   "tuning": [
+    "Delta_thr >= 0 free"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "lem:kl-ms-pre-sub-ucb",
+    "number": "Lemma 8",
+    "quote": "For KL-MS, its regret is bounded by: for any $\\Delta \\geq 0$, \\Reg(T) \\leq T\\Delta + O( \\sum_{a: \\Delta_a > \\Delta} (\\frac{\\dmu_1 + \\Delta_a}{\\Delta_a}) \\ln( \\frac{T\\Delta_a^2}{\\dmu_1 + \\Delta_a} \\vee e^2 ) )"
+   },
+   "confidence": "medium",
+   "notes": "Mixed form: T*Delta_thr exact plus O(.) on the sum; recorded with notation exact for the expression but the second term is up to a constant factor."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(log(T)/Delta_i)",
+    "expression_latex": "\\Reg(T) \\lesssim \\sum_{a: \\Delta_a > 0} \\frac{\\ln T}{\\Delta_a}",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:sub-UCB",
+    "number": "Theorem 2",
+    "quote": "KL-MS's regret is bounded by $\\Reg(T) \\lesssim \\sum_{a: \\Delta_a > 0} \\frac{\\ln T}{\\Delta_a}$. Therefore, KL-MS is sub-UCB."
+   },
+   "confidence": "high",
+   "notes": "Sub-UCB property."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(mu_star*(1 - mu_star)*K*T*log(K)) + K*log(T)",
+    "expression_latex": "\\Reg(T) \\lesssim \\sqrt{\\dmu_1 KT\\ln{K}} + K \\ln T",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:minimax-regret-bound",
+    "number": "Theorem 3",
+    "quote": "For any $K$-arm bandit problem with reward distribution supported on $[0,1]$, KL-MS has regret bounded as: $\\Reg(T) \\lesssim \\sqrt{\\dmu_1 KT\\ln{K}} + K \\ln T$."
+   },
+   "confidence": "high",
+   "notes": "Adaptive worst-case bound; depends on mu_star only through mu_star(1-mu_star). Implies O(sqrt(KT ln K))."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "sum_subopt(Delta_i/kl(mu_i, mu_star))*log(T)",
+    "expression_latex": "\\limsup_{T \\rightarrow \\infty} \\fr{ \\Reg(T) }{\\ln(T)} = \\sum_{a\\in[K]:\\Delta_a>0} \\frac{\\Delta_a}{\\kl(\\mu_a, \\mu_1)}",
+    "regime": "T -> infinity"
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:asymptotic-optimality",
+    "number": "Theorem 4",
+    "quote": "For any $K$-arm bandit problem with reward distribution supported on $[0,1]$, KL-MS satisfies the following asymptotic regret upper bound: \\limsup_{T \\rightarrow \\infty} \\fr{ \\Reg(T) }{\\ln(T)} = \\sum_{a\\in[K]:\\Delta_a>0} \\frac{\\Delta_a}{\\kl(\\mu_a, \\mu_1)}"
+   },
+   "confidence": "medium",
+   "notes": "Stated with '=' but proof establishes '<='; called an upper bound. Asymptotically optimal for Bernoulli rewards (not for general [0,1])."
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "T*Delta_thr + sum_subopt(Delta_i*log(1 + T*log(T)**2)/kl(mu_i + c_alg*Delta_i, mu_star - c_alg*Delta_i)) + sum_subopt((mu_star*(1 - mu_star) + Delta_i)/(c_alg**2*Delta_i))",
+    "expression_latex": "T\\Delta + \\sum_{a: \\Delta_a > \\Delta} \\frac{\\Delta_a \\ln(1+T\\ln^2T)}{\\KL(\\mu_a + c\\Delta_a, \\mu_1 - c\\Delta_a)} + O( \\sum_{a: \\Delta_a > \\Delta} \\frac{\\dmu_1 + \\Delta_a}{c^2 \\Delta_a} )",
+    "regime": null
+   },
+   "symbols": {
+    "Delta_thr": "arbitrary threshold Delta > 0; sums over arms with Delta_i > Delta_thr"
+   },
+   "conditions": [],
+   "tuning": [
+    "Delta_thr > 0",
+    "c_alg in (0, 1/4]",
+    "f(t) = 1 + t ln^2 t"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:kl-ucb-refined",
+    "number": "Theorem 30",
+    "quote": "For any $K$-arm bandit problem with reward distributions supported on $[0,1]$, KL-UCB (Algorithm~\\ref{alg:kl-ucb}) has regret bounded as follows. For any $\\Delta > 0$ and $c \\in (0,\\frac14]$, \\Reg(T) \\leq T\\Delta + \\sum ... + O(...)"
+   },
+   "confidence": "medium",
+   "notes": "Only the last term is inside O(.) in the paper; first two terms are exact. Proof is a sketch."
+  },
+  {
+   "id": "r7",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(mu_star*(1 - mu_star)*T*K*log(T)) + K*log(T)",
+    "expression_latex": "O( \\sqrt{ \\dmu_1 T K \\ln T } + K \\ln T)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:kl-ucb-refined",
+    "number": "Theorem 30",
+    "quote": "and consequently, \\Reg(T) \\leq O( \\sqrt{ \\dmu_1 T K \\ln T } + K \\ln T)."
+   },
+   "confidence": "high",
+   "notes": "Refined analysis of existing KL-UCB (Lattimore-Szepesvari version)."
+  },
+  {
+   "id": "r8",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(mu_star*(1 - mu_star)*T*K**3*log(T)) + K**2*log(T)",
+    "expression_latex": "O( \\sqrt{ \\dmu_1 T K^3 \\ln T } + K^2 \\ln T)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:kl-ucb++-refined",
+    "number": "Theorem 32",
+    "quote": "For any $K$-arm bandit problem with reward distributions supported on $[0,1]$, KL-UCB++ \\Reg(T) \\leq O( \\sqrt{ \\dmu_1 T K^3 \\ln T } + K^2 \\ln T)."
+   },
+   "confidence": "high",
+   "notes": "Refined analysis of existing KL-UCB++."
+  },
+  {
+   "id": "r9",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a4",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(mu_star*(1 - mu_star)*K*T*log(T)) + K*log(T)",
+    "expression_latex": "\\Reg(T) \\lsim \\sqrt{\\dmu_1 K T \\ln(T)} + K\\ln(T)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [
+    "c = 1, zeta = 1.1 in UCB-V exploration function"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:ucb-v-refined",
+    "number": "Theorem 34",
+    "quote": "The regret of the algorithm UCB-V\\cite{audibert09exploration} is bounded by: \\Reg(T) \\lsim \\sqrt{\\dmu_1 K T \\ln(T)} + K\\ln(T)"
+   },
+   "confidence": "medium",
+   "notes": "Refined analysis of existing UCB-V; horizon status inferred from UCB-V exploration using log t."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "lai85asymptotically",
+   "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_first_author": "T. L. Lai",
+   "cited_year": 1985,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Stochastic K-armed bandits with rewards bounded in [0,1], consistent algorithms (with Burnetas & Katehakis 1996)",
+   "bound": {
+    "notation": "liminf",
+    "expression": "sum_subopt(Delta_i/Kinf_i)*log(T)",
+    "expression_latex": "(1 + o(1)) \\sum_{a: \\Delta_a > 0}\\frac{\\Delta_a \\ln T}{\\KL_{\\inf}(\\nu_a, \\mu^*)}",
+    "regime": "T -> infinity"
+   },
+   "where": "Section 3 (Related Work)"
+  },
+  {
+   "cited_key": "audibert09minimax",
+   "cited_title": "Minimax Policies for Adversarial and Stochastic Bandits.",
+   "cited_first_author": "J.-Y. Audibert",
+   "cited_year": 2009,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Minimax regret of [0,1]-bounded reward K-armed bandits (with Auer et al. 2003)",
+   "bound": {
+    "notation": "Theta",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "\\Theta(\\sqrt{KT})",
+    "regime": null
+   },
+   "where": "Section 2 (Minimax ratio)"
+  },
+  {
+   "cited_key": "cappe2013kullback",
+   "cited_title": "Kullback-leibler upper confidence bounds for optimal sequential allocation",
+   "cited_first_author": "O. Cappé",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "KL-UCB",
+   "algorithm_registry_id": "kl_ucb",
+   "side": "upper",
+   "setting_description": "Stochastic bandits with [0,1] rewards, worst-case regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(T))",
+    "expression_latex": "O(\\sqrt{K T \\ln T})",
+    "regime": null
+   },
+   "where": "Section 3; Table 1"
+  },
+  {
+   "cited_key": "menard17minimax",
+   "cited_title": "A minimax and asymptotically optimal algorithm for stochastic bandits",
+   "cited_first_author": "P. Ménard",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "KL-UCB++",
+   "algorithm_registry_id": "kl_ucb_plus_plus",
+   "side": "upper",
+   "setting_description": "Stochastic bandits with [0,1] rewards, worst-case regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "O(\\sqrt{K T})",
+    "regime": null
+   },
+   "where": "Section 3; Table 1"
+  },
+  {
+   "cited_key": "agrawal2013further",
+   "cited_title": "Further optimal regret bounds for thompson sampling",
+   "cited_first_author": "S. Agrawal",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson Sampling",
+   "algorithm_registry_id": "thompson_sampling_beta",
+   "side": "upper",
+   "setting_description": "Stochastic bandits with [0,1] rewards, worst-case regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(K))",
+    "expression_latex": "O(\\sqrt{K T \\ln K})",
+    "regime": null
+   },
+   "where": "Section 3; Table 1"
+  },
+  {
+   "cited_key": "jinfinite",
+   "cited_title": "Finite-time regret of thompson sampling algorithms for exponential family multi-armed bandits",
+   "cited_first_author": "T. Jin",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "ExpTS+",
+   "algorithm_registry_id": "expts_plus",
+   "side": "upper",
+   "setting_description": "Stochastic bandits, worst-case regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "O(\\sqrt{KT})",
+    "regime": null
+   },
+   "where": "Section 3; Table 1"
+  },
+  {
+   "cited_key": "bian2022maillard",
+   "cited_title": "Maillard Sampling: Boltzmann Exploration Done Optimally",
+   "cited_first_author": "J. Bian",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Maillard Sampling",
+   "algorithm_registry_id": "maillard_sampling",
+   "side": "upper",
+   "setting_description": "Sub-Gaussian stochastic bandits, worst-case regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(T))",
+    "expression_latex": "O( \\sqrt{KT \\ln T} )",
+    "regime": null
+   },
+   "where": "Section 3"
+  },
+  {
+   "cited_key": "bian2022maillard",
+   "cited_title": "Maillard Sampling: Boltzmann Exploration Done Optimally",
+   "cited_first_author": "J. Bian",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "MS+",
+   "algorithm_registry_id": "maillard_sampling_plus",
+   "side": "upper",
+   "setting_description": "Sub-Gaussian stochastic bandits, worst-case regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(K))",
+    "expression_latex": "O( \\sqrt{KT \\ln K} )",
+    "regime": null
+   },
+   "where": "Section 3"
+  },
+  {
+   "cited_key": "cb17boltzmann",
+   "cited_title": "Boltzmann exploration done right",
+   "cited_first_author": "N. Cesa-Bianchi",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Boltzmann exploration variant",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Sub-Gaussian stochastic bandits, instance-dependent regret with minimum gap",
+   "bound": {
+    "notation": "O",
+    "expression": "K*log(T)**2/Delta_min",
+    "expression_latex": "O(\\frac{K \\ln^2 T}{\\Delta})",
+    "regime": null
+   },
+   "where": "Section 3"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "3e8a186d587d",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.3",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-19T17:30:01",
+  "source_chars": 192152,
+  "input_tokens": 125762,
+  "output_tokens": 11143,
+  "cost_usd_equiv": 1.0399696,
+  "status": "extracted"
+ },
+ "_verify": {
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "prompt_sha": "81d04c3b9fd7",
+  "date": "2026-10-19T17:42:08",
+  "applied_on": "2026-10-19T17:42:58",
+  "min_confidence": "medium",
+  "applied": [
+   {
+    "target": "results.r2.bound.notation",
+    "old": "\"exact\"",
+    "new": "\"O\"",
+    "reason": "The sum term of Lemma 8 is only stated up to an unspecified constant (inside O(.)); recording the constant-free expression as exact states a stronger bound than the paper proves.",
+    "evidence": "\\Reg(T) \\leq T\\Delta + O\\del{ \\sum_{a: \\Delta_a > \\Delta} \\rbr{\\frac{\\dmu_1 + \\Delta_a}{\\Delta_a}} \\ln\\rbr{ \\frac{T\\Delta_a^2}{\\dmu_1 + \\Delta_a} \\vee e^2 } }",
+    "severity": "major",
+    "confidence": "high"
+   }
+  ],
+  "rejected": [],
+  "flags": {
+   "hallucinated": [],
+   "not_a_guarantee": [],
+   "unverifiable": [],
+   "missing_results": [
+    {
+     "number": "Theorem 31",
+     "label": "thm:KL-UCB++-arm-number",
+     "side": "upper",
+     "description": "Refined bound on expected number of pulls of a suboptimal arm by KL-UCB++ for delta in a range.",
+     "quote": "\\EE\\sbr{N_a(T)} \\leq \\frac{\\ln(T)}{\\kl(\\mu_a+\\delta, \\mu_1-\\delta)} + O\\del{\\frac{(K + \\ln\\ln(T)) (\\dmu_1+\\Delta_a)}{\\delta^2}}"
+    }
+   ]
+  },
+  "summary": "The extraction is accurate. KL-MS Theorems 1–4 and the refined analyses of KL-UCB, KL-UCB++ and UCB-V match the source. The one correction is the notation of the Lemma 8 result (r2): it should be O, not exact. Theorem 31, a bound on KL-UCB++'s pulls of a suboptimal arm, was not extracted."
+ }
+}

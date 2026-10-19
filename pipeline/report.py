@@ -61,6 +61,12 @@ def describe(eid, results, inferred) -> str:
     return f"`{x['expression']}` ({r['bound']['notation']}; inherited from {r['paper']} {r['source']['number']})"
 
 
+def conditions_of(eid, results, inferred) -> list[str]:
+    eid = eid.partition("@")[0]
+    r = results.get(eid) or results[inferred[eid]["from_result"]]
+    return r.get("conditions") or []
+
+
 def poset(settings, order: Order) -> list[dict]:
     pairs = {(a, b): ch for a, b, ch in order.comparable_pairs({k: v["key"] for k, v in settings.items()})}
     succ = collections.defaultdict(set)
@@ -149,7 +155,8 @@ def main() -> None:
     for cf in cmp["conflicts"]:
         out += [f"- {label(cf['setting_id'])}, {cf['family']} / {cf['dependence']}, variable {cf['var']}: "
                 f"upper {cf['upper_rate']} < lower {cf['lower_rate']}",
-                "  - upper: " + describe(cf["upper"][0], results, inferred),
+                "  - upper: " + describe(cf["upper"][0], results, inferred)
+                + (f" — conditions: {'; '.join(cond)}" if (cond := conditions_of(cf["upper"][0], results, inferred)) else ""),
                 "  - lower: " + describe(cf["lower"][0], results, inferred)]
     (REP / "conflicts.md").write_text("\n".join(out) + "\n")
 
