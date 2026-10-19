@@ -35,11 +35,26 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `sqrt(T*(K - 1)*log(1/(4*delta)))/27` (exact; inherited from gerchinovitz2016refined Theorem 1)
 - relies on inherited bounds: True
 
+## adversarial · K-armed · rewards in [0,1] (`S-d7ebf661`, 4 papers): hp_regret, worst_case — **log gap**
+- K: upper 0.5·log^0.5 vs lower 0.5 (log_gap)
+- T: upper 0.5 vs lower 0.5 (tight)
+- best upper: `2*sqrt(2)*sqrt(K*T*log(K)) + (sqrt(2)*sqrt(K*T/log(K)) + 1)*log(2/delta)` (exact; neu2015explore Theorem 1); `4*sqrt(K*T*log(K)) + (2*sqrt(K*T/log(K)) + 1)*log(2/delta)` (exact; neu2015explore Theorem 1); `5.15*sqrt(K*T*log(K/delta))` (exact; inherited from bubeck2012survey Theorem (th:exp3P))
+- best lower: `sqrt(T*(K - 1)*log(1/(4*delta)))/27` (exact; inherited from gerchinovitz2016refined Theorem 1)
+- relies on inherited bounds: True
+
 ## adversarial (oblivious) · K-armed · rewards in [0,1] (`S-acdb6735`, 3 papers): hp_regret, worst_case — **log gap**
 - K: upper 0.5·log^0.5 vs lower 0.5 (log_gap)
 - T: upper 0.5 vs lower 0.5 (tight)
-- best upper: `5.15*sqrt(K*T*log(K/delta))` (exact; inherited from bubeck2012survey Theorem (th:exp3P)); `sqrt(K*T/log(K))*log(1/delta) + 5.15*sqrt(K*T*log(K))` (exact; inherited from bubeck2012survey Theorem (th:exp3P))
+- best upper: `5.15*sqrt(K*T*log(K/delta))` (exact; inherited from bubeck2012survey Theorem (th:exp3P)); `sqrt(K*T/log(K))*log(1/delta) + 5.15*sqrt(K*T*log(K))` (exact; inherited from bubeck2012survey Theorem (th:exp3P)); `2*sqrt(2)*sqrt(K*T*log(K)) + (sqrt(2)*sqrt(K*T/log(K)) + 1)*log(2/delta)` (exact; inherited from neu2015explore Theorem 1)
 - best lower: `sqrt(T*(K - 1)*log(1/(4*delta)))/27` (exact; gerchinovitz2016refined Theorem 1)
+- relies on inherited bounds: True
+
+## adversarial · linear (finite actions) · bounded_pm1 · finite (`S-7dbd870b`, 2 papers): regret, worst_case — **log gap**
+- K: upper 0·log^0.5 vs lower 0 (log_gap)
+- T: upper 0.5 vs lower 0.5 (tight)
+- d: upper 0.5 vs lower 0.5 (tight)
+- best upper: `2*sqrt(3)*sqrt(T*d*log(K))` (exact; bubeck2012minimax Theorem 4); `sqrt(T*d*log(K))` (O; dann2023blackbox Corollary 12)
+- best lower: `Min(T, sqrt(T*d))/20` (exact; inherited from auer2002exp3 Theorem 5.1); `sqrt(T*d)/20` (exact; inherited from bubeck2012survey Theorem (th:LBminimax)); `sqrt(T*(d - 1))/504` (exact; inherited from gerchinovitz2016refined Corollary 5)
 - relies on inherited bounds: True
 
 ## adversarial (adaptive) · linear (finite actions) · bounded_pm1 · arms_span_Rd · finite (`S-a945275c`, 2 papers): regret, worst_case — **log gap**
@@ -47,6 +62,14 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - T: upper 0.5·log^1 vs lower 0.5 (log_gap)
 - d: upper 0.5 vs lower 0.5 (log_gap)
 - best upper: `sqrt(T*d*log(T)*log(K*T))` (O; kong2023bestofthree Theorem (thm:thmregret))
+- best lower: `Min(T, sqrt(T*d))/20` (exact; inherited from auer2002exp3 Theorem 5.1); `sqrt(T*d)/20` (exact; inherited from bubeck2012survey Theorem (th:LBminimax)); `sqrt(T*(d - 1))/504` (exact; inherited from gerchinovitz2016refined Corollary 5)
+- relies on inherited bounds: True
+
+## adversarial · linear (finite actions) · bounded_pm1 · arms_span_Rd · finite (`S-9c1a3b69`, 1 papers): regret, worst_case — **log gap**
+- K: upper 0·log^0.5 vs lower 0 (log_gap)
+- T: upper 0.5 vs lower 0.5 (tight)
+- d: upper 0.5 vs lower 0.5 (tight)
+- best upper: `2*sqrt(3)*sqrt(T*d*log(K))` (exact; bubeck2012survey Theorem (th:exp2john)); `2*sqrt(3)*sqrt(T*d*log(K))` (exact; inherited from bubeck2012minimax Theorem 4); `sqrt(T*d*log(K))` (O; inherited from dann2023blackbox Corollary 12)
 - best lower: `Min(T, sqrt(T*d))/20` (exact; inherited from auer2002exp3 Theorem 5.1); `sqrt(T*d)/20` (exact; inherited from bubeck2012survey Theorem (th:LBminimax)); `sqrt(T*(d - 1))/504` (exact; inherited from gerchinovitz2016refined Corollary 5)
 - relies on inherited bounds: True
 
@@ -99,19 +122,5 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - d: upper 1 vs lower 1 (log_gap)
 - best upper: `sqrt(T)*d*log(T)` (O; russo2014posterior Proposition (prop:linear))
 - best lower: `sqrt(T)*d/10` (exact; inherited from dani2008stochastic Theorem 3)
-- relies on inherited bounds: True
-
-## adversarial_self_bounding · K-armed · bounded_pm1 (`S-d916881e`, 1 papers): regret, worst_case — **log gap**
-- K: upper 0.5 vs lower 0.5 (log_gap)
-- T: upper 0.5·log^1 vs lower 0.5 (log_gap)
-- best upper: `sqrt(K*T*log(T)*log(K*T))` (O; inherited from kong2023bestofthree Theorem (thm:thmregret))
-- best lower: `Min(T, sqrt(K*T))/20` (exact; inherited from auer2002exp3 Theorem 5.1); `sqrt(K*T)/20` (exact; inherited from bubeck2012survey Theorem (th:LBminimax))
-- relies on inherited bounds: True
-
-## adversarial (oblivious) · K-armed · bounded_pm1 (`S-ebd2c4fd`, 1 papers): regret, worst_case — **log gap**
-- K: upper 0.5 vs lower 0.5 (log_gap)
-- T: upper 0.5·log^1 vs lower 0.5 (log_gap)
-- best upper: `sqrt(K*T*log(T)*log(K*T))` (O; inherited from kong2023bestofthree Theorem (thm:thmregret))
-- best lower: `Min(T, sqrt(K*T))/20` (exact; inherited from auer2002exp3 Theorem 5.1); `sqrt(K*T)/20` (exact; inherited from bubeck2012survey Theorem (th:LBminimax)); `sqrt(T*(K - 1))/504` (exact; inherited from gerchinovitz2016refined Corollary 5)
 - relies on inherited bounds: True
 

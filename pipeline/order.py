@@ -31,6 +31,7 @@ class Change:
     general: object          # value in the general setting
     kind: str                # "order" | "reduction" | "subset" | "parameter"
     param_map: dict = field(default_factory=dict)  # general-setting symbol -> special-setting expr
+    up_map: dict = field(default_factory=dict)     # instantiation for lower bounds moving to the general setting
     justification: list = field(default_factory=list)  # one entry per ontology edge on the path
     caveats: list = field(default_factory=list)
     valid_for_comparator: set | None = None    # None = all comparators
@@ -59,6 +60,7 @@ class Order:
                     self.implies[(d, r["from"], r["to"])] = r["implies"]
             self.reductions[d] = self._compose(direct, self.orders[d])
         self.value_maps = {d: spec.get("value_maps") or {} for d, spec in self.dims.items()}
+        self.value_maps_up = {d: spec.get("value_maps_up") or {} for d, spec in self.dims.items()}
         self.notes = {d: {tuple(n["pair"]): n for n in spec.get("order_notes") or []}
                       for d, spec in self.dims.items()}
         for name, spec in (ontology.get("node_parameters") or {}).items():
@@ -139,6 +141,7 @@ class Order:
             if ch is None:
                 return None
             ch.param_map = {**ch.param_map, **self.value_maps.get(dim, {}).get(va, {})}
+            ch.up_map = dict(self.value_maps_up.get(dim, {}).get(vb, {}))
             changes.append(ch)
         for f in sorted(set(ka.get("action_set", {})) | set(kb.get("action_set", {}))):
             va, vb = ka.get("action_set", {}).get(f), kb.get("action_set", {}).get(f)

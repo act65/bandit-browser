@@ -136,6 +136,10 @@ def main() -> None:
                 up_map.update({v: k for k, v in ch.param_map.items() if isinstance(v, str) and v.isidentifier()})
             if ch.kind == "parameter":
                 fixed.update(ch.param_map)
+            if ch.up_map:
+                up_map.update(ch.up_map)  # e.g. graph lower bounds instantiated at the bandit graph (alpha_G = K)
+                caveats.append(f"instantiated {', '.join(f'{k} = {v}' for k, v in ch.up_map.items())}: valid if the "
+                               "lower bound is stated for every graph / instance of that class")
             for cv in ch.caveats + ([CAVEATS[ch.dim]] if ch.kind == "reduction" and ch.dim in CAVEATS else []):
                 if cv not in caveats:
                     caveats.append(cv)

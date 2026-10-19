@@ -36,6 +36,11 @@ dimensions:
       - {pair: [two_point, bandit], justification: "a one-point algorithm can ignore the second evaluation"}
       - {pair: [semi_bandit, bandit], justification: "a bandit algorithm can ignore per-arm feedback"}
       - {pair: [bandit, partial_monitoring], justification: "bandit feedback is a partial-monitoring game whose feedback matrix reveals the loss of the chosen action"}
+    # value_maps_up: symbols instantiated when a LOWER bound is transferred INTO a setting with this
+    # value. Graph-feedback lower bounds are stated for every feedback graph G; bandit feedback is the
+    # graph with self-loops only, whose independence number is K.
+    value_maps_up:
+      bandit: {alpha_G: K}
     values:
       full_information: "experts setting: all losses observed"
       two_point: "two (or a few) function evaluations per round"
@@ -68,6 +73,8 @@ dimensions:
       - {pair: [stochastic_corrupted, adversarial_self_bounding], justification: "corrupted stochastic satisfies the self-bounding constraint with C_sb = 2C"}
       - {pair: [adversarial_self_bounding, adversarial_oblivious], justification: "a constrained adversary"}
       - {pair: [adversarial_restricted, adversarial_oblivious], justification: "a restricted loss sequence is a particular oblivious sequence"}
+      - {pair: [adversarial_oblivious, adversarial_unspecified], justification: "an unstated adversary is oblivious or adaptive, so at least as general as oblivious"}
+      - {pair: [adversarial_unspecified, adversarial_adaptive], justification: "an unstated adversary is oblivious or adaptive, so at most as general as adaptive"}
     value_maps:
       stochastic_iid: {C: 0, C_sb: 0}
       stochastic_corrupted: {C_sb: 2*C}
@@ -89,6 +96,8 @@ dimensions:
       - [adversarial_oblivious, adversarial_adaptive]
       - [stochastic_iid, adversarial_self_bounding]
       - [stochastic_corrupted, adversarial_self_bounding]
+      - [adversarial_oblivious, adversarial_unspecified]
+      - [adversarial_unspecified, adversarial_adaptive]
       - [adversarial_self_bounding, adversarial_oblivious]
       - [adversarial_restricted, adversarial_oblivious]
     notes: >
@@ -271,7 +280,8 @@ node_parameters:
       shape:
         values: [not_applicable, unspecified, finite, arbitrary_compact, unit_ball, sphere, hypercube, simplex, l1_ball, polytope, convex_body, nonconvex]
         # not_applicable ⊑ finite: K arms embed as the canonical basis (the finite_K -> linear_finite reduction)
-        order: [[not_applicable, finite], [unit_ball, arbitrary_compact], [sphere, arbitrary_compact], [hypercube, arbitrary_compact],
+        # unspecified ⊑ arbitrary_compact: an unstated shape is some compact set
+        order: [[not_applicable, finite], [unspecified, arbitrary_compact], [unit_ball, arbitrary_compact], [sphere, arbitrary_compact], [hypercube, arbitrary_compact],
                 [simplex, arbitrary_compact], [l1_ball, arbitrary_compact], [polytope, arbitrary_compact],
                 [finite, arbitrary_compact], [convex_body, arbitrary_compact], [nonconvex, arbitrary_compact]]
         note: "lower bounds proved on a specific shape transfer only to more general shapes"
