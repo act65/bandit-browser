@@ -31,6 +31,8 @@ SCHEMA_MD = ROOT / "schema.md"
 PRE = ROOT / "corpus" / "pre"
 OUT = ROOT / "data" / "extractions"
 MANIFEST = ROOT / "corpus" / "manifest.yaml"
+VARIABLES_VERSION = None
+ALGO_REGISTRY_SIZE = 0
 
 USER_TEMPLATE = """Extract all results from the paper below, following your instructions exactly.
 
@@ -65,17 +67,48 @@ def render_ontology(ont: dict) -> str:
             lines.append("implications: " + "; ".join(spec["implications"]))
         if spec.get("notes"):
             lines.append("note: " + " ".join(spec["notes"].split()))
+    for name, spec in ont.get("node_parameters", {}).items():
+        lines.append(f"\n### {name} (node parameter: an object)")
+        if spec.get("applies_to"):
+            lines.append(f"applies_to: {spec['applies_to']}")
+        for field, fs in spec["fields"].items():
+            line = f"- `{field}`: " + ", ".join(f"`{v}`" for v in fs["values"])
+            if fs.get("order"):
+                line += "; order: " + ", ".join(f"{a} ⊑ {b}" for a, b in fs["order"])
+            if fs.get("note"):
+                line += f" ({fs['note']})"
+            lines.append(line)
     for name, values in ont["vocabularies"].items():
         lines.append(f"\n### {name}\n" + ", ".join(f"`{v}`" for v in values))
     return "\n".join(lines)
 
 
-def system_prompt(ont: dict) -> str:
+def render_variables(var: dict) -> str:
+    rows = ["| name | kind | meaning | paper aliases |", "|---|---|---|---|"]
+    for name, v in var["variables"].items():
+        aliases = ", ".join(str(a) for a in v.get("aliases", []))
+        rows.append(f"| {name} | {v['kind']} | {v['definition']} | {aliases} |")
+    return "\n".join(rows)
+
+
+def render_algorithms(algos: list[dict]) -> str:
+    if not algos:
+        return "(registry empty: set every registry_id to null)"
+    lines = []
+    for a in algos:
+        aliases = sorted({x for x in a.get("aliases", []) if x != a["name"]})
+        lines.append(f"- {a['id']}: {a['name']}" + (f" ({'; '.join(aliases)})" if aliases else ""))
+    return "\n".join(lines)
+
+
+def system_prompt(ont: dict, var: dict, algos: list[dict]) -> str:
     md = SCHEMA_MD.read_text()
     m = re.search(r"````text PROMPT\n(.*?)\n````", md, re.S)
     if not m:
         raise RuntimeError("PROMPT block not found in schema.md")
-    return m.group(1).replace("{{ONTOLOGY}}", render_ontology(ont))
+    return (m.group(1).replace("{{ONTOLOGY}}", render_ontology(ont))
+            .replace("{{VARIABLES}}", render_variables(var))
+            .replace("{{ALGORITHMS}}", render_algorithms(algos)))
 
 
 def extract_one(paper: dict, ont: dict, sys_prompt: str, js: dict, model: str | None,
@@ -94,6 +127,8 @@ def extract_one(paper: dict, ont: dict, sys_prompt: str, js: dict, model: str | 
         "prompt_sha": hashlib.sha256(sys_prompt.encode()).hexdigest()[:12],
         "schema_version": schema.SCHEMA_VERSION,
         "ontology_version": f"{ont['name']}-{ont['version']}",
+        "variables_version": VARIABLES_VERSION,
+        "algorithm_registry_size": ALGO_REGISTRY_SIZE,
         "date": dt.datetime.now().isoformat(timespec="seconds"),
         "source_chars": len(source),
         "input_tokens": (usage.get("input_tokens") or 0) + (usage.get("cache_read_input_tokens") or 0)
@@ -114,9 +149,13 @@ def main() -> None:
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
 
+    global VARIABLES_VERSION, ALGO_REGISTRY_SIZE
     ont = schema.load_ontology()
-    sys_prompt = system_prompt(ont)
-    js = schema.json_schema(ont)
+    var = schema.load_variables()
+    algos = schema.load_algorithms()
+    VARIABLES_VERSION, ALGO_REGISTRY_SIZE = var["version"], len(algos)
+    sys_prompt = system_prompt(ont, var, algos)
+    js = schema.json_schema(ont, [a["id"] for a in algos])
     papers = [p for p in yaml.safe_load(MANIFEST.read_text())["papers"] if p.get("arxiv_id")]
     if args.only:
         papers = [p for p in papers if p["id"] in set(args.only)]

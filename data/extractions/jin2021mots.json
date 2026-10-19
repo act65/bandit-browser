@@ -1,6 +1,6 @@
 {
- "schema_version": "0.2",
- "ontology_version": "bandits-0.2",
+ "schema_version": "0.3",
+ "ontology_version": "bandits-0.3",
  "paper": {
   "title": "MOTS: Minimax Optimal Thompson Sampling",
   "arxiv_id": "2003.01803",
@@ -17,7 +17,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "K-armed bandit with 1-subGaussian rewards",
+   "name_in_paper": "K-armed stochastic bandit with 1-subGaussian rewards",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -31,10 +31,18 @@
     "K",
     "sigma"
    ],
+   "instance_assumptions": [],
    "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
    "parameters": {
     "sigma": "1"
    },
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [],
    "definition_quote": "the agent plays an arm $A_t\\in \\{1,2,\\cdots,K\\}$ based on the observation of the previous $t-1$ time steps, and then observes a reward $r_t$ that is independently generated from a 1-subGaussian distribution with mean value $\\mu_{A_t}$"
   },
@@ -54,10 +62,18 @@
     "K",
     "sigma"
    ],
+   "instance_assumptions": [],
    "extras": [],
-   "parameters": {
-    "sigma": "1"
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
    },
+   "parameters": {
+    "sigma_std": "1"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [],
    "definition_quote": "Assume that the reward of each arm $i$ follows a Gaussian distribution $\\cN(\\mu_i,1)$"
   }
@@ -65,7 +81,8 @@
  "algorithms": [
   {
    "id": "a1",
-   "name": "MOTS",
+   "name": "MOTS (Minimax Optimal Thompson Sampling with clipping)",
+   "registry_id": "mots",
    "is_new": true,
    "techniques": [
     "thompson_sampling",
@@ -73,14 +90,13 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "K",
-    "rho",
-    "alpha"
+    "K"
    ]
   },
   {
    "id": "a2",
    "name": "MOTS-J",
+   "registry_id": "mots_j",
    "is_new": true,
    "techniques": [
     "thompson_sampling",
@@ -88,8 +104,7 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "K",
-    "alpha"
+    "K"
    ]
   }
  ],
@@ -102,6 +117,7 @@
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "known",
    "compute": "polynomial",
@@ -111,7 +127,10 @@
     "expression_latex": "O\\bigg(\\sqrt{KT}+\\sum_{i=2}^K \\Delta_i\\bigg)",
     "regime": null
    },
-   "symbols": {},
+   "symbols": {
+    "rho": "Gaussian variance scaling parameter in (1/2,1)",
+    "alpha_clip": "clipping threshold constant alpha"
+   },
    "extra_assumptions": [
     "rho in (1/2,1) fixed",
     "alpha >= 4"
@@ -120,10 +139,10 @@
    "source": {
     "label": "theorem:minimax-optimal",
     "number": "Theorem 1",
-    "quote": "Assume that the reward of  arm $i \\in [K]$ is 1-subGaussian with mean $\\mu_i$. For any fixed $\\rho\\in (1/2,1)$ and $\\alpha\\geq 4$,  the regret of Algorithm~\\ref{alg:mots} satisfies R_{\\mu}(T)= O\\bigg(\\sqrt{KT}+\\sum_{i=2}^K \\Delta_i\\bigg)."
+    "quote": "Assume that the reward of  arm $i \\in [K]$ is 1-subGaussian with mean $\\mu_i$. For any fixed $\\rho\\in (1/2,1)$ and $\\alpha\\geq 4$,  the regret of Algorithm~\\ref{alg:mots} satisfies $R_{\\mu}(T)= O(\\sqrt{KT}+\\sum_{i=2}^K \\Delta_i)$."
    },
    "confidence": "high",
-   "notes": "Regret defined as T*mu_star - E[sum r_t], equal to pseudo-regret. Clipping threshold uses T, so horizon known."
+   "notes": "Regret R_mu(T)=T max mu - E sum r_t is equivalent to pseudo-regret. Algorithm uses T in clipping threshold."
   },
   {
    "id": "r2",
@@ -133,17 +152,18 @@
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "asymptotic",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
-    "notation": "limsup",
+    "notation": "exact",
     "expression": "sum_subopt(2/(rho*Delta_i))",
     "expression_latex": "\\lim_{T \\rightarrow\\infty}\\frac{R_{\\mu}(T)}{\\log (T)}=\\sum_{i:\\Delta_i>0}\\frac{2}{\\rho \\Delta_i}",
-    "regime": "limit of R(T)/log(T) as T -> infinity"
+    "regime": "value of lim_{T->infinity} R(T)/log(T)"
    },
    "symbols": {
-    "rho": "variance scaling parameter of MOTS, in (1/2,1)"
+    "rho": "Gaussian variance scaling parameter in (1/2,1)"
    },
    "extra_assumptions": [
     "rho in (1/2,1) fixed",
@@ -153,10 +173,10 @@
    "source": {
     "label": "theorem:asymptotic-optimal",
     "number": "Theorem 2",
-    "quote": "Under the same conditions in Theorem \\ref{theorem:minimax-optimal}, the regret $R_{\\mu}(T)$ of Algorithm~\\ref{alg:mots} satisfies \\lim_{T \\rightarrow\\infty}\\frac{R_{\\mu}(T)}{\\log (T)}=\\sum_{i:\\Delta_i>0}\\frac{2}{\\rho \\Delta_i}."
+    "quote": "Under the same conditions in Theorem \\ref{theorem:minimax-optimal}, the regret $R_{\\mu}(T)$ of Algorithm~\\ref{alg:mots} satisfies $\\lim_{T \\rightarrow\\infty}\\frac{R_{\\mu}(T)}{\\log (T)}=\\sum_{i:\\Delta_i>0}\\frac{2}{\\rho \\Delta_i}.$"
    },
    "confidence": "medium",
-   "notes": "Paper states equality of the limit; recorded as limsup of R/log T."
+   "notes": "Expression is the asymptotic constant of R(T)/log T. Stated as equality of the limit."
   },
   {
    "id": "r3",
@@ -166,18 +186,19 @@
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(K*T)*ilog_mminus1(T) + sum_subopt(Delta_i)",
+    "expression": "sqrt(K*T)*ilog_m_minus_1_T + sum_subopt(Delta_i)",
     "expression_latex": "O\\bigg(\\sqrt{KT}\\ilog^{(m-1)}(T)+\\sum_{i=2}^{K}\\Delta_i\\bigg)",
     "regime": "m >= 2 integer independent of T"
    },
    "symbols": {
-    "ilog_mminus1": "iterated logarithm of order m-1, ilog^{(m-1)}",
-    "m": "integer >= 2 chosen by user"
+    "ilog_m_minus_1_T": "iterated logarithm of T of order m-1, ilog^{(m-1)}(T)",
+    "m_iter": "integer m >= 2 (iteration order)"
    },
    "extra_assumptions": [
     "alpha >= 4",
@@ -187,10 +208,10 @@
    "source": {
     "label": "theorem-new3",
     "number": "Theorem 3",
-    "quote": "Assume the reward of each arm $i$ is 1-subGaussian with mean $\\mu_i$, $i\\in[K]$.  In Algorithm \\ref{alg:mots}, if we choose $\\alpha\\geq 4$ and $\\rho=1-(\\ilog^{(m)}(T)/40)^{-1/2}$, then the regret of MOTS satisfies R_{\\mu}(T)= O\\bigg(\\sqrt{KT}\\ilog^{(m-1)}(T)+\\sum_{i=2}^{K}\\Delta_i\\bigg),\\quad\\text{and }\\lim_{T \\rightarrow\\infty}\\frac{R_{\\mu}(T)}{\\log (T)}=\\sum_{i:\\Delta_i>0}\\frac{2}{ \\Delta_i}"
+    "quote": "if we choose $\\alpha\\geq 4$ and $\\rho=1-(\\ilog^{(m)}(T)/40)^{-1/2}$, then the regret of MOTS satisfies $R_{\\mu}(T)= O(\\sqrt{KT}\\ilog^{(m-1)}(T)+\\sum_{i=2}^{K}\\Delta_i)$, and $\\lim_{T \\rightarrow\\infty}\\frac{R_{\\mu}(T)}{\\log (T)}=\\sum_{i:\\Delta_i>0}\\frac{2}{ \\Delta_i}$"
    },
    "confidence": "high",
-   "notes": "Minimax part of Theorem 3."
+   "notes": "Note m here is the iterated-log order, not combinatorial size."
   },
   {
    "id": "r4",
@@ -200,14 +221,15 @@
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "asymptotic",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
-    "notation": "limsup",
+    "notation": "exact",
     "expression": "sum_subopt(2/Delta_i)",
     "expression_latex": "\\lim_{T \\rightarrow\\infty}\\frac{R_{\\mu}(T)}{\\log (T)}=\\sum_{i:\\Delta_i>0}\\frac{2}{ \\Delta_i}",
-    "regime": "limit of R(T)/log(T) as T -> infinity"
+    "regime": "value of lim_{T->infinity} R(T)/log(T)"
    },
    "symbols": {},
    "extra_assumptions": [
@@ -218,10 +240,10 @@
    "source": {
     "label": "theorem-new3",
     "number": "Theorem 3",
-    "quote": "if we choose $\\alpha\\geq 4$ and $\\rho=1-(\\ilog^{(m)}(T)/40)^{-1/2}$, then the regret of MOTS satisfies ... \\lim_{T \\rightarrow\\infty}\\frac{R_{\\mu}(T)}{\\log (T)}=\\sum_{i:\\Delta_i>0}\\frac{2}{ \\Delta_i}"
+    "quote": "and $\\lim_{T \\rightarrow\\infty}\\frac{R_{\\mu}(T)}{\\log (T)}=\\sum_{i:\\Delta_i>0}\\frac{2}{ \\Delta_i}$"
    },
    "confidence": "medium",
-   "notes": "Asymptotic part of Theorem 3; stated as equality of the limit."
+   "notes": "Asymptotic constant of R(T)/log T."
   },
   {
    "id": "r5",
@@ -231,6 +253,7 @@
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "known",
    "compute": "polynomial",
@@ -248,10 +271,10 @@
    "source": {
     "label": "theorem_J_distribution",
     "number": "Theorem 4",
-    "quote": "Assume that the reward of each arm $i$ follows a Gaussian distribution $\\cN(\\mu_i,1)$, and that $\\alpha \\ge 2$ in \\eqref{eq:shrink_range}. The regret of MOTS-$\\cJ$ satisfies R_{\\mu}(T)= O\\bigg(\\sqrt{KT}+\\sum_{i=2}^K \\Delta_i\\bigg), \\quad\\text{and } \\lim_{T \\rightarrow\\infty}\\frac{R_{\\mu}(T)}{\\log (T)}=\\sum_{i:\\Delta_i>0}\\frac{2}{ \\Delta_i}."
+    "quote": "Assume that the reward of each arm $i$ follows a Gaussian distribution $\\cN(\\mu_i,1)$, and that $\\alpha \\ge 2$ in \\eqref{eq:shrink_range}. The regret of MOTS-$\\cJ$ satisfies $R_{\\mu}(T)= O(\\sqrt{KT}+\\sum_{i=2}^K \\Delta_i)$, and $\\lim_{T \\rightarrow\\infty}\\frac{R_{\\mu}(T)}{\\log (T)}=\\sum_{i:\\Delta_i>0}\\frac{2}{ \\Delta_i}.$"
    },
    "confidence": "high",
-   "notes": "Minimax part of Theorem 4."
+   "notes": ""
   },
   {
    "id": "r6",
@@ -261,14 +284,15 @@
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "asymptotic",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
-    "notation": "limsup",
+    "notation": "exact",
     "expression": "sum_subopt(2/Delta_i)",
     "expression_latex": "\\lim_{T \\rightarrow\\infty}\\frac{R_{\\mu}(T)}{\\log (T)}=\\sum_{i:\\Delta_i>0}\\frac{2}{ \\Delta_i}",
-    "regime": "limit of R(T)/log(T) as T -> infinity"
+    "regime": "value of lim_{T->infinity} R(T)/log(T)"
    },
    "symbols": {},
    "extra_assumptions": [
@@ -278,19 +302,23 @@
    "source": {
     "label": "theorem_J_distribution",
     "number": "Theorem 4",
-    "quote": "The regret of MOTS-$\\cJ$ satisfies ... \\lim_{T \\rightarrow\\infty}\\frac{R_{\\mu}(T)}{\\log (T)}=\\sum_{i:\\Delta_i>0}\\frac{2}{ \\Delta_i}."
+    "quote": "and $\\lim_{T \\rightarrow\\infty}\\frac{R_{\\mu}(T)}{\\log (T)}=\\sum_{i:\\Delta_i>0}\\frac{2}{ \\Delta_i}.$"
    },
    "confidence": "medium",
-   "notes": "Asymptotic part of Theorem 4; stated as equality of the limit."
+   "notes": "Asymptotic constant; matches Lai-Robbins for Gaussian."
   }
  ],
  "cited_results": [
   {
    "cited_key": "auer2002nonstochastic",
    "cited_title": "The nonstochastic multiarmed bandit problem",
+   "cited_first_author": "Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
    "algorithm_name": null,
+   "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "K-armed stochastic bandit, minimax lower bound for any strategy",
+   "setting_description": "K-armed stochastic bandit, problem-independent minimax lower bound",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(K*T)",
@@ -302,21 +330,29 @@
   {
    "cited_key": "lai1985asymptotically",
    "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_first_author": "Lai",
+   "cited_year": 1985,
+   "cited_arxiv_id": null,
    "algorithm_name": null,
+   "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Gaussian K-armed bandit, asymptotic lower bound on lim R/log T for consistent strategies",
+   "setting_description": "Gaussian K-armed bandit, asymptotic lower bound on lim R(T)/log T for consistent strategies",
    "bound": {
     "notation": "liminf",
     "expression": "sum_subopt(2/Delta_i)",
-    "expression_latex": "\\lim_{T\\rightarrow\\infty}R_{\\mu}/\\log T\\geq\\sum_{i:\\Delta_i>0} 2/\\Delta_i",
-    "regime": "T -> infinity"
+    "expression_latex": "\\sum_{i:\\Delta_i>0} 2/\\Delta_i",
+    "regime": "lim R(T)/log T"
    },
    "where": "Section 4.1"
   },
   {
    "cited_key": "agrawal2017near",
    "cited_title": "Near-optimal regret bounds for thompson sampling",
-   "algorithm_name": "Thompson sampling with Beta priors",
+   "cited_first_author": "Agrawal",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson Sampling with Beta priors",
+   "algorithm_registry_id": "thompson_sampling_beta",
    "side": "upper",
    "setting_description": "K-armed Bernoulli/bounded bandit, problem-independent regret",
    "bound": {
@@ -325,12 +361,16 @@
     "expression_latex": "O(\\sqrt{KT\\log T})",
     "regime": null
    },
-   "where": "Introduction"
+   "where": "Introduction, Table 1"
   },
   {
    "cited_key": "agrawal2017near",
    "cited_title": "Near-optimal regret bounds for thompson sampling",
-   "algorithm_name": "Thompson sampling with Gaussian priors",
+   "cited_first_author": "Agrawal",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson Sampling with Gaussian priors",
+   "algorithm_registry_id": "thompson_sampling_gaussian",
    "side": "upper",
    "setting_description": "K-armed bounded bandit, problem-independent regret",
    "bound": {
@@ -339,12 +379,16 @@
     "expression_latex": "O(\\sqrt{KT\\log K})",
     "regime": null
    },
-   "where": "Introduction"
+   "where": "Introduction, Table 1"
   },
   {
    "cited_key": "agrawal2017near",
    "cited_title": "Near-optimal regret bounds for thompson sampling",
-   "algorithm_name": "Thompson sampling with Gaussian priors",
+   "cited_first_author": "Agrawal",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson Sampling with Gaussian priors",
+   "algorithm_registry_id": "thompson_sampling_gaussian",
    "side": "lower",
    "setting_description": "Worst-case regret lower bound for TS with Gaussian priors on K-armed bandit",
    "bound": {
@@ -358,9 +402,13 @@
   {
    "cited_key": "bubeck2013prior",
    "cited_title": "Prior-free and prior-dependent regret bounds for thompson sampling",
-   "algorithm_name": "Thompson sampling",
+   "cited_first_author": "Bubeck",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson Sampling",
+   "algorithm_registry_id": "posterior_sampling",
    "side": "upper",
-   "setting_description": "Bayesian regret of TS on K-armed bandit",
+   "setting_description": "K-armed bandit, Bayesian regret",
    "bound": {
     "notation": "O",
     "expression": "sqrt(K*T)",
@@ -368,20 +416,6 @@
     "regime": null
    },
    "where": "Related Work"
-  },
-  {
-   "cited_key": "agrawal2013further",
-   "cited_title": "Further optimal regret bounds for thompson sampling",
-   "algorithm_name": "Thompson sampling (Beta priors)",
-   "side": "upper",
-   "setting_description": "Bernoulli K-armed bandit, problem-independent regret (minimax ratio sqrt(log T))",
-   "bound": {
-    "notation": "O",
-    "expression": "sqrt(K*T*log(T))",
-    "expression_latex": "\\sqrt{\\log T}\\text{ minimax ratio}",
-    "regime": null
-   },
-   "where": "Table 1"
   }
  ],
  "_run": {
@@ -390,14 +424,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "c6d1de293f21",
-  "schema_version": "0.2",
-  "ontology_version": "bandits-0.2",
-  "date": "2026-10-19T15:52:22",
+  "prompt_sha": "83b9f19fac84",
+  "schema_version": "0.3",
+  "ontology_version": "bandits-0.3",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-19T16:19:38",
   "source_chars": 90659,
-  "input_tokens": 63295,
-  "output_tokens": 6522,
-  "cost_usd_equiv": 0.5511402,
+  "input_tokens": 75002,
+  "output_tokens": 6691,
+  "cost_usd_equiv": 0.5568616,
   "status": "extracted"
  }
 }

@@ -1,6 +1,6 @@
 {
- "schema_version": "0.2",
- "ontology_version": "bandits-0.2",
+ "schema_version": "0.3",
+ "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Achieving Near Instance-Optimality and Minimax-Optimality in Stochastic and Adversarial Linear Bandits Simultaneously",
   "arxiv_id": "2102.05858",
@@ -17,29 +17,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "stochastic setting (linear bandit, finite action set)",
-   "objective": "cumulative_regret",
-   "feedback": "bandit",
-   "environment": "stochastic_iid",
-   "action_space": "linear_finite",
-   "function_class": [],
-   "domain": "not_applicable",
-   "context": "none",
-   "noise": "bounded_01",
-   "learner_knows": [],
-   "extras": [],
-   "parameters": {},
-   "unmapped": [
-    "losses and observations y_t lie in [-1,1] rather than [0,1]",
-    "unique optimal arm assumed",
-    "||x||_2 <= 1 for all actions; action set finite and spans R^d",
-    "loss minimization rather than reward maximization"
-   ],
-   "definition_quote": "In the stochastic setting, $\\ell_t$ is fixed to some unknown vector $\\theta\\in\\mathbb{R}^d$. We assume that there exists a unique optimal arm $x^*\\in\\calX$ ..."
-  },
-  {
-   "id": "s2",
-   "name_in_paper": "corrupted setting",
+   "name_in_paper": "corrupted setting (linear bandits with finite action set)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_corrupted",
@@ -47,21 +25,60 @@
    "function_class": [],
    "domain": "not_applicable",
    "context": "none",
-   "noise": "bounded_01",
+   "noise": "bounded_pm1",
    "learner_knows": [],
+   "instance_assumptions": [
+    "unique_optimal_arm",
+    "arms_span_Rd"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit"
+   },
    "extras": [],
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [
-    "observations in [-1,1]",
     "corruption is linear: ell_t = theta + c_t, chosen before seeing x_t; C = sum_t max_x |<x,c_t>|",
-    "unique optimal arm; regret measured w.r.t. theta",
-    "||x||_2<=1, finite spanning action set"
+    "||x||_2 <= 1 for all actions; regret measured w.r.t. theta (not corrupted losses)"
    ],
    "definition_quote": "The corrupted setting is a generalization of the stochastic setting, where in addition to a fixed vector $\\theta$, the environment also decides a corruption vector $c_t \\in \\mathbb{R}^d$ for each round (before seeing $x_t$) so that $\\ell_t = \\theta + c_t$. We define the total amount of corruption as $C=\\sum_t\\max_{x\\in\\calX}|\\inner{x, c_t}|$."
   },
   {
+   "id": "s2",
+   "name_in_paper": "stochastic setting (linear bandits with finite action set)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [],
+   "instance_assumptions": [
+    "unique_optimal_arm",
+    "arms_span_Rd"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit"
+   },
+   "extras": [],
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "||x||_2 <= 1 for all actions"
+   ],
+   "definition_quote": "In the stochastic setting, $\\ell_t$ is fixed to some unknown vector $\\theta\\in\\mathbb{R}^d$. We assume that there exists a unique optimal arm $x^*\\in\\calX$..."
+  },
+  {
    "id": "s3",
-   "name_in_paper": "adversarial setting",
+   "name_in_paper": "adversarial setting (linear bandits with finite action set)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "adversarial_adaptive",
@@ -69,13 +86,22 @@
    "function_class": [],
    "domain": "not_applicable",
    "context": "none",
-   "noise": "bounded_01",
+   "noise": "bounded_pm1",
    "learner_knows": [],
+   "instance_assumptions": [
+    "arms_span_Rd"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit"
+   },
    "extras": [],
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [
-    "observations include zero-mean noise and lie in [-1,1]",
-    "||x||_2<=1, finite spanning action set"
+    "||x||_2 <= 1 for all actions"
    ],
    "definition_quote": "Finally, in the adversarial setting, $\\ell_t$ can be chosen arbitrarily (possibly dependent on the learner's algorithm and her previously chosen actions). ... $\\Reg(T)=\\max_{x\\in\\calX}\\sum_{t=1}^T\\inner{x_t-x,\\ell_t}$."
   }
@@ -84,10 +110,11 @@
   {
    "id": "a1",
    "name": "Randomized Instance-optimal Algorithm (Algorithm 1)",
+   "registry_id": "randomized_instance_optimal",
    "is_new": true,
    "techniques": [
-    "doubling_trick",
-    "other"
+    "other",
+    "doubling_trick"
    ],
    "requires_knowledge_of": [
     "delta"
@@ -96,20 +123,22 @@
   {
    "id": "a2",
    "name": "BOTW (Best of Three Worlds)",
+   "registry_id": "botw",
    "is_new": true,
    "techniques": [
-    "restarts_or_sliding_window",
-    "other"
+    "exponential_weights",
+    "other",
+    "restarts_or_sliding_window"
    ],
    "requires_knowledge_of": [
     "T",
-    "delta",
-    "black-box adversarial algorithm A with constants C1, L0"
+    "delta"
    ]
   },
   {
    "id": "a3",
-   "name": "GeometricHedge.P (variant with John's exploration)",
+   "name": "GeometricHedge.P with John's exploration",
+   "registry_id": "geometric_hedge_p_john",
    "is_new": false,
    "techniques": [
     "exponential_weights"
@@ -123,58 +152,59 @@
  "results": [
   {
    "id": "r1",
-   "setting": "s2",
+   "setting": "s1",
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "high_probability_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "high_probability",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "c_X_theta*log(T)*log(T*N_X/delta) + M_star*log(1/delta)**(3/2) + C + d*sqrt(C/Delta_min)*log(C*N_X/(Delta_min*delta))",
+    "expression": "C_lin*log(T)*log(T*K/delta) + M_star*log(1/delta)**(3/2) + C + d*sqrt(C/Delta_min)*log(C*K/(Delta_min*delta))",
     "expression_latex": "c(\\calX, \\theta)\\log T\\log\\frac{T|\\calX|}{\\delta}+M^*\\log^\\frac{3}{2}\\frac{1}{\\delta} + C + d\\sqrt{\\frac{C}{\\Delta_{\\min}}} \\log\\frac{C|\\calX|}{\\Delta_{\\min}\\delta}",
     "regime": null
    },
    "symbols": {
-    "c_X_theta": "instance-optimal constant c(X,theta) from the lower-bound optimization problem",
-    "M_star": "problem-dependent constant depending on X and theta only",
-    "N_X": "number of actions |X|"
+    "C_lin": "c(X,theta), value of the lower-bound optimisation problem (constraint ||x||^2_{H(N)^-1} <= Delta_x^2/2)",
+    "M_star": "problem-dependent constant depending only on X and theta",
+    "K": "|X|, number of actions"
    },
    "extra_assumptions": [
-    "unique optimal arm",
     "delta < 0.1"
    ],
    "is_new": true,
    "source": {
     "label": "thm: sto-alg-guarantee",
     "number": "Theorem 1",
-    "quote": "In the corrupted setting, \\pref{alg:REOLB} guarantees that with probability at least $1-\\delta$, \\Reg(T) = \\order(c(\\calX, \\theta)\\log T\\log\\frac{T|\\calX|}{\\delta}+M^*\\log^\\frac{3}{2}\\frac{1}{\\delta} + C + d\\sqrt{\\frac{C}{\\Delta_{\\min}}} \\log\\frac{C|\\calX|}{\\Delta_{\\min}\\delta}), where $M^*$ is some constant that depends on $\\calX$ and $\\theta$ only."
+    "quote": "In the corrupted setting, \\pref{alg:REOLB} guarantees that with probability at least $1-\\delta$, $\\Reg(T) = \\order(c(\\calX, \\theta)\\log T\\log\\frac{T|\\calX|}{\\delta}+M^*\\log^\\frac{3}{2}\\frac{1}{\\delta} + C + d\\sqrt{\\frac{C}{\\Delta_{\\min}}} \\log\\frac{C|\\calX|}{\\Delta_{\\min}\\delta})$, where $M^*$ is some constant that depends on $\\calX$ and $\\theta$ only."
    },
    "confidence": "high",
-   "notes": "Covers stochastic case with C=0. Algorithm does not need C or T (doubling blocks)."
+   "notes": "Covers stochastic case C=0. Algorithm is parameter-free (doesn't need C or T)."
   },
   {
    "id": "r2",
-   "setting": "s2",
+   "setting": "s1",
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "high_probability_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "high_probability",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "d*sqrt(T)*log(T*N_X/delta) + C",
+    "expression": "d*sqrt(T)*log(T*K/delta) + C",
     "expression_latex": "d\\sqrt{T}\\log(T|\\calX|/\\delta)+C",
     "regime": null
    },
    "symbols": {
-    "N_X": "number of actions |X|"
+    "K": "|X|, number of actions"
    },
    "extra_assumptions": [
     "delta < 0.1"
@@ -190,81 +220,84 @@
   },
   {
    "id": "r3",
-   "setting": "s2",
+   "setting": "s1",
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "high_probability_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "high_probability",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "d**2/Delta_min*log(T*N_X/(Delta_min*delta))**2 + C",
+    "expression": "d**2/Delta_min*log(T*K/(Delta_min*delta))**2 + C",
     "expression_latex": "\\frac{d^2}{\\Delta_{\\min}}\\log^2\\left(\\frac{T|\\calX|}{\\Delta_{\\min}\\delta}\\right)+C",
     "regime": "C <= T, T >= d (used in proof)"
    },
    "symbols": {
-    "N_X": "number of actions |X|"
+    "K": "|X|, number of actions"
    },
    "extra_assumptions": [
-    "unique optimal arm"
+    "delta < 0.1"
    ],
    "is_new": true,
    "source": {
     "label": "thm: no-M-dependency",
-    "number": "Theorem 6",
-    "quote": "\\pref{alg:REOLB} guarantees that with probability at least $1-\\delta$, \\Reg(T) = \\order\\left(\\frac{d^2}{\\Delta_{\\min}}\\log^2\\left(\\frac{T|\\calX|}{\\Delta_{\\min}\\delta}\\right)+C \\right)."
+    "number": "Theorem 5",
+    "quote": "\\pref{alg:REOLB} guarantees that with probability at least $1-\\delta$, $\\Reg(T) = \\order\\left(\\frac{d^2}{\\Delta_{\\min}}\\log^2\\left(\\frac{T|\\calX|}{\\Delta_{\\min}\\delta}\\right)+C \\right).$"
    },
    "confidence": "medium",
-   "notes": "Theorem numbering inferred (shared counter); setting is the corrupted setting per surrounding appendix."
+   "notes": "Theorem number in appendix estimated (shared theorem counter)."
   },
   {
    "id": "r4",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "C_lin*log(T)*log(T*K/delta) + C_1*sqrt(log(T))/Delta_min + M_star*log(1/delta)**(3/2) + sqrt(C_1*L_0)",
+    "expression_latex": "c(\\calX,\\theta)\\log T\\log\\frac{T|\\calX|}{\\delta}+\\frac{C_1\\sqrt{\\log T}}{\\Delta_{\\min}}+M^*\\log^{\\frac{3}{2}}\\frac{1}{\\delta} + \\sqrt{C_1L_0}",
+    "regime": null
+   },
+   "symbols": {
+    "C_lin": "c(X,theta), lower-bound optimisation value",
+    "M_star": "problem-dependent constant (same as Theorem 1)",
+    "C_1": "coefficient of the black-box adversarial algorithm's sqrt(C_1 t) regret term (Assumption 1), C_1 >= 2^15 d log(T|X|/delta)",
+    "L_0": "minimum duration parameter of the black-box algorithm (Assumption 1)",
+    "K": "|X|"
+   },
+   "extra_assumptions": [
+    "black-box algorithm A satisfies Assumption 1",
+    "f_T = log T requires knowing T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm: sto-and-corrupt",
+    "number": "Theorem 3",
+    "quote": "\\pref{alg: BOBW} guarantees that with probability at least $1-\\delta$, in the stochastic setting ($C=0$), $\\Reg(T)$ is at most $\\order(c(\\calX,\\theta)\\log T\\log\\frac{T|\\calX|}{\\delta}+\\frac{C_1\\sqrt{\\log T}}{\\Delta_{\\min}}+M^*\\log^{\\frac{3}{2}}\\frac{1}{\\delta} + \\sqrt{C_1L_0})$"
+   },
+   "confidence": "high",
+   "notes": "Algorithm uses f_T = log T so horizon treated as known."
+  },
+  {
+   "id": "r5",
    "setting": "s1",
    "side": "upper",
    "algorithm": "a2",
    "algorithm_class": null,
    "quantity": "high_probability_regret",
    "dependence": "instance_dependent",
-   "probability": "high_probability",
-   "horizon": "known",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "O",
-    "expression": "c_X_theta*log(T)*log(T*N_X/delta) + C_1*sqrt(log(T))/Delta_min + M_star*log(1/delta)**(3/2) + sqrt(C_1*L_0)",
-    "expression_latex": "c(\\calX,\\theta)\\log T\\log\\frac{T|\\calX|}{\\delta}+\\frac{C_1\\sqrt{\\log T}}{\\Delta_{\\min}}+M^*\\log^{\\frac{3}{2}}\\frac{1}{\\delta} + \\sqrt{C_1L_0}",
-    "regime": null
-   },
-   "symbols": {
-    "c_X_theta": "instance-optimal constant c(X,theta)",
-    "M_star": "problem-dependent constant",
-    "N_X": "|X|",
-    "C_1": "regret coefficient of black-box adversarial algorithm (Assumption 1)",
-    "L_0": "minimum time for black-box guarantee (Assumption 1)"
-   },
-   "extra_assumptions": [
-    "black-box algorithm A satisfies Assumption 1",
-    "unique optimal arm"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "thm: sto-and-corrupt",
-    "number": "Theorem 3",
-    "quote": "\\pref{alg: BOBW} guarantees that with probability at least $1-\\delta$, in the stochastic setting ($C=0$), $\\Reg(T)$ is at most \\order(c(\\calX,\\theta)\\log T\\log\\frac{T|\\calX|}{\\delta}+\\frac{C_1\\sqrt{\\log T}}{\\Delta_{\\min}}+M^*\\log^{\\frac{3}{2}}\\frac{1}{\\delta} + \\sqrt{C_1L_0})"
-   },
-   "confidence": "high",
-   "notes": "Horizon known since f_T = log T used in tests."
-  },
-  {
-   "id": "r5",
-   "setting": "s2",
-   "side": "upper",
-   "algorithm": "a2",
-   "algorithm_class": null,
-   "quantity": "high_probability_regret",
-   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "high_probability",
    "horizon": "known",
    "compute": "polynomial",
@@ -275,8 +308,8 @@
     "regime": "C > 0"
    },
    "symbols": {
-    "C_1": "regret coefficient of black-box (Assumption 1)",
-    "L_0": "minimum time of black-box guarantee"
+    "C_1": "black-box regret coefficient (Assumption 1)",
+    "L_0": "black-box minimum duration (Assumption 1)"
    },
    "extra_assumptions": [
     "black-box algorithm A satisfies Assumption 1"
@@ -285,42 +318,43 @@
    "source": {
     "label": "thm: sto-and-corrupt",
     "number": "Theorem 3",
-    "quote": "and in the corrupted setting ($C>0$), $\\Reg(T)$ is at most \\order\\left(\\frac{C_1\\log T}{\\Delta_{\\min}}+C+\\sqrt{C_1L_0}\\right)."
+    "quote": "and in the corrupted setting ($C>0$), $\\Reg(T)$ is at most $\\order\\left(\\frac{C_1\\log T}{\\Delta_{\\min}}+C+\\sqrt{C_1L_0}\\right).$"
    },
    "confidence": "high",
    "notes": ""
   },
   {
    "id": "r6",
-   "setting": "s2",
+   "setting": "s1",
    "side": "upper",
    "algorithm": "a2",
    "algorithm_class": null,
    "quantity": "high_probability_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "high_probability",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "d*log(T*N_X/delta)*log(T)/Delta_min + C",
+    "expression": "d*log(T*K/delta)*log(T)/Delta_min + C",
     "expression_latex": "\\frac{d\\log(T|\\calX|/\\delta)\\log T}{\\Delta_{\\min}}+C",
     "regime": "C > 0"
    },
    "symbols": {
-    "N_X": "|X|"
+    "K": "|X|"
    },
    "extra_assumptions": [
-    "black-box A is the variant of GeometricHedge.P"
+    "black-box A is the variant of GeometricHedge.P with John's exploration"
    ],
    "is_new": true,
    "source": {
     "label": "thm: sto-and-corrupt",
     "number": "Theorem 3",
-    "quote": "In the case when $\\calA$ is the variant of GeometricHedge.P, the last bound is \\order\\left(\\frac{d\\log(T|\\calX|/\\delta)\\log T}{\\Delta_{\\min}}+C\\right)."
+    "quote": "In the case when $\\calA$ is the variant of GeometricHedge.P, the last bound is $\\order\\left(\\frac{d\\log(T|\\calX|/\\delta)\\log T}{\\Delta_{\\min}}+C\\right).$"
    },
    "confidence": "high",
-   "notes": "GeometricHedge.P runs in time linear in |X| per round."
+   "notes": "BOTW instantiated with GeometricHedge.P (exponential in nothing; per-round cost linear in |X|)."
   },
   {
    "id": "r7",
@@ -330,6 +364,7 @@
    "algorithm_class": null,
    "quantity": "high_probability_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "high_probability",
    "horizon": "known",
    "compute": "polynomial",
@@ -340,8 +375,8 @@
     "regime": null
    },
    "symbols": {
-    "C_1": "regret coefficient of black-box (Assumption 1)",
-    "L_0": "minimum time of black-box guarantee"
+    "C_1": "black-box regret coefficient (Assumption 1)",
+    "L_0": "black-box minimum duration (Assumption 1)"
    },
    "extra_assumptions": [
     "black-box algorithm A satisfies Assumption 1"
@@ -353,7 +388,7 @@
     "quote": "In the adversarial setting, \\pref{alg: BOBW} guarantees that with probability at least $1-\\delta$, $\\Reg(T)$ is at most $\\order\\left(\\sqrt{C_1 T\\log T}+\\sqrt{C_1L_0}\\right)$."
    },
    "confidence": "high",
-   "notes": "With GeometricHedge.P, C_1 = Theta(d log(T/delta'))."
+   "notes": "With GeometricHedge.P, C_1 = Theta(d log(T/delta')), giving O~(sqrt(dT))."
   },
   {
    "id": "r8",
@@ -361,42 +396,47 @@
    "side": "lower",
    "algorithm": null,
    "algorithm_class": "other",
-   "quantity": "high_probability_regret",
+   "quantity": "realized_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "high_probability",
-   "horizon": "not_applicable",
+   "horizon": "known",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "T**gamma*Delta_min/6",
+    "expression": "T**gamma_lb*Delta_min/6",
     "expression_latex": "\\frac{1}{6}T^{\\gamma}\\Delta_{\\min}",
-    "regime": "holds with probability at least (1/4) T^{-gamma/4}, for any gamma in (0,1), sufficiently large T"
+    "regime": "event holds with probability at least (1/4) T^{-gamma/4}; T sufficiently large"
    },
    "symbols": {
-    "gamma": "exponent in (0,1) chosen freely"
+    "gamma_lb": "free parameter gamma in (0,1)"
    },
    "extra_assumptions": [
-    "algorithm guarantees pseudo-regret c_reg*c(X,theta)*(1-gamma)/log(4/Delta_min)*(log T)^2 with c_reg=gamma/256 in stochastic environments for all large T",
-    "Bernoulli ±1 observations",
-    "||theta|| <= 1/4, ||x|| <= 1"
+    "algorithm guarantees pseudo-regret <= (gamma/256) c(X,theta) (1-gamma)/log(4/Delta_min) (log T)^2 in stochastic environments for all sufficiently large T",
+    "Bernoulli +-1 observations, ||theta|| <= 1/4, ||x|| <= 1",
+    "constructed adversarial environment is piecewise stochastic with one switch"
    ],
    "is_new": true,
    "source": {
     "label": "thm: lower bound",
-    "number": "Theorem 7",
-    "quote": "For any $\\gamma \\in(0,1)$, if an algorithm guarantees a pseudo regret bound of c_{\\reg}\\cdot c(\\calX,\\theta)\\frac{1-\\gamma}{\\log \\frac{4}{\\Delta_{\\min}}}(\\log T)^2 for constant $c_{\\reg}=\\frac{\\gamma}{256}$ in stochastic environments for all sufficiently large $T$, then there exists an adversarial environment such that with probability at least $\\frac{1}{4} T^{-\\frac{1}{4}\\gamma}$, the regret of the same algorithm is at least $\\frac{1}{6}T^{\\gamma}\\Delta_{\\min}$."
+    "number": "Theorem 6",
+    "quote": "For any $\\gamma \\in(0,1)$, if an algorithm guarantees a pseudo regret bound of $c_{\\reg}\\cdot c(\\calX,\\theta)\\frac{1-\\gamma}{\\log \\frac{4}{\\Delta_{\\min}}}(\\log T)^2$ for constant $c_{\\reg}=\\frac{\\gamma}{256}$ in stochastic environments for all sufficiently large $T$, then there exists an adversarial environment such that with probability at least $\\frac{1}{4} T^{-\\frac{1}{4}\\gamma}$, the regret of the same algorithm is at least $\\frac{1}{6}T^{\\gamma}\\Delta_{\\min}$."
    },
    "confidence": "medium",
-   "notes": "Tradeoff lower bound: algorithms with o(log^2 T)-type stochastic regret cannot have high-probability sublinear adversarial regret. Adversarial environment is piecewise stochastic (switch of theta). Theorem number inferred."
+   "notes": "Trade-off lower bound: the event has only polynomially small probability, not 1-delta. Theorem number estimated."
   }
  ],
  "cited_results": [
   {
    "cited_key": "li2019stochastic",
    "cited_title": "Stochastic linear optimization with adversarial corruption",
+   "cited_first_author": "Li",
+   "cited_year": 2019,
+   "cited_arxiv_id": "1909.02109",
    "algorithm_name": null,
+   "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "stochastic linear bandit with (possibly non-linear) adversarial corruption C",
+   "setting_description": "stochastic linear bandits with (possibly non-linear) adversarial corruption C",
    "bound": {
     "notation": "O",
     "expression": "d**6*log(T)**2/Delta_min**2 + d**(5/2)*C*log(T)/Delta_min",
@@ -408,30 +448,56 @@
   {
    "cited_key": "lattimore2017end",
    "cited_title": "The end of optimism? an asymptotic analysis of finite-armed linear bandits",
+   "cited_first_author": "Lattimore",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
    "algorithm_name": null,
+   "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "stochastic finite-armed linear bandit, consistent algorithms",
+   "setting_description": "stochastic finite-armed linear bandits, consistent algorithms",
    "bound": {
     "notation": "liminf",
-    "expression": "c_X_theta",
+    "expression": "C_lin*log(T)",
     "expression_latex": "\\liminf_{T\\to\\infty}\\frac{\\E[\\Reg(T)]}{\\log T}\\ge \\Omega(c(\\calX,\\theta))",
-    "regime": "asymptotic, normalized by log T"
+    "regime": "T -> infinity"
    },
    "where": "Section 3"
   },
   {
-   "cited_key": "bubeck2012towards",
-   "cited_title": "Towards minimax policies for online linear optimization with bandit feedback",
+   "cited_key": "dani2008price",
+   "cited_title": "The price of bandit information for online optimization",
+   "cited_first_author": "Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
    "algorithm_name": null,
+   "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "adversarial linear bandit, minimax regret",
+   "setting_description": "adversarial linear bandits, minimax regret",
    "bound": {
     "notation": "Theta",
     "expression": "d*sqrt(T)",
     "expression_latex": "\\Theta(d\\sqrt{T})",
     "regime": null
    },
-   "where": "Section 3 (also attributed to dani2008price)"
+   "where": "Section 3"
+  },
+  {
+   "cited_key": "bubeck2012towards",
+   "cited_title": "Towards minimax policies for online linear optimization with bandit feedback",
+   "cited_first_author": "Bubeck",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Exp2 with John's exploration",
+   "algorithm_registry_id": "exp2_john",
+   "side": "upper",
+   "setting_description": "adversarial linear bandits, minimax regret",
+   "bound": {
+    "notation": "Theta",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\Theta(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 3"
   }
  ],
  "_run": {
@@ -440,14 +506,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "c6d1de293f21",
-  "schema_version": "0.2",
-  "ontology_version": "bandits-0.2",
-  "date": "2026-10-19T16:03:13",
+  "prompt_sha": "83b9f19fac84",
+  "schema_version": "0.3",
+  "ontology_version": "bandits-0.3",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-19T16:30:20",
   "source_chars": 173444,
-  "input_tokens": 107677,
-  "output_tokens": 8332,
-  "cost_usd_equiv": 0.9423962,
+  "input_tokens": 119384,
+  "output_tokens": 9078,
+  "cost_usd_equiv": 0.9596576,
   "status": "extracted"
  }
 }

@@ -1,6 +1,6 @@
 {
- "schema_version": "0.2",
- "ontology_version": "bandits-0.2",
+ "schema_version": "0.3",
+ "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Thompson Sampling: An Asymptotically Optimal Finite Time Analysis",
   "arxiv_id": "1205.4217",
@@ -25,16 +25,27 @@
    "context": "none",
    "noise": "bernoulli",
    "learner_knows": [],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
    "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [],
-   "definition_quote": "Associated with each action, $a$, is an unknown Bernoulli distribution $\\cB\\left(\\mu_a\\right)$, whose expectation is $\\mu_a$. At each time $t$ the agent chooses to observe an action $A_t\\in\\{1,\\dots,K\\}$ and receives a reward $R_t$ drawn from the distribution $\\cB\\left(\\mu_{A_t}\\right)$."
+   "definition_quote": "Associated with each action, $a$, is an unknown Bernoulli distribution $\\cB\\left(\\mu_a\\right)$, whose expectation is $\\mu_a$. At each time $t$ the agent chooses to observe an action $A_t\\in\\{1,\\dots,K\\}$ and receives a reward $R_t$ drawn from the distribution $\\cB\\left(\\mu_{A_t}\\right)$. ... For the rest of this paper, we assume action $1$ is the unique optimal action."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Thompson Sampling (Beta-Bernoulli, uniform prior)",
+   "name": "Thompson Sampling (Beta posterior, uniform prior)",
+   "registry_id": "thompson_sampling_beta",
    "is_new": false,
    "techniques": [
     "thompson_sampling"
@@ -51,22 +62,21 @@
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "(1 + epsilon)*sum_subopt(Delta_i*(log(T) + log(log(T)))/KL_i) + C_eps",
+    "expression": "(1 + eps_alg)*sum_subopt(Delta_i*(log(T) + log(log(T)))/kl_i) + C_const",
     "expression_latex": "(1+\\epsilon)\\sum_{a\\in A:\\mu_a\\neq\\mu^*}\\frac{\\Delta_a(\\ln(T)+\\ln\\ln(T))}{K(\\mu_a,\\mu^*)}+ C(\\epsilon,\\mu_1,\\dots,\\mu_K)",
-    "regime": "for every epsilon > 0"
+    "regime": "for every eps>0"
    },
    "symbols": {
-    "KL_i": "Bernoulli KL divergence K(mu_i, mu_star)",
-    "C_eps": "problem-dependent constant C(epsilon, mu_1,...,mu_K)",
-    "epsilon": "arbitrary positive slack (not a PAC accuracy)"
+    "C_const": "problem-dependent constant C(epsilon, mu_1, ..., mu_K), independent of T"
    },
    "extra_assumptions": [
-    "unique optimal arm (assumed in analysis; paper argues WLOG)"
+    "unique optimal arm (stated WLOG)"
    ],
    "is_new": true,
    "source": {
@@ -75,7 +85,7 @@
     "quote": "For every $\\epsilon>0$ there exists a problem-dependent constant $C(\\epsilon,\\mu_1,\\dots,\\mu_K)$ such that the regret of Thompson Sampling satisfies: \\[ \\cR(T)\\leq(1+\\epsilon)\\sum_{a\\in A:\\mu_a\\neq\\mu^*}\\frac{\\Delta_a(\\ln(T)+\\ln\\ln(T))}{K(\\mu_a,\\mu^*)}+ C(\\epsilon,\\mu_1,\\dots,\\mu_K). \\]"
    },
    "confidence": "high",
-   "notes": "Regret defined via expected pull counts (pseudo-regret). Thompson Sampling does not use T; the ln ln T only arises in the analysis, so horizon marked anytime. Implies asymptotic optimality matching Lai-Robbins."
+   "notes": "Regret defined as sum of gaps times expected pulls, i.e. pseudo-regret. TS does not use T, so anytime. K(.,.) is Bernoulli KL, mapped to kl_i."
   },
   {
    "id": "r2",
@@ -85,25 +95,24 @@
    "algorithm_class": null,
    "quantity": "other",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "(1 + epsilon)*(log(T) + log(log(T)))/KL_a + D_eps + N_eps + N_0 + 5 + 2*C_b",
+    "expression": "(1 + eps_alg)*(log(T) + log(log(T)))/kl_i + D_const + N_const + N_0 + 5 + 2*C_b",
     "expression_latex": "(1+\\epsilon)\\frac{\\ln(T) + \\ln\\ln (T) }{K(\\mu_a,\\mu_1)} + D(\\epsilon,\\mu_1,\\mu_a) + N(b,\\epsilon,\\mu_1,\\mu_a)+N_0(b) + 5 + 2C_b",
-    "regime": "for every epsilon > 0, each suboptimal arm a"
+    "regime": "for every eps>0, every suboptimal arm a"
    },
    "symbols": {
-    "KL_a": "Bernoulli KL divergence K(mu_a, mu_1)",
-    "D_eps": "constant D(epsilon,mu_1,mu_a) = (1+epsilon/2)^2/(epsilon^2 min(mu_a(1-mu_a), mu_1(1-mu_1))^2)",
-    "N_eps": "constant N(b,epsilon,mu_1,mu_a)",
-    "N_0": "constant N_0(b)",
-    "C_b": "constant from Proposition 1, C_b(mu_1,mu_2)",
-    "epsilon": "arbitrary positive slack"
+    "D_const": "D(eps,mu_1,mu_a) = (1+eps/2)^2/(eps^2 * min(mu_a(1-mu_a), mu_1(1-mu_1))^2)",
+    "N_const": "problem-dependent constant N(b,eps,mu_1,mu_a)",
+    "N_0": "constant N_0(b) depending on b",
+    "C_b": "constant from Proposition 1 bounding sum_t P(N_{1,t} <= t^b)"
    },
    "extra_assumptions": [
-    "unique optimal arm, mu_1 > mu_2 >= ... >= mu_K"
+    "unique optimal arm"
    ],
    "is_new": true,
    "source": {
@@ -111,38 +120,28 @@
     "number": "Theorem 2",
     "quote": "Let $\\epsilon>0$. With $b$ as in Proposition \\ref{important:lemma}, for every suboptimal arm $a$, there exist constants $D(\\epsilon,\\mu_1,\\mu_a)$, $N(b,\\epsilon,\\mu_1,\\mu_a)$ and $N_0(b)$ such that: \\bE[N_{a,T}] \\leq (1+\\epsilon)\\frac{\\ln(T) + \\ln\\ln (T) }{K(\\mu_a,\\mu_1)} + D(\\epsilon,\\mu_1,\\mu_a) + N(b,\\epsilon,\\mu_1,\\mu_a)+N_0(b) + 5 + 2C_b ."
    },
-   "confidence": "high",
-   "notes": "Bound on the expected number of pulls E[N_{a,T}] of a suboptimal arm, hence quantity 'other'."
+   "confidence": "medium",
+   "notes": "Bound on the expected number of pulls of a suboptimal arm a (quantity 'other'); kl_i refers to K(mu_a, mu_1). Proof uses T>=e."
   }
  ],
  "cited_results": [
   {
    "cited_key": "LaiRobbins85bandits",
    "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_first_author": "T.L. Lai",
+   "cited_year": 1985,
+   "cited_arxiv_id": null,
    "algorithm_name": null,
+   "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic K-armed bandit (Bernoulli case as stated), strongly consistent policies; lower bound on expected pulls of each suboptimal arm",
+   "setting_description": "Stochastic Bernoulli K-armed bandit, strongly consistent policies; lower bound on expected number of pulls of each suboptimal arm",
    "bound": {
     "notation": "liminf",
-    "expression": "1/KL_i",
+    "expression": "1/kl_i",
     "expression_latex": "\\liminf_{T\\ra\\infty}\\frac{\\bE[N_{a,T}]}{\\ln T}\\geq \\frac{1}{K(\\mu_a,\\mu^*)}",
-    "regime": "T -> infinity, normalized by ln T"
+    "regime": "T -> infinity; bound on E[N_{a,T}]/ln T"
    },
-   "where": "Introduction, eq. (2)"
-  },
-  {
-   "cited_key": "AuerEtAl02FiniteTime",
-   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
-   "algorithm_name": "UCB1 (also UCB-V, MOSS)",
-   "side": "upper",
-   "setting_description": "Stochastic K-armed bandit; expected pulls of a suboptimal arm",
-   "bound": {
-    "notation": "exact",
-    "expression": "K_1*log(T)/Delta_i**2 + K_2",
-    "expression_latex": "\\bE[N_{a,T}] \\leq \\frac{K_1}{\\Delta_a^2}\\ln(T) + K_2",
-    "regime": "constants K_1 > 2, K_2 > 0"
-   },
-   "where": "Introduction, eq. (3)"
+   "where": "Introduction, eq. (LaiRobbins)"
   }
  ],
  "_run": {
@@ -151,14 +150,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "c6d1de293f21",
-  "schema_version": "0.2",
-  "ontology_version": "bandits-0.2",
-  "date": "2026-10-19T15:50:17",
+  "prompt_sha": "83b9f19fac84",
+  "schema_version": "0.3",
+  "ontology_version": "bandits-0.3",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-19T16:15:40",
   "source_chars": 50861,
-  "input_tokens": 40314,
-  "output_tokens": 3507,
-  "cost_usd_equiv": 0.392644,
+  "input_tokens": 52021,
+  "output_tokens": 3304,
+  "cost_usd_equiv": 0.48224,
   "status": "extracted"
  }
 }

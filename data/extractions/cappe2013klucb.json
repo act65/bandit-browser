@@ -1,6 +1,6 @@
 {
- "schema_version": "0.2",
- "ontology_version": "bandits-0.2",
+ "schema_version": "0.3",
+ "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Kullback-Leibler upper confidence bounds for optimal sequential allocation",
   "arxiv_id": "1210.1136",
@@ -27,14 +27,22 @@
    "context": "none",
    "noise": "exponential_family",
    "learner_knows": [
-    "K"
+    "reward_family"
    ],
+   "instance_assumptions": [],
    "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [
-    "All arms belong to a known canonical, regular one-parameter exponential family (natural parameter space open interval); learner knows the family"
+    "exponential family is canonical, regular (natural parameter space an open interval), b twice differentiable"
    ],
-   "definition_quote": "We consider in this section the case when $\\cD$ is a canonical exponential family of probability distributions $\\nu_\\theta$, indexed by $\\theta\\in\\Theta$ ... we assume in addition that $b$ is twice differentiable ... and that the exponential family $\\cD$ is regular, that is, that $\\Theta$ is an open interval"
+   "definition_quote": "We consider in this section the case when $\\cD$ is a canonical exponential family of probability distributions $\\nu_\\theta$, indexed by $\\theta\\in\\Theta$"
   },
   {
    "id": "s2",
@@ -47,13 +55,19 @@
    "domain": "not_applicable",
    "context": "none",
    "noise": "bounded_01",
-   "learner_knows": [
-    "K"
-   ],
+   "learner_knows": [],
+   "instance_assumptions": [],
    "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [
-    "Arm distributions are finitely supported on [0,1] (nonparametric model F)"
+    "reward distributions are finitely supported on [0,1]"
    ],
    "definition_quote": "In this section, $\\cD$ is the set $\\cF$ of finitely supported probability distributions over $\\cS= [0,1]$."
   },
@@ -68,11 +82,17 @@
    "domain": "not_applicable",
    "context": "none",
    "noise": "bounded_01",
-   "learner_knows": [
-    "K"
-   ],
+   "learner_knows": [],
+   "instance_assumptions": [],
    "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [],
    "definition_quote": "In this section, we consider the case where the arms are only known to have bounded distributions. As in Section~\\ref{secKLemp}, we assume without loss of generality that the rewards are bounded in $[0,1]$."
   }
@@ -81,28 +101,19 @@
   {
    "id": "a1",
    "name": "kl-UCB",
+   "registry_id": "kl_ucb",
    "is_new": true,
    "techniques": [
     "optimism"
    ],
    "requires_knowledge_of": [
-    "exponential family divergence d"
+    "reward_family"
    ]
   },
   {
    "id": "a2",
    "name": "empirical KL-UCB",
-   "is_new": true,
-   "techniques": [
-    "optimism"
-   ],
-   "requires_knowledge_of": [
-    "upper bound of reward support (1)"
-   ]
-  },
-  {
-   "id": "a3",
-   "name": "kl-UCB with Bernoulli divergence (d_BER)",
+   "registry_id": "empirical_kl_ucb",
    "is_new": true,
    "techniques": [
     "optimism"
@@ -110,8 +121,9 @@
    "requires_knowledge_of": []
   },
   {
-   "id": "a4",
-   "name": "UCB (kl-UCB with quadratic divergence d_QUAD, f(t)=log t + 3 log log t)",
+   "id": "a3",
+   "name": "UCB tuned with f(t)=log t + 3 log log t (kl-UCB with d_QUAD)",
+   "registry_id": "ucb_loglog",
    "is_new": false,
    "techniques": [
     "optimism"
@@ -128,31 +140,31 @@
    "algorithm_class": null,
    "quantity": "other",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "log(T)/d_a + 2*sqrt(2*pi*sigma_a2*dprime_a**2/d_a**3)*sqrt(log(T) + 3*log(log(T))) + (4*E + 3/d_a)*log(log(T)) + 8*sigma_a2*(dprime_a/d_a)**2 + 6",
-    "expression_latex": "\\frac{\\log(T)}{d (\\mu_a,\\mu^\\star)} + 2\\sqrt{\\frac{2\\pi\\sigma_{a,\\star}^2 ({d'}(\\mu_a, \\mu^\\star) )^2}{ ( d(\\mu_a,\\mu^\\star) )^3}} \\sqrt{\\log(T) + 3\\log(\\log (T))} + (4e + \\frac{3}{d(\\mu_a,\\mu^\\star)})\\log(\\log(T)) + 8\\sigma_{a,\\star}^2 ( \\frac{d'(\\mu_a,\\mu^\\star)}{d(\\mu_a,\\mu^\\star)})^2 + 6",
-    "regime": "T >= 3"
+    "expression": "log(T)/KL_i + 2*sqrt(2*pi*sigma_as**2*dKL_i**2/KL_i**3)*sqrt(log(T) + 3*log(log(T))) + (4*E + 3/KL_i)*log(log(T)) + 8*sigma_as**2*(dKL_i/KL_i)**2 + 6",
+    "expression_latex": "\\frac{\\log(T)}{d (\\mu_a,\\mu^\\star)} + 2\\sqrt{\\frac{2\\pi\\sigma_{a,\\star}^2 ({d'}(\\mu_a, \\mu^\\star) )^2}{ (d(\\mu_a,\\mu^\\star) )^3}} \\sqrt{\\log(T) + 3\\log(\\log (T))} + (4e + \\frac{3}{d(\\mu_a,\\mu^\\star)})\\log(\\log(T)) + 8\\sigma_{a,\\star}^2 (\\frac{d'(\\mu_a,\\mu^\\star)}{d(\\mu_a,\\mu^\\star)})^2 + 6",
+    "regime": "T >= 3; any suboptimal arm a"
    },
    "symbols": {
-    "d_a": "KL divergence d(mu_a, mu_star) in the exponential family",
-    "dprime_a": "derivative of d(., mu_star) at mu_a",
-    "sigma_a2": "max variance of family members with mean in [mu_a, mu_star]"
+    "sigma_as": "max variance of family distributions with mean in [mu_a, mu_star]",
+    "dKL_i": "derivative of d(., mu_star) evaluated at mu_a"
    },
    "extra_assumptions": [
-    "f(t)=log(t)+3log log(t)"
+    "f(t)=log(t)+3 log log(t)"
    ],
    "is_new": true,
    "source": {
     "label": "thmklUCB",
     "number": "Theorem 1",
-    "quote": "Assume that all arms belong to a canonical, regular, exponential family ... Then, using Algorithm~\\ref{algklUCB} with the divergence $d$ ... and with the choice $f(t) = \\log(t)+3\\log\\log(t)$ ... the number of draws of any suboptimal arm $a$ is upper bounded for any horizon $T\\geq3$ as ..."
+    "quote": "Assume that all arms belong to a canonical, regular, exponential family ... Then, using Algorithm~\\ref{algklUCB} with the divergence $d$ given in (\\ref{eqKLexpfam}) and with the choice $f(t) = \\log(t)+3\\log\\log(t)$ ... the number of draws of any suboptimal arm $a$ is upper bounded for any horizon $T \\geq3$ as ..."
    },
    "confidence": "high",
-   "notes": "Bound is on E[N_a(T)] for a suboptimal arm a; regret = sum_a Delta_a E[N_a(T)]. Anytime since f does not depend on T."
+   "notes": "Bound on E[N_a(T)] (expected pulls of a suboptimal arm), not regret directly; regret = sum Delta_a E[N_a(T)]. KL_i = d(mu_a, mu_star)."
   },
   {
    "id": "r2",
@@ -162,17 +174,17 @@
    "algorithm_class": null,
    "quantity": "other",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "log(T)/Kinf_a + 36/mu_star**4*log(T)**(4/5)*log(log(T)) + (72/mu_star**4 + 2*mu_star/((1 - mu_star)*Kinf_a**2))*log(T)**(4/5) + (1 - mu_star)**2*M_a/(2*mu_star**2)*log(T)**(2/5) + log(log(T))/Kinf_a + 2*mu_star/((1 - mu_star)*Kinf_a**2) + 4",
-    "expression_latex": "\\frac{\\log(T)}{\\cK_{\\inf} (\\nu_a,\\mu^\\star)} + \\frac{36}{(\\mu^\\star)^4} ( \\log(T))^{4/5} \\log(\\log(T)) + ( \\frac{72}{(\\mu^\\star)^4} + \\frac{2\\mu^\\star}{(1-\\mu^\\star) \\cK_{\\inf} (\\nu_a,\\mu^\\star)^2} ) ( \\log(T))^{4/5} + \\frac{(1-\\mu^\\star)^2 M(\\nu_a,\\mu^\\star)}{2(\\mu^\\star)^2} ( \\log(T))^{2/5} + \\frac{\\log(\\log(T) )}{\\cK_{\\inf} (\\nu_a,\\mu^\\star)} + \\frac{2\\mu^\\star}{(1-\\mu^\\star) \\cK_{\\inf} (\\nu_a,\\mu^\\star)^2} + 4",
-    "regime": "T >= 3"
+    "expression": "log(T)/Kinf_i + 36/mu_star**4*log(T)**(4/5)*log(log(T)) + (72/mu_star**4 + 2*mu_star/((1 - mu_star)*Kinf_i**2))*log(T)**(4/5) + (1 - mu_star)**2*M_a/(2*mu_star**2)*log(T)**(2/5) + log(log(T))/Kinf_i + 2*mu_star/((1 - mu_star)*Kinf_i**2) + 4",
+    "expression_latex": "\\frac{\\log(T)}{\\cK_{\\inf} (\\nu_a,\\mu^\\star)} + \\frac{36}{(\\mu^\\star)^4} ( \\log(T) )^{4/5} \\log (\\log(T) ) + ( \\frac{72}{(\\mu^\\star)^4} + \\frac{2\\mu^\\star}{(1-\\mu^\\star) \\cK_{\\inf} (\\nu_a,\\mu^\\star)^2} ) ( \\log(T))^{4/5} + \\frac{(1-\\mu^\\star)^2 M(\\nu_a,\\mu^\\star)}{2(\\mu^\\star)^2} ( \\log(T) )^{2/5} + \\frac{\\log(\\log(T) )}{\\cK_{\\inf} (\\nu_a,\\mu^\\star)} + \\frac{2\\mu^\\star}{(1-\\mu^\\star) \\cK_{\\inf} (\\nu_a,\\mu^\\star)^2} + 4",
+    "regime": "T >= 3; any suboptimal arm a"
    },
    "symbols": {
-    "Kinf_a": "K_inf(nu_a, mu_star) w.r.t. finitely supported model on [0,1]",
     "M_a": "constant M(nu_a, mu_star) > 0 depending only on nu_a and mu_star"
    },
    "extra_assumptions": [
@@ -184,40 +196,41 @@
    "source": {
     "label": "thmKLempUCB",
     "number": "Theorem 2",
-    "quote": "Assume that $\\mu_a > 0$ for all arms $a$ and that $\\mu^\\star< 1$. There exists a constant $M(\\nu_a,\\mu^\\star) > 0$ only depending on $\\nu_a$ and $\\mu^\\star$ such that, with the choice $f(t) = \\log(t) + \\log(\\log(t) )$ for $t\\geq2$, the expected number of times that any suboptimal arm $a$ is pulled by Algorithm~\\ref{algKLempUCB} is smaller, for all $T \\geq3$, than ..."
+    "quote": "Assume that $\\mu_a > 0$ for all arms $a$ and that $\\mu^\\star< 1$. There exists a constant $M(\\nu_a,\\mu^\\star) > 0$ only depending on $\\nu_a$ and $\\mu^\\star$ such that, with the choice $f(t) = \\log(t) + \\log(\\log(t) )$ for $t \\geq2$, the expected number of times that any suboptimal arm $a$ is pulled by Algorithm~\\ref{algKLempUCB} is smaller, for all $T \\geq3$, than ..."
    },
    "confidence": "high",
-   "notes": "Bound on E[N_a(T)]. Computational cost grows linearly with rounds (per paper)."
+   "notes": "Bound on E[N_a(T)]. Kinf w.r.t. model of finitely supported distributions on [0,1]."
   },
   {
    "id": "r3",
    "setting": "s3",
    "side": "upper",
-   "algorithm": "a3",
+   "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "other",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "log(T)/dber_a + sqrt(2*pi)*log(mu_star*(1 - mu_a)/(mu_a*(1 - mu_star)))/dber_a**(3/2)*sqrt(log(T) + 3*log(log(T))) + (4*E + 3/dber_a)*log(log(T)) + 2*log(mu_star*(1 - mu_a)/(mu_a*(1 - mu_star)))**2/dber_a**2 + 6",
-    "expression_latex": "\\frac{\\log(T)}{d_{\\ber}(\\mu_a,\\mu^\\star)} + \\frac{\\sqrt{2\\pi} \\log({\\mu^ \\star(1-\\mu_a)}/({\\mu_a(1-\\mu^\\star)}) )}{ ( d_{\\ber}(\\mu_a,\\mu^\\star) )^{3/2}} \\sqrt{\\log(T) + 3\\log(\\log(T))} + (4e + \\frac{3}{d_{\\ber}(\\mu_a,\\mu^\\star)}) \\log(\\log(T)) + \\frac{2 ( \\log({\\mu^ \\star(1-\\mu_a)}/({\\mu_a(1-\\mu^\\star)}) ) )^2}{ (d_{\\ber}(\\mu_a,\\mu^\\star) )^2} + 6",
-    "regime": "T >= 3"
+    "expression": "log(T)/kl_i + sqrt(2*pi)*Lr_i/kl_i**(3/2)*sqrt(log(T) + 3*log(log(T))) + (4*E + 3/kl_i)*log(log(T)) + 2*Lr_i**2/kl_i**2 + 6",
+    "expression_latex": "\\frac{\\log(T)}{d_{\\ber}(\\mu_a,\\mu^\\star)} + \\frac{\\sqrt{2\\pi} \\log({\\mu^ \\star(1-\\mu_a)}/({\\mu_a(1-\\mu^\\star)}) )}{( d_{\\ber}(\\mu_a,\\mu^\\star) )^{3/2}} \\sqrt{\\log(T) + 3\\log(\\log(T))} + (4e + \\frac{3}{d_{\\ber}(\\mu_a,\\mu^\\star)}) \\log(\\log(T)) + \\frac{2 ( \\log({\\mu^ \\star(1-\\mu_a)}/({\\mu_a(1-\\mu^\\star)})))^2}{ (d_{\\ber}(\\mu_a,\\mu^\\star) )^2} + 6",
+    "regime": "T >= 3; any suboptimal arm a"
    },
    "symbols": {
-    "dber_a": "Bernoulli KL divergence d_BER(mu_a, mu_star)",
-    "mu_a": "mean of suboptimal arm a"
+    "Lr_i": "log(mu_star*(1-mu_i)/(mu_i*(1-mu_star)))"
    },
    "extra_assumptions": [
-    "f(t)=log(t)+3log log(t)"
+    "f(t)=log(t)+3 log log(t)",
+    "Bernoulli divergence d_BER used"
    ],
    "is_new": true,
    "source": {
     "label": "thborneRegretklUCB",
     "number": "Corollary 1",
-    "quote": "Consider a bandit problem with rewards bounded in $[0,1]$. Choosing the parameters $f(t) = \\log(t) + 3\\log\\log(t)$ ... and $d_{\\ber}$ in Algorithm~\\ref{algklUCB}, the number of draws of any suboptimal arm $a$ is upper bounded for any horizon $T \\geq3$ as ..."
+    "quote": "Consider a bandit problem with rewards bounded in $[0,1]$. Choosing the parameters $f(t) = \\log(t) + 3\\log\\log(t)$ for $t \\geq 3$ and $f(1) = f(2) = f(3)$, and $d_{\\ber}$ ... in Algorithm~\\ref{algklUCB}, the number of draws of any suboptimal arm $a$ is upper bounded for any horizon $T \\geq3$ as ..."
    },
    "confidence": "high",
    "notes": "Bound on E[N_a(T)]."
@@ -226,18 +239,19 @@
    "id": "r4",
    "setting": "s3",
    "side": "upper",
-   "algorithm": "a4",
+   "algorithm": "a3",
    "algorithm_class": null,
    "quantity": "other",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
     "expression": "log(T)/(2*Delta_i**2) + 2*sqrt(pi)/Delta_i**2*sqrt(log(T) + 3*log(log(T))) + (4*E + 3/(2*Delta_i**2))*log(log(T)) + 8/Delta_i**2 + 6",
-    "expression_latex": "\\frac{\\log(T)}{2(\\mu^\\star- \\mu_a)^2} +\\frac{ 2 \\sqrt{\\pi}}{ (\\mu^\\star-\\mu_a )^2} \\sqrt{\\log(T) + 3\\log(\\log(T))} + (4e + \\frac{3}{2(\\mu^\\star-\\mu_a)^2} )\\log(\\log(T)) + \\frac{8}{(\\mu^\\star-\\mu_a)^2} + 6",
-    "regime": "T >= 3 (inherited from Theorem 1)"
+    "expression_latex": "\\frac{\\log(T)}{2(\\mu^\\star- \\mu_a)^2} +\\frac{ 2 \\sqrt{\\pi}}{ (\\mu^\\star-\\mu_a )^2} \\sqrt{\\log(T) + 3\\log(\\log(T))} + (4e + \\frac{3}{2(\\mu^\\star-\\mu_a)^2})\\log(\\log(T)) + \\frac{8}{(\\mu^\\star-\\mu_a)^2} + 6",
+    "regime": "T >= 3 (inherited from Theorem 1); any suboptimal arm a"
    },
    "symbols": {},
    "extra_assumptions": [
@@ -247,38 +261,64 @@
    "source": {
     "label": "corUCB",
     "number": "Corollary 2",
-    "quote": "Consider the kl-UCB algorithm with $d_{\\qua}$ and the function $f$ defined in Theorem~\\ref{thmklUCB}, or equivalently, the UCB algorithm tuned as follows ... Then the number of draws of a suboptimal arm $a$ is upper bounded as ..."
+    "quote": "Consider the \\textit{\\texttt{kl-UCB}} algorithm with $d_{\\qua}$ and the function $f$ defined in Theorem~\\ref{thmklUCB}, or equivalently, the \\textit{\\texttt{UCB}} algorithm tuned as follows ... Then the number of draws of a suboptimal arm $a$ is upper bounded as ..."
    },
    "confidence": "high",
-   "notes": "Bound on E[N_a(T)] for suboptimal arm a with gap Delta_i = mu_star - mu_a. Algorithm UCB is prior, analysis is new."
+   "notes": "Bound on E[N_a(T)]. Analysis of UCB is new though the algorithm is prior."
   }
  ],
  "cited_results": [
   {
    "cited_key": "LaiRo85",
    "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_first_author": "Lai",
+   "cited_year": 1985,
+   "cited_arxiv_id": null,
    "algorithm_name": null,
+   "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic K-armed bandit, admissible (uniformly good) policies, model D (exponential families; Burnetas96 for finitely supported)",
+   "setting_description": "Stochastic K-armed bandit, model D (e.g., one-parameter exponential family; Burnetas-Katehakis for finitely supported), admissible/consistent policies",
    "bound": {
     "notation": "liminf",
-    "expression": "sum_subopt(Delta_i/KL_i)",
+    "expression": "sum_subopt(Delta_i/Kinf_i)",
     "expression_latex": "\\liminf_{T\\to\\infty} \\frac{\\E[R_T]}{\\log(T)} \\geq\\sum_{a:\\mu_a<\\mu^\\star} \\frac{\\mu^\\star-\\mu_a}{\\cK_{\\inf} (\\nu_a,\\mu^\\star)}",
-    "regime": "liminf of E[R_T]/log(T); KL_i = K_inf(nu_a, mu_star)"
+    "regime": "liminf of E[R_T]/log(T)"
+   },
+   "where": "Introduction, eq. (1)"
+  },
+  {
+   "cited_key": "Burnetas96",
+   "cited_title": "Optimal adaptive policies for sequential allocation problems",
+   "cited_first_author": "Burnetas",
+   "cited_year": 1996,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Stochastic K-armed bandit with finitely supported distributions, uniformly good policies",
+   "bound": {
+    "notation": "liminf",
+    "expression": "sum_subopt(Delta_i/Kinf_i)",
+    "expression_latex": "\\liminf_{T\\to\\infty} \\frac{\\E[R_T]}{\\log(T)} \\geq\\sum_{a:\\mu_a<\\mu^\\star} \\frac{\\mu^\\star-\\mu_a}{\\cK_{\\inf} (\\nu_a,\\mu^\\star)}",
+    "regime": "liminf of E[R_T]/log(T)"
    },
    "where": "Introduction, eq. (1)"
   },
   {
    "cited_key": "Auer02",
    "cited_title": "Finite-time analysis of the multiarmed bandit problem",
+   "cited_first_author": "Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
    "algorithm_name": "UCB",
+   "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic K-armed bandit with rewards in [0,1]",
+   "setting_description": "Stochastic K-armed bandit with rewards bounded in [0,1]",
    "bound": {
     "notation": "exact",
     "expression": "8*sum_subopt(1/Delta_i)*log(T)",
-    "expression_latex": "\\E[R_T] \\leq C ( \\sum_{a:\\mu_a<\\mu^\\star} \\frac{1}{\\mu^\\star-\\mu_a} ) \\log(T)+ o(\\log(T))",
-    "regime": "plus o(log T); C=8 for example"
+    "expression_latex": "\\E[R_T] \\leq C ( \\sum_{a:\\mu_a<\\mu^\\star} \\frac{1}{\\mu^\\star-\\mu_a} ) \\log(T)+ o(\\log(T)), C=8",
+    "regime": "plus o(log T) remainder"
    },
    "where": "Introduction"
   }
@@ -289,14 +329,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "c6d1de293f21",
-  "schema_version": "0.2",
-  "ontology_version": "bandits-0.2",
-  "date": "2026-10-19T15:50:38",
+  "prompt_sha": "83b9f19fac84",
+  "schema_version": "0.3",
+  "ontology_version": "bandits-0.3",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-19T16:16:12",
   "source_chars": 87549,
-  "input_tokens": 56634,
-  "output_tokens": 6624,
-  "cost_usd_equiv": 0.5855440000000001,
+  "input_tokens": 68341,
+  "output_tokens": 7242,
+  "cost_usd_equiv": 0.69156,
   "status": "extracted"
  }
 }

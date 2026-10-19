@@ -14,12 +14,22 @@ import yaml
 from pydantic import BaseModel, ConfigDict, create_model
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_ONTOLOGY = ROOT / "ontology" / "bandits-0.2.yaml"
-SCHEMA_VERSION = "0.2"
+DEFAULT_ONTOLOGY = ROOT / "ontology" / "bandits-0.3.yaml"
+VARIABLES = ROOT / "ontology" / "variables.yaml"
+ALGORITHMS = ROOT / "data" / "algorithms.yaml"
+SCHEMA_VERSION = "0.3"
 
 
 def load_ontology(path: Path = DEFAULT_ONTOLOGY) -> dict:
     return yaml.safe_load(path.read_text())
+
+
+def load_variables(path: Path = VARIABLES) -> dict:
+    return yaml.safe_load(path.read_text())
+
+
+def load_algorithms(path: Path = ALGORITHMS) -> list[dict]:
+    return yaml.safe_load(path.read_text())["algorithms"] if path.exists() else []
 
 
 def _lit(values):
@@ -54,17 +64,31 @@ class Source(Strict):
 class CitedResult(Strict):
     cited_key: str
     cited_title: Optional[str]
+    cited_first_author: Optional[str]
+    cited_year: Optional[int]
+    cited_arxiv_id: Optional[str]
     algorithm_name: Optional[str]
+    algorithm_registry_id: Optional[str]
     side: Literal["upper", "lower"]
     setting_description: str
     bound: Bound
     where: str
 
 
-def build_models(ontology: dict):
-    """Return the top-level Extraction model for a given ontology."""
+def build_models(ontology: dict, algorithm_ids: list[str] | None = None):
+    """Return the top-level Extraction model for a given ontology.
+
+    With `algorithm_ids`, an algorithm's `registry_id` is constrained to those ids
+    (or null for an algorithm not yet in the registry).
+    """
     dims = ontology["dimensions"]
     voc = ontology["vocabularies"]
+    registry_id_type = Optional[_lit(algorithm_ids)] if algorithm_ids else Optional[str]
+
+    node_models = {}
+    for pname, pspec in ontology.get("node_parameters", {}).items():
+        fields = {f: (_lit(fs["values"]), ...) for f, fs in pspec["fields"].items()}
+        node_models[pname] = create_model(pname.title().replace("_", ""), __base__=Strict, **fields)
 
     setting_fields = {
         "id": (str, ...),
@@ -73,14 +97,18 @@ def build_models(ontology: dict):
     for name, spec in dims.items():
         lit = _lit(spec["values"].keys())
         setting_fields[name] = (list[lit], ...) if spec.get("multi") else (lit, ...)
+    for pname, model in node_models.items():
+        setting_fields[pname] = (model, ...)
     setting_fields["parameters"] = (dict[str, str], ...)
+    setting_fields["in_scope"] = (bool, ...)
+    setting_fields["out_of_scope_reason"] = (Optional[str], ...)
     setting_fields["unmapped"] = (list[str], ...)
     setting_fields["definition_quote"] = (str, ...)
     Setting = create_model("Setting", __base__=Strict, **setting_fields)
 
     Algorithm = create_model(
         "Algorithm", __base__=Strict,
-        id=(str, ...), name=(str, ...), is_new=(bool, ...),
+        id=(str, ...), name=(str, ...), registry_id=(registry_id_type, ...), is_new=(bool, ...),
         techniques=(list[_lit(voc["techniques"])], ...),
         requires_knowledge_of=(list[str], ...),
     )
@@ -95,6 +123,7 @@ def build_models(ontology: dict):
         quantity=(_lit(voc["quantity"]), ...),
         dependence=(Literal["worst_case", "instance_dependent"], ...),
         probability=(Literal["expectation", "high_probability", "almost_sure", "asymptotic"], ...),
+        comparator=(_lit(voc["comparator"]), ...),
         horizon=(Literal["known", "anytime", "not_applicable"], ...),
         compute=(Literal["polynomial", "exponential", "non_constructive", "not_stated"], ...),
         bound=(Bound, ...),
@@ -129,9 +158,9 @@ def _inline_refs(node, defs):
     return node
 
 
-def json_schema(ontology: dict) -> dict:
+def json_schema(ontology: dict, algorithm_ids: list[str] | None = None) -> dict:
     """Self-contained JSON Schema (no $refs) for the CLI's structured output."""
-    schema = build_models(ontology).model_json_schema()
+    schema = build_models(ontology, algorithm_ids).model_json_schema()
     return _inline_refs(schema, schema.get("$defs", {}))
 
 

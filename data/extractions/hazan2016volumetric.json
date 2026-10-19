@@ -1,6 +1,6 @@
 {
- "schema_version": "0.2",
- "ontology_version": "bandits-0.2",
+ "schema_version": "0.3",
+ "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Volumetric Spanners: an Efficient Exploration Basis for Learning",
   "arxiv_id": "1312.6214",
@@ -23,25 +23,32 @@
    "function_class": [],
    "domain": "not_applicable",
    "context": "none",
-   "noise": "not_applicable",
+   "noise": "bounded_pm1",
    "learner_knows": [
     "T",
     "d"
    ],
+   "instance_assumptions": [],
    "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "membership_oracle"
+   },
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [
-    "Losses chosen from a set Z whose polar contains K: |L^T x| <= 1 for all x in K",
-    "K is accessed via a membership oracle (used for log-concave sampling and linear optimization)",
-    "Regret bound depends on log of the size of a 1/T-net of K"
+    "Loss vectors chosen from the polar of K: |L_t^T x| <= 1 for all x in K"
    ],
-   "definition_quote": "iteratively at each time sequence $t$, the environment chooses a loss vector $L_t$ that is not revealed to the player. The player chooses a vector $x_t \\in \\K$ where $\\K \\subseteq \\reals^d$ is convex, and once she commits to her choice, the loss $\\ell_t = x_t^\\top L_t$ is revealed. ... The losses are bounded in absolute values by 1. That is, the loss functions are always chosen (by an oblivious adversary) from a convex set $\\cal Z$ such that $\\K$ is contained in its polar"
+   "definition_quote": "iteratively at each time sequence $t$, the environment chooses a loss vector $L_t$ that is not revealed to the player. The player chooses a vector $x_t \\in \\K$ where $\\K \\subseteq \\reals^d$ is convex, and once she commits to her choice, the loss $\\ell_t = x_t^\\top L_t$ is revealed. ... The set $\\K$ is equipped with a membership oracle. ... The losses are bounded in absolute values by 1 ... (by an oblivious adversary)"
   }
  ],
  "algorithms": [
   {
    "id": "a1",
    "name": "GeometricHedge with Volumetric Spanners Exploration",
+   "registry_id": "geometric_hedge_volumetric",
    "is_new": true,
    "techniques": [
     "exponential_weights"
@@ -61,21 +68,21 @@
    "algorithm_class": null,
    "quantity": "expected_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "(s + d)*sqrt(T*logN/d)",
+    "expression": "(s_sp + d)*sqrt(T*log(N_net)/d)",
     "expression_latex": "O\\left(  (s+d)\\sqrt{\\frac{T \\log |\\K|_{1/T} }{d}} \\right)",
     "regime": null
    },
    "symbols": {
-    "s": "max_t |S_t|, size of the exploration spanner",
-    "logN": "log |K|_{1/T}, log-size of a 1/T-net of K (at most d log T)"
+    "s_sp": "maximum size of the exploration set S_t over rounds, max_t |S_t|",
+    "N_net": "size of a 1/T-net of K, |K|_{1/T}"
    },
    "extra_assumptions": [
-    "membership oracle for K",
     "eta = sqrt(log|K|_{1/T}/(dT)), gamma = s sqrt(log|K|_{1/T}/(dT))"
    ],
    "is_new": true,
@@ -85,7 +92,7 @@
     "quote": "Under the assumptions stated above, and let $s=\\max_t |S_t|$, $ \\eta = \\sqrt{\\frac{\\log |\\K|_{1/T}}{dT}}$ and let $\\gamma = s\\sqrt{\\frac{\\log(|\\K|_{1/T})}{dT}} $. Algorithm \\ref{alg:BLO} given parameters $\\gamma,\\eta$ suffers a regret bounded by $$ O\\left(  (s+d)\\sqrt{\\frac{T \\log |\\K|_{1/T} }{d}} \\right)$$"
    },
    "confidence": "medium",
-   "notes": "Proof bounds expected regret against fixed x*. Theorem numbering inferred (section 6)."
+   "notes": "Proof bounds expected regret. Theorem numbering inferred (section 6)."
   },
   {
    "id": "r2",
@@ -95,21 +102,20 @@
    "algorithm_class": null,
    "quantity": "expected_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(d*T*logN)",
+    "expression": "sqrt(d*T*log(N_net))",
     "expression_latex": "O\\left(  \\sqrt{dT \\log |\\K|_{1/T}  } \\right)",
     "regime": null
    },
    "symbols": {
-    "logN": "log |K|_{1/T}, log-size of a 1/T-net of K"
+    "N_net": "size of a 1/T-net of K, |K|_{1/T}"
    },
-   "extra_assumptions": [
-    "membership oracle for K"
-   ],
+   "extra_assumptions": [],
    "is_new": true,
    "source": {
     "label": null,
@@ -117,7 +123,7 @@
     "quote": "There exist an efficient algorithm for BLO for any convex set $\\K$ with regret of $$ O\\left(  \\sqrt{dT \\log |\\K|_{1/T}  } \\right) = O\\left(  d\\sqrt{T \\log(T)  } \\right) $$"
    },
    "confidence": "medium",
-   "notes": "Obtained with s=d. Running time per round Õ(d^5 + d^3 T^6) with approximate sampling (later corollary)."
+   "notes": "Uses s=d via barycentric-spanner-based ratio spanner; polynomial runtime via approximate log-concave sampling."
   },
   {
    "id": "r3",
@@ -127,6 +133,7 @@
    "algorithm_class": null,
    "quantity": "expected_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "known",
    "compute": "polynomial",
@@ -137,9 +144,7 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "membership oracle for K"
-   ],
+   "extra_assumptions": [],
    "is_new": true,
    "source": {
     "label": null,
@@ -157,14 +162,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "c6d1de293f21",
-  "schema_version": "0.2",
-  "ontology_version": "bandits-0.2",
-  "date": "2026-10-19T15:56:26",
+  "prompt_sha": "83b9f19fac84",
+  "schema_version": "0.3",
+  "ontology_version": "bandits-0.3",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-19T16:29:07",
   "source_chars": 101360,
-  "input_tokens": 60232,
-  "output_tokens": 2605,
-  "cost_usd_equiv": 0.44829620000000003,
+  "input_tokens": 71939,
+  "output_tokens": 2686,
+  "cost_usd_equiv": 0.45225760000000004,
   "status": "extracted"
  }
 }

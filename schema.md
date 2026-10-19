@@ -1,9 +1,9 @@
-# Extraction schema and prompt (v0.2, bandits ontology v0.2)
+# Extraction schema and prompt (v0.3, bandits ontology v0.3)
 
 This file has three parts:
 
 1. **The prompt**: the system prompt given to the LLM extractor, verbatim (everything inside the `PROMPT` fence).
-2. **Controlled vocabulary**: the bandits ontology, maintained in [`ontology/bandits-0.2.yaml`](ontology/bandits-0.2.yaml) and rendered into the prompt by `pipeline/extract.py`.
+2. **Controlled vocabulary**: the bandits ontology, maintained in [`ontology/bandits-0.3.yaml`](ontology/bandits-0.3.yaml), with variables in [`ontology/variables.yaml`](ontology/variables.yaml), and rendered into the prompt by `pipeline/extract.py`.
 3. **Design notes**: why the schema looks the way it does, and open questions.
 
 The core of the schema (`paper`, `results`, `bound`, provenance) is domain-agnostic ([desiderata.md](desiderata.md) D3). Only the `setting` dimensions and the variable vocabulary are bandit-specific.
@@ -37,51 +37,32 @@ Also extract:
 9. If a field is not stated in the paper, use `null` (or `not_stated` where offered). Do not guess.
 10. `function_class` and `domain` apply to continuous action sets (convex bodies, Lipschitz/metric spaces). For finite or linear-finite action sets use `function_class: []` and `domain: not_applicable`.
 11. `parameters` on a setting records constraints that define the node, e.g. {"d": "1"} for one-dimensional problems or {"K": "2"} for two-armed bandits; use {} if none.
-12. `compute`: whether the algorithm behind an upper bound runs in polynomial time per round, as stated or clearly implied by the paper; `non_constructive` for existence proofs; `not_stated` otherwise and for lower bounds.
-13. Output a single JSON object matching the schema below, and nothing else.
+12. `action_set` describes the geometry of linear / convex / combinatorial action sets (shape, whether it changes over rounds, how it is accessed); use `not_applicable` for all three fields for finite unstructured arms.
+13. Set `in_scope: false` (with `out_of_scope_reason`) for settings that are not bandit problems (e.g. an episodic RL or a game-theoretic result included in the paper); still record their results.
+14. `comparator`: what regret is measured against (best fixed action, best action per round in contextual problems, best switching sequence, best expert, best policy); `not_applicable` for pure exploration.
+15. For `cited_results`, take the cited paper's title, first author, year and arXiv id from the bibliography if present (null otherwise).
+16. `compute`: whether the algorithm behind an upper bound runs in polynomial time per round, as stated or clearly implied by the paper; `non_constructive` for existence proofs; `not_stated` otherwise and for lower bounds.
+17. Output a single JSON object matching the schema below, and nothing else.
 
 ## Canonical variables
 
-| symbol      | meaning |
-|-------------|---------|
-| T           | horizon (number of rounds) |
-| K           | number of arms / actions (finite) |
-| d           | dimension (linear, contextual, kernel features) |
-| Delta_i     | gap of arm i: mu_star - mu_i |
-| Delta_min   | smallest positive gap |
-| Delta_max   | largest gap |
-| mu_star     | optimal mean reward |
-| sigma       | noise scale (sub-Gaussian parameter or standard deviation) |
-| delta       | failure probability (high-probability bounds; fixed-confidence BAI) |
-| epsilon     | accuracy (PAC / epsilon-best arm) |
-| S           | norm bound on the unknown parameter, ‖theta‖ ≤ S |
-| L_feat      | bound on the action/feature norm, ‖x‖ ≤ L_feat (if the paper bounds ‖x‖², say so in `symbols`) |
-| L_lip       | Lipschitz constant of the loss/reward |
-| lam         | regularisation parameter λ (ridge / self-normalised bounds) |
-| diam_K      | diameter of the action set K |
-| vartheta    | self-concordance parameter of a barrier on K |
-| alpha       | strong-convexity parameter |
-| beta        | smoothness parameter |
-| p           | smoothness order (highly smooth classes) |
-| m           | size of a combinatorial action (number of base arms selected) |
-| C           | total corruption budget |
-| S_T         | number of switches / changes of the environment (non-stationary) |
-| V_T         | total variation budget (non-stationary) |
-| D           | delay (fixed), or D_total for total delay (not the diameter: use diam_K) |
-| B           | budget (knapsacks / constrained) |
-| N           | number of agents/players |
-| H           | episode length (if an episodic structure appears) |
-| gamma_T     | maximum information gain (kernel / GP bandits) |
-| KL_i        | KL divergence used in instance-dependent lower bounds for arm i |
+Use these names in `bound.expression`. Each has a precise definition: if the paper's symbol means something slightly different, use the matching variant (e.g. `L_feat_sq` vs `L_feat`, `sigma_std` vs `sigma`, `Delta` vs `Delta_min`, `kl_i` vs `KL_i` vs `Kinf_i`), or declare a new name in `symbols`. Map the paper's notation onto these names (the paper's n is usually T; its N may be K, N_exp or n_act; check the definition).
 
-Sum over suboptimal arms: write `sum_subopt(<expr in Delta_i, KL_i>)`, e.g. `sum_subopt(log(T)/Delta_i)`.
-Sum over all arms: `sum_arms(<expr>)`. Polylog factors kept explicitly: use `log(...)`.
+{{VARIABLES}}
+
+Sum over suboptimal arms: write `sum_subopt(<expr in Delta_i, KL_i, ...>)`, e.g. `sum_subopt(log(T)/Delta_i)`. Sum over all arms: `sum_arms(<expr>)`. Keep polylog factors explicitly with `log(...)`. Never put O(...) inside an expression: use `bound.notation`.
+
+## Algorithm registry
+
+Known algorithms, as `id: name (aliases)`. For each algorithm in the paper, set `registry_id` to the matching id if it is the same algorithm (same update rule; renamings and "the algorithm of X et al." count); otherwise `null`. Genuinely different variants (e.g. KL-UCB vs KL-UCB++) are different algorithms. Apply the same rule to `cited_results[].algorithm_name` via `algorithm_registry_id`.
+
+{{ALGORITHMS}}
 
 ## Output schema (JSON)
 
 {
-  "schema_version": "0.2",
-  "ontology_version": "bandits-0.2",
+  "schema_version": "0.3",
+  "ontology_version": "bandits-0.3",
   "paper": {
     "title": str,
     "arxiv_id": str | null,
@@ -102,8 +83,12 @@ Sum over all arms: `sum_arms(<expr>)`. Polylog factors kept explicitly: use `log
       "context": <vocab>,
       "noise": <vocab>,
       "learner_knows": [<vocab>],       // e.g. ["T", "sigma"]
+      "instance_assumptions": [<vocab>],// e.g. ["unique_optimal_arm"]
+      "action_set": {"shape": <vocab>, "time_varying": <vocab>, "access": <vocab>},
       "extras": [<vocab>],              // e.g. ["delayed_feedback"]
       "parameters": { str: str },       // node-defining constraints, e.g. {"d": "1"}; {} if none
+      "in_scope": bool,                 // false for non-bandit settings (e.g. episodic RL)
+      "out_of_scope_reason": str | null,
       "unmapped": [str],                // plain-language features not covered by the vocabulary
       "definition_quote": str           // verbatim quote of the setting definition
     }
@@ -112,6 +97,7 @@ Sum over all arms: `sum_arms(<expr>)`. Polylog factors kept explicitly: use `log
     {
       "id": "a1",
       "name": str,                      // as named in the paper, e.g. "UCB-V"
+      "registry_id": str | null,        // id from the algorithm registry, or null if not listed
       "is_new": bool,                   // proposed in this paper?
       "techniques": [<vocab>],          // e.g. ["optimism", "elimination"]
       "requires_knowledge_of": [str]    // inputs the algorithm needs, e.g. ["T", "Delta_min"]
@@ -126,6 +112,7 @@ Sum over all arms: `sum_arms(<expr>)`. Polylog factors kept explicitly: use `log
       "algorithm_class": "all" | "consistent" | "uniformly_good" | "other" | null,  // lower bounds only
       "quantity": <vocab>,              // e.g. "pseudo_regret"
       "dependence": "worst_case" | "instance_dependent",
+      "comparator": <vocab>,            // e.g. "best_fixed_action"
       "probability": "expectation" | "high_probability" | "almost_sure" | "asymptotic",
       "horizon": "known" | "anytime" | "not_applicable",
       "compute": "polynomial" | "exponential" | "non_constructive" | "not_stated",
@@ -151,7 +138,11 @@ Sum over all arms: `sum_arms(<expr>)`. Polylog factors kept explicitly: use `log
     {
       "cited_key": str,                 // bib key as in the LaTeX
       "cited_title": str | null,        // from the .bib / .bbl if available
+      "cited_first_author": str | null,
+      "cited_year": int | null,
+      "cited_arxiv_id": str | null,
       "algorithm_name": str | null,
+      "algorithm_registry_id": str | null,
       "side": "upper" | "lower",
       "setting_description": str,       // free text; may be mapped later
       "bound": { "notation": ..., "expression": str, "expression_latex": str, "regime": str | null },
@@ -174,7 +165,7 @@ Input excerpt:
 Output result:
   {
     "id": "r1", "setting": "s1", "side": "upper", "algorithm": "a1", "algorithm_class": null,
-    "quantity": "pseudo_regret", "dependence": "instance_dependent",
+    "quantity": "pseudo_regret", "dependence": "instance_dependent", "comparator": "best_fixed_action",
     "probability": "expectation", "horizon": "anytime", "compute": "polynomial",
     "bound": {
       "notation": "exact",
@@ -189,17 +180,18 @@ Output result:
     "confidence": "high",
     "notes": "Paper's n is the horizon T. 'Expected regret' here is defined via expected pull counts, i.e. pseudo-regret. Bound holds for any n, so anytime."
   }
-with setting s1 = {objective: cumulative_regret, feedback: bandit, environment: stochastic_iid, action_space: finite_K, function_class: [], domain: not_applicable, context: none, noise: bounded_01, learner_knows: [], extras: [], parameters: {}}.
+with setting s1 = {objective: cumulative_regret, feedback: bandit, environment: stochastic_iid, action_space: finite_K, function_class: [], domain: not_applicable, context: none, noise: bounded_01, learner_knows: [], instance_assumptions: [], extras: [], action_set: {shape: not_applicable, time_varying: not_applicable, access: not_applicable}, parameters: {}, in_scope: true}, and algorithm a1 = {name: "UCB1", registry_id: "ucb1", ...}.
 ````
 
 ---
 
 ## 2. Controlled vocabulary
 
-The vocabulary lives in [`ontology/bandits-0.2.yaml`](ontology/bandits-0.2.yaml), which is the single source of truth. `pipeline/extract.py` renders it into the prompt in place of `{{ONTOLOGY}}`, and `pipeline/schema.py` turns it into the JSON Schema enums. Version history:
+The vocabulary lives in [`ontology/bandits-0.3.yaml`](ontology/bandits-0.3.yaml), variables in [`ontology/variables.yaml`](ontology/variables.yaml) and algorithms in [`data/algorithms.yaml`](data/algorithms.yaml). These are the single sources of truth. `pipeline/extract.py` renders it into the prompt in place of `{{ONTOLOGY}}`, and `pipeline/schema.py` turns it into the JSON Schema enums. Version history:
 
 - **v0.1** ([`ontology/bandits-0.1.yaml`](ontology/bandits-0.1.yaml)): dimensions objective, feedback, environment, action_space, context, noise, learner_knows and extras; per-dimension orders; K-armed → linear reduction.
-- **v0.2**: added the `function_class` (multi-select) and `domain` (improper ⊑ constrained, improper ⊑ unconstrained) dimensions, so bandit convex optimisation is expressible. Also added node `parameters` and a result-level `compute` field. New values: noise `conditionally_subgaussian` and `noise_free`, feedback `two_point`, environment `adversarial_unspecified`, objective `epsilon_optimal_point`, quantities `regret_unspecified` and `minimax_bayesian_regret`. `L` is split into `L_feat` / `L_lip`, and BCO variables are added. Driven by [`data/ground_truth/bco-ontology-notes.md`](data/ground_truth/bco-ontology-notes.md) and the OFUL test extraction. Deferred to Phase 3: constraint-set geometry and typed edge kinds.
+- **v0.2**: added the `function_class` (multi-select) and `domain` (improper ⊑ constrained, improper ⊑ unconstrained) dimensions, so bandit convex optimisation is expressible. Also added node `parameters` and a result-level `compute` field. New values: noise `conditionally_subgaussian` and `noise_free`, feedback `two_point`, environment `adversarial_unspecified`, objective `epsilon_optimal_point`, quantities `regret_unspecified` and `minimax_bayesian_regret`. `L` is split into `L_feat` / `L_lip`, and BCO variables are added. Driven by [`data/ground_truth/bco-ontology-notes.md`](data/ground_truth/bco-ontology-notes.md) and the OFUL test extraction.
+- **v0.3**: applies [`ontology/review-v0.2.md`](ontology/review-v0.2.md). Adds the `action_set` node parameter, `instance_assumptions`, richer `learner_knows`, adversary refinements, `comparator`, `in_scope`, and registry ids for algorithms and citations (D13). The variable registry has moved to `ontology/variables.yaml`.
 
 ## 3. Design notes and open questions
 

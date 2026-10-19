@@ -1,6 +1,6 @@
 {
- "schema_version": "0.2",
- "ontology_version": "bandits-0.2",
+ "schema_version": "0.3",
+ "ontology_version": "bandits-0.3",
  "paper": {
   "title": "An Asymptotically Optimal Primal-Dual Incremental Algorithm for Contextual Linear Bandits",
   "arxiv_id": "2010.12247",
@@ -16,7 +16,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "contextual linear bandit (CLB)",
+   "name_in_paper": "Contextual linear bandit (CLB) with finite contexts drawn i.i.d. from rho and finite arms",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -30,34 +30,44 @@
     "sigma",
     "S"
    ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit"
+   },
    "extras": [],
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [
-    "finite context set X with i.i.d. contexts from distribution rho, rho(x) >= rho_min > 0",
-    "features phi(x,a) with ||phi||_2 <= L",
-    "unique optimal arm in each context",
-    "parameter set Theta compact with ||theta||_2 <= B"
+    "Finite context set X with i.i.d. context distribution rho, rho(x) >= rho_min > 0 for all x",
+    "Features phi(x,a) bounded by L in l2 norm; parameter set Theta compact with ||theta|| <= B (B and L used by the algorithm)",
+    "Per-context action set is fixed finite set A; the effective feature set varies with the observed context"
    ],
-   "definition_quote": "At each time step $t \\in \\mathbb{N}$, the learner observes a context $X_t\\in\\X$ drawn i.i.d.\\ from a context distribution $\\rho$, it pulls an arm $A_t\\in\\A$, and it receives a reward $Y_{t} = \\phi(X_t,A_t)^\\transp\\theta^\\star + \\xi_t$ ... where $\\xi \\sim \\mathcal{N}(0,\\sigma^2)$ is a Gaussian noise."
+   "definition_quote": "At each time step $t \\in \\mathbb{N}$, the learner observes a context $X_t\\in\\X$ drawn i.i.d.\\ from a context distribution $\\rho$, it pulls an arm $A_t\\in\\A$, and it receives a reward $Y_{t} = \\phi(X_t,A_t)^\\transp\\theta^\\star + \\xi_t$ ... where $\\xi \\sim \\mathcal{N}(0,\\sigma^2)$ is a Gaussian noise. Assumption 1: ... $\\|\\theta\\|_2 \\leq B$ ... $\\| \\phi(x,a) \\|_2 \\leq L$ ... $\\rho(x) \\geq \\rho_{\\min} > 0$ ... unique optimal arm in each context."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "SOLID",
+   "name": "SOLID (aSymptotic Optimal Linear prImal Dual)",
+   "registry_id": "solid",
    "is_new": true,
    "techniques": [
     "optimism",
     "ftrl_or_mirror_descent",
+    "exponential_weights",
     "other"
    ],
    "requires_knowledge_of": [
     "T",
     "sigma",
-    "B",
-    "L",
-    "lambda_max",
-    "z_0"
+    "S",
+    "L_feat",
+    "lambda_max"
    ]
   }
  ],
@@ -70,31 +80,31 @@
    "algorithm_class": null,
    "quantity": "expected_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
    "probability": "asymptotic",
    "horizon": "known",
-   "compute": "not_stated",
+   "compute": "polynomial",
    "bound": {
     "notation": "limsup",
-    "expression": "v_star",
+    "expression": "C_lin*log(T)",
     "expression_latex": "\\limsup_{n\\to\\infty} \\E[R_n(\\theta^\\star)]/\\log n \\le v^\\star(\\theta^\\star)",
-    "regime": "T -> infinity"
+    "regime": "n -> infinity"
    },
    "symbols": {
-    "v_star": "value of the lower-bound optimization problem (P), v^*(theta^*)"
+    "C_lin": "v*(theta*), value of the contextual linear lower-bound optimisation problem (P)"
    },
    "extra_assumptions": [
-    "Assumption 1 (bounded params/features, rho_min>0, unique optimal arm per context)",
     "Assumption 2: lambda_max >= 2 B L z_underline(theta*)",
-    "beta_{t-1}=c_{n,1/n}, gamma_t=c_{n,1/S_t^2}, z_k=z_0 e^k, p_k=z_k e^{2k}"
+    "beta_{t-1}=c_{n,1/n}, gamma_t=c_{n,1/S_t^2}, z_k=z_0 e^k, p_k=z_k e^{2k}, step sizes 1/sqrt(p_k)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:regret.bound",
     "number": "Theorem 2",
-    "quote": "If \\algo is run with confidence values $\\beta_{t-1} = c_{n,1/n}$ and $\\gamma_t = c_{n,1/S_t^2}$, ... learning rates $\\alpha_k^\\lambda = \\alpha_k^\\omega = 1/\\sqrt{p_k}$ and increasing sequences $z_k = z_0 e^k$ and $p_k = z_k e^{2k}$, for some $z_0 \\geq 1$, then it is \\textbf{asymptotically optimal} with the same constant as in the lower bound of Prop.~\\ref{p:lower.bound}."
+    "quote": "If \\algo is run with confidence values $\\beta_{t-1} = c_{n,1/n}$ and $\\gamma_t = c_{n,1/S_t^2}$ ... learning rates $\\alpha_k^\\lambda = \\alpha_k^\\omega = 1/\\sqrt{p_k}$ and increasing sequences $z_k = z_0 e^k$ and $p_k = z_k e^{2k}$, for some $z_0 \\geq 1$, then it is \\textbf{asymptotically optimal} with the same constant as in the lower bound of Prop.~\\ref{p:lower.bound}."
    },
    "confidence": "medium",
-   "notes": "Asymptotic optimality stated as matching the lower-bound constant; normalization of regret by log n inferred from Prop 1 and appendix limsup statement."
+   "notes": "Asymptotic optimality stated qualitatively; encoded as limsup of regret/log n <= v*."
   },
   {
    "id": "r2",
@@ -104,34 +114,34 @@
    "algorithm_class": null,
    "quantity": "expected_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
    "probability": "expectation",
    "horizon": "known",
-   "compute": "not_stated",
+   "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "v_star*c_T/(2*sigma**2) + C_log*sqrt(log(log(T)))*log(T)**(3/4) + C_const",
+    "expression": "C_lin*c_n/(2*sigma**2) + C_log*sqrt(log(log(T)))*log(T)**(3/4) + C_const",
     "expression_latex": "v^\\star(\\theta^\\star) \\frac{c_{n,1/n}}{2\\sigma^2} + C_{\\log} (\\log\\log n)^{\\frac{1}{2}}(\\log n)^{\\frac{3}{4}} + C_{\\mathrm{const}}",
-    "regime": "any finite T"
+    "regime": "any finite n >= 3"
    },
    "symbols": {
-    "v_star": "value of lower-bound problem (P)",
-    "c_T": "confidence radius c_{n,1/n} = O(log T + d log log T)",
-    "C_log": "lin_{>=0}(v_star, |X|, L^2, B^2, sqrt(d), 1/sigma^2)",
-    "C_const": "v_star B^2 L^2/sigma^2 + lin_{>=0}(L, B, z_0 (z_underline/z_0)^3, (z_bar/z_0)^2)"
+    "C_lin": "v*(theta*), lower-bound constant",
+    "c_n": "c_{n,1/n} = O(log n + d log log n), confidence radius from Theorem 1",
+    "C_log": "lin_{>=0}(v*, |X|, L^2, B^2, sqrt(d), 1/sigma^2)",
+    "C_const": "v* B^2 L^2/sigma^2 + lin_{>=0}(L, B, z_0 (z_underline/z_0)^3, (z_bar/z_0)^2)"
    },
    "extra_assumptions": [
-    "Assumption 1",
     "Assumption 2: lambda_max >= 2 B L z_underline(theta*)",
-    "z_k=z_0 e^k, p_k=z_k e^{2k}, z_0>=1"
+    "z_0 >= 1, exponential phase schedule"
    ],
    "is_new": true,
    "source": {
-    "label": "thm:regret.bound",
+    "label": "eq:regret.bound.finite",
     "number": "Theorem 2",
     "quote": "Furthermore, for any finite $n$ the regret of \\algo is bounded as $\\E_{\\xi,\\rho}^\\pi [ R_n(\\theta^\\star) ] \\leq v^\\star(\\theta^\\star) \\frac{c_{n,1/n}}{2\\sigma^2} + C_{\\log} (\\log\\log n)^{\\frac{1}{2}}(\\log n)^{\\frac{3}{4}} + C_{\\mathrm{const}}$"
    },
    "confidence": "high",
-   "notes": "Constants C_log, C_const only specified up to nonnegative linear functions of listed quantities."
+   "notes": "Constants C_log and C_const only given as linear-type functions; declared as symbols."
   },
   {
    "id": "r3",
@@ -141,47 +151,80 @@
    "algorithm_class": null,
    "quantity": "expected_regret",
    "dependence": "worst_case",
+   "comparator": "best_action_per_round",
    "probability": "expectation",
    "horizon": "known",
-   "compute": "not_stated",
+   "compute": "polynomial",
    "bound": {
     "notation": "exact",
     "expression": "12*S*L_feat*pi**2*C_lmax + 2*exp(r)*(lambda_max**2 + log(K))/r*sqrt(T) + C_sqrt*C_lmax*log(T)*sqrt(d*T)",
-    "expression_latex": "12BL\\pi^2C_{\\lambda_{\\max}} + \\frac{2e^r(\\lambda_{\\max}^2 + \\log|\\A|)}{r}\\sqrt{n} + C_{\\mathrm{sqrt}} C_{\\lambda_{\\max}}\\log (n) \\sqrt{dn}",
-    "regime": "any T; p_k = e^{rk}, r >= 1, z_k arbitrary"
+    "expression_latex": "12BL\\pi^2C_{\\lambda_{\\max}} + \\frac{2e^r\\left(\\lambda_{\\max}^2 + \\log|\\A|\\right)}{r}\\sqrt{n} + C_{\\mathrm{sqrt}} C_{\\lambda_{\\max}}\\log (n) \\sqrt{dn}",
+    "regime": "any n; p_k = e^{rk}, r >= 1, z_k arbitrary"
    },
    "symbols": {
-    "lambda_max": "maximum Lagrange multiplier",
-    "r": "phase schedule exponent, p_k = e^{rk}",
+    "r": "phase-length growth rate, p_k = e^{rk}",
+    "lambda_max": "maximum Lagrange multiplier (algorithm input)",
     "C_lmax": "1 + lambda_max*B*L/sigma^2",
-    "C_sqrt": "lin_{>=0}(|X| + sqrt(d), B, L), |X| number of contexts"
+    "C_sqrt": "lin_{>=0}(|X| + sqrt(d), B, L)"
    },
    "extra_assumptions": [
-    "Assumption 1",
     "Assumption 2 not required"
    ],
    "is_new": true,
    "source": {
     "label": "th:worst-case",
     "number": "Theorem 3",
-    "quote": "Let $z_k$ be arbitrary, $p_k = e^{rk}$ for some constant $r \\geq 1$, and the other parameters be the same as in Thm.~\\ref{thm:regret.bound}. Then, for any $n$ the regret of \\algo is bounded as \\E[R_n] \\leq 12BL\\pi^2C_{\\lambda_{\\max}} + \\frac{2e^r(\\lambda_{\\max}^2 + \\log|\\A|)}{r}\\sqrt{n} + C_{\\mathrm{sqrt}} C_{\\lambda_{\\max}}\\log (n) \\sqrt{dn}"
+    "quote": "Let $z_k$ be arbitrary, $p_k = e^{rk}$ for some constant $r \\geq 1$, and the other parameters be the same as in Thm.~\\ref{thm:regret.bound}. Then, for any $n$ the regret of \\algo is bounded as $\\E[R_n] \\leq 12BL\\pi^2C_{\\lambda_{\\max}} + \\frac{2e^r(\\lambda_{\\max}^2 + \\log|\\A|)}{r}\\sqrt{n} + C_{\\mathrm{sqrt}} C_{\\lambda_{\\max}}\\log (n) \\sqrt{dn}$"
    },
    "confidence": "high",
-   "notes": "Paper's B (param norm) mapped to S and L to L_feat; |A| mapped to K. Paper summarizes as O~((sqrt(d)+|X|)sqrt(dn) + log|A| sqrt(n))."
+   "notes": "B mapped to S, L to L_feat, |A| to K, n to T."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "(sqrt(d) + M_ctx)*sqrt(d*T) + log(K)*sqrt(T)",
+    "expression_latex": "\\wt{\\mathcal{O}}((\\sqrt{d} + |\\X|)\\sqrt{dn} + \\log|\\A|\\sqrt{n})",
+    "regime": null
+   },
+   "symbols": {},
+   "extra_assumptions": [],
+   "is_new": true,
+   "source": {
+    "label": "th:worst-case",
+    "number": "Theorem 3 (discussion)",
+    "quote": "More precisely, the bound is $\\wt{\\mathcal{{O}}}((\\sqrt{d} + |\\X|)\\sqrt{dn} + \\log|\\A|\\sqrt{n})$, which matches the minimax optimal rate apart from the dependence on $|\\X|$"
+   },
+   "confidence": "medium",
+   "notes": "Simplified form of Theorem 3 stated in text after the theorem; M_ctx = |X|."
   }
  ],
  "cited_results": [
   {
-   "cited_key": "lai1985asymptotically",
-   "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_key": "combes2017minimal",
+   "cited_title": "Minimal exploration in structured stochastic bandits",
+   "cited_first_author": "Richard Combes",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
    "algorithm_name": null,
+   "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Contextual linear bandit with finite contexts/arms, Gaussian noise, uniformly good strategies (also attributed to combes2017minimal, ok2018exploration)",
+   "setting_description": "Contextual linear bandit with finite contexts/arms, Gaussian noise, uniformly good strategies (also attributed to Lai & Robbins 1985 and Ok et al. 2018)",
    "bound": {
     "notation": "liminf",
-    "expression": "v_star",
+    "expression": "C_lin*log(T)",
     "expression_latex": "\\liminf_{n \\rightarrow \\infty}\\frac{\\E[R_n(\\theta^\\star)]}{\\log(n)} \\geq v^\\star(\\theta^\\star)",
-    "regime": "T -> infinity, uniformly good algorithms"
+    "regime": "n -> infinity, uniformly good strategies"
    },
    "where": "Proposition 1, Section 3"
   }
@@ -192,14 +235,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "c6d1de293f21",
-  "schema_version": "0.2",
-  "ontology_version": "bandits-0.2",
-  "date": "2026-10-19T16:01:52",
+  "prompt_sha": "83b9f19fac84",
+  "schema_version": "0.3",
+  "ontology_version": "bandits-0.3",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-19T16:28:10",
   "source_chars": 234203,
-  "input_tokens": 139009,
-  "output_tokens": 4918,
-  "cost_usd_equiv": 1.1247722,
+  "input_tokens": 150716,
+  "output_tokens": 5200,
+  "cost_usd_equiv": 1.1327536,
   "status": "extracted"
  }
 }

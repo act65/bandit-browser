@@ -1,0 +1,254 @@
+# Bandits ontology v0.3. See CHANGELOG at the bottom and ontology/review-v0.2.md.
+# Variables used in bound expressions live in ontology/variables.yaml.
+# The extractor prompt renders this file in place of {{ONTOLOGY}}; the JSON Schema
+# enums are generated from it, so this file is the single source of truth.
+#
+# Order semantics (desiderata D1): a pair [a, b] under `order` means a ⊑ b,
+# i.e. any algorithm for b can be run on a with at most the same guarantee.
+# Upper bounds flow from b to a; lower bounds flow from a to b.
+# Orders are a first pass: each needs a justification and validity scope
+# before the inference engine uses it.
+
+name: bandits
+version: "0.3"
+
+dimensions:
+  objective:
+    multi: false
+    values:
+      cumulative_regret: ""
+      simple_regret: ""
+      bai_fixed_confidence: "best-arm identification, fixed confidence (sample complexity)"
+      bai_fixed_budget: "best-arm identification, fixed budget (error probability)"
+      pac_epsilon_best: "find an epsilon-optimal arm with probability >= 1-delta"
+      top_m_identification: ""
+      other_pure_exploration: ""
+      epsilon_optimal_point: "find x with f(x) <= inf f + epsilon w.p. >= 1-delta (continuous action sets)"
+      optimization_error: "expected error of a point returned after T queries (simple-regret analogue on continuous sets)"
+    order: []
+
+  feedback:
+    multi: false
+    values:
+      full_information: "experts setting: all losses observed"
+      two_point: "two (or a few) function evaluations per round"
+      semi_bandit: "observe the reward of each selected base arm"
+      bandit: "observe only the reward of the chosen action"
+      graph_feedback: "side observations given by a feedback graph"
+      partial_monitoring: "general feedback matrix"
+      dueling: "relative / preference feedback"
+    order:
+      - [full_information, graph_feedback]
+      - [full_information, two_point]
+      - [two_point, bandit]
+      - [graph_feedback, bandit]
+      - [semi_bandit, bandit]
+      - [bandit, partial_monitoring]
+
+  environment:
+    multi: false
+    values:
+      stochastic_iid: "rewards i.i.d. from fixed distributions"
+      stochastic_corrupted: "stochastic with adversarial corruption budget C"
+      adversarial_oblivious: "rewards fixed in advance by an adversary"
+      adversarial_adaptive: "rewards may depend on the learner's past actions"
+      adversarial_unspecified: "adversarial, paper does not say oblivious or adaptive"
+      adversarial_self_bounding: "stochastically constrained adversary / (Delta, C, T) self-bounding regime"
+      adversarial_restricted: "adversarial with restricted loss sequences (small loss, bounded variation, effective range); restriction in `parameters`"
+      nonstationary_switching: "piecewise stationary with S_T switches"
+      nonstationary_drifting: "variation budget V_T"
+      markovian: "rested or restless Markov arms"
+    order:
+      - [stochastic_iid, stochastic_corrupted]
+      - [stochastic_iid, nonstationary_switching]
+      - [nonstationary_switching, adversarial_oblivious]
+      - [adversarial_oblivious, adversarial_adaptive]
+      - [stochastic_iid, adversarial_self_bounding]
+      - [stochastic_corrupted, adversarial_self_bounding]
+      - [adversarial_self_bounding, adversarial_oblivious]
+      - [adversarial_restricted, adversarial_oblivious]
+    notes: >
+      'Best of both worlds' is NOT an environment: it is one algorithm with results
+      in several settings. Record one result per setting.
+
+  action_space:
+    multi: false
+    values:
+      finite_K: "K arms, no structure"
+      linear_finite: "finite action set in R^d, linear reward"
+      linear_infinite: "compact / convex action set in R^d, linear reward"
+      generalized_linear: "reward = link(<theta, x>)"
+      combinatorial: "subsets of base arms, typically of size m"
+      convex_body: "actions in a convex body K in R^d; loss class given by function_class (bandit convex optimisation)"
+      lipschitz_metric: "arms in a metric space, Lipschitz reward"
+      kernel_rkhs: "reward in an RKHS / Gaussian-process bandit"
+      continuum_other: ""
+      structured_general: "known parametric structure mu(x, theta) (covers linear, Lipschitz, unimodal, ...)"
+    order:
+      - [linear_finite, linear_infinite]   # a finite set is a compact set: compact-set algorithms run on it
+    reductions:
+      - {from: finite_K, to: linear_finite, map: {d: K}, note: "canonical basis actions"}
+      - {from: linear_finite, to: generalized_linear, map: {}, note: "identity link"}
+      - {from: linear_infinite, to: generalized_linear, map: {}, note: "identity link"}
+      - {from: finite_K, to: structured_general, map: {}, note: "unstructured arms are trivially structured"}
+      - {from: linear_finite, to: structured_general, map: {}, note: "linear structure is a known parametric structure"}
+      - {from: combinatorial, to: linear_finite, map: {d: K}, note: "subsets of K base arms as {0,1}^K action vectors"}
+      - {from: linear_infinite, to: kernel_rkhs, map: {}, note: "linear kernel"}
+    equivalences:
+      - {a: "action_space=linear_infinite", b: "action_space=convex_body + function_class={bounded, linear}", note: "BCO book F_{b,lin}"}
+
+  function_class:
+    multi: true
+    applies_to: "action_space in {convex_body, lipschitz_metric, continuum_other}; empty list otherwise"
+    values:
+      bounded: "f(x) in [0,1] on K"
+      lipschitz: "f Lipschitz on K (constant L_lip)"
+      smooth: "f - (beta/2)||x||^2 concave (beta >= 0)"
+      strongly_convex: "f - (alpha/2)||x||^2 convex (alpha > 0)"
+      quadratic: "f = x^T A x + b^T x + c"
+      linear: "f = b^T x + c"
+      highly_smooth: "order-p smoothness, p >= 2"
+      submodular_lovasz: "Lovasz extension of a submodular function"
+      quasi_convex: ""
+      polyak_lojasiewicz: ""
+    order_rule: "a set of properties P is a special case of Q iff Q is a subset of P (more properties = smaller class)"
+    implications: ["linear => quadratic", "linear => smooth (beta = 0)", "quadratic => smooth (beta = 2||A||)"]
+
+  domain:
+    multi: false
+    values:
+      not_applicable: "finite or unstructured action sets"
+      constrained: "learner queries and is compared within K"
+      improper: "learner may query anywhere in R^d, compared with the best point in K"
+      unconstrained: "K = R^d"
+    order:
+      - [improper, constrained]
+      - [improper, unconstrained]
+
+  context:
+    multi: false
+    values:
+      none: ""
+      stochastic_contexts: ""
+      adversarial_contexts: ""
+    order:
+      - [none, stochastic_contexts]
+      - [stochastic_contexts, adversarial_contexts]
+
+  noise:
+    multi: false
+    values:
+      bounded_01: "rewards in [0,1]; for adversarial settings: losses/rewards in [0,1]"
+      bounded_pm1: "rewards or losses in [-1,1] (or a symmetric bounded range)"
+      bernoulli: ""
+      subgaussian: ""
+      gaussian_known_variance: ""
+      conditionally_subgaussian: "martingale-difference noise, sub-Gaussian given the past (may depend on action/history)"
+      noise_free: "losses observed exactly"
+      exponential_family: ""
+      heavy_tailed: "bounded (1+eps)-th moment"
+      not_applicable: "range not stated (e.g. adversarial losses with no stated range)"
+    order:
+      - [bernoulli, bounded_01]
+      - [gaussian_known_variance, subgaussian]
+      - [bounded_01, subgaussian]
+      - [subgaussian, heavy_tailed]
+      - [subgaussian, conditionally_subgaussian]
+      - [noise_free, conditionally_subgaussian]
+      - [bounded_01, bounded_pm1]          # up to rescaling constants
+
+  learner_knows:
+    multi: true
+    order_rule: "knowing more is a special case: P special case of Q iff Q is a subset of P"
+    values: {T: "", sigma: "", Delta_min: "", S: "", C: "", S_T: "", V_T: "", D: "", gamma_T: "", K: "", d: "",
+             alpha: "", beta: "", L_lip: "", diam_K: "",
+             mu_star: "the optimal mean", Delta: "the exact gap", Delta_lower_bound: "a lower bound on the smallest gap",
+             moment_bound: "a bound on a moment / variance of the rewards", reward_family: "the parametric family of the reward distributions"}
+
+  instance_assumptions:
+    multi: true
+    order_rule: "more assumptions is a special case: P special case of Q iff Q is a subset of P"
+    values:
+      unique_optimal_arm: ""
+      gap_bounded_below: "Delta_min >= some known or unknown positive constant"
+      means_in_known_interval: ""
+      bounded_variance: ""
+      arms_span_Rd: "action set spans R^d"
+      bayesian_prior: "the unknown parameter is drawn from a prior (Bayesian regret)"
+
+  extras:
+    multi: true
+    values:
+      delayed_feedback: ""
+      batched: ""
+      switching_cost: ""
+      differential_privacy: ""
+      knapsack_constraints: ""
+      safety_constraints: ""
+      multi_player_collision: ""
+      multi_agent_cooperative: ""
+      federated: ""
+      fairness: ""
+      sleeping_arms: ""
+      mortal_arms: ""
+      rotting_or_rising: ""
+      causal: ""
+      strategic_arms: ""
+      budgeted_exploration: ""
+      infinitely_many_arms: ""
+      restless: ""
+      expert_advice: "learner observes advice from N experts and competes with the best expert"
+      time_varying_action_sets: "the available action set changes over rounds"
+
+# Node parameters: structured attributes of a setting. Unlike dimensions they are
+# objects; `order` is per field with the same semantics.
+node_parameters:
+  action_set:
+    applies_to: "action_space in {linear_finite, linear_infinite, generalized_linear, convex_body, combinatorial, kernel_rkhs}; else all fields not_applicable"
+    fields:
+      shape:
+        values: [not_applicable, unspecified, finite, arbitrary_compact, unit_ball, sphere, hypercube, simplex, l1_ball, polytope, convex_body, nonconvex]
+        order: [[unit_ball, arbitrary_compact], [sphere, arbitrary_compact], [hypercube, arbitrary_compact],
+                [simplex, arbitrary_compact], [l1_ball, arbitrary_compact], [polytope, arbitrary_compact],
+                [finite, arbitrary_compact], [convex_body, arbitrary_compact]]
+        note: "lower bounds proved on a specific shape transfer only to more general shapes"
+      time_varying:
+        values: [not_applicable, fixed, oblivious_sequence, adaptive_sequence]
+        order: [[fixed, oblivious_sequence], [oblivious_sequence, adaptive_sequence]]
+      access:
+        values: [not_applicable, explicit, linear_optimization_oracle, membership_oracle, separation_oracle]
+        note: "computational only: does not change statistical rates"
+
+vocabularies:
+  techniques: [optimism, thompson_sampling, elimination, explore_then_commit, epsilon_greedy,
+               exponential_weights, ftrl_or_mirror_descent, information_directed_sampling,
+               track_and_stop, gittins_or_bayes_optimal, doubling_trick, restarts_or_sliding_window,
+               lower_bound_change_of_measure, lower_bound_minimax_construction, other]
+  quantity: [pseudo_regret, expected_regret, high_probability_regret, bayesian_regret, simple_regret,
+             sample_complexity, error_probability, dynamic_regret, switching_regret,
+             regret_unspecified, minimax_bayesian_regret, realized_regret, other]
+  comparator: [best_fixed_action, best_action_per_round, best_switching_sequence, best_expert, best_policy, not_applicable]
+
+# CHANGELOG
+# 0.2 (2026-10-19): from the BCO ground truth (data/ground_truth/bco-ontology-notes.md)
+#   and the OFUL test extraction.
+#   + dimensions function_class (multi), domain
+#   + noise: conditionally_subgaussian, noise_free; feedback: two_point;
+#     environment: adversarial_unspecified; objective: epsilon_optimal_point;
+#     quantity: regret_unspecified, minimax_bayesian_regret; learner_knows: alpha, beta, L_lip, diam_K
+#   ~ action_space: convex -> convex_body
+#   deferred to Phase 3: constraint_set geometry, typed edge kinds (statistical_only,
+#     cross_problem, non_transfer), stochastic_fixed_function environment.
+# 0.3 (2026-10-19): from ontology/review-v0.2.md (142 unmapped items in the first pilot run).
+#   + node_parameters.action_set {shape, time_varying, access}
+#   + learner_knows: mu_star, Delta, Delta_lower_bound, moment_bound, reward_family
+#   + dimension instance_assumptions (multi)
+#   + noise: bounded_pm1 (noise also records adversarial loss ranges)
+#   + environment: adversarial_self_bounding, adversarial_restricted
+#   + action_space: structured_general; objective: optimization_error
+#   + extras: expert_advice, time_varying_action_sets; quantity: realized_regret
+#   + vocabulary comparator; setting-level in_scope flag (schema)
+#   variables moved to ontology/variables.yaml
+#   + orders/reductions found via the graph view: linear_finite ⊑ linear_infinite, bounded_01 ⊑ bounded_pm1,
+#     finite_K / linear_finite -> structured_general, combinatorial -> linear_finite (d = K),
+#     linear_infinite -> generalized_linear

@@ -1,6 +1,6 @@
 {
- "schema_version": "0.2",
- "ontology_version": "bandits-0.2",
+ "schema_version": "0.3",
+ "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Learning to Optimize Via Posterior Sampling",
   "arxiv_id": "1301.2609",
@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Finitely many actions (Bayesian, arbitrary prior, possibly dependent arms)",
+   "name_in_paper": "Finitely many actions (Bayesian, arbitrary prior, rewards in [0,1])",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -24,18 +24,27 @@
    "context": "none",
    "noise": "bounded_01",
    "learner_knows": [],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
    "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [
-    "Bayesian regret: theta drawn from an arbitrary prior known to the learner",
-    "arm rewards may be dependent (arbitrary function class F)",
-    "general formulation allows possibly random time-varying available action sets A_t"
+    "Arbitrary prior over reward functions; actions need not be modeled independently",
+    "Learner uses the prior (posterior sampling)"
    ],
    "definition_quote": "We consider in this section a problem with $|\\mathcal{A}| < \\infty$ actions and rewards satisfying $R_t \\in [0,1]$ for all $t$ almost surely. ... we make no further assumptions on the class of reward functions $\\mathcal{F}$ or on the prior distribution over $\\theta$."
   },
   {
    "id": "s2",
-   "name_in_paper": "Linear models (linear bandit, Bayesian)",
+   "name_in_paper": "Linear models (Bayesian linear bandit)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -45,13 +54,23 @@
    "context": "none",
    "noise": "conditionally_subgaussian",
    "learner_knows": [],
-   "extras": [],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "arbitrary_compact",
+    "time_varying": "adaptive_sequence",
+    "access": "not_applicable"
+   },
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [
-    "Bayesian regret with prior over theta",
-    "||theta||_2 <= c1, ||phi(a)||_2 <= c2",
-    "possibly time-varying action sets A_t",
-    "arbitrary (possibly infinite) action set via feature map"
+    "Parameter norm bounded by c1 and feature norm bounded by c2 (not necessarily known)",
+    "Action sets A_t are possibly random subsets of A"
    ],
    "definition_quote": "If $\\Theta\\subset\\mathbb{R}^d$, $f_\\theta(a)=\\left\\langle \\phi(a), \\theta \\right\\rangle$ ..., $\\sup_{\\rho \\in \\Theta} \\|\\rho\\|_2 \\leq c_1$, and $\\sup_{a \\in \\mathcal{A}} \\|\\phi(a)\\|_2 \\leq c_2$, and for each $t$, $R_t - f_{\\theta}(A_t)$ conditioned on $(H_t, A_t, \\theta)$ is $\\sigma$-sub-Gaussian"
   },
@@ -67,15 +86,25 @@
    "context": "none",
    "noise": "bounded_01",
    "learner_knows": [],
-   "extras": [],
-   "parameters": {},
-   "unmapped": [
-    "Bayesian regret with prior over theta",
-    "rewards in [0,C] rather than [0,1]",
-    "g strictly increasing, continuously differentiable; r = ratio of max to min slope of g",
-    "||theta|| <= c1, ||phi(a)|| <= c2"
+   "instance_assumptions": [
+    "bayesian_prior",
+    "arms_span_Rd"
    ],
-   "definition_quote": "$f_\\theta(a)=g(\\left\\langle \\phi(a), \\theta \\right\\rangle)$ for some strictly increasing continuously differentiable function $g$, $\\sup_{\\rho \\in \\Theta} \\|\\rho\\|_2 \\leq c_1$, $\\sup_{a \\in \\mathcal{A}} \\|\\phi(a)\\|_2 \\leq c_2$, $\\mathcal{A}_t = \\mathcal{A}$ for all $t$, ... and $R_t \\in [0,C]$"
+   "extras": [],
+   "action_set": {
+    "shape": "arbitrary_compact",
+    "time_varying": "fixed",
+    "access": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Rewards in [0,C] for a constant C (not [0,1])",
+    "Link function strictly increasing, continuously differentiable; ratio r of max/min slope enters bound",
+    "Exists a_1..a_d with sum phi phi^T >= lambda I"
+   ],
+   "definition_quote": "If $\\Theta\\subset\\mathbb{R}^d$, $f_\\theta(a)=g(\\left\\langle \\phi(a), \\theta \\right\\rangle)$ for some strictly increasing continuously differentiable function $g$, $\\sup_{\\rho} \\|\\rho\\|_2 \\leq c_1$, $\\sup_{a} \\|\\phi(a)\\|_2 \\leq c_2$, $\\mathcal{A}_t = \\mathcal{A}$ for all $t$, $\\sum_{i=1}^{d} \\phi(a_i) \\phi(a_i)^T \\succeq \\lambda I$ ..., and $R_t \\in [0,C]$"
   },
   {
    "id": "s4",
@@ -88,34 +117,55 @@
    "domain": "not_applicable",
    "context": "none",
    "noise": "gaussian_known_variance",
-   "learner_knows": [],
+   "learner_knows": [
+    "sigma"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
    "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "oblivious_sequence",
+    "access": "not_applicable"
+   },
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [
-    "reward function sampled from a Gaussian process prior (Bayesian regret)",
-    "finite action set A, marginal prior variances bounded by 1"
+    "Reward function drawn from a Gaussian process prior with marginal variances bounded by 1"
    ],
    "definition_quote": "If $\\mathcal{A}$ is finite, $\\left( f_\\theta(a):  a\\in \\mathcal{A} \\right)$ follows a multivariate Gaussian distribution with marginal variances bounded by $1$, ... $\\{R_t-f_{\\theta}(A_t)\\}$ is an iid sequence of zero-mean Gaussian random variables with variance $\\sigma^{2}$"
   },
   {
    "id": "s5",
-   "name_in_paper": "General function classes (bounded, sub-Gaussian noise)",
+   "name_in_paper": "General function classes (bounded reward functions, sub-Gaussian noise)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
-   "action_space": "continuum_other",
+   "action_space": "structured_general",
    "function_class": [],
    "domain": "not_applicable",
    "context": "none",
    "noise": "conditionally_subgaussian",
    "learner_knows": [],
-   "extras": [],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [
-    "arbitrary known function class F with f(a) in [0,C]",
-    "complexity measured by eluder dimension and Kolmogorov dimension",
-    "Bayesian regret with arbitrary prior",
-    "arbitrary action set (finite or infinite), possibly time-varying"
+    "Known function class F with f(a) in [0,C]",
+    "Complexity measured via eluder dimension and Kolmogorov dimension"
    ],
    "definition_quote": "For all $f \\in \\mathcal{F}$ and $a \\in \\mathcal{A}$, $f(a) \\in [0,C]$. ... For all $t \\in \\mathbb{N}$, $R_t-f_{\\theta}(A_t)$ conditioned on $(H_t, \\theta, A_t)$ is $\\sigma$-sub-Gaussian."
   }
@@ -124,6 +174,7 @@
   {
    "id": "a1",
    "name": "Posterior sampling (Thompson sampling)",
+   "registry_id": "posterior_sampling",
    "is_new": false,
    "techniques": [
     "thompson_sampling"
@@ -135,14 +186,14 @@
   {
    "id": "a2",
    "name": "Posterior sampling with initial designed exploration (pi^IPS_{a_1..a_d})",
+   "registry_id": "posterior_sampling_initial_exploration",
    "is_new": true,
    "techniques": [
-    "thompson_sampling",
-    "explore_then_commit"
+    "thompson_sampling"
    ],
    "requires_knowledge_of": [
     "prior",
-    "actions a_1..a_d with linearly independent features"
+    "a_1..a_d spanning actions"
    ]
   }
  ],
@@ -155,6 +206,7 @@
    "algorithm_class": null,
    "quantity": "bayesian_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "not_stated",
@@ -165,9 +217,7 @@
     "regime": null
    },
    "symbols": {},
-   "extra_assumptions": [
-    "arbitrary prior over theta"
-   ],
+   "extra_assumptions": [],
    "is_new": true,
    "source": {
     "label": "prop:finite",
@@ -175,7 +225,7 @@
     "quote": "If $|\\mathcal{A}|=K<\\infty$ and $R_t \\in [0,1]$, then for any $T\\in \\mathbb{N}$ \\mathrm{BayesRegret}(T, \\pi^{\\mathrm{PS}}) \\leq 2\\min\\{K, T\\}+4\\sqrt{K T(2+6\\log(T))}."
    },
    "confidence": "high",
-   "notes": "Bound uniform over priors. Posterior sampling does not use T, so anytime. Numbering inferred (first proposition is the decomposition)."
+   "notes": "Holds for arbitrary prior; PS does not use T so marked anytime."
   },
   {
    "id": "r2",
@@ -185,6 +235,7 @@
    "algorithm_class": null,
    "quantity": "bayesian_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "not_stated",
@@ -196,17 +247,16 @@
    },
    "symbols": {},
    "extra_assumptions": [
-    "||theta||_2 <= c1",
-    "||phi(a)||_2 <= c2"
+    "||theta|| <= c1, ||phi(a)|| <= c2"
    ],
    "is_new": true,
    "source": {
     "label": "prop:linear",
     "number": "Proposition 3",
-    "quote": "Fix positive constants $\\sigma$, $c_1$, and $c_2$. If $\\Theta\\subset\\mathbb{R}^d$, $f_\\theta(a)=\\left\\langle \\phi(a), \\theta \\right\\rangle$ ... then ${\\rm BayesRegret}\\left(T,\\,\\pi^{\\rm PS}\\right) = O(d \\log T \\sqrt{T})$"
+    "quote": "Fix positive constants $\\sigma$, $c_1$, and $c_2$. If ... then $${\\rm BayesRegret}\\left(T,\\,\\pi^{\\rm PS}\\right) = O(d \\log T \\sqrt{T}),$$"
    },
    "confidence": "high",
-   "notes": "Derived via regret decomposition plus Abbasi-Yadkori et al. 2011 analysis; no formal proof given."
+   "notes": "Proof only sketched (derived from Abbasi-Yadkori et al. 2011 analysis)."
   },
   {
    "id": "r3",
@@ -216,30 +266,30 @@
    "algorithm_class": null,
    "quantity": "bayesian_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "not_stated",
    "bound": {
     "notation": "O_tilde",
-    "expression": "E_sqrt_l0*sqrt(d*T)",
+    "expression": "E_sqrt_s0*sqrt(d*T)",
     "expression_latex": "\\tilde{O}\\left(\\mathbb{E} \\sqrt{ \\left\\Vert  \\theta \\right\\Vert_0 dT}  \\right)",
     "regime": null
    },
    "symbols": {
-    "E_sqrt_l0": "E[sqrt(||theta||_0)], prior expectation of square root of number of nonzero components of theta"
+    "E_sqrt_s0": "E[sqrt(||theta||_0)], expected square root of number of nonzero components of theta under the prior"
    },
    "extra_assumptions": [
-    "||theta||_2 <= c1",
-    "||phi(a)||_2 <= c2"
+    "||theta|| <= c1, ||phi(a)|| <= c2"
    ],
    "is_new": true,
    "source": {
     "label": "prop:linear",
     "number": "Proposition 3",
-    "quote": "${\\rm BayesRegret}\\left(T,\\,\\pi^{\\rm PS}\\right) = \\tilde{O}\\left(\\mathbb{E} \\sqrt{ \\left\\Vert  \\theta \\right\\Vert_0 dT}  \\right).$"
+    "quote": "and $${\\rm BayesRegret}\\left(T,\\,\\pi^{\\rm PS}\\right) = \\tilde{O}\\left(\\mathbb{E} \\sqrt{ \\left\\Vert  \\theta \\right\\Vert_0 dT}  \\right).$$"
    },
    "confidence": "medium",
-   "notes": "Sparse-linear bound; depends on prior through E sqrt(||theta||_0), labelled instance_dependent loosely."
+   "notes": "Sparse linear bound derived from Abbasi-Yadkori et al. 2012; proof sketch only."
   },
   {
    "id": "r4",
@@ -249,32 +299,31 @@
    "algorithm_class": null,
    "quantity": "bayesian_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "not_stated",
    "bound": {
     "notation": "O",
-    "expression": "r*d*log(T)**(3/2)*sqrt(T)",
+    "expression": "r_g*d*log(T)**(3/2)*sqrt(T)",
     "expression_latex": "O(r d \\log^{3/2} T \\sqrt{T})",
     "regime": null
    },
    "symbols": {
-    "r": "ratio sup g' / inf g' of slopes of the link function over the feasible domain"
+    "r_g": "ratio sup g'/inf g' of the link function slope over actions and parameters"
    },
    "extra_assumptions": [
-    "A_t = A for all t",
-    "exist a_1..a_d with sum phi(a_i)phi(a_i)^T >= lambda I",
-    "R_t in [0,C]",
-    "g strictly increasing, continuously differentiable"
+    "Rewards in [0,C]",
+    "strictly increasing continuously differentiable link g"
    ],
    "is_new": true,
    "source": {
     "label": "prop:generalizedLinear",
     "number": "Proposition 4",
-    "quote": "If $\\Theta\\subset\\mathbb{R}^d$, $f_\\theta(a)=g(\\left\\langle \\phi(a), \\theta \\right\\rangle)$ ... then ${\\rm BayesRegret}\\left(T,\\,\\pi^{\\rm IPS}_{a_1,\\ldots,a_d}\\right) = O(r d \\log^{3/2} T \\sqrt{T}),$ where $r=\\sup_{\\rho,a}g'(\\langle \\phi(a), \\rho\\rangle) / \\inf_{\\rho,a}g'(\\langle \\phi(a),\\rho\\rangle)$."
+    "quote": "... then $${\\rm BayesRegret}\\left(T,\\,\\pi^{\\rm IPS}_{a_1,\\ldots,a_d}\\right) = O(r d \\log^{3/2} T \\sqrt{T}),$$ where $r=\\sup_{\\rho,a}g'(\\langle \\phi(a), \\rho\\rangle) / \\inf_{\\rho,a}g'(\\langle \\phi(a),\\rho\\rangle)$."
    },
    "confidence": "high",
-   "notes": "Applies to modified PS with initial d designed exploration actions."
+   "notes": "Derived from Filippi et al. 2010; proof sketch only."
   },
   {
    "id": "r5",
@@ -284,28 +333,29 @@
    "algorithm_class": null,
    "quantity": "bayesian_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "1 + 2*sqrt(T*gamma_T/log(1 + sigma**(-2))*log((T**2 + 1)*K/sqrt(2*pi)))",
+    "expression": "1 + 2*sqrt(T*gamma_T*log((T**2 + 1)*K/sqrt(2*pi))/log(1 + sigma_std**(-2)))",
     "expression_latex": "1+2\\sqrt{T \\gamma_T \\ln\\left(1+\\sigma^{-2}\\right)^{-1} \\ln\\left(\\frac{(T^2+1) \\left| \\mathcal{A}\\right|} {\\sqrt{2\\pi}} \\right)}",
     "regime": null
    },
    "symbols": {},
    "extra_assumptions": [
     "prior marginal variances bounded by 1",
-    "K = |A| finite"
+    "iid Gaussian noise with variance sigma^2"
    ],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Proposition 5",
-    "quote": "If $\\mathcal{A}$ is finite, ... then ${\\rm BayesRegret}\\left(T,\\,\\pi^{\\rm PS}\\right)\\leq 1+2\\sqrt{T \\gamma_T \\ln\\left(1+\\sigma^{-2}\\right)^{-1} \\ln\\left(\\frac{(T^2+1) \\left| \\mathcal{A}\\right|} {\\sqrt{2\\pi}} \\right)}$ for all $T \\in \\mathbb{N}$."
+    "quote": "If $\\mathcal{A}$ is finite, ... then $${\\rm BayesRegret}\\left(T,\\,\\pi^{\\rm PS}\\right)\\leq 1+2\\sqrt{T \\gamma_T \\ln\\left(1+\\sigma^{-2}\\right)^{-1} \\ln\\left(\\frac{(T^2+1) \\left| \\mathcal{A}\\right|} {\\sqrt{2\\pi}} \\right)}$$ for all $T \\in \\mathbb{N}$."
    },
    "confidence": "medium",
-   "notes": "Interpreted ln(1+sigma^-2)^{-1} as 1/ln(1+sigma^-2). K denotes |A|. gamma_T is maximum information gain."
+   "notes": "K = |A|; paper's sigma is noise std. Interpreted ln(1+sigma^-2)^{-1} as 1/ln(1+sigma^-2)."
   },
   {
    "id": "r6",
@@ -315,29 +365,34 @@
    "algorithm_class": null,
    "quantity": "bayesian_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "1 + (dimE + 1)*C_bd + 4*sqrt(dimE*beta_star*T)",
-    "expression_latex": "1+\\left[{\\rm dim}_E\\left(\\mathcal{F}, T^{-1} \\right)+1\\right]C +4\\sqrt{{\\rm dim}_E\\left(\\mathcal{F}, T^{-1} \\right) \\beta^{*}_{T} \\left(\\mathcal{F}, \\alpha, \\delta \\right) T}",
-    "regime": "alpha > 0, delta <= 1/(2T)"
+    "expression": "1 + (dimE + 1)*C_rew + 16*sigma*sqrt(dimE*(1 + o_1 + dimK)*log(T)*T)",
+    "expression_latex": "1+\\left[{\\rm dim}_E\\left(\\mathcal{F}, T^{-1} \\right)+1\\right]C+ 16\\sigma \\sqrt{  {\\rm dim}_E\\left(\\mathcal{F},  T^{-1} \\right) \\left(1+o(1)+{\\rm dim}_K\\left(\\mathcal{F} \\right) \\right) \\log(T) T}",
+    "regime": null
    },
    "symbols": {
     "dimE": "eluder dimension dim_E(F, 1/T)",
-    "C_bd": "uniform bound on reward functions, f(a) in [0, C]",
-    "beta_star": "confidence parameter beta*_T(F, delta, alpha) = 8 sigma^2 log(N(F,alpha,||.||_inf)/delta) + 2 alpha T (8C + sqrt(8 sigma^2 ln(4T^2/delta)))"
+    "dimK": "Kolmogorov dimension of F",
+    "C_rew": "uniform bound on reward functions, f(a) in [0,C]",
+    "o_1": "term vanishing as T -> infinity (o(1))"
    },
-   "extra_assumptions": [],
+   "extra_assumptions": [
+    "f(a) in [0,C] for all f in F",
+    "sigma-sub-Gaussian noise"
+   ],
    "is_new": true,
    "source": {
-    "label": "prop: Bayesian regret bound in terms of beta",
-    "number": "Proposition 9",
-    "quote": "For all $T \\in \\mathbb{N}$, $\\alpha > 0$ and $\\delta \\leq 1/2T$, ${\\rm BayesRegret}\\left(T,\\,\\pi^{\\rm PS}\\right) \\leq 1+ \\left[{\\rm dim}_E\\left(\\mathcal{F}, T^{-1} \\right)+1\\right]C +4\\sqrt{{\\rm dim}_E\\left(\\mathcal{F}, T^{-1} \\right) \\beta^{*}_{T} \\left(\\mathcal{F}, \\alpha, \\delta \\right) T}.$"
+    "label": "prop: risk bound",
+    "number": "Proposition 10",
+    "quote": "For any fixed class of functions $\\mathcal{F}$, $${\\rm BayesRegret}\\left(T,\\,\\pi^{\\rm PS}\\right) \\leq 1+\\left[{\\rm dim}_E\\left(\\mathcal{F}, T^{-1} \\right)+1\\right]C+ 16\\sigma \\sqrt{  {\\rm dim}_E\\left(\\mathcal{F},  T^{-1} \\right) \\left(1+o(1)+{\\rm dim}_K\\left(\\mathcal{F} \\right) \\right) \\log(T) T}$$ for all $T\\in \\mathbb{N}$."
    },
    "confidence": "medium",
-   "notes": "Proposition number inferred from ordering. Note argument order of beta* differs from its definition in paper (typo)."
+   "notes": "Proposition numbering inferred. Contains an o(1) term; C renamed C_rew to avoid clash with corruption budget."
   },
   {
    "id": "r7",
@@ -347,73 +402,44 @@
    "algorithm_class": null,
    "quantity": "bayesian_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "1 + (dimE + 1)*C_bd + 16*sigma*sqrt(dimE*(1 + o1 + dimK)*log(T)*T)",
-    "expression_latex": "1+\\left[{\\rm dim}_E\\left(\\mathcal{F}, T^{-1} \\right)+1\\right]C+ 16\\sigma \\sqrt{  {\\rm dim}_E\\left(\\mathcal{F},  T^{-1} \\right) \\left(1+o(1)+{\\rm dim}_K\\left(\\mathcal{F} \\right) \\right) \\log(T) T }",
+    "expression": "1 + (dimE + 1)*C_rew + 8*sigma*sqrt(2*dimE*log(2*N_F*T)*T)",
+    "expression_latex": "1+\\left[{\\rm dim}_E\\left(\\mathcal{F}, T^{-1} \\right)+1\\right]C+8\\sigma\\sqrt{2{\\rm dim}_E\\left(\\mathcal{F}, T^{-1} \\right) \\log\\left(2\\left|\\mathcal{F}\\right|T\\right)T}",
     "regime": null
    },
    "symbols": {
     "dimE": "eluder dimension dim_E(F, 1/T)",
-    "dimK": "Kolmogorov dimension of F",
-    "o1": "term vanishing as T -> infinity",
-    "C_bd": "uniform bound on reward functions, f(a) in [0, C]"
-   },
-   "extra_assumptions": [],
-   "is_new": true,
-   "source": {
-    "label": "prop: risk bound",
-    "number": "Proposition 10",
-    "quote": "For any fixed class of functions $\\mathcal{F}$, ${\\rm BayesRegret}\\left(T,\\,\\pi^{\\rm PS}\\right) \\leq 1+\\left[{\\rm dim}_E\\left(\\mathcal{F}, T^{-1} \\right)+1\\right]C+ 16\\sigma \\sqrt{  {\\rm dim}_E\\left(\\mathcal{F},  T^{-1} \\right) \\left(1+o(1)+{\\rm dim}_K\\left(\\mathcal{F} \\right) \\right) \\log(T) T } for all $T\\in \\mathbb{N}$."
-   },
-   "confidence": "medium",
-   "notes": "Contains an o(1) term, so effectively asymptotic in the constant."
-  },
-  {
-   "id": "r8",
-   "setting": "s5",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "bayesian_regret",
-   "dependence": "worst_case",
-   "probability": "expectation",
-   "horizon": "anytime",
-   "compute": "not_stated",
-   "bound": {
-    "notation": "exact",
-    "expression": "1 + (dimE + 1)*C_bd + 8*sigma*sqrt(2*dimE*log(2*N_F*T)*T)",
-    "expression_latex": "1+\\left[{\\rm dim}_E\\left(\\mathcal{F}, T^{-1} \\right)+1\\right]C +8\\sigma\\sqrt{2{\\rm dim}_E\\left(\\mathcal{F}, T^{-1} \\right) \\log\\left(2\\left|\\mathcal{F}\\right|T\\right)T}",
-    "regime": null
-   },
-   "symbols": {
-    "dimE": "eluder dimension dim_E(F, 1/T)",
-    "N_F": "cardinality |F| of finite function class",
-    "C_bd": "uniform bound on reward functions, f(a) in [0, C]"
+    "C_rew": "uniform bound on reward functions, f(a) in [0,C]",
+    "N_F": "cardinality |F| of the finite function class"
    },
    "extra_assumptions": [
-    "F finite"
+    "F finite",
+    "f(a) in [0,C]",
+    "sigma-sub-Gaussian noise"
    ],
    "is_new": true,
    "source": {
     "label": "prop: risk bound",
     "number": "Proposition 10",
-    "quote": "Further, if $\\mathcal{F}$ is finite then ${\\rm BayesRegret}\\left(T,\\,\\pi^{\\rm PS}\\right) \\leq 1+\\left[{\\rm dim}_E\\left(\\mathcal{F}, T^{-1} \\right)+1\\right]C +8\\sigma\\sqrt{2{\\rm dim}_E\\left(\\mathcal{F}, T^{-1} \\right) \\log\\left(2\\left|\\mathcal{F}\\right|T\\right)T},$ for all $T \\in \\mathbb{N}$."
+    "quote": "Further, if $\\mathcal{F}$ is finite then $${\\rm BayesRegret}\\left(T,\\,\\pi^{\\rm PS}\\right) \\leq 1+\\left[{\\rm dim}_E\\left(\\mathcal{F}, T^{-1} \\right)+1\\right]C+8\\sigma\\sqrt{2{\\rm dim}_E\\left(\\mathcal{F}, T^{-1} \\right) \\log\\left(2\\left|\\mathcal{F}\\right|T\\right)T},$$ for all $T \\in \\mathbb{N}$."
    },
-   "confidence": "high",
-   "notes": ""
+   "confidence": "medium",
+   "notes": "Proposition numbering inferred."
   },
   {
-   "id": "r9",
+   "id": "r8",
    "setting": "s2",
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "bayesian_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "not_stated",
@@ -425,42 +451,43 @@
    },
    "symbols": {},
    "extra_assumptions": [
-    "||phi(a)|| <= gamma, ||theta|| <= s",
-    "rewards in [0,C] (Assumption 1)"
+    "bounded parameter and feature norms",
+    "f in [0,C]"
    ],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Example (Linear Models, Section 7.2)",
-    "quote": "Consider the case of a $d$-dimensional linear model ... ${\\rm dim}_E(\\mathcal{F}, \\epsilon) = O(d\\log(1/\\epsilon))$ and ${\\rm dim}_K(\\mathcal{F}) = O(d)$. Proposition \\ref{prop: risk bound} therefore yields an $O(d\\sqrt{T}\\log(T))$ Bayesian regret bound."
+    "quote": "Then, ${\\rm dim}_E(\\mathcal{F}, \\epsilon) = O(d\\log(1/\\epsilon))$ and ${\\rm dim}_K(\\mathcal{F}) = O(d)$. Proposition \\ref{prop: risk bound} therefore yields an $O(d\\sqrt{T}\\log(T))$ Bayesian regret bound."
    },
    "confidence": "medium",
-   "notes": "Stated in an Example specializing Proposition 10, under the Section 7 assumptions (bounded rewards, sub-Gaussian noise)."
+   "notes": "Specialization of general eluder-dimension bound, stated in an Example."
   },
   {
-   "id": "r10",
+   "id": "r9",
    "setting": "s3",
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "bayesian_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "not_stated",
    "bound": {
     "notation": "O",
-    "expression": "r*d*sqrt(T)*log(r*T)",
+    "expression": "r_g*d*sqrt(T)*log(r_g*T)",
     "expression_latex": "O(rd\\sqrt{T} \\log (rT))",
     "regime": null
    },
    "symbols": {
-    "r": "ratio of maximal to minimal slope of g"
+    "r_g": "ratio of max to min slope of the link function g"
    },
    "extra_assumptions": [
     "g increasing Lipschitz",
-    "sigma-sub-Gaussian noise (Assumption 2)",
-    "no designed exploration needed"
+    "sub-Gaussian noise",
+    "f in [0,C]"
    ],
    "is_new": true,
    "source": {
@@ -469,14 +496,36 @@
     "quote": "Then, ${\\rm dim}_K(\\mathcal{F}) = O(d)$ and ${\\rm dim}_E(\\mathcal{F}, \\epsilon) = O(r^2 d\\log(r \\epsilon))$ ... Proposition \\ref{prop: risk bound} yields an $O(rd\\sqrt{T} \\log (rT))$ Bayesian regret bound."
    },
    "confidence": "medium",
-   "notes": "Applies to standard posterior sampling; noise assumption here is sub-Gaussian rather than bounded as in setting s3."
+   "notes": "Applies to standard PS (no initial exploration). Setting s3 used though the noise assumption here is sub-Gaussian rather than bounded and A_t need not be fixed."
   }
  ],
  "cited_results": [
   {
+   "cited_key": "agrawal2013linear",
+   "cited_title": "Thompson sampling for contextual bandits with linear payoffs",
+   "cited_first_author": "Agrawal",
+   "cited_year": 2012,
+   "cited_arxiv_id": "1209.3352",
+   "algorithm_name": "Thompson sampling for contextual linear bandits",
+   "algorithm_registry_id": "lin_ts",
+   "side": "upper",
+   "setting_description": "Contextual linear bandit, d-dimensional, high-probability regret",
+   "bound": {
+    "notation": "O",
+    "expression": "d**2/eps_alg*sqrt(T**(1 + eps_alg))*log(T*d)*log(1/delta)",
+    "expression_latex": "\\frac{d^2}{\\epsilon}\\sqrt{T^{1+\\epsilon}}\\ln(Td)\\ln\\frac{1}{\\delta}",
+    "regime": "with probability at least 1-delta, eps in (0,1)"
+   },
+   "where": "Section 2.2"
+  },
+  {
    "cited_key": "auer2002finite",
    "cited_title": "Finite-time analysis of the multiarmed bandit problem",
-   "algorithm_name": "UCB1 (Independent UCB)",
+   "cited_first_author": "Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB (Independent UCB)",
+   "algorithm_registry_id": null,
    "side": "upper",
    "setting_description": "Finite-armed stochastic bandit, rewards in [0,1], problem-independent regret",
    "bound": {
@@ -485,42 +534,36 @@
     "expression_latex": "\\sqrt{|\\mathcal{A}| T \\log T}",
     "regime": null
    },
-   "where": "Section 5.1"
+   "where": "Section 6.1"
   },
   {
    "cited_key": "agrawal2012further",
    "cited_title": "Further optimal regret bounds for Thompson sampling",
-   "algorithm_name": "Thompson sampling",
+   "cited_first_author": "Agrawal",
+   "cited_year": 2012,
+   "cited_arxiv_id": "1209.3353",
+   "algorithm_name": "Thompson Sampling (Beta-Bernoulli)",
+   "algorithm_registry_id": "thompson_sampling_beta",
    "side": "upper",
-   "setting_description": "Finite independent Bernoulli arms, regret of posterior sampling",
+   "setting_description": "Finite-armed Bernoulli bandit with independent arms, problem-independent regret",
    "bound": {
     "notation": "O",
     "expression": "sqrt(K*T*log(T))",
     "expression_latex": "\\sqrt{|\\mathcal{A}| T \\log T}",
     "regime": null
    },
-   "where": "Section 2.2 and 5.1"
-  },
-  {
-   "cited_key": "agrawal2013linear",
-   "cited_title": "Thompson sampling for contextual bandits with linear payoffs",
-   "algorithm_name": "Thompson sampling (linear payoffs)",
-   "side": "upper",
-   "setting_description": "Contextual linear bandit, d-dimensional, high-probability regret",
-   "bound": {
-    "notation": "O",
-    "expression": "d**2/epsilon*sqrt(T**(1 + epsilon))*log(T*d)*log(1/delta)",
-    "expression_latex": "\\frac{d^2}{\\epsilon}\\sqrt{T^{1+\\epsilon}}\\ln(Td)\\ln\\frac{1}{\\delta}",
-    "regime": "epsilon in (0,1) algorithm parameter; w.p. 1-delta"
-   },
-   "where": "Section 2.2"
+   "where": "Section 6.1"
   },
   {
    "cited_key": "rusmevichientong2010linearly",
    "cited_title": "Linearly parameterized bandits",
+   "cited_first_author": "Rusmevichientong",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
    "algorithm_name": null,
+   "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Linear bandits; d sqrt(T) bound is order-optimal up to a ln T factor",
+   "setting_description": "Linear bandit, d-dimensional; Bayesian regret lower bound implied by 'order-optimal up to a factor of ln T'",
    "bound": {
     "notation": "Omega",
     "expression": "d*sqrt(T)",
@@ -530,25 +573,15 @@
    "where": "Section 2.2 and Example (Linear Models), Section 7.2"
   },
   {
-   "cited_key": "filippi2010parametric",
-   "cited_title": "Parametric bandits: The generalized linear case",
-   "algorithm_name": "GLM-UCB",
-   "side": "upper",
-   "setting_description": "Generalized linear bandit; regret bound translated to Bayesian regret",
-   "bound": {
-    "notation": "O",
-    "expression": "r*d*sqrt(T)*log(T)**(3/2)",
-    "expression_latex": "O(rd\\sqrt{T}\\log^{3/2}(T))",
-    "regime": null
-   },
-   "where": "Example (Generalized Linear Models), Section 7.2"
-  },
-  {
    "cited_key": "abbasi2011improved",
    "cited_title": "Improved algorithms for linear stochastic bandits",
+   "cited_first_author": "Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
    "algorithm_name": "OFUL (linear UCB)",
+   "algorithm_registry_id": "oful",
    "side": "upper",
-   "setting_description": "Linear stochastic bandit",
+   "setting_description": "Linear bandit, d-dimensional (Bayesian regret implied)",
    "bound": {
     "notation": "O",
     "expression": "d*sqrt(T)*log(T)",
@@ -556,6 +589,24 @@
     "regime": null
    },
    "where": "Example (Linear Models), Section 7.2"
+  },
+  {
+   "cited_key": "filippi2010parametric",
+   "cited_title": "Parametric bandits: The generalized linear case",
+   "cited_first_author": "Filippi",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GLM-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Generalized linear bandit, translated to Bayesian regret",
+   "bound": {
+    "notation": "O",
+    "expression": "r_g*d*sqrt(T)*log(T)**(3/2)",
+    "expression_latex": "O(rd\\sqrt{T}\\log^{3/2}(T))",
+    "regime": null
+   },
+   "where": "Example (Generalized Linear Models), Section 7.2"
   }
  ],
  "_run": {
@@ -564,14 +615,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "c6d1de293f21",
-  "schema_version": "0.2",
-  "ontology_version": "bandits-0.2",
-  "date": "2026-10-19T16:02:27",
+  "prompt_sha": "83b9f19fac84",
+  "schema_version": "0.3",
+  "ontology_version": "bandits-0.3",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-19T16:26:27",
   "source_chars": 137766,
-  "input_tokens": 78115,
-  "output_tokens": 11149,
-  "cost_usd_equiv": 0.7622401999999999,
+  "input_tokens": 89822,
+  "output_tokens": 11183,
+  "cost_usd_equiv": 0.7652616,
   "status": "extracted"
  }
 }

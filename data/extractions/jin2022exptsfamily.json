@@ -1,6 +1,6 @@
 {
- "schema_version": "0.2",
- "ontology_version": "bandits-0.2",
+ "schema_version": "0.3",
+ "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Finite-Time Regret of Thompson Sampling Algorithms for Exponential Family Multi-Armed Bandits",
   "arxiv_id": "2206.03520",
@@ -25,13 +25,25 @@
    "domain": "not_applicable",
    "context": "none",
    "noise": "exponential_family",
-   "learner_knows": [],
+   "learner_knows": [
+    "reward_family",
+    "K"
+   ],
+   "instance_assumptions": [
+    "bounded_variance"
+   ],
    "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [
-    "Variance of reward distributions bounded: 0 < V(mu) <= V < infinity",
     "b(theta) twice differentiable with continuous second derivative",
-    "Learner knows the exponential family (kl function / variance function V(x)) used in the sampling distribution"
+    "variance of all family members bounded by constant V: 0 < V(mu) <= V"
    ],
    "definition_quote": "we assume the reward $r_t$ is independently generated from some canonical one-parameter exponential family of distributions with a mean value $\\mu_{A_t}$... We assume the variances of exponential family distributions used in this paper are bounded by a constant $V>0$: $0<V(\\mu)\\leq V< +\\infty$."
   },
@@ -49,10 +61,18 @@
    "learner_knows": [
     "sigma"
    ],
+   "instance_assumptions": [],
    "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [],
-   "definition_quote": "If the reward follows a Gaussian distribution with a known variance $V$, we can set the sampling distribution in Algorithm \\ref{alg:rots} as $\\cN(\\hmu_{i}(t),V/T_{i}(t))$."
+   "definition_quote": "If the reward follows a Gaussian distribution with a known variance $V$"
   },
   {
    "id": "s3",
@@ -66,27 +86,50 @@
    "context": "none",
    "noise": "bernoulli",
    "learner_knows": [],
+   "instance_assumptions": [],
    "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [],
-   "definition_quote": "If the reward distribution is Bernoulli, we can set the sampling distribution $\\cP$ in Algorithm \\ref{alg:rots} as Beta posterior $\\cB(S_{i}(t)+1, T_{i}(t)-S_{i}(t)+1)$"
+   "definition_quote": "If the reward distribution is Bernoulli"
   }
  ],
  "algorithms": [
   {
    "id": "a1",
    "name": "ExpTS",
+   "registry_id": "expts",
    "is_new": true,
    "techniques": [
     "thompson_sampling"
    ],
    "requires_knowledge_of": [
-    "exponential family kl function"
+    "reward_family"
    ]
   },
   {
    "id": "a2",
+   "name": "ExpTS+",
+   "registry_id": "expts_plus",
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "reward_family",
+    "K"
+   ]
+  },
+  {
+   "id": "a3",
    "name": "Gaussian-TS",
+   "registry_id": "thompson_sampling_gaussian",
    "is_new": false,
    "techniques": [
     "thompson_sampling"
@@ -96,26 +139,14 @@
    ]
   },
   {
-   "id": "a3",
+   "id": "a4",
    "name": "Bernoulli-TS",
+   "registry_id": "thompson_sampling_beta",
    "is_new": false,
    "techniques": [
     "thompson_sampling"
    ],
    "requires_knowledge_of": []
-  },
-  {
-   "id": "a4",
-   "name": "ExpTS+",
-   "is_new": true,
-   "techniques": [
-    "thompson_sampling",
-    "other"
-   ],
-   "requires_knowledge_of": [
-    "K",
-    "exponential family kl function"
-   ]
   }
  ],
  "results": [
@@ -127,19 +158,19 @@
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sum_subopt(Delta_i + V*log(T*Delta_i**2/V)/Delta_i) + Delta_lam*T",
+    "expression": "sum_subopt(Delta_i + v_mom*log(T*Delta_i**2/v_mom)/Delta_i) + Delta_small*T",
     "expression_latex": "\\sum_{i\\in [K]:\\Delta_i>\\lambda} O\\bigg(\\Delta_i+\\frac{V\\log(T\\Delta_i^2/V)}{\\Delta_i} \\bigg)+\\max_{i\\in [K],\\Delta_i\\leq \\lambda} \\Delta_i \\cdot T",
-    "regime": "lambda >= 16*sqrt(V/T); first sum only over arms with Delta_i > lambda"
+    "regime": "sum restricted to arms with Delta_i > lambda, any lambda >= 16 sqrt(V/T)"
    },
    "symbols": {
-    "V": "upper bound on reward variance",
-    "lambda_thr": "threshold lambda >= 16 sqrt(V/T)",
-    "Delta_lam": "max gap among arms with Delta_i <= lambda_thr"
+    "Delta_small": "max_{i: Delta_i <= lambda} Delta_i (not inside O)",
+    "lambda": "threshold >= 16*sqrt(v_mom/T)"
    },
    "extra_assumptions": [
     "b_n=(n-1)/n"
@@ -148,10 +179,10 @@
    "source": {
     "label": "thm:regret_rots",
     "number": "Theorem 1",
-    "quote": "Let $b_n=(n-1)/n$. ... The regret of Algorithm \\ref{alg:rots} satisfies the following finite-time bounds: R_{\\mu}(T)=\\sum_{i\\in [K]:\\Delta_i>\\lambda} O(\\Delta_i+\\frac{V\\log(T\\Delta_i^2/V)}{\\Delta_i})+\\max_{i\\in [K],\\Delta_i\\leq \\lambda} \\Delta_i \\cdot T, ... where $\\lambda \\geq 16\\sqrt{V/T}$"
+    "quote": "Let $b_n=(n-1)/n$. ... The regret of Algorithm \\ref{alg:rots} satisfies ... R_{\\mu}(T)=\\sum_{i\\in [K]:\\Delta_i>\\lambda} O(\\Delta_i+\\frac{V\\log(T\\Delta_i^2/V)}{\\Delta_i})+\\max_{i\\in [K],\\Delta_i\\leq \\lambda} \\Delta_i \\cdot T ... where $\\lambda \\geq 16\\sqrt{V/T}$"
    },
    "confidence": "medium",
-   "notes": "Sub-UCB bound. sum_subopt restricted to arms with Delta_i>lambda; not exactly expressible. Regret defined as T*mu_star - E[sum r_t]."
+   "notes": "Sub-UCB bound; v_mom = variance bound V. O applies only to the sum term."
   },
   {
    "id": "r2",
@@ -161,18 +192,17 @@
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sum_subopt(Delta_i) + sqrt(V*K*T*log(K))",
+    "expression": "sum_subopt(Delta_i) + sqrt(v_mom*K*T*log(K))",
     "expression_latex": "O\\bigg(\\sum_{i=2}^{K}\\Delta_i+\\sqrt{VKT\\log K} \\bigg)",
     "regime": null
    },
-   "symbols": {
-    "V": "upper bound on reward variance"
-   },
+   "symbols": {},
    "extra_assumptions": [
     "b_n=(n-1)/n"
    ],
@@ -183,7 +213,7 @@
     "quote": "R_{\\mu}(T)= O\\bigg(\\sum_{i=2}^{K}\\Delta_i+\\sqrt{VKT\\log K} \\bigg)"
    },
    "confidence": "high",
-   "notes": "Minimax up to sqrt(log K)."
+   "notes": ""
   },
   {
    "id": "r3",
@@ -193,6 +223,7 @@
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "asymptotic",
    "horizon": "anytime",
    "compute": "polynomial",
@@ -200,11 +231,9 @@
     "notation": "limsup",
     "expression": "sum_subopt(Delta_i/KL_i)",
     "expression_latex": "\\lim_{T\\rightarrow \\infty}\\frac{R_{\\mu}(T)}{\\log T}= \\sum_{i=2}^{K}\\frac{\\Delta_i}{\\kl(\\mu_i,\\mu_1)}",
-    "regime": "T -> infinity, normalized by log T"
+    "regime": "T -> infinity, regret normalized by log T"
    },
-   "symbols": {
-    "KL_i": "kl(mu_i, mu_1) for the exponential family"
-   },
+   "symbols": {},
    "extra_assumptions": [
     "b_n=(n-1)/n"
    ],
@@ -212,31 +241,32 @@
    "source": {
     "label": "thm:regret_rots",
     "number": "Theorem 1",
-    "quote": "and also satisfies the following asymptotic bound simultaneously: \\lim_{T\\rightarrow \\infty}\\frac{R_{\\mu}(T)}{\\log T}= \\sum_{i=2}^{K}\\frac{\\Delta_i}{\\kl(\\mu_i,\\mu_1)}."
+    "quote": "\\lim_{T\\rightarrow \\infty}\\frac{R_{\\mu}(T)}{\\log T}= \\sum_{i=2}^{K}\\frac{\\Delta_i}{\\kl(\\mu_i,\\mu_1)}."
    },
    "confidence": "high",
-   "notes": "Stated as a limit equality; recorded as limsup of R/log T."
+   "notes": "Stated as a limit equality; recorded as the limsup of R/log T. kl is exponential-family KL between arms i and 1."
   },
   {
    "id": "r4",
    "setting": "s2",
    "side": "upper",
-   "algorithm": "a2",
+   "algorithm": "a3",
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sum_subopt(Delta_i + V*log(T*Delta_i**2/V)/Delta_i) + Delta_lam*T",
-    "expression_latex": "\\sum_{i\\in [K]:\\Delta_i>\\lambda} O\\bigg(\\Delta_i+\\frac{V\\log(T\\Delta_i^2/V)}{\\Delta_i} \\bigg)+\\max_{i\\in [K],\\Delta_i\\leq \\lambda} \\Delta_i \\cdot T",
-    "regime": "lambda >= 16*sqrt(V/T)"
+    "expression": "sum_subopt(Delta_i + v_mom*log(T*Delta_i**2/v_mom)/Delta_i) + Delta_small*T",
+    "expression_latex": "\\sum_{i:\\Delta_i>\\lambda} O(\\Delta_i+\\frac{V\\log(T\\Delta_i^2/V)}{\\Delta_i})+\\max_{\\Delta_i\\leq \\lambda} \\Delta_i T",
+    "regime": "sum over arms with Delta_i > lambda, lambda >= 16 sqrt(V/T)"
    },
    "symbols": {
-    "V": "known Gaussian variance",
-    "Delta_lam": "max gap among arms with Delta_i <= lambda"
+    "Delta_small": "max_{i: Delta_i <= lambda} Delta_i",
+    "v_mom": "known Gaussian variance V"
    },
    "extra_assumptions": [],
    "is_new": true,
@@ -246,27 +276,28 @@
     "quote": "If the reward follows a Gaussian distribution with a known variance $V$, we can set the sampling distribution in Algorithm \\ref{alg:rots} as $\\cN(\\hmu_{i}(t),V/T_{i}(t))$. The resulting algorithm (denoted as Gaussian-TS) enjoys the same regret bounds presented in Theorem \\ref{thm:regret_rots}."
    },
    "confidence": "medium",
-   "notes": "Inherits bound (1) of Theorem 1."
+   "notes": "Inherited from Theorem 1 by 'same regret bounds'."
   },
   {
    "id": "r5",
    "setting": "s2",
    "side": "upper",
-   "algorithm": "a2",
+   "algorithm": "a3",
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sum_subopt(Delta_i) + sqrt(V*K*T*log(K))",
-    "expression_latex": "O\\bigg(\\sum_{i=2}^{K}\\Delta_i+\\sqrt{VKT\\log K} \\bigg)",
+    "expression": "sum_subopt(Delta_i) + sqrt(v_mom*K*T*log(K))",
+    "expression_latex": "O(\\sum_{i=2}^{K}\\Delta_i+\\sqrt{VKT\\log K})",
     "regime": null
    },
    "symbols": {
-    "V": "known Gaussian variance"
+    "v_mom": "known Gaussian variance V"
    },
    "extra_assumptions": [],
    "is_new": true,
@@ -276,16 +307,17 @@
     "quote": "The resulting algorithm (denoted as Gaussian-TS) enjoys the same regret bounds presented in Theorem \\ref{thm:regret_rots}."
    },
    "confidence": "high",
-   "notes": "Inherits bound (2) of Theorem 1."
+   "notes": ""
   },
   {
    "id": "r6",
    "setting": "s2",
    "side": "upper",
-   "algorithm": "a2",
+   "algorithm": "a3",
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "asymptotic",
    "horizon": "anytime",
    "compute": "polynomial",
@@ -293,72 +325,69 @@
     "notation": "limsup",
     "expression": "sum_subopt(Delta_i/KL_i)",
     "expression_latex": "\\lim_{T\\rightarrow \\infty}\\frac{R_{\\mu}(T)}{\\log T}= \\sum_{i=2}^{K}\\frac{\\Delta_i}{\\kl(\\mu_i,\\mu_1)}",
-    "regime": "T -> infinity, normalized by log T"
+    "regime": "T -> infinity"
    },
-   "symbols": {
-    "KL_i": "Gaussian kl(mu_i, mu_1) = Delta_i^2/(2V)"
-   },
+   "symbols": {},
    "extra_assumptions": [],
    "is_new": true,
    "source": {
     "label": "thm:Gaussian",
     "number": "Theorem 2",
-    "quote": "The resulting algorithm (denoted as Gaussian-TS) enjoys the same regret bounds presented in Theorem \\ref{thm:regret_rots}."
+    "quote": "enjoys the same regret bounds presented in Theorem \\ref{thm:regret_rots}."
    },
    "confidence": "high",
-   "notes": "Inherits asymptotic bound of Theorem 1."
+   "notes": "KL_i = Delta_i^2/(2V) for Gaussians."
   },
   {
    "id": "r7",
    "setting": "s3",
    "side": "upper",
-   "algorithm": "a3",
+   "algorithm": "a4",
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sum_subopt(Delta_i + V*log(T*Delta_i**2/V)/Delta_i) + Delta_lam*T",
-    "expression_latex": "\\sum_{i\\in [K]:\\Delta_i>\\lambda} O\\bigg(\\Delta_i+\\frac{V\\log(T\\Delta_i^2/V)}{\\Delta_i} \\bigg)+\\max_{i\\in [K],\\Delta_i\\leq \\lambda} \\Delta_i \\cdot T",
-    "regime": "lambda >= 16*sqrt(V/T)"
+    "expression": "sum_subopt(Delta_i + log(T*Delta_i**2)/Delta_i) + Delta_small*T",
+    "expression_latex": "\\sum_{i:\\Delta_i>\\lambda} O(\\Delta_i+\\frac{V\\log(T\\Delta_i^2/V)}{\\Delta_i})+\\max_{\\Delta_i\\leq \\lambda} \\Delta_i T",
+    "regime": "sum over arms with Delta_i > lambda, lambda >= 16 sqrt(V/T), V=1/4"
    },
    "symbols": {
-    "V": "variance bound, V=1/4 for Bernoulli",
-    "Delta_lam": "max gap among arms with Delta_i <= lambda"
+    "Delta_small": "max_{i: Delta_i <= lambda} Delta_i"
    },
    "extra_assumptions": [],
    "is_new": true,
    "source": {
     "label": "thm:Bernoulli",
     "number": "Theorem 3",
-    "quote": "If the reward distribution is Bernoulli, we can set the sampling distribution $\\cP$ in Algorithm \\ref{alg:rots} as Beta posterior ... We denote the resulting algorithm as Bernoulli-TS, which enjoys the same regret bounds as in Theorem \\ref{thm:regret_rots}."
+    "quote": "If the reward distribution is Bernoulli, we can set the sampling distribution $\\cP$ ... as Beta posterior ... We denote the resulting algorithm as Bernoulli-TS, which enjoys the same regret bounds as in Theorem \\ref{thm:regret_rots}."
    },
    "confidence": "medium",
-   "notes": "Inherits bound (1) of Theorem 1 with V=1/4."
+   "notes": "V=1/4 for Bernoulli absorbed into constants."
   },
   {
    "id": "r8",
    "setting": "s3",
    "side": "upper",
-   "algorithm": "a3",
+   "algorithm": "a4",
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sum_subopt(Delta_i) + sqrt(V*K*T*log(K))",
-    "expression_latex": "O\\bigg(\\sum_{i=2}^{K}\\Delta_i+\\sqrt{VKT\\log K} \\bigg)",
+    "expression": "sum_subopt(Delta_i) + sqrt(K*T*log(K))",
+    "expression_latex": "O(\\sum_{i=2}^{K}\\Delta_i+\\sqrt{KT\\log K})",
     "regime": null
    },
-   "symbols": {
-    "V": "variance bound, V=1/4 for Bernoulli"
-   },
+   "symbols": {},
    "extra_assumptions": [],
    "is_new": true,
    "source": {
@@ -367,58 +396,56 @@
     "quote": "We denote the resulting algorithm as Bernoulli-TS, which enjoys the same regret bounds as in Theorem \\ref{thm:regret_rots}."
    },
    "confidence": "high",
-   "notes": "Improves O(sqrt(KT log T)) of Agrawal & Goyal 2017."
+   "notes": ""
   },
   {
    "id": "r9",
    "setting": "s3",
    "side": "upper",
-   "algorithm": "a3",
+   "algorithm": "a4",
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "asymptotic",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "limsup",
-    "expression": "sum_subopt(Delta_i/KL_i)",
+    "expression": "sum_subopt(Delta_i/kl_i)",
     "expression_latex": "\\lim_{T\\rightarrow \\infty}\\frac{R_{\\mu}(T)}{\\log T}= \\sum_{i=2}^{K}\\frac{\\Delta_i}{\\kl(\\mu_i,\\mu_1)}",
-    "regime": "T -> infinity, normalized by log T"
+    "regime": "T -> infinity"
    },
-   "symbols": {
-    "KL_i": "Bernoulli kl(mu_i, mu_1)"
-   },
+   "symbols": {},
    "extra_assumptions": [],
    "is_new": false,
    "source": {
     "label": "thm:Bernoulli",
     "number": "Theorem 3",
-    "quote": "We denote the resulting algorithm as Bernoulli-TS, which enjoys the same regret bounds as in Theorem \\ref{thm:regret_rots}."
+    "quote": "enjoys the same regret bounds as in Theorem \\ref{thm:regret_rots}."
    },
    "confidence": "medium",
-   "notes": "Paper states the asymptotic part was proved by agrawal2017near and omits the proof; marked not new."
+   "notes": "Paper says asymptotic optimality of Beta-TS was already proved by Agrawal & Goyal (2017) and omits the proof; marked not new."
   },
   {
    "id": "r10",
    "setting": "s1",
    "side": "upper",
-   "algorithm": "a4",
+   "algorithm": "a2",
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sum_subopt(Delta_i) + sqrt(V*K*T)",
+    "expression": "sum_subopt(Delta_i) + sqrt(v_mom*K*T)",
     "expression_latex": "O\\bigg(\\sum_{i=2}^K\\Delta_i+\\sqrt{VKT}\\bigg)",
     "regime": null
    },
-   "symbols": {
-    "V": "upper bound on reward variance"
-   },
+   "symbols": {},
    "extra_assumptions": [
     "b_n=(n-1)/n"
    ],
@@ -429,16 +456,17 @@
     "quote": "Let $b_n=(n-1)/n$. The regret of $\\algname^+$ satisfies R_{\\mu}(T)=O\\bigg(\\sum_{i=2}^K\\Delta_i+\\sqrt{VKT}\\bigg), \\quad\\text{and} \\quad \\lim_{T\\rightarrow \\infty}\\frac{R_{\\mu}(T)}{\\log T}=\\sum_{i=2}^K\\frac{\\Delta_i}{\\kl(\\mu_i,\\mu_1)}."
    },
    "confidence": "high",
-   "notes": "Minimax optimal; anytime."
+   "notes": ""
   },
   {
    "id": "r11",
    "setting": "s1",
    "side": "upper",
-   "algorithm": "a4",
+   "algorithm": "a2",
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "asymptotic",
    "horizon": "anytime",
    "compute": "polynomial",
@@ -446,11 +474,9 @@
     "notation": "limsup",
     "expression": "sum_subopt(Delta_i/KL_i)",
     "expression_latex": "\\lim_{T\\rightarrow \\infty}\\frac{R_{\\mu}(T)}{\\log T}=\\sum_{i=2}^K\\frac{\\Delta_i}{\\kl(\\mu_i,\\mu_1)}",
-    "regime": "T -> infinity, normalized by log T"
+    "regime": "T -> infinity"
    },
-   "symbols": {
-    "KL_i": "kl(mu_i, mu_1)"
-   },
+   "symbols": {},
    "extra_assumptions": [
     "b_n=(n-1)/n"
    ],
@@ -461,42 +487,54 @@
     "quote": "\\lim_{T\\rightarrow \\infty}\\frac{R_{\\mu}(T)}{\\log T}=\\sum_{i=2}^K\\frac{\\Delta_i}{\\kl(\\mu_i,\\mu_1)}."
    },
    "confidence": "high",
-   "notes": "Asymptotically optimal."
+   "notes": ""
   }
  ],
  "cited_results": [
   {
    "cited_key": "lai1985asymptotically",
    "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_first_author": "Lai",
+   "cited_year": 1985,
+   "cited_arxiv_id": null,
    "algorithm_name": null,
+   "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "K-armed stochastic bandit, distributions continuously parameterized by their means, consistent algorithms",
+   "setting_description": "stochastic K-armed bandit, distributions continuously parameterized by mean, consistent algorithms",
    "bound": {
     "notation": "liminf",
     "expression": "sum_subopt(Delta_i/KL_i)",
     "expression_latex": "\\lim_{T\\rightarrow \\infty} \\frac{R_{\\mu}(T)}{\\log T}\\geq \\sum_{i>1}\\frac{\\mu_1-\\mu_i}{\\kl(\\mu_i,\\mu_1)}",
     "regime": "T -> infinity"
    },
-   "where": "Section 1, Eq. (1)"
+   "where": "Introduction, Eq. (1)"
   },
   {
    "cited_key": "auer2002finite",
    "cited_title": "Finite-time analysis of the multiarmed bandit problem",
+   "cited_first_author": "Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
    "algorithm_name": null,
+   "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "K-armed stochastic bandit, worst-case regret",
+   "setting_description": "K-armed bandit, worst-case regret of any strategy",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(K*T)",
     "expression_latex": "\\Omega(\\sqrt{KT})",
     "regime": null
    },
-   "where": "Section 1"
+   "where": "Introduction"
   },
   {
    "cited_key": "agrawal2017near",
    "cited_title": "Near-optimal regret bounds for thompson sampling",
-   "algorithm_name": "TS with Beta posterior",
+   "cited_first_author": "Agrawal",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson Sampling (Beta priors)",
+   "algorithm_registry_id": "thompson_sampling_beta",
    "side": "upper",
    "setting_description": "Bernoulli K-armed bandit, worst-case regret",
    "bound": {
@@ -505,12 +543,16 @@
     "expression_latex": "O(\\sqrt{KT\\log T})",
     "regime": null
    },
-   "where": "Section 2"
+   "where": "Related Work"
   },
   {
    "cited_key": "agrawal2017near",
    "cited_title": "Near-optimal regret bounds for thompson sampling",
-   "algorithm_name": "Gaussian-TS",
+   "cited_first_author": "Agrawal",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Gaussian Thompson Sampling",
+   "algorithm_registry_id": "thompson_sampling_gaussian",
    "side": "upper",
    "setting_description": "Bernoulli K-armed bandit, worst-case regret",
    "bound": {
@@ -519,12 +561,16 @@
     "expression_latex": "O(\\sqrt{KT\\log K})",
     "regime": null
    },
-   "where": "Section 2"
+   "where": "Related Work"
   },
   {
    "cited_key": "agrawal2017near",
    "cited_title": "Near-optimal regret bounds for thompson sampling",
-   "algorithm_name": "Gaussian-TS",
+   "cited_first_author": "Agrawal",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Gaussian Thompson Sampling",
+   "algorithm_registry_id": "thompson_sampling_gaussian",
    "side": "lower",
    "setting_description": "Bernoulli K-armed bandit, worst-case regret of TS with Gaussian posteriors",
    "bound": {
@@ -533,12 +579,16 @@
     "expression_latex": "\\Omega(\\sqrt{KT\\log K})",
     "regime": null
    },
-   "where": "Section 2"
+   "where": "Related Work"
   },
   {
    "cited_key": "jin2021mots",
    "cited_title": "MOTS: Minimax Optimal Thompson Sampling",
+   "cited_first_author": "Jin",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
    "algorithm_name": "MOTS",
+   "algorithm_registry_id": "mots",
    "side": "upper",
    "setting_description": "sub-Gaussian K-armed bandit, worst-case regret, known horizon",
    "bound": {
@@ -547,77 +597,7 @@
     "expression_latex": "O(\\sqrt{KT})",
     "regime": null
    },
-   "where": "Section 2, Table 1"
-  },
-  {
-   "cited_key": "agrawal2013further",
-   "cited_title": "Further optimal regret bounds for thompson sampling",
-   "algorithm_name": "TS",
-   "side": "upper",
-   "setting_description": "Bernoulli K-armed bandit, worst-case regret (minimax ratio sqrt(log T))",
-   "bound": {
-    "notation": "O",
-    "expression": "sqrt(K*T*log(T))",
-    "expression_latex": "\\sqrt{\\log T} \\text{ minimax ratio}",
-    "regime": null
-   },
-   "where": "Table 1"
-  },
-  {
-   "cited_key": "audibert2009minimax",
-   "cited_title": "Minimax policies for adversarial and stochastic bandits",
-   "algorithm_name": "MOSS",
-   "side": "upper",
-   "setting_description": "[0,1]-reward K-armed bandit, worst-case regret, known horizon",
-   "bound": {
-    "notation": "O",
-    "expression": "sqrt(K*T)",
-    "expression_latex": "O(\\sqrt{KT})",
-    "regime": null
-   },
-   "where": "Table 2"
-  },
-  {
-   "cited_key": "menard2017minimax",
-   "cited_title": "A minimax and asymptotically optimal algorithm for stochastic bandits",
-   "algorithm_name": "KL-UCB++",
-   "side": "upper",
-   "setting_description": "exponential family K-armed bandit, worst-case regret, known horizon",
-   "bound": {
-    "notation": "O",
-    "expression": "sqrt(V*K*T)",
-    "expression_latex": "O(\\sqrt{VKT})",
-    "regime": null
-   },
-   "where": "Table 2"
-  },
-  {
-   "cited_key": "lattimore2016regret",
-   "cited_title": "Regret analysis of the finite-horizon gittins index strategy for multi-armed bandits",
-   "algorithm_name": "OCUCB",
-   "side": "upper",
-   "setting_description": "sub-Gaussian K-armed bandit, worst-case regret (minimax ratio sqrt(log log T))",
-   "bound": {
-    "notation": "O",
-    "expression": "sqrt(K*T*log(log(T)))",
-    "expression_latex": "\\sqrt{\\log\\log T} \\text{ minimax ratio}",
-    "regime": null
-   },
-   "where": "Table 2"
-  },
-  {
-   "cited_key": "bian2021maillard",
-   "cited_title": "Maillard sampling: Boltzmann exploration done optimally",
-   "algorithm_name": "MS",
-   "side": "upper",
-   "setting_description": "sub-Gaussian K-armed bandit, worst-case regret (minimax ratio sqrt(log K))",
-   "bound": {
-    "notation": "O",
-    "expression": "sqrt(K*T*log(K))",
-    "expression_latex": "\\sqrt{\\log K} \\text{ minimax ratio}",
-    "regime": null
-   },
-   "where": "Table 2"
+   "where": "Related Work / Table 1"
   }
  ],
  "_run": {
@@ -626,14 +606,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "c6d1de293f21",
-  "schema_version": "0.2",
-  "ontology_version": "bandits-0.2",
-  "date": "2026-10-19T15:58:34",
+  "prompt_sha": "83b9f19fac84",
+  "schema_version": "0.3",
+  "ontology_version": "bandits-0.3",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-19T16:20:52",
   "source_chars": 139006,
-  "input_tokens": 91789,
-  "output_tokens": 10103,
-  "cost_usd_equiv": 0.8507122,
+  "input_tokens": 103496,
+  "output_tokens": 9458,
+  "cost_usd_equiv": 0.8401536000000001,
   "status": "extracted"
  }
 }

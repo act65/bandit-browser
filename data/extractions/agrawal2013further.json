@@ -1,6 +1,6 @@
 {
- "schema_version": "0.2",
- "ontology_version": "bandits-0.2",
+ "schema_version": "0.3",
+ "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Further Optimal Regret Bounds for Thompson Sampling",
   "arxiv_id": "1209.3353",
@@ -24,18 +24,29 @@
    "context": "none",
    "noise": "bernoulli",
    "learner_knows": [],
-   "extras": [],
-   "parameters": {},
-   "unmapped": [
-    "Paper states model with rewards supported in [0,1]; analysis carried out for Bernoulli rewards, with extension to [0,1] via a cited reduction (AgrawalG12)"
+   "instance_assumptions": [
+    "unique_optimal_arm"
    ],
-   "definition_quote": "We are given a slot machine with $N$ arms; at each time step $t=1, 2, 3, \\ldots $, one of the $N$ arms must be chosen to be played. Each arm $i$, when played, yields a random real-valued reward according to some fixed (unknown) distribution with support in $[0,1]$. ... We provide the details of Thompson Sampling algorithm and our analysis for the Bernoulli bandit problem"
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Analysis done for Bernoulli rewards; paper states it extends to rewards with support [0,1] via the Bernoulli-trial reduction of Agrawal & Goyal 2012"
+   ],
+   "definition_quote": "We are given a slot machine with $N$ arms; ... Each arm $i$, when played, yields a random real-valued reward according to some fixed (unknown) distribution with support in $[0,1]$. ... We provide the details of Thompson Sampling algorithm and our analysis for the Bernoulli bandit problem"
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Thompson Sampling (Beta priors)",
+   "name": "Thompson Sampling for Bernoulli bandits (Beta(1,1) priors)",
+   "registry_id": "thompson_sampling_beta",
    "is_new": false,
    "techniques": [
     "thompson_sampling"
@@ -52,30 +63,28 @@
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "(1+epsilon)*sum_subopt(Delta_i*log(T)/KL_i) + K/epsilon**2",
+    "expression": "(1 + eps_alg)*sum_subopt(Delta_i*log(T)/kl_i) + K/eps_alg**2",
     "expression_latex": "(1+\\epsilon) \\sum_{i=2}^N \\frac{\\ln T}{d(\\mu_i,\\mu_1)} \\Delta_i+ O(\\frac{N}{\\epsilon^2})",
-    "regime": "0 < epsilon <= 1; big-O treats mu_i, Delta_i as constants; only the additive N/epsilon^2 term is inside O"
+    "regime": "0 < epsilon <= 1; O hides functions of mu_i, Delta_i (treated as constants)"
    },
-   "symbols": {
-    "KL_i": "Bernoulli KL divergence d(mu_i, mu_1)",
-    "epsilon": "free parameter of the analysis (not accuracy)"
-   },
+   "symbols": {},
    "extra_assumptions": [
-    "unique optimal arm (claimed w.l.o.g.)"
+    "unique optimal arm (stated WLOG)"
    ],
    "is_new": true,
    "source": {
     "label": "th:problem-dependent",
     "number": "Theorem 1",
-    "quote": "For the $N$-armed stochastic bandit problem, Thompson Sampling algorithm has expected regret $$\\Ex[{\\cal R}(T)] \\leq (1+\\epsilon) \\sum_{i=2}^N \\frac{\\ln T}{d(\\mu_i,\\mu_1)} \\Delta_i+ O(\\frac{N}{\\epsilon^2})  $$ in time $T$, where $d(\\mu_i,\\mu_1)=...$. The big-Oh notation in above assumes $\\mu_i, \\Delta_i, i=1, \\ldots, N$ to be constants."
+    "quote": "For the $N$-armed stochastic bandit problem, Thompson Sampling algorithm has expected regret $$\\Ex[{\\cal R}(T)] \\leq (1+\\epsilon) \\sum_{i=2}^N \\frac{\\ln T}{d(\\mu_i,\\mu_1)} \\Delta_i+ O(\\frac{N}{\\epsilon^2})$$ in time $T$, where $d(\\mu_i,\\mu_1)=...$. The big-Oh notation in above assumes $\\mu_i, \\Delta_i, i=1, \\ldots, N$ to be constants."
    },
-   "confidence": "medium",
-   "notes": "N = K. The leading term has explicit constant (1+epsilon); only the additive term is O(N/epsilon^2) with hidden instance-dependent constants. Regret defined via expected pull counts (pseudo-regret)."
+   "confidence": "high",
+   "notes": "Leading term is exact with constant (1+eps); only the additive N/eps^2 term is big-O, recorded with notation O. Paper's epsilon is a free analysis parameter (eps_alg). Expected regret defined via expected pull counts, i.e. pseudo-regret."
   },
   {
    "id": "r2",
@@ -85,6 +94,7 @@
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
@@ -103,19 +113,23 @@
     "quote": "For the $N$-armed stochastic bandit problem, Thompson Sampling algorithm has expected regret $$\\Ex[{\\cal R}(T)] \\leq O(\\sqrt{NT\\ln T})$$ in time $T$, where the big-Oh notation hides only the absolute constants."
    },
    "confidence": "high",
-   "notes": "N = K. Algorithm does not use T."
+   "notes": "Algorithm does not use T, so anytime."
   }
  ],
  "cited_results": [
   {
    "cited_key": "LaiR",
    "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_first_author": "T. L. Lai",
+   "cited_year": 1985,
+   "cited_arxiv_id": null,
    "algorithm_name": null,
+   "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic N-armed bandit, any (consistent) algorithm, problem-dependent asymptotic lower bound",
+   "setting_description": "Stochastic Bernoulli N-armed bandit, consistent algorithms",
    "bound": {
-    "notation": "Omega",
-    "expression": "sum_subopt(Delta_i/KL_i)*log(T)",
+    "notation": "liminf",
+    "expression": "sum_subopt(Delta_i/kl_i)*log(T)",
     "expression_latex": "\\left[\\sum_{i=2}^{N} \\frac{\\Delta_i}{d(\\mu_i, \\mu_1)} + o(1) \\right] \\ln{T}",
     "regime": "asymptotic"
    },
@@ -124,12 +138,16 @@
   {
    "cited_key": "Aueretal",
    "cited_title": "Finite-time analysis of the multiarmed bandit problem",
+   "cited_first_author": "P. Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
    "algorithm_name": "UCB1",
+   "algorithm_registry_id": null,
    "side": "upper",
    "setting_description": "Stochastic N-armed bandit, rewards in [0,1]",
    "bound": {
     "notation": "exact",
-    "expression": "8*sum_subopt(1/Delta_i)*log(T) + (1+pi**2/3)*sum_subopt(Delta_i)",
+    "expression": "8*sum_subopt(1/Delta_i)*log(T) + (1 + pi**2/3)*sum_subopt(Delta_i)",
     "expression_latex": "\\left[8 \\sum_{i=2}^N \\frac{1}{\\Delta_i} \\right] \\ln{T} + (1+\\pi^2/3)\\left(\\sum_{i=2}^{N} \\Delta_i\\right)",
     "regime": null
    },
@@ -138,7 +156,11 @@
   {
    "cited_key": "bubeck:regret",
    "cited_title": "Regret Analysis of Stochastic and Nonstochastic Multi-armed Bandit Problems",
+   "cited_first_author": "S. Bubeck",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
    "algorithm_name": null,
+   "algorithm_registry_id": null,
    "side": "lower",
    "setting_description": "Stochastic N-armed bandit, problem-independent lower bound",
    "bound": {
@@ -152,9 +174,13 @@
   {
    "cited_key": "bubeck:regret",
    "cited_title": "Regret Analysis of Stochastic and Nonstochastic Multi-armed Bandit Problems",
+   "cited_first_author": "S. Bubeck",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
    "algorithm_name": "UCB1",
+   "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic N-armed bandit, problem-independent bound for UCB1",
+   "setting_description": "Stochastic N-armed bandit, problem-independent bound",
    "bound": {
     "notation": "O",
     "expression": "sqrt(K*T*log(T))",
@@ -166,9 +192,13 @@
   {
    "cited_key": "AudibertB09",
    "cited_title": "Minimax Policies for Adversarial and Stochastic Bandits",
+   "cited_first_author": "J.-Y. Audibert",
+   "cited_year": 2009,
+   "cited_arxiv_id": null,
    "algorithm_name": "MOSS",
+   "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic N-armed bandit, problem-independent",
+   "setting_description": "Stochastic N-armed bandit, problem-independent bound",
    "bound": {
     "notation": "O",
     "expression": "sqrt(K*T)",
@@ -180,7 +210,11 @@
   {
    "cited_key": "AgrawalG12",
    "cited_title": "Analysis of Thompson Sampling for the Multi-armed Bandit Problem",
+   "cited_first_author": "S. Agrawal",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
    "algorithm_name": "Thompson Sampling",
+   "algorithm_registry_id": "thompson_sampling_beta",
    "side": "upper",
    "setting_description": "Stochastic N-armed bandit, problem-independent bound implied by earlier analysis",
    "bound": {
@@ -198,14 +232,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "c6d1de293f21",
-  "schema_version": "0.2",
-  "ontology_version": "bandits-0.2",
-  "date": "2026-10-19T15:50:51",
+  "prompt_sha": "83b9f19fac84",
+  "schema_version": "0.3",
+  "ontology_version": "bandits-0.3",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-19T16:16:08",
   "source_chars": 49735,
-  "input_tokens": 40246,
-  "output_tokens": 3690,
-  "cost_usd_equiv": 0.3101082,
+  "input_tokens": 51953,
+  "output_tokens": 3833,
+  "cost_usd_equiv": 0.3153096,
   "status": "extracted"
  }
 }

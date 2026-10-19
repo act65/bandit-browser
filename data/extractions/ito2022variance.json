@@ -1,6 +1,6 @@
 {
- "schema_version": "0.2",
- "ontology_version": "bandits-0.2",
+ "schema_version": "0.3",
+ "ontology_version": "bandits-0.3",
  "paper": {
   "title": "Adversarially Robust Multi-Armed Bandit Algorithm with Variance-Dependent Regret Bounds",
   "arxiv_id": "2206.06810",
@@ -25,16 +25,24 @@
    "context": "none",
    "noise": "bounded_01",
    "learner_knows": [
-    "T",
-    "K"
+    "T"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
    ],
    "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [
-    "loss minimization with loss vectors in [0,1]^K drawn i.i.d. from a joint distribution D (arms may be correlated)",
-    "T >= max{55, K} assumed"
+    "losses (not rewards); T >= max{55, K}"
    ],
-   "definition_quote": "In a stochastic setting, $\\ell(t) $ follows an unknown distribution $\\cD$ over $[0, 1]^K$, i.i.d.~for $t = 1, 2, \\ldots, T$. ... we assume that $T\\ge \\max\\{55,K\\}$ and is known to the player."
+   "definition_quote": "In a stochastic setting, $\\ell(t) $ follows an unknown distribution $\\cD$ over $[0, 1]^K$, i.i.d.~for $t = 1, 2, \\ldots, T$."
   },
   {
    "id": "s2",
@@ -46,18 +54,24 @@
    "function_class": [],
    "domain": "not_applicable",
    "context": "none",
-   "noise": "not_applicable",
+   "noise": "bounded_01",
    "learner_knows": [
-    "T",
-    "K"
+    "T"
    ],
+   "instance_assumptions": [],
    "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [
-    "losses in [0,1]^K",
-    "T >= max{55, K} assumed"
+    "T >= max{55, K}"
    ],
-   "definition_quote": "In the adversarial setting, we do not assume any generative models for the loss vector $\\ell(t)$, but it can be chosen in an adversarial manner. More precisely, in each round, $\\ell(t)$ may depend on the history of loss vectors and chosen arms $\\{ (\\ell(s), I(s)) \\}_{s=1}^{t-1}$."
+   "definition_quote": "In the adversarial setting, we do not assume any generative models for the loss vector $\\ell(t)$, but it can be chosen in an adversarial manner. More precisely, in each round, $\\ell(t)$ may depend on the history of loss vectors and chosen arms"
   },
   {
    "id": "s3",
@@ -71,42 +85,49 @@
    "context": "none",
    "noise": "bounded_01",
    "learner_knows": [
-    "T",
-    "K"
+    "T"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
    ],
    "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable"
+   },
    "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
    "unmapped": [
-    "corruption level defined as C = E[sum_t ||l'(t) - l(t)||_inf]; regret measured w.r.t. corrupted losses",
-    "T >= max{55, K} assumed"
+    "corruption level C = E[sum_t ||l'(t)-l(t)||_inf]; regret measured on corrupted losses"
    ],
-   "definition_quote": "a \\textit{temporary loss} $\\ell'(t) \\in [0, 1]^K$ is generated from an unknown distribution $\\cD$, and the adversary then corrupts $\\ell'(t)$ to determine $\\ell(t)$. We define the \\textit{corruption level} $C \\geq 0$ by $C = \\E \\left[ \\sum_{t=1}^T \\left\\|  \\ell'(t) - \\ell(t)  \\right\\|_{\\infty} \\right]$."
+   "definition_quote": "a \\textit{temporary loss} $\\ell'(t) \\in [0, 1]^K$ is generated from an unknown distribution $\\cD$, and the adversary then corrupts $\\ell'(t)$ to determine $\\ell(t)$. We define the \\textit{corruption level} $C \\geq 0$ by $C = \\E [ \\sum_{t=1}^T \\| \\ell'(t) - \\ell(t) \\|_{\\infty} ]$."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Proposed OFTRL algorithm (log-barrier + complement-entropy regularizer, prediction-error adaptive learning rates)",
+   "name": "Proposed OFTRL algorithm (log-barrier + complement entropy regularizer, prediction-error adaptive learning rates)",
+   "registry_id": "oftrl_logbarrier_complement_entropy",
    "is_new": true,
    "techniques": [
     "ftrl_or_mirror_descent"
    ],
    "requires_knowledge_of": [
-    "T",
-    "epsilon (input parameter in (0,1/2])"
+    "T"
    ]
   },
   {
    "id": "a2",
-   "name": "Proposed algorithm with modified optimistic prediction (path-length variant, Appendix C)",
+   "name": "Proposed algorithm with modified optimistic prediction (path-length variant)",
+   "registry_id": "oftrl_path_length",
    "is_new": true,
    "techniques": [
     "ftrl_or_mirror_descent"
    ],
    "requires_knowledge_of": [
-    "T",
-    "eta (input parameter in (0,1/2))",
-    "epsilon"
+    "T"
    ]
   }
  ],
@@ -119,31 +140,32 @@
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "limsup",
-    "expression": "2*(1+eps_alg) + sum_subopt(Max(4*sigma_i**2/Delta_i + c*log(1 + sigma_i**2/Delta_i), 2*(1+eps_alg)))",
-    "expression_latex": "R(T) \\leq \\left( 2 (1+\\epsilon) + \\sum_{i \\in [K] \\setminus \\{ i^* \\}} \\max\\left\\{4\\frac{\\sigma_i^2}{\\Delta_i} + c \\log \\left( 1 + \\frac{\\sigma_i^2}{\\Delta_i} \\right), 2(1+\\epsilon)\\right\\} \\right) \\log T + o (\\log T)",
-    "regime": "bound on R(T)/log T as T -> infinity (paper states R(T) <= (...) log T + o(log T))"
+    "expression": "2*(1 + eps_alg) + sum_subopt(Max(4*sigma_i**2/Delta_i + c_alg*log(1 + sigma_i**2/Delta_i), 2*(1 + eps_alg)))",
+    "expression_latex": "R(T) \\leq ( 2(1+\\epsilon) + \\sum_{i \\neq i^*} \\max\\{4\\frac{\\sigma_i^2}{\\Delta_i} + c \\log (1 + \\frac{\\sigma_i^2}{\\Delta_i}), 2(1+\\epsilon)\\} ) \\log T + o (\\log T)",
+    "regime": "bound on limsup_{T->inf} R(T)/log T (theorem states leading term times log T plus o(log T))"
    },
    "symbols": {
-    "sigma_i": "standard deviation of loss of arm i (sigma_i^2 variance)",
-    "eps_alg": "algorithm input parameter epsilon in (0,1/2]",
-    "c": "constant c = O((log(1/eps_alg))^2)"
+    "c_alg": "constant c = O((log(1/epsilon))^2) depending on the input parameter",
+    "eps_alg": "input parameter epsilon in (0,1/2]"
    },
    "extra_assumptions": [
-    "unique optimal arm"
+    "unique optimal arm",
+    "T >= max{55,K} known"
    ],
    "is_new": true,
    "source": {
     "label": "thm:main",
     "number": "Theorem 1",
-    "quote": "In any stochastic setting with a unique optimal arm, the proposed algorithm achieves R(T) \\leq ( 2 (1+\\epsilon) + \\sum_{i \\in [K] \\setminus \\{ i^* \\}} \\max\\{4\\frac{\\sigma_i^2}{\\Delta_i} + c \\log ( 1 + \\frac{\\sigma_i^2}{\\Delta_i} ), 2(1+\\epsilon)\\} ) \\log T + o (\\log T), where ... \\epsilon \\in (0, 1/2] is an input parameter for the algorithm, and c = O((\\log \\frac{1}{\\epsilon})^2)."
+    "quote": "In any stochastic setting with a unique optimal arm, the proposed algorithm achieves R(T) \\leq ( 2 (1+\\epsilon) + \\sum_{i \\in [K] \\setminus \\{ i^* \\}} \\max\\{4\\frac{\\sigma_i^2}{\\Delta_i} + c \\log ( 1 + \\frac{\\sigma_i^2}{\\Delta_i} ), 2(1+\\epsilon)\\} ) \\log T + o (\\log T), where ... $c = O((\\log \\frac{1}{\\epsilon})^2)$."
    },
-   "confidence": "medium",
-   "notes": "Recorded as limsup of R(T)/log T since theorem has o(log T) remainder. Regret R(T) = max_i E[...], which in stochastic setting equals sum Delta_i P_i (pseudo-regret). For eps=0.2 the paper gives c<=4.2 and 2(1+eps)=2.4 numerically."
+   "confidence": "high",
+   "notes": "sigma_i^2 is the loss variance of arm i. Encoded as coefficient of log T (limsup of R/log T), equivalent to Proposition prop:bound-sto bound."
   },
   {
    "id": "r2",
@@ -153,31 +175,29 @@
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
-   "probability": "asymptotic",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "limsup",
-    "expression": "sum_subopt(h_eps(sigma_i**2/Delta_i)) + 2*(1+eps_alg)",
-    "expression_latex": "\\limsup_{T \\to \\infty} \\frac{R(T)}{\\log T} \\leq \\sum_{i \\in [K] \\setminus \\{ i^* \\}} h \\left( \\frac{\\sigma_i^2}{\\Delta_i} \\right) + 2 \\bet",
-    "regime": "T -> infinity"
+    "expression": "sum_subopt(Max(4*sigma_i**2/Delta_i + 4.2*log(1 + sigma_i**2/Delta_i), 2.4)) + 2.4",
+    "expression_latex": "\\sum_{i\\neq i^*} \\max\\{4 \\frac{\\sigma_i^2}{\\Delta_i} + 4.2 \\log( 1 + \\frac{\\sigma_i^2}{\\Delta_i}),\\,2.4\\}+2.4 \\quad \\mbox{if } \\epsilon := 0.2",
+    "regime": "epsilon = 0.2; bound on limsup R(T)/log T"
    },
-   "symbols": {
-    "h_eps": "explicit piecewise function h(z) defined in eq. (defhh): 2(1+eps) for small z, else 2z(1+sqrt(1+2delta/z)) - 2delta + 4delta(log(z/(1+eps)) + log(1+sqrt(1+2delta/z))) + (1+eps)^2/z - 2(1+eps)",
-    "sigma_i": "standard deviation of loss of arm i",
-    "eps_alg": "algorithm parameter epsilon"
-   },
+   "symbols": {},
    "extra_assumptions": [
-    "unique optimal arm"
+    "unique optimal arm",
+    "epsilon = 0.2"
    ],
    "is_new": true,
    "source": {
-    "label": "prop:bound-sto",
-    "number": "Proposition 2",
-    "quote": "In any stochastic setting with a unique optimal arm, the proposed algorithm achieves \\limsup_{T \\to \\infty} \\frac{R(T)}{\\log T} \\leq \\sum_{i \\in [K] \\setminus \\{ i^* \\}} h ( \\frac{\\sigma_i^2}{\\Delta_i} ) + 2 \\bet"
+    "label": "table:regretbound-sto",
+    "number": "Table 3 / Appendix (after Proposition prop:bound-sto)",
+    "quote": "in the case of $\\epsilon = 0.2$, we can confirm numerically that $h(z) \\leq \\max\\{ 4 z + 4.2 \\log (1+z), 2.4 \\}$, which leads to the regret bound described in Table~\\ref{table:regretbound-sto}."
    },
    "confidence": "medium",
-   "notes": "Refined form of Theorem 1 stochastic bound; h is a complicated explicit function, abbreviated as symbol."
+   "notes": "Numerically verified specialization, not a formal theorem statement."
   },
   {
    "id": "r3",
@@ -186,26 +206,31 @@
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "expected_regret",
-   "dependence": "worst_case",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(K*T*log(T)) + K*log(T)",
-    "expression_latex": "R(T) \\leq \\sqrt{K \\log T \\cdot T} + O(K \\log T)",
+    "expression": "sqrt(K*log(T)*Min(T, 4*L_star, 4*(T - L_star), 4*Q_inf)) + K*log(T)",
+    "expression_latex": "R(T) \\leq \\sqrt{K \\log T \\min\\{ T, 4L^*, 4 (T-L^*), 4 Q_{\\infty} \\}} + O(K \\log T)",
     "regime": null
    },
-   "symbols": {},
-   "extra_assumptions": [],
+   "symbols": {
+    "Q_inf": "min_{lbar} E[sum_t ||l(t) - lbar||_inf^2]"
+   },
+   "extra_assumptions": [
+    "T >= max{55,K} known"
+   ],
    "is_new": true,
    "source": {
     "label": "thm:main",
     "number": "Theorem 1",
-    "quote": "Further, in adversarial settings, the regret for the proposed algorithm satisfies R(T) \\leq \\sqrt{K \\log T \\min\\left\\{ T, 4L^*,  4 (T-L^*),  4 Q_{\\infty}  \\right\\}} + O(K \\log T)"
+    "quote": "in adversarial settings, the regret for the proposed algorithm satisfies R(T) \\leq \\sqrt{K \\log T \\min\\{ T, 4L^*,  4 (T-L^*),  4 Q_{\\infty}  \\}} + O(K \\log T)"
    },
    "confidence": "high",
-   "notes": "Worst-case instance of the min (taking T). Leading constant is exactly 1 on sqrt(K T log T); only the additive K log T term is in O."
+   "notes": "Leading term has exact constant 1; O applies to K log T term only. L* = min_i E[sum_t l_i(t)]."
   },
   {
    "id": "r4",
@@ -214,29 +239,29 @@
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "expected_regret",
-   "dependence": "instance_dependent",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(K*log(T)*Min(T, 4*L_star, 4*(T - L_star), 4*Q_inf)) + K*log(T)",
-    "expression_latex": "R(T) \\leq \\sqrt{K \\log T \\min\\left\\{ T, 4L^*,  4 (T-L^*),  4 Q_{\\infty}  \\right\\}} + O(K \\log T)",
+    "expression": "sqrt(K*T*log(T)) + K*log(T)",
+    "expression_latex": "R(T) \\leq \\sqrt{K T \\log T} + O(K \\log T)",
     "regime": null
    },
-   "symbols": {
-    "L_star": "L^* = min_i E[sum_t ell_i(t)], cumulative loss of best arm",
-    "Q_inf": "Q_infty = min_{bar ell} E[sum_t ||ell(t) - bar ell||_inf^2], loss variation"
-   },
-   "extra_assumptions": [],
+   "symbols": {},
+   "extra_assumptions": [
+    "T >= max{55,K} known"
+   ],
    "is_new": true,
    "source": {
     "label": "thm:main",
     "number": "Theorem 1",
-    "quote": "R(T) \\leq \\sqrt{K \\log T \\min\\left\\{ T, 4L^*,  4 (T-L^*),  4 Q_{\\infty}  \\right\\}} + O(K \\log T) for L^* = \\min_{i^* \\in [K] }\\E [ \\sum_{t=1}^T \\ell_{i^*} (t) ] and Q_{\\infty} = \\min_{\\bar{\\ell} \\in [0,1]^K} \\E [ \\sum_{t=1}^T \\|\\ell_i(t) - \\bar{\\ell}\\|_{\\infty}^2 ]."
+    "quote": "R(T) \\leq \\sqrt{K \\log T \\min\\{ T, 4L^*,  4 (T-L^*),  4 Q_{\\infty}  \\}} + O(K \\log T)"
    },
    "confidence": "high",
-   "notes": "Data-dependent (first-order and second-order) bound; leading term has explicit constant, additive term O(K log T)."
+   "notes": "Worst-case specialization (min <= T) of the adversarial bound."
   },
   {
    "id": "r5",
@@ -246,6 +271,7 @@
    "algorithm_class": null,
    "quantity": "expected_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "known",
    "compute": "polynomial",
@@ -256,28 +282,97 @@
     "regime": null
    },
    "symbols": {
-    "R_sto": "RHS of the stochastic bound (2(1+eps) + sum_subopt max{4 sigma_i^2/Delta_i + c log(1+sigma_i^2/Delta_i), 2(1+eps)}) log T + o(log T)"
+    "R_sto": "RHS of stochastic bound: (2(1+eps_alg) + sum_subopt(Max(4*sigma_i**2/Delta_i + c_alg*log(1+sigma_i**2/Delta_i), 2(1+eps_alg))))*log(T) + o(log T)"
+   },
+   "extra_assumptions": [
+    "unique optimal arm",
+    "T >= max{55,K} known"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:bound-corrupted",
+    "number": "Theorem 1 / Proposition 3",
+    "quote": "In any corrupted stochastic setting with a unique optimal arm, the proposed algorithm achieves R(T) \\leq \\mathcal{R} + O(\\sqrt{C \\mathcal{R}}), where $\\mathcal{R}$ is the RHS of \\eqref{eq:thm1-bound-sto} and $C$ is the corruption level"
+   },
+   "confidence": "medium",
+   "notes": "O applies to sqrt(C R) term; leading R has constant 1."
+  },
+  {
+   "id": "r6",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K/(1 - 2*eta)*(Min(T, 4*L_star, 4*(T - L_star), 4*Q_inf, 8*V_1/eta) + K/eta)*log(T)) + K*log(T)",
+    "expression_latex": "R(T) \\leq \\sqrt{ \\frac{K}{1-2\\eta} ( \\min\\{ T, 4 L^*, 4 (T - L^*), 4 Q_{\\infty}, \\frac{8}{\\eta} V_1 \\} + \\frac{K}{\\eta} ) \\log T } + O(K \\log T)",
+    "regime": "eta in (0,1/2)"
+   },
+   "symbols": {
+    "Q_inf": "min_{lbar} E[sum_t ||l(t) - lbar||_inf^2]",
+    "V_1": "path length E[sum_t ||l(t) - l(t+1)||_1]"
+   },
+   "extra_assumptions": [
+    "T >= max{55,K} known"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "eq:bound-pathlength",
+    "number": "Remark 1",
+    "quote": "by modifying the algorithm in the way described in Appendix~\\ref{sec:path-length}, we can obtain a regret bound of R(T) \\leq \\sqrt{ \\frac{K}{1-2\\eta} ( \\min\\{ T, 4 L^*, 4 (T - L^*), 4 Q_{\\infty}, \\frac{8}{\\eta} V_1 \\} + \\frac{K}{\\eta} ) \\log T } + O(K \\log T) in adversarial settings, where $\\eta \\in (0, 1 / 2 )$ is an input parameter."
+   },
+   "confidence": "medium",
+   "notes": "Stated in a Remark, derived in Appendix C."
+  },
+  {
+   "id": "r7",
+   "setting": "s3",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "R_sto/(1 - 2*eta) + sqrt(C*R_sto/(1 - 2*eta)) + K*sqrt(log(T)/(eta*(1 - 2*eta)))",
+    "expression_latex": "R(T) \\leq \\frac{1}{1-2\\eta} \\mathcal{R} + O ( \\sqrt{ \\frac{1}{1-2\\eta} C \\mathcal{R} } + K \\sqrt{\\frac{ \\log T }{\\eta (1-2\\eta)}} )",
+    "regime": "eta in (0,1/2)"
+   },
+   "symbols": {
+    "R_sto": "RHS of the stochastic bound in Theorem 1"
    },
    "extra_assumptions": [
     "unique optimal arm"
    ],
    "is_new": true,
    "source": {
-    "label": "prop:bound-corrupted",
-    "number": "Theorem 1 / Proposition 3",
-    "quote": "In any corrupted stochastic setting with a unique optimal arm, the proposed algorithm achieves R(T) \\leq \\mathcal{R} + O ( \\sqrt{C \\mathcal{R}} ), where \\mathcal{R} is the RHS of \\eqref{eq:thm1-bound-sto} and C is the corruption level defined in Section~\\ref{sec:setting}."
+    "label": null,
+    "number": "Remark 1",
+    "quote": "In corrupted stochastic settings, this modified algoirthm achieves a regret bound of R(T) \\leq  \\frac{1}{1-2\\eta} \\mathcal{R} + O ( \\sqrt{ \\frac{1}{1-2\\eta} C \\mathcal{R} } + K \\sqrt{\\frac{ \\log T }{\\eta (1-2\\eta)}} )"
    },
    "confidence": "medium",
-   "notes": "Only the corruption term is in O; R_sto itself has explicit leading constant. Regret defined w.r.t. corrupted losses."
+   "notes": "Remark statement; proof sketched only for C=0 case in Appendix C."
   },
   {
-   "id": "r6",
+   "id": "r8",
    "setting": "s1",
    "side": "lower",
    "algorithm": null,
    "algorithm_class": "consistent",
    "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
    "probability": "asymptotic",
    "horizon": "not_applicable",
    "compute": "not_stated",
@@ -285,16 +380,11 @@
     "notation": "liminf",
     "expression": "sum_subopt(Delta_i/(mu_i**2/(sigma_i**2 + mu_i**2)*log(mu_i/mu_star) + sigma_i**2/(sigma_i**2 + mu_i**2)*log(sigma_i**2/(sigma_i**2 + mu_i*Delta_i))))",
     "expression_latex": "\\liminf_{T\\to\\infty}\\frac{R(T)}{\\log T} \\ge \\sum_{i\\neq i^*} \\frac{\\Delta_i}{ \\frac{\\mu_i^2}{\\sigma_i^2+\\mu_i^2}\\log \\frac{\\mu_i}{\\mu^*} +\\frac{\\sigma_i^2}{\\sigma_i^2+\\mu_i^2}\\log \\frac{\\sigma_i^2}{\\sigma_i^2+\\mu_i\\Delta_i}}",
-    "regime": "T -> infinity; for any 0 <= mu* < mu_i <= 1 and sigma_i^2 <= mu_i(1-mu_i), there exists a distribution"
+    "regime": "liminf of R(T)/log T; 0 <= mu* < mu_i <= 1, sigma_i^2 <= mu_i(1-mu_i)"
    },
-   "symbols": {
-    "mu_i": "expected loss of arm i",
-    "sigma_i": "standard deviation of loss of arm i",
-    "mu_star": "expected loss of optimal arm (loss minimization)"
-   },
+   "symbols": {},
    "extra_assumptions": [
-    "losses in [0,1]",
-    "existence of a hard distribution with given means and variances"
+    "exists a loss distribution on [0,1]^K with given means and variances (worst-case instance for given moments)"
    ],
    "is_new": true,
    "source": {
@@ -303,164 +393,72 @@
     "quote": "For any $0\\le \\mu^*<\\mu_i\\le 1$ and $\\sigma_i^2 \\le \\mu_i(1-\\mu_i)$, there exists a loss distribution $\\mathcal{D}$ over $[0,1]^K$ such that any consistent algorithm suffers \\liminf_{T\\to\\infty}\\frac{R(T)}{\\log T} \\ge \\sum_{i\\neq i^*} \\frac{\\Delta_i}{...} and there exists an algorithm achieving this bound with equality for all $\\mathcal{D}$."
    },
    "confidence": "medium",
-   "notes": "Simplification of Honda & Takemura (2012) Theorem 4; the paper derives the closed form. Approximately sum (2 sigma_i^2/Delta_i + 0.5 log(1+sigma_i^2/Delta_i) + 1) within 6% relative error after sup over mu."
-  },
-  {
-   "id": "r7",
-   "setting": "s2",
-   "side": "upper",
-   "algorithm": "a2",
-   "algorithm_class": null,
-   "quantity": "expected_regret",
-   "dependence": "instance_dependent",
-   "probability": "expectation",
-   "horizon": "known",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "O",
-    "expression": "sqrt(K/(1 - 2*eta)*(Min(T, 4*L_star, 4*(T - L_star), 4*Q_inf, 8*V_1/eta) + K/eta)*log(T)) + K*log(T)",
-    "expression_latex": "R(T) \\leq \\sqrt{ \\frac{K}{1-2\\eta} \\left( \\min\\left\\{ T, 4 L^*, 4 (T - L^*), 4 Q_{\\infty}, \\frac{8}{\\eta} V_1 \\right\\} + \\frac{K}{\\eta} \\right) \\log T } + O(K \\log T)",
-    "regime": "eta in (0, 1/2)"
-   },
-   "symbols": {
-    "eta": "input parameter of modified algorithm in (0,1/2)",
-    "L_star": "cumulative loss of best arm",
-    "Q_inf": "loss variation Q_infty",
-    "V_1": "path length E[sum_t ||ell(t)-ell(t+1)||_1]"
-   },
-   "extra_assumptions": [],
-   "is_new": true,
-   "source": {
-    "label": null,
-    "number": "Remark 1",
-    "quote": "by modifying the algorithm in the way described in Appendix~\\ref{sec:path-length}, we can obtain a regret bound of R(T) \\leq \\sqrt{ \\frac{K}{1-2\\eta} ( \\min\\{ T, 4 L^*, 4 (T - L^*), 4 Q_{\\infty}, \\frac{8}{\\eta} V_1 \\} + \\frac{K}{\\eta} ) \\log T } + O(K \\log T) in adversarial settings, where $\\eta \\in (0, 1 / 2 )$ is an input parameter."
-   },
-   "confidence": "medium",
-   "notes": "Stated in a remark with proof sketch in Appendix C."
-  },
-  {
-   "id": "r8",
-   "setting": "s3",
-   "side": "upper",
-   "algorithm": "a2",
-   "algorithm_class": null,
-   "quantity": "expected_regret",
-   "dependence": "instance_dependent",
-   "probability": "expectation",
-   "horizon": "known",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "O",
-    "expression": "R_sto/(1 - 2*eta) + sqrt(C*R_sto/(1 - 2*eta)) + K*sqrt(log(T)/(eta*(1 - 2*eta)))",
-    "expression_latex": "R(T) \\leq  \\frac{1}{1-2\\eta} \\mathcal{R} + O \\left( \\sqrt{ \\frac{1}{1-2\\eta} C \\mathcal{R} } + K \\sqrt{\\frac{ \\log T }{\\eta (1-2\\eta)}} \\right)",
-    "regime": "eta in (0, 1/2)"
-   },
-   "symbols": {
-    "eta": "input parameter in (0,1/2)",
-    "R_sto": "RHS of the stochastic bound of Theorem 1"
-   },
-   "extra_assumptions": [
-    "unique optimal arm"
-   ],
-   "is_new": true,
-   "source": {
-    "label": null,
-    "number": "Remark 1",
-    "quote": "In corrupted stochastic settings, this modified algoirthm achieves a regret bound of R(T) \\leq  \\frac{1}{1-2\\eta} \\mathcal{R} + O ( \\sqrt{ \\frac{1}{1-2\\eta} C \\mathcal{R} } + K \\sqrt{\\frac{ \\log T }{\\eta (1-2\\eta)}} ), where \\mathcal{R} is the RHS of \\eqref{eq:thm1-bound-sto}."
-   },
-   "confidence": "medium",
-   "notes": "Leading term R_sto/(1-2eta) has explicit constant; remaining terms in O."
+   "notes": "Simplification of Honda & Takemura (2012) Theorem 4; means are losses (mu_star = optimal mean loss). Achievability part not recorded separately."
   }
  ],
  "cited_results": [
   {
    "cited_key": "audibert2007tuning",
    "cited_title": "Tuning bandit algorithms in stochastic environments",
+   "cited_first_author": "J.-Y. Audibert",
+   "cited_year": 2007,
+   "cited_arxiv_id": null,
    "algorithm_name": "UCB-V",
+   "algorithm_registry_id": "ucb_v",
    "side": "upper",
-   "setting_description": "stochastic K-armed bandit, losses in [0,1], variance-dependent",
+   "setting_description": "stochastic K-armed bandit, losses in [0,1]",
    "bound": {
     "notation": "exact",
     "expression": "10*sum_subopt((sigma_i**2/Delta_i + 2)*log(T))",
     "expression_latex": "R(T) \\leq 10 \\sum_{i: \\Delta_i > 0} (\\frac{\\sigma_i^2}{\\Delta_i} + 2) \\log T",
     "regime": null
    },
-   "where": "Section 1 / Table 3"
+   "where": "Introduction"
   },
   {
-   "cited_key": "zimmert2021tsallis",
-   "cited_title": "Tsallis-inf: An optimal algorithm for stochastic and adversarial bandits",
-   "algorithm_name": "Tsallis-INF",
-   "side": "upper",
-   "setting_description": "stochastic K-armed bandit (BOBW)",
-   "bound": {
-    "notation": "O",
-    "expression": "sum_subopt(log(T)/Delta_i)",
-    "expression_latex": "O(\\sum_{i: \\Delta_i > 0} \\frac{\\log T}{\\Delta_i} )",
-    "regime": null
-   },
-   "where": "Section 1"
-  },
-  {
-   "cited_key": "zimmert2021tsallis",
-   "cited_title": "Tsallis-inf: An optimal algorithm for stochastic and adversarial bandits",
-   "algorithm_name": "Tsallis-INF",
-   "side": "upper",
-   "setting_description": "adversarial K-armed bandit (BOBW)",
-   "bound": {
-    "notation": "O",
-    "expression": "sqrt(K*T)",
-    "expression_latex": "O(\\sqrt{KT})",
-    "regime": null
-   },
-   "where": "Section 1"
-  },
-  {
-   "cited_key": "zimmert2021tsallis",
-   "cited_title": "Tsallis-inf: An optimal algorithm for stochastic and adversarial bandits",
-   "algorithm_name": "Tsallis-INF",
-   "side": "upper",
-   "setting_description": "stochastic K-armed bandit with adversarial corruption C",
-   "bound": {
-    "notation": "O",
-    "expression": "sum_subopt(log(T)/Delta_i) + sqrt(C*sum_subopt(log(T)/Delta_i))",
-    "expression_latex": "O( \\sum_{i: \\Delta_i > 0} \\frac{\\log T}{\\Delta_i} + \\sqrt{\\sum_{i: \\Delta_i > 0} \\frac{C \\log T}{\\Delta_i}} )",
-    "regime": null
-   },
-   "where": "Section 1"
-  },
-  {
-   "cited_key": "zimmert2021tsallis",
-   "cited_title": "Tsallis-inf: An optimal algorithm for stochastic and adversarial bandits",
+   "cited_key": "zimmert2019connections",
+   "cited_title": "Connections between mirror descent, thompson sampling and the information ratio",
+   "cited_first_author": "J. Zimmert",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
    "algorithm_name": "Tsallis-INF (IW)",
+   "algorithm_registry_id": "tsallis_inf",
    "side": "upper",
-   "setting_description": "stochastic K-armed bandit, asymptotic bound on R(T)/log T",
+   "setting_description": "stochastic K-armed bandit, unique optimal arm; bound on lim R(T)/log T",
    "bound": {
     "notation": "limsup",
     "expression": "sum_subopt(4/Delta_i) + 4",
     "expression_latex": "\\sum_{i \\neq i^*} \\frac{4}{\\Delta_i}+4",
-    "regime": "T -> infinity"
+    "regime": null
    },
    "where": "Table 3"
   },
   {
    "cited_key": "zimmert2019connections",
    "cited_title": "Connections between mirror descent, thompson sampling and the information ratio",
+   "cited_first_author": "J. Zimmert",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
    "algorithm_name": "Tsallis-INF (RV)",
+   "algorithm_registry_id": "tsallis_inf_rv",
    "side": "upper",
-   "setting_description": "stochastic K-armed bandit, asymptotic bound on R(T)/log T",
+   "setting_description": "stochastic K-armed bandit; bound on lim R(T)/log T",
    "bound": {
     "notation": "limsup",
     "expression": "sum_subopt(1/Delta_i) + 28*K",
     "expression_latex": "\\sum_{i \\neq i^*} \\frac{1}{\\Delta_i} + 28K",
-    "regime": "T -> infinity"
+    "regime": null
    },
    "where": "Table 3"
   },
   {
-   "cited_key": "zimmert2021tsallis",
-   "cited_title": "Tsallis-inf: An optimal algorithm for stochastic and adversarial bandits",
+   "cited_key": "zimmert2019connections",
+   "cited_title": "Connections between mirror descent, thompson sampling and the information ratio",
+   "cited_first_author": "J. Zimmert",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
    "algorithm_name": "Tsallis-INF (IW)",
+   "algorithm_registry_id": "tsallis_inf",
    "side": "upper",
    "setting_description": "adversarial K-armed bandit",
    "bound": {
@@ -474,7 +472,11 @@
   {
    "cited_key": "zimmert2019connections",
    "cited_title": "Connections between mirror descent, thompson sampling and the information ratio",
+   "cited_first_author": "J. Zimmert",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
    "algorithm_name": "Tsallis-INF (RV)",
+   "algorithm_registry_id": "tsallis_inf_rv",
    "side": "upper",
    "setting_description": "adversarial K-armed bandit",
    "bound": {
@@ -488,7 +490,11 @@
   {
    "cited_key": "zimmert2019connections",
    "cited_title": "Connections between mirror descent, thompson sampling and the information ratio",
+   "cited_first_author": "J. Zimmert",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
    "algorithm_name": "Tsallis-INF (RV-const)",
+   "algorithm_registry_id": null,
    "side": "upper",
    "setting_description": "adversarial K-armed bandit",
    "bound": {
@@ -502,9 +508,13 @@
   {
    "cited_key": "ito2021parameter",
    "cited_title": "Parameter-free multi-armed bandit algorithms with hybrid data-dependent regret bounds",
+   "cited_first_author": "S. Ito",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
    "algorithm_name": "LB-INF",
+   "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "adversarial K-armed bandit, data-dependent",
+   "setting_description": "adversarial K-armed bandit; Q_inf and V_1 as defined in Table 1",
    "bound": {
     "notation": "O",
     "expression": "3*sqrt(K*log(T)*Min(T, 4*L_star, 4*(T - L_star), 4*Q_inf, 32*V_1)) + K*log(T)",
@@ -516,7 +526,11 @@
   {
    "cited_key": "auer2002nonstochastic",
    "cited_title": "The nonstochastic multiarmed bandit problem",
+   "cited_first_author": "P. Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
    "algorithm_name": null,
+   "algorithm_registry_id": null,
    "side": "lower",
    "setting_description": "adversarial K-armed bandit, minimax lower bound",
    "bound": {
@@ -525,35 +539,25 @@
     "expression_latex": "\\Omega(\\sqrt{KT})",
     "regime": null
    },
-   "where": "Section 1 (Table 4 lists 1/20 min{sqrt(KT), T})"
+   "where": "Introduction"
   },
   {
-   "cited_key": "allenberg2006hannan",
-   "cited_title": "Hannan consistency in on-line learning in case of unbounded losses under partial monitoring",
-   "algorithm_name": null,
+   "cited_key": "zimmert2021tsallis",
+   "cited_title": "Tsallis-inf: An optimal algorithm for stochastic and adversarial bandits",
+   "cited_first_author": "J. Zimmert",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Tsallis-INF",
+   "algorithm_registry_id": "tsallis_inf",
    "side": "upper",
-   "setting_description": "adversarial K-armed bandit, first-order bound",
+   "setting_description": "stochastic bandit with adversarial corruption C",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(K*L_star*log(K))",
-    "expression_latex": "O(\\sqrt{K L^* \\log K})",
+    "expression": "sum_subopt(log(T)/Delta_i) + sqrt(C*sum_subopt(log(T)/Delta_i))",
+    "expression_latex": "O( \\sum_{i: \\Delta_i > 0} \\frac{\\log T}{\\Delta_i} + \\sqrt{\\sum_{i: \\Delta_i > 0} \\frac{C \\log T}{\\Delta_i}} )",
     "regime": null
    },
-   "where": "Section 1.2"
-  },
-  {
-   "cited_key": "auer2002finite",
-   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
-   "algorithm_name": "UCB1",
-   "side": "upper",
-   "setting_description": "stochastic K-armed bandit",
-   "bound": {
-    "notation": "O",
-    "expression": "sum_subopt(log(T)/Delta_i)",
-    "expression_latex": "O(\\sum_{i: \\Delta_i > 0} \\frac{\\log T}{\\Delta_i})",
-    "regime": null
-   },
-   "where": "Section 1"
+   "where": "Introduction"
   }
  ],
  "_run": {
@@ -562,14 +566,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "c6d1de293f21",
-  "schema_version": "0.2",
-  "ontology_version": "bandits-0.2",
-  "date": "2026-10-19T16:01:05",
+  "prompt_sha": "83b9f19fac84",
+  "schema_version": "0.3",
+  "ontology_version": "bandits-0.3",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-19T16:25:06",
   "source_chars": 131505,
-  "input_tokens": 83684,
-  "output_tokens": 12011,
-  "cost_usd_equiv": 0.8240322,
+  "input_tokens": 95391,
+  "output_tokens": 10792,
+  "cost_usd_equiv": 0.8019936,
   "status": "extracted"
  }
 }

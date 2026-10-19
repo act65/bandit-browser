@@ -34,11 +34,9 @@ PRE = ROOT / "corpus" / "pre"
 MANIFEST = ROOT / "corpus" / "manifest.yaml"
 REPORT = ROOT / "data" / "validation-report.md"
 
-CANONICAL = {"T", "K", "d", "Delta_i", "Delta_min", "Delta_max", "mu_star", "sigma", "delta",
-             "epsilon", "S", "L_feat", "L_lip", "m", "C", "S_T", "V_T", "D", "B", "N", "H",
-             "gamma_T", "KL_i", "diam_K", "vartheta", "alpha", "beta", "p", "lam",
-             "i", "pi", "E"}
+CANONICAL = set(schema.load_variables()["variables"]) | {"i"}  # i: summation index
 FUNCS = {"sum_subopt": sympy.Function("sum_subopt"), "sum_arms": sympy.Function("sum_arms"),
+         "kl": sympy.Function("kl"),
          "log": sympy.log, "sqrt": sympy.sqrt, "exp": sympy.exp, "pi": sympy.pi,
          "Min": sympy.Min, "Max": sympy.Max, "min": sympy.Min, "max": sympy.Max}
 
@@ -68,7 +66,7 @@ def quote_found(quote: str, source_norm: str) -> bool:
 
 
 IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
-KNOWN_FUNCS = {"log", "sqrt", "exp", "Min", "Max", "min", "max", "LambertW", "sum_subopt", "sum_arms"}
+KNOWN_FUNCS = {"log", "sqrt", "exp", "Min", "Max", "min", "max", "LambertW", "sum_subopt", "sum_arms", "kl"}
 
 
 def check_expression(expr: str, declared: set[str]) -> str | None:
@@ -136,7 +134,12 @@ def validate_file(path: Path, Model, manifest: dict) -> tuple[list[str], dict]:
 
 
 def main() -> None:
-    Model = schema.build_models(schema.load_ontology())
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--ontology", default=None, help="ontology YAML (default: latest)")
+    args = ap.parse_args()
+    ont = schema.load_ontology(Path(args.ontology)) if args.ontology else schema.load_ontology()
+    Model = schema.build_models(ont)
     manifest = {p["id"]: p for p in yaml.safe_load(MANIFEST.read_text())["papers"]}
     files = sorted(EXT.glob("*.json"))
     total = Counter()

@@ -1,0 +1,125 @@
+# Canonical variable registry (desiderata D13).
+#
+# Every symbol that may appear in a bound expression. Extractors MUST use these names;
+# anything else must be declared in the result's `symbols` with its meaning. Declared
+# symbols that recur across papers are promoted here (see pipeline/resolve.py report).
+#
+# kind:
+#   problem_parameter    given by the problem (T, K, d, ...)
+#   instance_quantity    property of the unknown instance (gaps, divergences, ...)
+#   confidence           accuracy / failure-probability targets (delta, epsilon)
+#   algorithm_parameter  tuning knobs of an algorithm (learning rate, regulariser, ...)
+#   constant             mathematical constants
+#   function             functions usable in expressions, e.g. kl(x, y)
+#
+# Similar-but-different definitions get SEPARATE symbols plus a `conversions` entry,
+# applied by the normaliser before bounds are compared. Never reuse a name with a
+# different meaning.
+
+version: "0.3"
+
+variables:
+  # ---- problem parameters
+  T:          {kind: problem_parameter, latex: "T", definition: "horizon: number of rounds", aliases: [n, N_rounds, "number of rounds"]}
+  K:          {kind: problem_parameter, latex: "K", definition: "number of arms / actions (finite)", aliases: [N_X, N_arms, k, "|A|", "|X|"]}
+  d:          {kind: problem_parameter, latex: "d", definition: "dimension of the action / feature / parameter space"}
+  m:          {kind: problem_parameter, latex: "m", definition: "size of a combinatorial action (number of base arms selected)"}
+  N_exp:      {kind: problem_parameter, latex: "N", definition: "number of experts (bandits with expert advice) or size of a finite policy class", aliases: [N]}
+  H:          {kind: problem_parameter, latex: "H", definition: "episode length (episodic problems)"}
+  M_ctx:      {kind: problem_parameter, latex: "M", definition: "number of distinct contexts (finite context set)"}
+  n_act:      {kind: problem_parameter, latex: "n", definition: "maximum number of actions available per round (finite, time-varying action sets)"}
+  S:          {kind: problem_parameter, latex: "S", definition: "norm bound on the unknown parameter, ||theta|| <= S"}
+  L_feat:     {kind: problem_parameter, latex: "L", definition: "bound on the action / feature norm, ||x|| <= L_feat"}
+  L_feat_sq:  {kind: problem_parameter, latex: "L^2", definition: "bound on the SQUARED action norm, ||x||^2 <= L_feat_sq (OFUL convention)"}
+  L_lip:      {kind: problem_parameter, latex: "L_{\\mathrm{lip}}", definition: "Lipschitz constant of the loss / reward"}
+  diam_K:     {kind: problem_parameter, latex: "\\mathrm{diam}(\\mathcal{K})", definition: "diameter of the action set K"}
+  vartheta:   {kind: problem_parameter, latex: "\\vartheta", definition: "self-concordance parameter of a barrier on K", aliases: [nu]}
+  alpha:      {kind: problem_parameter, latex: "\\alpha", definition: "strong-convexity parameter of the loss class"}
+  beta:       {kind: problem_parameter, latex: "\\beta", definition: "smoothness parameter of the loss class"}
+  p:          {kind: problem_parameter, latex: "p", definition: "smoothness order (highly smooth classes)"}
+  C:          {kind: problem_parameter, latex: "C", definition: "total corruption budget (stochastic bandits with adversarial corruption)", aliases: [C_corr]}
+  C_sb:       {kind: problem_parameter, latex: "C", definition: "constant C in the (Delta, C, T) self-bounding constraint; equals twice the corruption in the corrupted regime"}
+  S_T:        {kind: problem_parameter, latex: "S_T", definition: "number of switches of the environment (piecewise stationary) or of the comparator sequence"}
+  V_T:        {kind: problem_parameter, latex: "V_T", definition: "total variation budget (non-stationary)"}
+  D:          {kind: problem_parameter, latex: "D", definition: "feedback delay (fixed); NOT a diameter (use diam_K)"}
+  B:          {kind: problem_parameter, latex: "B", definition: "budget (knapsacks / constrained bandits)"}
+  N:          {kind: problem_parameter, latex: "N", definition: "number of agents / players (multi-agent)"}
+  gamma_T:    {kind: problem_parameter, latex: "\\gamma_T", definition: "maximum information gain (kernel / GP bandits)"}
+  alpha_G:    {kind: problem_parameter, latex: "\\alpha(G)", definition: "independence number of the feedback graph G"}
+  eps_m:      {kind: problem_parameter, latex: "\\varepsilon", definition: "moment order: rewards have bounded (1+eps_m)-th moment (heavy tails), eps_m in (0,1]"}
+  u_mom:      {kind: problem_parameter, latex: "u", definition: "bound on the raw (1+eps_m)-th moment, E|X|^(1+eps_m) <= u_mom"}
+  v_mom:      {kind: problem_parameter, latex: "v", definition: "bound on the centred (1+eps_m)-th moment or variance, E|X-mu|^(1+eps_m) <= v_mom", aliases: [V]}
+  sigma:      {kind: problem_parameter, latex: "\\sigma", definition: "sub-Gaussian parameter (variance proxy sigma^2) of the noise", aliases: [R]}
+  sigma_std:  {kind: problem_parameter, latex: "\\sigma", definition: "standard deviation of the noise (Gaussian / bounded-variance models)"}
+
+  # ---- instance quantities
+  Delta_i:    {kind: instance_quantity, latex: "\\Delta_i", definition: "gap of arm i: mu_star - mu_i", aliases: [Delta_a]}
+  Delta:      {kind: instance_quantity, latex: "\\Delta", definition: "THE gap in two-armed problems, |mu_1 - mu_2|, or a uniform gap shared by all suboptimal arms"}
+  Delta_min:  {kind: instance_quantity, latex: "\\Delta_{\\min}", definition: "smallest positive gap among arms"}
+  Delta_max:  {kind: instance_quantity, latex: "\\Delta_{\\max}", definition: "largest gap"}
+  Delta_lin:  {kind: instance_quantity, latex: "\\Delta", definition: "gap of a linear bandit instance in the sense of Dani et al. (2008): difference between the best and second-best extremal point values"}
+  mu_star:    {kind: instance_quantity, latex: "\\mu^*", definition: "optimal mean reward"}
+  mu_i:       {kind: instance_quantity, latex: "\\mu_i", definition: "mean reward (or loss) of arm i"}
+  sigma_i:    {kind: instance_quantity, latex: "\\sigma_i", definition: "standard deviation of arm i's reward / loss"}
+  KL_i:       {kind: instance_quantity, latex: "\\mathrm{KL}_i", definition: "KL divergence between arm i's distribution and the optimal arm's, KL(nu_i, nu_star), within a parametric family", aliases: [KL_a]}
+  kl_i:       {kind: instance_quantity, latex: "\\mathrm{kl}(\\mu_i, \\mu^*)", definition: "Bernoulli KL divergence between the means: kl(mu_i, mu_star)"}
+  Kinf_i:     {kind: instance_quantity, latex: "\\mathcal{K}_{\\inf,i}", definition: "K_inf(nu_i, mu_star; model) = inf { KL(nu_i, nu') : nu' in model, E[nu'] > mu_star } (Burnetas-Katehakis)", aliases: [K_inf, Kinf_a]}
+  L_star:     {kind: instance_quantity, latex: "L^*_T", definition: "cumulative loss of the best fixed comparator (first-order / small-loss bounds)"}
+  Q_T:        {kind: instance_quantity, latex: "Q_T", definition: "quadratic variation of the loss sequence (second-order bounds)"}
+  Lambda_T:   {kind: instance_quantity, latex: "\\Lambda_T", definition: "total conditional variance sum_t sigma_t^2 (variance-aware bounds)", aliases: [sum_sigma_sq]}
+  C_lin:      {kind: instance_quantity, latex: "c^*(\\theta)", definition: "value of the Graves-Lai / structured-bandit lower-bound optimisation problem (asymptotic constant)", aliases: [C_theta]}
+  H_1:        {kind: instance_quantity, latex: "H_1", definition: "best-arm identification hardness sum_i 1/Delta_i^2"}
+
+  # ---- confidence / accuracy
+  delta:      {kind: confidence, latex: "\\delta", definition: "failure probability"}
+  epsilon:    {kind: confidence, latex: "\\varepsilon", definition: "target accuracy (PAC / epsilon-optimal). NOT a free analysis parameter (use eps_alg)"}
+
+  # ---- algorithm parameters
+  lam:        {kind: algorithm_parameter, latex: "\\lambda", definition: "ridge regularisation parameter"}
+  eta:        {kind: algorithm_parameter, latex: "\\eta", definition: "learning rate"}
+  alpha_ts:   {kind: algorithm_parameter, latex: "\\alpha", definition: "Tsallis entropy power", aliases: [a_ts]}
+  eps_alg:    {kind: algorithm_parameter, latex: "\\varepsilon", definition: "free analysis / tuning parameter epsilon > 0 (e.g. the (1+eps) in asymptotic bounds)"}
+  c_alg:      {kind: algorithm_parameter, latex: "c", definition: "free analysis / tuning constant c > 0", aliases: [c]}
+
+  # ---- constants
+  pi:         {kind: constant, latex: "\\pi", definition: "pi"}
+  E:          {kind: constant, latex: "e", definition: "Euler's number"}
+
+  # ---- functions
+  kl:         {kind: function, latex: "\\mathrm{kl}", definition: "binary (Bernoulli) KL divergence kl(x, y)"}
+  sum_subopt: {kind: function, latex: "\\sum_{i:\\Delta_i>0}", definition: "sum over suboptimal arms of its argument (argument in Delta_i, KL_i, ...)"}
+  sum_arms:   {kind: function, latex: "\\sum_{i}", definition: "sum over all arms"}
+  log:        {kind: function, latex: "\\log", definition: "natural logarithm"}
+  sqrt:       {kind: function, latex: "\\sqrt{}", definition: "square root"}
+  exp:        {kind: function, latex: "\\exp", definition: "exponential"}
+  Min:        {kind: function, latex: "\\min", definition: "minimum"}
+  Max:        {kind: function, latex: "\\max", definition: "maximum"}
+  LambertW:   {kind: function, latex: "W", definition: "Lambert W function"}
+
+# Rules applied by the normaliser (pipeline/normalize.py) to put bounds from different
+# papers on the same footing before comparison. `when` restricts a rule to settings
+# where it is valid; an unconditional rule has no `when`.
+conversions:
+  - id: feat_sq_to_norm
+    rule: "L_feat_sq = L_feat**2"
+    note: "OFUL bounds ||x||^2 <= L; canonical form uses ||x|| <= L_feat"
+  - id: gaussian_std_is_subgaussian
+    rule: "sigma_std = sigma"
+    when: {noise: gaussian_known_variance}
+    note: "for Gaussian noise the standard deviation is the sub-Gaussian parameter"
+  - id: two_arm_gap
+    rule: "Delta = Delta_min"
+    when: {parameters: {K: "2"}}
+    note: "with two arms the unique gap is the smallest gap"
+  - id: uniform_gap
+    rule: "Delta_i = Delta"
+    note: "only when the paper states all suboptimal gaps equal Delta (instance-specific; applied manually)"
+    manual: true
+  - id: bernoulli_kl
+    rule: "KL_i = kl_i"
+    when: {noise: bernoulli}
+    note: "for Bernoulli arms the distribution KL equals the binary KL of the means"
+  - id: kinf_parametric
+    rule: "Kinf_i = KL_i"
+    when: {noise: [bernoulli, gaussian_known_variance, exponential_family]}
+    note: "in one-parameter exponential families K_inf reduces to the KL to the optimal arm's distribution (Lai-Robbins constant)"

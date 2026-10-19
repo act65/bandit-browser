@@ -18,7 +18,7 @@ Staged so that each phase ends with a **go / no-go check**. We do not scale extr
 - [ ] The 6 non-arXiv classics (Lai & Robbins, UCB1, EXP3, MOSS/INF, Dani et al., SupLinUCB) are not extracted yet. They hold key lower bounds for the acceptance facts (F01, F05), so add a PDF path or enter them by hand.
 - [ ] Gold set: **human-verify** 15–20 of the LLM extractions instead of annotating from scratch (cheaper), and record corrections. Suggested first: OFUL, KL-UCB, Tsallis-INF, Lattimore & Szepesvári 2017, Li et al. 2019, Garivier et al. 2016.
 - [x] Ontology v0.2 ([`ontology/bandits-0.2.yaml`](ontology/bandits-0.2.yaml)): function_class and domain dimensions, new noise/feedback/objective/quantity values, node parameters, `compute` field.
-- [ ] Ontology v0.3: review [`ontology/review-v0.2.md`](ontology/review-v0.2.md) (proposals from 142 `unmapped` items: action-set geometry, learner knowledge, instance assumptions, …), apply, and re-extract.
+- [x] Ontology v0.3 ([`ontology/bandits-0.3.yaml`](ontology/bandits-0.3.yaml)): applies [`ontology/review-v0.2.md`](ontology/review-v0.2.md) (action_set, instance_assumptions, learner knowledge, adversary refinements, comparator, in_scope), plus registries in the prompt. Corpus re-extracted.
 - [ ] Fix the per-dimension orders together with their justification and validity scope (D1).
 - [x] Write down 5–10 **known facts the system should rediscover** ([`data/ground_truth/pilot-facts.yaml`](data/ground_truth/pilot-facts.yaml), 14 facts, still to be verified by hand) (e.g. which settings are tight up to constants, up to logs, or open; historic gaps and the papers that closed them). These are the Phase 3 acceptance tests.
 - [ ] Ready-made ground truth from related work:
@@ -42,10 +42,11 @@ Staged so that each phase ends with a **go / no-go check**. We do not scale extr
 
 ## Phase 3: Graph and inference engine
 
-- [ ] **Canonical notation layer (D13)**, prerequisite for comparison:
+- [x] **Canonical notation layer (D13)**, prerequisite for comparison (built before the v0.3 re-extraction; `pipeline/resolve.py` → `data/canonical/`):
   - `ontology/variables.yaml`: a symbol registry with precise definitions, aliases and conversion rules (e.g. ‖x‖² ≤ L ⇒ L_feat = √L; σ as std vs sub-Gaussian parameter). It generates the prompt's variable table; declared `symbols` are clustered into registry proposals.
   - `data/algorithms.yaml`: an algorithm registry (canonical id, aliases, introducing paper, techniques), resolved by name normalisation, then LLM adjudication, then human confirmation.
   - Citation resolution: `cited_key` → .bbl title → arXiv/DOI → manifest id. Unmatched cited papers become corpus candidates.
+- [ ] **Next:** inherited results on setting pages. The v0.3 key is exact (124 nodes from 175 settings, many with one paper), so each node should show its own results plus those inherited along specialisation edges, with derivation paths. Product-order edges are already computed for the graph view.
 - [ ] Build the setting poset: per-dimension orders → product order, plus explicit cross-dimension reductions with parameter maps.
 - [ ] Inference: propagate upper bounds down and lower bounds up, translating through parameter maps and storing derivation paths separately from extracted results.
 - [ ] Bound comparison (D2): normalise to regime-specific forms (e.g. exponent vectors plus a polylog flag), compute dominance and the Pareto front, and assign a tightness status per setting and regime.
@@ -64,6 +65,7 @@ Staged so that each phase ends with a **go / no-go check**. We do not scale extr
 ## Phase 5: Browsing and outputs
 
 - [x] Minimal static site ([`site/`](site/)), deployed by GitHub Actions to act65.github.io/bandit-browser.
+- [x] Graph view: Hasse diagram of the product order over settings (Cytoscape), redesigned tables with canonical bound rendering (SymPy → LaTeX), neighbourhood panels.
 - [ ] Full website: one page per setting with bound tables (filter by regime), the Hasse-diagram neighbourhood view, provenance links and gap badges.
 - [ ] Published open-problems list generated from the gap reports, plus a status tracker for COLT open problems (none exists today).
 - [ ] Contribution workflow: corrections via PR or an issue template.
