@@ -90,7 +90,17 @@ Everything here builds on one piece of machinery: **D2 bound comparison**. Each 
 
 ## Phase 4: Scale to the full bandit literature (~1000–3000 papers)
 
-- [ ] Corpus building: snowball through citations from seed surveys and books, plus arXiv category/keyword search, plus COLT/ALT/NeurIPS/ICML/AISTATS proceedings. Dedupe.
+- [x] Corpus harvest (`pipeline/harvest.py`, `pipeline/dedupe.py` → `corpus/pool.csv`), first round (2026-10-20):
+  - **Sources:** arXiv keyword search (6,494 papers), PMLR COLT/ALT/ICML/AISTATS (694), NeurIPS (490), curated bibliographies (Lattimore–Szepesvári book, Slivkins, Foster–Rakhlin, Bubeck–Cesa-Bianchi, BCO book: 1,492 entries), and leads (cited-but-missing papers and triage findings: 130).
+  - **Result:** 9,370 records → **7,666 distinct papers**; 79% of PMLR and 69% of NeurIPS papers merged with their arXiv versions.
+  - **Recall check:** all 59 corpus papers are found. The keyword harvesters alone find 53; the 6 misses are pre-arXiv classics, found through the bibliographies.
+  - DBLP author lists are not possible: DBLP serves a bot challenge to scripts.
+- [ ] OpenAlex stages (need `OPENALEX_API_KEY`; the anonymous shared budget is exhausted):
+  - `harvest.py topic` (topic T12101, about 17.5k works, model-assigned);
+  - `harvest.py authors` (all works of authors with at least 3 bandit papers in the pool);
+  - `snowball.py` (works cited by at least 5 pool papers, iterated);
+  - `harvest.py openalex` (references and citers of the corpus).
+- [ ] LLM screening of the pool: bandit theory with formal guarantees vs applied / empirical / off-topic; screen all COLT/ALT papers, not just keyword hits.
 - [ ] Extend the ontology module by module (contextual, combinatorial, non-stationary, pure exploration, partial monitoring, …), each with a small gold set.
 - [ ] Cross-check with `cited_results` to flag conflicts, and run a human verification queue that prioritises results that drive gap reports.
 - [ ] Cost tracking: order of 10⁷–10⁸ tokens in total, so cheap; the real constraint is human review time.

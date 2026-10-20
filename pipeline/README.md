@@ -92,6 +92,20 @@ Two transfer rules between quantity families:
 
 `report.py` writes `data/canonical/poset.json` (the covering edges, with justifications) and `data/reports/*.md`: gaps, missing lower bounds, conflicts, unstudied neighbours, already-known results. `acceptance.py` checks the pilot facts and writes `data/acceptance-report.md`.
 
+## Corpus harvesting (Phase 4)
+
+```bash
+uv run python pipeline/harvest.py {arxiv,pmlr,neurips,bib,leads,topic,authors,openalex}   # -> corpus/harvest/*.jsonl
+uv run python pipeline/dedupe.py      # -> corpus/pool.jsonl (with abstracts, gitignored) + corpus/pool.csv
+uv run python pipeline/snowball.py    # citation snowball over the pool (OpenAlex)
+```
+
+- Harvesters use a project user-agent and no personal contact details.
+- They pace themselves per host (arXiv every 3 s) and back off for minutes on 429s.
+- The arXiv harvest resumes from cached pages.
+- OpenAlex stages read `OPENALEX_API_KEY`.
+- `dedupe.py` links records by arXiv id, DOI or normalised title.
+
 ## Site analysis index (Phase 3b)
 
 `site_index.py` writes `data/canonical/site_index.json`, the data behind the site's analysis pages:
