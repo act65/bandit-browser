@@ -271,7 +271,7 @@ document.addEventListener("DOMContentLoaded", function () {
         var T = state.x === "T" ? x : vals.T;
         d0 += (i ? "L" : "M") + px(x).toFixed(1) + "," + py(T).toFixed(1);
       });
-      el("path", { d: d0, class: "rp-trivial" }, plot);
+      el("path", { d: d0, class: "rp-trivial", fill: "none" }, plot);
       var tl = el("text", { x: W - m.r - 4, y: Math.max(m.t + 12, Math.min(H - m.b - 4, py(state.x === "T" ? c.xs[c.xs.length - 1] : vals.T) + 14)),
                             "text-anchor": "end", class: "rp-tlabel" }, svg);
       tl.textContent = "trivial: T";
@@ -291,7 +291,7 @@ document.addEventListener("DOMContentLoaded", function () {
       var b = s.b;
       var cls = "rp-line" + (b.side === "lower" ? " lo" : "") + (b.shape ? " shape" : "") + (b.front ? " front" : "") +
                 (state.hover ? (b.id === state.hover ? " hl" : " dim") : "");
-      el("path", { d: d, class: cls, stroke: colour(b) }, plot);
+      el("path", { d: d, class: cls, stroke: colour(b), fill: "none" }, plot);
     });
     if (empty) {
       var et = el("text", { x: (m.l + W - m.r) / 2, y: (m.t + H - m.b) / 2, "text-anchor": "middle", class: "rp-alabel" }, svg);

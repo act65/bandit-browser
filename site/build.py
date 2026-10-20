@@ -1788,6 +1788,19 @@ Table view: <a href="settings/index.html">settings index</a>.</p>
 # ---------------------------------------------------------------- main
 
 
+def bust_caches(out: Path) -> None:
+    """Append ?v=<content hash> to every static/*.css|js reference in the generated pages, so
+    browsers never combine new HTML with a cached old stylesheet or script (which broke the
+    rate plots: unstyled SVG paths fill black)."""
+    ref = re.compile(r'((?:\.\./)?static/([\w.-]+\.(?:css|js)))"')
+    digest = {f.name: hashlib.sha1(f.read_bytes()).hexdigest()[:10] for f in (out / "static").iterdir() if f.is_file()}
+    for page_file in out.rglob("*.html"):
+        s = page_file.read_text(encoding="utf-8")
+        s2 = ref.sub(lambda m: f'{m.group(1)}?v={digest[m.group(2)]}"' if m.group(2) in digest else m.group(0), s)
+        if s2 != s:
+            page_file.write_text(s2, encoding="utf-8")
+
+
 def build(root: Path, out: Path) -> None:
     site = Site(root)
     site.analysis = analysis.Analysis(root, site)
@@ -1821,6 +1834,7 @@ def build(root: Path, out: Path) -> None:
     for pid in site.paper_ids():
         w(f"papers/{slugify(pid)}.html", paper_page(site, pid))
     n_res = sum(len(n["results"]) for n in site.nodes.values())
+    bust_caches(out)
     print(f"built {out}: {len(site.paper_ids())} papers, {len(site.extractions)} extractions, "
           f"{len(site.nodes)} settings, {n_res} results, {len(site.edges)} edges, "
           f"{'canonical layer' if site.canonical else 'raw extractions'}, ontology {site.onto.version}, "
