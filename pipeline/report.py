@@ -158,6 +158,28 @@ def main() -> None:
                 "  - upper: " + describe(cf["upper"][0], results, inferred)
                 + (f" — conditions: {'; '.join(cond)}" if (cond := conditions_of(cf["upper"][0], results, inferred)) else ""),
                 "  - lower: " + describe(cf["lower"][0], results, inferred)]
+    # vacuous upper bounds: regret upper bounds growing at least linearly in T are no better
+    # than the trivial bound T (rewards in [0,1]); usually an extraction error, an unoptimised
+    # tuning parameter, or a data-dependent quantity read at its worst case
+    vac = []
+    canonical = set(schema.load_variables()["variables"]) | {"Delta"}
+    for eid, r in results.items():
+        if r["side"] != "upper" or compare.FAMILY.get(r.get("quantity")) != "regret" or r["bound"].get("regime"):
+            continue  # case-split branches (e.g. Delta*T when T*Delta^2 is small) carry a regime
+        expr = r["bound"].get("expression_normalised") or r["bound"]["expression"]
+        try:
+            e = compare.instance_expr(expr, r["bound"].get("notation"))
+            e = e.subs(compare.sympy.Symbol("delta"), 1 / compare.sympy.Symbol("T"))  # delta = 1/T
+            p = compare.profile(e, canonical) or {}
+        except Exception:  # unprofilable expressions are reported by validate.py
+            continue
+        a, b = p.get("T", (0, 0))
+        if a > 1 or (a == 1 and b >= 0):
+            vac.append(eid)
+    out += ["", "## Vacuous upper bounds (regret growing at least linearly in T)", "",
+            "No better than the trivial bound. Usually an extraction error, an unoptimised tuning parameter, "
+            "or a data-dependent quantity read at its worst case.", ""]
+    out += [f"- {describe(e, results, inferred)}" for e in sorted(vac)]
     (REP / "conflicts.md").write_text("\n".join(out) + "\n")
 
     # unstudied neighbours

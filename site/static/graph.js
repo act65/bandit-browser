@@ -13,6 +13,9 @@ document.addEventListener("DOMContentLoaded", function () {
   var css = function (name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); };
   var colourKey = "sa";
   try { colourKey = localStorage.getItem("bb-colour") || "sa"; } catch (e) { /* ignore */ }
+  var qcol = new URLSearchParams(window.location.search).get("colour");
+  if (qcol === "sa" || qcol === "se" || qcol === "st") colourKey = qcol;
+  if (colourKey === "st" && !document.querySelector('button[data-colour="st"]')) colourKey = "sa";
 
   var elements = [];
   data.nodes.forEach(function (n) {
@@ -28,7 +31,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   var style = function () {
     var fg = css("--fg"), muted = css("--muted"), surface = css("--surface");
-    var slot = function (ele) { return css("--s" + ele.data(colourKey)) || css("--s0"); };
+    var slot = function (ele) {
+      if (colourKey === "st") return css("--st-" + (ele.data("st") || "none")) || css("--s0");
+      return css("--s" + ele.data(colourKey)) || css("--s0");
+    };
     return [
       { selector: "node", style: {
         "width": "data(size)", "height": "data(size)", "background-color": slot,
@@ -109,12 +115,16 @@ document.addEventListener("DOMContentLoaded", function () {
     tip.style.left = Math.max(0, x) + "px";
     tip.style.top = y + "px";
   };
+  var STATUS_LABEL = { tight: "tight", log_gap: "log gap", poly_gap: "poly gap", no_lower: "no lower bound",
+                       no_upper: "no upper bound", conflict: "conflict", none: "no comparable bounds" };
   var esc = function (s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; };
   cy.on("mouseover", "node", function (ev) {
     var d = ev.target.data();
     showTip("<b>" + esc(d.name) + "</b>" + d.up + " upper · " + d.lo + " lower · " + d.papers + " paper" + (d.papers === 1 ? "" : "s") +
             ((d.iu || d.il) ? '<div class="muted">+' + d.iu + " upper · +" + d.il + " lower inherited</div>" : "") +
-            '<div class="muted">' + esc(d.action_space) + " · " + esc(d.environment) + "</div>", ev.renderedPosition);
+            '<div class="muted">' + esc(d.action_space) + " · " + esc(d.environment) + "</div>" +
+            (d.streg !== undefined && d.st ? '<div><span class="dot st-' + esc(d.st) + '"></span>' + esc(STATUS_LABEL[d.st] || d.st) +
+             (d.streg ? ' <span class="muted">(' + esc(d.streg) + ")</span>" : "") + "</div>" : ""), ev.renderedPosition);
     highlight(ev.target);
   });
   cy.on("mouseover", "edge", function (ev) {
@@ -163,6 +173,8 @@ document.addEventListener("DOMContentLoaded", function () {
     colourKey = key;
     document.getElementById("legend-sa").hidden = key !== "sa";
     document.getElementById("legend-se").hidden = key !== "se";
+    var lst = document.getElementById("legend-st");
+    if (lst) lst.hidden = key !== "st";
     cy.style(style());
     try { localStorage.setItem("bb-colour", key); } catch (e) { /* ignore */ }
   };

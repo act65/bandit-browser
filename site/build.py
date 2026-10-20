@@ -40,6 +40,7 @@ REPO = HERE.parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(1, str(REPO / "pipeline"))
 
+import analysis  # noqa: E402
 import bounds  # noqa: E402
 from order import Order  # noqa: E402  (pipeline/order.py: the specialisation order, D1)
 from ontology import (QUANTITY_LABEL, Ontology, dim_label, is_default, value_label)  # noqa: E402
@@ -487,6 +488,8 @@ NAV = [
     ("graph.html", "Graph", "graph"),
     ("settings/index.html", "Settings", "settings"),
     ("papers/index.html", "Papers", "papers"),
+    ("gaps.html", "Gaps", "gaps"),
+    ("search.html", "Search", "search"),
     ("ground-truth.html", "Ground truth", "gt"),
     ("pilot-facts.html", "Pilot facts", "facts"),
 ]
@@ -904,6 +907,30 @@ def home_page(site: Site) -> str:
     ]
     tiles_html = "".join(f'<a class="tile" href="{h}"><b>{n}</b><span>{lbl}</span><small>{sub}</small></a>'
                          for h, n, lbl, sub in tiles)
+    A = site.analysis
+    if A.ok:
+        from collections import Counter
+        st = Counter(c["status"] for c in A.cells)
+        n_sugg = sum(len(t["suggestions"]) for t in A.transfer)
+        atiles = [
+            ("gaps.html", st["poly_gap"] + st["log_gap"] + st["conflict"], "open-looking gaps",
+             f'{st["poly_gap"]} poly · {st["log_gap"]} log' + (f' · {st["conflict"]} conflicts' if st["conflict"] else "")),
+            ("gaps.html#status=no_lower", st["no_lower"] + st["no_upper"], "one-sided cells", f'{st["no_lower"]} no lower · {st["no_upper"]} no upper'),
+            ("settings/index.html", st["tight"], "tight cells", f"of {len(A.cells)} setting × regime cells"),
+            ("neighbours.html", len(A.unstudied), "unstudied neighbours", "one step from studied settings"),
+            ("transfer.html", n_sugg, "technique transfers", f"suggested for {len(A.transfer)} cells"),
+            ("redundant.html", len(A.redundant), "implied results", "rate already implied by earlier work"),
+        ]
+        tiles_html += ('</div><h2 class="tiles-h">Analysis <span class="muted small">(setting × regime cells, '
+                       'compared by growth exponents)</span></h2><div class="tiles">'
+                       + "".join(f'<a class="tile an" href="{h}"><b>{n}</b><span>{lbl}</span><small>{sub}</small></a>'
+                                 for h, n, lbl, sub in atiles))
+    analysis_cards = """
+<a class="card" href="gaps.html"><h2>Gaps →</h2><p>Settings where the best upper and lower bounds don't match, with triage verdicts and transfer suggestions.</p></a>
+<a class="card" href="search.html"><h2>Search →</h2><p>Faceted search over settings and bounds, with saved queries.</p></a>
+<a class="card" href="neighbours.html"><h2>Unstudied neighbours →</h2><p>Settings one assumption away from well-studied ones, with no results yet.</p></a>
+<a class="card" href="transfer.html"><h2>Technique transfer →</h2><p>Algorithm families that close the rate next door but are not tried here.</p></a>
+<a class="card" href="redundant.html"><h2>Redundancy →</h2><p>Results whose rate an earlier, more general result already implied.</p></a>""" if A.ok else ""
     body = f"""
 <section class="hero">
 <h1>An atlas of theoretical bandit results</h1>
@@ -917,12 +944,14 @@ are linked; where the ontology orders the two values, the link is a <em>speciali
 Arrows point from a special case to its generalisation.</p></a>
 <a class="card" href="settings/index.html"><h2>Settings →</h2><p>Browse settings by environment or action space, with counts of upper and lower bounds.</p></a>
 <a class="card" href="papers/index.html"><h2>Papers →</h2><p>The pilot corpus: what each paper proves, theorem by theorem.</p></a>
+{analysis_cards}
 <a class="card" href="ground-truth.html"><h2>Ground truth →</h2><p>Hand-curated bandit convex optimisation reference{"" if site.bco else " (not yet available)"},
 and the pilot facts the graph should rediscover.</p></a>
 </div>
 <p class="muted small">Ontology {e(site.onto.version)}{" · canonical layer (data/canonical)" if site.canonical else " · grouped from raw extractions"}.
 Bounds are shown in canonical notation; the paper's own LaTeX is under each result's <em>details</em>.
-{"Inherited bounds are propagated along the specialisation order by <code>pipeline/infer.py</code> and shown separately, with their derivation." if n_inh else "No bounds are inferred yet."} No bounds are compared yet.</p>
+{"Inherited bounds are propagated along the specialisation order by <code>pipeline/infer.py</code> and shown separately, with their derivation." if n_inh else "No bounds are inferred yet."}
+{"Bounds are compared by their growth exponents (<code>pipeline/compare.py</code>) for the gap analysis." if A.ok else "No bounds are compared yet."}</p>
 """
     return page("Home", body, "", "home")
 
@@ -947,20 +976,31 @@ def count_cell(own: int, inh: int) -> str:
 
 def settings_index(site: Site) -> str:
     act_slots = colour_slots([n["key"].get("action_space", "") for n in site.nodes.values()])
+    A = site.analysis
     rows = []
     for n in sorted(site.nodes.values(), key=lambda n: (-len(n["results"]), n["name"])):
         up, lo = site.counts(n)
         iu, il = site.counts(n, "inherited")
         k = n["key"]
         env, act = k.get("environment", ""), k.get("action_space", "")
+        st, reg = A.setting_status(n["id"])
+        st_cell = (f'<td data-label="Status">{analysis.status_badge(sys.modules[__name__], st, analysis.regime_label(reg) if reg else "")}</td>'
+                   if A.ok else "")
         rows.append(
-            f'<tr data-environment="{e(value_label("environment", env) if env else "unspecified")}" '
+            f'<tr data-status="{st}" data-environment="{e(value_label("environment", env) if env else "unspecified")}" '
             f'data-action_space="{e(value_label("action_space", act) if act else "unspecified")}" data-n="{len(n["results"])}">'
             f'<td data-label="Setting"><span class="dot s{act_slots.get(act, 0)}" aria-hidden="true"></span>'
-            f'<a href="{n["slug"]}.html">{e(n["name"])}</a></td>'
+            f'<a href="{n["slug"]}.html">{e(n["name"])}</a></td>{st_cell}'
             f'<td class="num" data-label="Upper">{count_cell(up, iu)}</td><td class="num" data-label="Lower">{count_cell(lo, il)}</td>'
             f'<td class="num" data-label="Papers">{len(n["papers"])}</td></tr>'
         )
+    status_select = ""
+    if A.ok:
+        from collections import Counter
+        cnt = Counter(A.setting_status(n["id"])[0] for n in site.nodes.values())
+        opts = "".join(f'<option value="{k}">{e(analysis.STATUS[k][0])} ({cnt[k]})</option>' for k in analysis.STATUS_RANK if cnt[k])
+        status_select = (f'<label class="fsel"><span>Status</span><select id="status-filter" title="Status in the regret · '
+                         f'worst-case regime, else the most relevant regime"><option value="">all</option>{opts}</select></label>')
     body = f"""
 <h1>Settings</h1>
 <p class="lede">{len(site.nodes)} canonical settings. A name lists only the assumptions that differ from the plain
@@ -974,14 +1014,16 @@ stochastic-regret defaults (bandit feedback, no context, no extras). Also see th
 <button type="button" data-group="environment" aria-pressed="false">Environment</button>
 <button type="button" data-group="" aria-pressed="false">None</button>
 </div>
+{status_select}
 </div>
 <div class="scroll"><table class="settings filterable groupable">
-<thead><tr><th>Setting</th><th class="num">Upper</th><th class="num">Lower</th><th class="num">Papers</th></tr></thead>
+<thead><tr><th>Setting</th>{'<th>Status</th>' if A.ok else ""}<th class="num">Upper</th><th class="num">Lower</th><th class="num">Papers</th></tr></thead>
 <tbody>
 {"".join(rows)}
 </tbody></table></div>
+{'<p class="small muted">Status: tightness in the regret · worst-case regime when the setting has one, else its most relevant regime; see <a href="../gaps.html">Gaps</a>.</p>' if A.ok else ""}
 """
-    return page("Settings", body, "../", "settings")
+    return page("Settings", body, "../", "settings", head='<script defer src="../static/analysis.js"></script>' if A.ok else "")
 
 
 def change_html(x: dict) -> str:
@@ -1066,6 +1108,7 @@ def setting_page(site: Site, n: dict) -> str:
 <div class="chips">{"".join(chips)}</div>
 <p class="summary"><b>{len(up)}</b> upper · <b>{len(lo)}</b> lower bounds from <b>{len(n["papers"])}</b> paper{"s" if len(n["papers"]) != 1 else ""}{inh}.</p>
 <h2 id="neighbours">Neighbourhood</h2>{neighbourhood(site, n)}
+{rates_section(site, n)}
 <h2 id="upper">Upper bounds <span class="muted">({len(up)})</span></h2>{results_table(up, site, "../")}
 <h2 id="lower">Lower bounds <span class="muted">({len(lo)})</span></h2>{results_table(lo, site, "../")}
 {inherited_section(site, iup, "upper", "inherited-upper")}
@@ -1073,7 +1116,34 @@ def setting_page(site: Site, n: dict) -> str:
 {f'<h2>Other <span class="muted">({len(other)})</span></h2>' + results_table(other, site, "../") if other else ""}
 <h2 id="papers">As stated in papers</h2>{table(["Paper", "Name in paper", "Learner knows", "Unmapped"], inst_rows, "compact")}
 """
-    return page(n["name"], body, "../", "settings")
+    head = '<script defer src="../static/plots.js"></script>' if site.analysis.by_setting.get(n["id"]) else ""
+    return page(n["name"], body, "../", "settings", head=head)
+
+
+def rates_section(site: Site, n: dict) -> str:
+    """Status per regime, rate plot and rate plane (static/plots.js) from site_index.json."""
+    A = site.analysis
+    data = A.plot_data(n) if A.ok else None
+    if not data:
+        return ""
+    h = sys.modules[__name__]
+    pages = analysis.Pages(site, A, h)
+    cells = sorted(A.cells_by_setting.get(n["id"]) or [], key=lambda c: (c["regime"] != "regret|worst_case", c["regime"]))
+    rows = []
+    for c in cells:
+        tri = analysis.triage_badge(h, c.get("triage")) if c["status"] in analysis.GAP_STATUSES else ""
+        rows.append(f'<li>{analysis.status_badge(h, c["status"])} <span class="reg-l">{e(analysis.regime_label(c["regime"]))}</span>'
+                    f' {tri}{pages.per_var_html(c.get("per_var") or {})}</li>')
+    strip = (f'<ul class="cellstrip">{"".join(rows)}</ul>' if rows else
+             '<p class="muted small">No regime has bounds with a usable rate profile, so no tightness status.</p>')
+    blob = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    return f"""
+<h2 id="rates">Rates</h2>
+<p class="hint muted small">Tightness per regime (quantity family × dependence) from the bounds' growth exponents;
+↑ upper / ↓ lower exponent of each variable (1/Δ for the gap). <a href="../gaps.html">All gaps →</a></p>
+{strip}
+<div class="rateplot" id="rateplot"><noscript><p class="muted">The rate plot needs JavaScript.</p></noscript></div>
+<script type="application/json" id="plot-data">{blob}</script>"""
 
 
 def papers_index(site: Site) -> str:
@@ -1553,7 +1623,9 @@ def graph_page(site: Site) -> str:
                       "up": up, "lo": lo, "iu": iu, "il": il, "papers": len(n["papers"]),
                       "action_space": value_label("action_space", act) if act else "unspecified",
                       "environment": value_label("environment", env) if env else "unspecified",
-                      "sa": act_slots.get(act, 0), "se": env_slots.get(env, 0)})
+                      "sa": act_slots.get(act, 0), "se": env_slots.get(env, 0),
+                      "st": site.analysis.setting_status(n["id"])[0] if site.analysis.ok else None,
+                      "streg": analysis.regime_label(site.analysis.setting_status(n["id"])[1] or "") if site.analysis.ok else ""})
     def lbl(x, i):
         return "; ".join(value_label(d, c[i]) if c[i] else "none"
                          for c in x.get("changes") or [(x["dim"], x["from"], x["to"])] for d in [c[0]])
@@ -1575,6 +1647,11 @@ def graph_page(site: Site) -> str:
         return "".join(out)
 
     data = json.dumps({"nodes": nodes, "edges": edges}, ensure_ascii=False).replace("</", "<\\/")
+    from collections import Counter
+    stc = Counter(x["st"] for x in nodes)
+    st_legend = "".join(f'<li><span class="dot st-{k}"></span>{e(analysis.STATUS[k][0])} <span class="muted">&nbsp;{stc[k]}</span></li>'
+                        for k in analysis.STATUS_RANK if stc[k])
+    st_legend += ('<li class="muted small">regret · worst-case regime, else the most relevant one</li>' if st_legend else "")
     n_dir = sum(1 for x in edges if x["kind"] != "neighbour")
     body = f"""
 <div class="graph-head">
@@ -1589,7 +1666,8 @@ Node size ∝ number of results. Click a node to open it.</p>
 <div class="graph-controls">
 <div class="seg" role="group" aria-label="Colour by"><span>Colour</span>
 <button type="button" data-colour="sa" aria-pressed="true">Action space</button>
-<button type="button" data-colour="se" aria-pressed="false">Environment</button></div>
+<button type="button" data-colour="se" aria-pressed="false">Environment</button>
+{'<button type="button" data-colour="st" aria-pressed="false">Status</button>' if site.analysis.ok else ""}</div>
 <div class="seg" role="group" aria-label="Layout"><span>Layout</span>
 <button type="button" data-layout="dagre" aria-pressed="true">Hierarchy</button>
 <button type="button" data-layout="cose" aria-pressed="false">Force</button></div>
@@ -1602,6 +1680,7 @@ Node size ∝ number of results. Click a node to open it.</p>
 <h3>Colour</h3>
 <ul id="legend-sa">{legend(act_slots, "action_space")}</ul>
 <ul id="legend-se" hidden>{legend(env_slots, "environment")}</ul>
+<ul id="legend-st" hidden>{st_legend}</ul>
 <h3>Edges</h3>
 <ul class="edge-key"><li><span class="ek order"></span>specialisation</li>
 <li><span class="ek reduction"></span>reduction</li><li><span class="ek neighbour"></span>other neighbour</li></ul>
@@ -1622,6 +1701,7 @@ Table view: <a href="settings/index.html">settings index</a>.</p>
 
 def build(root: Path, out: Path) -> None:
     site = Site(root)
+    site.analysis = analysis.Analysis(root, site)
     if out.exists():
         shutil.rmtree(out)
     (out / "settings").mkdir(parents=True)
@@ -1639,6 +1719,15 @@ def build(root: Path, out: Path) -> None:
     w("settings/index.html", settings_index(site))
     for n in site.nodes.values():
         w(f"settings/{n['slug']}.html", setting_page(site, n))
+    pages = analysis.Pages(site, site.analysis, sys.modules[__name__])
+    w("gaps.html", pages.gaps_page())
+    w("neighbours.html", pages.neighbours_page())
+    w("transfer.html", pages.transfer_page())
+    w("redundant.html", pages.redundant_page())
+    w("search.html", pages.search_page())
+    if site.analysis.ok:
+        blob = json.dumps(site.analysis.search_data(), ensure_ascii=False, separators=(",", ":"))
+        w("static/search-data.js", f"window.BB_SEARCH = {blob};\n")
     w("papers/index.html", papers_index(site))
     for pid in site.paper_ids():
         w(f"papers/{slugify(pid)}.html", paper_page(site, pid))

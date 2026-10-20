@@ -55,7 +55,14 @@ Staged so that each phase ends with a **go / no-go check**. We do not scale extr
 - [x] Inference: propagate upper bounds down and lower bounds up, translating through parameter maps and storing derivation paths separately from extracted results.
 - [x] Bound comparison (D2) (`pipeline/compare.py`; see pipeline/README.md for the method): normalise to regime-specific forms (e.g. exponent vectors plus a polylog flag), compute dominance and the Pareto front, and assign a tightness status per setting and regime.
 - [x] Reports: gaps, missing lower bounds, unstudied neighbours, redundant results, conflicts (D8) → `data/reports/` (`pipeline/report.py`).
-- [x] Gap triage (`pipeline/triage.py` → `data/reports/triage.yaml`): one web-search call per candidate gap; verdicts closed / open_known / blank. **First run (17 candidate gaps, 54 searches):** 14 closed by papers outside the corpus (INF/Tsallis-INF, Li et al. 2019, newer corruption-robust bounds, …), 1 known open (stochastic linear on general compact sets: d√T log T vs d√T), 2 blank. Most apparent gaps are coverage holes. Feed the papers cited in `triage.yaml` into the next snowball round. Original item: run a targeted retrieval search for each candidate gap before labelling it open; mark it open vs blank; log negative searches.
+- [x] Gap triage (`pipeline/triage.py` → `data/reports/triage.yaml`): one web-search call per candidate gap; verdicts closed / open_known / blank. **First run (17 candidate gaps, 54 searches):** 14 closed by papers outside the corpus (INF/Tsallis-INF, Li et al. 2019, newer corruption-robust bounds, …), 1 known open (stochastic linear on general compact sets: d√T log T vs d√T), 2 blank. Most apparent gaps are coverage holes. Feed the papers cited in `triage.yaml` into the next snowball round. **Second run** (after ontology v0.4 re-keyed the settings; 26 candidate gaps): 19 closed, 1 known open, 6 blank. The known-open and blank ones are the current candidate open problems:
+  - stochastic linear bandits on general compact action sets: d√T log T vs d√T (known open);
+  - adversarial linear bandits on the unit ball: √(log T) gap;
+  - adversarial linear bandits with K actions: √(log K) gap;
+  - Bayesian regret in linear bandits: d√(T log T) vs d√T (closed only under stronger noise assumptions);
+  - high-probability adversarial K-armed regret: √(log K) gap.
+
+  Triage verdicts are keyed by setting id, and ids change with the ontology, so `site_index.py` warns about stale verdicts; re-run `triage.py` after ontology changes. Original item: run a targeted retrieval search for each candidate gap before labelling it open; mark it open vs blank; log negative searches.
 
 **Exit check:** the acceptance tests from Phase 1 pass, i.e. known gaps and tight results are rediscovered from extracted data alone.
 
@@ -66,20 +73,20 @@ Staged so that each phase ends with a **go / no-go check**. We do not scale extr
 Everything here builds on one piece of machinery: **D2 bound comparison**. Each bound is reduced to its asymptotic profile, i.e. exponents in (T, K, d, 1/Δ, …) plus a polylog flag, per quantity and regime. With that we can compute dominance, the best upper and best lower bound per setting and regime, and a tightness status.
 
 ### d) Plots of bounds (instead of only tables)
-- [ ] **Rate plots per setting:** each bound (own and inherited, upper and lower) plotted against one variable (T by default, log-log), with sliders for the others (K, d, Δ, δ).
+- [x] **Rate plots per setting** (`site/static/plots.js`, hand-rolled SVG). Built from `pipeline/site_index.py`: 2,226 of 3,771 bounds plottable; bounds with tuning parameters or paper-specific symbols are skipped, because fixing them at 1 gives meaningless curves. Plan: each bound (own and inherited, upper and lower) plotted against one variable (T by default, log-log), with sliders for the others (K, d, Δ, δ).
   - SymPy → JS at build time (`sympy.printing.jscode`), plotted client-side.
   - Instance-dependent sums use a uniform-gap instance: `sum_subopt(f(Delta_i))` → (K−1)·f(Δ).
   - O/Θ/Ω bounds have no constants, so plot their shape with constant 1 and style them differently from exact bounds.
   - Asymptotic (lim inf / lim sup) bounds are drawn as c·log T.
-- [ ] **Rate-plane view:** each bound as a point (T-exponent, K- or d-exponent), with upper and lower bounds in different colours. Gaps are visible as the distance between the best upper and best lower point.
-- [ ] **Consistency check for free:** an extracted upper bound below an extracted lower bound in the same setting and regime is an extraction error or a genuine conflict (D5). Flag it.
+- [x] **Rate-plane view** on each setting page: each bound as a point (T-exponent, K- or d-exponent), with upper and lower bounds in different colours. Gaps are visible as the distance between the best upper and best lower point.
+- [x] **Consistency check**: `data/reports/conflicts.md` (0 conflicts), plus a vacuous-upper-bound check (regret ≥ linear in T, with δ = 1/T and case-split branches excluded; currently none): an extracted upper bound below an extracted lower bound in the same setting and regime is an extraction error or a genuine conflict (D5). Flag it.
 
 ### e) Search and filtering for motivation 1–4
-- [ ] **Faceted search** over settings (dimension facets) and results (quantity, regime, algorithm, technique family, paper, year, own/inherited, confidence), client-side from a JSON index. Saved queries such as "adversarial settings with no lower bound".
-- [ ] **1. Gap finder:** a per-setting, per-regime tightness status (tight / log gap / poly gap / no lower bound / no upper bound). It feeds a "Gaps" page sorted by importance (number of papers, gap size), a graph colouring by status, and a filter on the settings index. Before a gap is called open it goes through gap triage (open vs blank).
-- [ ] **2. Unstudied neighbours:** enumerate keys one order step away from well-studied settings (change one dimension to an adjacent value) that have no extracted results, ranked by how studied the source is. Skip combinations flagged ill-posed (e.g. an adversarial environment with a non-additive function class).
-- [ ] **3. Technique transfer:** for a setting with a gap, list algorithm families (registry `family` / techniques) that achieve the best bound in neighbouring settings but don't appear here.
-- [ ] **4. Redundancy:** an own result that is dominated by an inherited result from an *earlier* paper is "implied by prior work". List these with the derivation path.
+- [x] **Faceted search** (`search.html`, state in the URL hash, 7 saved queries): over settings (dimension facets) and results (quantity, regime, algorithm, technique family, paper, year, own/inherited, confidence), client-side from a JSON index. Saved queries such as "adversarial settings with no lower bound".
+- [x] **1. Gap finder**: `gaps.html` (real gaps first, with filters and triage badges), graph colouring by status, status column and filter on the settings index: a per-setting, per-regime tightness status (tight / log gap / poly gap / no lower bound / no upper bound). It feeds a "Gaps" page sorted by importance (number of papers, gap size), a graph colouring by status, and a filter on the settings index. Before a gap is called open it goes through gap triage (open vs blank).
+- [x] **2. Unstudied neighbours** (`neighbours.html`, 139 candidates, ill-posed adversarial × non-additive combinations removed): enumerate keys one order step away from well-studied settings (change one dimension to an adjacent value) that have no extracted results, ranked by how studied the source is. Skip combinations flagged ill-posed (e.g. an adversarial environment with a non-additive function class).
+- [x] **3. Technique transfer** (`transfer.html`, 35 suggestions, also shown on gap cards): for a setting with a gap, list algorithm families (registry `family` / techniques) that achieve the best bound in neighbouring settings but don't appear here.
+- [x] **4. Redundancy** (`redundant.html`, 49 findings): an own result that is dominated by an inherited result from an *earlier* paper is "implied by prior work". List these with the derivation path.
 
 ## Phase 4: Scale to the full bandit literature (~1000–3000 papers)
 

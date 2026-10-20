@@ -18,7 +18,7 @@ CLAUDE_CLI_USAGE_LOG=data/extract.usage.jsonl \
   uv run python pipeline/extract.py --workers 3
 uv run python pipeline/validate.py
 uv run python pipeline/fetch_pdf.py         # non-arXiv papers: PDF -> text (manifest pdf_url)
-uv run python pipeline/derive.py            # resolve -> infer -> compare -> report -> acceptance
+uv run python pipeline/derive.py            # resolve -> infer -> compare -> report -> acceptance -> site_index
 uv run python pipeline/verify.py            # second-reading verification -> data/extractions_verified/ (never edits extractions)
 uv run python pipeline/triage.py            # web search per candidate gap -> data/reports/triage.yaml
 uv run python site/build.py && python3 -m http.server -d _site 8000
@@ -91,6 +91,15 @@ Two transfer rules between quantity families:
 - Bayesian lower bounds count as worst-case lower bounds (set in `infer.py`).
 
 `report.py` writes `data/canonical/poset.json` (the covering edges, with justifications) and `data/reports/*.md`: gaps, missing lower bounds, conflicts, unstudied neighbours, already-known results. `acceptance.py` checks the pilot facts and writes `data/acceptance-report.md`.
+
+## Site analysis index (Phase 3b)
+
+`site_index.py` writes `data/canonical/site_index.json`, the data behind the site's analysis pages:
+- every bound with its profile and a JavaScript plot function: the formula on the uniform-gap instance, with arguments T, K, d, Δ, δ, ε and other symbols at fixed base values (3,310 of 3,771 plottable);
+- tightness cells with gap-triage verdicts;
+- technique-transfer suggestions: algorithm families achieving a neighbour's best bound but absent here;
+- unstudied neighbours, with ill-posed combinations removed;
+- redundancy findings.
 
 ## Sources are not redistributed
 
