@@ -21,10 +21,11 @@ ORDER = {"core": 0, "adjacent": 1, "applied": 2, "off_topic": 3}
 
 def main() -> None:
     pool = {p["id"]: p for p in (json.loads(line) for line in (ROOT / "corpus" / "pool.jsonl").open(encoding="utf-8"))}
+    key_to_id = {p["key"]: i for i, p in pool.items() if p.get("key")}  # screening records carry stable keys
     scr = {}
     for line in (ROOT / "corpus" / "screening.jsonl").open(encoding="utf-8"):
         r = json.loads(line)
-        scr[r["id"]] = r  # last verdict wins
+        scr[key_to_id.get(r.get("key"), r["id"])] = {**r, "id": key_to_id.get(r.get("key"), r["id"])}  # last verdict wins
     rows = sorted((r for r in scr.values() if r["id"] in pool),
                   key=lambda r: (ORDER[r["label"]], -(pool[r["id"]]["year"] or 0)))
     with open(ROOT / "corpus" / "screened.csv", "w", newline="", encoding="utf-8") as f:

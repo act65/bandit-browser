@@ -85,7 +85,7 @@ def screen_batch(batch: list[dict], model: str) -> list[dict]:
     res = []
     for r in out["papers"]:
         if r["id"] in by_id:
-            res.append({**r, "title_only": not by_id[r["id"]].get("abstract"), "model": model})
+            res.append({**r, "key": by_id[r["id"]]["key"], "title_only": not by_id[r["id"]].get("abstract"), "model": model})
     return res
 
 
@@ -97,8 +97,12 @@ def main() -> None:
     ap.add_argument("--batch", type=int, default=40)
     args = ap.parse_args()
     pool = [json.loads(line) for line in POOL.open(encoding="utf-8")]
-    done = {json.loads(line)["id"] for line in OUT.open(encoding="utf-8")} if OUT.exists() else set()
-    todo = [p for p in pool if p["id"] not in done and eligible(p)]
+    done = set()
+    if OUT.exists():
+        for line in OUT.open(encoding="utf-8"):
+            r = json.loads(line)
+            done.add(r.get("key") or r["id"])
+    todo = [p for p in pool if p["key"] not in done and eligible(p)]
     if args.sample:
         random.seed(0)
         corpus = [p for p in todo if p["in_corpus"]]

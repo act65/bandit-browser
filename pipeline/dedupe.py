@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import collections
 import csv
+import hashlib
 import json
 import re
 import sys
@@ -112,7 +113,11 @@ def main() -> None:
         first = re.sub(r"[^a-z]", "", first) or "anon"
         year = min(years) if years else None
         word = next((w for w in norm_title(title).split() if len(w) > 3), "paper")
+        # stable key: survives re-harvests and metadata fixes (ids include the year, which can change)
+        key = (f"arxiv:{arxiv.split('v')[0]}" if arxiv else f"doi:{doi.lower()}" if doi
+               else "title:" + hashlib.sha1(norm_title(title).encode()).hexdigest()[:12])
         pool.append({
+            "key": key,
             "id": next((m["manifest_id"] for m in members if m.get("manifest_id")), f"{first}{year or ''}{word}"),
             "title": title, "authors": authors, "year": year, "arxiv_id": arxiv, "doi": doi,
             "venues": sorted({m["venue"] for m in members if m.get("venue")}),

@@ -85,10 +85,11 @@ def main() -> None:
     rnd = random.Random(args.seed)
 
     pool = {p["id"]: p for p in (json.loads(l) for l in (ROOT / "corpus" / "pool.jsonl").open(encoding="utf-8"))}
+    key_to_id = {p["key"]: i for i, p in pool.items() if p.get("key")}  # screening records carry stable keys
     scr = {}
     for line in (ROOT / "corpus" / "screening.jsonl").open(encoding="utf-8"):
         r = json.loads(line)
-        scr[r["id"]] = r
+        scr[key_to_id.get(r.get("key"), r["id"])] = {**r, "id": key_to_id.get(r.get("key"), r["id"])}
     manifest = yaml.safe_load((ROOT / "corpus" / "manifest.yaml").read_text())["papers"]
     have = {p.get("arxiv_id") for p in manifest} | {p["id"] for p in manifest}
     core = [{**pool[i], "slice": r["slice"], "reason": r["reason"], "confidence": r["confidence"]}
