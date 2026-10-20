@@ -362,7 +362,7 @@ def bib_entries_bbl(text: str) -> list[dict]:
     for item in re.split(r"\\bibitem", text)[1:]:
         blocks = [" ".join(re.sub(r"\\[a-zA-Z]+|[{}~]", " ", b).split()) for b in item.split("\\newblock")]
         if len(blocks) >= 2:
-            y = re.findall(r"\b(19\d\d|20\d\d)\b", item)
+            y = re.findall(r"(?<![\d.])(19\d\d|20\d\d)(?![\d.])", item)  # not part of an arXiv id like 1907.05772
             out.append({"title": blocks[1].rstrip(" ."), "authors": [blocks[0][:200]], "year": int(y[-1]) if y else None,
                         "doi": None, "arxiv_id": norm_arxiv(item if "arxiv" in item.lower() else "")})
     return out

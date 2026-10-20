@@ -101,7 +101,10 @@ def main() -> None:
         abstract = next((m["abstract"] for s in ABSTRACT_PRIORITY for m in members if m["source"] == s and m.get("abstract")),
                         next((m["abstract"] for m in members if m.get("abstract")), None))  # any other source
         title = best["title"]
-        years = [m["year"] for m in members if isinstance(m.get("year"), int)]
+        # bibliography years are parsed heuristically (e.g. an arXiv id 1907.xxxxx reads as 1907):
+        # use them only when no metadata source gives a year
+        years = [m["year"] for m in members if isinstance(m.get("year"), int) and not m["source"].startswith("bib:")] \
+            or [m["year"] for m in members if isinstance(m.get("year"), int)]
         arxiv = next((norm_arxiv(m["arxiv_id"]) for m in members if m.get("arxiv_id")), None)
         doi = next((m["doi"] for m in members if m.get("doi")), None)
         authors = next((m["authors"] for m in members if m.get("authors") and m["source"] in ("arxiv", "pmlr", "neurips", "openalex", "manifest")), members[0].get("authors") or [])
