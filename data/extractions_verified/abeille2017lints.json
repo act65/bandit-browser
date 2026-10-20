@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "stochastic linear bandit",
+   "name_in_paper": "Stochastic linear bandit",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -30,25 +30,37 @@
     "d"
    ],
    "instance_assumptions": [],
+   "extras": [],
    "action_set": {
     "shape": "arbitrary_compact",
     "time_varying": "fixed",
-    "access": "linear_optimization_oracle"
+    "access": "linear_optimization_oracle",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable"
    },
-   "extras": [],
-   "parameters": {
-    "L_feat": "1"
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
    },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "arm set is an arbitrary (finite or infinite) compact subset of the unit ball"
+    "Noise is a martingale difference sequence, conditionally R-subgaussian (R plays the role of sigma)"
    ],
-   "definition_quote": "Let $\\X \\subset \\Re^d$ be an arbitrary (finite or infinite) set of arms. When an arm $x\\in\\X$ is pulled, a reward is generated as $r(x) = x^\\transp \\theta^\\star + \\xi$ ... The arm set $\\X$ is a bounded closed (and hence compact) subset of $\\mathbb{R}^d$ such that $\\|x\\| \\leq 1$ ... There exists $S$ such that $\\|\\theta^\\star\\| \\leq S$ and $S$ is known ... conditionally $R$-subgaussian"
+   "definition_quote": "Let $\\X \\subset \\Re^d$ be an arbitrary (finite or infinite) set of arms. When an arm $x\\in\\X$ is pulled, a reward is generated as $r(x) = x^\\transp \\theta^\\star + \\xi$ ... The arm set $\\X$ is a bounded closed (and hence compact) subset of $\\mathbb{R}^d$ such that $\\|x\\| \\leq 1$ ... There exists $S\\in\\Re^+$ such that $\\|\\theta^\\star\\| \\leq S$ and $S$ is known."
   },
   {
    "id": "s2",
-   "name_in_paper": "generalized linear bandit (GLM)",
+   "name_in_paper": "Generalized linear bandit (GLM)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -61,24 +73,37 @@
     "T",
     "S",
     "sigma",
-    "d"
+    "d",
+    "c_mu"
    ],
    "instance_assumptions": [],
+   "extras": [],
    "action_set": {
     "shape": "arbitrary_compact",
     "time_varying": "fixed",
-    "access": "linear_optimization_oracle"
+    "access": "linear_optimization_oracle",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable"
    },
-   "extras": [],
-   "parameters": {
-    "L_feat": "1"
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
    },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "link function continuously differentiable, k_mu-Lipschitz, derivative lower bounded by c_mu > 0; learner uses c_mu to scale the confidence radius"
+    "Link function continuously differentiable, k_mu-Lipschitz, derivative lower bounded by c_mu > 0"
    ],
-   "definition_quote": "Every time an arm $x\\in\\X$ is pulled, a reward is generated as $r(x) = \\mu(x^\\transp \\theta^\\star) + \\xi$, where $\\mu$ is the so-called link function ... The link function $\\mu$ is continuously differentiable, Lipschitz with constant $k_\\mu$ and such that $c_\\mu = \\inf (x^\\transp \\theta) > 0$."
+   "definition_quote": "a reward is generated as $r(x) = \\mu(x^\\transp \\theta^\\star) + \\xi$, where $\\mu$ is the so-called \\textit{link function} ... The link function $\\mu : \\mathbb{R} \\rightarrow \\mathbb{R}$ is continuously differentiable, Lipschitz with constant $k_\\mu$ and such that $c_\\mu = \\inf_{\\theta \\in \\mathbb{R}^d, x \\in \\mathcal{X}} (x^\\transp \\theta) > 0$."
   }
  ],
  "algorithms": [
@@ -100,7 +125,7 @@
   },
   {
    "id": "a2",
-   "name": "TS for generalized linear bandit (beta scaled by 1/c_mu)",
+   "name": "Thompson Sampling for generalized linear bandit",
    "registry_id": "glm_ts",
    "is_new": true,
    "techniques": [
@@ -111,8 +136,8 @@
     "S",
     "sigma",
     "d",
-    "delta",
-    "c_mu"
+    "c_mu",
+    "delta"
    ]
   }
  ],
@@ -131,16 +156,14 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "(beta_T + gamma_T*(1 + 4/p_ac))*sqrt(2*T*d*log(1 + T/lam)) + 4*gamma_T/p_ac*sqrt(8*T/lam*log(4/delta))",
+    "expression": "(beta_T + gamma_TS*(1 + 4/p_anti))*sqrt(2*T*d*log(1 + T/lam)) + 4*gamma_TS/p_anti*sqrt(8*T/lam*log(4/delta))",
     "expression_latex": "\\big(\\beta_T(\\delta^\\prime) +  \\gamma_T(\\delta^\\prime)(1 + \\frac{4}{p}) \\big) \\sqrt{ 2 T d \\log \\big( 1 + \\frac{T}{\\lambda} \\big) } + \\frac{4 \\gamma_T(\\delta^\\prime)}{p} \\sqrt{\\frac{8 T } {\\lambda} \\log \\frac{4}{\\delta} }",
     "regime": null
    },
    "symbols": {
-    "beta_T": "RLS confidence radius beta_T(delta') = sigma*sqrt(2*log((lam+T)^(d/2) lam^(-d/2)/delta')) + sqrt(lam)*S, with delta' = delta/(4T)",
-    "gamma_T": "beta_T(delta')*sqrt(c_D*d*log(c_D_prime*d/delta')), TS ellipsoid radius",
-    "p_ac": "anti-concentration probability p of the sampling distribution D^TS",
-    "c_D": "concentration constant c of D^TS",
-    "c_D_prime": "concentration constant c' of D^TS"
+    "beta_T": "beta_T(delta') = sigma*sqrt(2*log((lam+T)^(d/2)*lam^(-d/2)/delta')) + sqrt(lam)*S, with delta' = delta/(4T)",
+    "gamma_TS": "paper's gamma_T(delta') = beta_T(delta')*sqrt(c*d*log(c'*d/delta')), c, c' concentration constants of D^TS",
+    "p_anti": "paper's p: anti-concentration probability of the sampling distribution D^TS"
    },
    "conditions": [
     "||x|| <= 1 for all arms",
@@ -149,8 +172,7 @@
    ],
    "tuning": [
     "delta' = delta/(4T)",
-    "lambda >= 1 (needed by Prop. 2)",
-    "eta_t drawn i.i.d. from a distribution satisfying Definition 1 (e.g. N(0,I) with c=c'=2, p=1/(4 sqrt(e pi)))"
+    "sampling distribution D^TS satisfies concentration/anti-concentration (Def. 1), e.g. N(0,I) with c=c'=2, p=1/(4 sqrt(e pi))"
    ],
    "is_new": true,
    "source": {
@@ -159,10 +181,45 @@
     "quote": "Under assumptions~\\ref{asm:arm.set},\\ref{asm:param.set},\\ref{asm:subgaussian}, the regret of \\ts is bounded w.p. $1-\\delta$ as ($\\delta^\\prime = \\frac{\\delta}{4T}$) R(T) \\leq \\big(\\beta_T(\\delta^\\prime) +  \\gamma_T(\\delta^\\prime)(1 + \\frac{4}{p}) \\big) \\sqrt{ 2 T d \\log \\big( 1 + \\frac{T}{\\lambda} \\big) } + \\frac{4 \\gamma_T(\\delta^\\prime)}{p} \\sqrt{\\frac{8 T } {\\lambda} \\log \\frac{4}{\\delta} }."
    },
    "confidence": "high",
-   "notes": "Paper states this is of order O~(d^{3/2} sqrt(T)). Regret defined via means (pseudo-regret realized along trajectory), bound holds w.p. 1-delta. The paper's R is sigma."
+   "notes": "Regret defined via expected rewards x^T theta*, w.p. 1-delta. Paper's R (noise level) mapped to sigma. Same algorithm as Agrawal & Goyal's LinTS but with general oversampled perturbation."
   },
   {
    "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**(3/2)*sqrt(T)",
+    "expression_latex": "\\wt{O}(d^{3/2}\\sqrt{T})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "||x|| <= 1 for all arms",
+    "||theta*|| <= S"
+   ],
+   "tuning": [
+    "delta' = delta/(4T)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:regret_ts",
+    "number": "Theorem 1",
+    "quote": "As anticipated in introduction, this bound is of order $\\wt{O}(d^{3/2}\\sqrt{T})$ and it entirely matches the result of~\\citet{agrawal2012thompson}."
+   },
+   "confidence": "medium",
+   "notes": "Order-of-magnitude restatement of Theorem 1 given in the text right after it."
+  },
+  {
+   "id": "r3",
    "setting": "s2",
    "side": "upper",
    "algorithm": "a2",
@@ -175,18 +232,14 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "k_mu/c_mu*(beta_T + gamma_T*(1 + 2/p_ac))*sqrt(2*T*d*log(1 + T/lam)) + 2*k_mu*gamma_T/(p_ac*c_mu)*sqrt(8*T/lam*log(4/delta))",
+    "expression": "k_mu/c_mu*(beta_T + gamma_TS*(1 + 2/p_anti))*sqrt(2*T*d*log(1 + T/lam)) + 2*k_mu*gamma_TS/(p_anti*c_mu)*sqrt(8*T/lam*log(4/delta))",
     "expression_latex": "\\frac{k_\\mu}{c_\\mu} \\big(\\beta_T(\\delta^\\prime) +  \\gamma_T(\\delta^\\prime)(1 + 2/p) \\big) \\sqrt{ 2 T d \\log \\big( 1 + \\frac{T}{\\lambda} \\big) } + \\frac{2 k_\\mu\\gamma_T(\\delta^\\prime)}{p c_\\mu} \\sqrt{\\frac{8 T } {\\lambda} \\log \\frac{4}{\\delta} }",
     "regime": null
    },
    "symbols": {
-    "beta_T": "RLS confidence radius beta_T(delta') as in Eq. (beta), delta' = delta/(4T)",
-    "gamma_T": "beta_T(delta')*sqrt(c_D*d*log(c_D_prime*d/delta'))",
-    "p_ac": "anti-concentration probability p of D^TS",
-    "k_mu": "Lipschitz constant of the link function",
-    "c_mu": "lower bound on the derivative of the link function",
-    "c_D": "concentration constant c of D^TS",
-    "c_D_prime": "concentration constant c' of D^TS"
+    "beta_T": "beta_T(delta') = sigma*sqrt(2*log((lam+T)^(d/2)*lam^(-d/2)/delta')) + sqrt(lam)*S, delta' = delta/(4T)",
+    "gamma_TS": "paper's gamma_T(delta') = beta_T(delta')*sqrt(c*d*log(c'*d/delta'))",
+    "p_anti": "paper's p: anti-concentration probability of D^TS"
    },
    "conditions": [
     "||x|| <= 1 for all arms",
@@ -195,7 +248,7 @@
    ],
    "tuning": [
     "delta' = delta/(4T)",
-    "confidence radius beta multiplied by 1/c_mu"
+    "beta multiplied by 1/c_mu in the sampling"
    ],
    "is_new": true,
    "source": {
@@ -204,7 +257,7 @@
     "quote": "Under assumptions~\\ref{asm:arm.set},\\ref{asm:param.set},\\ref{asm:subgaussian} and~\\ref{asm:link.function}, the cumulative regret of \\ts over $T$ steps is bounded as R^{\\text{GLM}}(T) \\leq \\frac{k_\\mu}{c_\\mu} \\big(\\beta_T(\\delta^\\prime) +  \\gamma_T(\\delta^\\prime)(1 + 2/p) \\big) \\sqrt{ 2 T d \\log \\big( 1 + \\frac{T}{\\lambda} \\big) } + \\frac{2 k_\\mu\\gamma_T(\\delta^\\prime)}{p c_\\mu} \\sqrt{\\frac{8 T } {\\lambda} \\log \\frac{4}{\\delta} } with probability $1-\\delta$ where $\\delta^\\prime = \\frac{\\delta}{4T}$."
    },
    "confidence": "medium",
-   "notes": "Proof only sketched; constants (2/p vs 4/p) differ from Theorem 1 as printed. Regularized linear optimization extension claims the same bound as Theorem 1 informally (no formal statement), not recorded."
+   "notes": "Proof is a sketch; the constant 2/p differs from 4/p in Theorem 1 as stated. Assumption 4 literally writes inf of x^T theta > 0 (typo for derivative of mu)."
   }
  ],
  "cited_results": [
@@ -214,10 +267,10 @@
    "cited_first_author": "Shipra Agrawal",
    "cited_year": 2012,
    "cited_arxiv_id": "1209.3352",
-   "algorithm_name": "Thompson Sampling for linear contextual bandits (Gaussian prior)",
+   "algorithm_name": "Linear Thompson Sampling",
    "algorithm_registry_id": "lin_ts",
    "side": "upper",
-   "setting_description": "stochastic linear (contextual) bandit, frequentist regret",
+   "setting_description": "Stochastic linear (contextual) bandit, frequentist regret",
    "bound": {
     "notation": "O_tilde",
     "expression": "d**(3/2)*sqrt(T)",
@@ -235,7 +288,7 @@
    "algorithm_name": "OFUL",
    "algorithm_registry_id": "oful",
    "side": "upper",
-   "setting_description": "stochastic linear bandit",
+   "setting_description": "Stochastic linear bandit",
    "bound": {
     "notation": "O_tilde",
     "expression": "d*sqrt(T)",
@@ -251,27 +304,64 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "3e8a186d587d",
+  "prompt_sha": "225d94076f15",
   "schema_version": "0.4",
-  "ontology_version": "bandits-0.3",
+  "ontology_version": "bandits-0.4",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T17:34:41",
+  "date": "2026-10-20T09:11:32",
   "source_chars": 108040,
-  "input_tokens": 78835,
-  "output_tokens": 5155,
-  "cost_usd_equiv": 0.5447936,
+  "input_tokens": 82451,
+  "output_tokens": 5843,
+  "cost_usd_equiv": 0.5592768,
   "status": "extracted"
  },
  "_verify": {
   "models": [
    "claude-opus-5-5[1m]"
   ],
-  "prompt_sha": "81d04c3b9fd7",
-  "date": "2026-10-19T17:38:47",
-  "applied_on": "2026-10-19T17:42:58",
+  "prompt_sha": "2ad8746f9c72",
+  "date": "2026-10-20T09:21:45",
+  "applied_on": "2026-10-20T09:25:20",
   "min_confidence": "medium",
-  "applied": [],
+  "applied": [
+   {
+    "target": "results.r1.bound.expression",
+    "old": "\"(beta_T + gamma_T*(1 + 4/p))*sqrt(2*T*d*log(1 + T/lam)) + 4*gamma_T/p*sqrt(8*T/lam*log(4/delta))\"",
+    "new": "\"(beta_T + gamma_TS*(1 + 4/p_anti))*sqrt(2*T*d*log(1 + T/lam)) + 4*gamma_TS/p_anti*sqrt(8*T/lam*log(4/delta))\"",
+    "reason": "gamma_T and p are canonical variables (max information gain; smoothness order) and mean something else here. They must be renamed under rule 4.",
+    "evidence": "Let $\\gamma_t(\\delta) = \\beta_t(\\delta^\\prime)\\sqrt{c d \\log(c^\\prime d/\\delta)}$",
+    "severity": "major",
+    "confidence": "medium"
+   },
+   {
+    "target": "results.r1.symbols",
+    "old": "{\"beta_T\": \"beta_T(delta') = sigma*sqrt(2*log((lam+T)^(d/2)*lam^(-d/2)/delta')) + sqrt(lam)*S, with delta' = delta/(4T)\", \"gamma_T\": \"gamma_T(delta') = beta_T(delta')*sqrt(c*d*log(c'*d/delta')), c, c' concentration constants of D^TS\", \"p\": \"anti-concentration probability of the sampling distribution D^TS\"}",
+    "new": "{\"beta_T\": \"beta_T(delta') = sigma*sqrt(2*log((lam+T)^(d/2)*lam^(-d/2)/delta')) + sqrt(lam)*S, with delta' = delta/(4T)\", \"gamma_TS\": \"paper's gamma_T(delta') = beta_T(delta')*sqrt(c*d*log(c'*d/delta')), c, c' concentration constants of D^TS\", \"p_anti\": \"paper's p: anti-concentration probability of the sampling distribution D^TS\"}",
+    "reason": "Declares the renamed symbols so they do not collide with the canonical gamma_T and p.",
+    "evidence": "there exists a strictly positive probability $p$ such that for any $u \\in \\mathbb{R}^d$",
+    "severity": "minor",
+    "confidence": "medium"
+   },
+   {
+    "target": "results.r3.bound.expression",
+    "old": "\"k_mu/c_mu*(beta_T + gamma_T*(1 + 2/p))*sqrt(2*T*d*log(1 + T/lam)) + 2*k_mu*gamma_T/(p*c_mu)*sqrt(8*T/lam*log(4/delta))\"",
+    "new": "\"k_mu/c_mu*(beta_T + gamma_TS*(1 + 2/p_anti))*sqrt(2*T*d*log(1 + T/lam)) + 2*k_mu*gamma_TS/(p_anti*c_mu)*sqrt(8*T/lam*log(4/delta))\"",
+    "reason": "Same canonical-symbol collision as in r1.",
+    "evidence": "\\frac{2 k_\\mu\\gamma_T(\\delta^\\prime)}{p c_\\mu} \\sqrt{\\frac{8 T } {\\lambda} \\log \\frac{4}{\\delta} }",
+    "severity": "major",
+    "confidence": "medium"
+   },
+   {
+    "target": "results.r3.symbols",
+    "old": "{\"beta_T\": \"beta_T(delta') = sigma*sqrt(2*log((lam+T)^(d/2)*lam^(-d/2)/delta')) + sqrt(lam)*S, delta' = delta/(4T)\", \"gamma_T\": \"gamma_T(delta') = beta_T(delta')*sqrt(c*d*log(c'*d/delta'))\", \"p\": \"anti-concentration probability of D^TS\"}",
+    "new": "{\"beta_T\": \"beta_T(delta') = sigma*sqrt(2*log((lam+T)^(d/2)*lam^(-d/2)/delta')) + sqrt(lam)*S, delta' = delta/(4T)\", \"gamma_TS\": \"paper's gamma_T(delta') = beta_T(delta')*sqrt(c*d*log(c'*d/delta'))\", \"p_anti\": \"paper's p: anti-concentration probability of D^TS\"}",
+    "reason": "Declares the renamed symbols.",
+    "evidence": "Let $\\gamma_t(\\delta) = \\beta_t(\\delta^\\prime)\\sqrt{c d \\log(c^\\prime d/\\delta)}$",
+    "severity": "minor",
+    "confidence": "medium"
+   }
+  ],
   "rejected": [],
   "flags": {
    "hallucinated": [],
@@ -279,6 +369,6 @@
    "unverifiable": [],
    "missing_results": []
   },
-  "summary": "The extraction is accurate. Theorem 1 and Lemma 4 are transcribed faithfully with correct constants, symbols, probability type and horizon, and the settings reflect the paper's assumptions. The informal regularized-linear-optimization claim has no formal statement and is correctly omitted; the cited bounds match the text."
+  "summary": "The extraction is accurate: the bounds from Theorem 1 and Lemma 4 are transcribed correctly, with all constants, and the settings, algorithms and cited results match the source. The only problem is that the symbols gamma_T and p collide with canonical variables that mean something else, so I propose renaming them. No guarantee is missing; the regularized linear optimization extension is only argued in prose, not stated as a formal result."
  }
 }

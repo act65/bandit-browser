@@ -26,8 +26,8 @@
    "noise": "bounded_pm1",
    "learner_knows": [
     "T",
-    "K",
-    "d"
+    "d",
+    "K"
    ],
    "instance_assumptions": [
     "arms_span_Rd"
@@ -36,20 +36,34 @@
    "action_set": {
     "shape": "finite",
     "time_varying": "fixed",
-    "access": "explicit"
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "l2_ball"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "||x||_2 <= 1 for all arms and ||theta_t||_2 <= 1, so losses <theta_t,x> lie in [-1,1]; noise assumed zero in adversarial setting",
-    "K denotes |D|, the number of arms in the finite arm set D"
+    "Noise assumed zero in adversarial environment; losses <x,theta_t> with ||x||<=1, ||theta_t||<=1 so in [-1,1]",
+    "Regret measured against best arm in expectation in hindsight"
    ],
-   "definition_quote": "We denote by $D\\subseteq \\mathbb{R}^d$ the \\textit{finite} arm set ... we further assume that $D$ spans $\\mathbb{R}^d$ and $\\|x\\|_2\\leq 1$ ... $\\norm{\\theta_t}_2 \\le 1$ ... In this work, we consider the non-oblivious adversary ... we assume $\\epsilon_t\\left(x_t\\right)=0$ for all $t$ in the adversarial environment."
+   "definition_quote": "We denote by $D\\subseteq \\mathbb{R}^d$ the \\textit{finite} arm set ... we further assume that $D$ spans $\\mathbb{R}^d$ and $\\|x\\|_2\\leq 1$ ... we assume $\\norm{\\theta_t}_2 \\le 1$ ... In this work, we consider the non-oblivious adversary"
   },
   {
    "id": "s2",
-   "name_in_paper": "Stochastic linear bandits with corruption (adversarial regime with (Delta, C, T) self-bounding constraint)",
+   "name_in_paper": "Stochastic linear bandits with corruption level C",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_corrupted",
@@ -60,34 +74,46 @@
    "noise": "bounded_pm1",
    "learner_knows": [
     "T",
-    "K",
-    "d"
+    "d",
+    "K"
    ],
    "instance_assumptions": [
-    "arms_span_Rd",
-    "unique_optimal_arm"
+    "unique_optimal_arm",
+    "arms_span_Rd"
    ],
    "extras": [],
    "action_set": {
     "shape": "finite",
     "time_varying": "fixed",
-    "access": "explicit"
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "l2_ball"
+   },
+   "corruption": {
+    "adversary": "adaptive",
+    "budget_measure": "per_path",
+    "structure": "arbitrary",
+    "regret_reference": "corrupted"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Corruption c_t added to the observed loss is arbitrary (not necessarily linear in x_t), may depend on history; C = sum_t |c_t|",
-    "Noise is described only as independent zero-mean, but the analysis uses |ell_t(x_t)| <= 1",
-    "K denotes |D|"
+    "Noise is 'independent zero-mean'; analysis uses |l_t(x_t)|<=1"
    ],
-   "definition_quote": "For the corrupted stochastic environment, it is also satisfied that $\\theta_t=\\theta$ for some \\textit{unknown} $\\theta$, but the learner now receives loss $\\ell_t(x_t)=\\left\\langle x_t,\\theta \\right\\rangle+\\epsilon_t\\left(x_t\\right)+c_t$ ... let $C=\\sum_{t=1}^T|c_t|$ be the corruption level"
+   "definition_quote": "For the corrupted stochastic environment, it is also satisfied that $\\theta_t=\\theta$ for some \\textit{unknown} $\\theta$, but the learner now receives loss $\\ell_t(x_t)=\\left\\langle x_t,\\theta \\right\\rangle+\\epsilon_t\\left(x_t\\right)+c_t$, where $c_t$ is the corrupted value chosen by the adversary ... let $C=\\sum_{t=1}^T|c_t|$ be the corruption level"
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "FTRL for Linear Bandits (negative entropy regularizer + G-optimal design exploration)",
+   "name": "FTRL for Linear Bandits (negative entropy + G-optimal design exploration)",
    "registry_id": "ftrl_linear_negentropy_g_optimal",
    "is_new": true,
    "techniques": [
@@ -96,8 +122,8 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "K",
-    "d"
+    "d",
+    "K"
    ]
   }
  ],
@@ -121,11 +147,9 @@
     "regime": null
    },
    "symbols": {},
-   "conditions": [
-    "||x||_2 <= 1, ||theta_t||_2 <= 1"
-   ],
+   "conditions": [],
    "tuning": [
-    "psi_t(p) = -beta_t H(p)",
+    "psi_t = -beta_t H(p)",
     "gamma_t = min{g(pi)/beta_t, 1/2}",
     "beta_t = 2g(pi) + sqrt(d ln T/ln|D|) + sum_{tau<t} sqrt(d ln T/ln|D|)/sqrt(1+(ln|D|)^{-1} sum_{s<=tau} H(q_s))"
    ],
@@ -133,10 +157,10 @@
    "source": {
     "label": "thm:thmregret",
     "number": "Theorem (thm:thmregret)",
-    "quote": "Choose $\\psi_t(p) = -\\beta_t H(p)$ and $\\gamma_t = \\min\\sets{g(\\pi)/\\beta_t,1/2 }$ ... In the adversarial environment, regret can be upper bounded by $R(T) \\le O\\bracket{\\sqrt{dT\\ln T \\ln(|D|T)}}$"
+    "quote": "In the adversarial environment, regret can be upper bounded by R(T) \\le O\\bracket{\\sqrt{dT\\ln T \\ln(|D|T)}}"
    },
    "confidence": "high",
-   "notes": "R(T) defined vs best arm in expectation in hindsight; recorded as pseudo-regret. K = |D|. Learning rate uses ln T, so T known."
+   "notes": "K = |D|. Regret is expected pseudo-regret per the paper's definition. Learning rate uses ln T so horizon known."
   },
   {
    "id": "r2",
@@ -153,26 +177,24 @@
    "bound": {
     "notation": "O",
     "expression": "d*log(T)*log(K*T)/Delta_min + sqrt(C*d*log(T)*log(K*T)/Delta_min)",
-    "expression_latex": "O \\bracket{\\frac{ d\\ln T \\ln (|D|T) }{ \\Delta_{\\min}} + \\sqrt{\\frac{Cd\\ln T \\ln (|D|T)}{\\Delta_{\\min}}} }",
+    "expression_latex": "O \\bracket{\\frac{ d\\ln T \\ln (|D|T) }{ \\Delta_{\\min}} + \\sqrt{\\frac{Cd\\ln T \\ln (|D|T)}{\\Delta_{\\min}}}  }",
     "regime": null
    },
    "symbols": {},
-   "conditions": [
-    "unique optimal arm",
-    "||x||_2 <= 1, ||theta||_2 <= 1",
-    "C = sum_t |c_t| corruption level"
-   ],
+   "conditions": [],
    "tuning": [
-    "same beta_t, gamma_t as in Theorem"
+    "psi_t = -beta_t H(p)",
+    "gamma_t = min{g(pi)/beta_t, 1/2}",
+    "beta_t as in Theorem"
    ],
    "is_new": true,
    "source": {
     "label": "thm:thmregret",
     "number": "Theorem (thm:thmregret)",
-    "quote": "In the stochastic environment with corruption level $C$, the regret can be bounded by $R(T) \\le O \\bracket{\\frac{ d\\ln T \\ln (|D|T) }{ \\Delta_{\\min}} + \\sqrt{\\frac{Cd\\ln T \\ln (|D|T)}{\\Delta_{\\min}}} }$, where $\\Delta_{\\min}=\\min_{x\\in D,x\\neq x^*}\\Delta(x)$"
+    "quote": "In the stochastic environment with corruption level $C$, the regret can be bounded by R(T) \\le O \\bracket{\\frac{ d\\ln T \\ln (|D|T) }{ \\Delta_{\\min}} + \\sqrt{\\frac{Cd\\ln T \\ln (|D|T)}{\\Delta_{\\min}}}  }"
    },
    "confidence": "high",
-   "notes": "C=0 gives the stochastic case. Proof goes via the self-bounding framework."
+   "notes": "C=0 gives the stochastic result. Proof goes via the (Delta,C,T) self-bounding constraint; corruption c_t arbitrary (not linear). Delta_min is min gap over suboptimal arms."
   }
  ],
  "cited_results": [
@@ -182,8 +204,8 @@
    "cited_first_author": "Sébastien Bubeck",
    "cited_year": 2012,
    "cited_arxiv_id": null,
-   "algorithm_name": "Exp2 with John's exploration",
-   "algorithm_registry_id": "exp2_john",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
    "side": "upper",
    "setting_description": "Adversarial linear bandits, finite arm set D",
    "bound": {
@@ -200,7 +222,7 @@
    "cited_first_author": "Tor Lattimore",
    "cited_year": 2017,
    "cited_arxiv_id": null,
-   "algorithm_name": "Optimal Algorithm (warm-up / success / recovery phases)",
+   "algorithm_name": "Optimal Algorithm",
    "algorithm_registry_id": "end_of_optimism_optimal",
    "side": "upper",
    "setting_description": "Stochastic finite-armed linear bandits (C=0)",
@@ -218,10 +240,10 @@
    "cited_first_author": "Chung-Wei Lee",
    "cited_year": 2021,
    "cited_arxiv_id": null,
-   "algorithm_name": "detect-switch algorithm of Lee et al.",
+   "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Corrupted stochastic finite-armed linear bandits (linear corruption)",
+   "setting_description": "Stochastic linear bandits with (linear) corruption, finite arm set",
    "bound": {
     "notation": "O",
     "expression": "C_lin*log(T)**2 + C",
@@ -236,10 +258,10 @@
    "cited_first_author": "Chung-Wei Lee",
    "cited_year": 2021,
    "cited_arxiv_id": null,
-   "algorithm_name": "detect-switch algorithm of Lee et al.",
+   "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Adversarial finite-armed linear bandits",
+   "setting_description": "Adversarial linear bandits, finite arm set",
    "bound": {
     "notation": "O",
     "expression": "sqrt(d*T*log(T)**2)",
@@ -291,16 +313,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "3e8a186d587d",
+  "prompt_sha": "225d94076f15",
   "schema_version": "0.4",
-  "ontology_version": "bandits-0.3",
+  "ontology_version": "bandits-0.4",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T17:37:40",
+  "date": "2026-10-20T09:14:11",
   "source_chars": 55954,
-  "input_tokens": 53369,
-  "output_tokens": 5091,
-  "cost_usd_equiv": 0.3397856,
+  "input_tokens": 56985,
+  "output_tokens": 5152,
+  "cost_usd_equiv": 0.3417288,
   "status": "extracted"
  }
 }

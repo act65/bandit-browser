@@ -3,7 +3,7 @@
 This file has three parts:
 
 1. **The prompt**: the system prompt given to the LLM extractor, verbatim (everything inside the `PROMPT` fence).
-2. **Controlled vocabulary**: the bandits ontology, maintained in [`ontology/bandits-0.3.yaml`](ontology/bandits-0.3.yaml), with variables in [`ontology/variables.yaml`](ontology/variables.yaml), and rendered into the prompt by `pipeline/extract.py`.
+2. **Controlled vocabulary**: the bandits ontology, maintained in [`ontology/bandits-0.4.yaml`](ontology/bandits-0.4.yaml), with variables in [`ontology/variables.yaml`](ontology/variables.yaml), and rendered into the prompt by `pipeline/extract.py`.
 3. **Design notes**: why the schema looks the way it does, and open questions.
 
 The core of the schema (`paper`, `results`, `bound`, provenance) is domain-agnostic ([desiderata.md](desiderata.md) D3). Only the `setting` dimensions and the variable vocabulary are bandit-specific.
@@ -44,7 +44,7 @@ Also extract:
 16. `compute`: whether the algorithm behind an upper bound runs in polynomial time per round, as stated or clearly implied by the paper; `non_constructive` for existence proofs; `not_stated` otherwise and for lower bounds.
 17. `learner_knows`: for a setting used by an **upper bound**, include every input the algorithm needs that is in the vocabulary, as listed in its `requires_knowledge_of` (e.g. gaps used to tune a regulariser, the noise level, a norm bound S). For a setting used by a **lower bound**, include everything the lower bound allows the learner to know (lower bounds usually hold even when the learner knows T, K, the noise level and the model class; a lower bound against a better-informed learner is stronger). If an upper and a lower bound of the paper need different `learner_knows`, create two settings (append " (lower bound)" to `name_in_paper`) rather than sharing one.
 18. `instance_assumptions`: add a value only if the paper states it as an assumption of the result. Do not add consequences of the setting (two arms with Δ > 0 already have a unique optimal arm).
-19. `quantity`: choose it from the paper's *definition*, not its name (definitions are in the vocabulary). Regret defined through means (Σ μ* − μ_{A_t}, or ⟨θ, x* − x_t⟩, inside an expectation) is `pseudo_regret` even when the paper calls it "expected regret".
+19. If a bound is on the *average* per-round regret (regret divided by T), multiply the expression by T so that it bounds total regret, and say so in `notes`. `quantity`: choose it from the paper's *definition*, not its name (definitions are in the vocabulary). Regret defined through means (Σ μ* − μ_{A_t}, or ⟨θ, x* − x_t⟩, inside an expectation) is `pseudo_regret` even when the paper calls it "expected regret".
 20. Declared symbols: name them after the paper's own symbol, transliterated with underscores (C_2, not C2_eps; n_explore for the paper's exploration length n), and reuse canonical names such as `eps_alg` whenever the meaning matches.
 21. Never put O(·), Θ(·), Ω(·) or "lim" inside `bound.expression`: use `bound.notation`. For liminf/limsup results whose statement is lim R_T / log T ≤ c, write the expression as `c*log(T)`.
 22. Output a single JSON object matching the schema below, and nothing else.
@@ -193,11 +193,17 @@ with setting s1 = {objective: cumulative_regret, feedback: bandit, environment: 
 
 ## 2. Controlled vocabulary
 
-The vocabulary lives in [`ontology/bandits-0.3.yaml`](ontology/bandits-0.3.yaml), variables in [`ontology/variables.yaml`](ontology/variables.yaml) and algorithms in [`data/algorithms.yaml`](data/algorithms.yaml). These are the single sources of truth. `pipeline/extract.py` renders it into the prompt in place of `{{ONTOLOGY}}`, and `pipeline/schema.py` turns it into the JSON Schema enums. Version history:
+The vocabulary lives in [`ontology/bandits-0.4.yaml`](ontology/bandits-0.4.yaml), variables in [`ontology/variables.yaml`](ontology/variables.yaml) and algorithms in [`data/algorithms.yaml`](data/algorithms.yaml). These are the single sources of truth. `pipeline/extract.py` renders it into the prompt in place of `{{ONTOLOGY}}`, and `pipeline/schema.py` turns it into the JSON Schema enums. Version history:
 
 - **v0.1** ([`ontology/bandits-0.1.yaml`](ontology/bandits-0.1.yaml)): dimensions objective, feedback, environment, action_space, context, noise, learner_knows and extras; per-dimension orders; K-armed → linear reduction.
 - **v0.2**: added the `function_class` (multi-select) and `domain` (improper ⊑ constrained, improper ⊑ unconstrained) dimensions, so bandit convex optimisation is expressible. Also added node `parameters` and a result-level `compute` field. New values: noise `conditionally_subgaussian` and `noise_free`, feedback `two_point`, environment `adversarial_unspecified`, objective `epsilon_optimal_point`, quantities `regret_unspecified` and `minimax_bayesian_regret`. `L` is split into `L_feat` / `L_lip`, and BCO variables are added. Driven by [`data/ground_truth/bco-ontology-notes.md`](data/ground_truth/bco-ontology-notes.md) and the OFUL test extraction.
 - **v0.3**: applies [`ontology/review-v0.2.md`](ontology/review-v0.2.md). Adds the `action_set` node parameter, `instance_assumptions`, richer `learner_knows`, adversary refinements, `comparator`, `in_scope`, and registry ids for algorithms and citations (D13). The variable registry has moved to `ontology/variables.yaml`.
+- **v0.4**: applies [`ontology/review-v0.3.md`](ontology/review-v0.3.md):
+  - `action_set` gains `norm_bound` / `parameter_set` / `loss_set`, plus a `strongly_convex` shape;
+  - new node parameters `corruption` and `feedback_graph`;
+  - more `learner_knows` values (L, ε, N, α(G), c_μ, L*, r_K, prior);
+  - noise `gaussian_unknown_variance` and feedback `decoupled`;
+  - a `guidance` list rendered into the prompt, covering features that were expressible but left unmapped.
 
 ## 3. Design notes and open questions
 

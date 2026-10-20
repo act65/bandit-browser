@@ -14,7 +14,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, create_model
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_ONTOLOGY = ROOT / "ontology" / "bandits-0.3.yaml"
+DEFAULT_ONTOLOGY = ROOT / "ontology" / "bandits-0.4.yaml"
 VARIABLES = ROOT / "ontology" / "variables.yaml"
 ALGORITHMS = ROOT / "data" / "algorithms.yaml"
 SCHEMA_VERSION = "0.4"

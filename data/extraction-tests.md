@@ -260,3 +260,17 @@ Re-extracted all 58 papers, about $38 equivalent. The new run used:
 | Conflicts in `data/reports/conflicts.md` | — | **0** |
 
 The 6 papers with a major correction or a missing-result flag make the first human-review queue: auer2002exp3, baudry2023recipe, bubeck2013bounded, dann2023blackbox, gerchinovitz2016refined, qin2023klms. Verifier reports are in `data/extractions_verified/*.verify.json`. Corrections are never auto-applied to `data/extractions/`.
+
+## 6. Ontology v0.4 extraction (59 papers, including Lai & Robbins)
+
+- Unmapped items: 266 → 180.
+- Validation: 49/59 clean. Quote misses are concentrated in the 6 PDF-converted papers; Lai & Robbins is an OCR'd 1985 scan.
+- `verify.py`: **38 corrections** (1 critical, 12 major, 25 minor) and 7 missing-result flags.
+  - Minor: 18 theorem-number nitpicks.
+  - Major or critical, typical ones:
+    - quantity by definition (Bubeck et al. 2012: pseudo- vs expected regret);
+    - symbol collisions with canonical names (Abeille & Lazaric's γ_T, p);
+    - worst-case vs instance-dependent for constructed lower bounds (Lykouris et al.);
+    - EXP3 Thm 9.1's average regret. The verifier independently proposes the same ×T fix as `data/corrections.yaml`.
+  - The richer v0.4 schema gives more fields to get wrong, hence more corrections than the v0.3-prompt run (4).
+- **Human review queue** (major/critical corrections or missing results; 12 papers): abeille2017lints, auer2002exp3, baudry2023recipe, bubeck2012minimax, bubeck2012survey, gerchinovitz2016refined, gupta2019corruption, hamidi2020lints, ito2022variance, lykouris2018corruption, qin2023klms, wei2018moreadaptive.

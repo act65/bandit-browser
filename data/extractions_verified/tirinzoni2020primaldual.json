@@ -28,27 +28,42 @@
    "learner_knows": [
     "T",
     "sigma",
-    "S"
+    "S",
+    "L_feat"
    ],
    "instance_assumptions": [
     "unique_optimal_arm"
    ],
-   "extras": [],
    "action_set": {
     "shape": "finite",
     "time_varying": "oblivious_sequence",
-    "access": "explicit"
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "arbitrary_bounded",
+    "loss_set": "not_applicable"
    },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "extras": [],
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "finite context set X drawn i.i.d. from distribution rho with rho(x) >= rho_min > 0 for all x",
-    "feature bound ||phi(x,a)||_2 <= L known to the algorithm (used in confidence widths)",
-    "unique optimal arm in each context",
-    "action feature set per round is {phi(X_t,a)} determined by the i.i.d. context"
+    "Finite context set X drawn i.i.d. from distribution rho with rho(x) >= rho_min > 0 for all contexts",
+    "Per-round feature set is {phi(X_t,a): a in A}, varying with the i.i.d. context",
+    "Unique optimal arm required in each context",
+    "Comparator is the best arm in each context"
    ],
-   "definition_quote": "At each time step $t \\in \\mathbb{N}$, the learner observes a context $X_t\\in\\X$ drawn i.i.d.\\ from a context distribution $\\rho$, it pulls an arm $A_t\\in\\A$, and it receives a reward $Y_{t} = \\phi(X_t,A_t)^\\transp\\theta^\\star + \\xi_t$ ... The realizable parameters belong to a compact subset $\\Theta$ of $\\R^d$ such that $\\|\\theta\\|_2 \\leq B$ ... features are bounded ... $\\rho(x) \\geq \\rho_{\\min} > 0$ ... $\\theta^\\star$ has a unique optimal arm in each context"
+   "definition_quote": "At each time step $t \\in \\mathbb{N}$, the learner observes a context $X_t\\in\\X$ drawn i.i.d.\\ from a context distribution $\\rho$, it pulls an arm $A_t\\in\\A$, and it receives a reward $Y_{t} = \\phi(X_t,A_t)^\\transp\\theta^\\star + \\xi_t$ ... The realizable parameters belong to a compact subset $\\Theta$ of $\\R^d$ such that $\\|\\theta\\|_2 \\leq B$ ... features are bounded, i.e., $\\| \\phi(x,a) \\|_2 \\leq L$ ... $\\rho(x) \\geq \\rho_{\\min} > 0$ ... $\\theta^\\star$ has a unique optimal arm in each context"
   }
  ],
  "algorithms": [
@@ -60,12 +75,15 @@
    "techniques": [
     "optimism",
     "ftrl_or_mirror_descent",
+    "exponential_weights",
+    "track_and_stop",
     "other"
    ],
    "requires_knowledge_of": [
     "T",
     "sigma",
-    "S"
+    "S",
+    "L_feat"
    ]
   }
  ],
@@ -85,16 +103,13 @@
    "bound": {
     "notation": "limsup",
     "expression": "C_lin*log(T)",
-    "expression_latex": "\\limsup_{n\\to\\infty} \\E[R_n(\\theta^\\star)]/\\log n \\le v^\\star(\\theta^\\star)",
-    "regime": null
+    "expression_latex": "asymptotically optimal with the same constant as in the lower bound of Prop. 1, i.e. \\limsup R_n/\\log n \\le v^\\star(\\theta^\\star)",
+    "regime": "n -> infinity"
    },
-   "symbols": {
-    "C_lin": "v*(theta*), value of the lower-bound optimisation problem (P)"
-   },
+   "symbols": {},
    "conditions": [
-    "Assumption 2: lambda_max >= 2 B L z_lower(theta*)",
-    "rho(x) >= rho_min > 0",
-    "||theta|| <= B, ||phi|| <= L"
+    "Assumption 1: ||theta|| <= B, ||phi(x,a)|| <= L, rho(x) >= rho_min > 0, unique optimal arm per context",
+    "Assumption 2: lambda_max >= 2 B L z_underline(theta*)"
    ],
    "tuning": [
     "beta_{t-1} = c_{n,1/n}",
@@ -106,10 +121,10 @@
    "source": {
     "label": "thm:regret.bound",
     "number": "Theorem 2",
-    "quote": "If \\algo is run with confidence values $\\beta_{t-1} = c_{n,1/n}$ and $\\gamma_t = c_{n,1/S_t^2}$, ... learning rates $\\alpha_k^\\lambda = \\alpha_k^\\omega = 1/\\sqrt{p_k}$ and increasing sequences $z_k = z_0 e^k$ and $p_k = z_k e^{2k}$, for some $z_0 \\geq 1$, then it is \\textbf{asymptotically optimal} with the same constant as in the lower bound of Prop.~\\ref{p:lower.bound}."
+    "quote": "If \\algo is run with confidence values $\\beta_{t-1} = c_{n,1/n}$ and $\\gamma_t = c_{n,1/S_t^2}$ ... learning rates $\\alpha_k^\\lambda = \\alpha_k^\\omega = 1/\\sqrt{p_k}$ and increasing sequences $z_k = z_0 e^k$ and $p_k = z_k e^{2k}$, for some $z_0 \\geq 1$, then it is \\textbf{asymptotically optimal} with the same constant as in the lower bound of Prop.~\\ref{p:lower.bound}."
    },
-   "confidence": "medium",
-   "notes": "Asymptotic optimality stated in words; formalised via c_{n,1/n}/(2 sigma^2 log n) -> 1 as noted in appendix. Requires lambda_max tuned with instance-dependent z_lower(theta*)."
+   "confidence": "high",
+   "notes": "Asymptotic optimality matches the cited lower bound of Proposition 1. The constant v* is written C_lin in the canonical vocabulary but is declared here as v_star. Regret is defined through mean gaps, so it is recorded as pseudo-regret."
   },
   {
    "id": "r2",
@@ -130,15 +145,13 @@
     "regime": null
    },
    "symbols": {
-    "C_lin": "v*(theta*), value of lower-bound problem (P)",
-    "c_n": "c_{n,1/n} = O(log n + d log log n), confidence radius of Theorem 1",
-    "C_log": "lin_{>=0}(v*(theta*), |X|, L^2, B^2, sqrt(d), 1/sigma^2)",
-    "C_const": "v*(theta*) B^2 L^2/sigma^2 + lin_{>=0}(L, B, z_0 (z_lower/z_0)^3, (z_bar/z_0)^2)"
+    "c_n": "confidence radius c_{n,1/n} = O(log n + d log log n) from Theorem 1",
+    "C_log": "lin_{>=0}(v*, |X|, L^2, B^2, sqrt(d), 1/sigma^2)",
+    "C_const": "v* B^2 L^2/sigma^2 + lin_{>=0}(L, B, z_0 (z_underline/z_0)^3, (z_bar/z_0)^2)"
    },
    "conditions": [
-    "Assumption 2: lambda_max >= 2 B L z_lower(theta*)",
-    "rho(x) >= rho_min > 0",
-    "||theta|| <= B, ||phi|| <= L"
+    "Assumption 1: ||theta|| <= B, ||phi(x,a)|| <= L, rho(x) >= rho_min > 0, unique optimal arm per context",
+    "Assumption 2: lambda_max >= 2 B L z_underline(theta*)"
    ],
    "tuning": [
     "beta_{t-1} = c_{n,1/n}",
@@ -150,10 +163,10 @@
    "source": {
     "label": "thm:regret.bound",
     "number": "Theorem 2",
-    "quote": "Furthermore, for any finite $n$ the regret of \\algo is bounded as $\\E_{\\xi,\\rho}^\\pi [ R_n(\\theta^\\star) ] \\leq v^\\star(\\theta^\\star) \\frac{c_{n,1/n}}{2\\sigma^2} + C_{\\log} (\\log\\log n)^{\\frac{1}{2}}(\\log n)^{\\frac{3}{4}} + C_{\\mathrm{const}}$"
+    "quote": "Furthermore, for any finite $n$ the regret of \\algo is bounded as \\E[R_n(\\theta^\\star)] \\leq v^\\star(\\theta^\\star) \\frac{c_{n,1/n}}{2\\sigma^2} + C_{\\log} (\\log\\log n)^{\\frac{1}{2}}(\\log n)^{\\frac{3}{4}} + C_{\\mathrm{const}}, where $C_{\\log} = lin_{\\geq 0}(v^\\star(\\theta^\\star),|\\X|,L^2,B^2,\\sqrt{d},1/\\sigma^2)$ and $C_{\\mathrm{const}} = v^\\star(\\theta^\\star)\\frac{B^2L^2}{\\sigma^2}+ lin_{\\geq 0 }(L,B, z_0 (\\sfrac{\\underline{z}(\\theta^\\star)}{z_0})^{3}, (\\sfrac{\\wb{z}(\\theta^\\star)}{z_0})^2)$."
    },
    "confidence": "medium",
-   "notes": "C_log and C_const are only described as lin_{>=0}(...) functions; recorded as declared symbols."
+   "notes": "The constants are given only through 'lin' functions, i.e. up to unspecified nonnegative coefficients. c_{n,1/n} is O(log n + d log log n). |X| is M_ctx. The paper says the bound depends only logarithmically on |A|."
   },
   {
    "id": "r3",
@@ -169,54 +182,53 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "12*S*L_feat*pi**2*C_lambda_max + 2*exp(r)*(lambda_max**2 + log(K))/r*sqrt(T) + C_sqrt*C_lambda_max*log(T)*sqrt(d*T)",
+    "expression": "12*S*L_feat*pi**2*C_lmax + 2*exp(r)*(lambda_max**2 + log(K))*sqrt(T)/r + C_sqrt*C_lmax*log(T)*sqrt(d*T)",
     "expression_latex": "12BL\\pi^2C_{\\lambda_{\\max}} + \\frac{2e^r\\left(\\lambda_{\\max}^2 + \\log|\\A|\\right)}{r}\\sqrt{n} + C_{\\mathrm{sqrt}} C_{\\lambda_{\\max}}\\log (n) \\sqrt{dn}",
     "regime": null
    },
    "symbols": {
-    "C_lambda_max": "1 + lambda_max*B*L/sigma^2",
-    "lambda_max": "maximum Lagrange multiplier (algorithm input)",
-    "r": "phase-length exponent, p_k = e^{r k}, r >= 1",
+    "C_lmax": "1 + lambda_max*B*L/sigma^2",
+    "lambda_max": "maximum Lagrange multiplier used by SOLID",
+    "r": "phase-length exponent, p_k = e^{rk}, r >= 1",
     "C_sqrt": "lin_{>=0}(|X| + sqrt(d), B, L)"
    },
    "conditions": [
-    "||theta|| <= B, ||phi|| <= L",
-    "rho(x) >= rho_min > 0"
+    "Assumption 1: ||theta|| <= B, ||phi(x,a)|| <= L, rho(x) >= rho_min > 0, unique optimal arm per context",
+    "Assumption 2 is not required"
    ],
    "tuning": [
     "z_k arbitrary",
-    "p_k = e^{r k}, r >= 1",
-    "beta_{t-1} = c_{n,1/n}, gamma_t = c_{n,1/S_t^2}",
-    "alpha_k = 1/sqrt(p_k)"
+    "p_k = e^{rk}, r >= 1",
+    "beta_{t-1} = c_{n,1/n}, gamma_t = c_{n,1/S_t^2}, alpha_k = 1/sqrt(p_k)"
    ],
    "is_new": true,
    "source": {
     "label": "th:worst-case",
     "number": "Theorem 3",
-    "quote": "Let $z_k$ be arbitrary, $p_k = e^{rk}$ for some constant $r \\geq 1$, and the other parameters be the same as in Thm.~\\ref{thm:regret.bound}. Then, for any $n$ the regret of \\algo is bounded as $\\E[R_n(\\theta^\\star)] \\leq 12BL\\pi^2C_{\\lambda_{\\max}} + \\frac{2e^r\\left(\\lambda_{\\max}^2 + \\log|\\A|\\right)}{r}\\sqrt{n} + C_{\\mathrm{sqrt}} C_{\\lambda_{\\max}}\\log (n) \\sqrt{dn}$"
+    "quote": "Let $z_k$ be arbitrary, $p_k = e^{rk}$ for some constant $r \\geq 1$, and the other parameters be the same as in Thm.~\\ref{thm:regret.bound}. Then, for any $n$ the regret of \\algo is bounded as \\E[R_n(\\theta^\\star)] \\leq 12BL\\pi^2C_{\\lambda_{\\max}} + \\frac{2e^r\\left(\\lambda_{\\max}^2 + \\log|\\A|\\right)}{r}\\sqrt{n} + C_{\\mathrm{sqrt}} C_{\\lambda_{\\max}}\\log (n) \\sqrt{dn}, where $C_{\\mathrm{sqrt}} = lin_{\\geq 0}(|\\X| + \\sqrt{d}, B, L)$ and $C_{\\lambda_{\\max}} := \\left(1 + \\frac{\\lambda_{\\max}BL}{\\sigma^2}\\right)$."
    },
-   "confidence": "high",
-   "notes": "Does not require Assumption 2. Paper summarises as O~((sqrt(d)+|X|) sqrt(dn) + log|A| sqrt(n)), minimax optimal when |X| <= sqrt(d). B mapped to S, L to L_feat."
+   "confidence": "medium",
+   "notes": "B is mapped to S and L to L_feat. The paper summarises this bound as O~((sqrt(d) + |X|) sqrt(dn) + log|A| sqrt(n)), which it says is minimax optimal when |X| <= sqrt(d)."
   }
  ],
  "cited_results": [
   {
-   "cited_key": "combes2017minimal",
-   "cited_title": "Minimal exploration in structured stochastic bandits",
-   "cited_first_author": "Richard Combes",
-   "cited_year": 2017,
+   "cited_key": "lai1985asymptotically",
+   "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_first_author": "Tze Leung Lai",
+   "cited_year": 1985,
    "cited_arxiv_id": null,
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Contextual linear bandits with Gaussian noise, uniformly good strategies (asymptotic structured lower bound; also attributed to lai1985asymptotically and ok2018exploration)",
+   "setting_description": "Contextual linear bandit with finite contexts and arms, Gaussian noise; uniformly good strategies (also attributed to combes2017minimal, ok2018exploration)",
    "bound": {
     "notation": "liminf",
-    "expression": "C_lin*log(T)",
+    "expression": "v_star*log(T)",
     "expression_latex": "\\liminf_{n \\rightarrow \\infty}\\frac{\\E[R_n(\\theta^\\star)]}{\\log(n)} \\geq v^\\star(\\theta^\\star)",
-    "regime": null
+    "regime": "n -> infinity"
    },
-   "where": "Proposition 1"
+   "where": "Proposition 1, Section 3"
   }
  ],
  "_run": {
@@ -225,27 +237,64 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "3e8a186d587d",
+  "prompt_sha": "225d94076f15",
   "schema_version": "0.4",
-  "ontology_version": "bandits-0.3",
+  "ontology_version": "bandits-0.4",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T17:36:18",
+  "date": "2026-10-20T09:13:27",
   "source_chars": 234963,
-  "input_tokens": 152685,
-  "output_tokens": 6205,
-  "cost_usd_equiv": 1.1565936,
+  "input_tokens": 318848,
+  "output_tokens": 10962,
+  "cost_usd_equiv": 1.3336926000000002,
   "status": "extracted"
  },
  "_verify": {
   "models": [
    "claude-opus-5-5[1m]"
   ],
-  "prompt_sha": "81d04c3b9fd7",
-  "date": "2026-10-19T17:42:16",
-  "applied_on": "2026-10-19T17:42:58",
+  "prompt_sha": "2ad8746f9c72",
+  "date": "2026-10-20T09:25:06",
+  "applied_on": "2026-10-20T09:25:21",
   "min_confidence": "medium",
-  "applied": [],
+  "applied": [
+   {
+    "target": "results.r1.bound.expression",
+    "old": "\"v_star*log(T)\"",
+    "new": "\"C_lin*log(T)\"",
+    "reason": "v*(theta*) is the value of the structured lower-bound optimisation problem, which is exactly the canonical C_lin. Instruction 20 says to reuse canonical names when the meaning matches.",
+    "evidence": "where $v^\\star(\\theta^\\star)$ is the value of the optimization problem",
+    "severity": "minor",
+    "confidence": "medium"
+   },
+   {
+    "target": "results.r1.symbols",
+    "old": "{\"v_star\": \"value v*(theta*) of the lower-bound optimization problem (P) (Graves-Lai-type constant for contextual linear bandits)\"}",
+    "new": "{}",
+    "reason": "Once the canonical C_lin is used, no declared symbol is needed.",
+    "evidence": "where $v^\\star(\\theta^\\star)$ is the value of the optimization problem",
+    "severity": "minor",
+    "confidence": "medium"
+   },
+   {
+    "target": "results.r2.bound.expression",
+    "old": "\"v_star*c_n/(2*sigma**2) + C_log*sqrt(log(log(T)))*log(T)**(3/4) + C_const\"",
+    "new": "\"C_lin*c_n/(2*sigma**2) + C_log*sqrt(log(log(T)))*log(T)**(3/4) + C_const\"",
+    "reason": "Same renaming: v*(theta*) is the canonical C_lin.",
+    "evidence": "v^\\star(\\theta^\\star) \\frac{c_{n,1/n}}{2\\sigma^2} + C_{\\log} (\\log\\log n)^{\\frac{1}{2}}(\\log n)^{\\frac{3}{4}} + C_{\\mathrm{const}}",
+    "severity": "minor",
+    "confidence": "medium"
+   },
+   {
+    "target": "results.r2.symbols",
+    "old": "{\"v_star\": \"value of the lower-bound optimization problem (P)\", \"c_n\": \"confidence radius c_{n,1/n} = O(log n + d log log n) from Theorem 1\", \"C_log\": \"lin_{>=0}(v*, |X|, L^2, B^2, sqrt(d), 1/sigma^2)\", \"C_const\": \"v* B^2 L^2/sigma^2 + lin_{>=0}(L, B, z_0 (z_underline/z_0)^3, (z_bar/z_0)^2)\"}",
+    "new": "{\"c_n\": \"confidence radius c_{n,1/n} = O(log n + d log log n) from Theorem 1\", \"C_log\": \"lin_{>=0}(v*, |X|, L^2, B^2, sqrt(d), 1/sigma^2)\", \"C_const\": \"v* B^2 L^2/sigma^2 + lin_{>=0}(L, B, z_0 (z_underline/z_0)^3, (z_bar/z_0)^2)\"}",
+    "reason": "The v_star declaration is no longer needed once the canonical C_lin is used.",
+    "evidence": "where $v^\\star(\\theta^\\star)$ is the value of the optimization problem",
+    "severity": "minor",
+    "confidence": "medium"
+   }
+  ],
   "rejected": [],
   "flags": {
    "hallucinated": [],
@@ -253,6 +302,6 @@
    "unverifiable": [],
    "missing_results": []
   },
-  "summary": "The extraction is accurate. It covers both parts of Theorem 2 (asymptotic optimality and the finite-time bound) and the worst-case Theorem 3, with the constants and symbol mappings right. The recalled lower bound (Proposition 1) is correctly placed in cited_results, and no guarantee results are missing."
+  "summary": "The extraction is accurate. Both parts of Theorem 2 (asymptotic optimality and the finite-time bound) and Theorem 3 (the worst-case bound) are transcribed correctly, with the right constants, tuning and setting. The only change proposed is renaming v*(theta*) to the canonical C_lin. The lower bound in Proposition 1 is restated from prior work and is correctly placed in cited_results. No performance guarantees are missing."
  }
 }

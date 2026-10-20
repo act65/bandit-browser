@@ -28,25 +28,39 @@
     "d"
    ],
    "instance_assumptions": [],
+   "extras": [],
    "action_set": {
     "shape": "arbitrary_compact",
     "time_varying": "fixed",
-    "access": "explicit"
+    "access": "barycentric_spanner",
+    "norm_bound": "unspecified",
+    "parameter_set": "unspecified",
+    "loss_set": "bounded_mean_reward"
    },
-   "extras": [],
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Costs need only satisfy E(c_t(x)|H_t) = mu.x for all histories (martingale-difference noise), costs in [-1,1] and mu.x in [-1,1]",
-    "Learner needs access to a barycentric spanner of D",
-    "Losses (costs) minimised rather than rewards"
+    "Costs in [-1,1] with conditional expectation mu.x given history: noise is a bounded martingale difference sequence, not necessarily i.i.d.",
+    "Losses (minimization) rather than rewards",
+    "Learner is given a barycentric spanner of D; in spanner coordinates D is a subset of [-1,1]^n"
    ],
-   "definition_quote": "Let D ⊂ R^n be a compact (but otherwise arbitrary) set of decisions... Each such choice results in a cost ℓ_t = c_t(x_t) ∈ [−1, 1]. We assume that, regardless of the history H_t, the conditional expectation of c_t is a fixed linear function, i.e., for all x ∈ D, E(c_t(x) | H_t) = µ · x ∈ [−1, 1]."
+   "definition_quote": "Let D ⊂ R^n be a compact (but otherwise arbitrary) set of decisions... Each such choice results in a cost ℓ_t = c_t(x_t) ∈ [−1, 1]. We assume that, regardless of the history H_t, the conditional expectation of c_t is a fixed linear function, i.e., for all x ∈ D, E(c_t(x) | H_t) = µ · x ∈ [−1, 1]. ... R_T = sum_t (µ†x_t − µ†x*)"
   },
   {
    "id": "s2",
-   "name_in_paper": "Stochastic linear optimization, product of circles D_n = (S^1)^{n/2} (lower bound)",
+   "name_in_paper": "Lower bound instance: product of n/2 circles, ±1 costs, mu uniform on D_n/n (lower bound)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -58,24 +72,40 @@
    "learner_knows": [
     "T",
     "d",
-    "reward_family"
+    "prior"
    ],
    "instance_assumptions": [
     "bayesian_prior"
    ],
+   "extras": [],
    "action_set": {
     "shape": "nonconvex",
     "time_varying": "fixed",
-    "access": "explicit"
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "l2_ball",
+    "loss_set": "bounded_mean_reward"
    },
-   "extras": [],
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Decision set is the Cartesian product of n/2 unit circles; costs in {-1,+1}; mu uniform on D_n/n"
+    "Decision set D_n = (S^1)^{n/2}, Cartesian product of n/2 unit circles; n even",
+    "Costs take values in {-1,+1}",
+    "Gap Delta = 0"
    ],
-   "definition_quote": "Assume n is even. Let D_n = (S^1)^{n/2} be the Cartesian product of n/2 circles... Our cost functions take values in {−1, +1}, and for every x ∈ D_n, the expected cost is µ · x, where nµ ∈ D_n."
+   "definition_quote": "Let D_n = (S^1)^{n/2} be the Cartesian product of n/2 circles... Our cost functions take values in {−1, +1}, and for every x ∈ D_n, the expected cost is µ · x, where nµ ∈ D_n."
   }
  ],
  "algorithms": [
@@ -89,6 +119,7 @@
    ],
    "requires_knowledge_of": [
     "d",
+    "barycentric spanner of D",
     "delta"
    ]
   },
@@ -102,6 +133,7 @@
    ],
    "requires_knowledge_of": [
     "d",
+    "barycentric spanner of D",
     "delta"
    ]
   }
@@ -122,25 +154,25 @@
    "bound": {
     "notation": "exact",
     "expression": "8*d*Max(128*d*log(T)*log(T**2/delta), (8*log(T**2/delta)/3)**2)*log(T)/Delta_lin",
-    "expression_latex": "Prob(\\forall T, R_T \\le \\frac{8n\\beta_T \\ln(T)}{\\Delta}) \\ge 1-\\delta, \\beta_T = \\max(128 n \\ln T \\ln(T^2/\\delta), (\\frac{8}{3}\\ln\\frac{T^2}{\\delta})^2)",
+    "expression_latex": "\\mathrm{Prob}(\\forall T, R_T \\le \\frac{8n\\beta_T\\ln T}{\\Delta}) \\ge 1-\\delta,\\ \\beta_T = \\max(128 n \\ln T \\ln(T^2/\\delta), (\\frac{8}{3}\\ln\\frac{T^2}{\\delta})^2)",
     "regime": null
    },
    "symbols": {},
    "conditions": [
-    "gap Delta > 0 (in the extremal-point sense)",
+    "gap Delta > 0 (Dani et al. gap over extremal points)",
     "0 < delta < 1"
    ],
    "tuning": [
-    "beta_t = max(128 n ln t ln(t^2/delta), (8/3 ln(t^2/delta))^2)"
+    "confidence parameter delta given to the algorithm"
    ],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Theorem 1",
-    "quote": "Theorem 1(Problem Dependent Upper Bound) ... Suppose the decision set D and the true mean µ have a gap ∆ > 0. We have: • ConfidenceBall2 : For all sufficiently large T , the cumulative regret RT of ConfidenceBall2 (D,δ) is with high probability at most O(n^2/∆ log^3 T). More precisely, Prob(∀T, RT ≤ 8nβT ln(T)/∆) ≥ 1 − δ"
+    "quote": "Theorem 1 (Problem Dependent Upper Bound) ... Suppose the decision set D and the true mean µ have a gap ∆ > 0. We have: • ConfidenceBall2 : For all sufficiently large T , the cumulative regret R_T of ConfidenceBall2(D,δ) is with high probability at most O(n^2/∆ log^3 T ). More precisely, Prob(∀T, R_T ≤ 8nβ_T ln(T)/∆) ≥ 1 − δ"
    },
    "confidence": "high",
-   "notes": "n = d. Regret R_T defined via means (random variable); bound holds w.p. 1-delta uniformly over T. Equivalent to O(n^2 log^3 T / Delta). Paper says results extend to time-varying decision sets (Section 7)."
+   "notes": "n is the dimension d. Holds simultaneously for all T. Polynomial-time when D is small/finite; NP-hard in general for polytopes. Section 7 states it extends to time-varying decision sets."
   },
   {
    "id": "r2",
@@ -157,7 +189,7 @@
    "bound": {
     "notation": "exact",
     "expression": "8*d**2*Max(128*d*log(T)*log(T**2/delta), (8*log(T**2/delta)/3)**2)*log(T)/Delta_lin",
-    "expression_latex": "Prob(\\forall T, R_T \\le \\frac{8n^2\\beta_T \\ln(T)}{\\Delta}) \\ge 1-\\delta",
+    "expression_latex": "\\mathrm{Prob}(\\forall T, R_T \\le \\frac{8n^2\\beta_T\\ln T}{\\Delta}) \\ge 1-\\delta",
     "regime": null
    },
    "symbols": {},
@@ -166,17 +198,17 @@
     "0 < delta < 1"
    ],
    "tuning": [
-    "implemented to only choose extremal points of D",
-    "beta_t as in Algorithm 3.2"
+    "implemented so that it only chooses extremal points of D",
+    "confidence parameter delta"
    ],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Theorem 1",
-    "quote": "• ConfidenceBall1 : If ConfidenceBall1 is implemented so that it only chooses extremal points xt ∈ D (which is always possible) then, for all sufficiently large T , the cumulative regret RT of ConfidenceBall1 (D,δ) is with high probability at most O(n^3/∆ log^3 T). More precisely, Prob(∀T, RT ≤ 8n^2 βT ln(T)/∆) ≥ 1 − δ"
+    "quote": "• ConfidenceBall1 : If ConfidenceBall1 is implemented so that it only chooses extremal points x_t ∈ D (which is always possible) then, for all sufficiently large T , the cumulative regret R_T of ConfidenceBall1(D,δ) is with high probability at most O(n^3/∆ log^3 T ). More precisely, Prob(∀T, R_T ≤ 8n^2β_T ln(T)/∆) ≥ 1 − δ"
    },
    "confidence": "high",
-   "notes": "Polynomial time given a linear optimization oracle over D (O(n) oracle calls per round)."
+   "notes": "Efficient with O(n) calls to a linear optimization oracle over D."
   },
   {
    "id": "r3",
@@ -193,7 +225,7 @@
    "bound": {
     "notation": "exact",
     "expression": "sqrt(8*d*T*Max(128*d*log(T)*log(T**2/delta), (8*log(T**2/delta)/3)**2)*log(T))",
-    "expression_latex": "Prob(\\forall T, R_T \\le \\sqrt{8nT\\beta_T \\ln T}) \\ge 1-\\delta",
+    "expression_latex": "\\mathrm{Prob}(\\forall T, R_T \\le \\sqrt{8nT\\beta_T\\ln T}) \\ge 1-\\delta",
     "regime": null
    },
    "symbols": {},
@@ -201,16 +233,16 @@
     "0 < delta < 1"
    ],
    "tuning": [
-    "beta_t as in Algorithm 3.1"
+    "confidence parameter delta"
    ],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Theorem 2",
-    "quote": "Theorem 2(Problem Independent Upper Bound) ... • ConfidenceBall2 : For all sufficiently large T , the cumulative regret RT of ConfidenceBall2 (D,δ) is with high probability at most O∗(n√T)... More precisely, Prob(∀T, RT ≤ sqrt(8nTβT ln T)) ≥ 1 − δ."
+    "quote": "Theorem 2 (Problem Independent Upper Bound) ... • ConfidenceBall2 : For all sufficiently large T , the cumulative regret R_T of ConfidenceBall2(D,δ) is with high probability at most O*(n√T) ... More precisely, Prob(∀T, R_T ≤ sqrt(8nTβ_T ln T)) ≥ 1 − δ ."
    },
    "confidence": "high",
-   "notes": "O*(n sqrt T). Holds also when Delta = 0."
+   "notes": "Holds also when Delta = 0."
   },
   {
    "id": "r4",
@@ -227,7 +259,7 @@
    "bound": {
     "notation": "exact",
     "expression": "sqrt(8*d**2*T*Max(128*d*log(T)*log(T**2/delta), (8*log(T**2/delta)/3)**2)*log(T))",
-    "expression_latex": "Prob(\\forall T, R_T \\le \\sqrt{8n^2T\\beta_T \\ln T}) \\ge 1-\\delta",
+    "expression_latex": "\\mathrm{Prob}(\\forall T, R_T \\le \\sqrt{8n^2T\\beta_T\\ln T}) \\ge 1-\\delta",
     "regime": null
    },
    "symbols": {},
@@ -235,16 +267,16 @@
     "0 < delta < 1"
    ],
    "tuning": [
-    "beta_t as in Algorithm 3.2"
+    "confidence parameter delta"
    ],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Theorem 2",
-    "quote": "• ConfidenceBall1 : For all sufficiently large T , the cumulative regret RT of ConfidenceBall1 (D,δ) is with high probability at most O∗(n^{3/2}√T)... More precisely, Prob(∀T, RT ≤ sqrt(8n^2 TβT ln T)) ≥ 1 − δ."
+    "quote": "• ConfidenceBall1 : For all sufficiently large T , the cumulative regret R_T of ConfidenceBall1(D,δ) is with high probability at most O*(n^{3/2}√T) ... More precisely, Prob(∀T, R_T ≤ sqrt(8n^2Tβ_T ln T)) ≥ 1 − δ ."
    },
    "confidence": "high",
-   "notes": "O*(n^{3/2} sqrt T); efficient with linear optimization oracle."
+   "notes": "Efficient given linear optimization oracle over D."
   },
   {
    "id": "r5",
@@ -261,42 +293,43 @@
    "bound": {
     "notation": "exact",
     "expression": "d*sqrt(T)/10",
-    "expression_latex": "E R = E_\\mu E(R|\\mu) \\ge \\frac{1}{10} n\\sqrt{T}",
-    "regime": "T >= 1"
+    "expression_latex": "\\mathbb{E}_\\mu \\mathbb{E}(R|\\mu) \\ge \\frac{1}{10} n\\sqrt{T}",
+    "regime": null
    },
    "symbols": {},
    "conditions": [
     "n even",
-    "decision set D_n = (S^1)^{n/2}",
+    "D = (S^1)^{n/2}",
     "mu uniform on D_n/n",
-    "costs in {-1,+1} with mean mu.x"
+    "costs in {-1,+1}",
+    "T >= 1"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Theorem 3",
-    "quote": "Theorem 3 (Lower Bound) If µ is chosen uniformly at random from the set Dn /n, and the cost for each x ∈ Dn is in {−1, +1} with mean µ · x, then, for every algorithm, for every T ≥ 1, E R = E_µ E (R | µ) ≥ (1/10) n √T. where the inner expectation is with respect to observed costs."
+    "quote": "Theorem 3 (Lower Bound) If µ is chosen uniformly at random from the set D_n/n, and the cost for each x ∈ D_n is in {−1, +1} with mean µ · x, then, for every algorithm, for every T ≥ 1, E R = E_µ E(R | µ) ≥ (1/10) n √T."
    },
    "confidence": "medium",
-   "notes": "Bayesian regret with uniform prior on the scaled product of circles; regret through means. Instance has Delta = 0. Since it is a Bayesian average, it also implies a minimax pseudo-regret lower bound."
+   "notes": "Regret averaged over a uniform prior on mu (Bayesian), implying a worst-case lower bound. Instance has Delta=0, so it rules out polylog(T) rates on a fixed problem."
   }
  ],
  "cited_results": [
   {
-   "cited_key": "Auer [2002]",
-   "cited_title": "Using confidence bounds for exploitation-exploration trade-offs",
-   "cited_first_author": "Peter Auer",
+   "cited_key": "Auer et al. [2002]",
+   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
+   "cited_first_author": "P. Auer",
    "cited_year": 2002,
    "cited_arxiv_id": null,
-   "algorithm_name": "LinRel master algorithm (SupLinRel)",
+   "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic linear bandit, finite decision set D",
+   "setting_description": "Stochastic K-armed bandit, gap-dependent",
    "bound": {
-    "notation": "O_tilde",
-    "expression": "log(K)**(3/2)*sqrt(T)",
-    "expression_latex": "O^*((\\log|D|)^{3/2} poly(n)\\sqrt{T})",
+    "notation": "O",
+    "expression": "K*log(T)/Delta",
+    "expression_latex": "\\frac{K}{\\Delta}\\log T",
     "regime": null
    },
    "where": "Section 1.1"
@@ -346,7 +379,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Linear bandit on hypercube, instance chosen as a function of T",
+   "setting_description": "Linear bandit on hypercube, instance chosen depending on T",
    "bound": {
     "notation": "Omega",
     "expression": "d*sqrt(T)",
@@ -356,22 +389,22 @@
    "where": "Section 1.1"
   },
   {
-   "cited_key": "Auer et al. [2002]",
-   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
-   "cited_first_author": "P. Auer",
+   "cited_key": "Auer [2002]",
+   "cited_title": "Using confidence bounds for exploitation-exploration trade-offs",
+   "cited_first_author": "Peter Auer",
    "cited_year": 2002,
    "cited_arxiv_id": null,
-   "algorithm_name": "UCB1",
+   "algorithm_name": "LinRel master algorithm via covering",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic K-armed bandit",
+   "setting_description": "Stochastic linear bandit, arbitrary compact decision set (via covering argument)",
    "bound": {
-    "notation": "O",
-    "expression": "K*log(T)/Delta",
-    "expression_latex": "\\frac{K}{\\Delta}\\log T",
+    "notation": "O_tilde",
+    "expression": "d**(5/2)*sqrt(T)",
+    "expression_latex": "O^*(n^{5/2}\\sqrt{T})",
     "regime": null
    },
-   "where": "Section 1.1"
+   "where": "Footnote 1"
   },
   {
    "cited_key": "Abe and Long [1999]",
@@ -382,12 +415,12 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Linear bandit with time-varying decision sets, dimension growing with T",
+   "setting_description": "Linear bandit with time-varying decision sets, dimension depending on T",
    "bound": {
     "notation": "Omega",
     "expression": "T**(3/4)",
     "expression_latex": "\\Omega(T^{3/4})",
-    "regime": "n is a function of T"
+    "regime": "n a function of T"
    },
    "where": "Section 7"
   }
@@ -398,16 +431,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "3e8a186d587d",
+  "prompt_sha": "225d94076f15",
   "schema_version": "0.4",
-  "ontology_version": "bandits-0.3",
+  "ontology_version": "bandits-0.4",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T17:34:03",
+  "date": "2026-10-20T09:10:08",
   "source_chars": 52271,
-  "input_tokens": 104735,
-  "output_tokens": 12403,
-  "cost_usd_equiv": 0.5156582,
+  "input_tokens": 52501,
+  "output_tokens": 7208,
+  "cost_usd_equiv": 0.34697680000000003,
   "status": "extracted"
  }
 }

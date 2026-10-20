@@ -34,6 +34,7 @@ from __future__ import annotations
 import collections
 import json
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -71,6 +72,26 @@ FAMILY = {"pseudo_regret": "regret", "expected_regret": "regret", "regret_unspec
           "error_probability": "error_probability", "dynamic_regret": "dynamic_regret",
           "switching_regret": "switching_regret"}
 MINIMAX_LOWER_CLASSES = {None, "all", "consistent", "uniformly_good"}
+# A condition is a benign side condition if it only constrains the scanned problem sizes
+# (e.g. "K >= 2", "T >= max{55, K}"); anything else restricts the instance class.
+BENIGN_CONDITION = re.compile(r"^[\sTKdnN0-9δdelta()\[\]{}*+\-/^.,≥≤><=_maxinlogeqpwr]+$")
+
+
+_CLASSES_FILE = schema.ROOT / "data" / "condition-classes.yaml"
+CONDITION_CLASSES = ((__import__("yaml").safe_load(_CLASSES_FILE.read_text()) or {}).get("classes", {})
+                     if _CLASSES_FILE.exists() else {})
+
+
+def restricts_instances(conditions: list[str]) -> bool:
+    """True if any condition restricts the instance class (classified by
+    pipeline/classify_conditions.py; unclassified strings fall back to a regex)."""
+    for c in conditions or []:
+        cls = CONDITION_CLASSES.get(c)
+        if cls in ("instance_restriction", "unclear"):
+            return True
+        if cls is None and not BENIGN_CONDITION.match(c.replace(" ", "")):
+            return True
+    return False
 
 
 def instance_expr(expr: str, notation: str | None):
@@ -227,6 +248,13 @@ def main() -> None:
             p = {**p, "_unknown": {"Delta"}}  # tuning parameter constrained by the gap (e.g. eps < Delta)
         profiles[eid] = p
 
+    inferred_by_id = {x["id"]: x for x in inferred}
+
+    def conditions_of(eid: str) -> list[str]:
+        eid = eid.partition("@")[0]
+        r = results.get(eid) or results[inferred_by_id[eid]["from_result"]]
+        return r.get("conditions") or []
+
     regimes = collections.defaultdict(lambda: {"upper": [], "lower": []})
     for eid, sid, side, q, dep, cls, nota, expr, inh, cav in entries:
         fam = FAMILY.get(q)
@@ -235,6 +263,8 @@ def main() -> None:
         p = profiles.get(eid)
         if fam is None or p is None:
             continue
+        if side == "upper" and restricts_instances(conditions_of(eid)):
+            continue  # holds only on a restricted instance class: shown, but not the setting's rate
         if side == "lower" and (cls not in MINIMAX_LOWER_CLASSES or any(c.startswith("holds for") for c in cav)):
             continue  # algorithm-specific or fixed-parameter lower bounds don't define the setting's rate
         regimes[(sid, fam, dep)][side].append({"id": eid, "profile": p, "inherited": inh})

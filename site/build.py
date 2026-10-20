@@ -211,7 +211,7 @@ def setting_name(key: dict[str, str]) -> str:
             continue
         if d in ("function_class", "instance_assumptions", "extras"):
             bits.append(value_label(d, v.split("+")))
-        elif d.startswith("action_set."):
+        elif "." in d:  # node-parameter field, e.g. action_set.shape, corruption.adversary
             bits.append(f"{value_label(d, v)} {d.split('.', 1)[1].replace('_', ' ')}")
         else:
             bits.append(value_label(d, v))

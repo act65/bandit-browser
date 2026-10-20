@@ -33,11 +33,11 @@ ROOT = schema.ROOT
 EXT = ROOT / "data" / "extractions"
 OUT = ROOT / "data" / "canonical"
 MANIFEST = ROOT / "corpus" / "manifest.yaml"
+CORRECTIONS = ROOT / "data" / "corrections.yaml"
 
 # Dimensions that define a node. learner_knows minus trivially known quantities is
 # included because knowledge changes rates (e.g. bounded regret when mu_star is known).
 TRIVIAL_KNOWLEDGE = {"T", "K", "d"}
-DEFAULT_ACTION_SET = {"shape": "not_applicable", "time_varying": "not_applicable", "access": "not_applicable"}
 IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 FUNC_NAMES = {"log", "sqrt", "exp", "Min", "Max", "min", "max", "LambertW", "sum_subopt", "sum_arms", "kl"}
 # SymPy names the parser itself emits (numbers become Integer(...), Rational(...)); never rebind them
@@ -45,6 +45,31 @@ SYMPY_RESERVED = {"Integer", "Rational", "Float", "Symbol", "Function", "oo", "I
 
 
 # ---------------------------------------------------------------- settings
+
+def load_corrections() -> dict:
+    if not CORRECTIONS.exists():
+        return {}
+    out = {}
+    for c in yaml.safe_load(CORRECTIONS.read_text()).get("corrections") or []:
+        out.setdefault(c["target"], []).append(c)
+    return out
+
+
+def apply_corrections(r: dict, corrections: list[dict]) -> dict:
+    """Return a corrected copy of a result plus a record of what was applied."""
+    r = json.loads(json.dumps(r))
+    for c in corrections:
+        if c["op"] == "multiply_expression_by":
+            r["bound"]["expression"] = f"({c['factor']})*({r['bound']['expression']})"
+        elif c["op"] == "set":
+            node = r
+            *path, last = c["field"].split(".")
+            for k in path:
+                node = node[k]
+            node[last] = c["value"]
+    r["corrections"] = [{k: c.get(k) for k in ("op", "factor", "field", "value", "reason", "by", "status")} for c in corrections]
+    return r
+
 
 def setting_key(s: dict, ont: dict) -> dict:
     """Canonical key: every dimension (lists sorted), node parameters and parameters."""
@@ -58,9 +83,12 @@ def setting_key(s: dict, ont: dict) -> dict:
         key[dim] = v if v is not None else ("not_applicable" if dim == "domain" else None)
     if key.get("noise") == "not_applicable" and str(key.get("environment", "")).startswith("stochastic"):
         key["noise"] = "general_model_class"  # extractions before ontology 0.3.1 had no value for this
-    key["action_set"] = {**DEFAULT_ACTION_SET, **(s.get("action_set") or {})}
-    # access is computational only: it does not separate statistical settings
-    key["action_set"] = {k: v for k, v in key["action_set"].items() if k != "access"}
+    # node parameters (action_set, corruption, feedback_graph, ...): every field, defaulting to
+    # not_applicable; computational-only fields (e.g. action_set.access) don't separate settings
+    for name, spec in (ont.get("node_parameters") or {}).items():
+        given = s.get(name) or {}
+        key[name] = {f: given.get(f, "not_applicable") for f, fs in spec["fields"].items()
+                     if not fs.get("computational_only")}
     key["parameters"] = dict(sorted((s.get("parameters") or {}).items()))
     return key
 
@@ -186,6 +214,7 @@ def main() -> None:
     by_title = {norm_title(t): p["id"] for p in manifest for t in [p["title"], *p.get("alt_titles", [])]}
     by_arxiv = {p["arxiv_id"]: p["id"] for p in manifest if p.get("arxiv_id")}
     canonical_vars = set(var["variables"])
+    corrections = load_corrections()
 
     settings: dict[str, dict] = {}
     results, citations, candidates = [], {}, collections.Counter()
@@ -220,6 +249,8 @@ def main() -> None:
             local_algo[a["id"]] = aid
 
         for r in o["results"]:
+            if f"{paper}:{r['id']}" in corrections:
+                r = apply_corrections(r, corrections[f"{paper}:{r['id']}"])
             if r["setting"] not in local_setting:
                 continue
             sid, s = local_setting[r["setting"]]
@@ -249,6 +280,7 @@ def main() -> None:
                 "conditions": r.get("conditions", r.get("extra_assumptions", [])),
                 "tuning": r.get("tuning", []),
                 "extra_assumptions": r.get("conditions", r.get("extra_assumptions", [])) + r.get("tuning", []),
+                "corrections": r.get("corrections", []),
                 "bound": {**r["bound"], "expression_normalised": norm_expr, "conversions": applied},
                 "source": r["source"],
             })

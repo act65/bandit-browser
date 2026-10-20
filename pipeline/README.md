@@ -68,6 +68,11 @@ Each record carries its derivation and caveats. Inferred results never feed furt
 - **`verify.py`** caught 12/12 planted copying errors, but misses convention errors (quantity definitions, missing knowledge). Use it to rank records for human review, not as ground truth.
 - **Repeat runs** are good disagreement detectors for building the gold set. 2-of-3 voting is not recommended.
 
+## Corrections and condition classes
+
+- `data/corrections.yaml`: manual corrections, applied by `resolve.py` on top of `data/extractions/`, each recording author, reason and review status.
+- `data/condition-classes.yaml`: classes for the free-text result `conditions` (`classify_conditions.py`, cached). Upper bounds with an instance restriction stay out of tightness verdicts but remain visible.
+
 ## Bound comparison (D2)
 
 `compare.py` reduces every bound (extracted and inferred) to a profile, a growth rate v^a (log v)^b per variable:

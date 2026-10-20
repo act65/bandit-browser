@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Linear contextual bandit with finite action sets (upper bound)",
+   "name_in_paper": "Linear contextual bandit with finite action sets (oblivious action sets, known horizon)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -35,20 +35,30 @@
    "action_set": {
     "shape": "finite",
     "time_varying": "oblivious_sequence",
-    "access": "explicit"
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "unspecified"
    },
-   "parameters": {
-    "S": "1",
-    "L_feat": "1",
-    "sigma": "1"
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
    },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "at most n_act candidate actions per round; algorithm uses n_act",
-    "action sets chosen obliviously by an adversary before execution"
+    "at most n_act actions per round, n_act known to the algorithm (used in confidence width)",
+    "action sets chosen by oblivious adversary before execution"
    ],
-   "definition_quote": "At each time period $t$, a \\emph{policy} $\\pi$ is presented with an \\emph{action set} $\\mathcal A_t=\\{x_{it}\\}\\subseteq\\{x\\in\\mathbb R^d: \\|x\\|_2\\leq 1\\}$ ... receives a reward $r_t=x_{it}^\\top\\theta + \\eps_t$, where $\\{\\eps_t\\}$ are independent centered sub-Gaussian random variables with variance proxy $1$"
+   "definition_quote": "At each time period $t$, a policy $\\pi$ is presented with an action set $\\mathcal A_t=\\{x_{it}\\}\\subseteq\\{x\\in\\mathbb R^d: \\|x\\|_2\\leq 1\\}$ ... receives a reward $r_t=x_{it}^\\top\\theta + \\eps_t$, where $\\{\\eps_t\\}$ are independent centered sub-Gaussian random variables with variance proxy $1$"
   },
   {
    "id": "s2",
@@ -64,8 +74,7 @@
    "learner_knows": [
     "T",
     "d",
-    "sigma",
-    "S"
+    "sigma"
    ],
    "instance_assumptions": [],
    "extras": [
@@ -74,24 +83,34 @@
    "action_set": {
     "shape": "finite",
     "time_varying": "oblivious_sequence",
-    "access": "explicit"
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "unspecified"
    },
-   "parameters": {
-    "S": "1",
-    "L_feat": "1",
-    "sigma": "1"
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
    },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "at most n_act actions per round, learner knows n_act",
-    "hard instances use Gaussian noise with variance 1"
+    "at most n_act actions per round",
+    "hard instances use unit-variance Gaussian noise"
    ],
    "definition_quote": "\\mathfrak R(T;n,d) := \\inf_{\\pi\\in\\Pi_{T,n,d}}\\sup_{\\theta\\in\\mathbb R^d, |\\mathcal A_t|\\leq n} \\mathbb E[R^T]."
   },
   {
    "id": "s3",
-   "name_in_paper": "Linear bandit with infinite, time-changing action spaces (lower bound)",
+   "name_in_paper": "Linear bandit with infinite, time-varying action spaces (lower bound)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -103,28 +122,38 @@
    "learner_knows": [
     "T",
     "d",
-    "sigma",
-    "S"
+    "sigma"
    ],
    "instance_assumptions": [],
    "extras": [
     "time_varying_action_sets"
    ],
    "action_set": {
-    "shape": "unspecified",
+    "shape": "arbitrary_compact",
     "time_varying": "oblivious_sequence",
-    "access": "explicit"
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "unspecified"
    },
-   "parameters": {
-    "S": "1",
-    "L_feat": "1"
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
    },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "closed infinite action sets inside the unit ball that change over time"
+    "closed infinite action sets changing over time"
    ],
-   "definition_quote": "there exists a bandit instance with regression model $\\theta\\in\\mathbb R^d$, $\\|\\theta\\|_2\\leq 1$ and closed action spaces $\\mathcal A_1,\\cdots,\\mathcal A_T\\subseteq\\{x\\in\\mathbb R^d:\\|x\\|_2\\leq 1\\}$, $|\\mathcal A_t|=\\infty$"
+   "definition_quote": "closed action spaces $\\mathcal A_1,\\cdots,\\mathcal A_T\\subseteq\\{x\\in\\mathbb R^d:\\|x\\|_2\\leq 1\\}$, $|\\mathcal A_t|=\\infty$"
   }
  ],
  "algorithms": [
@@ -158,17 +187,19 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(d*T*log(T)*log(n_act))*log(log(n_act*T))**gamma_pl",
+    "expression": "(log(log(n_act*T)))**gamma_c*sqrt(d*T*log(T)*log(n_act))",
     "expression_latex": "\\mathrm{poly}(\\log\\log(nT))\\cdot O(\\sqrt{dT(\\log T)(\\log n)})",
     "regime": null
    },
    "symbols": {
     "n_act": "maximum number of actions per round (paper's n)",
-    "gamma_pl": "unspecified positive constant exponent of the poly(log log(nT)) factor"
+    "gamma_c": "some constant gamma > 0 (Remark 3)"
    },
    "conditions": [
-    "n_act < infinity",
-    "||theta||_2 <= 1, ||x||_2 <= 1"
+    "n < infinity",
+    "||theta||_2 <= 1",
+    "||x||_2 <= 1",
+    "noise 1-sub-Gaussian"
    ],
    "tuning": [
     "zeta_0 = ceil(log2(sqrt(T/d)))"
@@ -180,7 +211,7 @@
     "quote": "For any $n<\\infty$, the minimax regret $\\mathfrak R(T;n,d)$ can be asymptotically upper bounded by $\\mathrm{poly}(\\log\\log(nT))\\cdot O(\\sqrt{dT(\\log T)(\\log n)})$."
    },
    "confidence": "high",
-   "notes": "Stated as bound on minimax regret, achieved by VCL-SupLinUCB (Sec. 2). Regret defined via means, so pseudo-regret. Remark 3: poly(loglog(nT)) = (loglog(nT))^gamma."
+   "notes": "Achieved by VCL-SupLinUCB (Sec. 2). Regret defined through means, so pseudo-regret."
   },
   {
    "id": "r2",
@@ -198,15 +229,15 @@
     "notation": "Omega",
     "expression": "sqrt(d*T*log(n_act)*log(T/d))",
     "expression_latex": "\\Omega(1)\\cdot\\sqrt{dT(\\log n)\\log (T/d)}",
-    "regime": "n_act <= 2^(d/2) and T >= d*(log2 n_act)^(1+eps_alg)"
+    "regime": null
    },
    "symbols": {
-    "n_act": "maximum number of actions per round (paper's n)",
-    "eps_alg": "small constant epsilon > 0 in the condition on T"
+    "n_act": "maximum number of actions per round (paper's n)"
    },
    "conditions": [
     "n_act <= 2^(d/2)",
-    "T >= d*(log_2 n_act)^(1+eps_alg) for some constant eps_alg > 0"
+    "T >= d*(log2 n_act)^(1+eps) for a small constant eps > 0",
+    "Omega hides constants depending on eps"
    ],
    "tuning": [],
    "is_new": true,
@@ -216,7 +247,7 @@
     "quote": "For any small constant $\\epsilon > 0$, and any $n,d, $ such that $n \\leq 2^{d/2}$ and $T \\geq d (\\log_2 n)^{1+\\epsilon}$, the minimax regret $\\mathfrak R(T;n,d)$ can be asymptotically lower bounded by $\\Omega(1)\\cdot\\sqrt{dT(\\log n)\\log (T/d)}$."
    },
    "confidence": "high",
-   "notes": "Hidden constant depends on epsilon (Remark 3)."
+   "notes": "Hard instances use Gaussian noise with unit variance."
   },
   {
    "id": "r3",
@@ -234,11 +265,9 @@
     "notation": "Omega",
     "expression": "d*sqrt(T*log(T))",
     "expression_latex": "\\Omega(1)\\cdot d\\sqrt{T\\log T}",
-    "regime": "T >= d^5, n_act = 2^(d/2)"
+    "regime": null
    },
-   "symbols": {
-    "n_act": "maximum number of actions per round (paper's n)"
-   },
+   "symbols": {},
    "conditions": [
     "T >= d^5",
     "n_act = 2^(d/2)"
@@ -251,7 +280,7 @@
     "quote": "Suppose $T\\geq d^5$ and $n=2^{d/2}$. Then $\\mathfrak R(T;n,d) = \\Omega(1)\\cdot d\\sqrt{T\\log T}$."
    },
    "confidence": "high",
-   "notes": "Gaussian noise variance 1 in hard instances."
+   "notes": "Special case of Theorem 2 with stronger conditions."
   },
   {
    "id": "r4",
@@ -269,14 +298,11 @@
     "notation": "Omega",
     "expression": "d*sqrt(eps_alg*T*log(T))",
     "expression_latex": "\\Omega(1)\\cdot d\\sqrt{\\epsilon T\\log T}",
-    "regime": "T >= d^(2+eps_alg), n_act = 2^(d/2), d sufficiently large"
+    "regime": null
    },
-   "symbols": {
-    "n_act": "maximum number of actions per round (paper's n)",
-    "eps_alg": "small constant epsilon > 0 in the condition T >= d^(2+epsilon)"
-   },
+   "symbols": {},
    "conditions": [
-    "T >= d^(2+eps_alg)",
+    "T >= d^(2+eps) for small constant eps > 0 (eps_alg)",
     "n_act = 2^(d/2)",
     "d sufficiently large"
    ],
@@ -287,8 +313,8 @@
     "number": "Theorem 21",
     "quote": "For any small constant $\\epsilon > 0$ and sufficiently large $d$, suppose $T\\geq d^{2+\\eps}$ and $n=2^{d/2}$. Then $\\mathfrak R(T;n,d) = \\Omega(1)\\cdot d\\sqrt{\\epsilon T\\log T}$."
    },
-   "confidence": "high",
-   "notes": ""
+   "confidence": "medium",
+   "notes": "eps is a construction parameter of the problem condition, represented by eps_alg."
   },
   {
    "id": "r5",
@@ -305,22 +331,22 @@
    "bound": {
     "notation": "Omega",
     "expression": "d*sqrt(T*log(T))",
-    "expression_latex": "\\Omega(d\\sqrt{T\\log T})",
+    "expression_latex": "\\mathbb E[R^T] = \\Omega(d\\sqrt{T\\log T})",
     "regime": "T sufficiently large"
    },
    "symbols": {},
    "conditions": [
-    "action sets infinite, closed, and changing over time"
+    "action sets infinite, closed, changing over time"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "cor:infinite-action",
     "number": "Corollary 23",
-    "quote": "For any policy $\\pi$, there exists a bandit instance with regression model $\\theta\\in\\mathbb R^d$, $\\|\\theta\\|_2\\leq 1$ and closed action spaces $\\mathcal A_1,\\cdots,\\mathcal A_T\\subseteq\\{x\\in\\mathbb R^d:\\|x\\|_2\\leq 1\\}$, $|\\mathcal A_t|=\\infty$, such that for sufficiently large $T$, $\\mathbb E[R^T] = \\Omega(d\\sqrt{T\\log T})$."
+    "quote": "For any policy $\\pi$, there exists a bandit instance with regression model $\\theta\\in\\mathbb R^d$, $\\|\\theta\\|_2\\leq 1$ and closed action spaces ... $|\\mathcal A_t|=\\infty$, such that for sufficiently large $T$, $\\mathbb E[R^T] = \\Omega(d\\sqrt{T\\log T}).$"
    },
-   "confidence": "medium",
-   "notes": "Derived by reduction from Theorems 10/21; implicit relation between T and d (T >= d^(2+eps)) inherited."
+   "confidence": "high",
+   "notes": "Reduction from Theorems 10/21."
   }
  ],
  "cited_results": [
@@ -333,14 +359,14 @@
    "algorithm_name": "SupLinUCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Linear contextual bandit with n actions per round",
+   "setting_description": "Linear contextual bandit with n actions per round, d dimensions",
    "bound": {
     "notation": "O",
     "expression": "sqrt(d*T*log(n_act*T)**3)",
     "expression_latex": "O(\\sqrt{dT\\log^3(nT)})",
     "regime": null
    },
-   "where": "Theorem 4, Table 1"
+   "where": "Theorem 4 / Table 1"
   },
   {
    "cited_key": "auer2002using",
@@ -351,14 +377,14 @@
    "algorithm_name": "SupLinRel",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Linear contextual bandit with n actions per round",
+   "setting_description": "Linear contextual bandit with n actions per round, d dimensions",
    "bound": {
     "notation": "O",
     "expression": "sqrt(d*T)*log(n_act*T)**(3/2)",
     "expression_latex": "O(\\sqrt{dT}\\log^{3/2}(nT))",
     "regime": null
    },
-   "where": "Table 1, Section 1.2"
+   "where": "Table 1 / Section 1.2"
   },
   {
    "cited_key": "chu2011contextual",
@@ -374,9 +400,9 @@
     "notation": "Omega",
     "expression": "sqrt(d*T)",
     "expression_latex": "\\Omega(\\sqrt{dT})",
-    "regime": "n = Theta(d)"
+    "regime": null
    },
-   "where": "Table 1, Section 1.2"
+   "where": "Table 1 / Section 1.2"
   },
   {
    "cited_key": "dani2008stochastic",
@@ -446,7 +472,7 @@
     "notation": "Omega",
     "expression": "d*sqrt(T)",
     "expression_latex": "\\Omega(d \\sqrt{T})",
-    "regime": "2^Theta(d) candidate actions"
+    "regime": null
    },
    "where": "Section 1.2"
   },
@@ -456,10 +482,10 @@
    "cited_first_author": "Abbasi-Yadkori",
    "cited_year": 2012,
    "cited_arxiv_id": null,
-   "algorithm_name": "OLS-based UCB using all data",
+   "algorithm_name": "OLS-based UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Linear contextual bandit",
+   "setting_description": "Linear contextual bandit, UCB using OLS on all data",
    "bound": {
     "notation": "O",
     "expression": "d*sqrt(T*log(T)**2)",
@@ -477,11 +503,11 @@
    "algorithm_name": "MOSS",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic K-armed bandit",
+   "setting_description": "Stochastic multi-armed bandit with n arms",
    "bound": {
     "notation": "O",
     "expression": "sqrt(K*T)",
-    "expression_latex": "O(\\sqrt{nT})",
+    "expression_latex": "O(\\sqrt{n T})",
     "regime": null
    },
    "where": "Section 1.2"
@@ -493,16 +519,16 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "3e8a186d587d",
+  "prompt_sha": "225d94076f15",
   "schema_version": "0.4",
-  "ontology_version": "bandits-0.3",
+  "ontology_version": "bandits-0.4",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T17:35:54",
+  "date": "2026-10-20T09:12:44",
   "source_chars": 118554,
-  "input_tokens": 90266,
-  "output_tokens": 7710,
-  "cost_usd_equiv": 0.6873416,
+  "input_tokens": 93882,
+  "output_tokens": 7487,
+  "cost_usd_equiv": 0.6836048,
   "status": "extracted"
  }
 }

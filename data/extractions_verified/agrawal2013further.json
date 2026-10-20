@@ -24,24 +24,40 @@
    "context": "none",
    "noise": "bernoulli",
    "learner_knows": [],
-   "instance_assumptions": [],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
    "extras": [],
    "action_set": {
     "shape": "not_applicable",
     "time_varying": "not_applicable",
-    "access": "not_applicable"
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [],
-   "definition_quote": "We provide the details of Thompson Sampling algorithm and our analysis for the Bernoulli bandit problem, i.e. when the rewards are either $0$ or $1$, and for arm $i$ the probability of success (reward =$1$) is $\\mu_i$. ... A simple extension of this algorithm to general reward distributions with support $[0,1]$ is described in \\cite{AgrawalG12}, which seamlessly extends our analysis for Bernoulli bandits to general stochastic bandit problem."
+   "definition_quote": "We provide the details of Thompson Sampling algorithm and our analysis for the Bernoulli bandit problem, i.e. when the rewards are either $0$ or $1$, and for arm $i$ the probability of success (reward =$1$) is $\\mu_i$. ... From now on we will assume that the first arm is the unique optimal arm"
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Thompson Sampling for Bernoulli bandits",
+   "name": "Thompson Sampling for Bernoulli bandits (Beta(1,1) priors)",
    "registry_id": "thompson_sampling_beta",
    "is_new": false,
    "techniques": [
@@ -67,22 +83,21 @@
     "notation": "O",
     "expression": "(1 + eps_alg)*sum_subopt(Delta_i*log(T)/kl_i) + K/eps_alg**2",
     "expression_latex": "(1+\\epsilon) \\sum_{i=2}^N \\frac{\\ln T}{d(\\mu_i,\\mu_1)} \\Delta_i+ O(\\frac{N}{\\epsilon^2})",
-    "regime": "0 < eps_alg <= 1"
+    "regime": null
    },
    "symbols": {},
    "conditions": [
-    "unique optimal arm assumed w.l.o.g. (arm 1)",
-    "mu_i, Delta_i treated as constants in the O(N/eps^2) term"
+    "0 < eps_alg <= 1 (analysis parameter)"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:problem-dependent",
     "number": "Theorem 1",
-    "quote": "For the $N$-armed stochastic bandit problem, Thompson Sampling algorithm has expected regret $$\\Ex[{\\cal R}(T)] \\leq (1+\\epsilon) \\sum_{i=2}^N \\frac{\\ln T}{d(\\mu_i,\\mu_1)} \\Delta_i+ O(\\frac{N}{\\epsilon^2})  $$ in time $T$, where $d(\\mu_i,\\mu_1)=\\mu_i \\log \\frac{\\mu_i}{\\mu_1} + (1-\\mu_i) \\log \\frac{(1-\\mu_i)}{(1-\\mu_1)}$. The big-Oh notation in above assumes $\\mu_i, \\Delta_i, i=1, \\ldots, N$ to be constants."
+    "quote": "For the $N$-armed stochastic bandit problem, Thompson Sampling algorithm has expected regret $$\\Ex[{\\cal R}(T)] \\leq (1+\\epsilon) \\sum_{i=2}^N \\frac{\\ln T}{d(\\mu_i,\\mu_1)} \\Delta_i+ O(\\frac{N}{\\epsilon^2})  $$ in time $T$, where $d(\\mu_i,\\mu_1)=...$. The big-Oh notation in above assumes $\\mu_i, \\Delta_i, i=1, \\ldots, N$ to be constants."
    },
    "confidence": "medium",
-   "notes": "Leading term has exact constant (1+eps); only the additive N/eps^2 term is inside O(), which hides functions of mu_i and Delta_i. eps in (0,1] from proof. Analysis given for Bernoulli rewards; paper says it extends to [0,1] rewards via the AgrawalG12 reduction. Regret defined via means (pseudo-regret)."
+   "notes": "Leading term (1+eps) sum Delta_i ln T / kl(mu_i,mu_1) has explicit constant; only the additive N/eps^2 term is inside O(), which hides functions of mu_i and Delta_i. Notation 'O' used since expression cannot contain O. Analysis for Bernoulli rewards; paper says it extends to [0,1] rewards via AgrawalG12 reduction. Regret defined via means, so pseudo-regret."
   },
   {
    "id": "r2",
@@ -112,7 +127,7 @@
     "quote": "For the $N$-armed stochastic bandit problem, Thompson Sampling algorithm has expected regret $$\\Ex[{\\cal R}(T)] \\leq O(\\sqrt{NT\\ln T})$$ in time $T$, where the big-Oh notation hides only the absolute constants."
    },
    "confidence": "high",
-   "notes": "Paper's N is K. Proof is for Bernoulli rewards; extension to [0,1] claimed via reduction. Algorithm does not need T."
+   "notes": "Paper's N is K. Unique optimal arm assumed WLOG per paper."
   }
  ],
  "cited_results": [
@@ -127,10 +142,10 @@
    "side": "lower",
    "setting_description": "Stochastic N-armed Bernoulli bandit, consistent algorithms, asymptotic",
    "bound": {
-    "notation": "Omega",
+    "notation": "liminf",
     "expression": "sum_subopt(Delta_i/kl_i)*log(T)",
     "expression_latex": "\\left[\\sum_{i=2}^{N} \\frac{\\Delta_i}{d(\\mu_i, \\mu_1)} + o(1) \\right] \\ln{T}",
-    "regime": "asymptotic"
+    "regime": null
    },
    "where": "Section 1.3"
   },
@@ -179,7 +194,7 @@
    "algorithm_name": "UCB1",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic N-armed bandit, problem-independent bound",
+   "setting_description": "Stochastic N-armed bandit, problem-independent bound for UCB1",
    "bound": {
     "notation": "O",
     "expression": "sqrt(K*T*log(T))",
@@ -215,7 +230,7 @@
    "algorithm_name": "Thompson Sampling",
    "algorithm_registry_id": "thompson_sampling_beta",
    "side": "upper",
-   "setting_description": "Stochastic N-armed bandit, implied problem-independent bound",
+   "setting_description": "Stochastic N-armed bandit, problem-independent bound implied by earlier analysis",
    "bound": {
     "notation": "O",
     "expression": "T**(2/3)",
@@ -231,25 +246,25 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "3e8a186d587d",
+  "prompt_sha": "225d94076f15",
   "schema_version": "0.4",
-  "ontology_version": "bandits-0.3",
+  "ontology_version": "bandits-0.4",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T17:26:02",
+  "date": "2026-10-20T09:02:26",
   "source_chars": 50029,
-  "input_tokens": 53655,
-  "output_tokens": 4370,
-  "cost_usd_equiv": 0.3276536,
+  "input_tokens": 57271,
+  "output_tokens": 4304,
+  "cost_usd_equiv": 0.3270568,
   "status": "extracted"
  },
  "_verify": {
   "models": [
    "claude-opus-5-5[1m]"
   ],
-  "prompt_sha": "81d04c3b9fd7",
-  "date": "2026-10-19T17:38:37",
-  "applied_on": "2026-10-19T17:42:58",
+  "prompt_sha": "2ad8746f9c72",
+  "date": "2026-10-20T09:21:00",
+  "applied_on": "2026-10-20T09:25:20",
   "min_confidence": "medium",
   "applied": [],
   "rejected": [],
@@ -259,6 +274,6 @@
    "unverifiable": [],
    "missing_results": []
   },
-  "summary": "The extraction is accurate. Both theorems are recorded with the right expressions, notation, regimes and qualifiers. The setting and the algorithm's registry id match the paper, and the results the paper attributes to other papers are recorded as the paper states them."
+  "summary": "The extraction is accurate. Both theorems are recorded faithfully, with the right symbol mapping (N→K, d(mu_i,mu_1)→kl_i) and correct qualifiers. The setting and cited results match the paper. The remaining lemmas are technical and correctly left out."
  }
 }

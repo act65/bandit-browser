@@ -79,6 +79,8 @@ def render_ontology(ont: dict) -> str:
             if fs.get("note"):
                 line += f" ({fs['note']})"
             lines.append(line)
+    if ont.get("guidance"):
+        lines.append("\n### Mapping guidance\n" + "\n".join(f"- {g}" for g in ont["guidance"]))
     for name, values in ont["vocabularies"].items():
         if isinstance(values, dict):  # vocabulary with definitions
             lines.append(f"\n### {name}\n" + "\n".join(f"- `{v}`: {d}" for v, d in values.items()))

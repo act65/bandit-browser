@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Stochastic K-armed bandit with one-dimensional exponential family arms (bounded means, bounded variance)",
+   "name_in_paper": "Stochastic K-armed bandit with one-dimensional canonical exponential family arms, bounded means and bounded variance (family F)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -36,16 +36,30 @@
    "action_set": {
     "shape": "not_applicable",
     "time_varying": "not_applicable",
-    "access": "not_applicable"
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Variance of the family uniformly bounded by V, giving Pinsker-like inequality kl(mu,mu') >= (mu-mu')^2/(2V)",
-    "Means restricted to a fixed interval [mu^-, mu^+] inside the family's mean range"
+    "Variance of the exponential family bounded uniformly by V on I (Pinsker-like inequality kl >= (mu-mu')^2/(2V))",
+    "Means restricted to [mu^-, mu^+] strictly inside the family's mean range"
    ],
-   "definition_quote": "Each arm is assumed to be a probability distribution of some canonical one-dimensional exponential family ... we suppose that each arm $\\nu_\\theta$ satisfies $\\mu=b'(\\theta)\\in [\\mu-,\\mu+]\\subset I$ ... there exists $V>0$ such that $\\sup_{\\mu\\in I} b''( {b'}^{-1}(\\mu))\\leq V<+\\infty$."
+   "definition_quote": "Each arm is assumed to be a probability distribution of some canonical one-dimensional exponential family $\\nu_{\\theta}$ indexed by $\\theta\\in\\Theta$. ... we suppose that each arm $\\nu_\\theta$ satisfies $\\mu=b'(\\theta)\\in [\\mu-,\\mu+]\\subset I$ ... there exists $V>0$ such that $\\sup_{\\mu\\in I} b''( {b'}^{-1}(\\mu))\\leq V<+\\infty$."
   }
  ],
  "algorithms": [
@@ -79,12 +93,12 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "76*sqrt(V_var*K*T) + (mu_plus - mu_minus)*K",
+    "expression": "76*sqrt(V*K*T) + (mu_plus - mu_minus)*K",
     "expression_latex": "R_T\\leq 76 \\sqrt{ V K T}+(\\mu^+-\\mu^-)K",
     "regime": null
    },
    "symbols": {
-    "V_var": "uniform upper bound on the variance of distributions in the exponential family",
+    "V": "uniform upper bound on the variance of the exponential family",
     "mu_plus": "upper end of the interval containing all arm means",
     "mu_minus": "lower end of the interval containing all arm means"
    },
@@ -92,7 +106,7 @@
     "K >= 2"
    ],
    "tuning": [
-    "exploration function g(n) = log_+((T/(K n))(log_+^2(T/(K n)) + 1))"
+    "g(n) = log_+((T/(K n))(log_+^2(T/(K n)) + 1))"
    ],
    "is_new": true,
    "source": {
@@ -101,7 +115,7 @@
     "quote": "For any family $\\mathcal{F}$ satisfying the assumptions detailed in Section~\\ref{sec:settings}, and for any bandit model $\\nu\\in\\mathcal{F}$, the expected regret of the kl-UC$\\Bpp$ algorithm is upper-bounded as R_T\\leq 76 \\sqrt{ V K T}+(\\mu^+-\\mu^-)K\\,."
    },
    "confidence": "high",
-   "notes": "Regret defined via means (pseudo-regret). Paper notes the bound also applies to [0,1]-valued rewards with V=1/4."
+   "notes": "Regret defined as E[sum (mu* - mu_{A_t})], i.e. pseudo-regret. Paper notes the bound also applies to [0,1]-valued bandits with V=1/4."
   },
   {
    "id": "r2",
@@ -116,30 +130,59 @@
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
-    "notation": "exact",
-    "expression": "log(T)/kl_fam(mu_i + delta_p, mu_star - delta_p) + log((1/K)*(1 + log(T/K)**2))/kl_fam(mu_i + delta_p, mu_star - delta_p) + (16*E**2 + 2)*2*V_var*K/delta_p**2 + 1",
-    "expression_latex": "\\E[N_a(T)]\\leq \\frac{\\log(T)}{\\kl(\\mu_a+\\delta,\\mu^*-\\delta)}+ \\frac{\\log(1/K(1+\\log^2(T/K)))}{\\kl(\\mu_a+\\delta,\\mu^*-\\delta)}+(16e^2+2)\\frac{2 V K}{\\delta^2}+1",
-    "regime": "sqrt(22*V_var*K/T) <= delta_p <= Delta_i/3"
+    "notation": "O",
+    "expression": "log(T)/kl(mu_i + delta_a, mu_star - delta_a) + log(log(T))/delta_a**2",
+    "expression_latex": "\\E[N_a(T)]\\leq \\frac{\\log(T)}{\\kl(\\mu_a+\\delta,\\mu^\\star-\\delta)}+O\\left(\\frac{\\loglog(T)}{\\delta^2}\\right)",
+    "regime": "sqrt(22*V*K/T) <= delta_a <= Delta_i/3"
    },
    "symbols": {
-    "kl_fam": "KL divergence between members of the exponential family parametrised by their means",
-    "delta_p": "free analysis parameter delta of Theorem 2 (not a failure probability)",
-    "V_var": "uniform upper bound on the variance of distributions in the exponential family"
+    "delta_a": "free analysis parameter delta in the theorem",
+    "V": "uniform upper bound on the variance of the exponential family"
    },
    "conditions": [
-    "arm i is suboptimal"
+    "arm a (index i) is suboptimal"
    ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "th:asymptotic_bound",
+    "number": "Theorem 2",
+    "quote": "For any bandit model $\\nu\\in\\mathcal{F}$, for any suboptimal arm $a$ and any $\\delta$ such that $\\sqrt{22 V K / T}\\leq \\delta\\leq(\\mustar-\\mu_a)/3$, \\E[N_a(T)]\\leq \\frac{\\log(T)}{\\kl(\\mu_a+\\delta,\\mu^\\star-\\delta)}+O\\left(\\frac{\\loglog(T)}{\\delta^2}\\right)"
+   },
+   "confidence": "medium",
+   "notes": "Bound on expected number of pulls of a suboptimal arm; leading term has constant 1, only the second-order term is O(.). Explicit bound in proof: log(T)/kl + log((1/K)(1+log^2(T/K)))/kl + (16e^2+2)*2VK/delta^2 + 1."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "sum_subopt(Delta_i/kl(mu_i, mu_star))*log(T)",
+    "expression_latex": "\\limsup R_T/\\log T \\le \\sum_a (\\mu^\\star-\\mu_a)/\\kl(\\mu_a,\\mu^\\star)",
+    "regime": "T -> infinity"
+   },
+   "symbols": {},
+   "conditions": [],
    "tuning": [
-    "exploration function g(n) = log_+((T/(K n))(log_+^2(T/(K n)) + 1))"
+    "delta of order 1/sqrt(loglog T) in the analysis"
    ],
    "is_new": true,
    "source": {
     "label": "th:asymptotic_bound",
     "number": "Theorem 2",
-    "quote": "For any bandit model $\\nu\\in\\mathcal{F}$, for any suboptimal arm $a$ and any $\\delta$ such that $\\sqrt{22 V K / T}\\leq \\delta\\leq(\\mustar-\\mu_a)/3$, \\E[N_a(T)]\\leq \\frac{\\log(T)}{\\kl(\\mu_a+\\delta,\\mu^\\star-\\delta)}+O\\left(\\frac{\\loglog(T)}{\\delta^2}\\right) which implies the asymptotic optimality (see the end of the proof ... for an explicit bound)."
+    "quote": "which implies the asymptotic optimality (see the end of the proof in Section~\\ref{sec:proof:asymptotic} for an explicit bound)."
    },
    "confidence": "medium",
-   "notes": "Bound on expected number of pulls of a suboptimal arm. Theorem states log(T)/kl(mu_a+delta,mu*-delta) + O(loglog T/delta^2); the expression recorded is the explicit bound given at the end of the proof, which the theorem refers to. Choosing delta ~ (loglog T)^{-1/2} yields asymptotic optimality limsup E[N_a(T)]/log T <= 1/kl(mu_a, mu*), i.e. matching Lai-Robbins."
+   "notes": "Asymptotic optimality (matching Lai-Robbins) is claimed as an implication of Theorem 2 by choosing delta ~ 1/sqrt(loglog T); written here as limsup form. kl is the family's divergence (Bernoulli kl for Bernoulli arms)."
   }
  ],
  "cited_results": [
@@ -152,10 +195,10 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic K-armed bandit, one-dimensional exponential family; uniformly efficient strategies; E[N_a(T)] >= log(T)/kl(mu_a, mu*)(1-o(1)), implying regret lower bound",
+   "setting_description": "Stochastic K-armed bandit, exponential family arms, uniformly efficient strategies; lower bound on expected pulls of suboptimal arm",
    "bound": {
     "notation": "liminf",
-    "expression": "sum_subopt(Delta_i/KL_i)*log(T)",
+    "expression": "log(T)/kl(mu_i, mu_star)",
     "expression_latex": "\\E[N_a(T)] \\geq \\frac{\\log(T)}{\\kl(\\mu_a,\\mustar)}(1-o(1))",
     "regime": "T -> infinity"
    },
@@ -170,7 +213,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Minimax lower bound over family F of exponential-family bandits (adaptation of Theorem A.2 of Auer et al.)",
+   "setting_description": "Minimax lower bound over family F of exponential-family bandit problems (adaptation of Theorem A.2)",
    "bound": {
     "notation": "Omega",
     "expression": "Min(sqrt(K*T), T)",
@@ -186,25 +229,25 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "3e8a186d587d",
+  "prompt_sha": "225d94076f15",
   "schema_version": "0.4",
-  "ontology_version": "bandits-0.3",
+  "ontology_version": "bandits-0.4",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T17:27:18",
+  "date": "2026-10-20T09:03:59",
   "source_chars": 47839,
-  "input_tokens": 51560,
-  "output_tokens": 4190,
-  "cost_usd_equiv": 0.3072936,
+  "input_tokens": 55176,
+  "output_tokens": 4231,
+  "cost_usd_equiv": 0.3088368,
   "status": "extracted"
  },
  "_verify": {
   "models": [
    "claude-opus-5-5[1m]"
   ],
-  "prompt_sha": "81d04c3b9fd7",
-  "date": "2026-10-19T17:41:48",
-  "applied_on": "2026-10-19T17:42:58",
+  "prompt_sha": "2ad8746f9c72",
+  "date": "2026-10-20T09:24:34",
+  "applied_on": "2026-10-20T09:25:21",
   "min_confidence": "medium",
   "applied": [],
   "rejected": [],
@@ -214,6 +257,6 @@
    "unverifiable": [],
    "missing_results": []
   },
-  "summary": "The extraction is accurate. Both main theorems are recorded with the correct constants, regimes and quantities, the setting matches the paper's assumptions, and the algorithm maps to the right registry entry. No corrections are needed."
+  "summary": "The extraction faithfully records both main theorems (the minimax bound and the bound on suboptimal-arm pulls) and the asymptotic optimality they imply, with the correct setting, algorithm and constants. The cited lower bounds are recorded as the paper states them. No corrections are needed."
  }
 }

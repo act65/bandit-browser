@@ -1,6 +1,7 @@
 """Rebuild every derived artefact from data/extractions/ in order.
 
-resolve (canonical ids) -> infer (inherited bounds) -> compare (profiles, tightness)
+resolve (canonical ids) -> infer (inherited bounds) -> compare (profiles, tightness;
+uses data/condition-classes.yaml from pipeline/classify_conditions.py)
 -> report (poset, gap reports) -> acceptance (pilot facts). Validation is separate
 (pipeline/validate.py) because it needs the gitignored paper sources.
 

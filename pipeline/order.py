@@ -9,7 +9,9 @@ ontology's dimensions:
   - multi-valued dimensions with an `order_rule` (function_class, learner_knows,
     instance_assumptions): more elements = special case (P ⊑ Q iff Q ⊆ P);
     multi-valued dimensions without one (extras) must be equal;
-  - node parameters (action_set fields): per-field orders;
+  - node parameters (action_set, corruption, feedback_graph fields): per-field orders and
+    value maps; computational-only fields are ignored; `not_applicable` on one side defers
+    to the governing dimension; `unspecified` is compatible with a caveat;
   - `parameters`: fixing a parameter is a special case (P ⊑ Q iff Q ⊆ P as items).
 """
 
@@ -63,9 +65,12 @@ class Order:
         self.value_maps_up = {d: spec.get("value_maps_up") or {} for d, spec in self.dims.items()}
         self.notes = {d: {tuple(n["pair"]): n for n in spec.get("order_notes") or []}
                       for d, spec in self.dims.items()}
+        self.node_fields = {}  # node parameter -> fields that take part in the order
         for name, spec in (ontology.get("node_parameters") or {}).items():
+            self.node_fields[name] = [f for f, fs in spec["fields"].items() if not fs.get("computational_only")]
             for f, fspec in spec["fields"].items():
                 self.orders[f"{name}.{f}"] = _closure(tuple(p) for p in fspec.get("order") or [])
+                self.value_maps[f"{name}.{f}"] = fspec.get("value_maps") or {}
 
     @staticmethod
     def _compose(direct: dict, order: set) -> dict:
@@ -143,14 +148,25 @@ class Order:
             ch.param_map = {**ch.param_map, **self.value_maps.get(dim, {}).get(va, {})}
             ch.up_map = dict(self.value_maps_up.get(dim, {}).get(vb, {}))
             changes.append(ch)
-        for f in sorted(set(ka.get("action_set", {})) | set(kb.get("action_set", {}))):
-            va, vb = ka.get("action_set", {}).get(f), kb.get("action_set", {}).get(f)
-            if va == vb:
-                continue
-            if (va, vb) in self.orders.get(f"action_set.{f}", set()):
-                changes.append(Change(f"action_set.{f}", va, vb, "order"))
-            else:
-                return None
+        for name, fields in self.node_fields.items():
+            for f in fields:
+                va = (ka.get(name) or {}).get(f, "not_applicable")
+                vb = (kb.get(name) or {}).get(f, "not_applicable")
+                if va == vb:
+                    continue
+                dim = f"{name}.{f}"
+                if (va, vb) in self.orders.get(dim, set()):
+                    changes.append(Change(dim, va, vb, "order", dict(self.value_maps.get(dim, {}).get(va, {}))))
+                elif "not_applicable" in (va, vb):
+                    # irrelevant on one side: the governing dimension (environment for corruption,
+                    # feedback for feedback_graph, action_space for action_set) carries the order
+                    continue
+                elif "unspecified" in (va, vb):
+                    # the paper did not say: compatible only if its unstated convention matches
+                    changes.append(Change(dim, va, vb, "order",
+                                          caveats=[f"{dim} unspecified on one side ({va} vs {vb})"]))
+                else:
+                    return None
         pa, pb = ka.get("parameters", {}), kb.get("parameters", {})
         if pa != pb:
             if not set(pb.items()) < set(pa.items()):

@@ -32,13 +32,27 @@
    "action_set": {
     "shape": "not_applicable",
     "time_varying": "not_applicable",
-    "access": "not_applicable"
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [],
-   "definition_quote": "Associated with each action, $a$, is an unknown Bernoulli distribution $\\cB\\left(\\mu_a\\right)$, whose expectation is $\\mu_a$. At each time $t$ the agent chooses to observe an action $A_t\\in\\{1,\\dots,K\\}$ and receives a reward $R_t$ drawn from the distribution $\\cB\\left(\\mu_{A_t}\\right)$. ... For the rest of this paper, we assume action $1$ is the unique optimal action."
+   "definition_quote": "Associated with each action, $a$, is an unknown Bernoulli distribution $\\cB\\left(\\mu_a\\right)$ ... For the rest of this paper, we assume action $1$ is the unique optimal action."
   }
  ],
  "algorithms": [
@@ -73,10 +87,10 @@
     "regime": null
    },
    "symbols": {
-    "C_eps": "problem-dependent constant C(epsilon, mu_1, ..., mu_K) independent of T"
+    "C_eps": "problem-dependent constant C(epsilon, mu_1, ..., mu_K)"
    },
    "conditions": [
-    "unique optimal arm (assumed WLOG in the analysis)"
+    "unique optimal arm (assumed in Preliminaries)"
    ],
    "tuning": [
     "uniform Beta(1,1) prior"
@@ -88,7 +102,7 @@
     "quote": "For every $\\epsilon>0$ there exists a problem-dependent constant $C(\\epsilon,\\mu_1,\\dots,\\mu_K)$ such that the regret of Thompson Sampling satisfies: \\[ \\cR(T)\\leq(1+\\epsilon)\\sum_{a\\in A:\\mu_a\\neq\\mu^*}\\frac{\\Delta_a(\\ln(T)+\\ln\\ln(T))}{K(\\mu_a,\\mu^*)}+ C(\\epsilon,\\mu_1,\\dots,\\mu_K). \\]"
    },
    "confidence": "high",
-   "notes": "Regret defined as T mu* - E[sum R_t] = sum Delta_a E[N_a], i.e. pseudo-regret. Algorithm does not use T (T only appears in analysis quantities), so anytime. eps is a free analysis parameter. Implies asymptotic optimality (matches Lai-Robbins)."
+   "notes": "Regret defined as sum of gaps times expected pull counts: pseudo-regret. TS does not use T (T appears only in the analysis), so anytime. Asymptotically matches Lai-Robbins."
   },
   {
    "id": "r2",
@@ -104,22 +118,22 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "(1 + eps_alg)*(log(T) + log(log(T)))/kl_i + D_eps + N_const + N_0 + 5 + 2*C_b",
+    "expression": "(1 + eps_alg)*(log(T) + log(log(T)))/kl_i + D_eps + N_b + N_0 + 5 + 2*C_b",
     "expression_latex": "(1+\\epsilon)\\frac{\\ln(T) + \\ln\\ln (T) }{K(\\mu_a,\\mu_1)} + D(\\epsilon,\\mu_1,\\mu_a) + N(b,\\epsilon,\\mu_1,\\mu_a)+N_0(b) + 5 + 2C_b",
     "regime": null
    },
    "symbols": {
     "D_eps": "constant D(epsilon,mu_1,mu_a) = (1+eps/2)^2/(eps^2 min(mu_a(1-mu_a), mu_1(1-mu_1))^2)",
-    "N_const": "constant N(b,epsilon,mu_1,mu_a)",
+    "N_b": "constant N(b,epsilon,mu_1,mu_a)",
     "N_0": "constant N_0(b)",
-    "C_b": "constant C_b(mu_1,mu_2) from Proposition 1",
-    "b": "constant b(mu_1,mu_2) in (0,1) from Proposition 1"
+    "C_b": "constant from Proposition 1, C_b(mu_1,mu_2)"
    },
    "conditions": [
-    "unique optimal arm"
+    "unique optimal arm",
+    "bound on E[N_{a,T}] for a fixed suboptimal arm a; kl_i = K(mu_a, mu_1)"
    ],
    "tuning": [
-    "uniform Beta(1,1) prior"
+    "uniform prior"
    ],
    "is_new": true,
    "source": {
@@ -127,43 +141,8 @@
     "number": "Theorem 2",
     "quote": "Let $\\epsilon>0$. With $b$ as in Proposition \\ref{important:lemma}, for every suboptimal arm $a$, there exist constants $D(\\epsilon,\\mu_1,\\mu_a)$, $N(b,\\epsilon,\\mu_1,\\mu_a)$ and $N_0(b)$ such that: \\bE[N_{a,T}] \\leq (1+\\epsilon)\\frac{\\ln(T) + \\ln\\ln (T) }{K(\\mu_a,\\mu_1)} + D(\\epsilon,\\mu_1,\\mu_a) + N(b,\\epsilon,\\mu_1,\\mu_a)+N_0(b) + 5 + 2C_b ."
    },
-   "confidence": "high",
-   "notes": "Bound on expected number of pulls E[N_{a,T}] of a suboptimal arm a (quantity 'other'); kl_i here is kl(mu_a, mu_1)."
-  },
-  {
-   "id": "r3",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "other",
-   "dependence": "instance_dependent",
-   "comparator": "not_applicable",
-   "probability": "expectation",
-   "horizon": "anytime",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "exact",
-    "expression": "C_b",
-    "expression_latex": "\\sum_{t=1}^{\\infty}\\bP\\left(N_{1,t} \\leq  t^b\\right) \\leq C_b",
-    "regime": null
-   },
-   "symbols": {
-    "C_b": "finite constant C_b(mu_1,mu_2)",
-    "b": "constant b(mu_1,mu_2) in (0,1)"
-   },
-   "conditions": [
-    "unique optimal arm"
-   ],
-   "tuning": [],
-   "is_new": true,
-   "source": {
-    "label": "important:lemma",
-    "number": "Proposition 1",
-    "quote": "There exists constants $b=b(\\mu_1,\\mu_2)\\in(0,1)$ and $C_b=C_b(\\mu_1,\\mu_2)<\\infty$ such that \\[ \\sum_{t=1}^{\\infty}\\bP\\left(N_{1,t} \\leq  t^b\\right) \\leq C_b. \\]"
-   },
    "confidence": "medium",
-   "notes": "Tail control on the number of pulls of the optimal arm: sum over t of P(N_{1,t} <= t^b) bounded by a constant. Not a regret bound; recorded as 'other'."
+   "notes": "Bound on expected number of pulls of a suboptimal arm (quantity 'other')."
   }
  ],
  "cited_results": [
@@ -176,14 +155,32 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic Bernoulli K-armed bandit, strongly consistent policies; lower bound on E[N_{a,T}] for each suboptimal arm",
+   "setting_description": "Stochastic Bernoulli (and more general) bandits, strongly consistent policies; bound on E[N_{a,T}] for suboptimal arm a",
    "bound": {
     "notation": "liminf",
     "expression": "log(T)/kl_i",
     "expression_latex": "\\liminf_{T\\ra\\infty}\\frac{\\bE[N_{a,T}]}{\\ln T}\\geq \\frac{1}{K(\\mu_a,\\mu^*)}",
-    "regime": "T -> infinity"
+    "regime": null
    },
-   "where": "Introduction, Eq. (LaiRobbins)"
+   "where": "Introduction, eq. (LaiRobbins)"
+  },
+  {
+   "cited_key": "Agrawal:Goyal",
+   "cited_title": "Analysis of thompson sampling for the multi-armed bandit problem",
+   "cited_first_author": "S. Agrawal",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson Sampling",
+   "algorithm_registry_id": "thompson_sampling_beta",
+   "side": "upper",
+   "setting_description": "Stochastic Bernoulli bandits; bound on E[N_{a,T}] scaling like K_1/Delta_a^2 ln T + K_2",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)/Delta_i**2",
+    "expression_latex": "\\frac{K_1}{\\Delta_a^2}\\ln(T) + K_2",
+    "regime": null
+   },
+   "where": "Introduction"
   }
  ],
  "_run": {
@@ -192,40 +189,34 @@
    "claude-opus-5-5[1m]"
   ],
   "effort": null,
-  "prompt_sha": "3e8a186d587d",
+  "prompt_sha": "225d94076f15",
   "schema_version": "0.4",
-  "ontology_version": "bandits-0.3",
+  "ontology_version": "bandits-0.4",
   "variables_version": "0.3",
   "algorithm_registry_size": 132,
-  "date": "2026-10-19T17:25:55",
+  "date": "2026-10-20T09:02:33",
   "source_chars": 51066,
-  "input_tokens": 53676,
-  "output_tokens": 3807,
-  "cost_usd_equiv": 0.3165616,
+  "input_tokens": 57292,
+  "output_tokens": 3799,
+  "cost_usd_equiv": 0.3171248,
   "status": "extracted"
  },
  "_verify": {
   "models": [
    "claude-opus-5-5[1m]"
   ],
-  "prompt_sha": "81d04c3b9fd7",
-  "date": "2026-10-19T17:41:08",
-  "applied_on": "2026-10-19T17:42:58",
+  "prompt_sha": "2ad8746f9c72",
+  "date": "2026-10-20T09:23:44",
+  "applied_on": "2026-10-20T09:25:21",
   "min_confidence": "medium",
   "applied": [],
   "rejected": [],
   "flags": {
    "hallucinated": [],
-   "not_a_guarantee": [
-    {
-     "target": "results.r3",
-     "verdict": "not_a_guarantee",
-     "comment": "Proposition 1 is a technical tail-control lemma on N_{1,t} used in the proof of Theorem 2, not a performance guarantee."
-    }
-   ],
+   "not_a_guarantee": [],
    "unverifiable": [],
    "missing_results": []
   },
-  "summary": "The extraction is accurate. Theorems 1 and 2 are faithfully recorded with correct symbol mappings, setting, quantity and horizon. The only issue is that Proposition 1 is a technical tail bound rather than a performance guarantee, so it should not be stored as a result. Settings, the algorithm's registry id and the cited Lai–Robbins bound are correct."
+  "summary": "The extraction is accurate. Theorem 1 (the regret bound) and Theorem 2 (the bound on pulls of a suboptimal arm) are recorded faithfully, with correct symbol mappings, setting and algorithm registry id. Proposition 1 and the lemmas are technical tools and were rightly left out."
  }
 }
