@@ -24,8 +24,8 @@ STATUS = {  # key -> (label, short help)
     "conflict": ("conflict", "an upper bound grows more slowly than a lower bound: extraction error or contradiction"),
     "poly_gap": ("poly gap", "best upper and lower bounds differ by a polynomial factor"),
     "log_gap": ("log gap", "best upper and lower bounds differ by logarithmic factors only"),
-    "no_lower": ("no lower bound", "upper bounds but no comparable lower bound"),
-    "no_upper": ("no upper bound", "lower bounds but no comparable upper bound"),
+    "no_lower": ("no comparable lower bound", "upper bounds, but no lower bound usable for comparison (missing, unprofilable or instance-restricted)"),
+    "no_upper": ("no comparable upper bound", "lower bounds, but no upper bound usable for comparison (missing, unprofilable or instance-restricted)"),
     "tight": ("tight", "best upper and lower bounds match up to constants"),
     "none": ("no comparable bounds", "no bound in this setting has a usable rate profile"),
 }

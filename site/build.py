@@ -26,6 +26,7 @@ read from inferred.json and shown separately from extracted ones (D1, D4).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import json
 import re
@@ -203,8 +204,34 @@ def pretty_vars(s: str) -> str:
     return re.sub(r"[A-Za-z]+", lambda m: GREEK_TEXT.get(m.group(0), m.group(0)), s).replace("_*", "*")
 
 
+# Node-parameter fields shown in base names; the rest only appear when needed to tell
+# two otherwise identically named settings apart (see Site._dedupe_names).
+NAME_FIELDS = {"action_set.shape"}
+
+
+def field_bit(d: str, v: str) -> str:
+    return f"{value_label(d, v)} {d.split('.', 1)[1].replace('_', ' ')}"
+
+
+def short_params(s: str, width: int = 48) -> str:
+    """'K=2, restriction=L*_T / T <= alpha' -> 'K = 2, restriction: L*_T / T ≤ α' with long values cut."""
+    out = []
+    for part in s.split(", "):
+        k, _, v = part.partition("=")
+        v = v.replace("<=", "≤").replace(">=", "≥").replace("=>", "≥")
+        if v.startswith(">") or v.startswith("<") or v.startswith("≥") or v.startswith("≤"):
+            item = f"{k} {v}"
+        elif len(v) > 12 or " " in v:
+            item = f"{k}: {v}"
+        else:
+            item = f"{k} = {v}"
+        out.append(item if len(item) <= width else item[: width - 1] + "…")
+    return ", ".join(out)
+
+
 def setting_name(key: dict[str, str]) -> str:
-    order = [d for d in NAME_ORDER if d in key] + [d for d in key if d not in NAME_ORDER and d not in TRAILING]
+    order = [d for d in NAME_ORDER if d in key] + [d for d in key if d not in NAME_ORDER and d not in TRAILING
+                                                    and ("." not in d or d in NAME_FIELDS)]
     bits = []
     for d in order:
         v = key[d]
@@ -212,14 +239,14 @@ def setting_name(key: dict[str, str]) -> str:
             continue
         if d in ("function_class", "instance_assumptions", "extras"):
             bits.append(value_label(d, v.split("+")))
-        elif "." in d:  # node-parameter field, e.g. action_set.shape, corruption.adversary
-            bits.append(f"{value_label(d, v)} {d.split('.', 1)[1].replace('_', ' ')}")
+        elif "." in d:  # node-parameter field, e.g. action_set.shape
+            bits.append(field_bit(d, v))
         else:
             bits.append(value_label(d, v))
     if key.get("learner_knows"):
         bits.append("knows " + pretty_vars(", ".join(key["learner_knows"].split("+"))))
     if key.get("parameters"):
-        bits.append(pretty_vars(key["parameters"].replace("=>=", " ≥ ").replace("=", " = ")))
+        bits.append(pretty_vars(short_params(key["parameters"])))
     return " · ".join(bits) or "unspecified"
 
 
@@ -314,13 +341,27 @@ class Site:
         return {"paper": pid, "r": r, "node": nid, "alg": full, "alg_aliases": aliases, "knows": knows}
 
     def _dedupe_names(self) -> None:
+        """Settings sharing a base name get a short suffix listing only the node-parameter
+        fields that differ between them (e.g. "corruption adversary: adaptive"); the id is a
+        last resort."""
         seen: dict[str, list] = {}
         for n in self.nodes.values():
             seen.setdefault(n["name"], []).append(n)
         for name, ns in seen.items():
-            if len(ns) > 1:
-                for n in ns:
-                    n["name"] = f"{name} [{n['id'][:10]}]"
+            if len(ns) < 2:
+                continue
+            fields = sorted({d for n in ns for d in n["key"] if "." in d and d not in NAME_FIELDS})
+            differing = [d for d in fields if len({n["key"].get(d, "") for n in ns}) > 1]
+            for n in ns:
+                bits = [field_bit(d, n["key"][d]) for d in differing if not is_default(d, n["key"].get(d, ""))]
+                n["name"] = f"{name} · {', '.join(bits)}" if bits else name
+            again: dict[str, list] = {}
+            for n in ns:
+                again.setdefault(n["name"], []).append(n)
+            for nm, group in again.items():
+                if len(group) > 1:
+                    for n in group:
+                        n["name"] = f"{nm} [{n['id'][:10]}]"
 
     # -- neighbourhood structure
     def _edges(self) -> list[dict]:
@@ -1031,7 +1072,17 @@ def change_html(x: dict) -> str:
         v = lambda s: e(value_label(d, s) if s else "none")
         return f'<span class="dim">{e(dim_label(d))}</span> {v(fv)} <span class="arrow">→</span> {v(tv)}'
 
-    return "<br>".join(one(*c) for c in x.get("changes") or [(x["dim"], x["from"], x["to"])])
+    def informative(d, fv, tv):
+        lab = lambda s: value_label(d, s) if s else "none"
+        if lab(fv) == lab(tv):
+            return False  # e.g. "none -> none" after flattening
+        if "." in d and "not_applicable" in (fv, tv):
+            return False  # node field irrelevant on one side: implied by the governing dimension
+        return True
+
+    changes = x.get("changes") or [(x["dim"], x["from"], x["to"])]
+    shown = [c for c in changes if informative(*c)] or changes[:1]
+    return "<br>".join(one(*c) for c in shown)
 
 
 def flip(x: dict) -> dict:
@@ -1646,7 +1697,41 @@ def graph_page(site: Site) -> str:
             out.append(f'<li><span class="dot s{s}"></span>{e(lbl)}</li>')
         return "".join(out)
 
-    data = json.dumps({"nodes": nodes, "edges": edges}, ensure_ascii=False).replace("</", "<\\/")
+    # Overview: group settings by their main problem axes; one node per group, with
+    # specialisation arrows between groups (transitively reduced). The full graph of 150+
+    # near-duplicate settings is unreadable as a first view.
+    group_dims = ["objective", "environment", "action_space", "feedback"]
+    gid_of, groups = {}, {}
+    for n in site.nodes.values():
+        gk = tuple(n["key"].get(d, "") for d in group_dims)
+        gid = "G" + hashlib.sha1("|".join(gk).encode()).hexdigest()[:8]
+        gid_of[n["id"]] = gid
+        g = groups.setdefault(gid, {"id": gid, "name": setting_name(dict(zip(group_dims, gk))), "members": [],
+                                    "sa": act_slots.get(gk[2], 0), "se": env_slots.get(gk[1], 0), "results": 0})
+        g["members"].append(n["id"])
+        g["results"] += sum(site.counts(n))
+    for x in nodes:
+        x["g"] = gid_of[x["id"]]
+    gpairs = {(gid_of[x["source"]], gid_of[x["target"]]) for x in site.hasse()
+              if x["kind"] != "neighbour" and gid_of[x["source"]] != gid_of[x["target"]]}
+    succ: dict[str, set] = {}
+    for a, b in gpairs:
+        succ.setdefault(a, set()).add(b)
+
+    def reach(a, b, skip):
+        stack, seen = [y for y in succ.get(a, ()) if (a, y) != skip], set()
+        while stack:
+            y = stack.pop()
+            if y == b:
+                return True
+            if y not in seen:
+                seen.add(y)
+                stack += succ.get(y, ())
+        return False
+    gedges = [{"s": a, "t": b} for a, b in sorted(gpairs) if not reach(a, b, (a, b))]
+    gnodes = [{**g, "n": len(g["members"])} for g in groups.values()]
+    data = json.dumps({"nodes": nodes, "edges": edges, "groups": gnodes, "gedges": gedges},
+                      ensure_ascii=False).replace("</", "<\\/")
     from collections import Counter
     stc = Counter(x["st"] for x in nodes)
     st_legend = "".join(f'<li><span class="dot st-{k}"></span>{e(analysis.STATUS[k][0])} <span class="muted">&nbsp;{stc[k]}</span></li>'
@@ -1657,13 +1742,17 @@ def graph_page(site: Site) -> str:
 <div class="graph-head">
 <div>
 <h1>Settings graph</h1>
-<p class="lede small">{len(nodes)} settings. <b>Arrows</b> run from a special case to its generalisation
+<p class="lede small"><b>Overview</b>: {len(gnodes)} groups of settings (objective × environment × action space ×
+feedback); click a group to see its settings. <b>All settings</b>: {len(nodes)} settings. <b>Arrows</b> run from a special case to its generalisation
 ({n_dir} after removing transitive ones): upper bounds flow against the arrow, lower bounds along it.
 <span class="faint-line"></span> faint lines join settings that differ in one unordered assumption.
 Node size ∝ number of results. Click a node to open it.</p>
 </div>
 </div>
 <div class="graph-controls">
+<div class="seg" role="group" aria-label="View"><span>View</span>
+<button type="button" data-view="overview" aria-pressed="true">Overview</button>
+<button type="button" data-view="all" aria-pressed="false">All settings</button></div>
 <div class="seg" role="group" aria-label="Colour by"><span>Colour</span>
 <button type="button" data-colour="sa" aria-pressed="true">Action space</button>
 <button type="button" data-colour="se" aria-pressed="false">Environment</button>

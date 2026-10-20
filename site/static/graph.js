@@ -28,6 +28,14 @@ document.addEventListener("DOMContentLoaded", function () {
   data.edges.forEach(function (e, i) {
     elements.push({ group: "edges", data: Object.assign({ id: "e" + i, source: e.s, target: e.t }, e), classes: e.kind });
   });
+  // Overview: groups of settings (objective x environment x action space x feedback)
+  (data.groups || []).forEach(function (g) {
+    elements.push({ group: "nodes", classes: "grp", data: Object.assign({}, g, {
+      size: 18 + 6 * Math.sqrt(g.results), total: g.results, short: g.name }) });
+  });
+  (data.gedges || []).forEach(function (e, i) {
+    elements.push({ group: "edges", classes: "gedge", data: { id: "g" + i, source: e.s, target: e.t } });
+  });
 
   var style = function () {
     var fg = css("--fg"), muted = css("--muted"), surface = css("--surface");
@@ -52,20 +60,29 @@ document.addEventListener("DOMContentLoaded", function () {
       { selector: ".faded", style: { "opacity": 0.12 } },
       { selector: "node.hl", style: { "label": "data(short)", "border-color": fg, "border-width": 3, "color": fg, "font-weight": 600, "z-index": 10 } },
       { selector: "edge.hl", style: { "opacity": 1, "width": 2.4, "z-index": 9 } },
-      { selector: "edge.neighbour.hl", style: { "line-color": muted } }
+      { selector: "edge.neighbour.hl", style: { "line-color": muted } },
+      // neighbourhood view (?focus=): every node labelled in full, with room to read it
+      { selector: "node.local", style: { "label": "data(name)", "text-max-width": 150, "font-size": 12,
+        "color": fg, "text-background-opacity": 0.85 } },
+      { selector: "node.local.hl", style: { "font-weight": 700, "border-width": 4 } },
+      { selector: "node.grp", style: { "label": "data(name)", "text-max-width": 150, "font-size": 12, "color": fg } }
     ];
   };
 
   var cy = cytoscape({ container: holder, elements: elements, style: style(), wheelSensitivity: 0.25,
                        minZoom: 0.15, maxZoom: 3 });
+  var groupEls = cy.elements(".grp, .gedge");
+  var settingEls = cy.elements().not(groupEls);
 
   var layoutName = hasDagre ? "dagre" : "cose";
+  var qv = new URLSearchParams(window.location.search);
+  var view = (qv.get("focus") || qv.get("view") === "all" || qv.get("layout")) ? "all" : "overview";
   var qs = new URLSearchParams(window.location.search);
   if (qs.get("layout") === "cose" || qs.get("layout") === "dagre") layoutName = qs.get("layout");
   var nbBox = document.getElementById("show-nb");
   var showNb = function (on) {
     nbBox.checked = on;
-    cy.edges(".neighbour").style("display", on ? "element" : "none");
+    if (view === "all") cy.edges(".neighbour").style("display", on ? "element" : "none");
   };
   var runLayout = function (name) {
     layoutName = name;
@@ -74,9 +91,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (name === "dagre" && hasDagre) {
       // Rank by specialisation edges only; neighbour edges just come along for the ride.
       // Settings with no specialisation edge go in a grid beside the hierarchy.
-      var directed = cy.edges().not(".neighbour");
+      var directed = settingEls.edges().not(".neighbour");
       var ranked = directed.connectedNodes();
-      var loose = cy.nodes().not(ranked);
+      var loose = settingEls.nodes().not(ranked);
       opts = { name: "dagre", rankDir: "BT", nodeSep: 22, rankSep: 64, edgeSep: 8, ranker: "network-simplex",
                fit: false, animate: false };
       ranked.union(directed).layout(opts).run();
@@ -86,21 +103,40 @@ document.addEventListener("DOMContentLoaded", function () {
       loose.sort(function (a, b) { return b.data("total") - a.data("total"); }).forEach(function (n, i) {
         n.position({ x: bb.x2 + 90 + (i % cols) * cell, y: bb.y1 + Math.floor(i / cols) * cell });
       });
-      cy.fit(undefined, 24);
+      cy.fit(settingEls, 24);
     } else {
-      cy.layout({ name: "cose", animate: false, nodeRepulsion: function () { return 9000; },
+      settingEls.layout({ name: "cose", animate: false, nodeRepulsion: function () { return 9000; },
                   idealEdgeLength: function (e) { return e.hasClass("neighbour") ? 90 : 60; },
                   edgeElasticity: function (e) { return e.hasClass("neighbour") ? 60 : 160; },
                   gravity: 0.6, numIter: 2500, padding: 24, randomize: true }).run();
     }
   };
   runLayout(layoutName);
+  // Overview layout (computed once): dagre over the group graph, labels counted in spacing
+  if (groupEls.length) {
+    groupEls.layout(hasDagre
+      ? { name: "dagre", rankDir: "BT", nodeSep: 30, rankSep: 90, edgeSep: 10, fit: false, animate: false,
+          nodeDimensionsIncludeLabels: true }
+      : { name: "cose", animate: false, fit: false }).run();
+  }
+  var setView = function (v) {
+    view = v;
+    document.querySelectorAll("button[data-view]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.view === v)); });
+    document.querySelectorAll("button[data-layout], #show-nb").forEach(function (b) { b.disabled = v === "overview"; });
+    if (v === "overview") {
+      settingEls.style("display", "none");
+      groupEls.style("display", "element");
+      cy.fit(groupEls, 30);
+    } else {
+      groupEls.style("display", "none");
+      settingEls.style("display", "element");
+      showNb(nbBox.checked);
+      cy.fit(settingEls, 24);
+    }
+  };
   window.addEventListener("load", function () {
     cy.resize();
-    if (focused) {
-      cy.fit(visibleHood(focused), 80);
-      if (cy.zoom() > 1.4) cy.zoom({ level: 1.4, position: focused.position ? focused.position() : focused[0].position() });
-    } else cy.fit(undefined, 24);
+    cy.fit(cy.elements(":visible"), focused ? 50 : 30);
   });
 
   // Hover tooltip
@@ -115,11 +151,16 @@ document.addEventListener("DOMContentLoaded", function () {
     tip.style.left = Math.max(0, x) + "px";
     tip.style.top = y + "px";
   };
-  var STATUS_LABEL = { tight: "tight", log_gap: "log gap", poly_gap: "poly gap", no_lower: "no lower bound",
-                       no_upper: "no upper bound", conflict: "conflict", none: "no comparable bounds" };
+  var STATUS_LABEL = { tight: "tight", log_gap: "log gap", poly_gap: "poly gap", no_lower: "no comparable lower bound",
+                       no_upper: "no comparable upper bound", conflict: "conflict", none: "no comparable bounds" };
   var esc = function (s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; };
   cy.on("mouseover", "node", function (ev) {
     var d = ev.target.data();
+    if (ev.target.hasClass("grp")) {
+      showTip("<b>" + esc(d.name) + "</b>" + d.n + " setting" + (d.n === 1 ? "" : "s") + " · " + d.results +
+              " results<div class=\"muted\">click to show its settings</div>", ev.renderedPosition);
+      return;
+    }
     showTip("<b>" + esc(d.name) + "</b>" + d.up + " upper · " + d.lo + " lower · " + d.papers + " paper" + (d.papers === 1 ? "" : "s") +
             ((d.iu || d.il) ? '<div class="muted">+' + d.iu + " upper · +" + d.il + " lower inherited</div>" : "") +
             '<div class="muted">' + esc(d.action_space) + " · " + esc(d.environment) + "</div>" +
@@ -132,8 +173,24 @@ document.addEventListener("DOMContentLoaded", function () {
     var kind = d.kind === "neighbour" ? "neighbours" : d.kind === "reduction" ? "reduction (special → general)" : "specialisation (special → general)";
     showTip("<b>" + esc(d.dim) + ": " + esc(d.from) + " → " + esc(d.to) + "</b>" + kind, ev.renderedPosition);
   });
-  cy.on("mouseout", "node, edge", function () { tip.hidden = true; if (!focused) clearHl(); });
-  cy.on("tap", "node", function (ev) { window.location.href = ev.target.data("url"); });
+  cy.on("mouseout", "node, edge", function () {
+    tip.hidden = true;
+    if (!focused) clearHl();
+    else { cy.elements().removeClass("faded"); focused.addClass("hl"); }
+  });
+  cy.on("tap", "node", function (ev) {
+    var d = ev.target.data();
+    if (ev.target.hasClass("grp")) {  // open the group: all settings, its members highlighted
+      setView("all");
+      var hits = cy.nodes().filter(function (x) { return d.members.indexOf(x.id()) !== -1; });
+      cy.elements().addClass("faded");
+      hits.removeClass("faded").addClass("hl");
+      focused = hits;
+      cy.fit(hits, 60);
+      return;
+    }
+    window.location.href = d.url;
+  });
   cy.on("mouseover", "node", function () { holder.style.cursor = "pointer"; });
   cy.on("mouseout", "node", function () { holder.style.cursor = ""; });
 
@@ -152,9 +209,26 @@ document.addEventListener("DOMContentLoaded", function () {
   if (focusSlug) {
     var n = cy.nodes().filter(function (x) { return x.data("slug") === focusSlug; });
     if (n.length) {
+      // Neighbourhood view: only the setting and its immediate covers / neighbours, laid out
+      // on their own so that every label is readable. The full graph is one click away.
       focused = n;
-      highlight(n);
-      cy.fit(visibleHood(n), 80);
+      var hood = n.closedNeighborhood();
+      cy.elements().not(hood).style("display", "none");
+      hood.style("display", "element");
+      hood.nodes().addClass("local");
+      n.addClass("hl");
+      var lay = hasDagre
+        ? { name: "dagre", rankDir: "BT", nodeSep: 24, rankSep: 110, edgeSep: 12, fit: true, padding: 40, animate: false,
+            nodeDimensionsIncludeLabels: true }
+        : { name: "concentric", fit: true, padding: 50, animate: false,
+            concentric: function (x) { return x.same(n) ? 2 : 1; }, levelWidth: function () { return 1; } };
+      hood.layout(lay).run();
+      var note = document.createElement("p");
+      note.className = "cy-local-note small";
+      note.innerHTML = "Neighbourhood of <b>" + esc(n.data("name")) + "</b>: arrows point from special cases up to " +
+        "more general settings. <a href=\"graph.html\">Show the full graph →</a>";
+      holder.parentElement.parentElement.insertBefore(note, holder.parentElement);
+      document.querySelectorAll("button[data-layout]").forEach(function (b) { b.disabled = true; });
     }
   }
 
@@ -186,6 +260,11 @@ document.addEventListener("DOMContentLoaded", function () {
     x.setAttribute("aria-pressed", String(x.dataset.layout === layoutName));
   });
   nbBox.addEventListener("change", function (ev) { showNb(ev.target.checked); });
+  bind("button[data-view]", "data-view", setView);
+  if (!focusSlug) setView(view);
+  else document.querySelectorAll("button[data-view]").forEach(function (b) {
+    b.setAttribute("aria-pressed", String(b.dataset.view === "all"));
+  });
   document.getElementById("graph-search").addEventListener("input", function (ev) {
     var q = ev.target.value.toLowerCase().trim();
     focused = null;

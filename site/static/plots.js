@@ -8,7 +8,8 @@ document.addEventListener("DOMContentLoaded", function () {
   if (!host || !raw) return;
   var data = JSON.parse(raw.textContent);
   var NS = "http://www.w3.org/2000/svg";
-  var RANGE = { T: [1, 1e9], K: [2, 1e4], d: [1, 1e4], Delta: [1e-3, 1], delta: [1e-6, 0.5], epsilon: [1e-3, 1] };
+  // T starts at 10: bounds with log T factors are 0 at T = 1 and would dive to -infinity on log axes
+  var RANGE = { T: [10, 1e9], K: [2, 1e4], d: [2, 1e4], Delta: [1e-3, 0.5], delta: [1e-6, 0.5], epsilon: [1e-3, 1] };
   var NAME = { T: "T", K: "K", d: "d", Delta: "Δ", delta: "δ", epsilon: "ε" };
   var INT = { T: 1, K: 1, d: 1 };
   var vals = {};
@@ -346,6 +347,7 @@ document.addEventListener("DOMContentLoaded", function () {
     var nshape = bs.filter(function (b) { return b.shape; }).length;
     var parts = [];
     parts.push("Upper bounds solid (blue), lower bounds dashed (orange); ★ / thicker = best bound in this regime (the comparison front).");
+    parts.push("\u201cTight\u201d means equal growth rate up to constant factors: lower bounds often have small constants (e.g. 1/20, 1/504), so a parallel dashed line well below the solid ones is tight, not a gap.");
     if (nshape) parts.push("∝ fainter lines are O/Θ/Ω bounds drawn with constant 1: their shape, not their level.");
     parts.push("Instance-dependent sums use a uniform-gap instance (all gaps Δ).");
     if (bs.length - nplot) parts.push((bs.length - nplot) + " of " + bs.length + " bounds have no plottable form.");
