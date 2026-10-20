@@ -38,7 +38,7 @@ from harvest import BANDIT_RE, norm_arxiv  # noqa: E402
 ROOT = Path(__file__).resolve().parent.parent
 HARVEST = ROOT / "corpus" / "harvest"
 MANIFEST = ROOT / "corpus" / "manifest.yaml"
-ABSTRACT_PRIORITY = ["arxiv", "pmlr", "neurips", "openalex"]
+ABSTRACT_PRIORITY = ["arxiv", "pmlr", "neurips", "openalex", "topic", "authors", "snowball"]
 
 
 def norm_title(t: str | None) -> str:
@@ -98,7 +98,8 @@ def main() -> None:
         srcs = sorted({m["source"] for m in members})
         by_src = {m["source"]: m for m in members}
         best = next((by_src[s] for s in ["manifest", "arxiv", "pmlr", "neurips", "openalex"] if s in by_src), members[0])
-        abstract = next((m["abstract"] for s in ABSTRACT_PRIORITY for m in members if m["source"] == s and m.get("abstract")), None)
+        abstract = next((m["abstract"] for s in ABSTRACT_PRIORITY for m in members if m["source"] == s and m.get("abstract")),
+                        next((m["abstract"] for m in members if m.get("abstract")), None))  # any other source
         title = best["title"]
         years = [m["year"] for m in members if isinstance(m.get("year"), int)]
         arxiv = next((norm_arxiv(m["arxiv_id"]) for m in members if m.get("arxiv_id")), None)

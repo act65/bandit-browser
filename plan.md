@@ -95,12 +95,20 @@ Everything here builds on one piece of machinery: **D2 bound comparison**. Each 
   - **Result:** 9,370 records → **7,666 distinct papers**; 79% of PMLR and 69% of NeurIPS papers merged with their arXiv versions.
   - **Recall check:** all 59 corpus papers are found. The keyword harvesters alone find 53; the 6 misses are pre-arXiv classics, found through the bibliographies.
   - DBLP author lists are not possible: DBLP serves a bot challenge to scripts.
-- [ ] OpenAlex stages (need `OPENALEX_API_KEY`; the anonymous shared budget is exhausted):
-  - `harvest.py topic` (topic T12101, about 17.5k works, model-assigned);
-  - `harvest.py authors` (all works of authors with at least 3 bandit papers in the pool);
-  - `snowball.py` (works cited by at least 5 pool papers, iterated);
-  - `harvest.py openalex` (references and citers of the corpus).
-- [ ] LLM screening of the pool: bandit theory with formal guarantees vs applied / empirical / off-topic; screen all COLT/ALT papers, not just keyword hits.
+- [x] OpenAlex stages (with an API key):
+  - `harvest.py topic`: works whose *primary* topic is bandits (15.1k; 63k if any topic counts);
+  - `harvest.py authors`: the 148 authors with at least 20 bandit papers (about 3,000 at a threshold of 3), CS / maths / decision-science works only: 16.9k;
+  - `snowball.py`: works cited by at least 5 bandit pool papers, converged over 3 rounds (3,605 → 476 → 233). It finds the foundations keywords miss (Thompson 1933, Robbins 1952, Gittins 1979, Burnetas–Katehakis 1996);
+  - `harvest.py openalex`: references and citers of the corpus (4.2k).
+  - **Pool:** 51,469 records → 33,216 distinct papers.
+- [x] LLM screening (`pipeline/screen.py`, Sonnet, batches of 40, about $0.11 per batch):
+  - **Prefilter:** 13.3k papers with no bandit or theory terms are dropped. **19.9k screened** → core 6,541 / adjacent 5,749 / applied 4,198 / off-topic 3,421 (`corpus/screened.csv`).
+  - **Recall:** all 59 corpus papers are core.
+  - **Core rate by source:** PMLR 92%, NeurIPS 90%, arXiv 56%, topic 50%, snowball 11%.
+  - **Core papers found by only one source:** topic 941, arXiv 178, OpenAlex citations 140, snowball 133, authors 81.
+  - **Core with an arXiv id (LaTeX available): 4,004.**
+- [ ] Spot-check screening precision by hand; the doubtful ones are mostly title-only and low-confidence verdicts (383).
+- [ ] Extraction at scale: choose the model, tiering and budget (see the open decision).
 - [ ] Extend the ontology module by module (contextual, combinatorial, non-stationary, pure exploration, partial monitoring, …), each with a small gold set.
 - [ ] Cross-check with `cited_results` to flag conflicts, and run a human verification queue that prioritises results that drive gap reports.
 - [ ] Cost tracking: order of 10⁷–10⁸ tokens in total, so cheap; the real constraint is human review time.

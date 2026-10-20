@@ -9,7 +9,9 @@ A work cited by many pool papers is almost certainly relevant, whatever its titl
 Rounds repeat until no new work crosses the threshold (or --rounds is reached).
 
 Only keyword-matching pool papers (bandit_kw) or ones already in the corpus count as
-citers, so off-topic bibliography entries don't steer the snowball.
+citers, and works added by the snowball become citers only if they match the bandit
+keywords themselves, so general references (textbooks, concentration inequalities)
+don't steer it.
 
 Needs OpenAlex (set OPENALEX_API_KEY for a usable daily budget).
 Output: corpus/harvest/snowball.jsonl (merged by dedupe.py like any other harvest).
@@ -27,7 +29,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from harvest import OUT, ROOT, get, oa_record  # noqa: E402
+from harvest import BANDIT_RE, OUT, ROOT, get, oa_abstract, oa_record  # noqa: E402
 
 SELECT = "id,doi,title,referenced_works"
 
@@ -81,7 +83,10 @@ def main() -> None:
             rec.update(source="snowball", pool_citations=counts[w["id"]], round=rnd)
             added[w["id"]] = rec
             known.add(w["id"])
-        frontier = frontier + full  # newly added works also cite
+        # newly added works only become citers if they are bandit papers themselves; otherwise
+        # general references (textbooks, concentration inequalities) drag in their own references
+        frontier = frontier + [w for w in full if BANDIT_RE.search((w.get("title") or "") + " "
+                                                                   + (oa_abstract(w.get("abstract_inverted_index")) or ""))]
     OUT.mkdir(parents=True, exist_ok=True)
     with open(OUT / "snowball.jsonl", "w", encoding="utf-8") as f:
         for r in sorted(added.values(), key=lambda r: -r["pool_citations"]):

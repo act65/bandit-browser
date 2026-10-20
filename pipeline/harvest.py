@@ -63,8 +63,8 @@ def get(url: str, timeout: int = 60, retries: int = 6, accept: str | None = None
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 return r.read()
         except urllib.error.HTTPError as e:
-            if e.code in (401, 403):
-                raise  # out of budget or blocked: retrying won't help
+            if e.code in (400, 401, 403, 404):
+                raise  # bad request, out of budget, blocked or missing: retrying won't help
             if attempt == retries - 1:
                 raise
             wait = int(e.headers.get("Retry-After") or 0) or (30 * 2 ** attempt if e.code in (429, 503) else 5 * 2 ** attempt)
@@ -304,14 +304,17 @@ BANDIT_TOPIC = "T12101"  # OpenAlex topic "Advanced Bandit Algorithms Research" 
 
 
 def harvest_topic(since: int) -> list[dict]:
-    works = oa_works(f"topics.id:{BANDIT_TOPIC},from_publication_date:{since}-01-01", cap=40000)
+    # primary topic only: works merely touching bandits (63k) would swamp the pool
+    works = oa_works(f"primary_topic.id:{BANDIT_TOPIC},from_publication_date:{since}-01-01", cap=40000)
     print(f"  topic {BANDIT_TOPIC}: {len(works)} works", flush=True)
     return [{**oa_record(w), "source": "topic"} for w in works]
 
 
-def harvest_authors(since: int, min_papers: int = 3) -> list[dict]:
-    """All works of authors with >= min_papers keyword-matching papers in the current pool
-    (corpus/pool.jsonl): bandit researchers' papers whose titles don't say 'bandit'."""
+def harvest_authors(since: int, min_papers: int = 20) -> list[dict]:
+    """Works of prolific bandit authors (>= min_papers keyword-matching papers in the current
+    pool): their papers whose titles don't say 'bandit'. Restricted to computer science,
+    mathematics and decision sciences (OpenAlex primary field). A threshold of 3 would mean
+    ~3,000 authors; 20 gives ~150, the core community."""
     pool = [json.loads(line) for line in (ROOT / "corpus" / "pool.jsonl").open(encoding="utf-8")]
     counts = collections.Counter(a for p in pool if p["bandit_kw"] for a in p["authors"][:20] if a)
     names = [a for a, n in counts.most_common() if n >= min_papers]
@@ -322,7 +325,8 @@ def harvest_authors(since: int, min_papers: int = 3) -> list[dict]:
         if not d["results"]:
             continue
         aid = d["results"][0]["id"].rsplit("/", 1)[-1]
-        for w in oa_works(f"authorships.author.id:{aid},from_publication_date:{since}-01-01", cap=1000):
+        for w in oa_works(f"authorships.author.id:{aid},from_publication_date:{since}-01-01,"
+                          f"primary_topic.field.id:17|26|18", cap=600):
             out[w["id"]] = {**oa_record(w), "source": "authors", "via_author": name}
         time.sleep(0.2)
     return list(out.values())
