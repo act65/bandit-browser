@@ -1,0 +1,479 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Time-Varying Gaussian Process Bandit Optimization",
+  "arxiv_id": "1601.06650",
+  "arxiv_version": null,
+  "year": 2016,
+  "authors": [
+   "Ilija Bogunovic",
+   "Jonathan Scarlett",
+   "Volkan Cevher"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Time-varying GP bandit optimization",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "nonstationary_drifting",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "prior",
+    "sigma",
+    "d",
+    "T"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Reward function evolves via Gauss-Markov model f_{t+1} = sqrt(1-eps) f_t + sqrt(eps) g_{t+1}, g_t ~ GP(0,k) i.i.d.; eps is known to the learner",
+    "Kernel k with k(x,x) <= 1 and tail conditions on sup|f| and its derivatives",
+    "Domain D subset [0,r]^d compact convex"
+   ],
+   "definition_quote": "f_1(x) = g_1(x), f_{t+1}(x) = \\sqrt{1 - \\epsilon}\\,f_{t}(x) +  \\sqrt{\\epsilon}\\,g_{t+1}(x) ... the instantaneous regret we incur at time t is r_t = f_t(x^*_t) - f_t(x_t). We are interested in minimizing the cumulative regret R_T = \\sum_{t=1}^T r_t."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Time-varying GP bandit optimization (lower bound)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "nonstationary_drifting",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "prior",
+    "sigma",
+    "d",
+    "T"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Gauss-Markov evolving GP reward with rate eps; lower bound holds even when learner knows f_{t-1} entirely (genie-aided / full information)"
+   ],
+   "definition_quote": "f_{t+1}(x) = \\sqrt{1 - \\epsilon}\\,f_{t}(x) +  \\sqrt{\\epsilon}\\,g_{t+1}(x)"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "R-GP-UCB (GP-UCB with Resetting)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "restarts_or_sliding_window"
+   ],
+   "requires_knowledge_of": [
+    "prior",
+    "sigma",
+    "d",
+    "N",
+    "T"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "TV-GP-UCB (Time-Varying GP-UCB)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "prior",
+    "sigma",
+    "d",
+    "eps_tv"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "dynamic_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T*eps_tv",
+    "expression_latex": "\\myexpect[R_T] = \\Omega(T\\epsilon)",
+    "regime": null
+   },
+   "symbols": {
+    "eps_tv": "rate of function variation epsilon in [0,1]"
+   },
+   "conditions": [
+    "f ~ GP(0,k) almost surely twice continuously differentiable",
+    "tail bounds on first and second derivatives (eq. k_deriv1-k_deriv2)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:conv",
+    "number": "Theorem 4.1",
+    "quote": "Suppose that the kernel is such that $f \\sim \\GP(0,k)$ is almost surely twice continuously differentiable and satisfies \\eqref{eq:k_deriv1}--\\eqref{eq:k_deriv2} for some $(a_1,b_1,a_2,b_2)$.  Then, any GP bandit optimization algorithm incurs expected regret $\\myexpect[R_T] = \\Omega(T\\epsilon)$."
+   },
+   "confidence": "medium",
+   "notes": "Expectation over GP prior and noise (Bayesian). Proof shows it holds even in full-information setting."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(8/log(1 + sigma**(-2))*T*beta_T*(T/N + 1)*gamma_N) + 2 + T*(sqrt(beta_T*(3*sigma**(-2) + sigma**(-4))*N**3*eps_tv) + (sigma**(-2) + sigma**(-4))*N**3*eps_tv*(2 + b_0)*sqrt(log(2*(1 + a_0)*pi**2*T**2/(3*delta))))",
+    "expression_latex": "R_T \\le \\sqrt{C_1 T \\beta_T (\\frac{T}{N} + 1) \\gamma_N} + 2 + T\\psi_T(N,\\epsilon)",
+    "regime": null
+   },
+   "symbols": {
+    "eps_tv": "rate of function variation epsilon",
+    "N": "reset block size",
+    "gamma_N": "time-invariant maximum information gain over N points",
+    "beta_T": "confidence parameter 2 log(2 pi^2 T^2/(3 delta)) + 2d log(r d b T^2 sqrt(log(2 d a pi^2 T^2/(3 delta))))",
+    "a_0": "tail constant for sup|f|",
+    "b_0": "tail constant for sup|f|"
+   },
+   "conditions": [
+    "D subset [0,r]^d compact and convex",
+    "f ~ GP(0,k) a.s. continuously differentiable and satisfies tail conditions (k_deriv0)-(k_deriv1)",
+    "k(x,x) <= 1"
+   ],
+   "tuning": [
+    "beta_T as in eq. beta_T_R",
+    "block size N arbitrary"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:general_R",
+    "number": "Theorem 4.2",
+    "quote": "Defining $C_1 = 8/\\log(1+\\sigma^{-2})$, the R-GP-UCB algorithm satisfies the following after $T$ time steps: R_T \\le \\sqrt{C_1 T \\beta_T \\bigg(\\frac{T}{N} + 1\\bigg) \\gammaNTI} + 2 + T\\psi_T(N,\\epsilon) with probability at least $1-\\delta$, where \\psi_T(N,\\epsilon) := \\sqrt{\\beta_T( 3\\sigma^{-2} + \\sigma^{-4}) N^3 \\epsilon} + (\\sigma^{-2} + \\sigma^{-4}) N^3 \\epsilon (2+b_0) \\sqrt{\\log \\frac{2(1+a_0) \\pi^2 T^2}{3\\delta}}."
+   },
+   "confidence": "medium",
+   "notes": "Probability over GP prior and noise. Horizon classified anytime since beta_t is per-round; uncertain."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(8/log(1 + sigma**(-2))*T*beta_T*gamma_tilde_T) + 2",
+    "expression_latex": "R_T \\le \\sqrt{C_1 T \\beta_T \\gammatil_T} + 2",
+    "regime": null
+   },
+   "symbols": {
+    "gamma_tilde_T": "time-varying maximum information gain (max over x_1..x_T of 1/2 log det(I + sigma^-2 K~_T))",
+    "beta_T": "confidence parameter 2 log(pi^2 T^2/(2 delta)) + 2d log(r d b T^2 sqrt(log(d a pi^2 T^2/(2 delta))))"
+   },
+   "conditions": [
+    "D subset [0,r]^d compact and convex",
+    "f ~ GP(0,k) a.s. continuously differentiable and satisfies (k_deriv1)",
+    "k(x,x) <= 1"
+   ],
+   "tuning": [
+    "beta_T as in eq. beta_T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:general",
+    "number": "Theorem 4.3",
+    "quote": "Defining $C_1 = 8/\\log(1+\\sigma^{-2})$, the TV-GP-UCB algorithm satisfies the following after $T$ time steps: R_T \\le \\sqrt{C_1 T \\beta_T \\gammatil_T} + 2 \\le \\sqrt{C_1 T \\beta_T (\\frac{T}{\\Ntil} + 1) (\\gammaNtilTI + \\Ntil^3 \\epsilon)} + 2 with probability at least $1-\\delta$, where \\eqref{eq:weakened2} holds for any $\\Ntil \\in \\{1,\\dotsc,T\\}$."
+   },
+   "confidence": "high",
+   "notes": "First inequality of Theorem 4.3."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(8/log(1 + sigma**(-2))*T*beta_T*(T/N_tilde + 1)*(gamma_N_tilde + N_tilde**3*eps_tv)) + 2",
+    "expression_latex": "\\sqrt{C_1 T \\beta_T (\\frac{T}{\\Ntil} + 1) (\\gamma_{\\Ntil} + \\Ntil^3 \\epsilon)} + 2",
+    "regime": "any N_tilde in {1,...,T}"
+   },
+   "symbols": {
+    "N_tilde": "analysis block length",
+    "gamma_N_tilde": "time-invariant maximum information gain over N_tilde points",
+    "eps_tv": "rate of function variation",
+    "beta_T": "confidence parameter as in eq. beta_T"
+   },
+   "conditions": [
+    "D subset [0,r]^d compact and convex",
+    "f ~ GP(0,k) a.s. continuously differentiable and satisfies (k_deriv1)",
+    "k(x,x) <= 1"
+   ],
+   "tuning": [
+    "beta_T as in eq. beta_T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:general",
+    "number": "Theorem 4.3",
+    "quote": "\\le \\sqrt{C_1 T \\beta_T \\bigg(\\frac{T}{\\Ntil} + 1\\bigg) \\Big(\\gammaNtilTI + \\Ntil^3 \\epsilon\\Big)} + 2 with probability at least $1-\\delta$, where \\eqref{eq:weakened2} holds for any $\\Ntil \\in \\{1,\\dotsc,T\\}$."
+   },
+   "confidence": "high",
+   "notes": "Second inequality of Theorem 4.3; N_tilde only an analysis device."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "Max(sqrt(T), T*eps_tv**(1/8))",
+    "expression_latex": "R_T = \\Otil(\\max\\{\\sqrt{T},T\\epsilon^{1/8}\\})",
+    "regime": null
+   },
+   "symbols": {
+    "eps_tv": "rate of function variation"
+   },
+   "conditions": [
+    "squared exponential kernel",
+    "fixed d",
+    "conditions of Theorem 4.2"
+   ],
+   "tuning": [
+    "N = Theta(min{T, eps^{-1/4}})"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:specific",
+    "number": "Corollary 4.1",
+    "quote": "For the squared exponential kernel, $R_T = \\Otil(\\max\\{\\sqrt{T},T\\epsilon^{1/8}\\} )$  for R-GP-UCB with $N=\\Theta(\\min\\{T,\\epsilon^{-1/4}\\})$, and $R_T = \\Otil(\\max\\{\\sqrt{T},T\\epsilon^{1/6}\\} )$ for TV-GP-UCB."
+   },
+   "confidence": "high",
+   "notes": "Holds w.p. >= 1-delta inherited from Theorem 4.2."
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "Max(sqrt(T), T*eps_tv**(1/6))",
+    "expression_latex": "R_T = \\Otil(\\max\\{\\sqrt{T},T\\epsilon^{1/6}\\})",
+    "regime": null
+   },
+   "symbols": {
+    "eps_tv": "rate of function variation"
+   },
+   "conditions": [
+    "squared exponential kernel",
+    "fixed d",
+    "conditions of Theorem 4.3"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "cor:specific",
+    "number": "Corollary 4.1",
+    "quote": "and $R_T = \\Otil(\\max\\{\\sqrt{T},T\\epsilon^{1/6}\\} )$ for TV-GP-UCB."
+   },
+   "confidence": "high",
+   "notes": "SE kernel, TV-GP-UCB."
+  },
+  {
+   "id": "r7",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "Max(sqrt(T**(1 + c_mat)), T*eps_tv**((1 - c_mat)/(2*(4 - c_mat))))",
+    "expression_latex": "R_T = \\Otil(\\max\\{\\sqrt{T^{1+c}}, T\\epsilon^{\\frac{1}{2} \\frac{1-c}{4-c} } \\})",
+    "regime": null
+   },
+   "symbols": {
+    "eps_tv": "rate of function variation",
+    "c_mat": "d(d+1)/(2 nu + d(d+1)) for Matern kernel"
+   },
+   "conditions": [
+    "Matern kernel with nu > 2",
+    "fixed d",
+    "conditions of Theorem 4.2"
+   ],
+   "tuning": [
+    "N = Theta(min{T, eps^{-1/(4-c)}})"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:specific",
+    "number": "Corollary 4.1",
+    "quote": "Consider the Mat\\'ern kernel with parameter $\\nu > 2$, and set $c=\\frac{d(d+1)}{2\\nu + d(d+1)} \\in (0,1)$.  We have $R_T = \\Otil(\\max\\{\\sqrt{T^{1+c}}, T\\epsilon^{\\frac{1}{2} \\frac{1-c}{4-c} } \\} )$ for R-GP-UCB with $N=\\Theta(\\min\\{T,\\epsilon^{-\\frac{1}{4-c}}\\})$"
+   },
+   "confidence": "high",
+   "notes": "Matern kernel, R-GP-UCB."
+  },
+  {
+   "id": "r8",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "Max(sqrt(T**(1 + c_mat)), T*eps_tv**((1 - c_mat)/(2*(3 - c_mat))))",
+    "expression_latex": "R_T = \\Otil(\\max\\{\\sqrt{T^{1+c}},T\\epsilon^{\\frac{1}{2} \\frac{1-c}{3-c} } \\})",
+    "regime": null
+   },
+   "symbols": {
+    "eps_tv": "rate of function variation",
+    "c_mat": "d(d+1)/(2 nu + d(d+1)) for Matern kernel"
+   },
+   "conditions": [
+    "Matern kernel with nu > 2",
+    "fixed d",
+    "conditions of Theorem 4.3"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "cor:specific",
+    "number": "Corollary 4.1",
+    "quote": "and $R_T = \\Otil(\\max\\{\\sqrt{T^{1+c}},T\\epsilon^{\\frac{1}{2} \\frac{1-c}{3-c} } \\} )$ for TV-GP-UCB."
+   },
+   "confidence": "high",
+   "notes": "Matern kernel, TV-GP-UCB."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:51:31",
+  "source_chars": 100329,
+  "input_tokens": 81542,
+  "output_tokens": 9412,
+  "cost_usd_equiv": 0.6229948000000001,
+  "status": "extracted"
+ }
+}

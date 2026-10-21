@@ -1,0 +1,196 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Neural Contextual Bandits with Deep Representation and Shallow Exploration",
+  "arxiv_id": "2012.01780",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Pan Xu",
+   "Zheng Wen",
+   "Handong Zhao",
+   "Quanquan Gu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Neural contextual bandit (reward r(.) = <theta*, psi(.)> with unknown feature mapping, approximated by deep ReLU network)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "sigma",
+    "S",
+    "K",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "unspecified"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Reward generating function is unknown; assumed expressible as inner product of last-layer weight theta* with an unknown feature mapping, approximated by an overparameterized deep ReLU network",
+    "Each round K raw feature vectors x_{t,k} in R^d with ||x||_2=1 are revealed (context sequence not specified as stochastic)",
+    "Regret is conditional on random network initialization; bound holds w.p. 1-delta over initialization",
+    "NTK matrix positive definite (lambda_min(H) >= lambda_0) and first-order stability of network gradient (Assumption 2)"
+   ],
+   "definition_quote": "we assume that the reward generating function $r(\\cdot)$ can be expressed as the inner product between a deep represented feature vector and an exploration weight parameter, namely, $r(\\cdot)=\\la\\btheta^*,\\bpsi(\\cdot)\\ra$ ... $\\empR(\\xb_{t,k})=r(\\xb_{t,k})+\\xi_t$, where $\\xi_t$ is an independent $\\nu$-subGaussian random noise"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Neural-LinUCB (Deep Representation and Shallow Exploration)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma",
+    "S",
+    "K",
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_1*alpha_T*sqrt(T*d*log(1 + T*G**2/(lam*d))) + C_2*l_Lip*L_layers**3*d**(5/2)*T*sqrt(log(m_width)*log(1/delta)*log(T*K/delta))*E_err/m_width**(1/6)",
+    "expression_latex": "C_1\\alpha_T\\sqrt{Td\\log\\Big(1+ \\frac{TG^2}{\\lambda d}\\Big)}+\\frac{C_2\\fosPara \\layerLen^3 d^{5/2}T\\sqrt{\\log m\\log(\\frac{1}{\\delta})\\log(\\frac{TK}{\\delta})}\\|\\rb-\\tilde\\rb\\|_{\\Hb^{-1}}}{m^{1/6}}",
+    "regime": null
+   },
+   "symbols": {
+    "C_1": "absolute constant",
+    "C_2": "absolute constant",
+    "alpha_T": "exploration parameter nu*sqrt(2(d log(1+T log(H K)/lambda)+log(1/delta)))+lambda^{1/2} M",
+    "G": "bound on norm of the learned features phi(x; w)",
+    "l_Lip": "first-order stability constant from Assumption 2",
+    "L_layers": "number of hidden layers of the network",
+    "m_width": "width of the neural network",
+    "E_err": "||r - r_tilde||_{H^{-1}}: NTK-weighted error between true rewards and network outputs"
+   },
+   "conditions": [
+    "||x_{t,k}||_2 = 1 and symmetric entries (Assumption 1)",
+    "first-order stability of network gradient w.r.t. inputs (Assumption 2)",
+    "NTK matrix positive definite, lambda_min(H) >= lambda_0 > 0 (Assumption 3)",
+    "||theta*||_2 <= M",
+    "noise nu-sub-Gaussian",
+    "network width m = poly(L, d, 1/delta, H, log(TK/delta))"
+   ],
+   "tuning": [
+    "alpha_t = nu*sqrt(2(d log(1+t log(HK)/lambda)+log(1/delta)))+lambda^{1/2} M",
+    "step size eta_q <= C_0 (d^2 m n T^{5.5} L^6 log(TK/delta))^{-1}",
+    "network retrained every H steps with n gradient-descent iterations"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem 4",
+    "quote": "Suppose Assumptions \\ref{asp:nondegen}, \\ref{asp:gradient_fos} and \\ref{asp:ntk_pd} hold. Assume that $\\|\\btheta^*\\|_2\\leq M$ for some positive constant $M>0$. For any $\\delta\\in(0,1)$, let us choose $\\alpha_t$ ... With probability at least $1-\\delta$ over the randomness of the initialization of the neural network, it holds that $R_T\\leq C_1\\alpha_T\\sqrt{Td\\log(1+ \\frac{TG^2}{\\lambda d})}+\\frac{C_2\\fosPara \\layerLen^3 d^{5/2}T\\sqrt{\\log m\\log(\\frac{1}{\\delta})\\log(\\frac{TK}{\\delta})}\\|\\rb-\\tilde\\rb\\|_{\\Hb^{-1}}}{m^{1/6}}$"
+   },
+   "confidence": "medium",
+   "notes": "R_T is expectation over reward noise conditioned on initialization; bound holds w.p. 1-delta over initialization. Recorded as pseudo-regret with high_probability. Paper's m (width) renamed m_width; L (layers) renamed L_layers. Remark 6: if E_err=O(1) and m>=T^3 the regret becomes O~(sqrt(T)). Setting mapping to structured_general is approximate."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "zhou2019neural",
+   "cited_title": "Neural contextual bandits with ucb-based exploration",
+   "cited_first_author": "Zhou, D.",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "NeuralUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Neural contextual bandits, K arms, fixed horizon T; d_tilde is effective dimension of NTK matrix",
+   "bound": {
+    "notation": "O",
+    "expression": "d_tilde*sqrt(T)",
+    "expression_latex": "O(\\tilde d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 1 (Introduction)"
+  },
+  {
+   "cited_key": "zhang2020neural",
+   "cited_title": "Neural thompson sampling",
+   "cited_first_author": "Zhang, W.",
+   "cited_year": 2020,
+   "cited_arxiv_id": "2010.00827",
+   "algorithm_name": "NeuralTS",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Neural contextual bandits, K arms, fixed horizon T; d_tilde is effective dimension of NTK matrix",
+   "bound": {
+    "notation": "O",
+    "expression": "d_tilde*sqrt(T)",
+    "expression_latex": "O(\\tilde d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 1 (Introduction)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:17:51",
+  "source_chars": 99311,
+  "input_tokens": 80798,
+  "output_tokens": 3779,
+  "cost_usd_equiv": 0.5043827999999999,
+  "status": "extracted"
+ }
+}

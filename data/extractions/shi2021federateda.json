@@ -1,0 +1,291 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Federated Multi-armed Bandits with Personalization",
+  "arxiv_id": "2102.13101",
+  "arxiv_version": null,
+  "year": 2021,
+  "authors": [
+   "Chengshuai Shi",
+   "Cong Shen",
+   "Jing Yang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Personalized federated multi-armed bandits (PF-MAB) with mixed learning objective",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "K",
+    "sigma"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [
+    "federated",
+    "multi_agent_cooperative"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "N = M clients with heterogeneous (non-IID) local models over the same K arms",
+    "Mixed reward X'_{k,m} = alpha X_{k,m} + (1-alpha) X_k with global reward X_k the average of local rewards; global reward not directly observable (partially observable reward)",
+    "Client-server periodic communication with cost C_comm per client per communication slot added to regret",
+    "Personalization weight alpha in [0,1] known to the learner",
+    "Each client's optimal arm on its mixed model assumed unique"
+   ],
+   "definition_quote": "R(T) = T\\sum_{m=1}^M\\mu'_{*,m}-\\Eb\\left[\\sum_{t=1}^T\\sum_{m=1}^MX'_{\\pi_m(t),m}(t)\\right]+CMT_c, where $\\mu'_{*,m}$ is the mean reward from the optimal arm $k'_{*,m}$ of client $m$'s mixed model"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "PF-UCB (Personalized Federated Upper Confidence Bound)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination",
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "N",
+    "alpha_p"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "consistent",
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "log(T)*sum_clients_subopt(Max(Delta_p_km/kl_Y_km, Delta_p_km/kl_Z_km_min))",
+    "expression_latex": "\\liminf_{T\\to\\infty}\\frac{R_{\\Pi}(T)}{\\log(T)}\\geq \\sum_{m=1}^M\\sum_{k\\neq k'_{*,m}}\\max\\bigg\\{\\frac{\\Delta'_{k,m}}{\\mathrm{kl}(Y_{k,m}, Y_{k'_{*,m},m})}, \\frac{\\Delta'_{k,m}}{\\min_{n: n\\neq m,k'_{*,n}\\neq k}\\mathrm{kl}(Z^m_{k,n}, Z^m_{k'_{*,n},n})}\\bigg\\}",
+    "regime": null
+   },
+   "symbols": {
+    "sum_clients_subopt": "sum over clients m=1..M and arms k != k'_{*,m} (suboptimal on client m's mixed model)",
+    "Delta_p_km": "mixed-model gap Delta'_{k,m} = mu'_{*,m} - mu'_{k,m}",
+    "kl_Y_km": "KL divergence kl(Y_{k,m}, Y_{k'_{*,m},m}) with Y_{k,m} = (alpha+(1-alpha)/M) X_{k,m} + mu'_{k,m} - (alpha+(1-alpha)/M) mu_{k,m}",
+    "kl_Z_km_min": "min over n != m with k'_{*,n} != k of kl(Z^m_{k,n}, Z^m_{k'_{*,n},n}), Z^m_{k,n} = (1-alpha)/M X_{k,m} + mu'_{k,n} - (1-alpha)/M mu_{k,m}",
+    "N": "number of clients M"
+   },
+   "conditions": [
+    "communication cost ignored (C=0); paper states bound still holds for C>0"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:fed_lower",
+    "number": "Theorem 1",
+    "quote": "For any consistent algorithm $\\Pi$, the regret $R(T)$ in Eqn.~\\eqref{eqn:regret_personal} can be lower bounded as \\liminf_{T\\to\\infty}\\frac{R_{\\Pi}(T)}{\\log(T)}\\geq \\sum_{m=1}^M\\sum_{k\\neq k'_{*,m}}\\max\\bigg\\{...\\bigg\\}"
+   },
+   "confidence": "medium",
+   "notes": "Regret includes communication term; defined through means so classified as pseudo-regret. Paper notes the bound is not tight in general."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "consistent",
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "log(T)*sum_clients_subopt(Max(2*beta_w**2/Delta_p_km, 2*gamma_w**2*Delta_p_km/Delta_p_k**2))",
+    "expression_latex": "\\liminf_{T\\to\\infty}\\frac{R_{\\Pi}(T)}{\\log(T)}\\geq \\sum_{m=1}^M\\sum_{k\\neq k'_{*,m}}\\max\\bigg\\{\\frac{2\\beta^2}{\\Delta'_{k,m}}, \\frac{2\\gamma^2\\Delta'_{k,m}}{(\\Delta'_{k})^2}\\bigg\\}",
+    "regime": null
+   },
+   "symbols": {
+    "sum_clients_subopt": "sum over clients m and arms k != k'_{*,m}",
+    "Delta_p_km": "mixed-model gap Delta'_{k,m}",
+    "Delta_p_k": "min_{n: k'_{*,n} != k} Delta'_{k,n}",
+    "beta_w": "alpha_p + (1-alpha_p)/M",
+    "gamma_w": "(1-alpha_p)/M",
+    "alpha_p": "personalization weight alpha in [0,1]"
+   },
+   "conditions": [
+    "rewards Gaussian with unit variance",
+    "communication cost ignored (C=0)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "col:fed_lower_gaussian",
+    "number": "Corollary 1",
+    "quote": "For any consistent algorithm $\\Pi$, if the rewards follow Gaussian distributions with unit variance, the regret is lower bounded as \\liminf_{T\\to\\infty}\\frac{R_{\\Pi}(T)}{\\log(T)}\\geq \\sum_{m=1}^M\\sum_{k\\neq k'_{*,m}}\\max\\bigg\\{\\frac{2\\beta^2}{\\Delta'_{k,m}}, \\frac{2\\gamma^2\\Delta'_{k,m}}{(\\Delta'_{k})^2}\\bigg\\}"
+   },
+   "confidence": "medium",
+   "notes": "Gaussian special case of Theorem 1 with a different explicit expression."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_clients_subopt(Delta_p_km*(L_loc_km + G_glob_k + X_expt_km)) + 2*C_comm*N*p_max + 2*(1 + 2*C_comm)*N**2*K",
+    "expression_latex": "\\sum_{m}\\sum_{k\\neq k'_{*,m}}\\Delta'_{k,m}\\sum_{p=1}^{p'_{k,m}}\\lceil \\alpha M f(p) \\rceil +\\sum_{m}\\sum_{k\\neq k'_{*,m}}\\Delta'_{k,m}\\sum_{p=1}^{p'_{k}}\\lceil (1-\\alpha) f(p) \\rceil+\\sum_{m}\\sum_{k\\neq k'_{*,m}}\\Delta'_{k,m}\\sum_{p=1}^{p'_{k,m}}K\\lceil \\alpha Mf(p)\\rceil P'_{k,m}(p) + 2CMp'_{\\max}+ 2(1+2C)M^2K",
+    "regime": null
+   },
+   "symbols": {
+    "sum_clients_subopt": "sum over clients m and arms k != k'_{*,m}",
+    "Delta_p_km": "mixed-model gap Delta'_{k,m}",
+    "L_loc_km": "sum_{p=1}^{p'_{k,m}} ceil(alpha M f(p)), where p'_{k,m} is smallest integer with M F(p) >= 64 log(T)/Delta'_{k,m}^2, F(p)=sum_{q<=p} f(q)",
+    "G_glob_k": "sum_{p=1}^{p'_k} ceil((1-alpha) f(p)), p'_k = max_m p'_{k,m}",
+    "X_expt_km": "sum_{p=1}^{p'_{k,m}} K ceil(alpha M f(p)) exp(-Delta'_{k,m}^2 M F(p-1)/4)",
+    "p_max": "p'_max = max_k p'_k",
+    "C_comm": "communication loss per communication slot per client",
+    "N": "number of clients M"
+   },
+   "conditions": [
+    "1-subgaussian rewards (sigma = 1)"
+   ],
+   "tuning": [
+    "general exploration length schedule f(p)",
+    "confidence bound B_p = sqrt(4 log(T)/(M F(p)))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret_overall",
+    "number": "Theorem 2",
+    "quote": "$\\forall m\\in[M]$ and $\\forall k\\neq k'_{*,m}$, suppose $p'_{k,m}$ is the smallest integer that satisfies MF(p'_{k,m})\\geq \\frac{64\\log(T)}{(\\Delta'_{k,m})^2}. The regret of \\textsc{PF-UCB} can be bounded as R(T) \\leq ..."
+   },
+   "confidence": "medium",
+   "notes": "Regret includes communication cost C M T_c. Expression compressed via declared symbols."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_clients_subopt((alpha_p/Delta_p_km + (1 - alpha_p)/N*Delta_p_km/Delta_p_k**2)*log(T))",
+    "expression_latex": "O\\left(\\sum_{m=1}^M\\sum_{k\\neq k'_{*,m}}\\left[\\frac{\\alpha}{\\Delta'_{k,m}}+\\frac{\\frac{1-\\alpha}{M}\\Delta'_{k,m}}{(\\Delta'_{k})^2}\\right]\\log(T)\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "sum_clients_subopt": "sum over clients m and arms k != k'_{*,m}",
+    "Delta_p_km": "mixed-model gap Delta'_{k,m}",
+    "Delta_p_k": "min_{n: k'_{*,n} != k} Delta'_{k,n}",
+    "alpha_p": "personalization weight alpha in [0,1]",
+    "N": "number of clients M"
+   },
+   "conditions": [
+    "1-subgaussian rewards (sigma = 1)"
+   ],
+   "tuning": [
+    "f(p) = 2^p log(T)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "col:regret_overall_log",
+    "number": "Corollary 2",
+    "quote": "With $f(p)=2^p\\log(T)$, it holds that R(T)= O\\left(\\sum_{m=1}^M\\sum_{k\\neq k'_{*,m}}\\left[\\frac{\\alpha}{\\Delta'_{k,m}}+\\frac{\\frac{1-\\alpha}{M}\\Delta'_{k,m}}{(\\Delta'_{k})^2}\\right]\\log(T)\\right), where $\\Delta'_{k}=\\min_{n:k'_{*,n}\\neq k}\\{\\Delta'_{k,n}\\}$."
+   },
+   "confidence": "medium",
+   "notes": "Communication and exploitation losses claimed O(1) (constant in T). Appendix Table 1 (not a formal statement) gives additional variants for f(p)=lambda, lambda log T, 2^p including communication terms; not recorded."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Lai:1985",
+   "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_first_author": "Lai",
+   "cited_year": 1985,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Single-player stochastic K-armed bandit, consistent algorithms",
+   "bound": {
+    "notation": "liminf",
+    "expression": "sum_subopt(Delta_i/KL_i)*log(T)",
+    "expression_latex": "\\liminf_{T\\to\\infty}\\frac{R(T)}{\\log(T)}\\geq \\sum_{k\\not=k_*}\\frac{\\mu_*-\\mu_k}{\\mathrm{kl}(X_k,X_{k_*})}",
+    "regime": null
+   },
+   "where": "Section 2.1, Eqn. (2)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:43:55",
+  "source_chars": 83232,
+  "input_tokens": 68188,
+  "output_tokens": 6439,
+  "cost_usd_equiv": 0.4567028,
+  "status": "extracted"
+ }
+}

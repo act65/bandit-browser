@@ -1,0 +1,300 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "On Lai's Upper Confidence Bound in Multi-Armed Bandits",
+  "arxiv_id": "2410.02279",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Huachen Ren",
+   "Cun-Hui Zhang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "K-armed bandit with Gaussian rewards, fixed horizon T",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_unknown_variance",
+   "learner_knows": [
+    "T",
+    "sigma",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Arm variances are unknown but bounded above by a known sigma^2 used by the algorithm",
+    "Regret counted only after the K initialization rounds (horizon T' = T-K)"
+   ],
+   "definition_quote": "We focus on a $K$-armed bandit problem with a fixed time horizon $T$, $2 \\le K \\le T$, and assume that the rewards sampled from arm $a$ are independent and identically distributed Gaussian random variables with mean $\\mu_a$ and a variance no greater than $\\sigma^2$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "UCB with constant level of exploration b_{T'}",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma",
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Lai's UCB with g(x)=1 v log x (kl-UCB+ for fixed horizon, Gaussian)",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(sigma**2*(b_T**2 + 1 + eta_b)/Delta_i)",
+    "expression_latex": "\\sum_{a:\\mu_a<\\mu^*}\\frac{\\sigma^2(b_{T'}^2+1+\\eta(b_{T'}))}{\\mu^* - \\mu_a}",
+    "regime": null
+   },
+   "symbols": {
+    "b_T": "exploration level b_{T'} of the UCB index",
+    "eta_b": "eta(b_{T'}) = 4T' Phi_2(-b_{T'}) + 3(b_{T'}^2+1) Phi^*(-b_{T'},T'), T'=T-K",
+    "T_p": "T' = T - K"
+   },
+   "conditions": [
+    "Gaussian rewards with variance <= sigma^2",
+    "2 <= K <= T"
+   ],
+   "tuning": [
+    "any exploration level b_{T'} > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th-Gaussian-LaiRobbins-T",
+    "number": "Theorem 1",
+    "quote": "Suppose the rewards from arm $a$ follow a Gaussian distribution with mean $\\mu_a$ and no greater variance than $\\sigma^2$ for all $a=1,\\ldots,K$. Then, the regret of the UCB rule \\eqref{UCB-rule-T} is bounded by R_{T'} \\le \\sum_{a:\\mu_a<\\mu^*}\\frac{\\sigma^2(b_{T'}^2+1+\\eta(b_{T'}))}{\\mu^* - \\mu_a}"
+   },
+   "confidence": "high",
+   "notes": "Regret R_{T'} counts rounds K+1..T only and equals sum Delta_a E[n_{a,T}-1], i.e. pseudo-regret."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(sigma**2*(2*log(T_p) + c_1)/Delta_i)",
+    "expression_latex": "\\sum_{a:\\mu_a<\\mu^*}\\frac{\\sigma^2(2\\log T'+c_1(T'))}{\\mu^* - \\mu_a}",
+    "regime": "T' >= 2"
+   },
+   "symbols": {
+    "T_p": "T' = T - K",
+    "c_1": "c_1(T') = o(1); c_1 <= 10.1, 7, 5.5, 4, 3 for T' >= 2, 20, 40, 100, 200"
+   },
+   "conditions": [
+    "Gaussian rewards with variance <= sigma^2"
+   ],
+   "tuning": [
+    "b_{T'} = sqrt(2 log T')"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor-Gaussian-LaiRobbins-T-1",
+    "number": "Corollary 3",
+    "quote": "Setting $b_{T'}=\\sqrt{2\\log T'}$ in \\eqref{UCB-rule-T}, we find that R_{T'} \\le \\sum_{a:\\mu_a<\\mu^*}\\frac{\\sigma^2(2\\log T'+c_1(T'))}{\\mu^* - \\mu_a}, where $c_1(T') =o(1)$ as $T' \\rightarrow \\infty$ and $c_1(T') \\le 10.1, 7, 5.5, 4, 3\\ldots$ for $T' \\ge 2, 20, 40, 100, 200\\ldots$."
+   },
+   "confidence": "high",
+   "notes": "Constants obtained via numerical evaluation. Remark 4 notes the uniform asymptotic optimality limsup sup_mu R/(log T' sum 2sigma^2/Delta) <= 1."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(sigma**2*(2*log(T_p) - 3*log(log(T_p)) - log(pi) + 1 + eps_T)/Delta_i)",
+    "expression_latex": "\\sum_{a:\\mu_a<\\mu^*}\\frac{\\sigma^2(2\\log T' - 3\\log\\log(T') -\\log \\pi +1 +\\eps_{T'})}{\\mu^* - \\mu_a}",
+    "regime": null
+   },
+   "symbols": {
+    "T_p": "T' = T - K",
+    "eps_T": "eps_{T'} = o(1) as T' -> infinity, depending on T' only"
+   },
+   "conditions": [
+    "Gaussian rewards with variance <= sigma^2"
+   ],
+   "tuning": [
+    "b_{T'} = argmin_{z>0} {z^2 + 4T' Phi_2(-z)}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor-Gaussian-LaiRobbins-T-2",
+    "number": "Corollary 5",
+    "quote": "The UCB rule \\eqref{UCB-rule-T} with the exploration level $b_{T'}$ in \\eqref{th-Gaussian-LaiRobbins-T-4} enjoys the following regret bound, R_{T'} \\le \\sum_{a:\\mu_a<\\mu^*}\\frac{\\sigma^2(2\\log T' - 3\\log\\log(T') -\\log \\pi +1 +\\eps_{T'})}{\\mu^* - \\mu_a} for some $\\eps_{T'} = o(1)$ depending on $T'$ only."
+   },
+   "confidence": "high",
+   "notes": "Lower-order terms negative for large T'."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(sigma**2*(2*L_i + 1 + eps_i)/Delta_i)",
+    "expression_latex": "\\sum_{a:\\mu_a< \\mu^*} \\frac{\\sigma^2\\big(2L(T'\\gamma_a^2)+1+\\eps_{a,T'}\\big)}{\\mu^* - \\mu_a}",
+    "regime": null
+   },
+   "symbols": {
+    "L_i": "L(T' gamma_i^2) with L(x) = log_+(x/log_+(x/log_+(x))), log_+(x)=max(1, log x), gamma_i = Delta_i/sigma, T'=T-K",
+    "eps_i": "eps_{a,T'} <= 14.8, eps_{a,T'} -> 0 as T' gamma_a^2 -> infinity"
+   },
+   "conditions": [
+    "Gaussian rewards with variance <= sigma^2"
+   ],
+   "tuning": [
+    "exploration function g(x) = 1 v log x"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th-Gaussian-Lai-T",
+    "number": "Theorem 6",
+    "quote": "Suppose the rewards from arm $a$ follow a Gaussian distribution with mean $\\mu_a$ and no greater variance than $\\sigma^2$ for all $a=1,\\ldots,K$. Let $\\gamma_a = (\\mu^* - \\mu_a)/\\sigma$. Then, the UCB index policy in \\eqref{UCB-rule-Lai} satisfies R_{T'} \\le \\sum_{a:\\mu_a< \\mu^*} \\frac{\\sigma^2\\big(2L(T'\\gamma_a^2)+1+\\eps_{a,T'}\\big)}{\\mu^* - \\mu_a} where ... $L(x) = \\log_+(x/\\log_+(x/\\log_+(x)))$, and $\\eps_{a,T'}$ is uniformly bounded with $\\eps_{a,T'}\\le 14.8$ and $\\eps_{a,T'}\\to 0$ as $T'\\gamma_a^2\\to\\infty$."
+   },
+   "confidence": "high",
+   "notes": "Pseudo-regret after the K initialization rounds."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "auer2002finite",
+   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
+   "cited_first_author": "Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB1 (alpha=2)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "K-armed stochastic bandit, rewards in [0,1]",
+   "bound": {
+    "notation": "exact",
+    "expression": "8*sum_subopt(log(T)/Delta_i) + (1 + pi**2/3)*sum_subopt(Delta_i)",
+    "expression_latex": "8\\sum_{a: \\mu_a< \\mu^*} \\f{\\log T}{\\mu^* - \\mu_a}+\\Big(1+\\f{\\pi^2}{3}\\Big)\\sum_{a:\\mu_a < \\mu^* }(\\mu^* - \\mu_a)",
+    "regime": null
+   },
+   "where": "Section 1.3, eq. (Auer-bd)"
+  },
+  {
+   "cited_key": "lai1985asymptotically",
+   "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_first_author": "Lai",
+   "cited_year": 1985,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "K-armed stochastic bandit with one-parameter parametric reward family, consistent allocation rules",
+   "bound": {
+    "notation": "liminf",
+    "expression": "sum_subopt(Delta_i/KL_i)*log(T)",
+    "expression_latex": "\\liminf_{T \\rightarrow \\infty}\\f{R_T }{\\log T} \\ge \\sum_{a: \\mu_a < \\mu^*}\\f{\\mu^* - \\mu_a}{\\KL(\\theta_a, \\theta^*)}",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T10:00:16",
+  "source_chars": 79055,
+  "input_tokens": 74605,
+  "output_tokens": 6084,
+  "cost_usd_equiv": 0.5009388,
+  "status": "extracted"
+ }
+}

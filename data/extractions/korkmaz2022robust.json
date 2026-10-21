@@ -1,0 +1,341 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Robust Pareto Set Identification with Contaminated Bandit Feedback",
+  "arxiv_id": "2206.02666",
+  "arxiv_version": null,
+  "year": 2022,
+  "authors": [
+   "İlter Onat Korkmaz",
+   "Efe Eren Ceyani",
+   "Kerem Bozgan",
+   "Cem Tekin"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Pareto set identification in MO-MAB with contaminated reward observations (oblivious / prescient / malicious adversary)",
+   "objective": "other_pure_exploration",
+   "feedback": "bandit",
+   "environment": "stochastic_corrupted",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "adaptive",
+    "budget_measure": "unspecified",
+    "structure": "arbitrary",
+    "regret_reference": "uncorrupted"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Multi-objective rewards (M objectives); goal is (alpha,delta)-PAC identification of the Pareto set defined via medians, with accuracy 2D+alpha and 2D-coverage",
+    "Huber-type contamination: each sample is replaced with probability epsilon by an arbitrary (unbounded) contamination value; not a total budget C",
+    "Reward distributions belong to the class C_{R,t_bar} (bounded quantile deviation from the median by function R)",
+    "Learner knows contamination probability epsilon, t_bar, R(.), alpha, delta"
+   ],
+   "definition_quote": "The contamination probability is fixed across all arms and objectives and is denoted by $\\epsilon \\in (0, \\frac{1}{2})$. ... If a contamination occurs at arm $i$ and objective $d$ in round $n$, then the observed reward is sampled from the contamination distribution instead of the true reward distribution."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "R-PSI (Robust Pareto Set Identification)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "epsilon (contamination probability)",
+    "t_bar",
+    "R(.)",
+    "alpha",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_arms(2*tau_Di*(beta_t_eps*log(tau_Di**2*M*K*pi**2/(6*delta_tilde)) + 1))",
+    "expression_latex": "\\sum_{i: \\Delta_i > 4D + \\alpha} 2\\tau_{(\\bar{\\Delta}_i)}(\\beta_{\\bar{t}, \\epsilon} \\log(\\frac{\\tau_{(\\bar{\\Delta}_i)}^2MK\\pi^2}{6\\tilde{\\delta}}) + 1) + \\sum_{i : \\Delta_i \\leq 4D + \\alpha} 2\\tau_{(\\alpha)}(\\beta_{\\bar{t}, \\epsilon} \\log(\\frac{\\tau_{(\\alpha)}^2MK\\pi^2}{6\\tilde{\\delta}}) + 1)",
+    "regime": null
+   },
+   "symbols": {
+    "M": "number of objectives",
+    "tau_Di": "tau_(Delta^alpha_i) = inf{tau: U_tau <= max(alpha, Delta_i - 4D)/5}",
+    "beta_t_eps": "(t_bar - eps/(2(1-eps)))^{-2} for oblivious/prescient, (t_bar - eps)^{-2} for malicious",
+    "delta_tilde": "delta/2 (oblivious/prescient) or delta/3 (malicious)"
+   },
+   "conditions": [
+    "reward distributions belong to C_{R,t_bar}",
+    "epsilon <= 2 t_bar/(1+2 t_bar) (oblivious/prescient) or epsilon <= t_bar (malicious)",
+    "holds on good event E, which has probability >= 1-delta (Lemma 4)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm: sample complexity",
+    "number": "Theorem 1",
+    "quote": "Assume that the reward distributions belong to $C_{R, \\bar{t}}$ ... and the event $E$ defined in Lemma \\ref{lem:good_event} holds. Then, given any $\\alpha \\in \\mathbb{R}_{+}$, ... R-PSI is Pareto accurate with sample complexity $N$ bounded by: ..."
+   },
+   "confidence": "medium",
+   "notes": "Two sums combined into a single sum over arms using Delta^alpha_i = max(alpha, Delta_i - 4D), as in eq. (gapdependent) of the proof. D is the unavoidable bias. Holds on event E of probability >= 1-delta."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "K*tau_alpha*(2*beta_t_eps*log(tau_alpha**2*M*K*pi**2/(6*delta_tilde)) + 2)",
+    "expression_latex": "K \\tau_{(\\alpha)}\\left(2\\beta_{\\bar{t}, \\epsilon} \\log\\left(\\frac{\\tau_{(\\alpha)}^2MK\\pi^2}{6\\tilde{\\delta}}\\right) + 2\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "M": "number of objectives",
+    "tau_alpha": "inf{tau: U_tau <= alpha/5}",
+    "beta_t_eps": "(t_bar - eps/(2(1-eps)))^{-2} for oblivious/prescient, (t_bar - eps)^{-2} for malicious",
+    "delta_tilde": "delta/2 (oblivious/prescient) or delta/3 (malicious)"
+   },
+   "conditions": [
+    "reward distributions belong to C_{R,t_bar}",
+    "epsilon <= 2 t_bar/(1+2 t_bar) (oblivious/prescient) or epsilon <= t_bar (malicious)",
+    "holds on good event E, which has probability >= 1-delta"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm: sample complexity",
+    "number": "Theorem 1",
+    "quote": "N \\leq K \\tau_{(\\alpha)}\\left(2\\beta_{\\bar{t}, \\epsilon} \\log\\left(\\frac{\\tau_{(\\alpha)}^2MK\\pi^2}{6\\tilde{\\delta}}\\right) + 2\\right) where ... $\\tau_{(a)} := \\inf \\{\\tau: U_{\\tau} \\leq a/5 \\}$"
+   },
+   "confidence": "medium",
+   "notes": "Second (gap-free) inequality of Theorem 1."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sigma**2*K*beta_t_eps/(alpha_acc**2*log(1/(1/2 - h_eps)))*log(sigma**2*M*K/(alpha_acc**2*log(1/(1/2 - h_eps))*delta_tilde))",
+    "expression_latex": "\\mathcal{O} \\left( \\frac{\\sigma^2 K\\beta_{\\bar{t}, \\epsilon}}{\\alpha^2 \\log\\left( \\frac{1}{1/2-h_\\epsilon}\\right)}\\log\\left(\\frac{ \\sigma^2 MK}{\\alpha^2 \\log\\left( \\frac{1}{1/2-h_\\epsilon}\\right)\\tilde{\\delta}}\\right) \\right)",
+    "regime": "asymptotic as alpha -> 0"
+   },
+   "symbols": {
+    "M": "number of objectives",
+    "alpha_acc": "accuracy parameter alpha",
+    "h_eps": "eps/(2(1-eps)) for oblivious/prescient, eps for malicious",
+    "beta_t_eps": "(t_bar - h_eps)^{-2}",
+    "delta_tilde": "delta/2 or delta/3"
+   },
+   "conditions": [
+    "rewards sigma-subgaussian (R from Example 1 used)",
+    "epsilon condition as in Theorem 1",
+    "large M, K and small delta (used in proof)"
+   ],
+   "tuning": [
+    "R(t) = sigma*sqrt(2)*(sqrt(log(1/(1/2-t))) + sqrt(log 2))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:subgaussian_sample",
+    "number": "Corollary 1",
+    "quote": "Suppose that the reward distributions are subgaussian with parameter $\\sigma$. Then, the asymptotic sample complexity (as $\\alpha \\rightarrow 0$) is given by: ..."
+   },
+   "confidence": "medium",
+   "notes": "Proof gives explicit constant 800 and log argument with 50 sigma^2. Holds on event E (prob >= 1-delta)."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_arms(2*(beta_t_eps + 25*m2_bar**2*B_lin**2/Delta_alpha_i**2)*(log((1 + 25*m2_bar**2*B_lin**2/(beta_t_eps*Delta_alpha_i**2))**2*M*K*pi**2/(6*delta_tilde)) + 1))",
+    "expression_latex": "N \\leq \\sum^{K}_{i} 2 ( \\beta_{\\bar{t}, \\epsilon} +\\frac{25 \\bar{m}_2^2 B^2}{(\\Delta^\\alpha_i)^2} ) ( \\log(\\frac{(1 +\\frac{25 \\bar{m}_2^2 B^2}{ \\beta_{\\bar{t}, \\epsilon} (\\Delta^\\alpha_i)^2})^2MK\\pi^2}{6\\tilde{\\delta}}) + 1)",
+    "regime": null
+   },
+   "symbols": {
+    "M": "number of objectives",
+    "m2_bar": "known upper bound on median absolute deviations of reward distributions",
+    "B_lin": "constant B of family F_{B,t_bar}",
+    "Delta_alpha_i": "max(alpha, Delta_i - 4D)",
+    "beta_t_eps": "(t_bar - h_eps)^{-2}",
+    "delta_tilde": "delta/2 or delta/3"
+   },
+   "conditions": [
+    "reward distributions in F_{B,t_bar} (cdf increases linearly around median)",
+    "known upper bound m2_bar on median absolute deviations",
+    "epsilon condition as in Theorem 1",
+    "holds on event E (prob >= 1-delta)"
+   ],
+   "tuning": [
+    "R(t) = B*m2_bar*t"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:linear_sample",
+    "number": "Corollary 2",
+    "quote": "Suppose that the reward distributions are from the family $F \\in \\mathcal{F}_{ B,\\bar{t}}$. Let $\\bar{m}_2 \\geq max_{i \\in [K]} m_2(F)$ ... be a known upper bound. When $R(t)=B \\bar{m}_2 t$ is used, R-PSI is Pareto accurate with sample complexity $N$ bounded by ..."
+   },
+   "confidence": "medium",
+   "notes": "Gaps defined via medians in multi-objective sense; D unavoidable bias."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "auer",
+   "cited_title": "Pareto front identification from stochastic bandit feedback",
+   "cited_first_author": "Peter Auer",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Algorithm 1 (Auer-A1)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Pareto front identification in uncontaminated MO-MAB, K arms, D objectives",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_arms(4320/Delta_eps0_i**2*log(12*K*D_obj/(delta*Delta_eps0_i)))",
+    "expression_latex": "\\sum_i \\frac{4320}{(\\Delta_i^{\\epsilon_0})^2} \\log (\\frac{12 K D}{\\delta \\Delta_i^{\\epsilon_0}})",
+    "regime": null
+   },
+   "where": "Introduction (Theorem 4 of auer)"
+  },
+  {
+   "cited_key": "auer",
+   "cited_title": "Pareto front identification from stochastic bandit feedback",
+   "cited_first_author": "Peter Auer",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Pareto front identification in uncontaminated MO-MAB",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sum_arms(1/Delta_tilde_eps0_i**2*log(1/delta))",
+    "expression_latex": "\\Omega(\\sum_{i=1}^K \\frac{1}{(\\tilde{\\Delta}_i^{\\epsilon_0})^2} \\log (\\frac{1}{\\delta}))",
+    "regime": null
+   },
+   "where": "Introduction (Theorem 17 of auer)"
+  },
+  {
+   "cited_key": "altschuler",
+   "cited_title": "Best arm identification for contaminated bandits",
+   "cited_first_author": "Jason Altschuler",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Best arm identification with probabilistic contamination (single objective)",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(1/Delta_tilde_i**2*log(K/(delta*Delta_tilde_i)))",
+    "expression_latex": "\\mathcal{O}(\\sum_{i \\neq i^*} \\frac{1}{\\tilde{\\Delta}_i^2} \\log (\\frac{k}{\\delta \\tilde{\\Delta}_i}))",
+    "regime": null
+   },
+   "where": "Section 1.1 (Theorem 3 of altschuler)"
+  },
+  {
+   "cited_key": "altschuler",
+   "cited_title": "Best arm identification for contaminated bandits",
+   "cited_first_author": "Jason Altschuler",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Best arm identification with probabilistic contamination (single objective); also stated in Remark 2 as max{Delta_i - 2D, alpha}",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sum_subopt(1/Max(Delta_tilde_i, alpha_acc)**2*log(1/delta))",
+    "expression_latex": "\\Omega(\\sum_{i \\in[k] \\setminus\\{i^*\\}} \\frac{1}{\\max (\\tilde{\\Delta}_i, \\alpha)^2} \\log \\frac{1}{\\delta})",
+    "regime": null
+   },
+   "where": "Section 1.1 and Remark 2 (Theorem 18 of altschuler)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:30:04",
+  "source_chars": 124278,
+  "input_tokens": 93963,
+  "output_tokens": 6825,
+  "cost_usd_equiv": 0.6706228000000001,
+  "status": "extracted"
+ }
+}

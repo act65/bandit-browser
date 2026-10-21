@@ -1,0 +1,165 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Gaussian Process Optimization with Adaptive Sketching: Scalable and No Regret",
+  "arxiv_id": "1903.05594",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Daniele Calandriello",
+   "Luigi Carratino",
+   "Alessandro Lazaric",
+   "Michal Valko",
+   "Lorenzo Rosasco"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Gaussian process optimization / kernelized bandit with finite arm set (frequentist, ||f||_H <= F)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "T",
+    "sigma",
+    "S"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "arbitrary_bounded",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "bounded kernel k(x,x) <= kappa^2",
+    "reward function in RKHS with ||f||_H <= F (F mapped to S)",
+    "noise N(0, xi^2); appendix notes extension to xi-sub-Gaussian noise"
+   ],
+   "definition_quote": "we assume that $\\armset \\triangleq \\{\\bx_i\\}_{i=1}^{\\Narm}$ is a fixed finite set of $\\Narm$ vectors in $\\Real^d$. ... receives reward $y_t \\triangleq f(\\bx_t) + \\eta_t$ ... The goal of the learner is to minimize its cumulative regret $R_T \\triangleq \\sum_{t=1}^T f(\\bx_\\star) - f(\\bx_t)$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "BKB (Budgeted Kernelized Bandit)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma",
+    "S"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*(2*alpha_eps)**(3/2)*sqrt(T)*(sigma*d_eff*log(kappa**2*T) + sqrt(lam*S**2*d_eff*log(kappa**2*T)) + sigma*log(1/delta))",
+    "expression_latex": "2(2\\alpha)^{3/2}\\sqrt{T}\\left(\\xi\\deff(\\lambda,\\wt{\\bX}_T)\\log(\\kappa^2T) +\\sqrt{\\lambda \\fnorm^2 \\deff(\\lambda,\\wt{\\bX}_T)\\log(\\kappa^2T)}+ \\xi\\log(1/\\delta) \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_eps": "(1+epsilon)/(1-epsilon), approximation accuracy factor with 0<epsilon<1",
+    "d_eff": "effective dimension d_eff(lambda, X_T) = Tr(K_T (K_T + lambda I)^{-1}) of the arms selected by BKB",
+    "kappa": "bound on kernel: k(x,x) <= kappa^2"
+   },
+   "conditions": [
+    "||f||_H <= F < infinity (F denoted S)",
+    "k(x,x) <= kappa^2 for all arms",
+    "noise eta_t ~ N(0, xi^2) with xi denoted sigma"
+   ],
+   "tuning": [
+    "0 < epsilon < 1, alpha = (1+epsilon)/(1-epsilon)",
+    "qbar >= 6 alpha log(4T/delta)/epsilon^2",
+    "beta_t = 2 xi sqrt(alpha log(kappa^2 t) sum_s sigma_tilde_t^2(x_s) + log(1/delta)) + (1 + 1/sqrt(1-epsilon)) sqrt(lambda) F",
+    "lambda > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main-regret",
+    "number": "Theorem 2",
+    "quote": "Assume $\\normsmall{f}_{\\rkhs} \\leq F < \\infty$. For any desired $0 < \\varepsilon < 1$, $0 < \\delta < 1$, $0 < \\lambda$, let $\\alpha \\triangleq (1 + \\varepsilon)/(1 - \\varepsilon)$ and $\\qbar \\geq 6\\alpha\\log(4T/\\delta)/\\varepsilon^2$. If we run \\bkb with $\\wt{\\beta}_t \\triangleq ...$ then, with probability of at least $1-\\delta$, the regret $R_T$ of \\bkb is bounded as $R_T \\leq 2(2\\alpha)^{3/2}\\sqrt{T}(\\xi\\deff(\\lambda,\\wt{\\bX}_T)\\log(\\kappa^2T) +\\sqrt{\\lambda \\fnorm^2 \\deff(\\lambda,\\wt{\\bX}_T)\\log(\\kappa^2T)}+ \\xi\\log(1/\\delta) )$."
+   },
+   "confidence": "medium",
+   "notes": "Regret is realized sum f(x*)-f(x_t) bounded w.p. 1-delta. d_eff is data-dependent (depends on arms selected). Per-step time O(A d_eff^2) up to logs (Theorem 1, a dictionary-size/accuracy guarantee, not recorded as a regret result). Paper's lambda=xi^2 in GP view but theorem allows any lambda>0."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "kuzborskij2019efficient",
+   "cited_title": "Efficient linear bandits through matrix sketching",
+   "cited_first_author": "Ilja Kuzborskij",
+   "cited_year": 2019,
+   "cited_arxiv_id": "1809.11033",
+   "algorithm_name": "SOFUL-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic linear bandit in R^d with Frequent Directions sketch of fixed size m",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "(1 + eps_mm)**(3/2)*(d + m_sk)*sqrt(T)",
+    "expression_latex": "\\abigotime((1 + \\varepsilon_m)^{3/2}(d + m)\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 5 (Discussion)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:25:57",
+  "source_chars": 111871,
+  "input_tokens": 86646,
+  "output_tokens": 3556,
+  "cost_usd_equiv": 0.5467067999999999,
+  "status": "extracted"
+ }
+}

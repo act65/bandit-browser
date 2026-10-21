@@ -1,0 +1,224 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Trading off rewards and errors in multi-armed bandits",
+  "arxiv_id": "2605.00488",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Akram Erraqabi",
+   "Alessandro Lazaric",
+   "Michal Valko",
+   "Emma Brunskill",
+   "Yun-En Liu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "MAB tradeoff between rewards and estimation errors (objective f_w)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Objective is not standard cumulative regret: regret R_n = f* - f_w(empirical allocation), where f_w(lambda) = w*sum_i lambda_i mu_i - (1-w)/K * sum_i sigma_i/sqrt(lambda_i) trades off average reward and sqrt(n)-scaled RMSE of arm mean estimates (active exploration)",
+    "Tradeoff weight w in (0,1) is given to the learner",
+    "Assumption 1: optimal allocation lies in restricted simplex, min_i lambda*_i >= lambda_min (lambda_min known to algorithm)",
+    "sigma_min > 0 (all arms have non-zero variance)"
+   ],
+   "definition_quote": "We consider a MAB of $K$ arms with distributions $\\{\\nu_i\\}_{i=1}^K$, each characterized by mean $\\mu_i$ and variance~$\\sigma_i^2$. For technical convenience, we consider distributions with bounded support in $[0,1]$. ... We define its regret w.r.t.\\ the value of the optimal allocation as $R_n(\\wt{\\blambda}_n) = f^* - f_w(\\wt{\\blambda}_n; \\{\\nu_i\\}_i)$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "ForcingBalance",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "w",
+    "lambda_min",
+    "eta (forcing parameter)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "1",
+    "expression_latex": "1",
+    "regime": "T <= K*(K*eta_f**2 + eta_f*sqrt(K) + 1)"
+   },
+   "symbols": {
+    "eta_f": "forcing parameter eta of ForcingBalance"
+   },
+   "conditions": [
+    "K >= 2",
+    "Assumption 1: min_i lambda*_i >= lambda_min"
+   ],
+   "tuning": [
+    "eta_f <= 21",
+    "restricted simplex with lambda_min > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem 1",
+    "quote": "Under Asm.~\\ref{asm:simplex}, \\forcing with a parameter $\\eta\\leq 21$ and a simplex $\\wb{\\D}_K$ restricted to $\\lambda_{\\min}$ suffers a regret R_n \\leq 1 if n \\leq n_0 ... with probability $1-\\delta$ ... n_0 = K(K\\eta^2 + \\eta\\sqrt{K} + 1)"
+   },
+   "confidence": "medium",
+   "notes": "Trivial first-phase branch. Regret is f* - f_w(empirical allocation), a normalized (non-cumulative) quantity, hence quantity 'other'."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "43*K**(5/2)*(beta_f/alpha_f)*sqrt(log(8*K*T*(T+1)/delta)/(eta_f*lambda_min))*T**(-1/4)",
+    "expression_latex": "43 K^{5/2} \\frac{\\beta}{\\alpha} \\sqrt{\\frac{\\log(2/\\delta_n)}{\\eta\\lambda_{\\min}}} n^{-1/4}",
+    "regime": "n_0 < T <= n_2"
+   },
+   "symbols": {
+    "eta_f": "forcing parameter eta of ForcingBalance",
+    "alpha_f": "strong concavity of f_w: 3(1-w)sigma_min/(4K)",
+    "beta_f": "smoothness of f_w on restricted simplex: 3(1-w)sigma_max/(4K lambda_min^{5/2})",
+    "lambda_min": "lower bound on allocation components defining the restricted simplex",
+    "n_0": "K(K eta^2 + eta sqrt(K) + 1)",
+    "n_2": "C K^10 log^2(1/delta_n) / ((lambda*_min)^8 alpha^4 lambda_min^2), C numerical constant"
+   },
+   "conditions": [
+    "K >= 2",
+    "Assumption 1: min_i lambda*_i >= lambda_min",
+    "sigma_min > 0"
+   ],
+   "tuning": [
+    "eta_f <= 21"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem 1",
+    "quote": "43 K^{5/2} \\frac{\\beta}{\\alpha} \\sqrt{\\frac{\\log(2/\\delta_n)}{\\eta\\lambda_{\\min}}} n^{-1/4} if n_0 < n \\leq n_2 ... with probability $1-\\delta$ (where $\\delta_n = \\delta/(4Kn(n+1))$)"
+   },
+   "confidence": "medium",
+   "notes": "delta_n substituted: log(2/delta_n)=log(8Kn(n+1)/delta). Appendix states n_2 with lambda_min^4 rather than lambda_min^2 (inconsistency)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "153*K**(5/2)*(beta_f/alpha_f)*sqrt(log(8*K*T*(T+1)/delta)/(lambda_min*lambda_min_star))*T**(-1/2)",
+    "expression_latex": "153 K^{5/2} \\frac{\\beta}{\\alpha} \\sqrt{\\frac{\\log(2/\\delta_n)}{\\lambda_{\\min}\\lambda_{\\min}^*}}n^{-1/2}",
+    "regime": "T > n_2"
+   },
+   "symbols": {
+    "alpha_f": "strong concavity of f_w: 3(1-w)sigma_min/(4K)",
+    "beta_f": "smoothness of f_w on restricted simplex: 3(1-w)sigma_max/(4K lambda_min^{5/2})",
+    "lambda_min": "lower bound on allocation components defining the restricted simplex",
+    "lambda_min_star": "smallest component of the optimal allocation",
+    "n_2": "C K^10 log^2(1/delta_n) / ((lambda*_min)^8 alpha^4 lambda_min^2), C numerical constant"
+   },
+   "conditions": [
+    "K >= 2",
+    "Assumption 1: min_i lambda*_i >= lambda_min",
+    "sigma_min > 0"
+   ],
+   "tuning": [
+    "eta_f <= 21"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem 1",
+    "quote": "153 K^{5/2} \\frac{\\beta}{\\alpha} \\sqrt{\\frac{\\log(2/\\delta_n)}{\\lambda_{\\min}\\lambda_{\\min}^*}}n^{-1/2} if n > n_2, with probability $1-\\delta$ (where $\\delta_n = \\delta/(4Kn(n+1))$)"
+   },
+   "confidence": "medium",
+   "notes": "Asymptotic O~(n^{-1/2}) rate on the normalized tradeoff regret."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:57:31",
+  "source_chars": 96672,
+  "input_tokens": 75652,
+  "output_tokens": 4007,
+  "cost_usd_equiv": 0.4677748,
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,322 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Semi Bandit Dynamics in Congestion Games: Convergence to Nash Equilibrium and No-Regret Guarantees",
+  "arxiv_id": "2306.15543",
+  "arxiv_version": null,
+  "year": 2023,
+  "authors": [
+   "Ioannis Panageas",
+   "Stratis Skoulakis",
+   "Luca Viano",
+   "Xiao Wang",
+   "Volkan Cevher"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online Resource Selection (semi-bandit)",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "adversarial_unspecified",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "not_applicable",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "polytope",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "linf_box"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Costs are non-negative and bounded by c_max (c^t_e in [0, c_max]), not normalized to [0,1]",
+    "Strategy set is a family of subsets of m resources given implicitly via the H-representation {x in [0,1]^m : A x <= b} of its convex hull"
+   ],
+   "definition_quote": "Agent $i$ selects a prob. distribution $\\pi_i^t \\in \\Delta(\\mathcal{P}_i)$. An adversary selects a cost function $c^t: E \\mapsto \\mathbb{R}_{\\geq 0}$. Agent $i$ samples a path $p^t_i \\sim \\pi_i^t$ and suffers cost $C_i(p^t_i, c^t) := \\sum_{e \\in p_i^t} c_e^t$. Agent $i$ learns the costs $c_e^t$ for all resources $e \\in p_i^t$"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Semi-Bandit Game Dynamics in congestion games (convergence to Nash Equilibrium)",
+   "objective": "other_pure_exploration",
+   "feedback": "semi_bandit",
+   "environment": "adversarial_adaptive",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "not_applicable",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [
+    "multi_agent_cooperative"
+   ],
+   "action_set": {
+    "shape": "polytope",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "unspecified"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Game-theoretic convergence of all n agents to an approximate mixed Nash equilibrium in a congestion game, not a single-learner bandit regret guarantee",
+   "unmapped": [
+    "n selfish agents in a congestion game with m resources, non-decreasing resource cost functions bounded by c_max",
+    "Objective: time-averaged exploitability (best-iterate convergence to epsilon-approximate mixed NE)"
+   ],
+   "definition_quote": "Each agent $i \\in [n]$ (randomly) selects a strategy $p^t_i \\in \\mathcal{P}_i$ and suffers cost ... Each agent $i \\in [n]$ \\textbf{learns only} the congestion costs $c_e(p_i^t,p^t_{-i})$ of her selected resources $e \\in p_i^t$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Semi-Bandit Gradient Descent with Caratheodory Exploration (SBGD-CE / OGD-CE, Algorithm 2)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent",
+    "other"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "m*c_max**2*T**(4/5)*log(1/delta)",
+    "expression_latex": "\\mathcal{O}\\left(mc^2_{\\max}T^{4/5} \\log(1/\\delta) \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "c_max": "upper bound on resource costs, ||c^t||_inf <= c_max"
+   },
+   "conditions": [
+    "||c^t||_inf <= c_max",
+    "costs non-negative"
+   ],
+   "tuning": [
+    "gamma_t = t^(-3/5)",
+    "mu_t = min(1/m_i, t^(-1/5))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "t:regret",
+    "number": "Theorem (t:regret)",
+    "quote": "Let $p_i^1,\\ldots,p^T_i \\in \\mathcal{P}_i$ the sequence of strategies produced by Algorithm~\\ref{alg:alg1} given as input the costs $c^1,\\ldots,c^T$ with $\\norm{c^t}_\\infty \\leq c_{\\max}$. Then with probability $1- \\delta$, \\[\\sum_{t=1}^T\\sum_{e \\in p^t_i} c_e^t - \\min_{p_i^\\star \\in \\mathcal{P}_i}\\sum_{e \\in p^\\star_i} c_e^t \\leq \\mathcal{O}\\left(mc^2_{\\max}T^{4/5} \\log(1/\\delta) \\right)\\]"
+   },
+   "confidence": "medium",
+   "notes": "Realized regret against best fixed strategy w.p. 1-delta. Remark 3.6 states that choosing delta = O(1/(m T c_max)) gives Õ(m^2 c_max^2 T^{4/5}) regret (the paper's headline O(m^2 T^{4/5})). Step sizes do not depend on T, so anytime. Note the proof's final expression has a m^2 T^{3/5} and T^{1/5}*sqrt(T) terms; the stated order is as printed."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "regret_unspecified",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "m**(3/2)*T**(3/4)",
+    "expression_latex": "\\mathcal{O}(m^{3/2}T^{3/4})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "||c^t||_inf <= c_max"
+   ],
+   "tuning": [
+    "gamma_t = c_max^(-1) m^(-1/2) t^(-3/4)",
+    "mu_t = min(1/m_i, m^(-1/2) t^(-1/4))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "remarkT34",
+    "number": "Remark 3.6",
+    "quote": "The better $\\mathcal{O}(m^{3/2}T^{3/4})$ regret bound can be obtained by selecting the parameters $\\gamma_t = c_{\\max}^{-1}m^{-1/2}t^{-3/4}$ and $\\mu_t = \\min(1/m_i, m^{-1/2}t^{-1/4})$. However such a parameter selection leads to $\\mathcal{O}(T^{-1/8})$ convergence rate to NE."
+   },
+   "confidence": "low",
+   "notes": "Stated in a remark without proof; probability type (high-probability vs expectation) and c_max dependence not specified; 'expectation' field is a placeholder since regret type unspecified."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "Theta",
+    "expression": "m**12.5*N**7.5/epsilon**5",
+    "expression_latex": "T \\geq \\Theta\\left( m^{12.5}n^{7.5}/\\epsilon^5 \\right)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "all n agents adopt Algorithm 2",
+    "resource costs bounded by c_max"
+   ],
+   "tuning": [
+    "gamma_t = t^(-3/5)",
+    "mu_t = min(1/m_i, t^(-1/5))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:convergence_to_nash",
+    "number": "Theorem (thm:convergence_to_nash)",
+    "quote": "Let $\\pi^1,\\ldots, \\pi^T$ the sequence of strategy profiles produced if all agents adopt Algorithm~\\ref{alg:alg1}. Then for all $T \\geq \\Theta\\left( m^{12.5}n^{7.5}/\\epsilon^5 \\right)$, \\[\\frac{1}{T}\\E \\left[\\sum_{t=1}^T\\max_{i \\in [n]}\\left[c_i(\\pi^{t}_i, \\pi^{t}_{-i}) - \\min_{\\pi_i \\in \\Delta(\\mathcal{P}_i)} c_i(\\pi_i, \\pi_{-i}^{t})\\right]\\right] \\leq \\epsilon.\\]"
+   },
+   "confidence": "medium",
+   "notes": "Number of rounds sufficient for time-averaged expected exploitability <= epsilon (best-iterate convergence to epsilon-mixed NE). N = number of agents n. Corollary c:markov converts this into high-probability statements via Markov's inequality."
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "Theta",
+    "expression": "N**6.5*m**7/epsilon**5",
+    "expression_latex": "T \\geq \\Theta(n^{6.5}m^{7}/\\epsilon^5)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "all n agents adopt Algorithm 2",
+    "resource costs bounded by c_max"
+   ],
+   "tuning": [
+    "gamma_t = Theta(m^(-4/5) n^(-8/5) c_max^(-1) t^(-3/5))",
+    "mu_t = Theta(n^(-6/5) m^(-11/10) t^(-1/5))",
+    "agents know n and m"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:convergence_to_nash",
+    "number": "Theorem (thm:convergence_to_nash)",
+    "quote": "The same holds for $T \\geq \\Theta(n^{6.5}m^{7}/\\epsilon^5)$ in case the agents know $n,m$ and select $\\gamma_t :=\\Theta(m^{-4/5} n^{-8/5}c^{-1}_{\\max} t^{-3/5})$ and $\\mu_t := \\Theta(n^{-6/5}m^{-11/10} t^{-1/5})$."
+   },
+   "confidence": "medium",
+   "notes": "Second case of the same theorem: tuned parameters requiring knowledge of n, m, c_max. Proof bound has a log T factor neglected in the statement."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "du22",
+   "cited_title": "Learning in congestion games with bandit feedback",
+   "cited_first_author": "Qiwen Cui",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Frank-Wolfe with Exploration II",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Semi-bandit congestion game dynamics; number of samples to reach epsilon-approximate NE (best-iterate), n agents, m resources",
+   "bound": {
+    "notation": "O",
+    "expression": "N**12*m**9/epsilon**6",
+    "expression_latex": "\\mathcal{O}\\left(n^{12}m^{9}/\\epsilon^6\\right)",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "BCK12",
+   "cited_title": "Towards minimax policies for online linear optimization with bandit feedback",
+   "cited_first_author": "Sébastien Bubeck",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Adversarial combinatorial bandits (online linear optimization with bandit feedback)",
+   "bound": {
+    "notation": "O",
+    "expression": "m*sqrt(T)",
+    "expression_latex": "\\mathcal{O}(m\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Introduction (Our Techniques and Related Work)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:06:19",
+  "source_chars": 161522,
+  "input_tokens": 122598,
+  "output_tokens": 6363,
+  "cost_usd_equiv": 0.8904627999999999,
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,354 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Dynamic Matching Bandit For Two-Sided Online Markets",
+  "arxiv_id": "2205.03699",
+  "arxiv_version": null,
+  "year": 2022,
+  "authors": [
+   "Yuantong Li",
+   "Chi-hua Wang",
+   "Guang Cheng",
+   "Will Wei Sun"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Dynamic Matching Problem (DMP)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "sigma",
+    "d",
+    "K"
+   ],
+   "instance_assumptions": [
+    "gap_bounded_below",
+    "unique_optimal_arm"
+   ],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "oblivious_sequence",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "unspecified",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Two-sided matching market: N agents (companies) each with unknown linear preference parameter theta_i, K arms (job applicants) with known fixed preferences over agents; centralized platform computes matching via deferred acceptance",
+    "Regret per agent measured against the agent-optimal stable matching at each time (can be negative)",
+    "Arm contexts x_j(t) drawn i.i.d. from product distribution, ||x||_inf < 1, min eigenvalue of E[XX^T] >= phi_0^2",
+    "Scaled uniform sub-optimal minimal gap rho (Assumption 6.4); positive preference parameter entries (Assumption 6.5)",
+    "Learning length h requires knowledge of rho, phi_0, Delta_max"
+   ],
+   "definition_quote": "y_{i,j}(t) = \\mu_{i,j}(t) + \\epsilon_{i,j}(t), ... where \\mu_{i,j}(t) = \\theta_{i, *}^T x_{j}(t) ... R_{i}(T) = \\sum_{t=1}^{T}\\mu_{i,\\overline{m}_{t}(i)}(t) - \\mu_{i,m_{t}(i)}(t)."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Two-agent three-arm instance (lower bound)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "T",
+    "sigma",
+    "d",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "oblivious_sequence",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "unspecified",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {
+    "N": "2",
+    "K": "3"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Two-sided matching market with 2 agents, 3 arms; contexts uniform on (0,1)^d; theta designed depending on h",
+    "Lower bound is for the paper's dynamic matching algorithm only, not all algorithms"
+   ],
+   "definition_quote": "we consider that there are two agents and three arms in the platform. Contexts are generated from the uniform distribution, x_j(t) ~ U(0,1)^d ... Noise follows Gaussian distribution with variance sigma^2."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Dynamic Matching Algorithm",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma",
+    "d",
+    "K",
+    "rho",
+    "phi_0",
+    "Delta_max"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "regret_unspecified",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "R_learn + 2*C_0*N*d*G_exploit*exp(-h*2*phi_0**4*rho**2/(d**2*sigma**2))",
+    "expression_latex": "\\sum_{t=1}^{h} \\overline{\\Delta}_{i,m_{t}(i)}(t) + 2C_{0}(\\lambda_{i})Nd [\\sum_{t = h + 1}^{T}\\overline{\\Delta}_{i, \\max}(t)(K-\\min_{i\\in [N]}\\tau_{i}(t))] \\exp[-h\\frac{2\\phi_{0}^{4}\\rho^{2}}{d^2\\sigma^2}]",
+    "regime": null
+   },
+   "symbols": {
+    "R_learn": "sum of gaps during the h learning rounds",
+    "G_exploit": "sum_{t=h+1}^T Delta_max_i(t)(K - min_i tau_i(t))",
+    "C_0": "exp(-4 lambda_i phi_0^2 rho^2/(d^2 sigma^2))",
+    "N": "number of agents (companies)",
+    "h": "learning length",
+    "phi_0": "sqrt of min eigenvalue lower bound of context covariance",
+    "rho": "scaled uniform sub-optimal minimal gap"
+   },
+   "conditions": [
+    "Assumptions 6.1-6.5: sigma-subgaussian noise, ||x||_inf<1, lambda_min(E[XX^T])>=phi_0^2, scaled gap > rho, positive preference parameters"
+   ],
+   "tuning": [
+    "learning length h given",
+    "ridge parameter lambda_i"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm: upper bound of cc-etc",
+    "number": "Theorem 6.1",
+    "quote": "With Assumptions \\ref{ass: noise ass} - \\ref{ass: positive theta} and given the learning length $h$, if the platform follows the dynamic matching algorithm, agent $p_{i}$'s regret up to time $T$ is upper bounded by ..."
+   },
+   "confidence": "medium",
+   "notes": "Regret R_i(T) defined as random sum but bound derived via probabilities of invalid ranking; expectation type not stated precisely."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "regret_unspecified",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_1*(1 + log(C_2*T))",
+    "expression_latex": "C_{1}(1+\\log{C_{2}T})",
+    "regime": null
+   },
+   "symbols": {
+    "C_1": "d^2 sigma^2 Delta_max_i/(2 phi_0^4 rho^2)",
+    "C_2": "4 C_0(lambda_i) N K phi_0^4 rho^2/(d sigma^2 Delta_max_i)",
+    "N": "number of agents"
+   },
+   "conditions": [
+    "Assumptions 6.1-6.5"
+   ],
+   "tuning": [
+    "h = ceil(max_i d^2 sigma^2/(2 phi_0^4 rho^2) log(4 C_0 N K phi_0^4 rho^2 T/(d sigma^2 Delta_max_i)))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "coro: upper order",
+    "number": "Corollary 6.1",
+    "quote": "With $h = \\lceil \\max_{i} \\frac{d^2\\sigma^2}{2\\phi_{0}^{4}\\rho^{2}} \\log \\frac{4C_{0}(\\lambda_{i})NK \\phi_{0}^{4} \\rho^{2}}{d \\sigma^2 \\overline{\\Delta}_{i, \\max}}T\\rceil$, we have R_i(T) \\leq C_{1}(1+\\log{C_{2}T}) = \\tilde{O}(\\frac{d^{2}\\sigma^{2}}{\\rho^{2}}\\log(NKT))"
+   },
+   "confidence": "medium",
+   "notes": "Exact form of the corollary."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "regret_unspecified",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**2*sigma**2*log(N*K*T)/rho**2",
+    "expression_latex": "\\mathcal{\\tilde{O}}(\\frac{d^{2}\\sigma^{2}}{\\rho^{2}}\\log(NKT))",
+    "regime": null
+   },
+   "symbols": {
+    "N": "number of agents",
+    "rho": "scaled uniform sub-optimal minimal gap"
+   },
+   "conditions": [
+    "Assumptions 6.1-6.5"
+   ],
+   "tuning": [
+    "h as in Corollary 6.1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "coro: upper order",
+    "number": "Corollary 6.1",
+    "quote": "R_i(T) \\leq C_{1}(1+\\log{C_{2}T}) = \\mathcal{\\tilde{O}}\\bigg(\\frac{d^{2}\\sigma^{2}}{\\rho^{2}}\\log(NKT)\\bigg)"
+   },
+   "confidence": "medium",
+   "notes": "Order form of the same corollary."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "d**2*sigma**2/(2*rho**2*phi_0**4)*(log(2*d*(K-1)) - log(1 - Psi**(1/N)))",
+    "expression_latex": "\\lceil{\\frac{d^2 \\sigma^2}{2\\rho^2\\phi_{0}^4}[\\log(2d(K-1)) - \\log(1 - \\Psi^{1/N})] \\rceil}",
+    "regime": null
+   },
+   "symbols": {
+    "Psi": "target probability of agent-optimal stable matching",
+    "N": "number of agents",
+    "phi_0": "min-eigenvalue constant",
+    "rho": "scaled minimal gap"
+   },
+   "conditions": [
+    "Assumptions 6.1-6.5"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm: stability of ccetc",
+    "number": "Theorem 6.2",
+    "quote": "If $t \\geq \\lceil{\\frac{d^2 \\sigma^2}{2\\rho^2\\phi_{0}^4}[\\log(2d(K-1)) - \\log(1 - \\Psi^{1/N})] \\rceil},$ the dynamic matching algorithm provides an agent-optimal stable matching solution with a probability at least $\\Psi > 0$."
+   },
+   "confidence": "low",
+   "notes": "Time/sample threshold (ceiling omitted) after which matching is agent-optimal stable w.p. >= Psi."
+  },
+  {
+   "id": "r5",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "regret_unspecified",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "log(T)",
+    "expression_latex": "\\Omega(\\log(T))",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "two agents, three arms, contexts U(0,1)^d, Gaussian noise, theta designed depending on h",
+    "applies to the paper's dynamic matching algorithm with the optimized h"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm: lower bound",
+    "number": "Theorem 6.3",
+    "quote": "Consider the designed two-agent three-arms instance above. The regret lower bound for agent $p_{i}$ is, R_i(T) \\geq \\sum_{t=1}^{h} \\Delta_{i,m_{t}(i)}(t) + \\sum_{t = h+1}^{T} \\overline{\\Delta}_{i, \\min}[\\mathcal{L}_{i}^{b}(t)\\mathcal{L}_{j}^{b}(t) + \\mathcal{L}_{i}^{b}(t) \\mathcal{L}_{j}^{g}(t)] ... With the optimized $h$ provided by the dynamic matching algorithm, the order of the regret lower bound is $R_{i}(T) = \\Omega(\\log(T))$."
+   },
+   "confidence": "low",
+   "notes": "Lower bound for the specific algorithm (ETC-type with ridge estimation), not an information-theoretic lower bound over all algorithms. The detailed expression in terms of L^b, L^g is not recorded separately."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:43:19",
+  "source_chars": 205883,
+  "input_tokens": 132003,
+  "output_tokens": 5639,
+  "cost_usd_equiv": 0.9512228,
+  "status": "extracted"
+ }
+}

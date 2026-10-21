@@ -1,0 +1,363 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Equal Opportunity in Online Classification with Partial Feedback",
+  "arxiv_id": "1902.02242",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Yahav Bechavod",
+   "Katrina Ligett",
+   "Aaron Roth",
+   "Bo Waggoner",
+   "Zhiwei Steven Wu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online classification with partial (apple tasting) feedback under per-round gamma-EFP fairness",
+   "objective": "cumulative_regret",
+   "feedback": "partial_monitoring",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "N_exp"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "fairness"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {
+    "K": "2"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Apple-tasting feedback: true label observed only when the learner predicts +1",
+    "0-1 classification loss; competes with best gamma-EFP (equalized false positive rate) convex combination of classifiers from a finite hypothesis class H (|H| = N_exp)",
+    "Learner must satisfy (gamma+beta)-EFP fairness w.r.t. the true distribution at every round with probability 1-delta",
+    "Access to a cost-sensitive classification oracle over H (oracle efficiency)"
+   ],
+   "definition_quote": "In each round t, Learner chooses a convex combination \\pi_t \\in \\Delta(\\H). Environment draws (x_t,y_t) \\sim D independently; learner observes x_t. Learner labels the point \\hat{y}_t = h_t(x_t), where h_t \\sim \\pi_t. If \\hat{y}_t = +1, Learner observes y_t."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Online classification with partial feedback under per-round fairness (lower bound)",
+   "objective": "cumulative_regret",
+   "feedback": "partial_monitoring",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "N_exp"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "fairness"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {
+    "K": "2"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Apple-tasting feedback",
+    "Learner must satisfy T^{-alpha}-EFP(delta) at every round; regret measured against 0-EFP fair policies"
+   ],
+   "definition_quote": "There exists a hypothesis class H containing {\\pm 1} such that any algorithm satisfying a T^{-\\alpha}-EFP(\\delta) fairness constraint has expected regret with respect to the set of 0-EFP fair policies of \\Omega(T^{2\\alpha})."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Oracle-efficient fair algorithm (pure +1 exploration, FairCSC oracle, modified ILOVETOCONBANDITS)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "delta",
+    "gamma"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Modified ILOVETOCONBANDITS with approximate CSC oracle",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)*log(N_exp/delta)",
+    "expression_latex": "\\tilde O(\\sqrt{T} \\ln(|\\H|/\\delta))",
+    "regime": null
+   },
+   "symbols": {
+    "N_exp": "|H|, size of the hypothesis class",
+    "gamma": "fairness level of the comparator class"
+   },
+   "conditions": [
+    "Pr[a=1,y=-1], Pr[a=-1,y=-1] in Omega(1)",
+    "{+1,-1,+a,-a} subset of H",
+    "comparator: best gamma-EFP convex combination",
+    "algorithm satisfies (gamma+beta)-EFP(delta) with beta = O(sqrt(ln(|H|/delta))/T^{1/4})"
+   ],
+   "tuning": [
+    "delta in [0, 1/sqrt(T)]",
+    "T_0 = Theta(sqrt(T ln(|H|/delta)))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "upper",
+    "number": "Theorem 3.1",
+    "quote": "For any $\\H$ and data distribution satisfying the two mild assumptions above, there exists an oracle-efficient algorithm that takes parameters $\\delta \\in [0,\\frac{1}{\\sqrt{T}}]$ and $\\gamma \\geq 0$ as input and satisfies $(\\gamma + \\beta)$-EFP($\\delta$) fairness and has an expected regret at most $\\tilde O(\\sqrt{T} \\ln(|\\H|/\\delta) )$ with respect to the class of $\\gamma$-EFP fair policies, where $\\beta =  O(\\sqrt{\\ln(|\\H|/\\delta)}/T^{1/4})$."
+   },
+   "confidence": "medium",
+   "notes": "Regret defined as pseudo-regret w.r.t. the true distribution. Oracle-efficient = polynomial time given CSC oracle."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "log(N_exp/delta)/beta_f**2 + sqrt(T)*log(N_exp/delta)",
+    "expression_latex": "\\tilde O\\left(\\frac{\\ln(\\frac{|\\H|}{\\delta})}{\\beta^2} + \\sqrt{T} \\ln(|\\H|/\\delta) \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "N_exp": "|H|",
+    "beta_f": "fairness slack: algorithm is (gamma+beta_f)-EFP(delta)"
+   },
+   "conditions": [
+    "same two mild assumptions as Theorem 3.1",
+    "comparator: best gamma-EFP policy"
+   ],
+   "tuning": [
+    "any beta_f > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Remark 3.2",
+    "quote": "More generally, we can extend Theorem~\\ref{upper} to give an algorithm that satisfies $(\\gamma + \\beta)$-EFP($\\delta$) for any $\\beta > 0$, and achieves an expected regret at most $\\tilde O\\left(\\frac{\\ln(\\frac{|\\H|}{\\delta})}{\\beta^2} + \\sqrt{T} \\ln(|\\H|/\\delta) \\right)$ with respect to the class of $\\gamma$-EFP fair policies."
+   },
+   "confidence": "medium",
+   "notes": "Stated as a remark without proof."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(2*alpha_f)",
+    "expression_latex": "O(T^{2\\alpha})",
+    "regime": "alpha in [1/4, 1/2]"
+   },
+   "symbols": {
+    "alpha_f": "tradeoff exponent; fairness gap gamma'-gamma = O(T^{-alpha_f})"
+   },
+   "conditions": [
+    "same assumptions as Theorem 3.1",
+    "algorithm satisfies (gamma + O(T^{-alpha_f}))-EFP(delta)"
+   ],
+   "tuning": [
+    "exploration length modified according to alpha_f"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Remark 3.3",
+    "quote": "it is straightforward, by modifying the length of the exploration round, to obtain a more general tradeoff---a regret bound of $O(T^{2\\alpha})$ with respect to the set of $\\gamma$-EFP fair policies, while satisfying $(\\gamma + O(T^{-\\alpha}))$-EFP($\\delta$) fairness, for any $\\alpha \\in [1/4,1/2]$."
+   },
+   "confidence": "low",
+   "notes": "Remark without proof; log factors suppressed."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "log(N_exp*T/delta)*sqrt(T)",
+    "expression_latex": "O\\left(\\ln(|\\H|T/\\delta) ~ \\sqrt{T}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "N_exp": "|H|"
+   },
+   "conditions": [
+    "regret measured against best policy in Pi (support-2 empirically fair mixtures)",
+    "given access to an approximate-CSC oracle",
+    "ln(T) >= 5 used in proof"
+   ],
+   "tuning": [
+    "eta = 1/T^2",
+    "mu_t = 3.2 ln(|Pi_eta| T/delta)/sqrt(t)",
+    "nu = 1/T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:bandit-regret",
+    "number": "Theorem 3.11",
+    "quote": "The bandit algorithm, given access to an approximate-CSC oracle, runs in time polynomial in $T$ and achieves expected regret at most $O\\left(\\ln(|\\H|T/\\delta) ~ \\sqrt{T}\\right)$."
+   },
+   "confidence": "medium",
+   "notes": "Comparator is the policy class Pi, not the gamma-EFP class; intermediate result for Theorem 3.1."
+  },
+  {
+   "id": "r5",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T**(2*alpha_f)",
+    "expression_latex": "\\Omega\\left(T^{2\\alpha}\\right)",
+    "regime": "alpha in (0, 0.5), T >= 16^(1/alpha)"
+   },
+   "symbols": {
+    "alpha_f": "fairness exponent: algorithm satisfies T^{-alpha_f}-EFP(delta)"
+   },
+   "conditions": [
+    "algorithm satisfies T^{-alpha}-EFP(delta) with delta <= 0.24",
+    "regret against 0-EFP fair policies",
+    "hard hypothesis class H = {-1,+1,h_1,h_2} with two indistinguishable distributions",
+    "T >= 16^(1/alpha)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:main-negative1",
+    "number": "Theorem 4.1",
+    "quote": "Fix any $\\alpha \\in (0,0.5)$ and let $T \\geq \\sqrt[\\alpha]{16}$. Fix any $\\delta \\leq 0.24$. There exists a hypothesis class $\\H$ containing $\\{\\pm \\mathbf{1}\\}$ such that any algorithm satisfying a $T^{-\\alpha}$-EFP($\\delta$) fairness constraint has expected  regret with respect to the set of 0-EFP fair policies of $\\Omega\\left(T^{2\\alpha}\\right)$."
+   },
+   "confidence": "high",
+   "notes": "Algorithm class: all algorithms satisfying the per-round fairness constraint. Proof via KL/Pinsker between two distributions."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:13:29",
+  "source_chars": 95780,
+  "input_tokens": 75730,
+  "output_tokens": 5833,
+  "cost_usd_equiv": 0.5049188,
+  "status": "extracted"
+ }
+}

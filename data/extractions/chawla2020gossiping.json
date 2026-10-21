@@ -1,0 +1,651 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "The Gossiping Insert-Eliminate Algorithm for Multi-Agent Bandits",
+  "arxiv_id": "2001.05452",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Ronshee Chawla",
+   "Abishek Sankararaman",
+   "Ayalvadi Ganesh",
+   "Sanjay Shakkottai"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Decentralized multi-agent MAB with pairwise gossip communication and communication budget",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [
+    "multi_agent_cooperative"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "N agents play the same K-armed instance and receive independent rewards (no collisions)",
+    "agents pull information (an O(log NK)-bit message) from a random agent drawn from an unknown gossip matrix P (irreducible, Assumption A.1)",
+    "communication budget B_t: at most B_t information pulls in the first t slots, B_t = Omega(log t) plus convexity/summability conditions (Assumption A.2)",
+    "per-agent regret; agents know N and their own ID",
+    "communication budget sequence is an input to the algorithm"
+   ],
+   "definition_quote": "We consider N agents, each playing the same instance of a K armed stochastic MAB to minimize cumulative regret. ... all agents pull one of the K arms and observe a stochastic Bernoulli reward, independent of everything else. ... The regret of agent i ... is defined as R_T^{(i)} := sum_{t=1}^{T}(mu_1 - mu_{I_t^{(i)}})"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Multi-agent MAB, any communication (full interaction) (lower bound)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "K",
+    "T"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [
+    "multi_agent_cooperative"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "N agents; lower bound holds for any communication matrix P and even with no communication constraints (full sharing of history)",
+    "per-agent regret"
+   ],
+   "definition_quote": "The regret of any agent i in [N] after playing arms for T times under any consistent policy played by the agents and any communication matrix P satisfies ..."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Synchronous GosInE (Synch Gossiping Insert-Eliminate)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "N",
+    "agent ID",
+    "communication budget B_t",
+    "alpha",
+    "epsilon"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Asynchronous GosInE",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "N",
+    "agent ID",
+    "communication budget B_t",
+    "alpha",
+    "delta",
+    "epsilon"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "Distributed Poisson Asynchronous MAB Regret Minimization",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "N",
+    "agent ID",
+    "communication budget B_t",
+    "alpha",
+    "delta",
+    "epsilon"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*alpha_ucb*log(T)*Sum_KN + K/4 + g_A + E_A_spr",
+    "expression_latex": "\\left( \\sum_{j=2}^{\\lceil \\frac{K}{N} \\rceil + 2}  \\frac{1}{\\Delta_j} \\right) 4 \\alpha \\ln(T) + \\frac{K}{4} + g((A_x)_{x \\in \\mathbb{N}}) + \\mathbb{E}[A_{2\\tau_{spr}^{(P)}}]",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_ucb": "UCB exploration parameter alpha",
+    "Sum_KN": "sum_{j=2}^{ceil(K/N)+2} 1/Delta_j (arms sorted by mean)",
+    "g_A": "g((A_x)) = A_{j*} + 2/(2alpha-3) sum_{l >= j*/2-1} A_{2l+1}/A_{l-1}^3, with j* as defined in Theorem 1",
+    "E_A_spr": "E[A_{2 tau_spr^{(P)}}], tau_spr^{(P)} the PULL rumor-spreading time on gossip matrix P",
+    "N": "number of agents"
+   },
+   "conditions": [
+    "N >= 2",
+    "K >= 2",
+    "P irreducible (A.1)",
+    "budget and epsilon satisfy A.2",
+    "means in (0,1) with unique best arm"
+   ],
+   "tuning": [
+    "alpha > 3",
+    "epsilon > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:strong_result",
+    "number": "Theorem 1",
+    "quote": "Suppose in a system of $N \\geq 2$ agents connected by a communication matrix $P$ satisfying assumption (A.1) and $K \\geq 2$ arms, each agent runs Algorithm 1, with UCB parameter $\\alpha > 3$ and communication budget $(B_t)$ and $\\varepsilon > 0$ satisfying assumption (A.2). Then the regret of any agent $i \\in [N]$, after time any time $T$ is bounded by ..."
+   },
+   "confidence": "high",
+   "notes": "Regret defined through means: pseudo-regret. Per-agent bound."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*alpha_ucb*log(T)*Sum_KN + K/4 + 4/(2*alpha_ucb - 3)*pi**2/6*3**beta_b + 4*Max(K**(3/(2*alpha_ucb - 6)), (16*alpha_ucb*(2 + ceiling(K/N))/Delta_min**2)**(beta_b/(beta_b - 1))) + (C_u*log(N))**beta_b",
+    "expression_latex": "\\left(\\sum_{j=2}^{\\lceil \\frac{K}{N} \\rceil + 2}  \\frac{1}{\\Delta_j} \\right) 4 \\alpha \\ln(T) + \\frac{K}{4} + \\frac{4}{2\\alpha-3} \\frac{\\pi^2}{6} 3^{\\beta} + 4 \\max \\left( K^{\\frac{3 }{ (2\\alpha-6)}},\\left(16\\alpha \\frac{2 + \\lceil  \\frac{K}{N}\\rceil}{\\Delta_2^2} \\right)^{\\frac{\\beta}{\\beta-1}} \\right) + (C\\log(N))^{\\beta}",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_ucb": "UCB exploration parameter alpha",
+    "Sum_KN": "sum_{j=2}^{ceil(K/N)+2} 1/Delta_j",
+    "beta_b": "budget exponent: B_t = floor(t^{1/beta})",
+    "C_u": "universal constant from rumor-spreading bound",
+    "N": "number of agents"
+   },
+   "conditions": [
+    "complete gossip graph P(i,j)=1/N",
+    "B_t = floor(t^{1/beta}), beta > 1",
+    "conditions of Theorem 1"
+   ],
+   "tuning": [
+    "alpha > 3",
+    "epsilon sufficiently small, epsilon < beta - 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:main_result_interpretation",
+    "number": "Corollary 2",
+    "quote": "Suppose the communication budget satisfies $B_t = \\lfloor t^{1/\\beta} \\rfloor$ ... If the gossip matrix connecting the agents corresponded to the complete graph, i.e., $P(i,j) = 1/N$, ... then under the conditions of Theorem 1, the regret of any agent ... satisfies ..."
+   },
+   "confidence": "medium",
+   "notes": "Delta_2 (best minus second best) mapped to Delta_min."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*alpha_ucb*log(T)*Sum_KN + K/4 + (1 + delta_s)*E_A_async + g_hat",
+    "expression_latex": "\\left( \\sum_{j=2}^{\\lceil \\frac{K}{N} \\rceil + 2}  \\frac{1}{\\Delta_j} \\right) 4 \\alpha \\ln(T) + \\frac{K}{4} + (1+\\delta)\\mathbb{E}[A_{2\\lfloor 2+\\delta\\rfloor  \\tau_{spr}^{(P)}}] + \\widehat{g}((A_x)_{x \\in \\mathbb{N}},\\delta)",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_ucb": "UCB exploration parameter alpha",
+    "Sum_KN": "sum_{j=2}^{ceil(K/N)+2} 1/Delta_j",
+    "delta_s": "slack parameter delta of the asynchronous algorithm",
+    "E_A_async": "E[A_{2 floor(2+delta) tau_spr^{(P)}}]",
+    "g_hat": "2(1+delta)(A_{2 ceil(2+delta) j*} + 2/(2alpha-3) sum_{l>=3} A_{2l}/A_{l-1}^3)",
+    "N": "number of agents"
+   },
+   "conditions": [
+    "N >= 2",
+    "K >= 2",
+    "P irreducible (A.1)",
+    "budget and epsilon satisfy A.2"
+   ],
+   "tuning": [
+    "alpha > 3",
+    "delta > 0",
+    "epsilon > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:prob_main_result",
+    "number": "Theorem 3",
+    "quote": "Suppose in a system of $N \\geq 2$ agents connected by a communication matrix $P$ satisfying assumption (A.1) and $K \\geq 2$ arms, each agent runs Algorithm 2, with UCB parameter $\\alpha > 3$, $\\delta >0$ ... Then the regret of any agent $i \\in [N]$, after any time $T$ is bounded by ..."
+   },
+   "confidence": "high",
+   "notes": ""
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "consistent",
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "log(N*T)*sum_subopt(Delta_i/kl_i)/N",
+    "expression_latex": "\\liminf_{T \\rightarrow \\infty} \\frac{\\mathbb{E}[R_{T}^{(i)}]}{\\ln(NT)} \\geq  \\left( \\frac{1}{N}\\sum_{j =2}^{K} \\frac{\\Delta_j}{\\text{KL}(\\mu_j,\\mu_1)} \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "N": "number of agents"
+   },
+   "conditions": [
+    "any communication matrix P (holds even without communication constraints)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:full_interaction",
+    "number": "Theorem 4",
+    "quote": "The regret of any agent $i \\in [N]$ after playing arms for $T$ times under any consistent policy played by the agents and any communication matrix $P$ satisfies $\\liminf_{T \\rightarrow \\infty} \\frac{\\mathbb{E}[R_{T}^{(i)}]}{\\ln(NT)} \\geq  \\left( \\frac{1}{N}\\sum_{j =2}^{K} \\frac{\\Delta_j}{\\text{KL}(\\mu_j,\\mu_1)} \\right)$"
+   },
+   "confidence": "high",
+   "notes": "KL is Bernoulli KL kl(mu_j, mu_1). The paper also derives the weaker form mu_1(1-mu_1)(1/N) sum 1/Delta_j via standard KL inequalities. Consistency is defined per agent."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "4*alpha_ucb*Sum_KN*log(T)",
+    "expression_latex": "\\limsup_{T \\rightarrow \\infty} \\frac{E[R_T^{(i)}]}{\\ln(T)} \\leq \\left( \\sum_{j=2}^{\\lceil \\frac{K}{N} \\rceil + 2} \\frac{4\\alpha}{\\Delta_j} \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_ucb": "UCB exploration parameter alpha",
+    "Sum_KN": "sum_{j=2}^{ceil(K/N)+2} 1/Delta_j"
+   },
+   "conditions": [
+    "conditions of Theorem 1"
+   ],
+   "tuning": [
+    "alpha > 3"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:asym_regret",
+    "number": "Corollary 6",
+    "quote": "Suppose in a system of $N \\geq 2$ agents each running Algorithm 1 or 2 with parameters satisfying conditions in Theorems 1 and 3 respectively. Then, for every agent $i \\in [N]$ ... $\\limsup_{T \\rightarrow \\infty} \\frac{E[R_T^{(i)}]}{\\ln(T)} \\leq \\left( \\sum_{j=2}^{\\lceil \\frac{K}{N} \\rceil + 2} \\frac{4\\alpha}{\\Delta_j} \\right)$"
+   },
+   "confidence": "high",
+   "notes": "Same statement covers Algorithm 2 (recorded separately as r6)."
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "4*alpha_ucb*Sum_KN*log(T)",
+    "expression_latex": "\\limsup_{T \\rightarrow \\infty} \\frac{E[R_T^{(i)}]}{\\ln(T)} \\leq \\left( \\sum_{j=2}^{\\lceil \\frac{K}{N} \\rceil + 2} \\frac{4\\alpha}{\\Delta_j} \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_ucb": "UCB exploration parameter alpha",
+    "Sum_KN": "sum_{j=2}^{ceil(K/N)+2} 1/Delta_j"
+   },
+   "conditions": [
+    "conditions of Theorem 3"
+   ],
+   "tuning": [
+    "alpha > 3",
+    "delta > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:asym_regret",
+    "number": "Corollary 6",
+    "quote": "Suppose in a system of $N \\geq 2$ agents each running Algorithm 1 or 2 with parameters satisfying conditions in Theorems 1 and 3 respectively. ..."
+   },
+   "confidence": "high",
+   "notes": "Asynchronous algorithm version."
+  },
+  {
+   "id": "r7",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*alpha_ucb*log(T)*Sum_KN + K/4 + (2*C_u*log(N)/phi)**beta_b + 2*3**beta_b/(2*alpha_ucb - 3)*pi**2/6 + j_star**beta_b + 1",
+    "expression_latex": "4 \\alpha \\ln(T)\\left( \\sum_{j=2}^{\\lceil \\frac{K}{N} \\rceil + 2} \\frac{1}{\\Delta_j} \\right) + \\frac{K}{4} + \\left(2C\\frac{ \\log(N)}{\\phi}\\right)^{\\beta} + 2\\frac{3^{\\beta}}{2\\alpha-3} \\frac{\\pi^2}{6} + (j^*)^{\\beta}+1",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_ucb": "UCB exploration parameter alpha",
+    "Sum_KN": "sum_{j=2}^{ceil(K/N)+2} 1/Delta_j",
+    "C_u": "universal constant (rumor spreading)",
+    "phi": "conductance of the d-regular communication graph",
+    "beta_b": "budget exponent: B_t = floor(t^{1/beta})",
+    "j_star": "j* from Theorem 1 (depends on N, K, Delta_2)",
+    "N": "number of agents"
+   },
+   "conditions": [
+    "agents connected by a d-regular graph with conductance phi, P = A_G/d",
+    "B_t = floor(t^{1/beta}), beta > 1",
+    "assumptions of Theorem 1"
+   ],
+   "tuning": [
+    "alpha > 3"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:regret-comm-main-paper",
+    "number": "Corollary 8",
+    "quote": "Suppose $N \\geq 2$ agents are connected by a $d$-regular graph with adjacency matrix $\\boldsymbol{A}_G$ having conductance $\\phi$ and the gossip matrix $P = d^{-1}\\boldsymbol{A}_G$. Suppose the communication budget scales as $B_t = \\lfloor t^{1/\\beta} \\rfloor$ ... then for any $i \\in [N]$ and $T$ ..."
+   },
+   "confidence": "medium",
+   "notes": "Constant terms as printed; they appear somewhat inconsistent with Corollary 21."
+  },
+  {
+   "id": "r8",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*alpha_ucb*log(T)*Sum_KN + K/4 + A_phi + g_A + A_jstar + 1",
+    "expression_latex": "4 \\alpha \\ln(T)\\left( \\sum_{j=2}^{\\lceil \\frac{K}{N} \\rceil + 2} \\frac{1}{\\Delta_j} \\right) + \\frac{K}{4} + A_{2C\\frac{ \\log(N)}{\\phi}} + g\\left( (A_x)_{x \\in \\mathbb{N}} \\right) + A_{j^{*}}+1",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_ucb": "UCB exploration parameter alpha",
+    "Sum_KN": "sum_{j=2}^{ceil(K/N)+2} 1/Delta_j",
+    "A_phi": "A_{2 C log(N)/phi}, phi the graph conductance, C universal constant",
+    "g_A": "g((A_x)) from Theorem 1",
+    "A_jstar": "A_{j*}",
+    "N": "number of agents"
+   },
+   "conditions": [
+    "d-regular graph with conductance phi, P = A_G/d",
+    "assumptions of Theorem 1"
+   ],
+   "tuning": [
+    "alpha > 3"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:regret-comm",
+    "number": "Corollary 21",
+    "quote": "Suppose $N \\geq 2$ agents are connected by a $d$-regular graph ... If the agents are using Algorithm 1 with parameters satisfying assumptions in Theorem 1, then ... $\\mathbb{E}[R_T^{(i)}] \\leq ... + A_{2C\\frac{ \\log(N)}{\\phi}} + g\\left( (A_x)_{x \\in \\mathbb{N}} \\right) + A_{j^{*}}+1$"
+   },
+   "confidence": "medium",
+   "notes": "Proof additionally uses A_l <= e^{Dl}."
+  },
+  {
+   "id": "r9",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*alpha_ucb*log(T)*Sum_KN + K/4 + (1 + delta_s)*A_phi_async + g_hat + 1",
+    "expression_latex": "4 \\alpha \\ln(T)\\left( \\sum_{j=2}^{\\lceil \\frac{K}{N} \\rceil + 2} \\frac{1}{\\Delta_j} \\right) + \\frac{K}{4} + (1+\\delta)A_{2\\lfloor 2 + \\delta \\rfloor C\\frac{ \\log(N)}{\\phi}} + \\widehat{g}\\left( (A_x)_{x \\in \\mathbb{N}},\\delta \\right) +1",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_ucb": "UCB exploration parameter alpha",
+    "Sum_KN": "sum_{j=2}^{ceil(K/N)+2} 1/Delta_j",
+    "delta_s": "slack parameter delta",
+    "A_phi_async": "A_{2 floor(2+delta) C log(N)/phi}",
+    "g_hat": "g_hat((A_x), delta) from Theorem 3",
+    "N": "number of agents"
+   },
+   "conditions": [
+    "d-regular graph with conductance phi, P = A_G/d",
+    "assumptions of Theorem 3"
+   ],
+   "tuning": [
+    "alpha > 3",
+    "delta > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:regret-comm",
+    "number": "Corollary 21",
+    "quote": "Similarly, if all agents run Algorithm 2 with assumptions as in Theorem 3, then $\\mathbb{E}[R_T^{(i)}] \\leq ... + (1+\\delta)A_{2\\lfloor 2 + \\delta \\rfloor C\\frac{ \\log(N)}{\\phi}} + \\widehat{g}\\left( (A_x)_{x \\in \\mathbb{N}},\\delta \\right) +1$"
+   },
+   "confidence": "medium",
+   "notes": ""
+  },
+  {
+   "id": "r10",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*alpha_ucb*log(T)*Sum_KN + K/4 + (1 + delta_s)*E_A_async + g_hat_1 + N*g_hat_2",
+    "expression_latex": "\\left( \\sum_{j=2}^{\\lceil \\frac{K}{N} \\rceil + 2}  \\frac{1}{\\Delta_j} \\right) 4 \\alpha \\ln(T) + \\frac{K}{4} + (1+\\delta)\\mathbb{E}[A_{2\\lfloor 2+\\delta\\rfloor  \\tau_{spr}^{(P)}}] + \\widehat{g}_1((A_x)_{x \\in \\mathbb{N}},\\delta) + N \\widehat{g}_2((A_x)_{x \\in \\mathbb{N}},\\delta)",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_ucb": "UCB exploration parameter alpha",
+    "Sum_KN": "sum_{j=2}^{ceil(K/N)+2} 1/Delta_j",
+    "delta_s": "slack parameter delta",
+    "E_A_async": "E[A_{2 floor(2+delta) tau_spr^{(P)}}]",
+    "g_hat_1": "g_hat_1((A_x), delta) as defined in Theorem 12",
+    "g_hat_2": "g_hat_2((A_x), delta) as defined in Theorem 12",
+    "N": "number of agents"
+   },
+   "conditions": [
+    "P irreducible (A.1)",
+    "budget satisfies A.2 and A.3",
+    "exists D>0 with c(delta) >= 5D/4 and 3+2delta+ln(4+2delta) >= 5/(4D)"
+   ],
+   "tuning": [
+    "alpha > 3",
+    "delta chosen as in the theorem conditions"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:poisson_result",
+    "number": "Theorem 12",
+    "quote": "Suppose in a system of $N \\geq 2$ agents connected by a communication matrix $P$ satisfying assumption A.1 and $K \\geq 2$ arms, each agent runs Algorithm 5, with input parameters $(B_t)$, and the UCB parameter $\\alpha > 3$ and $\\varepsilon > 0$ satisfying assumptions A.2 and A.3 and $\\delta >0$ such that ... Then the regret of any agent ... is bounded by ..."
+   },
+   "confidence": "medium",
+   "notes": "The Poisson algorithm does not meet the communication budget exactly. The appendix says it does so with high probability; the main-text proof sketch says in expectation."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "sigmetrics",
+   "cited_title": "Social learning in multi agent multi armed bandits",
+   "cited_first_author": "Abishek Sankararaman",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Social learning algorithm of Sankararaman et al.",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Multi-agent stochastic MAB, complete graph among agents, per-agent regret",
+   "bound": {
+    "notation": "O",
+    "expression": "(ceiling(K/N) + log(N))*log(T)/Delta_min",
+    "expression_latex": "\\BigO{\\frac{\\lceil \\frac{K}{N}\\rceil + \\log(N)}{\\Delta_2} \\log(T)}",
+    "regime": null
+   },
+   "where": "Introduction, Key Contributions 2"
+  },
+  {
+   "cited_key": "ucb_auer",
+   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
+   "cited_first_author": "Peter Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB (no collaboration)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Single-agent K-armed stochastic MAB (no collaboration among agents)",
+   "bound": {
+    "notation": "O",
+    "expression": "K*log(T)/Delta_min",
+    "expression_latex": "\\BigO{\\frac{K}{\\Delta_2}\\log(T)}",
+    "regime": null
+   },
+   "where": "Introduction, Key Contributions 2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:45:48",
+  "source_chars": 149664,
+  "input_tokens": 106224,
+  "output_tokens": 13413,
+  "cost_usd_equiv": 0.9004707999999999,
+  "status": "extracted"
+ }
+}

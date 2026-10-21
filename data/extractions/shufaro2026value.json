@@ -1,0 +1,338 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "The Value of Mechanistic Priors in Sequential Decision Making",
+  "arxiv_id": "2605.10018",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Itai Shufaro",
+   "Gal Benor",
+   "Shie Mannor"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Hybrid setting: K-armed policy bandit with mechanistic prior (Bayesian regret)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "T",
+    "K",
+    "prior"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Before interaction the learner observes a mechanistic recommendation pihat derived from a Gaussian measurement Z = h(M*) + nu of the true dynamics; regret governed by residual entropy H(mu) - I(pi*; pihat)",
+    "Arms are discretized control policies of a continuous control problem (Assumption 1, discretization quality)",
+    "Assumptions 2-3: metric model space with centered occupancy-weighted norm and identifiability constant L_h"
+   ],
+   "definition_quote": "At round $t$ the learner plays $\\pi_t \\in \\Pi$ and observes $r_t = \\bar{r}(\\pi_t) + \\xi_t$, where $\\xi_t$ is normally distributed, with zero-mean and standard deviation $\\sigma_\\xi>0$. ... $\\BR^*(N) = \\E_{\\pistar\\sim\\mu}\\E[\\sum_{t=1}^N (\\bar{r}(\\pistar) - \\bar{r}(\\pi_t))]$"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Burn-in regime with confidently wrong prior (Bernoulli bandit, delta-PAC identification)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "K",
+    "prior",
+    "Delta"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Regret measured up to the stopping time tau_delta of a delta-PAC identification procedure",
+    "Prior puts mass 1-epsilon on a wrong recommended arm pihat"
+   ],
+   "definition_quote": "Let the prior place mass $1-\\epsilon$ on $\\pihat$ (confident but wrong) and $\\epsilon/(K-1)$ on each other arm, one of which is $\\pistar$ ... There is a Bernoulli bandit with gap $\\Delta$ such that ..."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "TS_hyb (Thompson Sampling with hybrid prior mu_hyb = P(pi* | pihat))",
+   "registry_id": "posterior_sampling",
+   "is_new": false,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "prior"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "c_univ*sqrt(K*T*H_mech/log(K))",
+    "expression_latex": "\\BR^*(N) \\;\\geq\\; c\\,\\sqrt{\\frac{KN\\,\\Hmech}{\\log K}}",
+    "regime": "N >= N_0"
+   },
+   "symbols": {
+    "c_univ": "universal constant c > 0",
+    "H_mech": "residual entropy H(mu) - R_mech, R_mech = I(pi*; pihat)",
+    "N_0": "universal constant"
+   },
+   "conditions": [
+    "Assumptions 2-3 (metric model space, identifiability)",
+    "there exists a prior mu over Pi (worst case over priors)",
+    "relies on Prop 4.1 of Shufaro et al. requiring D_KL(p_t || P^{pi*}) > c' > 0 (algorithm not yet concentrated)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lb",
+    "number": "Theorem 1",
+    "quote": "Consider the hybrid setting with $K$ policies and $N$ rounds. Under Assumptions \\ref{ass:metric}--\\ref{ass:h_llb}, there exist universal constants $c,N_0>0$ such that for any algorithm there exists a prior $\\mu$ over $\\Pi$ such that for all $N\\geq N_0$: $\\BR^*(N) \\geq c\\sqrt{\\frac{KN\\Hmech}{\\log K}}$, where $\\Hmech = H(\\mu)-\\Rmech \\geq 0$."
+   },
+   "confidence": "medium",
+   "notes": "Paper's N is horizon T. Direct application of Shufaro et al. 2025 lower bound with H(mu) replaced by H_mech; proof assumes an extra KL non-concentration condition."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_univ*sqrt(K*T*H_mech)",
+    "expression_latex": "\\BR_{\\TShyb}(N) \\;\\leq\\; C\\sqrt{KN\\,\\Hmech}",
+    "regime": null
+   },
+   "symbols": {
+    "C_univ": "universal constant C > 0",
+    "H_mech": "residual entropy H(mu) - I(pi*; pihat)"
+   },
+   "conditions": [
+    "TS prior is the exact posterior of mu given pihat"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:ub",
+    "number": "Theorem 2",
+    "quote": "Let $\\mu_{\\mathrm{hyb}}$ be the posterior of $\\mu$ after conditioning on $\\pihat$. By construction, $I(\\pistar;\\pihat) = \\Rmech$. Let $\\mathrm{TS}_{\\mathrm{hyb}}$ be Thompson Sampling with this prior. Then there exists a universal constant $C>0$ such that: $\\BR_{\\TShyb}(N) \\leq C\\sqrt{KN\\,\\Hmech}$"
+   },
+   "confidence": "medium",
+   "notes": "Follows from Russo & Van Roy 2016 bound C sqrt(K N H(prior)) plus Jensen. Horizon dependence: TS does not need N, marked anytime."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "c_univ*sqrt(K*T*H_mu/(s*log(K)))",
+    "expression_latex": "c\\sqrt{KNH(\\mu)/(s\\log K)}",
+    "regime": "N >= N_0"
+   },
+   "symbols": {
+    "c_univ": "universal constant c from Theorem 1",
+    "H_mu": "Shannon entropy of the prior mu of the optimal policy",
+    "s": "target sample-complexity ratio s > 1"
+   },
+   "conditions": [
+    "model bias B_mu >= B_mu^crit(s) = (sigma_h/L_h)/sqrt(exp(2(1-1/s)H(mu)/d_Z) - 1)",
+    "Assumptions 2-3",
+    "conditions of Theorem 1"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:phase",
+    "number": "Theorem 3",
+    "quote": "Let $s \\geq 1$ be a target sample-complexity ratio. For $s > 1$ define the critical bias ... Then any model with $B_\\mu \\geq \\Bcrit(s)$ suffers regret of at least $c\\sqrt{KNH(\\mu)/(s\\log K)}$ for any $N \\geq N_0$"
+   },
+   "confidence": "medium",
+   "notes": "Corollary of Theorem 1 and Proposition 1 (mechanistic information channel bound)."
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "((1 - delta)*L_0 + 2*log(1/(2.4*delta)) - 1)/(4*log((1 + Delta)/(1 - Delta)))",
+    "expression_latex": "\\frac{(1-\\delta)\\,L_0 + 2\\log\\frac{1}{2.4\\delta} - 1}{4\\,\\log\\frac{1+\\Delta}{1-\\Delta}}",
+    "regime": null
+   },
+   "symbols": {
+    "L_0": "prior log-odds log((1-eps_prior)(K-1)/eps_prior)",
+    "eps_prior": "prior mass off the recommended (wrong) arm"
+   },
+   "conditions": [
+    "K >= 2",
+    "Delta in (0,1)",
+    "delta in (0,1)",
+    "prior mass 1-eps_prior on wrong arm pihat, eps_prior/(K-1) on each other arm",
+    "algorithm is posterior-monotone (plays arms with higher posterior of being optimal at least as likely)",
+    "algorithm is delta-PAC with stopping time tau_delta",
+    "a specific Bernoulli instance with gap Delta (exists)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "prop:burnin",
+    "number": "Proposition 2",
+    "quote": "Let $K \\geq 2$, $\\Delta \\in (0,1)$ and $\\delta \\in (0, 1)$. Let the prior place mass $1-\\epsilon$ on $\\pihat$ (confident but wrong) and $\\epsilon/(K-1)$ on each other arm, one of which is $\\pistar$ ... There is a Bernoulli bandit with gap $\\Delta$ such that any algorithm for which ... then $\\tau_\\delta$ satisfies $\\E[\\text{regret up to } \\tau_\\delta] \\geq \\frac{(1-\\delta)L_0 + 2\\log\\frac{1}{2.4\\delta} - 1}{4\\log\\frac{1+\\Delta}{1-\\Delta}}$."
+   },
+   "confidence": "medium",
+   "notes": "Regret up to the delta-PAC stopping time, not a fixed horizon; quantity mapped to pseudo_regret (expected Delta * plays). Statement is somewhat garbled ('then tau_delta satisfies')."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "shufaro2025bits",
+   "cited_title": null,
+   "cited_first_author": "Shufaro",
+   "cited_year": 2025,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Bayesian K-armed bandit, any agent, prior with entropy H(pi*), under KL non-concentration assumption",
+   "bound": {
+    "notation": "exact",
+    "expression": "c_univ*sqrt(K*H_mu*T/log(K))",
+    "expression_latex": "c\\sqrt{KH(\\pi^*)T/\\log K}",
+    "regime": null
+   },
+   "where": "Proposition 4 (Appendix, proof of Theorem 1)"
+  },
+  {
+   "cited_key": "russo2016",
+   "cited_title": null,
+   "cited_first_author": "Russo",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson Sampling",
+   "algorithm_registry_id": "posterior_sampling",
+   "side": "upper",
+   "setting_description": "Bayesian K-armed bandit, Thompson sampling with prior nu",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_univ*sqrt(K*T*H_nu)",
+    "expression_latex": "\\BR^*(N;\\mathrm{TS})\\leq C\\sqrt{KN\\,H(\\nu)}",
+    "regime": null
+   },
+   "where": "Proof of Theorem 2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T13:58:16",
+  "source_chars": 147484,
+  "input_tokens": 97428,
+  "output_tokens": 6009,
+  "cost_usd_equiv": 0.6820227999999999,
+  "status": "extracted"
+ }
+}

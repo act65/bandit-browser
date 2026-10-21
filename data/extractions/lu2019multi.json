@@ -1,0 +1,331 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Multi-Objective Generalized Linear Bandits",
+  "arxiv_id": "1905.12879",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Shiyin Lu",
+   "Guanghui Wang",
+   "Yao Hu",
+   "Lijun Zhang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Multi-objective generalized linear bandits (MOGLB)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "generalized_linear",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "c_mu",
+    "S"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Multi-objective: reward is a vector of n_obj objectives, each following its own GLM with parameter theta_i and link mu_i",
+    "Performance measured by Pareto regret (cumulative Pareto suboptimality gap) rather than scalar regret",
+    "Rewards bounded almost surely by R_y in absolute value (|y_t^i| <= R_y); link function bounded by U on [-D, D]",
+    "Algorithm uses R_y, U, D, kappa, n_obj, delta to build confidence widths"
+   ],
+   "definition_quote": "In each round $t$, a learner selects an arm $x_t \\in \\mathcal{X}$ to play and then receives a stochastic reward vector $y_t \\in \\mathbb{R}^m$ consisting of $m$ objectives. We assume each objective $y_t^i$ is generated according to the GLM ... Pareto regret is defined as $PR(T) \\coloneqq \\sum_{t=1}^T \\Delta x_t$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "MOGLB-UCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "c_mu",
+    "S",
+    "R_y",
+    "U",
+    "n_obj",
+    "delta",
+    "lam"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*k_mu*sqrt(d*T/c_mu*log(1 + c_mu*T/(2*lam*d))*gamma_T1)",
+    "expression_latex": "4L \\sqrt{\\frac{dT}{\\kappa} \\log{\\left( 1 + \\frac{\\kappa T}{2\\lambda d} \\right)} \\gamma_{T+1} }",
+    "regime": null
+   },
+   "symbols": {
+    "gamma_T1": "confidence width gamma_{T+1} = 16(R_y+U)^2/c_mu*log(n_obj/delta*sqrt(1+4 S^2 T)) + lam*S^2 + 2(R_y+U)^2/c_mu*log(det Z_{T+1}/det Z_1) + c_mu/2, which is O(d log T)",
+    "R_y": "almost-sure bound on |y_t^i|",
+    "U": "bound on |mu_i(z)| on [-D,D]",
+    "n_obj": "number of objectives m"
+   },
+   "conditions": [
+    "||theta_i|| <= S (paper's D) for all objectives",
+    "||x|| <= 1 for all arms",
+    "each link mu_i is k_mu-Lipschitz (paper's L) on [-D,D], continuously differentiable, mu_i' >= c_mu (paper's kappa) > 0, |mu_i| <= U",
+    "|y_t^i| <= R_y almost surely"
+   ],
+   "tuning": [
+    "lam >= max(1, kappa/2)",
+    "confidence parameter delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:002",
+    "number": "Theorem 2",
+    "quote": "With probability at least $1 - \\delta$, PR(T) \\leq 4L \\sqrt{\\frac{dT}{\\kappa} \\log{\\left( 1 + \\frac{\\kappa T}{2\\lambda d} \\right)} \\gamma_{T+1} } where $\\gamma_{T+1}$ is defined in (\\ref{def:gamma})."
+   },
+   "confidence": "medium",
+   "notes": "Quantity is Pareto regret (sum of Pareto suboptimality gaps of pulled arms) holding w.p. 1-delta; comparator set to not_applicable since it's against the Pareto front. Remark states this is O~(d sqrt(T)) (Corollary 1 gives gamma = O(d log t)). The paper's L, kappa, D are mapped to k_mu, c_mu, S."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "turgay2018multi",
+   "cited_title": "Multi-objective contextual bandit problem with similarity information",
+   "cited_first_author": "Eralp Turgay",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Pareto contextual zooming",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Multi-objective contextual bandits with similarity (Lipschitz) information; Pareto regret; d_p = Pareto zooming dimension",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(1 - 1/(2 + d_p))",
+    "expression_latex": "\\tilde O(T^{1 - 1 / (2+d_p)})",
+    "regime": null
+   },
+   "where": "Introduction / Related Work"
+  },
+  {
+   "cited_key": "drugan2013designing",
+   "cited_title": "Designing multi-objective multi-armed bandits algorithms: a study",
+   "cited_first_author": "MM Drugan",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Pareto UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Multi-objective multi-armed bandits, Pareto regret",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)",
+    "expression_latex": "O(\\log{T})",
+    "regime": null
+   },
+   "where": "Related Work"
+  },
+  {
+   "cited_key": "filippi2010parametric",
+   "cited_title": "Parametric bandits: The generalized linear case",
+   "cited_first_author": "Sarah Filippi",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GLM-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Generalized linear bandits",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\tilde O(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Related Work"
+  },
+  {
+   "cited_key": "Dani2008StochasticLO",
+   "cited_title": "Stochastic linear optimization under bandit feedback",
+   "cited_first_author": "Varsha Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": "ConfidenceBall_2",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic linear bandits, possibly infinite arm set",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\tilde O(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Related Work"
+  },
+  {
+   "cited_key": "auer2002using",
+   "cited_title": "Using confidence bounds for exploitation-exploration trade-offs",
+   "cited_first_author": "Peter Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SuperLinRel",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic linear bandits with finite arm set of size K",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "log(K)**(3/2)*sqrt(d*T)",
+    "expression_latex": "\\tilde O(({\\log{K}})^{3/2}\\sqrt{dT})",
+    "regime": null
+   },
+   "where": "Related Work"
+  },
+  {
+   "cited_key": "zhang2016online",
+   "cited_title": "Online stochastic linear optimization under one-bit feedback",
+   "cited_first_author": "Lijun Zhang",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": "OL^2M",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Logistic (logit) bandits / GLB with logit link",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\tilde O(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Related Work"
+  },
+  {
+   "cited_key": "langford2008epoch",
+   "cited_title": "The epoch-greedy algorithm for multi-armed bandits with side information",
+   "cited_first_author": "John Langford",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Epoch-Greedy",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic contextual bandits with i.i.d. context-reward pairs",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(2/3)",
+    "expression_latex": "O(T^{2/3})",
+    "regime": null
+   },
+   "where": "Related Work"
+  },
+  {
+   "cited_key": "lu2010contextual",
+   "cited_title": "Contextual multi-armed bandits",
+   "cited_first_author": "Tyler Lu",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Lipschitz contextual bandits; d_p packing dimension of similarity space",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T**(1 - 1/(2 + d_p))",
+    "expression_latex": "\\Omega(T^{1-1/(2+d_p)})",
+    "regime": null
+   },
+   "where": "Related Work"
+  },
+  {
+   "cited_key": "lu2010contextual",
+   "cited_title": "Contextual multi-armed bandits",
+   "cited_first_author": "Tyler Lu",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Query-Ad-Clustering",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Lipschitz contextual bandits; d_c covering dimension of similarity space",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(1 - 1/(2 + d_c))",
+    "expression_latex": "\\tilde O(T^{1-1/(2+d_c)})",
+    "regime": null
+   },
+   "where": "Related Work"
+  },
+  {
+   "cited_key": "slivkins2014contextual",
+   "cited_title": "Contextual bandits with similarity information",
+   "cited_first_author": "Aleksandrs Slivkins",
+   "cited_year": 2014,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Contextual zooming",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Lipschitz contextual bandits; d_z zooming dimension",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(1 - 1/(2 + d_z))",
+    "expression_latex": "\\tilde O(T^{1-1/(2+d_z)})",
+    "regime": null
+   },
+   "where": "Related Work"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:38:40",
+  "source_chars": 53959,
+  "input_tokens": 54581,
+  "output_tokens": 5276,
+  "cost_usd_equiv": 0.3245868,
+  "status": "extracted"
+ }
+}

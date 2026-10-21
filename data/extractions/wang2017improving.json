@@ -1,0 +1,626 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Improving Regret Bounds for Combinatorial Semi-Bandits with Probabilistically Triggered Arms and Its Applications",
+  "arxiv_id": "1703.01610",
+  "arxiv_version": null,
+  "year": 2017,
+  "authors": [
+   "Qinshi Wang",
+   "Wei Chen"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "CMAB-T (combinatorial multi-armed bandit with probabilistically triggered arms and semi-bandit feedback)",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "fixed",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Base arms jointly distributed on [0,1]^m (not necessarily independent); actions probabilistically trigger random subsets of base arms whose outcomes are observed",
+    "Expected reward r_S(mu) is a general (possibly nonlinear) function of the arm mean vector; action space may be infinite",
+    "Learner has access to an offline (alpha,beta)-approximation oracle; regret is the (alpha,beta)-approximation regret",
+    "Problem instance (action space, distribution class, triggering function, reward function) is known to the learner"
+   ],
+   "definition_quote": "The environment consists of $m$ random variables $X_1, \\ldots, X_m$ called {\\em base arms} (or {\\em arms}) following a joint distribution $D$ over $[0,1]^m$. ... When action $S_t$ is played on the environment outcome $X^{(t)}$, a random subset of arms $\\tau_t \\subseteq [m]$ are triggered, and the outcomes of $X^{(t)}_i$ for all $i\\in \\tau_t$ are observed as the feedback to the player."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "FTP(p) fixed triggering probability CMAB-T instance (lower bound)",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "K",
+    "reward_family"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "m actions S_i, each triggers only base arm i with fixed probability p; reward p^{-1} X_i if triggered, 0 otherwise (rewards in [0,1/p])",
+    "Instance satisfies the non-TPM infinity-norm bounded smoothness with B=1 but not the TPM condition"
+   ],
+   "definition_quote": "For each base arm $i \\in [m]$, we define an action $S_i$ ... When playing action $S_i$ in round $t$, with a fixed probability $p$, arm $i$ is triggered and its outcome $X_i^{(t)}$ is observed, and the reward of playing $S_i$ is $p^{-1} X_i^{(t)}$; otherwise with probability $1-p$ no arm is triggered, no feedback is observed and the reward is $0$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "CUCB (with computation oracle)",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_arms(576*B_sm**2*K_trig*log(T)/Delta_min_i) + sum_arms(Max(ceiling(log(2*B_sm*K_trig/Delta_min_i, 2)), 0) + 2)*pi**2/6*Delta_max + 4*B_sm*m_base",
+    "expression_latex": "\\sum_{i\\in[m]} \\frac{576B^2K\\ln T}{\\Delta_{\\min}^i} + \\sum_{i\\in[m]}\\left(\\left\\lceil\\log_2 \\frac{2BK}{\\Delta_{\\min}^i}\\right\\rceil_0 + 2\\right)\\cdot \\frac{\\pi^2}{6} \\cdot \\Delta_{\\max} +4Bm",
+    "regime": "Delta_min > 0"
+   },
+   "symbols": {
+    "m_base": "number of base arms m",
+    "K_trig": "maximum number of arms that can be triggered by an action, max_S |tilde S|",
+    "B_sm": "1-norm TPM bounded smoothness constant B",
+    "Delta_min_i": "minimum positive gap among actions that trigger arm i with positive probability",
+    "Delta_max": "maximum gap over actions triggering some arm"
+   },
+   "conditions": [
+    "monotonicity (Condition 1)",
+    "1-norm TPM bounded smoothness with constant B (Condition 2)",
+    "access to an (alpha,beta)-approximation oracle",
+    "arm outcome does not depend on whether it is triggered"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:1-normTPM",
+    "number": "Theorem 1",
+    "quote": "For the CUCB algorithm on a CMAB-T problem instance that satisfies monotonicity (Condition~\\ref{cond:monotone}) and 1-norm TPM bounded smoothness (Condition~\\ref{cond:1-normTPM}) with bounded smoothness constant $B$, (1) if $\\Delta_{\\min} > 0$, we have distribution-dependent bound $Reg_{\\vmu, \\alpha, \\beta}(T) \\le \\sum_{i\\in[m]} \\frac{576B^2K\\ln T}{\\Delta_{\\min}^i} + \\sum_{i\\in[m]}\\left(\\left\\lceil\\log_2 \\frac{2BK}{\\Delta_{\\min}^i}\\right\\rceil_0 + 2\\right)\\cdot \\frac{\\pi^2}{6} \\cdot \\Delta_{\\max} +4Bm$"
+   },
+   "confidence": "medium",
+   "notes": "Regret is the (alpha,beta)-approximation regret defined via expected rewards r_S(mu); recorded as pseudo_regret. Paper's m (base arms) and K (max triggered set size) renamed to m_base, K_trig. Applies to cascading bandits (B=1) and influence maximization (B = C~) via Lemmas 1-2. Appendix also gives a refined version with arm-dependent B_i."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "12*B_sm*sqrt(m_base*K_trig*T*log(T)) + (Max(ceiling(log(T/(18*log(T)), 2)), 0) + 2)*m_base*pi**2/6*Delta_max + 2*B_sm*m_base",
+    "expression_latex": "12B\\sqrt{mKT\\ln T} + \\left(\\left\\lceil\\log_2 \\frac{T}{18\\ln T}\\right\\rceil_0+2\\right) \\cdot m \\cdot \\frac{\\pi^2}{6}\\cdot \\Delta_{\\max} +2Bm",
+    "regime": null
+   },
+   "symbols": {
+    "m_base": "number of base arms m",
+    "K_trig": "maximum number of arms that can be triggered by an action",
+    "B_sm": "1-norm TPM bounded smoothness constant B",
+    "Delta_max": "maximum gap"
+   },
+   "conditions": [
+    "monotonicity (Condition 1)",
+    "1-norm TPM bounded smoothness with constant B (Condition 2)",
+    "access to an (alpha,beta)-approximation oracle"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:1-normTPM",
+    "number": "Theorem 1",
+    "quote": "(2) we have distribution-independent bound $Reg_{\\vmu, \\alpha, \\beta}(T) \\le 12B\\sqrt{mKT\\ln T} + \\left(\\left\\lceil\\log_2 \\frac{T}{18\\ln T}\\right\\rceil_0+2\\right) \\cdot m \\cdot \\frac{\\pi^2}{6}\\cdot \\Delta_{\\max} +2Bm.$"
+   },
+   "confidence": "medium",
+   "notes": "Distribution-independent bound (still contains Delta_max in lower-order term)."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "(1/170)*sqrt(m_base*T/p_trig)",
+    "expression_latex": "\\frac{1}{170}\\sqrt{\\frac{m T}{p}}",
+    "regime": "T >= 6/p"
+   },
+   "symbols": {
+    "m_base": "number of base arms (= number of actions) m",
+    "p_trig": "fixed triggering probability p in (0,1)"
+   },
+   "conditions": [
+    "instance FTP(p) with 0<p<1",
+    "T >= 6/p"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:indlowerbound",
+    "number": "Theorem 2",
+    "quote": "Let $p$ be a real number with $0< p < 1$. Then for any CMAB-T algorithm $A$, if $T \\ge 6p^{-1}$, there exists a CMAB-T environment instance $D$ with mean $\\vmu$ such that on instance FTP($p$), $Reg_{\\vmu}^A(T) \\ge \\frac{1}{170}\\sqrt{\\frac{m T}{p}}.$"
+   },
+   "confidence": "high",
+   "notes": "Shows 1/p^* factor is unavoidable without the TPM condition."
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "consistent",
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "sum_subopt(Delta_i/(p_trig*kl_i))*log(T)",
+    "expression_latex": "\\liminf_{T\\to +\\infty} \\frac{Reg^A_{\\vmu}(T)}{\\ln T} \\ge \\sum_{i:\\mu_i<\\mu^*} \\frac{p^{-1}\\Delta_i}{\\kl(\\mu_i, \\mu^*)}",
+    "regime": null
+   },
+   "symbols": {
+    "p_trig": "fixed triggering probability p"
+   },
+   "conditions": [
+    "instance FTP(p)",
+    "mu_i < 1 for every arm i"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:deplowerbound",
+    "number": "Theorem 3",
+    "quote": "For any consistent algorithm $A$ running on instance FTP($p$) and $\\mu_i < 1$ for every arm $i$, we have $$\\liminf_{T\\to +\\infty} \\frac{Reg^A_{\\vmu}(T)}{\\ln T} \\ge \\sum_{i:\\mu_i<\\mu^*} \\frac{p^{-1}\\Delta_i}{\\kl(\\mu_i, \\mu^*)},$$"
+   },
+   "confidence": "high",
+   "notes": "Consistent: every non-optimal arm played o(T^a) times for all a>0."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_arms(48*B_sm**2*K_trig*log(T)/Delta_min_i) + 2*B_sm*m_base + pi**2/3*m_base*Delta_max",
+    "expression_latex": "\\sum_{i\\in[m]}\\frac{48B^2K\\ln T}{\\Delta_{\\min}^i} + 2Bm + \\frac{\\pi^2}{3}\\cdot m\\cdot \\Delta_{\\max}",
+    "regime": "Delta_min > 0"
+   },
+   "symbols": {
+    "m_base": "number of base arms",
+    "K_trig": "maximum action size (arms triggered by an action)",
+    "B_sm": "1-norm bounded smoothness constant",
+    "Delta_min_i": "minimum positive gap of actions containing arm i"
+   },
+   "conditions": [
+    "no probabilistic triggering (p^* = 1)",
+    "1-norm (non-TPM) bounded smoothness with constant B (Condition 3)",
+    "access to an (alpha,beta)-approximation oracle"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:1-norm.nontriggering",
+    "number": "Theorem 4",
+    "quote": "For the CUCB algorithm on a CMAB (without triggering, i.e. $p^*=1$) problem that satisfies 1-norm bounded smoothness (Condition~\\ref{cond:1-norm}) with bounded smoothness constant $B$, 1. if $\\Delta_{\\min} > 0$, we have distribution-dependent bound $Reg_{\\vmu, \\alpha, \\beta}(T) \\le \\sum_{i\\in[m]}\\frac{48B^2K\\ln T}{\\Delta_{\\min}^i} + 2Bm + \\frac{\\pi^2}{3}\\cdot m\\cdot \\Delta_{\\max};$"
+   },
+   "confidence": "medium",
+   "notes": "Generalizes linear combinatorial semi-bandits (Kveton et al. 2015). Monotonicity not stated in theorem but used implicitly in proof."
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "14*B_sm*sqrt(K_trig*m_base*T*log(T)) + 2*B_sm*m_base + pi**2/3*m_base*Delta_max",
+    "expression_latex": "14B\\sqrt{KmT\\ln T} + 2Bm + \\frac{\\pi^2}{3}\\cdot m\\cdot \\Delta_{\\max}",
+    "regime": null
+   },
+   "symbols": {
+    "m_base": "number of base arms",
+    "K_trig": "maximum action size",
+    "B_sm": "1-norm bounded smoothness constant"
+   },
+   "conditions": [
+    "no probabilistic triggering (p^* = 1)",
+    "1-norm (non-TPM) bounded smoothness with constant B (Condition 3)",
+    "access to an (alpha,beta)-approximation oracle"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:1-norm.nontriggering",
+    "number": "Theorem 4",
+    "quote": "2. we have distribution-independent bound $Reg_{\\vmu, \\alpha, \\beta}(T) \\le 14B\\sqrt{KmT\\ln T} + 2Bm + \\frac{\\pi^2}{3}\\cdot m\\cdot \\Delta_{\\max};$"
+   },
+   "confidence": "medium",
+   "notes": ""
+  },
+  {
+   "id": "r7",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_arms(78*log(T)*G_i) + m_base*((pi**2/6 + 1)*Max(ceiling(-log(finv_Delta_min, 2)), 0) + pi**2/3 + 1)*Delta_max",
+    "expression_latex": "\\sum_{i\\in [m]} 78\\ln T \\left(\\frac{\\Delta_{\\min}^i}{f^{-1}(\\Delta_{\\min}^i)^2} + \\int_{\\Delta_{\\min}^i}^{\\Delta_{\\max}^i}\\frac{1}{f^{-1}(x)^2}\\dx\\right) + m \\cdot \\left[\\left(\\frac{\\pi^2}{6}+1\\right) \\lceil-\\log_2 f^{-1}(\\Delta_{\\min})\\rceil_{0} + \\frac{\\pi^2}{3}+1\\right] \\cdot \\Delta_{\\max}",
+    "regime": "Delta_min > 0"
+   },
+   "symbols": {
+    "m_base": "number of base arms",
+    "G_i": "Delta_min^i/f^{-1}(Delta_min^i)^2 + integral from Delta_min^i to Delta_max^i of 1/f^{-1}(x)^2 dx",
+    "finv_Delta_min": "f^{-1}(Delta_min), inverse bounded smoothness function at the minimum gap"
+   },
+   "conditions": [
+    "monotonicity (Condition 1)",
+    "infinity-norm TPM bounded smoothness with function f (Condition 6)",
+    "access to an (alpha,beta)-approximation oracle"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:inf-norm",
+    "number": "Theorem 5",
+    "quote": "For the CUCB algorithm on a problem instance that satisfies TPM bounded smoothness (Condition~\\ref{cond:globalTPM}) with bounded smoothness function $f(x)$, together with $\\Delta_{\\min}>0$, the regret is at most \\sum_{i\\in [m]} 78\\ln T \\left(\\frac{\\Delta_{\\min}^i}{f^{-1}(\\Delta_{\\min}^i)^2} + \\int_{\\Delta_{\\min}^i}^{\\Delta_{\\max}^i}\\frac{1}{f^{-1}(x)^2}\\dx\\right) + m \\cdot [...] \\cdot \\Delta_{\\max};"
+   },
+   "confidence": "medium",
+   "notes": "Proof assumes alpha=beta=1 for clarity."
+  },
+  {
+   "id": "r8",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "25*a_sm*sqrt(m_base*T*log(T)) + m_base*((pi**2/6 + 1)*Max(ceiling(-log(sqrt(156*m_base*log(T)/T), 2)), 0) + pi**2/3 + 1)*Delta_max",
+    "expression_latex": "25a\\sqrt{mT\\ln T} + m \\cdot \\left[\\left(\\frac{\\pi^2}{6}+1\\right) \\left\\lceil-\\log_2 (\\sqrt{156m\\ln T/T})\\right\\rceil_0 + \\frac{\\pi^2}{3}+1\\right] \\cdot \\Delta_{\\max}",
+    "regime": null
+   },
+   "symbols": {
+    "m_base": "number of base arms",
+    "a_sm": "slope of linear bounded smoothness function f(x)=a x"
+   },
+   "conditions": [
+    "monotonicity (Condition 1)",
+    "infinity-norm TPM bounded smoothness with f(x)=a x (Condition 6)",
+    "access to an (alpha,beta)-approximation oracle"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:inf-norm",
+    "number": "Theorem 5",
+    "quote": "For the CUCB algorithm on a problem instance that satisfies TPM bounded smoothness (Condition~\\ref{cond:globalTPM}) with bounded smoothness function $f(x)=ax$, the regret is at most $$25a\\sqrt{mT\\ln T} + m \\cdot \\left[\\left(\\frac{\\pi^2}{6}+1\\right) \\left\\lceil-\\log_2 (\\sqrt{156m\\ln T/T})\\right\\rceil_0 + \\frac{\\pi^2}{3}+1\\right] \\cdot \\Delta_{\\max};$$"
+   },
+   "confidence": "medium",
+   "notes": ""
+  },
+  {
+   "id": "r9",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_arms(576*B_i**2*K_trig*log(T)/Delta_min_i) + sum_arms(Max(ceiling(log(2*B_i*K_trig/Delta_min_i, 2)), 0) + 2)*pi**2/6*Delta_max + sum_arms(4*B_i)",
+    "expression_latex": "\\sum_{i\\in[m]} \\frac{576B_i^2K\\ln T}{\\Delta_{\\min}^i} + \\sum_{i\\in[m]}\\left(\\left\\lceil\\log_2 \\frac{2B_iK}{\\Delta_{\\min}^i}\\right\\rceil_0 + 2\\right) \\cdot \\frac{\\pi^2}{6} \\cdot \\Delta_{\\max} +\\sum_{i\\in [m]}4B_i",
+    "regime": "Delta_min > 0"
+   },
+   "symbols": {
+    "B_i": "relative 1-norm TPM bounded smoothness constant of arm i",
+    "K_trig": "maximum number of arms triggered by an action",
+    "Delta_min_i": "minimum positive gap among actions triggering arm i"
+   },
+   "conditions": [
+    "monotonicity (Condition 1)",
+    "relative 1-norm TPM bounded smoothness with vector B and reference optimal action mapping (Condition 7)",
+    "existence of an optimal action"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:relative.1-normTPM",
+    "number": "Theorem 6",
+    "quote": "For the CUCB algorithm on a CMAB-T problem instance that satisfies monotonicity (Condition~\\ref{cond:monotone}), and a distribution and a reference optimal action mapping $\\ro(\\cdot)$ that satisfy the relative 1-norm TPM bounded smoothness (Condition~\\ref{cond:relative.1-normTPM}) with $\\vB$, (1) if $\\Delta_{\\min} > 0$, we have gap-dependent bound ..."
+   },
+   "confidence": "medium",
+   "notes": "For linear rewards with 0-1 action vectors, B_i = 0 for arms in the optimal action, so the sum runs over non-optimal arms only."
+  },
+  {
+   "id": "r10",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "12*sqrt(sum_arms(B_i**2)*m_base*T*log(T)) + (Max(ceiling(log(T/(18*log(T)), 2)), 0) + 2)*m_base*pi**2/6*Delta_max + sum_arms(2*B_i)",
+    "expression_latex": "12\\sqrt{\\sum_{i\\in[m]}B_i^2mT\\ln T} + \\left(\\left\\lceil\\log_2 \\frac{T}{18\\ln T}\\right\\rceil_0+2\\right) \\cdot m \\cdot \\frac{\\pi^2}{6}\\cdot \\Delta_{\\max} +\\sum_{i\\in[m]}2B_i",
+    "regime": null
+   },
+   "symbols": {
+    "B_i": "relative 1-norm TPM bounded smoothness constant of arm i",
+    "m_base": "number of base arms"
+   },
+   "conditions": [
+    "monotonicity (Condition 1)",
+    "relative 1-norm TPM bounded smoothness (Condition 7)",
+    "existence of an optimal action"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:relative.1-normTPM",
+    "number": "Theorem 6",
+    "quote": "(2) we have \\emph{gap}-independent bound (it is not distribution-independent, because it depends on $\\ro(\\cdot)$) $Reg_{\\vmu, \\alpha, \\beta}(T) \\le 12\\sqrt{\\sum_{i\\in[m]}B_i^2mT\\ln T} + \\left(\\left\\lceil\\log_2 \\frac{T}{18\\ln T}\\right\\rceil_0+2\\right) \\cdot m \\cdot \\frac{\\pi^2}{6}\\cdot \\Delta_{\\max} +\\sum_{i\\in[m]}2B_i.$"
+   },
+   "confidence": "medium",
+   "notes": "Statement uses m inside the sqrt (vs K in Appendix refinement); recorded as printed. Gap-independent but instance-dependent through B_i (depends on reference optimal action)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "CWYW16",
+   "cited_title": "Combinatorial multi-armed bandit and its extension to probabilistically triggered arms",
+   "cited_first_author": "Wei Chen",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "CMAB-T FTP(p) instance under (infinity-norm) bounded smoothness",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_arms(log(T)/(p_trig*Delta_min_i))",
+    "expression_latex": "O(\\sum_i \\frac{1}{p\\Delta^i_{\\min}}\\log T)",
+    "regime": null
+   },
+   "where": "Section 5 (Lower Bound)"
+  },
+  {
+   "cited_key": "CWYW16",
+   "cited_title": "Combinatorial multi-armed bandit and its extension to probabilistically triggered arms",
+   "cited_first_author": "Wei Chen",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "CMAB-T FTP(p) instance, distribution-independent",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(m_base*T*log(T)/p_trig)",
+    "expression_latex": "O(\\sqrt{p^{-1} m T \\log T})",
+    "regime": null
+   },
+   "where": "Section 5 (Lower Bound)"
+  },
+  {
+   "cited_key": "KWAS15",
+   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
+   "cited_first_author": "Branislav Kveton",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Linear combinatorial semi-bandits (m base arms, actions of size K), gap-dependent",
+   "bound": {
+    "notation": "Omega",
+    "expression": "(m_base - K_trig)*K_trig*log(T)/Delta",
+    "expression_latex": "\\Omega(\\frac{(m-K)K}{\\Delta}\\log T)",
+    "regime": null
+   },
+   "where": "Section 4 discussion after Theorem 1"
+  },
+  {
+   "cited_key": "KWAS15",
+   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
+   "cited_first_author": "Branislav Kveton",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Linear combinatorial semi-bandits, gap-independent",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(m_base*K_trig*T)",
+    "expression_latex": "\\Omega(\\sqrt{mKT})",
+    "regime": "T >= m/K"
+   },
+   "where": "Section 4 discussion after Theorem 1"
+  },
+  {
+   "cited_key": "Wen2016",
+   "cited_title": "Influence maximization with semi-bandit feedback",
+   "cited_first_author": "Zheng Wen",
+   "cited_year": 2016,
+   "cited_arxiv_id": "1605.06593",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Influence maximization bandit on bar graphs (|V| nodes, k seeds)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "n_V*sqrt(k_seed*T)",
+    "expression_latex": "\\tilde O\\left(|V|\\sqrt{kT}\\right)",
+    "regime": null
+   },
+   "where": "Table 1 (Appendix)"
+  },
+  {
+   "cited_key": "Wen2016",
+   "cited_title": "Influence maximization with semi-bandit feedback",
+   "cited_first_author": "Zheng Wen",
+   "cited_year": 2016,
+   "cited_arxiv_id": "1605.06593",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Influence maximization bandit on complete graphs (|V| nodes)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "n_V**4*sqrt(T)",
+    "expression_latex": "\\tilde O\\left(|V|^4\\sqrt{T}\\right)",
+    "regime": null
+   },
+   "where": "Table 1 (Appendix)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:09:22",
+  "source_chars": 184518,
+  "input_tokens": 127843,
+  "output_tokens": 13284,
+  "cost_usd_equiv": 1.0708427999999999,
+  "status": "extracted"
+ }
+}

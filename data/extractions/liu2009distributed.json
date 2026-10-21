@@ -1,0 +1,328 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Distributed Learning in Multi-Armed Bandit with Multiple Players",
+  "arxiv_id": "0910.2065",
+  "arxiv_version": null,
+  "year": 2009,
+  "authors": [
+   "Keqin Liu",
+   "Qing Zhao"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Decentralized MAB with M distributed players (collision models 1 and 2)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "K",
+    "reward_family"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "multi_player_collision"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "M < N distributed players, no communication; each player observes only its own arm and collisions",
+    "Collision model 1: colliding players share reward (one gets it); collision model 2: no one gets reward",
+    "Regret is system regret against the M best arms (centralized known-model benchmark)",
+    "Single-parameter reward family satisfying Lai-Robbins regularity conditions C1-C4 (and C5 for estimators)",
+    "M best arms have distinct nonnegative means",
+    "Players know the number of players M"
+   ],
+   "definition_quote": "There are $M$ distributed players competing for $N$ independent arms. Each arm, when played, offers i.i.d. reward according to a distribution with an unknown parameter. At each time, each player chooses one arm to play without exchanging observations or any information with other players. Players choosing the same arm collide, and, depending on the collision model, either no one receives reward or the colliding players share the reward in an arbitrary way."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Decentralized TDFS policy pi*_F (with pre-agreement), built on Lai-Robbins policy",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "reward_family",
+    "M (number of players)"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Decentralized TDFS policy pi*_F without pre-agreement (random offsets)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "reward_family",
+    "M (number of players)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "uniformly_good",
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "L_Theta*log(T)",
+    "expression_latex": "L(\\Theta)\\le\\liminf_{T\\rightarrow\\infty}\\frac{R_T^{\\pi^*}(\\Theta)}{\\log T}",
+    "regime": null
+   },
+   "symbols": {
+    "L_Theta": "instance-dependent constant; per the proof, the centralized Anantharam et al. constant sum_{j: mu_j < mu_sigma(M)} (mu_sigma(M) - mu_j)/I(theta_j, theta_sigma(M))"
+   },
+   "conditions": [
+    "regularity conditions C1-C4",
+    "M best arms have nonnegative means"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:optorder",
+    "number": "Theorem 1",
+    "quote": "Under both collision models, the optimal order of the system regret growth rate of the decentralized MAB is logarithmic, \\ie for an optimal decentralized policy $\\pi^*$, we have L(\\Theta)\\le\\liminf_{T\\rightarrow\\infty}\\frac{R_T^{\\pi^*}(\\Theta)}{\\log T}\\le\\limsup_{T\\rightarrow\\infty}\\frac{R_T^{\\pi^*}(\\Theta)}{\\log T}\\le U(\\Theta) for some constants $L(\\Theta)$ and $U(\\Theta)$ that depend on $\\Theta$."
+   },
+   "confidence": "medium",
+   "notes": "Theorem states only existence of constant L(Theta); proof identifies it with the centralized lower bound (eqn cenlow) via Lemma 1. Regret defined via means of reward Y(t) in expectation -> pseudo_regret."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "C_Theta_1*log(T)",
+    "expression_latex": "C(\\Theta)=M(\\Sigma_{i=1}^Mx_k\\mu(\\theta_{\\sigma(i)})-\\Sigma_{n:\\mu(\\theta_n)<\\mu(\\theta_{\\sigma(M)})}\\frac{\\mu(\\theta_{n})}{I(\\theta_{n},\\theta_{\\sigma(M)})})",
+    "regime": "collision model 1"
+   },
+   "symbols": {
+    "C_Theta_1": "M*(sum_{i=1}^M x_i mu_sigma(i) - sum_{n: mu_n < mu_sigma(M)} mu_n / I(theta_n, theta_sigma(M)))",
+    "x_k": "sum_{i=1}^k sum_{j: mu_j < mu_sigma(i)} 1/I(theta_j, theta_sigma(i))",
+    "I": "KL divergence between parametric distributions",
+    "M": "number of players"
+   },
+   "conditions": [
+    "collision model 1",
+    "regularity conditions C1-C5",
+    "M best arms have distinct nonnegative means"
+   ],
+   "tuning": [
+    "Lai-Robbins point estimates and confidence bounds satisfying C5",
+    "delta in (0, 1/N)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:worstcase",
+    "number": "Theorem 2",
+    "quote": "Under the TDFS policy $\\pi^*_F$, we have, for some constant $C(\\Theta)$, \\limsup_{T\\rightarrow\\infty}\\frac{R^{\\pi^*_F}_T(\\Theta)}{\\log T}\\le C(\\Theta). ... Under collision model 1, C(\\Theta)=M(\\Sigma_{i=1}^Mx_k\\mu(\\theta_{\\sigma(i)})-\\Sigma_{n:\\mu(\\theta_n)<\\mu(\\theta_{\\sigma(M)})}\\frac{\\mu(\\theta_{n})}{I(\\theta_{n},\\theta_{\\sigma(M)})})."
+   },
+   "confidence": "medium",
+   "notes": "Paper writes x_k inside sum over i (typo for x_i, per Appendix E). Theorem 1 upper part (U(Theta)) is established by this result."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "C_Theta_2*log(T)",
+    "expression_latex": "C(\\Theta)= M(\\Sigma_{i=1}^M\\Sigma_{k=1}^Mx_k\\mu(\\theta_{\\sigma(i)})-\\Sigma_{n:\\mu(\\theta_n)<\\mu(\\theta_{\\sigma(M)})} \\mu(\\theta_{n})\\max\\{\\frac{1}{I(\\theta_{n},\\theta_{\\sigma(M)})}-\\Sigma_{i=1}^{M-1}\\frac{1}{I(\\theta_{n},\\theta_{\\sigma(i)})},0\\})",
+    "regime": "collision model 2"
+   },
+   "symbols": {
+    "C_Theta_2": "M*(sum_{i=1}^M sum_{k=1}^M x_k mu_sigma(i) - sum_{n: mu_n < mu_sigma(M)} mu_n * max{1/I(theta_n,theta_sigma(M)) - sum_{i=1}^{M-1} 1/I(theta_n,theta_sigma(i)), 0})",
+    "x_k": "sum_{i=1}^k sum_{j: mu_j < mu_sigma(i)} 1/I(theta_j, theta_sigma(i))",
+    "M": "number of players"
+   },
+   "conditions": [
+    "collision model 2",
+    "regularity conditions C1-C5",
+    "M best arms have distinct nonnegative means"
+   ],
+   "tuning": [
+    "Lai-Robbins point estimates and confidence bounds satisfying C5",
+    "delta in (0, 1/N)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:worstcase",
+    "number": "Theorem 2",
+    "quote": "Under collision model 2, C(\\Theta)= M(\\Sigma_{i=1}^M\\Sigma_{k=1}^Mx_k\\mu(\\theta_{\\sigma(i)})-\\Sigma_{n:\\mu(\\theta_n)<\\mu(\\theta_{\\sigma(M)})} \\mu(\\theta_{n})\\max\\{\\frac{1}{I(\\theta_{n},\\theta_{\\sigma(M)})}-\\Sigma_{i=1}^{M-1} \\frac{1}{I(\\theta_{n},\\theta_{\\sigma(i)})},0\\})."
+   },
+   "confidence": "medium",
+   "notes": "Theorem 3 (fairness) states each player's local regret rate equals 1/M of the system rate; not recorded separately."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "C_Theta*log(T)",
+    "expression_latex": "\\text{order-optimal (logarithmic)}",
+    "regime": null
+   },
+   "symbols": {
+    "C_Theta": "unspecified instance-dependent constant"
+   },
+   "conditions": [
+    "regularity conditions C1-C5",
+    "M best arms have distinct nonnegative means"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:optElimPre",
+    "number": "Theorem 4",
+    "quote": "The decentralized TDFS policy $\\pi_F^*$ without pre-agreement is order-optimal and fair."
+   },
+   "confidence": "medium",
+   "notes": "'Order-optimal' interpreted as limsup R_T/log T <= constant, as in Theorem 2; proof sketch in Appendix F."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "L_TDS*log(T)",
+    "expression_latex": "\\liminf_{T\\rightarrow\\infty}\\frac{R_T^{\\pi}(\\Theta)}{\\log T}\\ge\\Sigma_{i=1}^M\\Sigma_{j:\\mu(\\theta_j)<\\mu(\\theta_{\\sigma(M)})}\\frac{\\mu(\\theta_{\\sigma(M)})-\\mu(\\theta_{j})}{I(\\theta_{j},\\theta_{\\sigma(i)})}",
+    "regime": null
+   },
+   "symbols": {
+    "L_TDS": "sum_{i=1}^M sum_{j: mu_j < mu_sigma(M)} (mu_sigma(M) - mu_j)/I(theta_j, theta_sigma(i))",
+    "M": "number of players"
+   },
+   "conditions": [
+    "policy is uniformly good and in the Time Division Selection (TDS) class",
+    "regularity conditions C1-C4"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lowerboundTDS",
+    "number": "Theorem 5",
+    "quote": "For any uniformly good decentralized policy $\\pi$ in the TDS class, we have \\liminf_{T\\rightarrow\\infty}\\frac{R_T^{\\pi}(\\Theta)}{\\log T}\\ge\\Sigma_{i=1}^M\\Sigma_{j:\\mu(\\theta_j)<\\mu(\\theta_{\\sigma(M)})}\\frac{\\mu(\\theta_{\\sigma(M)})-\\mu(\\theta_{j})}{I(\\theta_{j},\\theta_{\\sigma(i)})}."
+   },
+   "confidence": "high",
+   "notes": "Algorithm class: uniformly good TDS policies (fixed Theta-independent time shares of the M best arms)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Anantharam&etal87TAC",
+   "cited_title": "Asymptotically Efficient Allocation Rules for the Multiarmed Bandit Problem with Multiple Plays-Part I: IID rewards",
+   "cited_first_author": "V. Anantharam",
+   "cited_year": 1987,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Centralized single-player MAB with M plays per round, parametric rewards satisfying C1-C4, uniformly good policies (M=1 case: Lai & Robbins 1985)",
+   "bound": {
+    "notation": "liminf",
+    "expression": "L_cen*log(T)",
+    "expression_latex": "\\liminf_{T\\rightarrow\\infty}\\frac{R_T^{\\pi}(\\Theta)}{\\log T}\\ge\\Sigma_{j:~\\mu(\\theta_j)<\\mu(\\theta_{\\sigma(M)})}\\frac{\\mu(\\theta_{\\sigma(M)})-\\mu(\\theta_{j})}{I(\\theta_{j},\\theta_{\\sigma(M)})}",
+    "regime": null
+   },
+   "where": "Section 2, Theorem [1,2]"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:47:17",
+  "source_chars": 88570,
+  "input_tokens": 71318,
+  "output_tokens": 6789,
+  "cost_usd_equiv": 0.48874280000000003,
+  "status": "extracted"
+ }
+}

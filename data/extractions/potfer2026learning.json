@@ -1,0 +1,242 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Learning to Bid in FCR Markets: A Best-of-Both-Worlds Approach",
+  "arxiv_id": "2605.31070",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Marius Potfer",
+   "Cheng Wan",
+   "Pierre Gruet"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Repeated uniform-price auction (FCR) with stochastic opposing bids",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "linear_optimization_oracle",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Learner observes only market-level bandit feedback (clearing price and allocation), from which semi-bandit feedback on active coordinates of the combinatorial representation H subset {0,1}^N is reconstructed",
+    "Opposing bid vectors beta^t drawn i.i.d. from an unknown distribution D; utility is a linear function h(b)^T W(beta) of the bid encoding, bounded by the number of units K",
+    "Multi-unit uniform-price auction with K = D_max,s units and discretized bid grid; marginal costs known to the bidder"
+   ],
+   "definition_quote": "The opposing bids are stochastic. This setting is defined by $\\mathcal{D}$, a distribution from which, for each timestep $t \\in [T]$, the opposing bids $\\betavec^t$ are sampled."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Repeated uniform-price auction (FCR) with adversarial opposing bids",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "adversarial_oblivious",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "not_applicable",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "linear_optimization_oracle",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Learner observes only market-level bandit feedback (clearing price and allocation), from which semi-bandit feedback on active coordinates is reconstructed",
+    "Opposing bids form any fixed sequence; utility linear h(b)^T W(beta^t), bounded in terms of K"
+   ],
+   "definition_quote": "The opposing bids are adversarial. In this case, the opposing bids $(\\betavec^t)_{t \\in [T]}$ can be any fixed sequence."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "BOB Algorithm for Semi-Bandit (FTRL with hybrid Tsallis/log regularizer, Zimmert et al. 2019)",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)",
+    "expression_latex": "\\tilde{R}_T = \\mathcal{O} ( \\log T )",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "Assumptions 1-2: provider participates in a single country; clearing price < 1"
+   ],
+   "tuning": [
+    "eta_t = 1/sqrt(t)",
+    "0 < gamma <= 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "The pseudo regret incurred by \\autoref{algo : bob_bidder} is upper bounded, in the stochastic opposing bid case, by \\tilde{R}_T = \\mathcal{O} ( \\log T ) and in the adversarial opposing bid case by R_T = \\mathcal{O} ( \\sqrt{T} ) where $\\mathcal{O}$ hides problem-dependent constants."
+   },
+   "confidence": "medium",
+   "notes": "Stated as a simplified restatement of Theorem 2 of Zimmert et al. (2019) applied to the auction reduction; O hides problem-dependent constants (gaps, N, K). Possibly requires unique optimal action as in Zimmert et al., not stated here."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)",
+    "expression_latex": "R_T = \\mathcal{O} ( \\sqrt{T} )",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "Assumptions 1-2: provider participates in a single country; clearing price < 1"
+   ],
+   "tuning": [
+    "eta_t = 1/sqrt(t)",
+    "0 < gamma <= 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "The pseudo regret incurred by \\autoref{algo : bob_bidder} is upper bounded, in the stochastic opposing bid case, by \\tilde{R}_T = \\mathcal{O} ( \\log T ) and in the adversarial opposing bid case by R_T = \\mathcal{O} ( \\sqrt{T} ) where $\\mathcal{O}$ hides problem-dependent constants."
+   },
+   "confidence": "medium",
+   "notes": "R_T defined with sup over fixed bids outside the expectation, i.e. pseudo-regret. O hides problem-dependent constants (dimension N, K). Adapted from Zimmert et al. (2019)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "zimmert2019beating",
+   "cited_title": null,
+   "cited_first_author": "Zimmert",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "BOB algorithm for combinatorial semi-bandits",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Combinatorial semi-bandit, stochastic environment (pseudo-regret)",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)",
+    "expression_latex": "\\mathcal{O}(\\log T)",
+    "regime": null
+   },
+   "where": "Section 3.2 (Theorem 1, simplified restatement of Theorem 2)"
+  },
+  {
+   "cited_key": "zimmert2019beating",
+   "cited_title": null,
+   "cited_first_author": "Zimmert",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "BOB algorithm for combinatorial semi-bandits",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Combinatorial semi-bandit, adversarial environment",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\mathcal{O}(\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 3.2 (Theorem 1, simplified restatement of Theorem 2)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:01:03",
+  "source_chars": 64368,
+  "input_tokens": 55743,
+  "output_tokens": 3906,
+  "cost_usd_equiv": 0.3064828,
+  "status": "extracted"
+ }
+}

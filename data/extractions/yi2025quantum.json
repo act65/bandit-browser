@@ -1,0 +1,349 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Quantum Lipschitz Bandits",
+  "arxiv_id": "2504.02251",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Bongsoo Yi",
+   "Yue Kang",
+   "Yao Li"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Quantum Lipschitz bandit, bounded noise",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "lipschitz_metric",
+   "function_class": [
+    "lipschitz"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Quantum feedback: each round the learner accesses a quantum unitary oracle O_x encoding the reward distribution of the chosen arm (instead of a sample reward), used via Quantum Monte Carlo",
+    "Compact doubling metric space with diameter <= 1, reward 1-Lipschitz"
+   ],
+   "definition_quote": "In the quantum bandit framework, at each round, the learner selects an action x and gains access to the quantum unitary oracle O_x. ... Bounded Noise: If y in [0,1] ..."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Quantum Lipschitz bandit, bounded variance noise",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "lipschitz_metric",
+   "function_class": [
+    "lipschitz"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "heavy_tailed",
+   "learner_knows": [
+    "T",
+    "moment_bound"
+   ],
+   "instance_assumptions": [
+    "bounded_variance"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {
+    "eps_m": "1"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Quantum feedback: access to a quantum unitary oracle encoding the reward distribution, used via Quantum Monte Carlo (QMC_2)",
+    "Variance bound sigma^2 known to the algorithm",
+    "Compact doubling metric space with diameter <= 1, reward 1-Lipschitz"
+   ],
+   "definition_quote": "Noise with Bounded Variance: If Var(y) <= sigma^2, then for epsilon < 4 sigma, there exists a constant C_2 > 1 and a quantum algorithm QMC_2..."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Q-LAE (Quantum Lipschitz Adaptive Elimination)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Q-Zooming",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(d_z/(d_z+1))*log(T)**(2/(d_z+1))",
+    "expression_latex": "T^{\\frac{d_z}{d_z+1}} \\,(\\log T)^{\\frac{2}{d_z+1}}",
+    "regime": null
+   },
+   "symbols": {
+    "d_z": "zooming dimension of the problem instance"
+   },
+   "conditions": [
+    "rewards y in [0,1]",
+    "1-Lipschitz mean reward on compact doubling metric space of diameter <= 1"
+   ],
+   "tuning": [
+    "n_m = C_1/epsilon_m log(T/delta)",
+    "epsilon_m = 2^{-m}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:blin",
+    "number": "Theorem (thm:blin)",
+    "quote": "Under the bounded noise assumption, the cumulative regret R(T) of the Q-LAE Algorithm is bounded with high probability, at least 1 - delta, as follows: R(T) = O ( T^{d_z/(d_z+1)} (log T)^{2/(d_z+1)} ), where d_z represents the zooming dimension of the problem instance."
+   },
+   "confidence": "high",
+   "notes": "Regret is sum of mu* - mu(x_t), w.p. >= 1-delta. Quantum oracle feedback."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(d_z/(d_z+1))*log(T)**(7/(2*(d_z+1)))*log(log(T))**(1/(d_z+1))",
+    "expression_latex": "T^{\\frac{d_z}{d_z+1}}  (\\log T)^{\\frac72 \\frac{1}{d_z+1}} (\\log\\log T)^{\\frac{1}{d_z+1}}",
+    "regime": null
+   },
+   "symbols": {
+    "d_z": "zooming dimension of the problem instance"
+   },
+   "conditions": [
+    "Var(y) <= sigma^2",
+    "1-Lipschitz mean reward on compact doubling metric space of diameter <= 1"
+   ],
+   "tuning": [
+    "n_m = C_2 sigma/epsilon_m log_2^{3/2}(8 sigma/epsilon_m) log_2(log_2(8 sigma/epsilon_m)) log(T/delta)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:blin_bounded_variance",
+    "number": "Theorem (thm:blin_bounded_variance)",
+    "quote": "With the choice of n_m = ... in line 2, under the bounded variance noise assumption, the cumulative regret R(T) of the Q-LAE Algorithm is bounded with high probability, at least 1 - delta, as follows: R(T) = O ( T^{d_z/(d_z+1)} (log T)^{7/2 1/(d_z+1)} (log log T)^{1/(d_z+1)} )"
+   },
+   "confidence": "high",
+   "notes": "Algorithm uses sigma."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(d_z/(d_z+1))*log(T)**(1/(d_z+1))",
+    "expression_latex": "T^{\\frac{d_z}{d_z+1}} \\, ( \\log T)^{\\frac{1}{d_z+1}}",
+    "regime": null
+   },
+   "symbols": {
+    "d_z": "zooming dimension of the problem instance"
+   },
+   "conditions": [
+    "rewards y in [0,1]",
+    "1-Lipschitz mean reward on compact doubling metric space of diameter <= 1"
+   ],
+   "tuning": [
+    "N_s = C_1/epsilon_s(x_s) log(m/delta)",
+    "delta >= 1/T (used in proof)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:q-zooming",
+    "number": "Theorem (thm:q-zooming)",
+    "quote": "Under the bounded noise assumption, the cumulative regret R(T) of the Q-Zooming Algorithm is bounded with high probability, at least 1 - delta, as follows: R(T) = O ( T^{d_z/(d_z+1)} ( log T)^{1/(d_z+1)} ), where d_z is the zooming dimension of the problem instance."
+   },
+   "confidence": "high",
+   "notes": "Proof assumes delta >= 1/T."
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(d_z/(d_z+1))*log(T)**(5/(2*(d_z+1)))*log(log(T))**(1/(d_z+1))",
+    "expression_latex": "T^{\\frac{d_z}{d_z+1}}  (\\log T)^{\\frac52 \\frac{1}{d_z+1}} (\\log\\log T)^{\\frac{1}{d_z+1}}",
+    "regime": null
+   },
+   "symbols": {
+    "d_z": "zooming dimension of the problem instance"
+   },
+   "conditions": [
+    "Var(y) <= sigma^2",
+    "1-Lipschitz mean reward on compact doubling metric space of diameter <= 1"
+   ],
+   "tuning": [
+    "N_s = C_2 sigma/epsilon_s(x_s) log_2^{3/2}(8 sigma/epsilon_s(x_s)) log_2(log_2(8 sigma/epsilon_s(x_s))) log(m/delta)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:zooming_bounded_variance",
+    "number": "Theorem (thm:zooming_bounded_variance)",
+    "quote": "With the choice of N_s = ... in line 9, the cumulative regret R(T) of the Q-Zooming Algorithm under the bounded variance noise assumption is bounded with high probability, at least 1 - delta, as follows: R(T) = O ( T^{d_z/(d_z+1)} (log T)^{5/2 1/(d_z+1)} (log log T)^{1/(d_z+1)} )"
+   },
+   "confidence": "high",
+   "notes": "Algorithm uses sigma."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "kleinberg2019bandits",
+   "cited_title": null,
+   "cited_first_author": "Kleinberg",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Classical stochastic Lipschitz bandit (non-quantum), zooming dimension d_z",
+   "bound": {
+    "notation": "Omega_tilde",
+    "expression": "T**((d_z+1)/(d_z+2))",
+    "expression_latex": "\\tilde O\\left(T^{{(d_z+1)}/{(d_z+2)}}\\right)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "kleinberg2019bandits",
+   "cited_title": null,
+   "cited_first_author": "Kleinberg",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Classical Lipschitz bandit algorithms (e.g. Zooming)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Classical stochastic Lipschitz bandit, sub-Gaussian noise",
+   "bound": {
+    "notation": "O",
+    "expression": "T**((d_z+1)/(d_z+2))*log(T)**(1/(d_z+2))",
+    "expression_latex": "O \\left( T^{\\frac{d_z+1}{d_z+2}}  (\\log T)^{ \\frac{1}{d_z+2}} \\right)",
+    "regime": null
+   },
+   "where": "Table 1 (no citation given in table; attributed to classical state of the art)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:22:38",
+  "source_chars": 81254,
+  "input_tokens": 66916,
+  "output_tokens": 5165,
+  "cost_usd_equiv": 0.4210468,
+  "status": "extracted"
+ }
+}

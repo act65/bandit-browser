@@ -1,0 +1,338 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Optimal Design for Reward Modeling in RLHF",
+  "arxiv_id": "2410.17055",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Antoine Scheid",
+   "Etienne Boursier",
+   "Alain Durmus",
+   "Michael I. Jordan",
+   "Pierre Ménard",
+   "Eric Moulines",
+   "Michal Valko"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Offline linear contextual dueling bandit (simple regret) for RLHF dataset selection",
+   "objective": "simple_regret",
+   "feedback": "dueling",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "d",
+    "S"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "batched"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Bradley-Terry / logistic preference feedback Y_t ~ Ber(sigma(<theta*, a_t - a'_t>)) on pairs from the same prompt set A_n",
+    "Fully offline (non-adaptive) design: all T pairs chosen before any feedback is observed",
+    "Simple regret is the max over N given action sets A_n of the gap of the recommended action",
+    "Action sets (A_n) arbitrary (worst case), theta* in unit ball"
+   ],
+   "definition_quote": "\\regret_{\\alg}(T, (\\cA_n)_{n \\in [N]}, \\theta^\\star) = \\max_{n \\in [N]}\\max_{a \\in \\cA_n} \\ps{\\theta^\\star}{a- \\hat{a}_T(\\cA_n)} ... For any $x,y \\in \\cX \\times \\cY, \\psi(x,y) \\in \\oball(0,1)$ ... We also suppose that $\\theta^\\star \\in \\oball(0,1)$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Changing action set (online) dueling setting (lower bound)",
+   "objective": "simple_regret",
+   "feedback": "dueling",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "d",
+    "S"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {
+    "d": "2"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "At each step t an action set A_t is given and a pair from A_t^2 is chosen; logistic preference feedback; simple regret is max over all A_t of gap of predicted best action"
+   ],
+   "definition_quote": "at each step $t \\in [T]$, an action set $\\cA_t, t \\in [T]$ is provided and the algorithm must select a pair of samples $(\\al_t, \\am_t) \\in \\cA_t^2$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "ODPO (Optimal Design for Policy/Preference Optimization)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d",
+    "S"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "20*(1 + eps_alg)*sqrt(d/T)*(sqrt(2*log(1/delta) + d*log(lam**(1 - 1/d) + 4*T/(d*lam**(1/d)))) + sqrt(lam))",
+    "expression_latex": "20 (1+\\epsilon)\\, \\sqrt{d/T} \\left[\\sqrt{2 \\log (1/\\delta) + d\\, \\log\\left(\\lambda^{1-1/d}+4T/d\\lambda^{1/d} \\right)} + \\sqrt{\\lambda} \\right]",
+    "regime": "T >= d^2"
+   },
+   "symbols": {
+    "eps_alg": "approximation parameter: hat{pi} is a (1+epsilon)-approximation of the optimal design"
+   },
+   "conditions": [
+    "T >= d^2",
+    "actions and theta* in the unit ball (H1)",
+    "Bradley-Terry logistic preference feedback"
+   ],
+   "tuning": [
+    "samples drawn according to a (1+epsilon)-approximate optimal design",
+    "regularization lambda > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:simple_regret_upper_bound",
+    "number": "Theorem (theorem:simple_regret_upper_bound)",
+    "quote": "Let $\\epsilon >0$ and suppose that we collect at least $T\\geq d^2$ samples according to an $(1+\\epsilon)$ approximation $\\hat{\\pi}$ of the optimal design policy $\\pi^\\star$ for the problem. Then, for any $\\cB$ and $\\theta^\\star \\in \\oball(0,1)$, with probability at least $1-\\delta$, ... $\\regret(T, (\\cA_n)_{n \\in [N]}, \\theta^\\star) \\leq 20 (1+\\epsilon)\\, \\sqrt{d/T} \\times [\\sqrt{2 \\log (1/\\delta) + d\\, \\log(\\lambda^{1-1/d}+4T/d\\lambda^{1/d} )} + \\sqrt{\\lambda} ]$."
+   },
+   "confidence": "medium",
+   "notes": "Interpreted 4T/d\\lambda^{1/d} as 4T/(d lambda^{1/d}) per the proof. Regret here is the realized simple regret holding w.p. 1-delta."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "30*sqrt(d/T)*(sqrt(2*log(1/delta) + d*log((1 + 4*T)/d**(1 - 1/d))) + 1/sqrt(d))",
+    "expression_latex": "30\\sqrt{d/T} \\times \\left[\\sqrt{2 \\log(1/\\delta) + d\\log((1+4T)/d^{1-1/d})}+1/\\sqrt{d} \\right]",
+    "regime": "T >= d^2"
+   },
+   "symbols": {},
+   "conditions": [
+    "T >= d^2",
+    "actions and theta* in the unit ball (H1)"
+   ],
+   "tuning": [
+    "hat{pi} is a 3/2-approximation of the optimal design",
+    "lambda = 1/d"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "corollary:simple_regret_upper_bound",
+    "number": "Corollary (corollary:simple_regret_upper_bound)",
+    "quote": "Suppose that we have selected the samples $\\dselect$ to label under $\\hat{\\pi}$, a $3/2$-approximation of the optimal design policy $\\pi^\\star$. Choosing $\\lambda = 1/d$ for the regularization, for any $\\delta \\in (0,1)$, under the conditions of Theorem, with probability at least $1-\\delta$, we have that $\\regret \\leq 30\\sqrt{d/T} \\times [\\sqrt{2 \\log(1/\\delta) + d\\log((1+4T)/d^{1-1/d})}+1/\\sqrt{d} ]$"
+   },
+   "confidence": "high",
+   "notes": "First part of the corollary."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "30*(d + 2)/sqrt(T)*sqrt(log((4*T + 1)/d**(1 - 1/d))) + 31/sqrt(T)",
+    "expression_latex": "30 \\frac{d+2}{\\sqrt{T}}\\sqrt{\\log\\left(\\frac{4T+1}{d^{1-1/d}}\\right)} + 31/\\sqrt{T}",
+    "regime": "T >= d^2"
+   },
+   "symbols": {},
+   "conditions": [
+    "T >= d^2",
+    "actions and theta* in the unit ball (H1)"
+   ],
+   "tuning": [
+    "hat{pi} is a 3/2-approximation of the optimal design",
+    "lambda = 1/d",
+    "delta = d^{1-1/d}/(4T+1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "corollary:simple_regret_upper_bound",
+    "number": "Corollary (corollary:simple_regret_upper_bound)",
+    "quote": "and as a consequence, choosing $\\delta = d^{1-1/d}/(4T+1)$, we can bound the expectation of the regret as $\\E[\\regret(T, (\\cA_n)_{n \\in [N]}, \\theta^\\star)] \\leq 30 \\frac{d+2}{\\sqrt{T}}\\sqrt{\\log(\\frac{4T+1}{d^{1-1/d}})} + 31/\\sqrt{T}$."
+   },
+   "confidence": "high",
+   "notes": "Expected simple regret, second part of the corollary."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "simple_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "d*exp(-5)/(4*sqrt(T))",
+    "expression_latex": "d \\, \\rme^{-5}/4\\sqrt{T}",
+    "regime": "d >= 16, T >= d^2"
+   },
+   "symbols": {},
+   "conditions": [
+    "d >= 16",
+    "T >= d^2",
+    "hard instance: action set [-1/sqrt(d), 1/sqrt(d)]^d, theta in {±sqrt(d/T)}^d"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "theorem:lower_bound",
+    "number": "Theorem (theorem:lower_bound)",
+    "quote": "Suppose that $d \\geq 16$ and that $T \\geq d^2$. For any algorithm $\\alg$ which samples $T$ pairs from $\\cB$ and receives a preference feedback before outputing an action $\\hat{a}(\\cA_n) \\in \\cA_n$ for an input $\\cA_n$, there exists $(\\cA_n)_{n \\in [N]} \\subseteq \\oball(0,1)$ as well as $\\theta^\\star \\in \\oball(0,1)$ such that $\\regret(T, (\\cA_n)_{n \\in [N]}, \\theta^\\star) \\geq d \\, \\rme^{-5}/4\\sqrt{T}$."
+   },
+   "confidence": "medium",
+   "notes": "Statement does not specify expectation, but the proof lower-bounds the expected regret under P_theta*; recorded as expectation. Read as d e^{-5}/(4 sqrt(T)) per the proof."
+  },
+  {
+   "id": "r5",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "simple_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "exp(-c_const)/2",
+    "expression_latex": "\\rme^{-c}/2",
+    "regime": null
+   },
+   "symbols": {
+    "c_const": "some constant c > 0 independent of T and d"
+   },
+   "conditions": [
+    "d = 2",
+    "adversarially chosen action sets: A_1..A_{T-1} = {±e_1}, A_T = {±e_2}, theta* in {±e_2}"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "lemma:lower_bound_online",
+    "number": "Theorem (lemma:lower_bound_online)",
+    "quote": "Consider the $2$-dimensional euclidian space Span$(e_1, e_2)$ as the whole action space. In that case, there exists a set of actions $(\\cA_t)_{t \\in [T]}$ and some $\\theta^\\star \\in \\oball(0,1)$ such the regret defined in \\eqref{equation:definition_online_regret} for any algorithm $\\alg$ satisfies $\\regret_\\alg(T, (\\cA_t)_{t \\in [T]}, \\theta^\\star) \\geq \\rme^{-c}/2$, for some $c >0$ independent of $T$ and $d$."
+   },
+   "confidence": "medium",
+   "notes": "Constant (non-vanishing) simple regret with changing adversarial action sets; probabilistic type not stated explicitly, proof is in-expectation style via Bretagnolle-Huber."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:33:06",
+  "source_chars": 88147,
+  "input_tokens": 71591,
+  "output_tokens": 6436,
+  "cost_usd_equiv": 0.4838668,
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,533 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Communication Efficient Federated Learning for Generalized Linear Bandits",
+  "arxiv_id": "2202.01087",
+  "arxiv_version": null,
+  "year": 2022,
+  "authors": [
+   "Chuanhao Li",
+   "Hongning Wang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Federated Generalized Linear Bandit",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "generalized_linear",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "S",
+    "c_mu",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "federated",
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "N clients interact round-robin each round with a star-shaped communication network through a central server; communication cost C_T = total number of times data is transferred",
+    "Rewards from an exponential-family GLM with known scale; link mu is k_mu-Lipschitz with derivative >= c_mu on [-S,S]",
+    "Noise is a martingale difference bounded by R_max (|eta| <= R_max)",
+    "Algorithm uses k_mu (AGD step size) and R_max (confidence width)",
+    "Each client has K arms per round"
+   ],
+   "definition_quote": "each client $i \\in [N]$ chooses an arm $\\bx_{t,i}$ from its time-varying candidate set ... the goal of the learning system is to minimize the cumulative (pseudo) regret over all $N$ clients ... $R_{T}=\\sum_{t=1}^{T} \\sum_{i=1}^{N}r_{t,i}$, where $r_{t,i}=\\max_{\\bx \\in \\cA_{t,i}} \\bbE[y|\\bx]- \\bbE[y_{t,i}|\\bx_{t,i}]$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "FedGLB-UCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "N",
+    "d",
+    "c_mu",
+    "k_mu",
+    "S",
+    "R_max",
+    "lambda",
+    "delta"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "FedGLB-UCB_1 (scheduled communication, no local update)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "N",
+    "c_mu",
+    "k_mu",
+    "S",
+    "R_max",
+    "lambda",
+    "delta"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "FedGLB-UCB_2 (scheduled communication)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "N",
+    "d",
+    "c_mu",
+    "k_mu",
+    "S",
+    "R_max",
+    "lambda",
+    "delta"
+   ]
+  },
+  {
+   "id": "a4",
+   "name": "FedGLB-UCB_3 (scheduled communication + ONS global update)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "N",
+    "c_mu",
+    "k_mu",
+    "S",
+    "R_max",
+    "lambda",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "k_mu*(k_mu + R_max)/c_mu*d*sqrt(N*T)*log(N*T/delta)",
+    "expression_latex": "O\\left(\\frac{k_{\\mu}(k_{\\mu}+R_{\\max})}{c_{\\mu}}d\\sqrt{NT}\\log(NT/\\delta)\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "R_max": "almost-sure bound on the noise |eta_{t,i}|",
+    "N": "number of clients"
+   },
+   "conditions": [
+    "Assumption 1 (link continuously differentiable, k_mu-Lipschitz, derivative >= c_mu on [-S,S])",
+    "Assumption 2 (conditionally zero-mean noise bounded by R_max)",
+    "||x|| <= 1, ||theta_star|| <= S"
+   ],
+   "tuning": [
+    "epsilon_t = 1/(N^2 t^2)",
+    "D = T/(N d log(NT))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret_comm_upper_bound",
+    "number": "Theorem 4",
+    "quote": "Under Assumption 1, 2, and by setting $\\epsilon_{t} = \\frac{1}{N^{2}t^{2}},\\forall t$ and $D=\\frac{T}{Nd \\log(NT)}$, the cumulative regret $R_{T}$ has upper bound $R_{T}=O\\left(\\frac{k_{\\mu}(k_{\\mu}+R_{\\max})}{c_{\\mu}}d\\sqrt{NT}\\log(NT/\\delta)\\right)$, with probability at least $1-2\\delta$."
+   },
+   "confidence": "high",
+   "notes": "Holds with probability at least 1-2delta. Regret summed over N clients (pseudo-regret type definition)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "d*N**2*sqrt(T)*log(N*T)**2",
+    "expression_latex": "C_{T} =O\\Big(d N^{2}\\sqrt{T}\\log^{2}(NT)\\Big)",
+    "regime": null
+   },
+   "symbols": {
+    "N": "number of clients"
+   },
+   "conditions": [
+    "Assumption 1",
+    "Assumption 2"
+   ],
+   "tuning": [
+    "epsilon_t = 1/(N^2 t^2)",
+    "D = T/(N d log(NT))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret_comm_upper_bound",
+    "number": "Theorem 4",
+    "quote": "The corresponding communication cost $C_{T}$ has upper bound $C_{T} =O\\Big(d N^{2}\\sqrt{T}\\log^{2}(NT)\\Big).$"
+   },
+   "confidence": "medium",
+   "notes": "Communication cost (number of data transfers). Footnote: measured in scalars, C_T = O(d^3 N^1.5 log(NT) + d^2 N^2 T^0.5 log^2(NT)). Probability type not explicit for C_T; the counting argument is deterministic."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "k_mu*R_max*d/c_mu*sqrt(N*T)*log(N*T/delta)",
+    "expression_latex": "O\\left(\\frac{k_{\\mu}R_{\\max}d}{c_{\\mu}}\\sqrt{NT}\\log(NT/\\delta)\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "R_max": "almost-sure bound on the noise",
+    "N": "number of clients"
+   },
+   "conditions": [
+    "Assumption 1",
+    "Assumption 2"
+   ],
+   "tuning": [
+    "epsilon_t = 1/(N^2 t^2)",
+    "B = sqrt(NT) global synchronizations"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 10",
+    "quote": "Under the condition that $\\epsilon_{t} = \\frac{1}{N^{2}t^{2}}$, and the total number of global synchronizations $B=\\sqrt{NT}$, the cumulative regret $R_{T}$ has upper bound $R_{T}=O\\left(\\frac{k_{\\mu}R_{\\max}d}{c_{\\mu}}\\sqrt{NT}\\log(NT/\\delta)\\right)$ with probability at least $1-\\delta$."
+   },
+   "confidence": "high",
+   "notes": ""
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "N**2*T*log(N*T)",
+    "expression_latex": "C_{T} =O(N^{2}T \\log(NT))",
+    "regime": null
+   },
+   "symbols": {
+    "N": "number of clients"
+   },
+   "conditions": [
+    "Assumption 1",
+    "Assumption 2"
+   ],
+   "tuning": [
+    "epsilon_t = 1/(N^2 t^2)",
+    "B = sqrt(NT)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 10",
+    "quote": "The cumulative communication cost has upper bound $C_{T} =O(N^{2}T \\log(NT))$"
+   },
+   "confidence": "medium",
+   "notes": "Communication cost; deterministic counting."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "k_mu*(k_mu + R_max)/c_mu*d*sqrt(N*T)*log(N*T/delta)*sqrt(log(T/(d**2*N*log(N*T))))",
+    "expression_latex": "O\\left(\\frac{k_{\\mu}(k_{\\mu}+R_{\\max})}{c_{\\mu}}d\\sqrt{NT}\\log(NT/\\delta) \\sqrt{\\log\\frac{T}{d^{2}N \\log{NT}}}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "R_max": "almost-sure bound on the noise",
+    "N": "number of clients"
+   },
+   "conditions": [
+    "Assumption 1",
+    "Assumption 2"
+   ],
+   "tuning": [
+    "epsilon_t = 1/(N^2 t^2)",
+    "B = d^2 N log(NT)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 11",
+    "quote": "Under the condition that $\\epsilon_{t} = \\frac{1}{N^{2}t^{2}}$, and the total number of global synchronizations $B=d^{2}N\\log(NT)$, the cumulative regret $R_{T}$ has upper bound $R_{T} = O\\left(\\frac{k_{\\mu}(k_{\\mu}+R_{\\max})}{c_{\\mu}}d\\sqrt{NT}\\log(NT/\\delta) \\sqrt{\\log\\frac{T}{d^{2}N \\log{NT}}}\\right)$ with probability at least $1-\\delta$."
+   },
+   "confidence": "high",
+   "notes": "Table 1 lists this as ...log(NT)log(T); recorded theorem statement."
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "d**2*N**2.5*sqrt(T)*log(N*T)**2",
+    "expression_latex": "C_{T} = O(d^{2}N^{2.5} \\sqrt{T} \\log^{2}(NT))",
+    "regime": null
+   },
+   "symbols": {
+    "N": "number of clients"
+   },
+   "conditions": [
+    "Assumption 1",
+    "Assumption 2"
+   ],
+   "tuning": [
+    "epsilon_t = 1/(N^2 t^2)",
+    "B = d^2 N log(NT)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 11",
+    "quote": "The cumulative communication cost has upper bound $C_{T} = O(d^{2}N^{2.5} \\sqrt{T} \\log^{2}(NT))$"
+   },
+   "confidence": "medium",
+   "notes": "Communication cost."
+  },
+  {
+   "id": "r7",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a4",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "k_mu*(k_mu + R_max)/c_mu*d*N**(3/4)*T**(3/4)*log(N*T/delta)",
+    "expression_latex": "O\\left(\\frac{k_{\\mu}(k_{\\mu}+R_{max})}{c_{\\mu}}d N^{3/4}T^{3/4}\\log(NT/\\delta)\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "R_max": "almost-sure bound on the noise",
+    "N": "number of clients"
+   },
+   "conditions": [
+    "Assumption 1",
+    "Assumption 2"
+   ],
+   "tuning": [
+    "ONS learning rate gamma = (1/2) min(1/(4 S sqrt(k_mu^2 S^2 + R_max^2)), c_mu/((k_mu^2 S^2 + R_max^2) sqrt(NT)))",
+    "B = sqrt(NT)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 15",
+    "quote": "Under the condition that the learning rate of ONS $\\gamma=...$, and the total number of global synchronizations $B=\\sqrt{NT}$, the cumulative regret $R_{T}$ has upper bound $R_{T} = O\\left(\\frac{k_{\\mu}(k_{\\mu}+R_{max})}{c_{\\mu}}d N^{3/4}T^{3/4}\\log(NT/\\delta)\\right)$ with probability at least $1-\\delta$."
+   },
+   "confidence": "high",
+   "notes": ""
+  },
+  {
+   "id": "r8",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a4",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "N**1.5*sqrt(T)",
+    "expression_latex": "C_{T} = O(N^{1.5} \\sqrt{T})",
+    "regime": null
+   },
+   "symbols": {
+    "N": "number of clients"
+   },
+   "conditions": [
+    "Assumption 1",
+    "Assumption 2"
+   ],
+   "tuning": [
+    "B = sqrt(NT)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 15",
+    "quote": "The cumulative communication cost has upper bound $C_{T} = O(N^{1.5} \\sqrt{T})$"
+   },
+   "confidence": "medium",
+   "notes": "Communication cost."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "filippi2010parametric",
+   "cited_title": "Parametric bandits: The generalized linear case",
+   "cited_first_author": "Sarah Filippi",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GLM-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Centralized generalized linear bandit",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\tilde{O}(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Related Work"
+  },
+  {
+   "cited_key": "wang2019distributed",
+   "cited_title": "Distributed bandit learning: Near-optimal regret with efficient communication",
+   "cited_first_author": "Yuanhao Wang",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "DisLinUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Federated linear bandit with N clients, time-varying arm sets; communication cost",
+   "bound": {
+    "notation": "O",
+    "expression": "d*N**1.5*log(N*T)",
+    "expression_latex": "O(d N^{1.5} \\log(NT))",
+    "regime": "communication cost while attaining O(d sqrt(NT) log(NT)) regret"
+   },
+   "where": "Section 4.2 (after Theorem 4)"
+  },
+  {
+   "cited_key": "wang2019distributed",
+   "cited_title": "Distributed bandit learning: Near-optimal regret with efficient communication",
+   "cited_first_author": "Yuanhao Wang",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "DisLinUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Federated linear bandit with N clients, time-varying arm sets; regret",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(N*T)*log(N*T)",
+    "expression_latex": "O\\big(d \\sqrt{NT}\\log(NT)\\big)",
+    "regime": null
+   },
+   "where": "Section 4.2 (after Theorem 4)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:37:52",
+  "source_chars": 152757,
+  "input_tokens": 112896,
+  "output_tokens": 7363,
+  "cost_usd_equiv": 0.8328468,
+  "status": "extracted"
+ }
+}

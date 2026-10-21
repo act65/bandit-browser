@@ -1,0 +1,544 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "An Optimal Private Stochastic-MAB Algorithm Based on an Optimal Private Stopping Rule",
+  "arxiv_id": "1905.09383",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Touqir Sajed",
+   "Or Sheffet"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "epsilon-differentially private stochastic K-armed bandit",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "differential_privacy"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "pure epsilon-DP under continual observation (event-level privacy); privacy parameter eps_dp",
+    "T needed to set beta = 1/T (or doubling trick)"
+   ],
+   "definition_quote": "In this section, our goal is to devise an optimal $\\epsDP$-differentially private algorithm for the stochastic $K$-arms bandit problem, in a setting where all rewards are between $[0,1]$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "epsilon-DP (alpha,beta)-stopping rule",
+   "objective": "other_pure_exploration",
+   "feedback": "full_information",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "sigma"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "differential_privacy"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {
+    "K": "1"
+   },
+   "in_scope": false,
+   "out_of_scope_reason": "Private stopping rule for multiplicative mean estimation from a single i.i.d. stream; not a bandit problem.",
+   "unmapped": [
+    "samples in known range [-R,R] (R known)",
+    "goal: (1 +- alpha) multiplicative approximation of mean w.p. 1-beta",
+    "pure epsilon-DP"
+   ],
+   "definition_quote": "In the \\emph{stopping rule} problem, the input consists of a stream of i.i.d samples $\\{X_t\\}_{t\\geq 1}$ drawn from a distribution over an a-priori known support $[-R,R]$ and with unknown mean $\\mu$. ... a \\emph{$(\\epsStop,\\deltaStop)$-stopping rule} halts at some time $t^*$ and releases $\\hat{\\mu}$ such that $\\Pr [|\\hat{\\mu} - \\mu| > \\epsStop |\\mu| ] <\\deltaStop$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "DP Successive Elimination (DP-SE)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "T"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "DP exponential NAS",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2000*(R_rng**2*log(log(R_rng/(alpha_stop*mu_abs))/delta)/(alpha_stop**2*mu_abs**2) + R_rng*log(log(R_rng/(alpha_stop*mu_abs))/delta)/(eps_dp*mu_abs) + R_rng*log(1/delta)/(eps_dp*alpha_stop*mu_abs))",
+    "expression_latex": "t_U = 2000(t_0+t_1+t_2)",
+    "regime": null
+   },
+   "symbols": {
+    "R_rng": "range bound, samples in [-R,R]",
+    "alpha_stop": "multiplicative accuracy alpha",
+    "mu_abs": "|mu|, absolute value of the mean",
+    "eps_dp": "differential privacy parameter epsilon"
+   },
+   "conditions": [
+    "beta <= 0.08",
+    "mu != 0",
+    "samples i.i.d. in [-R,R]"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:DP_exp_NAS_complexity",
+    "number": "Theorem (thm:DP_exp_NAS_complexity)",
+    "quote": "Fix $\\deltaStop \\leq 0.08$ and $\\mu\\neq 0$. ... Then with probability at least $1 - \\deltaStop$, Algorithm~\\ref{alg:exp_privateNAS} halts by timestep $t_U = 2000(t_0+t_1+t_2)$."
+   },
+   "confidence": "high",
+   "notes": "Paper's beta (confidence) mapped to delta."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "R_rng*log(1/delta)/(eps_dp*alpha_stop*mu_abs)",
+    "expression_latex": "\\Omega \\left( \\nicefrac{R\\log (\\nicefrac 1\\deltaStop)}{\\epsDP \\epsStop |\\mu|}  \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "R_rng": "range bound",
+    "alpha_stop": "multiplicative accuracy",
+    "mu_abs": "|mu|",
+    "eps_dp": "privacy parameter"
+   },
+   "conditions": [
+    "any eps-DP (alpha,beta)-stopping rule",
+    "alpha < 1, beta < 1/4 (in proof)",
+    "hard instance on two-point support {-R,R}"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:stoppingrule_lowerbound_privacy",
+    "number": "Theorem (thm:stoppingrule_lowerbound_privacy)",
+    "quote": "Any $\\epsDP$-differentially private $(\\epsStop,\\deltaStop)$-stopping rule whose input consists of a steam of i.i.d samples from a distribution over support $[-R,R]$ and with mean $\\mu \\neq0$,  must have a sample complexity of $\\Omega \\left( \\nicefrac{R\\log (\\nicefrac 1\\deltaStop)}{\\epsDP \\epsStop |\\mu|}  \\right)$."
+   },
+   "confidence": "medium",
+   "notes": "Proof shows halting after more than n samples with probability > 1/4."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "R_rng**2*log(1/delta)/(alpha_stop**2*mu_abs**2) + R_rng*log(1/delta)/(eps_dp*alpha_stop*mu_abs)",
+    "expression_latex": "\\Omega \\left( \\frac{R^2\\log(\\nicefrac 1 \\deltaStop)}{\\epsStop^2 \\mu^2}  + \\frac{R\\log(\\nicefrac 1\\deltaStop)}{\\epsDP \\epsStop |\\mu|}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "R_rng": "range bound",
+    "alpha_stop": "multiplicative accuracy",
+    "mu_abs": "|mu|",
+    "eps_dp": "privacy parameter"
+   },
+   "conditions": [
+    "exists a distribution P (hard instance)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "col:private_stoppingrule_lowerbound",
+    "number": "Corollary 4",
+    "quote": "There exists a distribution $\\calP$ for which any $\\epsDP$-differentially private $(\\epsStop,\\deltaStop)$-stopping rule algorithm has a sample complexity of $\\Omega \\left( \\frac{R^2\\log(\\nicefrac 1 \\deltaStop)}{\\epsStop^2 \\mu^2}  + \\frac{R\\log(\\nicefrac 1\\deltaStop)}{\\epsDP \\epsStop |\\mu|}\\right)$."
+   },
+   "confidence": "medium",
+   "notes": "Combines Dagum et al. non-private bound with Theorem lower bound."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "Min(T, (log(K/delta) + log(log(1/Delta_i)))*(1/Delta_i**2 + 1/(eps_dp*Delta_i)))",
+    "expression_latex": "\\min\\{ T, ~~O\\left(  \\left( \\log(\\nicefrac K  \\deltaStop) + \\log \\log (\\nicefrac 1 \\Delta_{a}) \\right) \\left( \\frac{1}{\\Delta^2_{a}} + \\frac{1}{\\epsDP \\Delta_{a}} \\right) \\right)   \\}",
+    "regime": null
+   },
+   "symbols": {
+    "eps_dp": "privacy parameter"
+   },
+   "conditions": [],
+   "tuning": [
+    "confidence parameter beta = delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "lem:DP_SE_numpulls",
+    "number": "Lemma 5",
+    "quote": "Then w.p. $\\geq 1 - \\deltaStop$ it holds that Algorithm~\\ref{alg:DP_SE} pulls each suboptimal arm $a\\neq a^*$ for a number of timesteps upper bounded by \\[ \\min\\{ T, ~~O\\left(  \\left( \\log(\\nicefrac K  \\deltaStop) + \\log \\log (\\nicefrac 1 \\Delta_{a}) \\right) \\left( \\frac{1}{\\Delta^2_{a}} + \\frac{1}{\\epsDP \\Delta_{a}} \\right) \\right)   \\}  \\]"
+   },
+   "confidence": "high",
+   "notes": "Bound on number of pulls of each suboptimal arm. Proof gives explicit log(K log(2/Delta_a)/beta)(1024/Delta_a^2 + 96/(eps Delta_a))."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(log(T)/Delta_i) + K*log(T)/eps_dp",
+    "expression_latex": "O \\left( \\left(\\sum\\limits_{a\\neq a^*}  \\frac{\\log(T)}{\\Delta_{a}}\\right) + \\frac{K\\log(T)}{\\epsDP} \\right)",
+    "regime": "T sufficiently large"
+   },
+   "symbols": {
+    "eps_dp": "privacy parameter"
+   },
+   "conditions": [
+    "T >= K",
+    "T >= 1/Delta_a"
+   ],
+   "tuning": [
+    "beta = 1/T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:DP_SE_instanceDependent_regret",
+    "number": "Theorem (thm:DP_SE_instanceDependent_regret)",
+    "quote": "Under the same notation as in Lemma~\\ref{lem:DP_SE_numpulls} and for sufficiently large $T$, the expected regret of Algorithm~\\ref{alg:DP_SE} is at most $O \\left( \\left(\\sum\\limits_{a\\neq a^*}  \\frac{\\log(T)}{\\Delta_{a}}\\right) + \\frac{K\\log(T)}{\\epsDP} \\right)$."
+   },
+   "confidence": "high",
+   "notes": "Expected regret defined as sum of gaps -> pseudo-regret. Uses beta=1/T (known T), or doubling trick when unknown."
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*K*log(T)) + K*log(T)/eps_dp",
+    "expression_latex": "O \\big( \\sqrt{T K \\log(T)} + ~\\nicefrac{K \\log(T)}{\\epsDP} \\big)",
+    "regime": null
+   },
+   "symbols": {
+    "eps_dp": "privacy parameter"
+   },
+   "conditions": [
+    "K <= T"
+   ],
+   "tuning": [
+    "beta = 1/T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:DP_SE_instanceIndependent_regret",
+    "number": "Theorem (thm:DP_SE_instanceIndependent_regret)",
+    "quote": "(Instance Independent Bound) The pseudo regret of Algorithm~\\ref{alg:DP_SE} is $O \\big( \\sqrt{T K \\log(T)}$ $+ ~\\nicefrac{K \\log(T)}{\\epsDP} \\big)$."
+   },
+   "confidence": "high",
+   "notes": ""
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "shariff2018differentially",
+   "cited_title": "Differentially private contextual linear bandits",
+   "cited_first_author": "R. Shariff",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "pure eps-DP stochastic K-armed bandit, added pseudo-regret",
+   "bound": {
+    "notation": "Omega",
+    "expression": "K*log(T)/eps_dp",
+    "expression_latex": "\\Omega(\\nicefrac{K\\log(T)}\\epsDP)",
+    "regime": null
+   },
+   "where": "Abstract / Introduction"
+  },
+  {
+   "cited_key": "lai1985asymptotically",
+   "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_first_author": "T. L. Lai",
+   "cited_year": 1985,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "stochastic K-armed bandit, consistent algorithms, pseudo-regret",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sum_subopt(log(T)/Delta_i)",
+    "expression_latex": "\\Omega(\\sum_{a\\neq a^*} \\frac {\\log(T)} {\\Delta_a})",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "Auer2002",
+   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
+   "cited_first_author": "P. Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "stochastic K-armed bandit, rewards in [0,1], minimax pseudo-regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(T))",
+    "expression_latex": "O(\\sqrt{KT\\log(T)})",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "Auer2002",
+   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
+   "cited_first_author": "P. Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "stochastic K-armed bandit, rewards in [0,1], instance-dependent pseudo-regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(log(T)/Delta_i)",
+    "expression_latex": "O(\\sum_{a\\neq a^*} \\frac {\\log(T)} {\\Delta_a})",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "auer2002nonstochastic",
+   "cited_title": "The nonstochastic multiarmed bandit problem",
+   "cited_first_author": "P. Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "K-armed bandit minimax regret",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(T*K)",
+    "expression_latex": "\\Omega(\\sqrt{TK})",
+    "regime": null
+   },
+   "where": "Section 4, after Theorem (thm:DP_SE_instanceIndependent_regret)"
+  },
+  {
+   "cited_key": "mishra2015nearly",
+   "cited_title": "(nearly) optimal differentially private stochastic multi-arm bandits",
+   "cited_first_author": "N. Mishra",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": "DP-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "eps-DP stochastic K-armed bandit, added regret term (per footnote)",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)**3/eps_dp",
+    "expression_latex": "O(\\nicefrac{\\log^{3} (T)}{\\epsDP})",
+    "regime": null
+   },
+   "where": "Introduction, footnote"
+  },
+  {
+   "cited_key": "domingo2002adaptive",
+   "cited_title": "Adaptive sampling methods for scaling up knowledge discovery algorithms",
+   "cited_first_author": "C. Domingo",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "NAS (Nonmonotonic Adaptive Sampling)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "non-private (alpha,beta)-stopping rule, samples in [-R,R], sample complexity",
+   "bound": {
+    "notation": "O",
+    "expression": "R_rng**2/(alpha_stop**2*mu_abs**2)*log(R_rng/(delta*alpha_stop*mu_abs))",
+    "expression_latex": "O\\left(\\frac{R^2}{\\epsStop^2 \\mu^2} \\left( \\log(\\frac{R}{\\deltaStop\\cdot \\epsStop|\\mu|}) \\right)\\right)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "mnih2008empirical",
+   "cited_title": "Empirical bernstein stopping",
+   "cited_first_author": "V. Mnih",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": "NAS (improved analysis)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "non-private (alpha,beta)-stopping rule, samples in [-R,R], sample complexity",
+   "bound": {
+    "notation": "O",
+    "expression": "R_rng**2/(alpha_stop**2*mu_abs**2)*(log(1/delta) + log(log(R_rng/(alpha_stop*mu_abs))))",
+    "expression_latex": "O\\left(\\frac{R^2}{\\epsStop^2 \\mu^2} \\left( \\log(\\frac{1}{\\deltaStop}) + \\log\\log(\\frac{R}{\\epsStop|\\mu|}) \\right)\\right)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "dagum2000optimal",
+   "cited_title": "An optimal algorithm for monte carlo estimation",
+   "cited_first_author": "P. Dagum",
+   "cited_year": 2000,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "non-private (alpha,beta)-stopping rule sample complexity; sigma_std^2 variance",
+   "bound": {
+    "notation": "Omega",
+    "expression": "Max(sigma_std**2, R_rng*alpha_stop*mu_abs)/(alpha_stop**2*mu_abs**2)*log(1/delta)",
+    "expression_latex": "\\Omega \\left( \\frac{\\max\\{\\sigma^2, R \\epsStop |\\mu|\\}}{\\epsStop^2 \\mu^2}  \\log(\\nicefrac 1 \\deltaStop) \\right)",
+    "regime": null
+   },
+   "where": "Section 3.1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:32:08",
+  "source_chars": 99707,
+  "input_tokens": 78913,
+  "output_tokens": 8970,
+  "cost_usd_equiv": 0.5931228,
+  "status": "extracted"
+ }
+}

@@ -168,7 +168,9 @@ def main() -> None:
     todo = []
     for p in papers:
         pre_ok = pre_path(p).exists()
-        if not pre_ok:
+        if p.get("withdrawn"):
+            print(f"skip {p['id']}: withdrawn")
+        elif not pre_ok:
             print(f"skip {p['id']}: not preprocessed")
         elif (OUT / f"{p['id']}.json").exists() and not args.force:
             print(f"skip {p['id']}: already extracted")

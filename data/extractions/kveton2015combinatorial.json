@@ -1,0 +1,180 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Combinatorial Cascading Bandits",
+  "arxiv_id": "1507.04208",
+  "arxiv_version": null,
+  "year": 2015,
+  "authors": [
+   "Branislav Kveton",
+   "Zheng Wen",
+   "Azin Ashkan",
+   "Csaba Szepesvari"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "combinatorial cascading bandit",
+   "objective": "cumulative_regret",
+   "feedback": "partial_monitoring",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "linear_optimization_oracle",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Cascade feedback: learner observes only the index of the first chosen item whose weight is zero (items before it are observed)",
+    "Non-linear (conjunctive, product) reward: reward is 1 iff all chosen items have weight 1",
+    "Item weights are independent Bernoulli (factored distribution P)",
+    "Actions are ordered tuples of distinct ground items from an arbitrary feasible set Theta"
+   ],
+   "definition_quote": "A combinatorial cascading bandit is a tuple $B = (E, P, \\Theta)$ ... receives a binary reward $\\rnd{r}_t = \\min_{e \\in \\rnd{A}_t} \\rnd{w}_t(e)$ ... At the end of time $t$, the agent observes the index of the first item in $\\rnd{A}_t$ whose weight is zero ... $P(w) = \\prod_{e \\in E} P_e(w(e))$, where $P_e$ is a Bernoulli distribution with mean $\\bar{w}(e)$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "CombCascade",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(m/f_star)*sum_subopt(4272/Delta_e_min)*log(T) + pi**2/3*L_items",
+    "expression_latex": "\\frac{K}{f^\\ast} \\sum_{e \\in \\tilde{E}} \\frac{4272}{\\Delta_{e, \\min}} \\log n + \\frac{\\pi^2}{3} L",
+    "regime": null
+   },
+   "symbols": {
+    "f_star": "expected reward of the optimal solution, f(A*, w_bar) = prod_{e in A*} w_bar(e)",
+    "Delta_e_min": "minimum gap of suboptimal solutions containing suboptimal item e",
+    "L_items": "number of ground items L",
+    "m": "paper's K: maximum number of items in any feasible solution"
+   },
+   "conditions": [
+    "f* > 0",
+    "optimal solution A* unique as a set",
+    "item weights independent Bernoulli",
+    "algorithm initialized with one sample w_0 ~ P"
+   ],
+   "tuning": [
+    "confidence radius c_{t,s} = sqrt(1.5 log t / s)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:ucb1",
+    "number": "Theorem 1",
+    "quote": "The regret of $\\combcascade$ is bounded as $\\displaystyle R(n) \\leq \\frac{K}{f^\\ast} \\sum_{e \\in \\tilde{E}} \\frac{4272}{\\Delta_{e, \\min}} \\log n + \\frac{\\pi^2}{3} L$."
+   },
+   "confidence": "high",
+   "notes": "sum_subopt here sums over suboptimal ground items (E minus A*), not arms. Regret E[sum f(A*,w_t)-f(A_t,w_t)] equals pseudo-regret. Also applies to disjunctive variant with redefined gaps and f*."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "131*sqrt(m*L_items*T*log(T)/f_star) + pi**2/3*L_items",
+    "expression_latex": "131 \\sqrt{\\frac{K L n \\log n}{f^\\ast}} + \\frac{\\pi^2}{3} L",
+    "regime": null
+   },
+   "symbols": {
+    "f_star": "expected reward of the optimal solution",
+    "L_items": "number of ground items L",
+    "m": "paper's K: maximum number of items in any feasible solution"
+   },
+   "conditions": [
+    "f* > 0",
+    "optimal solution A* unique as a set",
+    "item weights independent Bernoulli",
+    "algorithm initialized with one sample w_0 ~ P"
+   ],
+   "tuning": [
+    "confidence radius c_{t,s} = sqrt(1.5 log t / s)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:gap-free",
+    "number": "Theorem 2",
+    "quote": "The regret of $\\combcascade$ is bounded as $\\displaystyle R(n) \\leq 131 \\sqrt{\\frac{K L n \\log n}{f^\\ast}} + \\frac{\\pi^2}{3} L$."
+   },
+   "confidence": "high",
+   "notes": "Bound still depends on instance through f*; the epsilon in the proof is analysis-only so algorithm does not need n."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:09:45",
+  "source_chars": 65299,
+  "input_tokens": 62591,
+  "output_tokens": 2866,
+  "cost_usd_equiv": 0.34046679999999996,
+  "status": "extracted"
+ }
+}

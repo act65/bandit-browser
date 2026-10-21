@@ -1,0 +1,406 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Improving the Expected Improvement Algorithm",
+  "arxiv_id": "1705.10033",
+  "arxiv_version": null,
+  "year": 2017,
+  "authors": [
+   "Chao Qin",
+   "Diego Klabjan",
+   "Daniel Russo"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Gaussian best-arm identification, fixed confidence setting",
+   "objective": "bai_fixed_confidence",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "sigma",
+    "K"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "all arm means assumed distinct (mu_1 > mu_2 > ... > mu_k)"
+   ],
+   "definition_quote": "The reward $Y_{n,i}$ of arm $i \\in A$ at time $n\\in \\mathbb{N}$ follows a normal distribution $N(\\mu_i,\\sigma^2)$ with common known variance $\\sigma^2$, but unknown mean $\\mu_i$. ... We consider minimizing the average number of observations $\\E[\\tau]$ required by an algorithm guaranteeing a vanishing probability $\\delta$ of incorrect identification"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Gaussian best-arm identification, rate of posterior convergence",
+   "objective": "other_pure_exploration",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "sigma",
+    "K"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "objective: exponential decay rate of posterior mass 1-alpha_{n,1} not on the true best arm (uncorrelated Gaussian prior)",
+    "all arm means assumed distinct"
+   ],
+   "definition_quote": "we aim to maximize the exponent governing the rate of decay, effectively solving the optimization problem \\underset{\\text{sampling rules}}{\\min} \\limsup_{n\\to \\infty} \\frac{1}{n} \\log\\left( 1-\\alpha_{n,1}\\right)."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Top-Two Expected Improvement (TTEI)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "sigma"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "TTEI with Chernoff's stopping rule (threshold log(C n^alpha/delta))",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "almost_sure",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "w_beta_i",
+    "expression_latex": "\\lim_{n \\to \\infty} \\frac{T_{n,i}}{n} = w^{\\beta}_{i}",
+    "regime": "n -> infinity"
+   },
+   "symbols": {
+    "w_beta_i": "optimal proportion of arm i given best-arm proportion beta_tt (w_1 = beta_tt, equalizing (mu_i-mu_1)^2/(1/w_i+1/beta_tt))",
+    "beta_tt": "TTEI tuning parameter in (0,1)"
+   },
+   "conditions": [],
+   "tuning": [
+    "beta_tt in (0,1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm: sampling proportions",
+    "number": "Theorem 1",
+    "quote": "If TTEI is applied with parameter $\\beta \\in (0,1)$, $\\E[T^\\epsilon_\\beta]<\\infty$ for any $\\epsilon>0$. Therefore, \\[ \\lim_{n \\to \\infty} \\frac{T_{n,i}}{n} = w^{\\beta}_{i} \\qquad \\forall i \\in A. \\]"
+   },
+   "confidence": "medium",
+   "notes": "Quantity is the limiting empirical sampling proportion T_{n,i}/n (not a regret). Theorem also states E[T^eps_beta] < infinity (expected time until means and proportions are eps-accurate is finite)."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "almost_sure",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "exp(-Gamma_star*T)",
+    "expression_latex": "\\lim_{n\\to\\infty} -\\frac{1}{n}\\log\\left( 1-\\alpha_{n,1} \\right) = \\Gamma^*",
+    "regime": "n -> infinity (logarithmic equivalence)"
+   },
+   "symbols": {
+    "Gamma_star": "optimal exponent max_beta Gamma_beta",
+    "Gamma_beta": "(mu_i-mu_1)^2/(2 sigma^2 (1/w_i^beta + 1/beta)) common value"
+   },
+   "conditions": [
+    "allocation rule satisfies T_{n,i}/n -> w_i^* for each arm"
+   ],
+   "tuning": [
+    "beta_tt = beta^* (via Theorem 1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm: sc1",
+    "number": "Theorem 2",
+    "quote": "Under any allocation rule satisfying $T_{n,i}/n \\to w_i^*$ for each $i \\in A$, \\[ \\lim_{n\\to\\infty} \\,\\, -\\frac{1}{n}\\log\\left( 1-\\alpha_{n,1} \\right) = \\Gamma^*. \\]"
+   },
+   "confidence": "medium",
+   "notes": "Bound on posterior mass 1-alpha_{n,1} on non-best arms; expression means 1-alpha_{n,1} decays as exp(-Gamma* n) in the log-equivalence sense. Stated for any allocation rule with these limiting proportions; attributed to TTEI with beta* by Theorem 1. T denotes n."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "almost_sure",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "exp(-Gamma_star*T)",
+    "expression_latex": "\\limsup_{n\\to\\infty} \\,\\,-\\frac{1}{n}\\log(1-\\alpha_{n,1}) \\leq \\Gamma^*",
+    "regime": "n -> infinity"
+   },
+   "symbols": {
+    "Gamma_star": "optimal exponent max_beta Gamma_beta"
+   },
+   "conditions": [],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm: sc1",
+    "number": "Theorem 2",
+    "quote": "Under any sampling rule, \\[ \\limsup_{n\\to\\infty} \\,\\,-\\frac{1}{n}\\log(1-\\alpha_{n,1}) \\leq \\Gamma^*. \\]"
+   },
+   "confidence": "medium",
+   "notes": "Posterior mass on non-best arms cannot decay faster than exp(-Gamma* n). The same result was proved by Russo (2016) for bounded correlated priors; here for uncorrelated Gaussian priors with different proof."
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "almost_sure",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "exp(-Gamma_beta*T)",
+    "expression_latex": "\\lim_{n\\to\\infty} -\\frac{1}{n}\\log(1-\\alpha_{n,1}) = \\Gamma_\\beta^*",
+    "regime": "n -> infinity (logarithmic equivalence)"
+   },
+   "symbols": {
+    "Gamma_beta": "(mu_i-mu_1)^2/(2 sigma^2 (1/w_i^beta + 1/beta)) common value",
+    "beta_tt": "TTEI tuning parameter"
+   },
+   "conditions": [
+    "allocation rule satisfies T_{n,i}/n -> w_i^beta for each arm"
+   ],
+   "tuning": [
+    "beta_tt in (0,1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm: sc1",
+    "number": "Theorem 2",
+    "quote": "For $\\beta \\in (0,1)$, under any allocation rule satisfying $T_{n,i}/n \\to w^{\\beta}_i$ for each $i\\in A$, \\[ \\lim_{n\\to\\infty} -\\frac{1}{n}\\log(1-\\alpha_{n,1}) = \\Gamma_\\beta^*. \\]"
+   },
+   "confidence": "medium",
+   "notes": "Applies to TTEI with parameter beta via Theorem 1. With beta=1/2, Gamma_{1/2} >= Gamma*/2."
+  },
+  {
+   "id": "r5",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "almost_sure",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "exp(-Gamma_beta*T)",
+    "expression_latex": "\\limsup_{n\\to\\infty} \\,\\, -\\frac{1}{n}\\log(1-\\alpha_{n,1}) \\leq \\Gamma_\\beta^*",
+    "regime": "n -> infinity"
+   },
+   "symbols": {
+    "Gamma_beta": "(mu_i-mu_1)^2/(2 sigma^2 (1/w_i^beta + 1/beta)) common value"
+   },
+   "conditions": [
+    "sampling rule satisfies T_{n,1}/n -> beta"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm: sc1",
+    "number": "Theorem 2",
+    "quote": "Under any sampling rule satisfying $T_{n,1}/n \\to \\beta$, \\[ \\limsup_{n\\to\\infty} \\,\\, -\\frac{1}{n}\\log(1-\\alpha_{n,1}) \\leq \\Gamma_\\beta^*. \\]"
+   },
+   "confidence": "medium",
+   "notes": "Algorithm class: sampling rules allocating a beta fraction of samples to the best arm."
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "alpha_thr*log(1/delta)/Gamma_beta",
+    "expression_latex": "\\limsup_{\\delta\\to0} \\frac{\\mathbb{E}[\\tau_\\delta]}{\\log(1/\\delta)} \\leq \\frac{\\alpha}{\\Gamma_\\beta^*}",
+    "regime": "delta -> 0"
+   },
+   "symbols": {
+    "alpha_thr": "exponent alpha > 1 in stopping threshold log(C n^alpha/delta)",
+    "Gamma_beta": "(mu_i-mu_1)^2/(2 sigma^2 (1/w_i^beta + 1/beta)) common value"
+   },
+   "conditions": [],
+   "tuning": [
+    "beta_tt in (0,1)",
+    "Chernoff stopping rule with threshold log(C n^alpha_thr/delta), alpha_thr > 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm: sc2",
+    "number": "Theorem 3",
+    "quote": "Let $\\beta\\in(0,1)$. Consider any sampling rule which, if applied with no stopping rule, satisfies $\\mathbb{E}[T^{\\epsilon}_\\beta]<\\infty$ for all $\\epsilon>0$. Fix any $\\alpha > 1$. Then if this sampling rule is applied with Chernoff's stopping rule with the threshold $\\gamma_{n,\\delta}^\\alpha$, we have \\[ \\limsup_{\\delta\\to0} \\frac{\\mathbb{E}[\\tau_\\delta]}{\\log(1/\\delta)} \\leq \\frac{\\alpha}{\\Gamma_\\beta^*}. \\]"
+   },
+   "confidence": "high",
+   "notes": "Stated for any sampling rule with E[T^eps_beta] finite; TTEI satisfies this by Theorem 1. delta-correctness from Garivier-Kaufmann Proposition 12. With beta=beta* matches lower bound 1/Gamma* as alpha->1."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "GarivierK16",
+   "cited_title": "Optimal best arm identification with fixed confidence",
+   "cited_first_author": "Aurélien Garivier",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Gaussian best-arm identification, fixed confidence, any delta-correct sampling and stopping rule",
+   "bound": {
+    "notation": "liminf",
+    "expression": "log(1/delta)/Gamma_star",
+    "expression_latex": "\\liminf_{\\delta\\to0} \\frac{\\mathbb{E}[\\tau_\\delta]}{\\log(1/\\delta)} \\geq \\frac{1}{\\Gamma^*}",
+    "regime": "delta -> 0"
+   },
+   "where": "Section 5.2 (Sample Complexity)"
+  },
+  {
+   "cited_key": "doi:10.1287/opre.2016.1494",
+   "cited_title": "On the convergence rates of expected improvement methods",
+   "cited_first_author": "Ilya O. Ryzhov",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Expected Improvement (EI)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Gaussian best-arm identification; number of samples EI allocates to suboptimal arms",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)",
+    "expression_latex": "\\mathcal{O}(\\log n)",
+    "regime": "asymptotic"
+   },
+   "where": "Section 3 (Top-Two Expected Improvement)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:54:22",
+  "source_chars": 108819,
+  "input_tokens": 89297,
+  "output_tokens": 7419,
+  "cost_usd_equiv": 0.6451747999999999,
+  "status": "extracted"
+ }
+}

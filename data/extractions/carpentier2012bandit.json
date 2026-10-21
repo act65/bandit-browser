@@ -1,0 +1,195 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Bandit Theory meets Compressed Sensing for high dimensional Stochastic Linear Bandit",
+  "arxiv_id": "1205.4094",
+  "arxiv_version": null,
+  "year": 2012,
+  "authors": [
+   "Alexandra Carpentier",
+   "Rémi Munos"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "High-dimensional sparse stochastic linear bandit on the unit l2 ball",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "S",
+    "sigma",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "unit_ball",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "unbounded",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "theta is s-sparse (at most s nonzero coordinates), sparsity unknown to learner; dimension K (here d) may be much larger than n",
+    "noise enters the parameter: r_t = <x_t, theta + eta_t> with eta_t i.i.d. white noise, coordinatewise bounded |eta_{k,t}| <= sigma_k/2",
+    "learner knows upper bounds on ||theta||_2 and ||sigma||_2 (not the sparsity)"
+   ],
+   "definition_quote": "At each round $1\\leq t \\leq n$ it selects an arm $x_t$ in the set of arms $\\D_{K}$, which is the unit ball for the $||.||_2$-norm induced by the inner product. It then receives a reward $r_t = \\langle x_t,\\theta+\\eta_t\\rangle$, where $\\eta_t\\in \\R^K$ is an i.i.d.~white noise ... we make the assumption that $\\theta$ is $S-$sparse with $S<n$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "SL-UCB (Sparse Linear Upper Confidence Bound)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "S",
+    "sigma",
+    "d"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "ConfidenceBall_2 (CB_2)",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "118*(theta_bar + sigma_bar)**2*log(2*d/delta)*s_sp*sqrt(T)",
+    "expression_latex": "118 (\\bar{\\theta}_2+ \\bar{\\sigma}_2)^2 \\log(2K/\\delta)S \\sqrt{n}",
+    "regime": null
+   },
+   "symbols": {
+    "theta_bar": "input upper bound on ||theta||_2",
+    "sigma_bar": "input upper bound on ||sigma||_2 (sigma_k bounds the noise coordinates)",
+    "s_sp": "sparsity of theta (number of nonzero components); paper's S"
+   },
+   "conditions": [
+    "Assumption 1: (eta_{k,t}) i.i.d. white noise with |eta_{k,t}| <= sigma_k/2",
+    "theta is s_sp-sparse",
+    "theta_bar >= ||theta||_2, sigma_bar >= ||sigma||_2"
+   ],
+   "tuning": [
+    "b = (theta_bar + sigma_bar)*sqrt(2 log(2K/delta))",
+    "confidence parameter delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:m1-regret",
+    "number": "Theorem 2",
+    "quote": "Under Assumption~\\ref{as:noise1}, if we choose $\\bar{\\sigma}_2 \\geq ||\\si||_2$, and $\\bar{\\theta}_2 \\geq ||\\theta||_2$, the regret of SL-UCB is bounded with probability at least $1-5\\delta$, as $R_n(\\Alg_{SL-UCB})\\leq 118 (\\bar{\\theta}_2+ \\bar{\\sigma}_2)^2 \\log(2K/\\delta)S \\sqrt{n}.$"
+   },
+   "confidence": "medium",
+   "notes": "Paper's K is the ambient dimension (mapped to d), paper's n is T, paper's S is sparsity (renamed s_sp since canonical S is a norm bound). Holds with probability at least 1-5delta. Regret is n||theta||_2 - sum <theta,x_t> (pseudo-regret style, w.r.t. means) bounded with high probability. Learner does not need the sparsity."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "dani2008stochastic",
+   "cited_title": "Stochastic linear optimization under bandit feedback",
+   "cited_first_author": "V. Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": "ConfidenceBall_2",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic linear bandit in dimension d on the unit l2 ball, noise r_t=<x_t,theta+eta_t> with |eta_{t,k}| <= sigma_k/2; high probability 1-delta, n large enough",
+   "bound": {
+    "notation": "exact",
+    "expression": "64*d*(theta_norm + sigma_norm)*log(T**2/delta)**2*sqrt(T)",
+    "expression_latex": "64 d\\Big(||\\theta||_2 + ||\\si||_2\\Big)(\\log(n^2/\\delta))^2\\sqrt{n}",
+    "regime": "for large enough n"
+   },
+   "where": "Theorem 1 (Section 1.2)"
+  },
+  {
+   "cited_key": "Yasin",
+   "cited_title": "Online-to-confidence-set conversions and application to sparse stochastic bandits",
+   "cited_first_author": "Y. Abbasi-yadkori",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Sparse stochastic linear bandit, dimension K, sparsity S, general action set, different noise model",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(d*s_sp*T)",
+    "expression_latex": "O(\\sqrt{K S n})",
+    "regime": null
+   },
+   "where": "Introduction"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:39:38",
+  "source_chars": 56919,
+  "input_tokens": 58389,
+  "output_tokens": 3238,
+  "cost_usd_equiv": 0.3142908,
+  "status": "extracted"
+ }
+}

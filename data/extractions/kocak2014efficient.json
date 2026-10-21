@@ -1,0 +1,412 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Efficient learning by implicit exploration in bandit problems with side observations",
+  "arxiv_id": "2604.24555",
+  "arxiv_version": null,
+  "year": 2014,
+  "authors": [
+   "Tomas Kocak",
+   "Gergely Neu",
+   "Michal Valko",
+   "Remi Munos"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Multi-armed bandit problems with side observations (directed observation system)",
+   "objective": "cumulative_regret",
+   "feedback": "graph_feedback",
+   "environment": "adversarial_unspecified",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "strongly_observable",
+    "time_varying": "adaptive_sequence",
+    "knowledge": "revealed_after_action"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Paper's d is the number of arms (K here)",
+    "Graph G_t chosen by environment each round; learner always observes own loss plus out-neighbours' losses"
+   ],
+   "definition_quote": "In each round $t=1,2,\\dots,T$, the environment assigns a loss vector $\\bloss_t\\in[0,1]^\\nodes$ for $d$ actions and also selects an observation system described by the directed graph $G_t$. Then ... the learner selects action $I_t$ and subsequently incurs and observes loss $\\loss_{t,I_t}$. Furthermore, the learner also observes the losses $\\loss_{t,j}$ for all $j$ such that $(I_t \\ra j)\\in G_t$"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Combinatorial semi-bandit with side observations",
+   "objective": "cumulative_regret",
+   "feedback": "graph_feedback",
+   "environment": "adversarial_oblivious",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "d",
+    "alpha_G"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "linear_optimization_oracle",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "linf_box"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "strongly_observable",
+    "time_varying": "oblivious_sequence",
+    "knowledge": "revealed_after_action"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Semi-bandit feedback on chosen components plus side observations via directed graph on components",
+    "Action set S subset of {0,1}^d with ||v||_1 <= m",
+    "Learner uses approximations alpha_tilde_t of independence numbers with alpha_t/C <= alpha_tilde_t <= alpha_t"
+   ],
+   "definition_quote": "the learner has access to a possibly huge action set $\\Sw\\subseteq\\ev{0,1}^\\nodes$ ... we assume that $\\onenorm{\\bv}\\le m$ ... we assume that the learner gets to observe the losses of some other components not included in its own decision vector $\\bV_t$ ... given by a directed observability graph $G_t$ ... We refer to this feedback scheme as semi-bandit with side observations."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Exp3-IX",
+   "registry_id": "exp3_ix_side_observations",
+   "is_new": true,
+   "techniques": [
+    "exponential_weights"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "FPL-IX",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "d",
+    "m",
+    "alpha_G"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*E_sqrt_Q",
+    "expression_latex": "4\\EE{\\sqrt{\\pa{d+\\sumt Q_t}\\log d}}",
+    "regime": null
+   },
+   "symbols": {
+    "E_sqrt_Q": "E[sqrt((K + sum_t Q_t) log K)], Q_t = sum_i p_{t,i}/(o_{t,i}+gamma_t)"
+   },
+   "conditions": [],
+   "tuning": [
+    "eta_t = gamma_t = sqrt(log K / (K + sum_{s<t} Q_s))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:expix",
+    "number": "Theorem 1",
+    "quote": "Setting $\\etat = \\gammat = \\sqrt{(\\log{\\nodes})/(\\nodes+\\sum_{s = 1}^{t-1}Q_s})$, the regret of \\expfive satisfies $\\regret \\leq 4\\EE{\\sqrt{\\pa{d+\\textstyle\\sumt Q_t}\\log d}}$."
+   },
+   "confidence": "medium",
+   "notes": "Regret defined as max_i E[sum (l_{t,I_t} - l_{t,i})]. Bound depends on random algorithm quantities Q_t."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*sqrt((K + 2*sum_H_alpha + 2*T)*log(K))",
+    "expression_latex": "4\\sqrt{\\pa{d + 2\\sumt\\left(H_t \\alpha_t+1\\right)}\\log d}",
+    "regime": null
+   },
+   "symbols": {
+    "sum_H_alpha": "sum_t H_t alpha_t, with alpha_t the independence number of G_t and H_t = log(1 + (ceil(K^2 sqrt(tK/log K)) + K)/alpha_t) = O(log(KT))"
+   },
+   "conditions": [],
+   "tuning": [
+    "eta_t = gamma_t = sqrt(log K / (K + sum_{s<t} Q_s))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:mainExp",
+    "number": "Corollary 1",
+    "quote": "The regret of \\expfive satisfies $$\\regret \\leq 4\\sqrt{\\pa{d + 2\\textstyle\\sumt\\left(H_t \\alpha_t+1\\right)}\\log d},$$ where $H_t = \\log\\left(1+\\frac{\\lceil \\nodes^2\\sqrt{t\\nodes/\\log \\nodes}\\rceil+\\nodes}{\\alpha_t}\\right) =\\OO(\\log (dT))$."
+   },
+   "confidence": "high",
+   "notes": "Paper's d = K arms. Scales as O~(sqrt(alpha_bar T log K)) with average independence number."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "m*(log(d)+1)/eta_T + 4*m*S_eta_Q + S_gamma_Q",
+    "expression_latex": "\\frac{m\\left(\\log d+1\\right)}{\\eta_T} + 4m \\sum_{t=1}^T \\eta_t \\EE{\\tQ_t\\pa{\\frac{\\gamma_t}{1-\\gamma_t}}} + \\sum_{t=1}^T \\gamma_t \\EE{\\tQ_t(\\gamma_t)}",
+    "regime": null
+   },
+   "symbols": {
+    "eta_T": "learning rate at final round T",
+    "S_eta_Q": "sum_t eta_t E[Qtilde_t(gamma_t/(1-gamma_t))], Qtilde_t(c) = sum_i q_{t,i}/(o_{t,i}+c)",
+    "S_gamma_Q": "sum_t gamma_t E[Qtilde_t(gamma_t)]"
+   },
+   "conditions": [
+    "oblivious adversary"
+   ],
+   "tuning": [
+    "gamma_t <= 1/2 for all t",
+    "eta_1 >= eta_2 >= ... >= eta_T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:fplix",
+    "number": "Theorem 2",
+    "quote": "Assume $\\gamma_t\\le 1/2$ for all $t$ and $\\eta_1\\ge\\eta_2\\ge\\dots\\ge \\eta_T$. The regret of \\fplix satisfies $R_T \\le \\frac{m\\left(\\log d+1\\right)}{\\eta_T} + 4m \\sum_{t=1}^T \\eta_t \\EE{\\tQ_t\\pa{\\frac{\\gamma_t}{1-\\gamma_t}}} + \\sum_{t=1}^T \\gamma_t \\EE{\\tQ_t(\\gamma_t)}$."
+   },
+   "confidence": "medium",
+   "notes": "Generic bound in terms of algorithm parameters; here the learner_knows alpha_G is not needed (only for Corollary 2's tuning)."
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "log(m*d*T)*m**(3/2)*sqrt((d + C_apx*sum_alpha)*(log(d)+1))",
+    "expression_latex": "H m^{3/2} \\sqrt{\\pa{d + C\\textstyle\\sum_{t = 1}^{T} \\alpha_t}(\\log d + 1)}, H = \\OO(\\log (mdT))",
+    "regime": null
+   },
+   "symbols": {
+    "C_apx": "approximation factor C > 1 with alpha_t/C <= alpha_tilde_t <= alpha_t",
+    "sum_alpha": "sum_t alpha_t, sum of independence numbers of the observability graphs"
+   },
+   "conditions": [
+    "oblivious adversary",
+    "m*d > 4",
+    "alpha_t/C <= alpha_tilde_t <= alpha_t <= d for all t, C > 1"
+   ],
+   "tuning": [
+    "eta_t = gamma_t = sqrt((log d + 1)/(m (d + sum_{s<t} alpha_tilde_s)))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Corollary 2",
+    "quote": "Assume that for all $t\\in[T]$, $\\alpha_t/C \\le \\talpha_t \\le \\alpha_t \\le d$ for some $C>1$, and assume $md>4$. Setting $\\eta_ t = \\gamma_t = \\sqrt{\\pa{\\log{\\nodes} + 1}/\\pa{m\\pa{\\nodes+\\sum_{s =1}^{t-1}\\talpha_s}}}$, the regret of \\fplix satisfies $R_T \\le H m^{3/2} \\sqrt{\\pa{d + C\\textstyle\\sum_{t = 1}^{T} \\alpha_t}(\\log d + 1)}$, where $H$ is $\\OO(\\log (mdT))$."
+   },
+   "confidence": "medium",
+   "notes": "Exact bound with factor H = O(log(mdT)); recorded as O with H replaced by log(mdT)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "mannor2011from",
+   "cited_title": "From Bandits to Experts: On the Value of Side-Observations",
+   "cited_first_author": "Mannor",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "LP-based algorithm of Mannor and Shamir",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Adversarial bandits with undirected side observations; c = number of cliques covering the graph",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(c_cl*T)",
+    "expression_latex": "\\tilde\\OO(\\sqrt{cT})",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "alon2013from",
+   "cited_title": "From Bandits to Experts: A Tale of Domination and Independence",
+   "cited_first_author": "Alon",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Exp3-SET",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Adversarial bandits with side observations (graph feedback), alpha upper bound on independence numbers",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(alpha_G*T*log(K))",
+    "expression_latex": "O(\\sqrt{\\alpha T\\log d})",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "koolen10comphedge",
+   "cited_title": "Hedging structured concepts",
+   "cited_first_author": "Koolen",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Component Hedge",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online combinatorial optimization, full information, actions of size m in {0,1}^d",
+   "bound": {
+    "notation": "O",
+    "expression": "m*sqrt(T*log(d))",
+    "expression_latex": "m\\sqrt{T\\log d}",
+    "regime": null
+   },
+   "where": "Section 3"
+  },
+  {
+   "cited_key": "neu2013efficient",
+   "cited_title": "An Efficient Algorithm for Learning with Semi-bandit Feedback",
+   "cited_first_author": "Neu",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "FPL",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online combinatorial optimization, full information",
+   "bound": {
+    "notation": "O",
+    "expression": "m**(3/2)*sqrt(T*log(d))",
+    "expression_latex": "m^{3/2}\\sqrt{T\\log d}",
+    "regime": null
+   },
+   "where": "Section 3"
+  },
+  {
+   "cited_key": "audibert2014regret",
+   "cited_title": "Regret in Online Combinatorial Optimization",
+   "cited_first_author": "Audibert",
+   "cited_year": 2014,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Component Hedge",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online combinatorial optimization, semi-bandit feedback",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(m*d*T*log(d))",
+    "expression_latex": "O(\\sqrt{mdT\\log d})",
+    "regime": null
+   },
+   "where": "Section 3"
+  },
+  {
+   "cited_key": "neu2013efficient",
+   "cited_title": "An Efficient Algorithm for Learning with Semi-bandit Feedback",
+   "cited_first_author": "Neu",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "FPL with geometric resampling",
+   "algorithm_registry_id": "bandit_ftpl_gr",
+   "side": "upper",
+   "setting_description": "Online combinatorial optimization, semi-bandit feedback",
+   "bound": {
+    "notation": "O",
+    "expression": "m*sqrt(d*T*log(d))",
+    "expression_latex": "O(m\\sqrt{dT\\log d})",
+    "regime": null
+   },
+   "where": "Section 3"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:49:37",
+  "source_chars": 58478,
+  "input_tokens": 59438,
+  "output_tokens": 7198,
+  "cost_usd_equiv": 0.4018828,
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,286 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "An Optimal Algorithm for Bandit and Zero-Order Convex Optimization with Two-Point Feedback",
+  "arxiv_id": "1507.08752",
+  "arxiv_version": null,
+  "year": 2015,
+  "authors": [
+   "Ohad Shamir"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Bandit convex optimization with two-point feedback (general norm / mirror descent)",
+   "objective": "cumulative_regret",
+   "feedback": "two_point",
+   "environment": "adversarial_unspecified",
+   "action_space": "convex_body",
+   "function_class": [
+    "lipschitz"
+   ],
+   "domain": "improper",
+   "context": "none",
+   "noise": "not_applicable",
+   "learner_knows": [
+    "T",
+    "d",
+    "L_lip"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "loss functions f_t are convex",
+    "learner plays w_t in W (suffers f_t(w_t)) and separately queries two points w_t +/- delta_t u_t, which may lie slightly outside W",
+    "learner needs a regularizer r with sup_W r <= R^2 (R known) that is 1-strongly convex w.r.t. a norm whose dual satisfies a 4th-moment condition"
+   ],
+   "definition_quote": "At each round $t$, the adversary picks a convex function $f_t$ on $\\reals^d$, which is not revealed to the learner. The learner then chooses a point $\\bw_t$ from some known and closed convex set $\\Wcal\\subseteq \\reals^d$, and suffers a loss $f_t(\\bw_t)$. As feedback, the learner may choose two points $\\bw'_t,\\bw''_t\\in \\Wcal$ and receive $f_t(\\bw_t'),f_t(\\bw_t'')$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Two-point bandit convex optimization on the simplex, L1-Lipschitz losses",
+   "objective": "cumulative_regret",
+   "feedback": "two_point",
+   "environment": "adversarial_unspecified",
+   "action_space": "convex_body",
+   "function_class": [
+    "lipschitz"
+   ],
+   "domain": "improper",
+   "context": "none",
+   "noise": "not_applicable",
+   "learner_knows": [
+    "T",
+    "d",
+    "L_lip"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "simplex",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "loss functions f_t are convex and G_1-Lipschitz w.r.t. the L1 norm",
+    "query points may lie slightly outside W"
+   ],
+   "definition_quote": "the $1$-norm, $\\norm{\\cdot}_1$, the domain $\\Wcal$ is the simplex in $\\reals^d$, $d>1$ ... Suppose $f_t$ for all $t$ is $G_1$-Lipschitz with respect to the $L_1$ norm."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Two-Point Bandit Convex Optimization Algorithm (mirror descent with symmetric two-point gradient estimator)",
+   "registry_id": "osgd_two_point",
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d",
+    "L_lip",
+    "diam_K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "p_star*G_2*R*sqrt(d*T)",
+    "expression_latex": "c~p_{*} G_2R\\sqrt{\\frac{d}{T}}",
+    "regime": null
+   },
+   "symbols": {
+    "p_star": "bound on (E||u||_*^4)^{1/4} for u uniform on the unit sphere",
+    "G_2": "Lipschitz constant of f_t w.r.t. the 2-norm",
+    "R": "sup_W r(w) <= R^2 for the 1-strongly convex regularizer r"
+   },
+   "conditions": [
+    "f_t convex and G_2-Lipschitz w.r.t. 2-norm",
+    "r 1-strongly convex w.r.t. norm ||.|| with sup_W r <= R^2",
+    "(E||u||_*^4)^{1/4} <= p_star"
+   ],
+   "tuning": [
+    "eta = R/(p_star*G_2*sqrt(d*T))",
+    "delta_t <= p_star*R*sqrt(d/T)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1",
+    "quote": "If $\\eta = \\frac{R}{p_{*} G_2 \\sqrt{dT}}$, and $\\delta_t$ chosen such that $\\delta_t\\leq p_*R\\sqrt{\\frac{d}{T}}$, then the sequence $\\bw_1,\\ldots,\\bw_T$ generated by the algorithm satisfies the following for any $T$ and $\\bw^*\\in\\Wcal$: \\E[\\frac{1}{T}\\sum f_t(\\bw_t)-\\frac{1}{T}\\sum f_t(\\bw^*)] \\leq c~p_{*} G_2R\\sqrt{\\frac{d}{T}}, where $c$ is some numerical constant."
+   },
+   "confidence": "high",
+   "notes": "Paper bounds average regret; multiplied by T. Expectation over learner randomness for any fixed w*. Registry match to osgd_two_point is approximate (mirror descent generalization)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "L_lip*R*sqrt(d*T)",
+    "expression_latex": "c~G_2 R\\sqrt{\\frac{d}{T}}",
+    "regime": null
+   },
+   "symbols": {
+    "R": "radius: W is contained in the Euclidean ball of radius R"
+   },
+   "conditions": [
+    "f_t convex and G_2-Lipschitz w.r.t. Euclidean norm (L_lip = G_2)",
+    "W subset of {w: ||w||_2 <= R}"
+   ],
+   "tuning": [
+    "Euclidean norm, r(w) = ||w||_2^2/2 (online gradient descent)",
+    "eta, delta_t as in Theorem 1 with p_star = 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:2",
+    "number": "Corollary 1",
+    "quote": "Suppose $f_t$ for all $t$ is $G_2$-Lipschitz with respect to the Euclidean norm, and $\\Wcal\\subseteq \\{\\bw:\\norm{\\bw}_2\\leq R\\}$. Then using $\\norm{\\cdot}=\\norm{\\cdot}_2$ and $r(\\bw)=\\frac{1}{2}\\norm{\\bw}_2^2$, it holds for some constant $c$ and any $\\bw^*\\in\\Wcal$ that ... \\leq c~G_2 R\\sqrt{\\frac{d}{T}},"
+   },
+   "confidence": "high",
+   "notes": "Average regret multiplied by T. Paper states it matches the lower bound of Duchi et al. up to constants."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "G_1*sqrt(d*log(d)**2*T)",
+    "expression_latex": "c~G_1 \\sqrt{\\frac{d\\log^2(d)}{T}}",
+    "regime": null
+   },
+   "symbols": {
+    "G_1": "Lipschitz constant of f_t w.r.t. the L1 norm"
+   },
+   "conditions": [
+    "W is the simplex in R^d",
+    "d > 1",
+    "f_t convex and G_1-Lipschitz w.r.t. L1 norm"
+   ],
+   "tuning": [
+    "norm ||.||_1, entropic regularizer r(w) = sum_i w_i log(d w_i)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:1",
+    "number": "Corollary 2",
+    "quote": "Suppose $f_t$ for all $t$ is $G_1$-Lipschitz with respect to the $L_1$ norm. Then using $\\norm{\\cdot}=\\norm{\\cdot}_1$ and $r(\\bw)=\\sum_{i=1}^{d}w_i\\log(d w_i)$, it holds for some constant $c$ and any $\\bw^*\\in\\Wcal$ that ... \\leq c~G_1 \\sqrt{\\frac{d\\log^2(d)}{T}}."
+   },
+   "confidence": "high",
+   "notes": "Average regret multiplied by T. Optimal up to a log factor per paper."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "dujww13",
+   "cited_title": "Optimal rates for zero-order optimization: the power of two function evaluations",
+   "cited_first_author": "J. Duchi",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Two-point zero-order / bandit convex optimization, G_2-Lipschitz convex functions on Euclidean ball of radius R (average error lower bound c G_2 R sqrt(d/T), times T)",
+   "bound": {
+    "notation": "Omega",
+    "expression": "L_lip*R*sqrt(d*T)",
+    "expression_latex": "G_2 R\\sqrt{d/T}",
+    "regime": null
+   },
+   "where": "Section 2, after Corollary 1 (implied by 'matches (up to constants) the lower bound')"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:26:56",
+  "source_chars": 29309,
+  "input_tokens": 44943,
+  "output_tokens": 5133,
+  "cost_usd_equiv": 0.24462279999999997,
+  "status": "extracted"
+ }
+}

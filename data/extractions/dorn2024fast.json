@@ -1,0 +1,294 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Fast UCB-type algorithms for stochastic bandits with heavy and super heavy symmetric noise",
+  "arxiv_id": "2402.07062",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Yuriy Dorn",
+   "Aleksandr Katrutsa",
+   "Ilgam Latypov",
+   "Andrey Pudovikov"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Stochastic MAB with heavy / super-heavy symmetric noise (Assumption 1)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Reward X = mu_i + xi with noise having a symmetric density",
+    "Noise only needs E|xi|^alpha <= sigma^alpha for some alpha > 0 (possibly alpha < 1, no mean of the noise required)"
+   ],
+   "definition_quote": "For any arm $i$ ($i=1,\\dots,K$) and any round $t$ ($t=1, \\dots, T$), random reward $X_i^t = \\mu_i + \\xi_i^t$ and the probability density function $\\rho_i^t$ of the noise $\\xi_i^t$ satisfy ... $\\rho(u) = \\rho(-u)$ for any $u \\in \\R$  (symmetric noise), there are $\\sigma > 0$ and $\\alpha>0$, such that $\\EE[|\\xi_i^t|^{\\alpha}] \\leq \\sigma^{\\alpha}$ (heavy tail)."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "FO-UCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "ZO-UCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "Clipped-SGD-UCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(Delta_i*(g_inv(Delta_i**2/8, 1/T**2) + 2))",
+    "expression_latex": "R_T \\leq \\sum_{i: \\Delta_i>0} \\Delta_i \\left (g^{-1}\\left (\\frac{\\Delta_i^2}{8}, \\frac{1}{T^2} \\right ) + 2 \\right )",
+    "regime": null
+   },
+   "symbols": {
+    "g_inv": "inverse in k of the bounding function g(k, delta) of the inner first-order optimization algorithm"
+   },
+   "conditions": [
+    "inner first-order algorithm is g(k,delta)-bounding for f_i(x)=(x-mu_i)^2/2"
+   ],
+   "tuning": [
+    "delta = 1/T^2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:FO_UCB",
+    "number": "Theorem 2",
+    "quote": "The regret of the \\algname{FO-UCB} with $g(k, \\delta)$-bounded first-order algorithm for the MAB problem with $K$ arms, auxiliary functions $f_i(x) = \\frac{1}{2}(x-\\mu_i)^2$, period $T$, $\\delta=\\frac{1}{T^2}$ satisfies R_T \\leq \\sum_{i: \\Delta_i>0} \\Delta_i (g^{-1}(\\frac{\\Delta_i^2}{8}, \\frac{1}{T^2}) + 2)"
+   },
+   "confidence": "medium",
+   "notes": "Generic reduction bound. Appendix restatement (Theorem 11) uses delta=1/(T(T+1)) and +1 instead of +2."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_arms(Delta_i*(g_inv(Delta_i/2, 1/T**2) + 2))",
+    "expression_latex": "R_T = \\sum_{i=1}^K \\Delta_i \\left ( g^{-1}\\left (\\frac{\\Delta_i}{2}, \\frac{1}{T^2} \\right ) + 2\\right )",
+    "regime": null
+   },
+   "symbols": {
+    "g_inv": "inverse in k of the bounding function g(k, delta) of the inner zero-order optimization algorithm"
+   },
+   "conditions": [
+    "inner algorithm is g(k,delta)-bounding for f_i(x)=|x-mu_i|"
+   ],
+   "tuning": [
+    "delta = 1/T^2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:ZO_UCB",
+    "number": "Theorem 3",
+    "quote": "The regret of the \\algname{ZO-UCB} with $g(k, \\delta)$-bounded first-order algorithm for the MAB problem with $K$ arms, auxiliary functions $f_i(x) = |x-\\mu_i|$, period $T$, $\\delta=\\frac{1}{T^2}$ satisfies R_T = \\sum_{i=1}^K \\Delta_i ( g^{-1}(\\frac{\\Delta_i}{2}, \\frac{1}{T^2} ) + 2)"
+   },
+   "confidence": "medium",
+   "notes": "Paper writes '=' but proof gives an upper bound; recorded as upper bound. Appendix restatement (Theorem 12) uses delta=1/(T(T+1)) and +1."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*log((T+1)*T*R_0**2)*sqrt(C_sgd*log(4*T*(T+1)**2)*T*K) + sum_arms(Delta_i)",
+    "expression_latex": "R_T \\leq 4\\log((T+1)TR^2)\\sqrt{C \\log(4T(T+1)^2)TK} +  \\sum_i \\Delta_i",
+    "regime": null
+   },
+   "symbols": {
+    "C_sgd": "constant from the clipped-SGD convergence theorem (C = 5400 sigma^2 in the proof)",
+    "R_0": "bound R >= |x_0 - x^*| on initial distance of the estimate to the mean"
+   },
+   "conditions": [
+    "symmetric reward noise (Assumption 1)",
+    "Assumptions 5 and 6 hold for the gradient estimator",
+    "number of iterations sufficiently large (from Theorem 7)"
+   ],
+   "tuning": [
+    "gamma = min(1/(400 L ln(4(K+1)/delta)), ln((K+1)R^2)/(K+1))",
+    "lambda_k = exp(-gamma(1+k/2)) R/(120 gamma ln(4(K+1)/delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:MAB_theorem",
+    "number": "Theorem 9",
+    "quote": "The regret of the \\algname{Clipped-SGD-UCB} for multi-armed bandit problem with $K$ arms, period $T$, $\\gamma = ...$, $\\lambda_k= ...$ and symmetric distribution of rewards satisfies: R_T \\leq 4\\log((T+1)TR^2)\\sqrt{C \\log(4T(T+1)^2)TK} +  \\sum_i \\Delta_i"
+   },
+   "confidence": "medium",
+   "notes": "Abstract summarizes as O(log T sqrt(KT log T)). The K in the tuning formulas is the optimization iteration count, not number of arms. Constants C, R not fully specified."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(Delta_i + 8*C_sgd*log(4*T*(T+1)**2)*log((T+1)*T*R_0**2)**2/Delta_i)",
+    "expression_latex": "R_T \\leq \\sum_{i: \\Delta_i>0}  \\left [ \\Delta_i + \\frac{8C \\log(4T(T+1^2)) \\log^2((T+1)TR^2)}{\\Delta_i}\\right ]",
+    "regime": null
+   },
+   "symbols": {
+    "C_sgd": "constant from the clipped-SGD convergence theorem (C = 5400 sigma^2 in the proof)",
+    "R_0": "bound R >= |x_0 - x^*| on initial distance of the estimate to the mean"
+   },
+   "conditions": [
+    "symmetric reward noise (Assumption 1)",
+    "Assumptions 5 and 6 hold for the gradient estimator",
+    "number of iterations sufficiently large (from Theorem 7)"
+   ],
+   "tuning": [
+    "gamma = min(1/(400 L ln(4(K+1)/delta)), ln((K+1)R^2)/(K+1))",
+    "lambda_k = exp(-gamma(1+k/2)) R/(120 gamma ln(4(K+1)/delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:MAB_theorem",
+    "number": "Theorem 9",
+    "quote": "R_T \\leq \\sum_{i: \\Delta_i>0}  \\left [ \\Delta_i + \\frac{8C \\log(4T(T+1^2)) \\log^2((T+1)TR^2)}{\\Delta_i}\\right ]"
+   },
+   "confidence": "medium",
+   "notes": "Paper writes (T+1^2), interpreted as (T+1)^2 typo."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "bubeck2013bandits",
+   "cited_title": "Bandits with heavy tail",
+   "cited_first_author": "Sébastien Bubeck",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Stochastic K-armed bandits with heavy-tailed rewards, E|X|^{1+alpha} <= sigma^{1+alpha}, alpha in (0,1]",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T**(1/(1+eps_m))*K**(eps_m/(1+eps_m))",
+    "expression_latex": "\\Omega\\left ( T^{\\frac{1}{1+\\alpha}} K^{\\frac{\\alpha}{1+\\alpha}} \\right )",
+    "regime": null
+   },
+   "where": "Introduction"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:29:13",
+  "source_chars": 66473,
+  "input_tokens": 62487,
+  "output_tokens": 5099,
+  "cost_usd_equiv": 0.38429479999999994,
+  "status": "extracted"
+ }
+}

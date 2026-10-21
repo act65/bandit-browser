@@ -1,0 +1,160 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "A Distribution Optimization Framework for Confidence Bounds of Risk Measures",
+  "arxiv_id": "2306.07059",
+  "arxiv_version": null,
+  "year": 2023,
+  "authors": [
+   "Hao Liang",
+   "Zhi-quan Luo"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "CVaR bandit (risk-sensitive MAB)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Arms are evaluated by CVaR of their loss distribution at level alpha (risk-sensitive objective) rather than the mean; regret measured in CVaR gaps",
+    "Loss distributions supported on [a, infinity) with known lower bound a (the bound also involves an upper bound b)"
+   ],
+   "definition_quote": "The performance of an algorithm $\\pi$ is measured by the cumulative regret \\[\\text{Regret}(\\pi,\\nu,N)\\triangleq \\bE\\brk{\\sum_{t\\in[N]} \\rT(F_{I_t})-\\min_{i\\in[K]}\\rT(F_{i}) }.\\]"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Lower Confidence Bound meta-algorithm (CVaR-UCB when T = CVaR)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*log(sqrt(2)*T)/alpha_cvar**2*sum_subopt((b_up - q_i)**2/Delta_i) + 3*sum_arms(Delta_i)",
+    "expression_latex": "\\frac{4\\log(\\sqrt{2}N)}{\\alpha^2}\\sum_{i>1}^K\\frac{\\prt{b-F_i^{-1}(1-\\alpha-2c^*_i)}^2}{\\Delta_i}+3\\sum_{i=1}^K\\Delta_i",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_cvar": "CVaR level alpha",
+    "b_up": "upper bound b of the loss support",
+    "q_i": "F_i^{-1}(1-alpha-2c_i^*), quantile of arm i's loss distribution",
+    "c_i_star": "solution c of 2(b-F_i^{-1}(1-alpha-2c))c/alpha = Delta_i",
+    "Delta_i": "CVaR gap C_alpha(F_i) - C_alpha(F_1)"
+   },
+   "conditions": [
+    "risk measure is CVaR at level alpha",
+    "Delta_i < b - F_i^{-1}(1-alpha)",
+    "arm 1 is the unique optimal arm (T(F_1) < T(F_i))"
+   ],
+   "tuning": [
+    "c_i(t) = sqrt(log(2KN^2)/s_i(t))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:reg",
+    "number": "Proposition 6.1",
+    "quote": "The expected regret of Algorithm \\ref{alg:lcb} on a instance $\\nu\\in \\sD([a,\\infty])$ with $\\rT=C_{\\alpha}$ is bounded as \\text{Regret}(\\text{LCB},\\nu,N) \\leq \\frac{4\\log(\\sqrt{2}N)}{\\alpha^2}\\sum_{i>1}^K\\frac{\\prt{b-F_i^{-1}(1-\\alpha-2c^*_i)}^2}{\\Delta_i}+3\\sum_{i=1}^K\\Delta_i, where the sub-optimality gap $\\Delta_i\\triangleq C_{\\alpha}(F_i)-C_{\\alpha}(F_1)<b-F_i^{-1}(1-\\alpha)$..."
+   },
+   "confidence": "medium",
+   "notes": "Regret is defined through CVaR values of the chosen arms (risk analogue of pseudo-regret). Instance stated as D([a,inf]) but the bound involves b, the upper support bound; ambiguity in the paper. N is the horizon T."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "tamkin2019distributionally",
+   "cited_title": "Distributionally-aware exploration for cvar bandits",
+   "cited_first_author": "Tamkin",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CVaR-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "CVaR bandit with losses bounded in [a,b], K arms, horizon N",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*log(sqrt(2)*T)/alpha_cvar**2*sum_subopt((b_up - a_low)**2/Delta_i) + 3*sum_arms(Delta_i)",
+    "expression_latex": "\\frac{4\\log(\\sqrt{2}N)}{\\alpha^2}\\sum_{i>1}^K\\frac{\\prt{b-a}^2}{\\Delta_i}+3\\sum_{i=1}^K\\Delta_i",
+    "regime": null
+   },
+   "where": "Remark 6.3"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T10:00:17",
+  "source_chars": 122550,
+  "input_tokens": 95409,
+  "output_tokens": 3011,
+  "cost_usd_equiv": 0.6059108,
+  "status": "extracted"
+ }
+}

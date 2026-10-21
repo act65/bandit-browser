@@ -1,0 +1,198 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Time-varying Gaussian Process Bandit Optimization with Experts: no-regret in logarithmically-many side queries",
+  "arxiv_id": "2510.21274",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Eliabelle Mauduit",
+   "Eloïse Berthier",
+   "Andrea Simonetto"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Time-varying GP bandit optimization with expert side queries",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "nonstationary_drifting",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "sigma"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each f_t lies in an RKHS with bounded kernel k(x,x) <= M_k^2 and ||f_t||_k <= B (B used in beta_t)",
+    "Per-round variation bounded: sup_x |f_{t+1}(x)-f_t(x)| <= 1 (not a total variation budget V_T)",
+    "Learner may additionally query an expert for noisy evaluations of the current f_t at O(log^d t) points per round",
+    "Squared exponential kernel",
+    "Regret is dynamic: against max_x f_t(x) at each round"
+   ],
+   "definition_quote": "We consider the problem of sequentially optimizing a reward function $f: \\Dset \\times \\mathbb{R}_+ \\to \\mathbb{R}$ where $\\Dset \\subset \\mathbb{R}^d$ is a compact convex set... $y_t = f(x_t, t) + \\epsilon_t$, where $\\epsilon_t \\sim \\mathcal{N}(0, \\sigma^2)$... $R_T = \\sum_{t=1}^T (\\max_{x} f_t(x) - f_t(x_t))$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "SparQ-GP-UCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "restarts_or_sliding_window",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "RKHS norm bound ||f_t||_k",
+    "kernel k",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*d*log(T)**(d+5))*sqrt(log(1/delta) + d*log(d*log(T))**(d+3))",
+    "expression_latex": "\\mathcal{O}\\left(\\sqrt{ Td \\log^{d+5}(T)}\\sqrt{\\log\\left( \\frac{1}{\\delta} \\right) +  d \\log^{d+3}\\left( d\\log\\left(T \\right) \\right)}\\right) = \\Ot(\\sqrt{T})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "Assumption 1: f_t in RKHS with k(x,x) <= M_k^2 and ||f_t||_k <= B",
+    "Assumption 2: sup_x |f_{t+1}(x) - f_t(x)| <= 1",
+    "squared exponential kernel",
+    "Gaussian noise N(0, sigma^2) i.i.d.",
+    "expert queried O(log^d t) times per round with noisy updated observations"
+   ],
+   "tuning": [
+    "beta_t = sqrt(2 log(2|Sigma^s_t + K^s_tt|^{1/2}/(delta |Sigma^s_t|^{1/2}))) + ||f_t||_k",
+    "discard observations with injected variance > sigma^2 log t"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "Thm:regret",
+    "number": "Theorem (Thm:regret)",
+    "quote": "Take any $0 < \\delta \\leq 1$ ... Then, with probability at least $1-\\delta$, by asking to an expert $\\mathcal{O}\\left(\\log^d (t)\\right)$ queries per time step, SparQ-GP-UCB attains a cumulative dynamic regret of $R_T = \\mathcal{O}\\left(\\sqrt{ Td \\log^{d+5}(T)}\\sqrt{\\log\\left( \\frac{1}{\\delta} \\right) +  d \\log^{d+3}\\left( d\\log\\left(T \\right) \\right)}\\right) = \\Ot(\\sqrt{T})$."
+   },
+   "confidence": "medium",
+   "notes": "Regret uses extra expert observations beyond bandit feedback. Horizon marked anytime since algorithm does not use T, though theorem says 'Let T be a time horizon'. Constants (sigma, B, M_k) hidden. Computational complexity theorem (O~(T^2)) not recorded as performance bound."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Srinivas_2012",
+   "cited_title": "Information-theoretic regret bounds for Gaussian Process optimization in the bandit setting",
+   "cited_first_author": "Srinivas",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GP-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Static GP bandit, f with bounded RKHS norm, squared exponential kernel",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)",
+    "expression_latex": "R_T = \\Ot(\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "bogunovic2016",
+   "cited_title": "Time-varying Gaussian Process bandit optimization",
+   "cited_first_author": "Bogunovic",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Time-varying GP bandit with forgetting factor epsilon spatio-temporal kernel",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T*eps_f",
+    "expression_latex": "\\mathbb{E}[R_T]=\\Omega(T\\varepsilon)",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "bogunovic2016",
+   "cited_title": "Time-varying Gaussian Process bandit optimization",
+   "cited_first_author": "Bogunovic",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": "TV-GP-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Time-varying GP bandit with forgetting factor epsilon",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T",
+    "expression_latex": "R_T = \\Ot(T)",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:47:43",
+  "source_chars": 85139,
+  "input_tokens": 72019,
+  "output_tokens": 3328,
+  "cost_usd_equiv": 0.42513080000000003,
+  "status": "extracted"
+ }
+}

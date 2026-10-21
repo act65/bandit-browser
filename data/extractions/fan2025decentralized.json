@@ -1,0 +1,261 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Decentralized Asynchronous Multi-player Bandits",
+  "arxiv_id": "2509.25824",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Jingqi Fan",
+   "Canzhe Zhao",
+   "Shuai Li",
+   "Siwei Wang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Decentralized asynchronous multi-player multi-armed bandit (MP-MAB)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "multi_player_collision"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "M players join and leave the system at arbitrary unknown times (asynchronous); no global clock; players do not know their own start/end times",
+    "decentralized: each player observes only her own arm, reward, and collision indicator; no communication",
+    "number of simultaneously active players bounded by m <= K/2 (Assumption 1)",
+    "regret benchmark is the sum of the top m_t means at each time, where m_t is the number of active players",
+    "collision sensing: players observe the collision indicator"
+   ],
+   "definition_quote": "We consider a T-step decentralized asynchronous multi-player multi-armed bandit problem with K arms and M players. ... Each player j joins the system at time step T^j_start and leaves at time step T^j_end. ... player j is unaware of her own T^j_start and T^j_end, and only knows that the game lasts for a total of T time steps."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "ACE (Adaptive Change between Exploration and Exploitation)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "m (max number of active players; can be replaced by K/2 per Corollary)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "576*E*m_act*K*M_pl*log(T)/Delta_m**2 + 96*m_act**(3/2)*M_pl*sqrt(T*log(T)) + 7704*m_act**2*K*M_pl*log(T) + (4*E*m_act*K*M_pl)**2",
+    "expression_latex": "\\frac{576emKM\\log(T)}{\\Delta^2} + 96m^{3/2}M\\sqrt{T\\ln(T)} + 7704m^2KM\\ln(T) + (4emKM)^2",
+    "regime": null
+   },
+   "symbols": {
+    "m_act": "upper bound on the number of simultaneously active players (paper's m)",
+    "M_pl": "total number of players (paper's M)",
+    "Delta_m": "min_{k<=m}(mu_k - mu_{k+1})"
+   },
+   "conditions": [
+    "m_t <= m <= K/2 for all t (Assumption 1)",
+    "means are distinct: mu_1 > mu_2 > ... > mu_K",
+    "rewards in [0,1]"
+   ],
+   "tuning": [
+    "epsilon = min{sqrt(1141 m^3 ln T/(2T)), 1/K, 1/10}",
+    "L_p = ceil(866 ln T), L_q = ceil(570 ln T)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:upper",
+    "number": "Theorem (th:upper)",
+    "quote": "Let $\\varepsilon = \\min\\{ \\sqrt{\\frac{1141m^3\\ln(T) }{2T}}, \\frac{1}{K}, \\frac{1}{10} \\}$. Then given $K$ arms and $M$ players, the regret of Algorithm \\ref{alg:1} is bounded by R(T) \\leq \\frac{576emKM\\log(T)}{\\Delta^2} + 96m^{3/2}M\\sqrt{T\\ln(T)} + 7704m^2KM\\ln(T) + (4emKM)^2, where $\\Delta := \\min_{k\\leq m}(\\mu_k- \\mu_{k+1})$."
+   },
+   "confidence": "medium",
+   "notes": "Regret is against the sum of top-m_t means per round (centralized offline benchmark); comparator mapped to best_policy as an approximation. Algorithm requires m as input."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "288*E*K**2*M_pl*log(T)/Delta_m**2 + 34*K**(3/2)*M_pl*sqrt(T*log(T)) + 1926*K**3*M_pl*log(T) + (3*E*K**2*M_pl)**2",
+    "expression_latex": "\\frac{288eK^2M\\log(T)}{\\Delta^2} + 34K^{3/2}M\\sqrt{T\\ln(T)} + 1926K^3M\\ln(T) + (3eK^2M)^2",
+    "regime": null
+   },
+   "symbols": {
+    "M_pl": "total number of players (paper's M)",
+    "Delta_m": "min_{k<=m}(mu_k - mu_{k+1})"
+   },
+   "conditions": [
+    "m_t <= m <= K/2 for all t (Assumption 1)",
+    "means are distinct: mu_1 > ... > mu_K",
+    "rewards in [0,1]"
+   ],
+   "tuning": [
+    "m replaced by K/2 in the algorithm (unknown m)",
+    "epsilon = min{sqrt(1141 K^3 ln T/(16T)), 1/K, 1/10}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:upper",
+    "number": "Corollary (cor:upper)",
+    "quote": "Given $K$ arms and $M$ players, $\\varepsilon = \\min\\{ \\sqrt{\\frac{1141K^3\\ln(T)}{16T}}, \\frac{1}{K}, \\frac{1}{10} \\}$, the regret of Algorithm \\ref{alg:1} is bounded by R(T) \\leq \\frac{288eK^2M\\log(T)}{\\Delta^2} + 34K^{3/2}M\\sqrt{T\\ln(T)} + 1926K^3M\\ln(T) + (3eK^2M)^2, where $\\Delta = \\min_{k\\leq m}(\\mu_k- \\mu_{k+1})$."
+   },
+   "confidence": "medium",
+   "notes": "Unknown-m variant; algorithm does not need m."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "boursier2019sic",
+   "cited_title": "Sic-mmab: Synchronisation involves communication in multiplayer multi-armed bandits",
+   "cited_first_author": "Etienne Boursier",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "DYN-MMAB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Decentralized MP-MAB, players arrive at different times but never leave, no communication",
+   "bound": {
+    "notation": "O",
+    "expression": "K*M_pl*log(T)/Delta_1**2 + K*M_pl**2*log(T)/mu_M",
+    "expression_latex": "\\mathcal{O} \\left(\\frac{KM\\log T}{\\Delta^2_{(1)}} + \\frac{KM^2\\log T}{\\mu_M}  \\right)",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "dakdouk2022massive",
+   "cited_title": "Massive multi-player multi-armed bandits for internet of things networks",
+   "cited_first_author": "Hiba Dakdouk",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Decentralized MP-MAB with explicit communication, each player active with probability p",
+   "bound": {
+    "notation": "O",
+    "expression": "Max(K**2, log(K*T)/(M_pl*p*(1 - p/K)**M_pl))*T**(2/3)",
+    "expression_latex": "\\mathcal{O} \\left(\\max \\left\\{K^2, \\frac{\\log(KT)}{Mp(1-p/K)^{M}}\\right\\}T^{2/3}\\right)",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "richard2024constant",
+   "cited_title": "Constant or logarithmic regret in asynchronous multiplayer bandits with limited communication",
+   "cited_first_author": "Hugo Richard",
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Centralized MP-MAB with communication, known activation probability p",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(K*T)*Min(K, M_pl*p))",
+    "expression_latex": "\\mathcal{O} \\left( \\sqrt{KT\\log(KT)\\min\\{K, Mp\\}} \\right)",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "richard2024constant",
+   "cited_title": "Constant or logarithmic regret in asynchronous multiplayer bandits with limited communication",
+   "cited_first_author": "Hugo Richard",
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Centralized MP-MAB with communication, known activation probability p (gap-dependent)",
+   "bound": {
+    "notation": "O",
+    "expression": "(K**2 + (1 + p)*M_pl**2)*log(K*T)/Delta_2",
+    "expression_latex": "\\mathcal{O} \\left( \\frac{(K^2+(1+p)M^2)\\log(KT)}{\\Delta_{(2)}} \\right)",
+    "regime": null
+   },
+   "where": "Table 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:41:23",
+  "source_chars": 126922,
+  "input_tokens": 94380,
+  "output_tokens": 4754,
+  "cost_usd_equiv": 0.6325388000000001,
+  "status": "extracted"
+ }
+}

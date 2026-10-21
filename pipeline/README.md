@@ -21,6 +21,7 @@ uv run python pipeline/fetch_pdf.py         # non-arXiv papers: PDF -> text (man
 uv run python pipeline/derive.py            # resolve -> infer -> compare -> report -> acceptance -> site_index
 uv run python pipeline/verify.py            # second-reading verification -> data/extractions_verified/ (never edits extractions)
 uv run python pipeline/triage.py            # web search per candidate gap -> data/reports/triage.yaml
+uv run python pipeline/review_unmapped.py   # themes of unmapped setting features -> ontology/review-v<version>.md
 uv run python site/build.py && python3 -m http.server -d _site 8000
 ```
 
@@ -71,7 +72,7 @@ Each record carries its derivation and caveats. Inferred results never feed furt
 ## Corrections and condition classes
 
 - `data/corrections.yaml`: manual corrections, applied by `resolve.py` on top of `data/extractions/`, each recording author, reason and review status.
-- `data/condition-classes.yaml`: classes for the free-text result `conditions` (`classify_conditions.py`, cached). Upper bounds with an instance restriction stay out of tightness verdicts but remain visible.
+- `data/condition-classes.yaml`: classes for the free-text result `conditions` (`classify_conditions.py`, cached). Upper bounds with an instance restriction (or proved only for small T / on a constructed class), lower bounds for restricted algorithms (memory, batches; consistency assumptions excepted), and results under a `model_change` (quantum oracles, starved feedback, …) stay out of tightness verdicts but remain visible. `--all` reclassifies every string (hand edits are then lost).
 
 ## Bound comparison (D2)
 

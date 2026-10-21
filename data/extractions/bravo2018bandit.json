@@ -1,0 +1,325 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Bandit learning in concave $N$-person games",
+  "arxiv_id": "1810.01925",
+  "arxiv_version": null,
+  "year": 2018,
+  "authors": [
+   "Mario Bravo",
+   "David S. Leslie",
+   "Panayotis Mertikopoulos"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Monotone concave N-person game with bandit (payoff-based) feedback",
+   "objective": "other_pure_exploration",
+   "feedback": "bandit",
+   "environment": "adversarial_adaptive",
+   "action_space": "convex_body",
+   "function_class": [
+    "smooth"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "noise_free",
+   "learner_knows": [
+    "d",
+    "r_K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Multi-agent non-cooperative concave game; the guarantee is convergence of play to Nash equilibrium, not single-agent bandit regret.",
+   "unmapped": [
+    "N players each with a compact convex action set; payoff concave in own action, depends on all players' actions",
+    "Game is monotone (diagonal strict concavity) or beta-strongly monotone",
+    "Individual payoff gradients are Lipschitz continuous",
+    "Objective: convergence of realized actions to the Nash equilibrium (E||X_hat_n - x*||^2)",
+    "Each player knows a safety ball B_r(p) inside its action set"
+   ],
+   "definition_quote": "Throughout this paper, we will focus on games with a finite number of players $\\play\\in\\players = \\{1,\\dotsc,\\nPlayers\\}$ and continuous action sets... we posit instead that players rely on a \\acf{SPSA} approach that allows them to estimate their individual payoff gradients $\\payv_{\\play}$ based off a \\emph{single} function evaluation."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Strongly monotone concave game with stochastic first-order oracle feedback",
+   "objective": "other_pure_exploration",
+   "feedback": "full_information",
+   "environment": "adversarial_adaptive",
+   "action_space": "convex_body",
+   "function_class": [
+    "smooth"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "not_applicable",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Multi-agent game; convergence to Nash equilibrium with gradient oracle feedback.",
+   "unmapped": [
+    "Feedback is a stochastic first-order oracle: unbiased gradient estimates with bounded conditional second moment V^2 (not full information of losses)",
+    "Game is beta-strongly monotone",
+    "Objective: E||X_n - x*||^2"
+   ],
+   "definition_quote": "It is therefore more common to assume that each player has access to a \\emph{stochastic oracle} which ... produces a sequence of gradient estimates ... Unbiasedness ... Finite mean square"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Multi-agent mirror descent with bandit feedback (MD-b, SPSA one-point estimate)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "d",
+    "r_K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Multi-agent mirror descent with first-order oracle feedback (MD)",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "almost_sure",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "limsup",
+    "expression": "0",
+    "expression_latex": "\\hat X_n \\to x^* \\text{ a.s.}",
+    "regime": "n -> infinity"
+   },
+   "symbols": {},
+   "conditions": [
+    "game is monotone (DSC)",
+    "payoff gradients Lipschitz",
+    "Bregman reciprocity"
+   ],
+   "tuning": [
+    "gamma_n -> 0, delta_n -> 0",
+    "sum gamma_n = infinity",
+    "sum gamma_n*delta_n < infinity",
+    "sum gamma_n^2/delta_n^2 < infinity"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:convergence",
+    "number": "Theorem 1",
+    "quote": "Suppose that the players of a monotone game follow (MD-b) with step-size gamma_n and query radius delta_n such that lim gamma_n = lim delta_n = 0, sum gamma_n = infinity, sum gamma_n delta_n < infinity, and sum gamma_n^2/delta_n^2 < infinity. Then, the sequence of realized actions hat X_n converges to Nash equilibrium with probability 1."
+   },
+   "confidence": "low",
+   "notes": "This is an asymptotic convergence statement with no rate, recorded as limsup of the distance to the Nash-equilibrium set = 0 almost surely."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(-1/3)",
+    "expression_latex": "\\mathbb{E}[\\|\\hat X_n - x^*\\|^2] = O(n^{-1/3})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "game is beta-strongly monotone",
+    "payoff gradients Lipschitz"
+   ],
+   "tuning": [
+    "Euclidean projections",
+    "gamma_n = gamma/n with gamma > 1/(3*beta_sm)",
+    "delta_n = delta/n^(1/3), delta > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:rate",
+    "number": "Theorem 2",
+    "quote": "Let x* be the (necessarily unique) Nash equilibrium of a beta-strongly monotone game. If the players follow (MD-b) with Euclidean projections and parameters gamma_n = gamma/n and delta_n = delta/n^{1/3} with gamma > 1/(3 beta) and delta>0, we have E[||hat X_n - x*||^2] = O(n^{-1/3})."
+   },
+   "confidence": "high",
+   "notes": "The bound is on the squared distance of the realized actions to the Nash equilibrium at round n (here T = n). Theorem 9(b) in the appendix restates the same result. Tuning the step size requires knowing the strong-monotonicity constant beta_sm, which is not the canonical smoothness beta."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "1/T",
+    "expression_latex": "\\mathbb{E}[\\|X_n - x^*\\|^2] = O(n^{-1})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "game is beta-strongly monotone",
+    "oracle unbiased with finite conditional second moment V^2"
+   ],
+   "tuning": [
+    "Euclidean projections",
+    "gamma_n = gamma/n with gamma > 1/beta_sm"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:rates",
+    "number": "Theorem 9",
+    "quote": "If the players have access to a gradient oracle satisfying (oracle) and they follow (MD) with Euclidean projections and step-size sequence gamma_n = gamma/n for some gamma > 1/beta, we have E[||X_n - x*||^2] = O(n^{-1})."
+   },
+   "confidence": "medium",
+   "notes": "This is part (a) of Theorem 9. Part (b) duplicates Theorem 2."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "ADX10",
+   "cited_title": "Optimal algorithms for online convex optimization with multi-point bandit feedback",
+   "cited_first_author": "Alekh Agarwal",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Single-agent bandit stochastic convex optimization with strongly convex and smooth objectives",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(-1/2)",
+    "expression_latex": "O(n^{-1/2})",
+    "regime": null
+   },
+   "where": "Section 5, discussion after Theorem 2"
+  },
+  {
+   "cited_key": "ADX10",
+   "cited_title": "Optimal algorithms for online convex optimization with multi-point bandit feedback",
+   "cited_first_author": "Alekh Agarwal",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Single-agent bandit stochastic convex optimization with strongly convex (not necessarily smooth) objectives",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(-1/3)",
+    "expression_latex": "O(n^{-1/3})",
+    "regime": null
+   },
+   "where": "Section 5, discussion after Theorem 2"
+  },
+  {
+   "cited_key": "Sha13",
+   "cited_title": "On the complexity of bandit and derivative-free stochastic convex optimization",
+   "cited_first_author": "Ohad Shamir",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Single-agent bandit stochastic convex optimization, strongly convex and smooth objectives (time-averaged output)",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T**(-1/2)",
+    "expression_latex": "\\Theta(n^{-1/2})",
+    "regime": null
+   },
+   "where": "Section 5, discussion after Theorem 2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:46:28",
+  "source_chars": 109828,
+  "input_tokens": 83471,
+  "output_tokens": 5627,
+  "cost_usd_equiv": 0.5627268,
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,626 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Efficient Change-Point Detection for Tackling Piecewise-Stationary Bandits",
+  "arxiv_id": "1902.01575",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Lilian Besson",
+   "Emilie Kaufmann",
+   "Odalric-Ambrym Maillard",
+   "Julien Seznec"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Piecewise stationary (piecewise i.i.d.) bandit with bounded rewards",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "nonstationary_switching",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "extras": [],
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Number of breakpoints Upsilon_T is NOT known to the learner",
+    "Regret measured against the current best arm at each round (dynamic regret)",
+    "Breakpoints must be sufficiently spaced relative to change magnitudes (Assumption 4 / 11)"
+   ],
+   "definition_quote": "A piecewise stationary bandit model is characterized by a stream of (random) rewards $(X_{a,t})$ ... we assume that $X_{a,t} \\in [0,1]$. ... $R_T^{\\pi} = \\E\\left[\\sum_{t=1}^T \\left(\\mu_{a^\\star_t}(t) - \\mu_{A_t}(t)\\right)\\right]$. In the piecewise i.i.d. model, we furthermore assume that there is a (relatively small) number of breakpoints, denoted by $\\Upsilon_T$"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Piecewise stationary bandit, number of changepoints C_T known",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "nonstationary_switching",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "extras": [],
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Learner knows the total number of changepoints C_T (sum over arms of per-arm changepoints)",
+    "Changepoints on each arm must be sufficiently spaced (Assumption 11)"
+   ],
+   "definition_quote": "If $C_T$ is known, choosing $\\alpha_k = \\sqrt{\\frac{C_T A \\ln(T)}{T}}$ and $\\delta = \\frac{1}{T^\\gamma}$ yields ..."
+  },
+  {
+   "id": "s3",
+   "name_in_paper": "Sequential change-point detection (Bernoulli GLR) for bounded samples",
+   "objective": "other_pure_exploration",
+   "feedback": "full_information",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "extras": [],
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Sequential change-point detection test (false alarm control), not a bandit problem",
+   "unmapped": [
+    "False alarm probability of a sequential test under no change"
+   ],
+   "definition_quote": "Assume that we collect independent samples $X_1,X_2,\\ldots$ all from some distribution supported in $[0,1]$. We want to discriminate between two possible scenarios"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "GLR-klUCB (Global restart)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "restarts_or_sliding_window"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "GLR-klUCB (Local restart)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "restarts_or_sliding_window"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "Bernoulli GLR change point detector",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s3",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "delta",
+    "expression_latex": "\\bP_{\\mu_0}(\\hat\\tau_\\delta < \\infty) \\leq \\delta",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "all samples have common mean mu_0 and lie in [0,1]"
+   ],
+   "tuning": [
+    "beta(n,delta) = 2*T(ln(3 n sqrt(n)/delta)/2) + 6 ln(1+ln n)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "lem:FalseAlarm",
+    "number": "Lemma 2",
+    "quote": "Assume that there exists $\\mu_0 \\in [0,1]$ such that $\\bE[X_t] = \\mu_0$ and that $X_i \\in [0,1]$ for all $i$. Then the Bernoulli GLR test satisfies $\\bP_{\\mu_0}(\\hat\\tau_\\delta < \\infty) \\leq \\delta$ with the threshold function ..."
+   },
+   "confidence": "medium",
+   "notes": "False alarm probability of the change-point detector; out of bandit scope."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "(K+1)*S_T*delta*T + K*delta*T + alpha_U1*T + Seg_sum",
+    "expression_latex": "(A+1)\\Upsilon_T \\delta T + A\\delta T + \\alpha_{\\Upsilon_T+1} T + \\sum_{k=0}^{\\Upsilon_T}\\sum_{a : \\Delta_a^{(k)}>0} \\min \\{\\Delta_a^{(k)}(\\tau^{(k+1)}-\\tau^{(k)}) ; \\Delta_a^{(k)} [d^{(k)}(\\alpha,\\delta) + \\frac{\\ln(\\tau^{(k+1)}-\\tau^{(k)})}{\\kl(\\mu_a^{(k)},\\mu_{k^\\star}^{(k)})} ] + O(\\sqrt{\\ln(\\tau^{(k+1)}-\\tau^{(k)})})\\}",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_U1": "exploration frequency alpha_{Upsilon_T+1}",
+    "Seg_sum": "sum over stationary segments k and suboptimal arms a of min{Delta_a^(k)(tau^(k+1)-tau^(k)); Delta_a^(k)[d^(k)(alpha,delta) + ln(tau^(k+1)-tau^(k))/kl(mu_a^(k),mu_{k*}^(k))] + O(sqrt(ln(tau^(k+1)-tau^(k))))}",
+    "delta": "confidence parameter of the GLR test (algorithm input)"
+   },
+   "conditions": [
+    "Assumption 4: tau^(k)-tau^(k-1) >= 2 max(d^(k), d^(k-1)) for all k, with d^(k) = ceil(4A/(alpha_k (Delta^{c,(k)})^2) beta(3/2 (tau^(k)-tau^(k-1)),delta) + A/alpha_k)"
+   ],
+   "tuning": [
+    "alpha increasing exploration sequence",
+    "delta in (0,1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:mainRegretBoundGlobal",
+    "number": "Theorem 5",
+    "quote": "For $\\alpha=(\\alpha_1,\\alpha_2,\\dots)$ an increasing exploration sequence and $\\delta$ for which Assumption~\\ref{ass:LongPeriodsGlobal} is satisfied, the regret of \\GLRklUCB{} with parameters $\\alpha$ and $\\delta$ based on \\textbf{Global} Restart satisfies R_T \\leq (A+1)\\Upsilon_T \\delta T + A\\delta T + \\alpha_{\\Upsilon_T+1} T + \\sum ..."
+   },
+   "confidence": "medium",
+   "notes": "Exact bound up to an O(sqrt(log)) term inside; recorded as O. S_T = Upsilon_T number of breakpoints, K = A."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "(1+gamma_d)*sqrt(S_T*K*T*log(T))/Delta_change**2 + (K-1)*S_T*log(T)/Delta_opt",
+    "expression_latex": "(1+\\gamma)\\frac{\\sqrt{\\Upsilon_T AT \\ln(T)}}{(\\Delta^{change})^2} + \\frac{(A-1)}{\\Delta^{opt}} \\Upsilon_T\\ln(T)",
+    "regime": null
+   },
+   "symbols": {
+    "gamma_d": "exponent with delta = T^{-gamma}, gamma in (1/2,1]",
+    "Delta_change": "smallest magnitude of a breakpoint",
+    "Delta_opt": "smallest positive sub-optimality gap over stationary segments"
+   },
+   "conditions": [
+    "Assumption 4 holds for the chosen alpha, delta"
+   ],
+   "tuning": [
+    "alpha_k = alpha_0*sqrt(k*A*ln(T)/T)",
+    "delta = T^{-gamma}, gamma in (1/2,1]"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:Global",
+    "number": "Corollary 6",
+    "quote": "For any $\\alpha_0 \\in \\R^+$ and $\\gamma \\in (1/2,1]$, choosing $\\alpha_k = \\alpha_0\\sqrt{\\frac{kA\\ln(T)}{T}}$ and $\\delta = \\frac{1}{T^\\gamma}$, on problem instances satisfying the corresponding Assumption~\\ref{ass:LongPeriodsGlobal}, the regret of \\GLRklUCB{} satisfies R_T = O((1+\\gamma)\\frac{\\sqrt{\\Upsilon_T AT \\ln(T)}}{(\\Delta^{change})^2} + \\frac{(A-1)}{\\Delta^{opt}} \\Upsilon_T\\ln(T))"
+   },
+   "confidence": "high",
+   "notes": "Does not require knowledge of Upsilon_T."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(S_T*K*T*log(T))/Delta_change**2",
+    "expression_latex": "\\frac{\\sqrt{\\Upsilon_T AT \\ln(T)}}{(\\Delta^{change})^2}",
+    "regime": null
+   },
+   "symbols": {
+    "Delta_change": "smallest magnitude of a breakpoint"
+   },
+   "conditions": [
+    "Assumption 4 holds for the chosen alpha, delta"
+   ],
+   "tuning": [
+    "alpha_k = alpha_0*sqrt(k*A*ln(T)/T)",
+    "delta = T^{-gamma}, gamma in (1/2,1]"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:Global",
+    "number": "Corollary 6",
+    "quote": "and $R_T = \\bigO{\\frac{\\sqrt{\\Upsilon_T AT \\ln(T)}}{\\left(\\Delta^{\\emph{change}}\\right)^2}}.$"
+   },
+   "confidence": "high",
+   "notes": "Gap-free (w.r.t. Delta_opt) version; still depends on Delta_change."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "(K + 2*C_T)*delta*T + alpha_C1*T + Loc_sum + sqrt(log(T))",
+    "expression_latex": "(A+2C_T)\\delta T + \\alpha_{C_T+1} T + 2\\sum_{a=1}^A\\sum_{\\ell=1}^{C_a} \\frac{4A}{\\alpha_\\ell (\\Delta_a^{c,(\\ell)})^2}\\beta(\\tfrac{3}{2}(\\tau_a^{(\\ell)} - \\tau_a^{(\\ell-1)}),\\delta) + \\sum_{a=1}^A\\sum_{\\ell=0}^{C_a} \\frac{\\ln(\\tau_a^{(\\ell+1)} - \\tau_a^\\ell)}{\\kl(\\overline{\\mu}_a^{(\\ell)},{\\mu}_{a}^{(\\ell),*})} +O(\\sqrt{\\ln(T)})",
+    "regime": null
+   },
+   "symbols": {
+    "C_T": "total number of changepoints over all arms",
+    "alpha_C1": "exploration frequency alpha_{C_T+1}",
+    "Loc_sum": "2 sum_a sum_l 4A/(alpha_l (Delta_a^{c,(l)})^2) beta(3/2(tau_a^(l)-tau_a^(l-1)),delta) + sum_a sum_l ln(tau_a^(l+1)-tau_a^(l))/kl(mubar_a^(l), mu_a^{(l),*})",
+    "delta": "confidence parameter of the GLR test"
+   },
+   "conditions": [
+    "Assumption 11: per-arm changepoints spaced tau_a^(l)-tau_a^(l-1) >= 2 max(d_a^(l), d_a^(l-1))"
+   ],
+   "tuning": [
+    "alpha exploration sequence",
+    "delta in (0,1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:mainRegretBound",
+    "number": "Theorem 12",
+    "quote": "For $\\alpha=(\\alpha_1,\\alpha_2,\\dots)$ and $\\delta \\in (0,1)$ for which Assumption~\\ref{ass:LongPeriods} is satisfied, the regret of \\GLRklUCB{} with parameters $\\alpha$ and $\\delta$ based on \\textbf{Local} Restart satisfies R_T \\leq (A+2C_T)\\delta T + \\alpha_{C_T+1} T + ..."
+   },
+   "confidence": "medium",
+   "notes": "Complex sum terms abbreviated via declared symbol."
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "(1+gamma_d)*sum_arms(sqrt(C_a))*sqrt(K*T*log(T))/Delta_cp**2 + C_T*log(T)/Delta_opt**2",
+    "expression_latex": "(1+\\gamma)(\\sum_{a=1}^{A} \\sqrt{C_a})\\frac{\\sqrt{AT\\ln(T)}}{\\Delta^2} + \\frac{C_T\\ln(T)}{(\\Delta^{opt})^2}",
+    "regime": null
+   },
+   "symbols": {
+    "gamma_d": "exponent with delta = T^{-gamma}, gamma > 1/2",
+    "C_a": "number of changepoints on arm a",
+    "C_T": "total number of changepoints",
+    "Delta_cp": "minimum magnitude of any changepoint on any arm",
+    "Delta_opt": "smallest positive sub-optimality gap over stationary segments"
+   },
+   "conditions": [
+    "Assumption 11 holds"
+   ],
+   "tuning": [
+    "alpha_k = sqrt(k*A*ln(T)/T)",
+    "delta = T^{-gamma}, gamma > 1/2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:Local",
+    "number": "Corollary 13",
+    "quote": "Choosing $\\alpha_k = \\sqrt{\\frac{k A\\ln(T)}{T}}$ and $\\delta = \\frac{1}{T^\\gamma}$ yields R_T = O((1+\\gamma)(\\sum_{a=1}^{A} \\sqrt{C_a})\\frac{\\sqrt{AT\\ln(T)}}{\\Delta^2} + \\frac{C_T\\ln(T)}{(\\Delta^{opt})^2})."
+   },
+   "confidence": "high",
+   "notes": "Part 1 of Corollary 13; agnostic to C_T and Upsilon_T."
+  },
+  {
+   "id": "r7",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "(1+gamma_d)*sqrt(C_T*K*T*log(T))/Delta_cp**2 + C_T*log(T)/Delta_opt**2",
+    "expression_latex": "(1+\\gamma)\\frac{\\sqrt{C_T AT\\ln(T)}}{\\Delta^2} + \\frac{C_T\\ln(T)}{(\\Delta^{opt})^2}",
+    "regime": null
+   },
+   "symbols": {
+    "gamma_d": "exponent with delta = T^{-gamma}, gamma > 1/2",
+    "C_T": "total number of changepoints",
+    "Delta_cp": "minimum magnitude of any changepoint on any arm",
+    "Delta_opt": "smallest positive sub-optimality gap over stationary segments"
+   },
+   "conditions": [
+    "Assumption 11 holds"
+   ],
+   "tuning": [
+    "alpha_k = sqrt(C_T*A*ln(T)/T)",
+    "delta = T^{-gamma}, gamma > 1/2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:Local",
+    "number": "Corollary 13",
+    "quote": "If $C_T$ is known, choosing $\\alpha_k = \\sqrt{\\frac{C_T A \\ln(T)}{T}}$ and $\\delta = \\frac{1}{T^\\gamma}$ yields R_T = O((1+\\gamma)\\frac{\\sqrt{C_T AT\\ln(T)}}{\\Delta^2} + \\frac{C_T\\ln(T)}{(\\Delta^{opt})^2})."
+   },
+   "confidence": "high",
+   "notes": "Part 2 of Corollary 13."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Auer02NonStochastic",
+   "cited_title": "The Non-Stochastic Multi-Armed Bandit Problem",
+   "cited_first_author": "P. Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Exp3.S",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Adversarial bandit, regret against best sequence of actions with Upsilon_T-1 switches; T and Upsilon_T known",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*S_T*T*log(T))",
+    "expression_latex": "\\cO(\\sqrt{A\\Upsilon_T T \\ln(T)})",
+    "regime": null
+   },
+   "where": "Section 2.1"
+  },
+  {
+   "cited_key": "Garivier11UCBDiscount",
+   "cited_title": "On Upper-Confidence Bound Policies For Switching Bandit Problems",
+   "cited_first_author": "A. Garivier",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Discounted UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Piecewise stationary bandit, gamma tuned with Upsilon_T and T",
+   "bound": {
+    "notation": "O",
+    "expression": "K*sqrt(S_T*T)*log(T)",
+    "expression_latex": "\\cO(A\\sqrt{\\Upsilon_T T }\\ln(T))",
+    "regime": null
+   },
+   "where": "Section 2.2"
+  },
+  {
+   "cited_key": "Garivier11UCBDiscount",
+   "cited_title": "On Upper-Confidence Bound Policies For Switching Bandit Problems",
+   "cited_first_author": "A. Garivier",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Sliding-Window UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Piecewise stationary bandit, window tuned with Upsilon_T and T",
+   "bound": {
+    "notation": "O",
+    "expression": "K*sqrt(S_T*T*log(T))",
+    "expression_latex": "\\cO(A\\sqrt{\\Upsilon_T T \\ln(T)})",
+    "regime": null
+   },
+   "where": "Section 2.2"
+  },
+  {
+   "cited_key": "Besbes14stochastic",
+   "cited_title": "Stochastic Multi-Armed Bandit Problem with Non-Stationary Rewards",
+   "cited_first_author": "O. Besbes",
+   "cited_year": 2014,
+   "cited_arxiv_id": null,
+   "algorithm_name": "RExp3",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Non-stationary bandit with variation budget V_T",
+   "bound": {
+    "notation": "O",
+    "expression": "(K*log(K))**(1/3)*V_T**(1/3)*T**(2/3)",
+    "expression_latex": "\\cO((A\\log{A})^{1/3} V_T^{1/3} T^{2/3})",
+    "regime": null
+   },
+   "where": "Section 2.2"
+  },
+  {
+   "cited_key": "Allesiardo17",
+   "cited_title": "The Non-Stationary Stochastic Multi-Armed Bandit Problem",
+   "cited_first_author": "R. Allesiardo",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Exp3.R",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Piecewise stationary bandit, Upsilon_T unknown",
+   "bound": {
+    "notation": "O",
+    "expression": "S_T*K*sqrt(T*log(T))",
+    "expression_latex": "\\cO(\\Upsilon_T A\\sqrt{T \\ln(T)})",
+    "regime": null
+   },
+   "where": "Section 2.2"
+  },
+  {
+   "cited_key": "LiuLeeShroff17",
+   "cited_title": "A Change-Detection based Framework for Piecewise-stationary Multi-Armed Bandit Problem",
+   "cited_first_author": "F. Liu",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CUSUM-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Piecewise stationary bandit, Upsilon_T known",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(S_T*K*T*log(T))",
+    "expression_latex": "\\cO(\\sqrt{\\Upsilon_T A T \\ln(T)})",
+    "regime": null
+   },
+   "where": "Section 2.2"
+  },
+  {
+   "cited_key": "CaoZhenKvetonXie18",
+   "cited_title": "Nearly Optimal Adaptive Procedure for Piecewise-Stationary Bandit: a Change-Point Detection Approach",
+   "cited_first_author": "Y. Cao",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "M-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Piecewise stationary bandit, Upsilon_T known",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(S_T*K*T*log(T))",
+    "expression_latex": "\\cO(\\sqrt{\\Upsilon_T A T \\ln(T)})",
+    "regime": null
+   },
+   "where": "Section 2.2"
+  },
+  {
+   "cited_key": "Seznec20RestlessRotting",
+   "cited_title": "A single algorithm for both restless and rested rotting bandits",
+   "cited_first_author": "Julien Seznec",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Piecewise stationary bandit, minimax lower bound",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(S_T*K*T)",
+    "expression_latex": "\\sqrt{TA\\Upsilon_T}",
+    "regime": null
+   },
+   "where": "Introduction / Section 4.1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:50:23",
+  "source_chars": 147934,
+  "input_tokens": 106899,
+  "output_tokens": 11243,
+  "cost_usd_equiv": 0.8624708000000001,
+  "status": "extracted"
+ }
+}

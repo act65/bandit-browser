@@ -1,0 +1,223 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Learning the Optimal Path and DNN Partition for Collaborative Edge Inference",
+  "arxiv_id": "2410.01857",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Yin Huang",
+   "Letian Zhang",
+   "Jie Xu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Adversarial group linear bandits (AGLB) with switching cost",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_unspecified",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "sigma",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "switching_cost",
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "G groups, each with its own unknown linear parameter theta_g; learner picks a group and an arm within the group",
+    "Adversary picks a binary attack vector over groups each round; reward of an attacked group is exactly 0 (attack is observable through the 0 reward)",
+    "Hybrid stochastic (within-group linear) / adversarial (across-group) reward generation",
+    "Switching cost tau per group switch, known to the learner",
+    "Benchmark: best fixed group in hindsight, playing the per-round optimal arm within that group"
+   ],
+   "definition_quote": "the learner receives a reward r^t(g^t, x^t, a^t) = a^t(g^t)\\cdot (\\mu(g^t, x^t) + \\epsilon^t) ... if the group g^{t} \\neq g^{t-1}, then the learner also suffers an extra penalty of \\tau ... The total regret is the sum of the reward regret and switching regret"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "EXPUCB.B (EXPUCB)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "exponential_weights",
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma",
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "regret_unspecified",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(3/4)*sqrt(log(T))",
+    "expression_latex": "\\reg(T) = O(T^{3/4}\\sqrt{\\log(T)})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "||x|| <= 1 for all arms",
+    "||theta_g|| <= 1 for all groups",
+    "noise sigma-sub-Gaussian conditionally on history"
+   ],
+   "tuning": [
+    "beta = T^{-1/4} sqrt(log T)",
+    "eta = T^{-3/4}",
+    "block lengths B_n = max{ceil(n^a),1} with a = 1",
+    "lambda >= 1",
+    "delta in (0,1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "For any $\\delta \\in (0, 1)$, by choosing $\\beta = T^{-1/4}\\sqrt{\\log(T)}$, $\\eta = T^{-3/4}$, $B_n = \\max\\{\\lceil n^a \\rceil, 1\\}$ and $a = 1$, EXPUCB yields, with probability at least $1-\\delta$, the following expected regret bound $R_T \\le O(T^{1/2}), S_T \\le O(T^{3/4}\\sqrt{\\log(T)})$, $\\reg(T) = O(T^{3/4}\\sqrt{\\log(T)})$."
+   },
+   "confidence": "medium",
+   "notes": "Total regret = expected reward regret + switching cost. Statement mixes 'with probability 1-delta' and 'expected regret', so quantity left unspecified though probability marked high_probability. Comparator is the best fixed group (with per-round optimal arm in that group). Dependence on G, d, tau, sigma hidden. Conclusion states O(T^{3/4} log T)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "regret_unspecified",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(1/2)",
+    "expression_latex": "R_T \\le O(T^{1/2})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "||x|| <= 1 for all arms",
+    "||theta_g|| <= 1 for all groups",
+    "noise sigma-sub-Gaussian conditionally on history"
+   ],
+   "tuning": [
+    "beta = T^{-1/4} sqrt(log T)",
+    "eta = T^{-3/4}",
+    "B_n = max{ceil(n^a),1}, a = 1",
+    "lambda >= 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "EXPUCB yields, with probability at least $1-\\delta$, the following expected regret bound $R_T \\le O(T^{1/2}), S_T \\le O(T^{3/4}\\sqrt{\\log(T)})$"
+   },
+   "confidence": "low",
+   "notes": "Reward regret only (excluding switching cost). The proof instead concludes R_T = O(T^{3/4} sqrt(log T)) and S_T = O(T^{1/2}); the statement appears to swap the two. Recorded as stated."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(3/4)*sqrt(log(T))",
+    "expression_latex": "S_T \\le O(T^{3/4}\\sqrt{\\log(T)})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "||x|| <= 1 for all arms",
+    "||theta_g|| <= 1 for all groups"
+   ],
+   "tuning": [
+    "beta = T^{-1/4} sqrt(log T)",
+    "eta = T^{-3/4}",
+    "B_n = max{ceil(n^a),1}, a = 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "$R_T \\le O(T^{1/2}), S_T \\le O(T^{3/4}\\sqrt{\\log(T)})$"
+   },
+   "confidence": "low",
+   "notes": "Bound on cumulative switching cost S_T (paper's S_T, not number of environment switches). The proof gives S_T <= tau(Gamma+1) = O(T^{1/2}), which contradicts the statement; recorded as stated."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:36:56",
+  "source_chars": 65260,
+  "input_tokens": 60870,
+  "output_tokens": 3661,
+  "cost_usd_equiv": 0.34259880000000004,
+  "status": "extracted"
+ }
+}

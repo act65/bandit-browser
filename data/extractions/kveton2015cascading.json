@@ -1,0 +1,226 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Cascading Bandits: Learning to Rank in the Cascade Model",
+  "arxiv_id": "1502.02763",
+  "arxiv_version": null,
+  "year": 2015,
+  "authors": [
+   "Branislav Kveton",
+   "Csaba Szepesvari",
+   "Zheng Wen",
+   "Azin Ashkan"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "cascading bandit",
+   "objective": "cumulative_regret",
+   "feedback": "partial_monitoring",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Cascade feedback: agent recommends an ordered list of m out of L items; user clicks first attractive item; only items up to and including the clicked one are observed (less than semi-bandit)",
+    "Reward is non-linear: f(A,w) = 1 - prod_k (1 - w(a_k)); item weights are independent Bernoulli (Assumption 1)",
+    "Paper's K (list size) is mapped to m, paper's L (number of items) is declared as L"
+   ],
+   "definition_quote": "We refer to our learning problem as a generalized cascading bandit. Formally, we represent the problem by a tuple $B = (E, P, K)$, where $E = \\set{1, \\dots, L}$ is a ground set of $L$ items, $P$ is a probability distribution over a unit hypercube $\\set{0, 1}^E$, and $K \\leq L$ is the number of recommended items. ... Under this assumption, we refer to our learning problem as a cascading bandit."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "CascadeUCB1",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "CascadeKL-UCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(12*log(T)/Delta_e_K) + pi**2/3*L",
+    "expression_latex": "\\sum_{e = K + 1}^L \\frac{12}{\\Delta_{e, K}} \\log n + \\frac{\\pi^2}{3} L",
+    "regime": null
+   },
+   "symbols": {
+    "L": "number of items (ground set size / base arms)",
+    "Delta_e_K": "gap w(K) - w(e) between the K-th most attractive (least attractive optimal) item and suboptimal item e"
+   },
+   "conditions": [
+    "optimal solution (as a set) is unique",
+    "item attraction weights independent Bernoulli (Assumption 1)"
+   ],
+   "tuning": [
+    "c_{t,s} = sqrt(1.5 log t / s)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:ucb1",
+    "number": "Theorem 2",
+    "quote": "The expected $n$-step regret of $\\cascadeucb$ is bounded as: R(n) \\leq \\sum_{e = K + 1}^L \\frac{12}{\\Delta_{e, K}} \\log n + \\frac{\\pi^2}{3} L."
+   },
+   "confidence": "high",
+   "notes": "Sum over suboptimal items e = K+1..L. Regret defined as E[sum f(A*,w_t)-f(A_t,w_t)], equals pseudo-regret since E f(A,w)=f(A,w̄). Algorithm uses log t, so anytime."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt((1 + eps_alg)*Delta_e_K*(1 + log(1/Delta_e_K))/kl(w_e, w_K)*(log(T) + 3*log(log(T)))) + m*L*C_2/T**beta_eps + 7*m*log(log(T))",
+    "expression_latex": "\\sum_{e = K + 1}^L \\frac{(1 + \\eps) \\Delta_{e, K} (1 + \\log(1 / \\Delta_{e, K}))}{\\kl{\\bar{w}(e)}{\\bar{w}(K)}} (\\log n + 3 \\log \\log n) + C, \\quad C = K L \\frac{C_2(\\eps)}{n^{\\beta(\\eps)}} + 7 K \\log \\log n",
+    "regime": null
+   },
+   "symbols": {
+    "L": "number of items",
+    "Delta_e_K": "gap w(K) - w(e)",
+    "w_e": "attraction probability of suboptimal item e",
+    "w_K": "attraction probability of the K-th most attractive item",
+    "C_2": "constant C_2(eps) from Garivier & Cappe (2011)",
+    "beta_eps": "constant beta(eps) from Garivier & Cappe (2011)"
+   },
+   "conditions": [
+    "optimal solution (as a set) is unique",
+    "item attraction weights independent Bernoulli (Assumption 1)"
+   ],
+   "tuning": [
+    "exploration level log t + 3 log log t",
+    "any eps > 0 (analysis parameter)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:klucb",
+    "number": "Theorem 3",
+    "quote": "For any $\\eps > 0$, the expected $n$-step regret of $\\cascadeklucb$ is bounded as: R(n) \\leq \\sum_{e = K + 1}^L \\frac{(1 + \\eps) \\Delta_{e, K} (1 + \\log(1 / \\Delta_{e, K}))}{\\kl{\\bar{w}(e)}{\\bar{w}(K)}} \\times (\\log n + 3 \\log \\log n) + C, where $C = K L \\frac{C_2(\\eps)}{n^{\\beta(\\eps)}} + 7 K \\log \\log n$"
+   },
+   "confidence": "high",
+   "notes": "Paper's K mapped to m. kl is Bernoulli KL."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "consistent",
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "(L - m)*Delta*(1 - p_att)**(m - 1)/kl(p_att - Delta, p_att)*log(T)",
+    "expression_latex": "\\liminf_{n \\to \\infty} \\frac{R(n)}{\\log n} \\geq \\frac{(L - K) \\Delta (1 - p)^{K - 1}}{\\kl{p - \\Delta}{p}}",
+    "regime": null
+   },
+   "symbols": {
+    "L": "number of items",
+    "p_att": "attraction probability of each optimal item in the hard instance"
+   },
+   "conditions": [
+    "instance B_LB(L,K,p,Delta): optimal items have attraction probability p, suboptimal items p - Delta, Delta in (0,p)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lower bound",
+    "number": "Theorem 4",
+    "quote": "For any cascading bandit $B_\\mathrm{LB}$, the regret of any consistent algorithm is bounded from below as: \\liminf_{n \\to \\infty} \\frac{R(n)}{\\log n} \\geq \\frac{(L - K) \\Delta (1 - p)^{K - 1}}{\\kl{p - \\Delta}{p}}."
+   },
+   "confidence": "high",
+   "notes": "Delta is the uniform gap in the instance; paper's K mapped to m."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:09:31",
+  "source_chars": 71864,
+  "input_tokens": 65281,
+  "output_tokens": 4115,
+  "cost_usd_equiv": 0.3869668,
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,278 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Neural Contextual Bandits with UCB-based Exploration",
+  "arxiv_id": "1911.04462",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Dongruo Zhou",
+   "Lihong Li",
+   "Quanquan Gu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "stochastic K-armed contextual bandit with unknown bounded reward function",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "sigma",
+    "S",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Reward r = h(x) + noise with h an arbitrary unknown function in [0,1]; analysis via the neural tangent kernel (NTK) Gram matrix H on all T*K contexts, requiring S >= sqrt(2 h^T H^{-1} h) (an NTK-RKHS-type norm bound); kernel_rkhs is an approximation of this structure",
+    "Contexts: K feature vectors per round, generation process unspecified; regret against per-round best action",
+    "Assumption 2: NTK matrix H >= lambda_0 I, ||x||_2 = 1 and [x]_j = [x]_{j+d/2}"
+   ],
+   "definition_quote": "We consider the stochastic $K$-armed contextual bandit problem, where the total number of rounds $T$ is known. At round $t \\in [T]$, the agent observes the context consisting of $K$ feature vectors ... $r_{t,a_t} = h(\\xb_{t,a_t}) + \\xi_t$, where $h$ is an unknown function satisfying $0 \\leq h(\\xb) \\leq 1$ for any $\\xb$, and $\\xi_t$ is $\\nu$-sub-Gaussian noise conditioned on $\\xb_{1,a_1},\\dots,\\xb_{t-1,a_{t-1}}$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "NeuralUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma",
+    "S",
+    "delta"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "NeuralUCB_0",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma",
+    "S",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "3*sqrt(T)*sqrt(d_tilde*log(1 + T*K/lam) + 2)*(sigma*sqrt(d_tilde*log(1 + T*K/lam) + 2 - 2*log(delta)) + (lam + C_2*T*L_depth)*(1 - lam/(T*L_depth))**(J/2)*sqrt(T/lam) + 2*sqrt(lam)*S) + 1",
+    "expression_latex": "3\\sqrt{T}\\sqrt{\\tilde d \\log (1+TK/\\lambda) + 2} \\cdot \\bigg[\\nu\\sqrt{\\tilde d \\log (1+TK/\\lambda) + 2-2\\log\\delta} + (\\lambda +C_2TL)(1- \\lambda/(TL))^{J/2} \\sqrt{T/\\lambda} + 2\\sqrt{\\lambda}S\\bigg]+ 1",
+    "regime": null
+   },
+   "symbols": {
+    "d_tilde": "effective dimension of the NTK matrix, log det(I + H/lambda)/log(1+TK/lambda)",
+    "L_depth": "neural network depth L",
+    "J": "number of gradient descent steps in TrainNN",
+    "C_2": "absolute positive constant"
+   },
+   "conditions": [
+    "Assumption 2: NTK matrix H >= lambda_0 I on all T*K contexts; ||x||_2 = 1 and [x]_j = [x]_{j+d/2}",
+    "S >= sqrt(2 h^T H^{-1} h)",
+    "h(x) in [0,1]; noise nu-sub-Gaussian conditionally on the past"
+   ],
+   "tuning": [
+    "m >= poly(T, L, K, 1/lambda, 1/lambda_0, 1/S, log(1/delta))",
+    "eta = C_1 (mTL + m lambda)^{-1}",
+    "lambda >= max{1, S^{-2}}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:newalgorithm",
+    "number": "Theorem 5",
+    "quote": "There exist constant $C_1, C_2>0$, such that for any $\\delta \\in(0,1)$, if $m \\geq \\text{poly}(T, L, K, \\lambda^{-1}, \\lambda_0^{-1}, S^{-1}, \\log(1/\\delta))$, $\\eta = C_1( mTL + m \\lambda)^{-1}$, $\\lambda \\geq \\max\\{1, S^{-2}\\}$, and $S \\geq \\sqrt{2\\hb^\\top\\Hb^{-1}\\hb}$, then with probability at least $1-\\delta$, the regret of Algorithm 1 satisfies R_T \\leq 3\\sqrt{T}\\sqrt{\\tilde d \\log (1+TK/\\lambda) + 2}[...] + 1."
+   },
+   "confidence": "medium",
+   "notes": "nu (sub-Gaussian parameter) mapped to sigma. Statement contains a typo '+ +'. Remark 8: with J ~ O~(TL/lambda), constants nu, lambda, S = sqrt(2h^T H^{-1} h), bound becomes O~(sqrt(d_tilde T) sqrt(max{d_tilde, h^T H^{-1} h})), i.e. O~(d_tilde sqrt(T)). R_T is defined as an expectation but the theorem bounds it with probability 1-delta (effectively the sum of h-gaps)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2 + 3*sqrt(T)*sqrt(d_tilde*log(1 + T*K/lam) + 2)*(sigma*sqrt(d_tilde*log(1 + T*K/lam) + 2 + 2*log(T)) + 2*sqrt(lam)*S + (lam + C*T*L_depth)*(1 - lam/(T*L_depth))**(J/2)*sqrt(T/lam))",
+    "expression_latex": "2+3\\sqrt{T}\\sqrt{\\tilde d \\log (1+TK/\\lambda) + 2}\\cdot\\bigg[\\nu\\sqrt{\\tilde d \\log (1+TK/\\lambda) + 2+2\\log T} + 2\\sqrt{\\lambda}S + (\\lambda + CTL)(1- \\lambda/(TL))^{J/2} \\sqrt{T/\\lambda}\\bigg]",
+    "regime": null
+   },
+   "symbols": {
+    "d_tilde": "effective dimension of the NTK matrix",
+    "L_depth": "neural network depth L",
+    "J": "number of gradient descent steps",
+    "C": "absolute positive constant"
+   },
+   "conditions": [
+    "Same conditions as Theorem 5: Assumption 2, S >= sqrt(2 h^T H^{-1} h), h in [0,1]"
+   ],
+   "tuning": [
+    "delta = 1/T",
+    "m >= poly(T, L, K, 1/lambda, 1/lambda_0, 1/S, log T)",
+    "eta = C_1 (mTL + m lambda)^{-1}",
+    "lambda >= max{1, S^{-2}}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "coro:expectation",
+    "number": "Corollary 9",
+    "quote": "Under the same conditions in Theorem \\ref{thm:newalgorithm}, there exists a positive constant $C$ such that \\EE [R_T] \\leq 2+3\\sqrt{T}\\sqrt{\\tilde d \\log (1+TK/\\lambda) + 2}\\cdot\\bigg[\\nu\\sqrt{\\tilde d \\log (1+TK/\\lambda) + 2+2\\log T} + 2\\sqrt{\\lambda}S + (\\lambda + CTL)(1- \\lambda/(TL))^{J/2} \\sqrt{T/\\lambda}\\bigg]."
+   },
+   "confidence": "medium",
+   "notes": "Obtained from Theorem 5 with delta = 1/T. Regret defined via expected rewards, hence pseudo_regret."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "valko2013finite",
+   "cited_title": "Finite-time analysis of kernelised contextual bandits",
+   "cited_first_author": "Valko",
+   "cited_year": 2013,
+   "cited_arxiv_id": "1309.6869",
+   "algorithm_name": "KernelUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "kernel contextual bandit, reward in RKHS with bounded norm",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(d_tilde*T)",
+    "expression_latex": "\\tilde O(\\sqrt{\\tilde d T})",
+    "regime": null
+   },
+   "where": "Section 6 (Related Work)"
+  },
+  {
+   "cited_key": "langford08epoch",
+   "cited_title": "The epoch-greedy algorithm for contextual multi-armed bandits",
+   "cited_first_author": "Langford",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Epoch-Greedy",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "contextual bandit via reduction to supervised learning",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(2/3)",
+    "expression_latex": "O(T^{2/3})",
+    "regime": null
+   },
+   "where": "Section 6 (Related Work)"
+  },
+  {
+   "cited_key": "foster2020beyond",
+   "cited_title": "Beyond ucb: Optimal and efficient contextual bandits with regression oracles",
+   "cited_first_author": "Foster",
+   "cited_year": 2020,
+   "cited_arxiv_id": "2002.04926",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "contextual bandits with regression oracles (as stated in this paper, dimension-independent)",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(3/4)",
+    "expression_latex": "O(T^{3/4})",
+    "regime": null
+   },
+   "where": "Section 6 (Related Work)"
+  },
+  {
+   "cited_key": "abbasi2011improved",
+   "cited_title": "Improved algorithms for linear stochastic bandits",
+   "cited_first_author": "Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "OFUL",
+   "algorithm_registry_id": "oful",
+   "side": "upper",
+   "setting_description": "linear contextual bandit",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\tilde O( d \\sqrt{T})",
+    "regime": null
+   },
+   "where": "Introduction (contributions)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:18:20",
+  "source_chars": 124667,
+  "input_tokens": 98280,
+  "output_tokens": 5573,
+  "cost_usd_equiv": 0.6801188,
+  "status": "extracted"
+ }
+}

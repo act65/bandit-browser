@@ -1,0 +1,161 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Thompson Sampling for Budgeted Multi-armed Bandits",
+  "arxiv_id": "1505.00146",
+  "arxiv_version": null,
+  "year": 2015,
+  "authors": [
+   "Yingce Xia",
+   "Haifang Li",
+   "Tao Qin",
+   "Nenghai Yu",
+   "Tie-Yan Liu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Budgeted MAB (Bernoulli and general bandits, rewards and costs in [0,1])",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [
+    "knapsack_constraints"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each pull yields a random reward and a random cost (both in [0,1], independent of each other); play stops when budget B is exhausted; regret measured against the optimal policy with known distributions, as a function of budget B",
+    "Optimal arm is the one with maximal expected-reward-to-expected-cost ratio; all mean rewards and costs are positive"
+   ],
+   "definition_quote": "At round $t$, a player pulls an arm $i\\in[K]$, receives a random reward $r_i(t)$, and pays a random cost $c_i(t)$ until he runs out of his budget $B$, which is a positive integer. Both the reward $r_i(t)$ and the cost $c_i(t)$ are supported on $[0,1]$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Budgeted Thompson Sampling (BTS)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(2*log(B)/(gamma**2*mu_c_i*Delta_ratio_i)*(mu_r_1/mu_c_1 + 1)**2 + Phi_i) + K/gamma**2",
+    "expression_latex": "\\sum_{i=2}^{K}\\Big\\{\\frac{2\\ln B}{\\gamma^2\\mu_i^c\\Delta_i}\\bigg(\\frac{\\mu_1^r}{\\mu_1^c}+1\\bigg)^2 + \\Phi_i(\\gamma)\\Big\\}+O\\bigg(\\frac{K}{\\gamma^2}\\bigg)",
+    "regime": null
+   },
+   "symbols": {
+    "B": "budget",
+    "gamma": "free analysis parameter in (0,1)",
+    "mu_r_1": "expected reward of optimal arm",
+    "mu_c_1": "expected cost of optimal arm",
+    "mu_c_i": "expected cost of arm i",
+    "Delta_ratio_i": "ratio gap mu_1^r/mu_1^c - mu_i^r/mu_i^c",
+    "Phi_i": "O(1/eps_i^4) if mu_1^c+eps_i>=1, else O(1/(eps_i^6 (1-mu_1^c-eps_i))), with eps_i(gamma)=(1-gamma) mu_1^c Delta_i/(mu_i^r/mu_i^c+1)"
+   },
+   "conditions": [
+    "rewards and costs supported in [0,1], reward independent of cost",
+    "mu_i^r > 0 and mu_i^c > 0 for all arms",
+    "B positive integer (proof uses B > e)"
+   ],
+   "tuning": [
+    "any gamma in (0,1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:bound_TS_asymp",
+    "number": "Theorem 1",
+    "quote": "$\\forall \\gamma \\in (0,1)$, for both Bernoulli bandits and general bandits, the regret of the BTS algorithm can be upper bounded as below. Regret \\leq \\sum_{i=2}^{K}\\Big\\{\\frac{2\\ln B}{\\gamma^2\\mu_i^c\\Delta_i}\\bigg(\\frac{\\mu_1^r}{\\mu_1^c}+1\\bigg)^2 + \\Phi_i(\\gamma)\\Big\\}+O\\bigg(\\frac{K}{\\gamma^2}\\bigg)"
+   },
+   "confidence": "medium",
+   "notes": "Leading ln B term has explicit constants; remaining terms are O(.) with constants depending on the instance but not B. Holds for Bernoulli and general [0,1] bandits (Bernoulli is special case). Remark 4 instantiates gamma=1/sqrt(2), giving leading constant 4(mu_1^r/mu_1^c+1)^2 sum 1/(mu_i^c Delta_i). Comparator is the optimal policy knowing distributions (approximately always pulling the best-ratio arm). Algorithm does not need B, so recorded as anytime."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "epsilon_first",
+   "cited_title": "Epsilon-first policies for budget limited multi-armed bandits",
+   "cited_first_author": "Long Tran-Thanh",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": "epsilon-first",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Budgeted MAB with deterministic fixed arm costs",
+   "bound": {
+    "notation": "O",
+    "expression": "B**(2/3)",
+    "expression_latex": "O(B^{\\frac{2}{3}})",
+    "regime": null
+   },
+   "where": "Section 1 (Introduction)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:13:59",
+  "source_chars": 91363,
+  "input_tokens": 81343,
+  "output_tokens": 3342,
+  "cost_usd_equiv": 0.5000028,
+  "status": "extracted"
+ }
+}

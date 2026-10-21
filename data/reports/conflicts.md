@@ -2,8 +2,119 @@
 
 An upper bound grows more slowly than a lower bound in the same setting and regime. Usually an extraction error (a dropped term, a missing assumption in the setting) — occasionally a genuine contradiction.
 
+- adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] (`S-9b927624`, 1 papers), regret / worst_case, variable K: upper 0.5 < lower 0
+  - upper: `3*sqrt(K)/4 + 14*K*log(T) + sqrt(T)/2 + 2*sqrt(T*(K - 1)) + 15` (exact; inherited from masoudian2021improved Theorem 3)
+  - lower: `T/4` (exact; alon2015online Theorem 6)
+- adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] (`S-9b927624`, 1 papers), regret / worst_case, variable T: upper 0.5 < lower 1
+  - upper: `3*sqrt(K)/4 + 14*K*log(T) + sqrt(T)/2 + 2*sqrt(T*(K - 1)) + 15` (exact; inherited from masoudian2021improved Theorem 3)
+  - lower: `T/4` (exact; alon2015online Theorem 6)
+- adversarial · combinatorial · rewards in [0,1] · finite (`S-aafcc4c6`, 1 papers), regret / worst_case, variable d: upper 0.5 < lower 1
+  - upper: `160*sqrt(T*d*(log(K) + log(1/delta)))` (exact; inherited from bacchiocchi2026efficient Theorem (thm:main)) [delta=1/T] — conditions: 1 <= m <= d-1; K = binom(d,m); |<x, l_t>| <= 1 for all actions x
+  - lower: `0.05*Min(T, sqrt(T)*d)` (exact; audibert2011minimax Theorem 21)
+- stochastic · continuum_other · bounded_pm1 (`S-17c2c184`, 1 papers), regret / worst_case, variable T: upper 0.5·log^0.5 < lower 1
+  - upper: `sqrt(T*log(T))*(2*sqrt(2) + 4)*(sqrt(2*E - 2) + 8) + 3` (exact; inherited from cesabianchi2024role Theorem 4)
+  - lower: `T/13` (exact; cesabianchi2024role Theorem 1)
+- stochastic · continuum_other · partial_monitoring feedback · bounded_pm1 (`S-3205d37a`, 1 papers), regret / worst_case, variable T: upper 0.5·log^0.5 < lower 1
+  - upper: `sqrt(T*log(T))*(2*sqrt(2) + 4)*(sqrt(2*E - 2) + 8) + 3` (exact; cesabianchi2024role Theorem 4)
+  - lower: `T/13` (exact; inherited from cesabianchi2024role Theorem 1)
+- other_pure_exploration · stochastic · K-armed · Gaussian · knows reward_family, sigma · K=1 (`S-0b80305c`, 1 papers), sample_complexity / instance_dependent, variable Delta: upper 2·log^0.04 < lower 2·log^0.05
+  - upper: `(log(1/delta) + log(log(1/Delta)))/Delta**2` (O; inherited from chen2015optimal Remark G.4)
+  - lower: `log(log(1/Delta))/Delta**2` (Omega; chen2015optimal Theorem D.1)
+- other_pure_exploration · stochastic · K-armed · subgaussian · K=1 (`S-096efd86`, 1 papers), sample_complexity / instance_dependent, variable Delta: upper 2·log^0.04 < lower 2·log^0.05
+  - upper: `(log(1/delta) + log(log(1/Delta)))/Delta**2` (O; chen2015optimal Remark G.4)
+  - lower: `log(log(1/Delta))/Delta**2` (Omega; inherited from chen2015optimal Theorem D.1)
+- adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] (`S-0304f654`, 1 papers), regret / worst_case, variable K: upper 0.5 < lower 0
+  - upper: `3*sqrt(K)/4 + 14*K*log(T) + sqrt(T)/2 + 2*sqrt(T*(K - 1)) + 15` (exact; inherited from masoudian2021improved Theorem 3)
+  - lower: `T/16` (exact; cohen2016online Theorem 15)
+- adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] (`S-0304f654`, 1 papers), regret / worst_case, variable T: upper 0.5 < lower 1
+  - upper: `3*sqrt(K)/4 + 14*K*log(T) + sqrt(T)/2 + 2*sqrt(T*(K - 1)) + 15` (exact; inherited from masoudian2021improved Theorem 3)
+  - lower: `T/16` (exact; cohen2016online Theorem 15)
+- stochastic · linear (finite actions) · adversarial contexts · Gaussian · time_varying_action_sets · knows S, sigma · finite (`S-4e55e95d`, 1 papers), regret / worst_case, variable K: upper 0 < lower 0.25
+  - upper: `sqrt(T*d)*log(2*T*d)*Min(sqrt(d), (d*log(K))**(1/4))` (O; inherited from jin2026nearly Theorem 4) — conditions: K >= d >= 2; T >= d
+  - lower: `K**(1/4)*sqrt(T*d)` (Omega; jin2026nearly Theorem 1)
+- stochastic · linear (finite actions) · adversarial contexts · Gaussian · time_varying_action_sets · knows S, sigma · finite (`S-4e55e95d`, 1 papers), regret / worst_case, variable d: upper 0.5 < lower 0.75·log^-0.25
+  - upper: `(K*log(2*K*T + 1))**(1/4)*sqrt(T*d*log(T/d + 1))` (O; inherited from jin2026nearly Theorem 3) — conditions: 2 <= K <= d <= T
+  - lower: `sqrt(T*d)*Min(sqrt(d), (d*log(K)/log(2*d))**(1/4))` (Omega; jin2026nearly Theorem 1)
+- stochastic · linear (finite actions) · adversarial contexts · Gaussian · time_varying_action_sets · finite (`S-8ebbd778`, 1 papers), regret / worst_case, variable K: upper 0 < lower 0.25
+  - upper: `sqrt(T*d)*log(2*T*d)*Min(sqrt(d), (d*log(K))**(1/4))` (O; jin2026nearly Theorem 4) — conditions: K >= d >= 2; T >= d
+  - lower: `K**(1/4)*sqrt(T*d)` (Omega; inherited from jin2026nearly Theorem 1)
+- stochastic · linear (finite actions) · adversarial contexts · Gaussian · time_varying_action_sets · finite (`S-8ebbd778`, 1 papers), regret / worst_case, variable d: upper 0.5 < lower 1
+  - upper: `(K*log(2*K*T + 1))**(1/4)*sqrt(T*d*log(T/d + 1))` (O; jin2026nearly Theorem 3) — conditions: 2 <= K <= d <= T
+  - lower: `d*sqrt(T*log(T))` (Omega; inherited from li2019nearlyminimax Theorem 10)
+- stochastic · linear (finite actions) · adversarial contexts · conditionally_subgaussian · time_varying_action_sets · finite (`S-68cd3bdc`, 1 papers), regret / worst_case, variable K: upper 0 < lower 0.25
+  - upper: `sqrt(T*d)*log(2*T*d)*Min(sqrt(d), (d*log(K))**(1/4))` (O; jin2026nearly Corollary 17) — conditions: K >= d >= 2; T >= d; conditionally 1-subGaussian noise
+  - lower: `K**(1/4)*sqrt(T*d)` (Omega; inherited from jin2026nearly Theorem 1)
+- stochastic · linear (finite actions) · adversarial contexts · conditionally_subgaussian · time_varying_action_sets · finite (`S-68cd3bdc`, 1 papers), regret / worst_case, variable d: upper 0.5 < lower 1
+  - upper: `130*(K*log(2*K*T + 1))**(1/4)*sqrt(T*d*log(T/d + 1))` (exact; jin2026nearly Corollary 17) — conditions: 2 <= K <= d <= T; conditionally 1-subGaussian noise
+  - lower: `d*sqrt(T*log(T))` (Omega; inherited from li2019nearlyminimax Theorem 10)
+- adversarial (oblivious) · continuum_other · partial_monitoring feedback · {bounded} · rewards in [0,1] (`S-85c6950c`, 1 papers), regret / worst_case, variable K: upper 0 < lower 1
+  - upper: `T**(2/3)` (O_tilde; jin2026tight Theorem 1) — conditions: T sufficiently large (T >> 1)
+  - lower: `K*T**(2/3)` (Omega; inherited from tang2020bandit Theorem 6.1)
+- adversarial (oblivious) · K-armed · full_information feedback · rewards in [0,1] · K=2 (`S-5ea6d54a`, 2 papers), regret / worst_case, variable T: upper 0.5 < lower 1
+  - upper: `sqrt(T)` (O; lewi2019thompson Corollary 3)
+  - lower: `T` (Omega; malik2022complete Counterexample 1)
+- stochastic · linear (finite actions) · adversarial contexts · Gaussian · time_varying_action_sets · knows sigma · finite (`S-59ffe186`, 1 papers), regret / worst_case, variable d: upper 0.5 < lower 1
+  - upper: `(K*log(2*K*T + 1))**(1/4)*sqrt(T*d*log(T/d + 1))` (O; inherited from jin2026nearly Theorem 3) — conditions: 2 <= K <= d <= T
+  - lower: `d*sqrt(T*log(T))` (Omega; li2019nearlyminimax Theorem 10)
+- stochastic · continuum_other · semi_bandit feedback · {bounded,lipschitz} · rewards in [0,1] · knows L_lip · simplex (`S-48eec8d4`, 1 papers), regret / worst_case, variable K: upper 0 < lower 1
+  - upper: `sqrt(T*log(T))*(2*sqrt(2) + 4)*(sqrt(2*E - 2) + 8) + 3` (exact; inherited from cesabianchi2024role Theorem 4)
+  - lower: `K*T**(2/3)` (Omega; tang2020bandit Theorem 6.1)
+- stochastic · continuum_other · semi_bandit feedback · {bounded,lipschitz} · rewards in [0,1] · knows L_lip · simplex (`S-48eec8d4`, 1 papers), regret / worst_case, variable T: upper 0.5·log^0.5 < lower 0.666667
+  - upper: `sqrt(T*log(T))*(2*sqrt(2) + 4)*(sqrt(2*E - 2) + 8) + 3` (exact; inherited from cesabianchi2024role Theorem 4)
+  - lower: `K*T**(2/3)` (Omega; tang2020bandit Theorem 6.1)
+- stochastic · linear (finite actions) · adversarial contexts · subgaussian · time_varying_action_sets · finite (`S-c7707ca2`, 1 papers), regret / worst_case, variable d: upper 0.5 < lower 1
+  - upper: `130*(K*log(2*K*T + 1))**(1/4)*sqrt(T*d*log(T/d + 1))` (exact; inherited from jin2026nearly Corollary 17) — conditions: 2 <= K <= d <= T; conditionally 1-subGaussian noise
+  - lower: `d*sqrt(T*log(T))` (Omega; inherited from li2019nearlyminimax Theorem 10)
+- adversarial · K-armed · graph_feedback feedback · rewards in [0,1] (`S-96ed2e3a`, 1 papers), regret / worst_case, variable K: upper 0.5 < lower 0
+  - upper: `3*sqrt(K)/4 + 14*K*log(T) + sqrt(T)/2 + 2*sqrt(T*(K - 1)) + 15` (exact; inherited from masoudian2021improved Theorem 3)
+  - lower: `T/16` (exact; inherited from cohen2016online Theorem 15)
+- adversarial · K-armed · graph_feedback feedback · rewards in [0,1] (`S-96ed2e3a`, 1 papers), regret / worst_case, variable T: upper 0.5 < lower 1
+  - upper: `3*sqrt(K)/4 + 14*K*log(T) + sqrt(T)/2 + 2*sqrt(T*(K - 1)) + 15` (exact; inherited from masoudian2021improved Theorem 3)
+  - lower: `T/16` (exact; inherited from cohen2016online Theorem 15)
+- adversarial (adaptive) · K-armed · full_information feedback · rewards in [0,1] · K=2 (`S-285f395c`, 1 papers), regret / worst_case, variable T: upper 0.5 < lower 1
+  - upper: `2*sqrt(T)*sqrt(log(2))` (exact; inherited from bubeck2012survey Theorem (th:Exp3))
+  - lower: `T` (Omega; inherited from malik2022complete Counterexample 1)
+- stochastic · continuum_other · partial_monitoring feedback · rewards in [0,1] (`S-7eff21ec`, 1 papers), regret / worst_case, variable K: upper 0 < lower 1
+  - upper: `sqrt(T*log(T))*(2*sqrt(2) + 4)*(sqrt(2*E - 2) + 8) + 3` (exact; inherited from cesabianchi2024role Theorem 4)
+  - lower: `K*T**(2/3)` (Omega; inherited from tang2020bandit Theorem 6.1)
+- stochastic · continuum_other · partial_monitoring feedback · rewards in [0,1] (`S-7eff21ec`, 1 papers), regret / worst_case, variable T: upper 0.5·log^0.5 < lower 0.666667
+  - upper: `sqrt(T*log(T))*(2*sqrt(2) + 4)*(sqrt(2*E - 2) + 8) + 3` (exact; inherited from cesabianchi2024role Theorem 4)
+  - lower: `K*T**(2/3)` (Omega; inherited from tang2020bandit Theorem 6.1)
+- adversarial (adaptive) · combinatorial · rewards in [0,1] (`S-479253cf`, 1 papers), regret / worst_case, variable d: upper 0.5 < lower 1.5
+  - upper: `160*sqrt(T*d*(log(K) + log(1/delta)))` (exact; inherited from bacchiocchi2026efficient Theorem (thm:main)) [delta=1/T] — conditions: 1 <= m <= d-1; K = binom(d,m); |<x, l_t>| <= 1 for all actions x
+  - lower: `0.01*sqrt(T)*d**(3/2)` (exact; inherited from audibert2011minimax Theorem 20)
+- adversarial · K-armed · graph_feedback feedback · rewards in [0,1] (`S-2d795082`, 1 papers), regret / worst_case, variable K: upper 0.5 < lower 0
+  - upper: `3*sqrt(K)/4 + 14*K*log(T) + sqrt(T)/2 + 2*sqrt(T*(K - 1)) + 15` (exact; inherited from masoudian2021improved Theorem 3)
+  - lower: `T/4` (exact; inherited from alon2015online Theorem 6)
+- adversarial · K-armed · graph_feedback feedback · rewards in [0,1] (`S-2d795082`, 1 papers), regret / worst_case, variable T: upper 0.5 < lower 1
+  - upper: `3*sqrt(K)/4 + 14*K*log(T) + sqrt(T)/2 + 2*sqrt(T*(K - 1)) + 15` (exact; inherited from masoudian2021improved Theorem 3)
+  - lower: `T/4` (exact; inherited from alon2015online Theorem 6)
+- adversarial · combinatorial · graph_feedback feedback · rewards in [0,1] · finite (`S-7ad83869`, 1 papers), regret / worst_case, variable d: upper 0.5 < lower 1
+  - upper: `160*sqrt(T*d*(log(K) + log(1/delta)))` (exact; inherited from bacchiocchi2026efficient Theorem (thm:main)) [delta=1/T] — conditions: 1 <= m <= d-1; K = binom(d,m); |<x, l_t>| <= 1 for all actions x
+  - lower: `0.008*sqrt(T)*d` (exact; inherited from audibert2011minimax Theorem 20)
+- adversarial (adaptive) · combinatorial · rewards in [0,1] · finite (`S-8b700d4b`, 1 papers), regret / worst_case, variable d: upper 0.5 < lower 1.5
+  - upper: `160*sqrt(T*d*(log(K) + log(1/delta)))` (exact; inherited from bacchiocchi2026efficient Theorem (thm:main)) [delta=1/T] — conditions: 1 <= m <= d-1; K = binom(d,m); |<x, l_t>| <= 1 for all actions x
+  - lower: `0.01*sqrt(T)*d**(3/2)` (exact; inherited from audibert2011minimax Theorem 20)
+- adversarial (adaptive) · combinatorial · bounded_pm1 · finite (`S-6bcb4fcc`, 1 papers), regret / worst_case, variable d: upper 0.5 < lower 1
+  - upper: `160*sqrt(T*d*(log(K) + log(1/delta)))` (exact; bacchiocchi2026efficient Theorem (thm:main)) [delta=1/T] — conditions: 1 <= m <= d-1; K = binom(d,m); |<x, l_t>| <= 1 for all actions x
+  - lower: `0.05*Min(T, sqrt(T)*d)` (exact; inherited from audibert2011minimax Theorem 21)
+- adversarial (adaptive) · combinatorial · rewards in [0,1] · finite (`S-8e48ac80`, 1 papers), regret / worst_case, variable d: upper 0.5 < lower 1
+  - upper: `160*sqrt(T*d*(log(K) + log(1/delta)))` (exact; inherited from bacchiocchi2026efficient Theorem (thm:main)) [delta=1/T] — conditions: 1 <= m <= d-1; K = binom(d,m); |<x, l_t>| <= 1 for all actions x
+  - lower: `0.05*Min(T, sqrt(T)*d)` (exact; inherited from audibert2011minimax Theorem 21)
+- stochastic · linear (finite actions) · adversarial contexts · conditionally_subgaussian · time_varying_action_sets · knows sigma · finite (`S-a0beb0bf`, 1 papers), regret / worst_case, variable K: upper 0 < lower 0.25
+  - upper: `sqrt(T*d)*log(2*T*d)*Min(sqrt(d), (d*log(K))**(1/4))` (O; inherited from jin2026nearly Corollary 17) — conditions: K >= d >= 2; T >= d; conditionally 1-subGaussian noise
+  - lower: `K**(1/4)*sqrt(T*d)` (Omega; inherited from jin2026nearly Theorem 1)
+- stochastic · linear (finite actions) · adversarial contexts · conditionally_subgaussian · time_varying_action_sets · knows sigma · finite (`S-a0beb0bf`, 1 papers), regret / worst_case, variable d: upper 0.5 < lower 1
+  - upper: `130*(K*log(2*K*T + 1))**(1/4)*sqrt(T*d*log(T/d + 1))` (exact; inherited from jin2026nearly Corollary 17) — conditions: 2 <= K <= d <= T; conditionally 1-subGaussian noise
+  - lower: `d*sqrt(T*log(T))` (Omega; inherited from li2019nearlyminimax Theorem 10)
 
 ## Vacuous upper bounds (regret growing at least linearly in T)
 
 No better than the trivial bound. Usually an extraction error, an unoptimised tuning parameter, or a data-dependent quantity read at its worst case.
 
+- `T*d**2*eta/2 + d*log(2)/eta` (exact; audibert2011minimax Theorem 17)
+- `T*d*eta/2 + d*log(2)/eta` (exact; audibert2011minimax Theorem 18)
+- `T*d**2*eta/2 + d*log(2)/eta` (exact; audibert2011minimax Theorem 10)
+- `T*eta/2 + d*log(2)/eta` (exact; audibert2011minimax Theorem 11)
+- `3*L_star*d*eta*m + 3*d*m**2*(-log(eta) + 2*log(d/m) + 1) + 3*d + m*(log(d/m) + 1)/eta` (exact; neu2015first Corollary (cor:nonadapt))
+- `T` (O; vaze2025online Corollary 6)

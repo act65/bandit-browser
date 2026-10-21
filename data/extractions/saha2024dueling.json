@@ -1,0 +1,335 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "DP-Dueling: Learning from Preference Feedback without Compromising User Privacy",
+  "arxiv_id": "2403.15045",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Aadirupa Saha",
+   "Hilal Asi"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Finite armed DP-DB (differentially private dueling bandits, D=[K])",
+   "objective": "cumulative_regret",
+   "feedback": "dueling",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "differential_privacy"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Utility-based preferences: P(i beats j) = sigma(r(x_i) - r(x_j)) with logistic link (total ordering)",
+    "Pure epsilon-differential privacy w.r.t. the preference outcomes o_t (central model)",
+    "Regret sums suboptimality of both dueling arms: 2r(x*) - r(a_t) - r(b_t)"
+   ],
+   "definition_quote": "At each round $t$, the learner is allowed to actively choose a pair of items $(\\a_t,\\b_t)$, upon which it gets to see a binary preference feedback $o_t \\in \\{0,1\\}$ ... $o_t \\sim \\text{Ber}\\bign{\\sigma(r(\\a_t)-r(\\b_t))}$ ... In this section, we first address the \\dpdb\\, problem for finite decision space $\\cD = [K]$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "DP-DB with general d-dimensional decision space",
+   "objective": "cumulative_regret",
+   "feedback": "dueling",
+   "environment": "stochastic_iid",
+   "action_space": "generalized_linear",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "differential_privacy"
+   ],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Dueling feedback with logistic link on reward differences w*^T(a_t - b_t)",
+    "Pure epsilon-DP w.r.t. preference outcomes",
+    "Algorithm uses the minimum-slope constant kappa of the sigmoid",
+    "Possibly infinite decision space D subset of B_d(1); discretized by 1/T-net"
+   ],
+   "definition_quote": "consider decision space $\\cD \\subset \\cB_d(1)$. Assume any item $\\x \\in \\R^d$ in the decision space is associated with a reward/score parameter $r(\\x) = \\w^{*\\top} \\x$ for some unknown $\\w^* \\in \\R^d$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "DP-EBS-Elimination",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination",
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "GOptimal-DPDB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "regret_unspecified",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sum_subopt(log(K*T)/Delta_pref_i) + K/eps_dp",
+    "expression_latex": "\\tO\\left( \\sum_{i = 2}^K \\frac{\\log (KT)}{\\Delta(1,i)} + \\frac{K}{\\epsilon} \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "Delta_pref_i": "preference gap Delta(1,i) = P(1,i) - 1/2 of arm i against the best arm",
+    "eps_dp": "differential privacy parameter epsilon"
+   },
+   "conditions": [
+    "T > K",
+    "eps_dp <= 1 (privacy lemma)"
+   ],
+   "tuning": [
+    "delta = 1/T",
+    "binary tree counters with privacy parameter eps/4"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:fin",
+    "number": "Theorem (thm:fin)",
+    "quote": "For any $T >K$, \\algfin ($\\cA$)\\, is $\\eps$-DP and its total regret is upper bounded by $$\\cR_T(\\cA) = \\tO\\left( \\sum_{i = 2}^K \\frac{\\log (KT)}{\\Delta(1,i)} + \\frac{K}{\\epsilon} \\right).$$"
+   },
+   "confidence": "medium",
+   "notes": "Regret type (expected/high-prob) not stated in the theorem; proof is a high-probability-event argument with delta=1/T. Algorithm is also eps-DP."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "regret_unspecified",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sum_subopt(log(T)/Delta_pref_i) + K/eps_dp",
+    "expression_latex": "\\Omega\\left( \\sum_{i = 2}^K \\frac{\\log T}{\\Delta(1,i)} + \\frac{K}{\\epsilon} \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "Delta_pref_i": "preference gap Delta(1,i) = P(1,i) - 1/2",
+    "eps_dp": "differential privacy parameter epsilon"
+   },
+   "conditions": [
+    "K/eps_dp <= T/2",
+    "algorithm is (eps, delta)-differentially private",
+    "holds for some preference matrix P (existential)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:LB_fin",
+    "number": "Theorem (thm:LB_fin)",
+    "quote": "Let $K$ and $\\epsilon$ be such that $K/\\epsilon \\le T/2$. For any $(\\epsilon,\\delta)$ differentially private algorithm $\\cA$\\, there exist a preference matrix $P$ such that the regret of $\\cA$ on $P$ is lower bounded by $$\\cR_T(\\cA) = \\Omega\\left( \\sum_{i = 2}^K \\frac{\\log T}{\\Delta(1,i)} + \\frac{K}{\\epsilon} \\right),$$"
+   },
+   "confidence": "medium",
+   "notes": "Proof only establishes the K/eps term on a constant-gap instance (gap 1/4); the log T/Delta term is attributed to the non-private dueling lower bound. Proof's Lemma requires K/eps <= T/10 and eps <= 1."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "regret_unspecified",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "d**6*log(d*T/delta)*log(T*kappa**2/d)/(kappa*eps_dp) + d*sqrt(T)*log(T/delta)/kappa",
+    "expression_latex": "O \\left(   \\frac{d^6\\log(dT/\\delta) \\log({T}\\kappa^2/d)}{\\kappa \\epsilon  } + \\frac{ d\\sqrt{T}   {\\log(T/\\delta)}}{\\kappa} \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "kappa": "minimum slope of the sigmoid: inf of sigma'(x^T w) over ||x|| in B_d(1), ||w - w*|| <= 1",
+    "eps_dp": "differential privacy parameter epsilon"
+   },
+   "conditions": [
+    "w* in B_d(1)",
+    "D subset of B_d(1)",
+    "kappa > 0"
+   ],
+   "tuning": [
+    "t_0 = 2(C_1 d sqrt(d) + C_2 d sqrt(log(1/delta)))^2 + 16d/kappa^4 (d^2 + log(T/delta))",
+    "D_1 = 1/T-net of D",
+    "delta set to 1/(B T ell) in proof"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:reg_gen",
+    "number": "Theorem (thm:reg_gen)",
+    "quote": "Let $\\kappa := \\inf ... \\dot{\\sigma}(\\x^\\top\\theta) > 0 $ and $\\w^* \\in \\cB_d(1)$. Consider any $d$-dimensional decision space $\\cD \\subseteq \\cB_d(1)$. Then for the choice of $t_0 = ...$, and any finite horizon $T$, \\cref{alg:gen} is $\\epsilon$-DP with regret guarantee at most $O \\left(   \\frac{d^6\\log(dT/\\delta) \\log({T}\\kappa^2/d)}{\\kappa \\epsilon  } + \\frac{ d\\sqrt{T}   {\\log(T/\\delta)}}{\\kappa} \\right)$."
+   },
+   "confidence": "medium",
+   "notes": "delta is the algorithm's confidence parameter. Proof refers to 'expected regret'. Abstract summarizes as O_tilde(d^6/(kappa eps) + d sqrt(T)/kappa)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "rusmevichientong2010linearly",
+   "cited_title": "Linearly parameterized bandits",
+   "cited_first_author": "Paat Rusmevichientong",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Non-private stochastic linear bandits",
+   "bound": {
+    "notation": "Omega",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "O(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Remark 4"
+  },
+  {
+   "cited_key": "dani08",
+   "cited_title": "Stochastic linear optimization under bandit feedback",
+   "cited_first_author": "Varsha Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Non-private stochastic linear bandits",
+   "bound": {
+    "notation": "Omega",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "O(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Remark 4"
+  },
+  {
+   "cited_key": "shariff2018differentially",
+   "cited_title": "Differentially private contextual linear bandits",
+   "cited_first_author": "Roshan Shariff",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Differentially private (contextual) linear bandits, privacy term",
+   "bound": {
+    "notation": "Omega",
+    "expression": "d*log(T)/eps_dp",
+    "expression_latex": "\\frac{d \\log T}{\\epsilon}",
+    "regime": null
+   },
+   "where": "Remark 4"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:32:59",
+  "source_chars": 119054,
+  "input_tokens": 91835,
+  "output_tokens": 5858,
+  "cost_usd_equiv": 0.6342588,
+  "status": "extracted"
+ }
+}

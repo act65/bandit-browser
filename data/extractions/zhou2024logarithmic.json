@@ -1,0 +1,342 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Logarithmic Regret for Unconstrained Submodular Maximization Stochastic Bandit",
+  "arxiv_id": "2410.08578",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Julien Zhou",
+   "Pierre Gaillard",
+   "Thibaud Rahier",
+   "Julyan Arbel"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online unconstrained submodular maximization (Online USM) with stochastic (full-)bandit feedback",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "sigma",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Action set is the full power set P(D) of d items (unconstrained)",
+    "Mean reward is a non-monotone submodular set function f: P(D) -> [0, c], with range bound c known to the learner",
+    "Regret is the 1/2-approximate pseudo-regret sum_t [f(A*)/2 - f(A_t)]",
+    "Single noisy scalar feedback per action (full-bandit), noise sigma^2-sub-Gaussian conditionally on the past, sigma known"
+   ],
+   "definition_quote": "The player receives noisy rewards from a non monotone submodular set-function $f: \\cP(\\cD)\\rightarrow [0, c]$ with $c>0$. At each round $t\\in[T]$, the player chooses an action $A_t\\in\\cP(\\cD)$ and receives $Z_t = f(A_t) + \\eta_t$, where $\\eta_t$ is a random variable. Let $\\sigma>0$ (known), we assume that $\\eta_t$ is $\\sigma^2$-sub-Gaussian conditionally to the past ... $R_T = \\sum_{t=1}^T\\Big[\\frac{1}{2}f(A^*) - f(A_t)\\Big]$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Double-Greedy - Explore-then-Commit (DG-ETC)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma",
+    "d",
+    "c (range of f)",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "Min(H_f*log(d*T), d*T**(2/3)*log(d*T)**(1/3))",
+    "expression_latex": "R_T \\leq C_1\\min\\Big\\{H_f\\log(dT),\\ dT^{2/3}\\log(dT)^{1/3}\\Big\\}",
+    "regime": null
+   },
+   "symbols": {
+    "H_f": "global DG-hardness: sum over items of local hardness h_{f,i} = max_X (alpha_+ + beta_+)^2/(alpha_+ - beta_+)^4"
+   },
+   "conditions": [
+    "d*(T*sqrt(log(dT)))^(2/3) <= T/2",
+    "f submodular with values in [0,c]",
+    "holds with probability at least 1 - 10*delta/T"
+   ],
+   "tuning": [
+    "delta > 0 confidence input",
+    "tau_max = T^(2/3) log(dT)^(1/3)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:DGETC",
+    "number": "Theorem 2",
+    "quote": "Then, with probability greater than $1-10\\delta/T$, \\DGETC satisfies \\[ R_T \\leq C_1\\min\\Big\\{H_f\\log(dT),\\ dT^{2/3}\\log(dT)^{1/3}\\Big\\}\\,, \\] where $C_1$ is a constant independent from $d$, $T$ and $\\delta$."
+   },
+   "confidence": "medium",
+   "notes": "Regret is the 1/2-approximate pseudo-regret. Constant C_1 claimed independent of delta though the proof's g_{T,delta} depends on log(1/delta); recorded as O."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "d*T**(2/3)*log(d*T)**(1/3)",
+    "expression_latex": "C_1 dT^{2/3}\\log(dT)^{1/3}",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "d*(T*sqrt(log(dT)))^(2/3) <= T/2",
+    "holds with probability at least 1 - 10*delta/T"
+   ],
+   "tuning": [
+    "delta > 0 confidence input"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:DGETC",
+    "number": "Theorem 2",
+    "quote": "Then, with probability greater than $1-10\\delta/T$, \\DGETC satisfies \\[ R_T \\leq C_1\\min\\Big\\{H_f\\log(dT),\\ dT^{2/3}\\log(dT)^{1/3}\\Big\\}\\,, \\]"
+   },
+   "confidence": "high",
+   "notes": "Problem-free branch of the min in Theorem 2 (1/2-approximate regret)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "Min(H_f*log(d*T), d*T**(2/3)*log(d*T)**(1/3))",
+    "expression_latex": "\\bE[R_T] \\leq C_2 \\min\\Big\\{H_f\\log(dT),\\ dT^{2/3}\\log(dT)^{1/3}\\Big\\}",
+    "regime": null
+   },
+   "symbols": {
+    "H_f": "global DG-hardness (sum of local DG-hardnesses h_{f,i})"
+   },
+   "conditions": [
+    "d*(T*sqrt(log(dT)))^(2/3) <= T/2"
+   ],
+   "tuning": [
+    "delta = 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:DGETC",
+    "number": "Theorem 2",
+    "quote": "Likewise, in expectation, \\[ \\bE[R_T] \\leq C_2 \\min\\Big\\{H_f\\log(dT),\\ dT^{2/3}\\log(dT)^{1/3}\\Big\\}\\,, \\] where $C_1$ is a constant independent from $d$ and $T$."
+   },
+   "confidence": "high",
+   "notes": "Expectation obtained by choosing delta=1 per the analysis. 1/2-approximate pseudo-regret."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "d*T**(2/3)*log(d*T)**(1/3)",
+    "expression_latex": "C_2 dT^{2/3}\\log(dT)^{1/3}",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "d*(T*sqrt(log(dT)))^(2/3) <= T/2"
+   ],
+   "tuning": [
+    "delta = 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:DGETC",
+    "number": "Theorem 2",
+    "quote": "Likewise, in expectation, \\[ \\bE[R_T] \\leq C_2 \\min\\Big\\{H_f\\log(dT),\\ dT^{2/3}\\log(dT)^{1/3}\\Big\\}\\,, \\]"
+   },
+   "confidence": "high",
+   "notes": "Problem-free branch of the expectation bound."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_arms(Min(h_i*log(d*T), T**(2/3)*log(d*T)**(1/3)))",
+    "expression_latex": "R_T\\leq C_3 \\sum_{i\\in[d]}\\min\\Big\\{h_{f,i}\\log(dT),\\ T^{2/3}\\log(dT)^{1/3}\\Big\\}",
+    "regime": null
+   },
+   "symbols": {
+    "h_i": "local DG-hardness h_{f,i} of item i; sum is over the d items"
+   },
+   "conditions": [
+    "d*(T*sqrt(log(dT)))^(2/3) <= T/2",
+    "holds with probability at least 1 - 10*delta/T"
+   ],
+   "tuning": [
+    "delta > 0 confidence input"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Remark 4",
+    "quote": "we can keep the per-item granularity to get with probability at least $1-10\\delta/T$ \\begin{align*} R_T\\leq C_3 \\sum_{i\\in[d]}\\min\\Big\\{h_{f,i}\\log(dT),\\ T^{2/3}\\log(dT)^{1/3}\\Big\\}\\,, \\end{align*} where $C_3$ is a constant independent from $d$, $T$ and $\\delta$."
+   },
+   "confidence": "medium",
+   "notes": "Stated in a remark rather than a theorem; sum over items (d of them) written as sum_arms."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "fourati2023randomizedgreedylearningnonmonotone",
+   "cited_title": "Randomized greedy learning for non-monotone stochastic submodular maximization under full-bandit feedback",
+   "cited_first_author": "Fares Fourati",
+   "cited_year": 2023,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Randomized Greedy Learning (RGL)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic full-bandit non-monotone unconstrained submodular maximization, 1/2-approximate expected regret",
+   "bound": {
+    "notation": "O",
+    "expression": "d*T**(2/3)*log(T)**(1/3)",
+    "expression_latex": "O(dT^{2/3}\\log(T)^{1/3})",
+    "regime": null
+   },
+   "where": "Section 1.3 / Section 2.2"
+  },
+  {
+   "cited_key": "roughgarden2018optimalalgorithmonlineunconstrained",
+   "cited_title": "An optimal algorithm for online unconstrained submodular maximization",
+   "cited_first_author": "Tim Roughgarden",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online adversarial full-information unconstrained non-monotone submodular maximization, 1/2-approximate regret",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "O(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 1.3"
+  },
+  {
+   "cited_key": "niazadeh2021online",
+   "cited_title": "Online learning via offline greedy algorithms: Applications in market design and optimization",
+   "cited_first_author": "Rad Niazadeh",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Adversarial bandit unconstrained non-monotone submodular maximization, 1/2-approximate regret",
+   "bound": {
+    "notation": "O",
+    "expression": "d*T**(2/3)",
+    "expression_latex": "O(dT^{2/3})",
+    "regime": null
+   },
+   "where": "Section 1.3"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:05:42",
+  "source_chars": 85185,
+  "input_tokens": 73521,
+  "output_tokens": 5550,
+  "cost_usd_equiv": 0.4815868,
+  "status": "extracted"
+ }
+}

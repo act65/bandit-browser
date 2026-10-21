@@ -143,7 +143,8 @@ class Analysis:
                     "paper": b.get("paper"), "cite": site.cite(b.get("paper")), "year": b.get("year"),
                     "alg": alg, "js": b.get("js"), "tex": tex if ok else None, "expr": b.get("expression"),
                     "prof": b.get("profile"), "front": full_id in fronts.get(reg, ()), "dsub": dsub,
-                    "restricted": bool(b.get("restricted")), "conf": b.get("confidence")}
+                    "restricted": bool(b.get("restricted")), "conf": b.get("confidence"),
+                    "rate": dsub or b.get("rate_regime") == reg}
 
         out = [entry(b, self.regime(b), b["id"], False) for b in bs]
         # High-probability bounds read in expectation with delta = 1/T (front ids "...@delta=1/T").

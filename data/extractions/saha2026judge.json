@@ -1,0 +1,227 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "LLM-as-Judge on a Budget",
+  "arxiv_id": "2602.15481",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Aadirupa Saha",
+   "Aniket Wagde",
+   "Branislav Kveton"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Optimal query allocation for LLM-as-judge with known variances",
+   "objective": "other_pure_exploration",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "K",
+    "sigma"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Objective is to estimate all K arm means and minimise worst-case (sup-norm) estimation error max_i |s_i - hat s_i| under a fixed query budget B",
+    "Arm-dependent sub-Gaussian parameters sigma_i^2, known to the learner"
+   ],
+   "definition_quote": "Given a fixed budget $B$, our goal is to find a `near optimal allocation' $\\mathcal{B}$ to minimize the Worst-Case Estimation Error (WCE) across all pairs: $\\max_{i \\in [K]} |s_i - \\hat{s}_i(\\cB)|$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Optimal query allocation for LLM-as-judge with unknown variances",
+   "objective": "other_pure_exploration",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_unknown_variance",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Objective is to estimate all K arm means and minimise worst-case (sup-norm) estimation error max_i |s_i - hat s_i| under a fixed query budget B"
+   ],
+   "definition_quote": "We now address the most general case of the problem (recall the setting in \\cref{sec:prob}) with unknown variances $\\sigma_1^2, \\ldots, \\sigma_K^2$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "ROBIN",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "sigma"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "ROBIN-HOOD",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "explore_then_commit"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(sum_arms(sigma_i**2)/T*log(2*K/delta))",
+    "expression_latex": "\\max_{i \\in [K]} \\abs{s_i - \\hs_i(\\cR)} \\leq \\sqrt{\\frac{\\sum_{i=1}^K \\sigma_i^2}{B}\\log\\frac{2K}{\\delta}}",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "B > K",
+    "noise of arm i is sub-Gaussian with parameter sigma_i^2"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:known",
+    "number": "Theorem 2",
+    "quote": "Assume the noisy score evaluation of Arm-$i$ follows sub-Gaussian distribution with parameter $\\sigma_i^2$ (i.e. $\\epsilon_i \\sim \\cS_\\cG(0,\\sigma_i^2)$). Given fixed budget $B > K$, the estimated scores $\\hs_i(\\cR)$ computed through the allocation rule $\\cR$ of \\algk\\ (\\cref{alg:algk}) achieves WCE: \\[ \\max_{i \\in [K]} \\abs{s_i - \\hs_i(\\cR)} \\leq \\sqrt{\\frac{\\sum_{i=1}^K \\sigma_i^2}{B}\\log\\frac{2K}{\\delta}}, \\] with high probability at least $(1-\\delta)$"
+   },
+   "confidence": "medium",
+   "notes": "Bound on worst-case estimation error of means (not regret). Paper's budget B = number of rounds, mapped to T. The proof sketch derives an extra factor 2 inside the square root, inconsistent with the statement; statement recorded as written."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(sum_arms(sigma_i**2)/T*log(4*K*T/delta))",
+    "expression_latex": "\\max_{i \\in [K]} \\abs{s_i - \\hs_i(\\cR_\\cH)} \\leq O\\left(\\sqrt{\\frac{\\sum_{i=1}^K \\sigma_i^2}{B}\\log\\frac{4KB}{\\delta}}\\right)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "B > 16 K log(4/delta)",
+    "noise of arm i is Gaussian N(0, sigma_i^2)"
+   ],
+   "tuning": [
+    "t_0 = 16 log(4KB/delta)",
+    "confidence parameter delta used in the variance UCB"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:unknown",
+    "number": "Theorem (thm:unknown)",
+    "quote": "Consider any fixed budget $B > 16K \\log \\frac{4}{\\delta}$ and assume the noisy score evaluation of Arm-$i$ follows Gaussian distribution with variance $\\sigma_i^2$ (i.e. $\\epsilon_i \\sim \\cN(0,\\sigma_i^2)$). Then for the choice of $t_0 = 16 \\log \\frac{4KB}{\\delta}$, the estimated scores $\\hs_i(\\cR)$ computed through the allocation rule $\\cR_\\cH$ of \\algu\\ achieves WCE: \\[ \\max_{i \\in [K]} \\abs{s_i - \\hs_i(\\cR_\\cH)} \\leq O\\left(\\sqrt{\\frac{\\sum_{i=1}^K \\sigma_i^2}{B}\\log\\frac{4KB}{\\delta}}\\right), \\] with high probability at least $(1-\\delta)$"
+   },
+   "confidence": "medium",
+   "notes": "Budget B mapped to T. Estimation-error bound, not regret. Theorem number not printed in source (restatable shared counter)."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:50:28",
+  "source_chars": 75692,
+  "input_tokens": 64956,
+  "output_tokens": 3933,
+  "cost_usd_equiv": 0.38072680000000003,
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,251 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Restless-UCB, an Efficient and Low-complexity Algorithm for Online Restless Bandits",
+  "arxiv_id": "2011.02664",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Siwei Wang",
+   "Longbo Huang",
+   "John C. S. Lui"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online restless bandit with birth-death Markov chains",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "markovian",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "restless"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each arm's state follows a Markov chain with M states that transitions every round regardless of pulls; player observes the state and reward of the pulled arm only",
+    "Regret is against the optimal (belief-state) policy with full knowledge of transitions and rewards, via the optimal average reward mu*",
+    "Rewards monotone non-increasing in state index (Assumption 1)",
+    "Birth-death transition structure (Assumption 2)",
+    "P_i(k,k+1)+P_i(k+1,k) <= 1 (Assumption 3)",
+    "Neighbor transition probabilities lower bounded by c_1 (Assumption 4)",
+    "Access to an offline oracle returning the optimal (or approximate) policy"
+   ],
+   "definition_quote": "Consider an online restless bandit problem $\\mathcal{R}$ which has one player (decision maker) and $N$ arms ... Each arm $i$ is associated with a Markov chain $M_i$. All the Markov chains have the same state space $S = \\{1,2,\\cdots,M\\}$ ... this action gives a reward $x(t) \\in [0,1]$ ... $Reg(T) = T\\mu^*(\\mathcal{R}) - \\sum_{t=1}^T \\E[x^\\pi(t)]$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Restless-UCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "(K/d_min + M_st**3/(1 - lambda_max)**2)*T**(2/3)",
+    "expression_latex": "\\tilde{O}\\left(\\left({N\\over d_{\\min}} + {M^3\\over (1-\\lambda_{\\max})^2}\\right)T^{2\\over 3}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "M_st": "number of states of each arm's Markov chain (paper's M)",
+    "d_min": "minimum stationary probability over all arms and states",
+    "lambda_max": "max over arms of the sup of second largest eigenvalue modulus over the neighbourhood of transition matrices"
+   },
+   "conditions": [
+    "Assumptions 1-4: monotone rewards in state, birth-death chains, P_i(k,k+1)+P_i(k+1,k)<=1, neighbor transitions >= c_1",
+    "Oracle returns the exact optimal policy of the offline instance"
+   ],
+   "tuning": [
+    "m(T) = T^(2/3)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "Theorem_1",
+    "number": "Theorem 1",
+    "quote": "If \\texttt{Oracle} returns the optimal policy, then under Assumptions 1, 2, 3 and 4, the regret of Restless-UCB with $m(T) = T^{2\\over 3}$ in an online restless bandit problem $\\mathcal{R}$ satisfies: $Reg(T) = \\tilde{O}\\left(\\left({N\\over d_{\\min}} + {M^3\\over (1-\\lambda_{\\max})^2}\\right)T^{2\\over 3}\\right)$."
+   },
+   "confidence": "medium",
+   "notes": "Paper's N (number of arms) mapped to K. Regret defined as T*mu* minus expected cumulative reward, against optimal policy; classified as pseudo_regret. Polynomial complexity assumes an efficient oracle. Proof also hides constants such as a diameter constant C and dependence on c_1."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(2/3)",
+    "expression_latex": "\\tilde{O}(T^{2\\over 3})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "Assumptions 1-4",
+    "Oracle returns an approximate policy with ratio lambda"
+   ],
+   "tuning": [
+    "m(T) = T^(2/3)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "Proposition_Approx",
+    "number": "Theorem (Proposition_Approx)",
+    "quote": "If \\texttt{Oracle} returns an approximate policy with ratio $\\lambda$, then under Assumptions 1, 2, 3 and 4, the approximation regret (with approximate ratio $\\lambda$) of Restless-UCB with $m(T) = T^{2\\over 3}$ in an online restless bandit problem $\\mathcal{R}$ is upper bounded by $\\tilde{O}(T^{2\\over 3})$."
+   },
+   "confidence": "medium",
+   "notes": "Quantity is lambda-approximation regret (lambda*T*mu* - expected reward). Hidden constant may be exponential in N, M (depends on a diameter D)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "ortner2012regret",
+   "cited_title": "Regret bounds for restless markov bandits",
+   "cited_first_author": "R. Ortner",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": "colored-UCRL2",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online restless bandit (general), regret against optimal policy; D is the diameter, exponential in N, M",
+   "bound": {
+    "notation": "O",
+    "expression": "D_diam*sqrt(T)",
+    "expression_latex": "O(D\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "jung2019thompson",
+   "cited_title": "Thompson sampling in non-episodic restless bandits",
+   "cited_first_author": "Y. H. Jung",
+   "cited_year": 2019,
+   "cited_arxiv_id": "1910.05654",
+   "algorithm_name": "Thompson Sampling",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Non-episodic online restless bandit, Bayesian regret; D is the diameter",
+   "bound": {
+    "notation": "O",
+    "expression": "D_diam*sqrt(T)",
+    "expression_latex": "O(D\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "jung2019regret",
+   "cited_title": "Regret bounds for thompson sampling in episodic restless bandit problems",
+   "cited_first_author": "Y. H. Jung",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson Sampling",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Episodic restless bandit with episode length L",
+   "bound": {
+    "notation": "O",
+    "expression": "H*sqrt(T)",
+    "expression_latex": "O(L\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "liu2011logarithmic",
+   "cited_title": "Logarithmic weak regret of non-bayesian restless multi-armed bandit",
+   "cited_first_author": "H. Liu",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB-based restless policy",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online restless bandit, weak regret against best single-arm policy",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)",
+    "expression_latex": "O(\\log T)",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:48:57",
+  "source_chars": 98890,
+  "input_tokens": 76279,
+  "output_tokens": 3879,
+  "cost_usd_equiv": 0.4702308,
+  "status": "extracted"
+ }
+}

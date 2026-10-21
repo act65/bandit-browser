@@ -1,0 +1,262 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Distributed Learning Over Markovian Fading Channels for Stable Spectrum Access",
+  "arxiv_id": "2101.11292",
+  "arxiv_version": null,
+  "year": 2022,
+  "authors": [
+   "Tomer Gafni",
+   "Kobi Cohen"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Multi-user spectrum access over restless unknown Markovian (FSMC) channels with user-dependent rates; regret w.r.t. stable matching",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "markovian",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "Delta_min",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "multi_player_collision",
+    "restless"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "M users (agents) and K >= M channels; each user's rate on each channel is a finite-state irreducible aperiodic Markov chain, independent across user-channel pairs, evolving regardless of actions (restless)",
+    "Rates (means) differ across users; all entries of expected-rate matrix U are distinct (unique stable matching)",
+    "Comparator is the stable matching allocation (not the optimal matching), with weak regret against a genie knowing only means",
+    "Channel states observed via carrier sensing regardless of collisions; collisions yield zero reward",
+    "Algorithm uses parameter L depending on Markov chain constants (eigenvalue gap, state values, stationary distribution) and epsilon; uses opportunistic CSMA backoff signalling between users"
+   ],
+   "definition_quote": "we define the regret for policy $\\phi$ as the loss in the expected aggregated data rate with respect to the stable matching solution that uses the true expected rates: r_\\phi(t) \\triangleq t \\cdot \\sum_{i=1}^M \\mu_{i,S(i)} - \\mathbb{E}_\\phi [\\sum_{n=1}^t \\sum_{i=1}^M X_{i,\\phi_i(n)}(n) ]."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Distributed Stable Strategy Learning (DSSL)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "Delta_min",
+    "K",
+    "L (Markov-chain mixing/scale constant)",
+    "epsilon"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "A_max*n_O_sum + R_explore + N**2*A_max*n_O_sum + 2*E*log(N+1)*n_O_sum*mu_SM + (A_max + (N**2*K + N*K)*6*X_max/pi_min*mu_SM)*ceiling(log(3*T/2 + 1)/log(4)) + C_0",
+    "expression_latex": "A_{\\max}(\\sum_{i,k}(\\lfloor \\log_4(3A_{i,k}\\log t+1)\\rfloor+1)) + \\sum_{i,k}[(4A_{i,k}\\log t+1+M^{i,k}_{\\max}(\\lfloor\\log_4(3A_{i,k}\\log t+1)\\rfloor+1))(\\mu_{i,S(i)}+\\mu_{S^{-1}(k),k}-\\mu_{i,k})] + M^2 A_{\\max}(\\sum_{i,k}(\\cdots)) + [2e\\log(M+1)(\\sum_{i,k}(\\cdots))][\\sum_j \\mu_{j,S(j)}] + (A_{\\max}+(M^2K+MK)\\frac{6X_{\\max}}{\\pi_{\\min}}\\sum_j\\mu_{j,S(j)})\\lceil\\log_4(\\frac32 t+1)\\rceil + O(1)",
+    "regime": null
+   },
+   "symbols": {
+    "N": "number of users M in the paper",
+    "A_max": "max_{i,k} (min_x pi^x_{i,k})^{-1} sum_x x (transient-effect constant)",
+    "n_O_sum": "sum_{i=1}^M sum_{k=1}^K (floor(log_4(3 A_{i,k} log t + 1)) + 1), with A_{i,k} = max{2/I, D^{(max)}_{i,k}} if k in G_i else max{2/I, 4L/Delta_min^2}",
+    "R_explore": "sum_{i,k} (4 A_{i,k} log t + 1 + M^{i,k}_max (floor(log_4(3A_{i,k} log t+1))+1)) * (mu_{i,S(i)} + mu_{S^{-1}(k),k} - mu_{i,k}); M^{i,k}_max is the max mean hitting time",
+    "mu_SM": "sum_j mu_{j,S(j)}, total expected rate of the stable matching",
+    "X_max": "maximal cardinality of the Markov chain state spaces",
+    "pi_min": "minimal stationary probability over all states, users, channels",
+    "C_0": "constant independent of t (the O(1) term)"
+   },
+   "conditions": [
+    "rates are finite-state irreducible aperiodic Markov chains, independent across user-channel pairs",
+    "all entries of the expected rate matrix U are distinct",
+    "K >= M"
+   ],
+   "tuning": [
+    "L = 28 x_max^2 r_max^2 pi_hat_max^2 / lambda_bar_min",
+    "I = 7 eps^2 / (48 (r_max+2)^2 L)",
+    "exploration condition T^O_{i,k}(t) > max{D_hat_{i,k}(t), 2/I} log t"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:regret",
+    "number": "Theorem 1",
+    "quote": "Assume that the proposed DSSL algorithm is implemented and that the assumptions on the system model described in Section \\ref{sec:problem} hold. Then, the regret at time $t$ is upper bounded by: r(t) \\leq A_{\\max} \\cdot (\\sum_{i=1}^{M} \\sum_{k=1}^{K} (\\lfloor \\log_4(3A_{i,k}\\log(t)+1) \\rfloor +1) ) + \\sum_{i=1}^{M} \\sum_{k=1}^{K} [( 4A_{i,k} \\cdot \\log(t) + 1 + M_{\\max}^{i,k}(\\lfloor \\log_4(3A_{i,k}\\log(t)+1) \\rfloor +1 ) ) \\cdot ( \\mu_{i,S(i)} + \\mu_{S^{-1}(k),k} - \\mu_{i,k} ) ] + M^2 \\cdot A_{\\max} \\cdot (...) + ... +O(1)"
+   },
+   "confidence": "medium",
+   "notes": "Regret is t*sum of stable-matching means minus expected realized rewards (weak regret vs stable matching, not optimal matching); quantity set to 'other' and comparator approximated as best_fixed_action. Expression compresses the double sums into declared symbols; T denotes current time t. Paper's M (users) mapped to N."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "(1/Delta_U**2 + N*K)*log(T)",
+    "expression_latex": "O((\\frac{1}{(\\Delta_{\\min})^2}+MK)\\log(t))",
+    "regime": null
+   },
+   "symbols": {
+    "N": "number of users M",
+    "Delta_U": "paper's Delta_min: in the benchmark, difference in rates between the M-th and (M+1)-th best channels"
+   },
+   "conditions": [
+    "benchmark setting: equal rates among users (rates vary only across channels)",
+    "K > M"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "th:regret",
+    "number": "Theorem 1",
+    "quote": "In contrast, under DSSL, the regret scales as $O((\\frac{1}{(\\Delta_{\\min})^2}+MK)\\log(t))$ due to the novel algorithm design that explores every channel according to its unique adaptive exploration rate"
+   },
+   "confidence": "low",
+   "notes": "Informal scaling consequence of Theorem 1 stated in the discussion after the theorem, for a special benchmark case; dependence on Markov constants suppressed."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "nayyar2016regret",
+   "cited_title": "On regret-optimal learning in decentralized multiplayer multiarmed bandits",
+   "cited_first_author": "N. Nayyar",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": "dE^3",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Decentralized multiplayer bandits, benchmark with equal rates among users, K > M",
+   "bound": {
+    "notation": "O",
+    "expression": "N*K/Delta_U**2*log(T)",
+    "expression_latex": "O(\\frac{MK}{(\\Delta_{\\min})^2}\\log(t))",
+    "regime": null
+   },
+   "where": "Section 1.1 and after Theorem 1"
+  },
+  {
+   "cited_key": "Liu_2013_Learning",
+   "cited_title": "Learning in a changing world: Restless multiarmed bandit with unknown dynamics",
+   "cited_first_author": "H. Liu",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "DSEE",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Restless multi-user bandit, equal rates among users, K > M",
+   "bound": {
+    "notation": "O",
+    "expression": "N*K/Delta_U**2*log(T)",
+    "expression_latex": "O(\\frac{MK}{(\\Delta_{\\min})^2}\\log(t))",
+    "regime": null
+   },
+   "where": "Section 1.1 and after Theorem 1"
+  },
+  {
+   "cited_key": "2019arXiv190201239B",
+   "cited_title": "A Practical Algorithm for Multiplayer Bandits when Arm Means Vary Among Players",
+   "cited_first_author": "E. Boursier",
+   "cited_year": 2019,
+   "cited_arxiv_id": "1902.01239",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Multiplayer bandits with i.i.d. channels, benchmark equal rates among users, K > M",
+   "bound": {
+    "notation": "O",
+    "expression": "N**3*K/Delta_U**2*log(T)",
+    "expression_latex": "O(\\frac{M^3K}{(\\Delta_{\\min})^2}\\log(t))",
+    "regime": null
+   },
+   "where": "Section 1.1 and after Theorem 1"
+  },
+  {
+   "cited_key": "bistritz2018distributed",
+   "cited_title": "Distributed multi-player bandits-a game of thrones approach",
+   "cited_first_author": "I. Bistritz",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Game of Thrones",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Multiplayer bandits with i.i.d. channels, benchmark equal rates among users, K > M",
+   "bound": {
+    "notation": "O",
+    "expression": "N*K**2/Delta_U**2*log(T)",
+    "expression_latex": "O(\\frac{MK^2}{(\\Delta_{\\min})^2}\\log(t))",
+    "regime": null
+   },
+   "where": "Section 1.1 and after Theorem 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:43:09",
+  "source_chars": 119430,
+  "input_tokens": 92699,
+  "output_tokens": 6249,
+  "cost_usd_equiv": 0.6489908,
+  "status": "extracted"
+ }
+}

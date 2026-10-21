@@ -1,0 +1,200 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Cost-Effective Online Multi-LLM Selection with Versatile Reward Models",
+  "arxiv_id": "2405.16587",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Xiangxiang Dai",
+   "Jin Li",
+   "Xutong Liu",
+   "Anqi Yu",
+   "John C. S. Lui"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "C2MAB-V: cost-effective combinatorial multi-armed bandit with versatile reward models (AWC/SUC/AIC) and long-term cost constraint",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "extras": [
+    "knapsack_constraints"
+   ],
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Long-term average budget constraint with unknown stochastic costs; performance also measured by constraint violation V(T) = [ (1/T) sum_t sum_{k in F_t} y_{t,k} - rho ]^+",
+    "Partial (probabilistically triggered) feedback: only a subset F_t of selected arms observed, with minimum full-observation probability o*",
+    "Non-linear reward functions (AWC: 1-prod(1-mu_k), SUC: sum mu_k, AIC: prod mu_k), L-Lipschitz and monotone",
+    "alpha-approximate regret with an alpha-approximation oracle (alpha = 1-1/e for AWC, 1 for SUC/AIC)",
+    "Feasible actions: matroid / cardinality-constrained subsets of size at most (or exactly) N; learner knows budget rho"
+   ],
+   "definition_quote": "R(T) = \\E\\left[\\sum_{t=1}^T \\left(\\alpha \\cdot r(S^*_t;\\boldsymbol{\\mu}) - r(S_t;\\boldsymbol{\\mu})\\right)\\right] ... V(T)=\\left[ \\frac{1}{T}\\sum_{t=1}^T\\sum_{k \\in \\mathcal{F}_t} y_{t,k} -\\rho \\right]^{+}"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "C2MAB-V",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*L_lip/o_star*sqrt(2*m*K*T*log(2*pi**2*K*T/3)) + (K + 1)*r_star",
+    "expression_latex": "R(T) \\leq  \\frac{2 L}{o^*} \\sqrt{2 N K T \\ln \\left(\\frac{2 \\pi^2 K T}{3 }\\right)}+\\left(K+1\\right)r^*",
+    "regime": null
+   },
+   "symbols": {
+    "o_star": "minimum probability that all selected LLMs in an action are observed",
+    "r_star": "maximum reward max_S r(S; mu)",
+    "m": "N in the paper: maximum number of LLMs selected per action"
+   },
+   "conditions": [
+    "reward function is monotone and L-Lipschitz (AWC, SUC or AIC)",
+    "rewards in [0,1]"
+   ],
+   "tuning": [
+    "delta = 1/T in confidence radius"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem 1",
+    "quote": "With $\\delta=1/T$ in the confidence radius, the $\\alpha$-approximate regret for the multi-LLM selection problem is bounded as follows, with probability at least $1-1/T$: R(T) \\leq  \\frac{2 L}{o^*} \\sqrt{2 N K T \\ln \\left(\\frac{2 \\pi^2 K T}{3 }\\right)}+\\left(K+1\\right)r^*."
+   },
+   "confidence": "medium",
+   "notes": "Regret is alpha-approximate (alpha = 1-1/e for AWC, 1 for SUC/AIC) and defined as an expectation, yet stated 'with probability at least 1-1/T'; recorded as high-probability as stated. L_lip is the paper's L (Lipschitz constant of the reward)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(m*K/T)*(2*sqrt(2*log(2*pi**2*K*T/3)) + sqrt(m*K/T))",
+    "expression_latex": "V(T) \\leq \\sqrt{NK/T} \\left(2 \\sqrt{2\\ln \\left(\\frac{2 \\pi^2 K T}{3 }\\right)}+\\sqrt{NK/T}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "m": "N in the paper: maximum number of LLMs selected per action"
+   },
+   "conditions": [
+    "worst case for AWC: all selected LLMs are used (S_t = F_t)"
+   ],
+   "tuning": [
+    "delta = 1/T in confidence radius"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:violation",
+    "number": "Theorem 2",
+    "quote": "With $\\delta=1/T$ in the confidence radius, the constraint violation under the worst case is bounded as follows, with probability at least $1-1/T$: V(T) \\leq \\sqrt{NK/T} \\left(2 \\sqrt{2\\ln \\left(\\frac{2 \\pi^2 K T}{3 }\\right)}+\\sqrt{NK/T}\\right)."
+   },
+   "confidence": "medium",
+   "notes": "Bound on the average per-round budget constraint violation V(T) (not regret), recorded as stated (not multiplied by T); paper notes total violation is O~(sqrt(KT))."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "kveton2015tight",
+   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
+   "cited_first_author": "Branislav Kveton",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Stochastic combinatorial semi-bandit with linear reward, full semi-bandit feedback, K base arms, actions of size N",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(m*K*T)",
+    "expression_latex": "\\Omega(\\sqrt{N K T})",
+    "regime": null
+   },
+   "where": "Remark 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:05:29",
+  "source_chars": 151729,
+  "input_tokens": 102210,
+  "output_tokens": 3637,
+  "cost_usd_equiv": 0.6728388000000001,
+  "status": "extracted"
+ }
+}

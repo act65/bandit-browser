@@ -1,0 +1,236 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Adversarial Attacks on Linear Contextual Bandits",
+  "arxiv_id": "2002.03839",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Evrard Garcelon",
+   "Baptiste Roziere",
+   "Laurent Meunier",
+   "Jean Tarbouriech",
+   "Olivier Teytaud",
+   "Alessandro Lazaric",
+   "Matteo Pirotta"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online adversarial attacks on contexts of a linear contextual bandit (LinUCB, white-box)",
+   "objective": "other_pure_exploration",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "sigma",
+    "L_feat",
+    "K",
+    "T",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "l2_ball",
+    "loss_set": "bounded_mean_reward"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "The guarantee is for an attacker (not the learner): the attacker perturbs contexts shown to LinUCB to force pulls of target arms A^dagger with small cumulative perturbation cost",
+    "Disjoint per-arm linear model: reward <theta_a, x_t> + noise with K arm parameters",
+    "Attacker knows a lower bound nu on the target-arm reward (Assumption 2) and has white-box access to LinUCB",
+    "Expected rewards in (0,1] for all contexts and arms"
+   ],
+   "definition_quote": "At each time $t$, the agent observes a context $x_{t}\\in\\mathbb{R}^{d}$, selects an action $a_{t}\\in \\llbracket 1, K\\rrbracket$ and observes a reward: $r_{t,a_{t}} = \\langle \\theta_{a_{t}}, x_{t}\\rangle + \\eta_{a_{t}}^{t}$ ... We denote by $\\widetilde{x}_t$ the context after the attack and by $c_t = \\|x_t - \\widetilde{x}_t\\|_2$ the instantaneous cost."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "ConicAttack (ContextualConic) against LinUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "nu (lower bound on target-arm reward)",
+    "L_feat",
+    "white-box access to LinUCB"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "LinUCB",
+   "registry_id": "lin_ucb",
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "L_feat",
+    "T",
+    "K"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "Contextual ACE",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "L_feat"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "32*K**2*(lam/alpha_att**2 + sigma**2*d*log((lam*d + T*L_feat**2*alpha_att**2)/(d*lam*delta)))**3",
+    "expression_latex": "\\sum_{j\\notin A^{\\dagger}} N_{j}(T) \\leq 32K^{2}\\left( \\frac{\\lambda}{\\alpha^{2}} + \\sigma^{2}d\\log\\left(\\frac{\\lambda d + TL^2\\alpha^{2}}{d\\lambda\\delta}\\right) \\right)^{3}",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_att": "attack dilation factor alpha = 2/nu",
+    "nu": "known lower bound on target-arm expected reward (Assumption 2)"
+   },
+   "conditions": [
+    "||x||_2 <= nu*L/2 for all contexts",
+    "Assumption 1: ||x||<=L, <theta_a,x> in (0,1], ||theta_a||<=S",
+    "Assumption 2: for every context some target arm has reward >= nu > 0",
+    "delta in (0,1/K]"
+   ],
+   "tuning": [
+    "alpha = 2/nu",
+    "LinUCB regularization lambda"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:cost_attack_all_ctx",
+    "number": "Proposition 2",
+    "quote": "Using the attack described in Fig.~\\ref{alg:context_attack_protocol} and assuming that $\\|x\\|_{2}\\leq \\nu L/2$ for all contexts $x\\in\\mathcal{D}$, for any $\\delta\\in (0,1/K]$, with probability at least $1 - K\\delta$, the number of times \\linucb does not pull an arm in $A^{\\dagger}$ before time $T$ is at most $\\sum_{j\\notin A^{\\dagger}} N_{j}(T) \\leq 32K^{2}\\left( \\frac{\\lambda}{\\alpha^{2}} + \\sigma^{2}d\\log\\left(\\frac{\\lambda d + TL^2\\alpha^{2}}{d\\lambda\\delta}\\right) \\right)^{3}$"
+   },
+   "confidence": "medium",
+   "notes": "Bound on number of non-target pulls by attacked LinUCB, holding w.p. >= 1-K delta. Not a regret bound; quantity 'other'."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "64*K**2/nu*(lam/alpha_att**2 + sigma**2*d*log((lam*d + T*L_feat**2*alpha_att**2)/(d*lam*delta)))**3",
+    "expression_latex": "\\sum_{t=1}^{T} c_{t} \\leq \\frac{64K^{2}}{\\nu}\\left( \\frac{\\lambda}{\\alpha^{2}} + \\sigma^{2}d\\log\\left(\\frac{\\lambda d + TL^2\\alpha^{2}}{d\\lambda\\delta}\\right) \\right)^{3}",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_att": "attack dilation factor alpha = 2/nu",
+    "nu": "known lower bound on target-arm expected reward (Assumption 2)"
+   },
+   "conditions": [
+    "||x||_2 <= nu*L/2 for all contexts",
+    "Assumption 1: ||x||<=L, <theta_a,x> in (0,1], ||theta_a||<=S",
+    "Assumption 2: for every context some target arm has reward >= nu > 0",
+    "delta in (0,1/K]"
+   ],
+   "tuning": [
+    "alpha = 2/nu"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:cost_attack_all_ctx",
+    "number": "Proposition 2",
+    "quote": "The total cost for the attacker is bounded by: $   \\sum_{t=1}^{T} c_{t} \\leq \\frac{64K^{2}}{\\nu}\\left( \\frac{\\lambda}{\\alpha^{2}} + \\sigma^{2}d\\log\\left(\\frac{\\lambda d + TL^2\\alpha^{2}}{d\\lambda\\delta}\\right) \\right)^{3}$ with $\\alpha = 2/\\nu$."
+   },
+   "confidence": "medium",
+   "notes": "Cumulative attack cost (sum of context perturbation norms), w.p. >= 1-K delta. Propositions 1, 3, 4 (o(T) statements / qualitative) not recorded since no explicit expression."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "lattimore2018bandit",
+   "cited_title": "Bandit algorithms",
+   "cited_first_author": "Tor Lattimore",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Exp4",
+   "algorithm_registry_id": "exp4",
+   "side": "upper",
+   "setting_description": "Adversarial bandits with expert advice, K arms, N experts",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(2*T*K*log(N_exp))",
+    "expression_latex": "\\sqrt{2TK\\log(N)}",
+    "regime": null
+   },
+   "where": "Appendix D (Attacks on Adversarial Bandits)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:30:38",
+  "source_chars": 107931,
+  "input_tokens": 81157,
+  "output_tokens": 4185,
+  "cost_usd_equiv": 0.5153748,
+  "status": "extracted"
+ }
+}

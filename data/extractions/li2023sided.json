@@ -1,0 +1,228 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Two-sided Competing Matching Recommendation Markets With Quota and Complementary Preferences Constraints",
+  "arxiv_id": "2301.10230",
+  "arxiv_version": null,
+  "year": 2023,
+  "authors": [
+   "Yuantong Li",
+   "Guang Cheng",
+   "Xiaowu Dai"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Competing Matching under Complementary Preferences Recommendation problem (CMCPR)",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "prior"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Two-sided many-to-one matching market: N firms (agents) and M types of workers (arms), K_m workers of type m",
+    "Centralized platform computes a stable matching each round; firms compete for workers",
+    "Firms have type-specific minimum quotas q_i^m and total quota Q_i (complementary preferences)",
+    "Workers' preferences over firms are known; firms' preferences unknown",
+    "Regret measured against the firm-optimal stable matching, summed over firms and types (Bayesian social welfare gap)"
+   ],
+   "definition_quote": "If $p_i$ is matched with $a_j^m$ at time $t$, $p_i$ provides a noisy reward $y_{i,j}^m(t)$ which is assumed to be the true matching score $\\mu_{i,j}^m$ plus a noise term ... sub-Gaussian ... Finally, define the Bayesian social welfare gap (BSWG) $\\mathfrak{R}(T):= \\mathbb{E}_{\\theta \\in \\Theta}[\\sum_{i=1}^{N}R_{i}(T,\\theta)]$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "CMCPR incentive compatibility (single deviating Machiavelli firm)",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [
+    "strategic_arms"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Strategic behaviour is by an agent (firm) deviating from MMTS recommendations, not by arms",
+    "Unique stable matching assumed (stated in discussion)",
+    "Bound on a single firm's firm-optimal regret for m-type workers"
+   ],
+   "definition_quote": "Suppose all firms other than firm $p_{i}$ follow the preferences according to the $\\mmts$ to the centralized platform."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Multi-agent Multi-type Thompson Sampling (MMTS) with double matching",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "prior"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "8*Q*log(Q*T)*sqrt(K_max*T) + N*K/Q",
+    "expression_latex": "\\mathfrak{R}(T) \\leq 8Q\\log(QT) \\sqrt{K_{\\max}T} + NK/Q",
+    "regime": null
+   },
+   "symbols": {
+    "Q": "total quota of all firms, sum_i Q_i",
+    "K_max": "maximum number of workers of a single type, max_m K_m",
+    "N": "number of firms (agents)",
+    "K": "total number of workers, sum_m K_m"
+   },
+   "conditions": [
+    "sub-Gaussian noise",
+    "worker-to-firm preferences known",
+    "sum_m q_i^m <= Q_i"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm: regret upper bound",
+    "number": "Theorem 5.2",
+    "quote": "Assume $K_{\\max} = \\max\\{K_{1},..., K_{M}\\}, K = \\sum_{m=1}^{M}K_{m}$, with probability $1-1/QT$, when all firms follow the $\\mmts$ algorithm, firms together will suffer the Bayesian expected regret $$\\mathfrak{R}(T) \\leq 8Q\\log(QT) \\sqrt{K_{\\max}T} + NK/Q.$$"
+   },
+   "confidence": "medium",
+   "notes": "Paper states a Bayesian expected regret holding 'with probability 1-1/QT' (odd combination); recorded as high_probability as stated. Comparator is the firm-optimal stable matching, mapped to best_fixed_action. Theorem F.1 restates the same bound as 8 log(QT) sqrt(QK_max) sqrt(QT) + NK/Q."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "R_IC",
+    "expression_latex": "R_{i}^{m}(T,\\theta) \\geq \\sum_{l: \\overline{\\Delta}_{i,l}^{m} < 0} \\overline{\\Delta}_{i,l}^{m}\\Bigg[\\underset{S^{m} \\in \\cC(\\cH_{i,l}^{m})}{\\min}\\sum_{(p_{j}, a_{k}^{m}, a_{k'}^{m})\\in S^{m}}\\bigg(C^{m}_{i,j,k'} +\\frac{\\log(T)}{d(\\mu_{j, \\overline{u}_{i,\\min}^{m}}, \\mu_{j, k'})}\\bigg)\\Bigg]",
+    "regime": null
+   },
+   "symbols": {
+    "R_IC": "sum over super-optimal workers l (negative super gap Delta_bar_{i,l}^m) of Delta_bar_{i,l}^m times min over covers S^m of the achievable sub-matching set of sum over blocking triplets (C_{i,j,k'}^m + log(T)/kl(mu_{j,u_min}, mu_{j,k'})), with C = O((log T)^{-1/3})"
+   },
+   "conditions": [
+    "all firms other than p_i follow MMTS",
+    "unique stable matching",
+    "Bernoulli KL divergence d used"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm: IC",
+    "number": "Theorem 5.3",
+    "quote": "Suppose all firms other than firm $p_{i}$ follow the preferences according to the $\\mmts$ to the centralized platform. Then the following upper bound on firm $p_{i}$'s optimal regret for $m$-type workers holds: R_{i}^{m}(T,\\theta) \\geq \\sum_{l: \\overline{\\Delta}_{i,l}^{m} < 0} \\overline{\\Delta}_{i,l}^{m}[...]"
+   },
+   "confidence": "low",
+   "notes": "Lower bound (negative, of order -O(log T)) on a deviating firm's regret, showing incentive compatibility; derived from Lemma 5.1 bound on expected number of matches with super-optimal workers. Statement text calls it an 'upper bound' but writes >=. Restated as Theorem G.1."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:42:56",
+  "source_chars": 136774,
+  "input_tokens": 94032,
+  "output_tokens": 4395,
+  "cost_usd_equiv": 0.6225748,
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,239 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Top-$k$ Pareto Bandits: Hypervolume Regret for Multi-Objective Slate Selection",
+  "arxiv_id": "2607.26273",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Nicolas Gutowski",
+   "Fabien Chhel",
+   "Alexandre Letard",
+   "Sylvain Lamprier"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Top-k Pareto bandits (multi-objective top-k semi-bandit with hypervolume alpha-regret)",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K",
+    "sigma"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Multi-objective: each arm yields a d-dimensional reward vector in [0,1]^d (d = number of objectives, recorded as d_obj)",
+    "Reward of a slate is the dominated hypervolume of the selected arms' mean vectors w.r.t. a reference point r dominated by all means (r known to the learner)",
+    "Regret is the alpha-approximation regret alpha*V* - HV(S_t) with alpha = 1-1/e against the best size-k subset",
+    "Each reward coordinate is eta-sub-Gaussian; eta is also used as the algorithm's confidence parameter",
+    "Action = any subset of size k of n arms"
+   ],
+   "definition_quote": "At each round $t\\in[T]$, the agent selects a subset $S_t\\subseteq[n]$ of size $|S_t|=k$ (a \\emph{slate}) and observes the vectors $\\{\\mathbf{X}_{i,t}: i\\in S_t\\}$ (semi-bandit feedback). ... $\\bar{r}_t = \\alpha V^\\star - \\mathrm{HV}(S_t), \\quad \\bar{R}_T = \\sum_{t=1}^{T} \\bar{r}_t.$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "THV-UCB (Top-k HyperVolume UCB)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "sigma"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "C_d*sqrt(K*m*T*log(T))",
+    "expression_latex": "O\\!\\left( C_d \\sqrt{n k T \\log T} \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "C_d": "coordinate-wise Lipschitz constant of the hypervolume; C_d <= d_obj when rewards in [0,1]^d and r = 0",
+    "d_obj": "number of objectives (reward vector dimension)"
+   },
+   "conditions": [
+    "each reward coordinate is eta-sub-Gaussian and bounded in [0,1]",
+    "holds on the event E where all confidence intervals hold, P(E) >= 1 - delta"
+   ],
+   "tuning": [
+    "beta_i(t) = sqrt(2 eta log(n d t^2/delta)/N_i(t-1))",
+    "m_0 >= 1 initial pulls"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:gapfree",
+    "number": "Theorem 1",
+    "quote": "Assume each reward coordinate is $\\eta$-sub-Gaussian and bounded in $[0,1]$. On $\\mathcal{E}$, \\[ \\bar{R}_T \\;=\\; O\\!\\left( C_d \\sqrt{n k T \\log T} \\right). \\]"
+   },
+   "confidence": "medium",
+   "notes": "Regret is the alpha-approximation (alpha=1-1/e) hypervolume regret. Paper's n = K (arms), k = m (slate size). Detailed version Theorem 4 (thm:gap-free) restates the same bound. Abstract states O~(d sqrt(nkT)) using C_d <= d. log(1/delta) dependence hidden in O."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "K*m**2.5*log(T)/Delta_min_stage",
+    "expression_latex": "O\\!\\left( \\frac{n k^{2.5} \\log T}{\\Delta_{\\min}} \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "Delta_min_stage": "minimum stage-wise gap of the greedy benchmark G* on true means: min over stages l and arms i != i*_l of Delta(i*_l | G*_{l-1}) - Delta(i | G*_{l-1})"
+   },
+   "conditions": [
+    "each reward coordinate is eta-sub-Gaussian and bounded in [0,1]",
+    "the greedy maximizer of G* is unique at every stage",
+    "the safe-pruning step never eliminates an arm of G*",
+    "holds on the event E, P(E) >= 1 - delta"
+   ],
+   "tuning": [
+    "beta_i(t) = sqrt(2 eta log(n d t^2/delta)/N_i(t-1))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:gapdep",
+    "number": "Theorem 2",
+    "quote": "Under the same assumptions, if the greedy maximizer of $G^\\star$ is unique at every stage and the safe-pruning step never eliminates an arm of $G^\\star$, then on $\\mathcal{E}$, \\[ \\bar{R}_T \\;=\\; O\\!\\left( \\frac{n k^{2.5} \\log T}{\\Delta_{\\min}} \\right). \\]"
+   },
+   "confidence": "medium",
+   "notes": "alpha-approximation hypervolume regret. Delta_min is a greedy stage-wise gap, not the usual arm gap. Pruning condition is assumed, not proved (footnote). Detailed version Theorem 5 identical."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "Min(sqrt(K*m*T*log(T)), K*m**2.5*log(T)/Delta_min_stage) + 1",
+    "expression_latex": "\\min\\Bigl\\{ O\\left(\\sqrt{n k T \\log T}\\right), O\\left(\\frac{n k^{2.5} \\log T}{\\Delta_{\\min}}\\right) \\Bigr\\} + O(1)",
+    "regime": null
+   },
+   "symbols": {
+    "Delta_min_stage": "minimum stage-wise gap of the greedy benchmark G* on true means"
+   },
+   "conditions": [
+    "each reward coordinate is eta-sub-Gaussian and bounded in [0,1]",
+    "gap-dependent term requires unique greedy maximizer at every stage and pruning never eliminating an arm of G*"
+   ],
+   "tuning": [
+    "delta = 1/T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:combined",
+    "number": "Theorem 3",
+    "quote": "With $\\delta = 1/T$, \\mathbb{E}\\big[\\bar{R}_T\\big] \\leq \\min\\Bigl\\{ O\\left(\\sqrt{n k T \\log T}\\right), O\\left(\\frac{n k^{2.5} \\log T}{\\Delta_{\\min}}\\right) \\Bigr\\} + O(1). In particular $\\mathbb{E}[\\bar{R}_T]/T \\to 0$"
+   },
+   "confidence": "medium",
+   "notes": "Expected alpha-approximation (alpha=1-1/e) hypervolume pseudo-regret (defined through means). C_d is dropped in this statement (treated as constant). Detailed version Theorem 8 (thm:main) identical."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "zhang2020random",
+   "cited_title": null,
+   "cited_first_author": "Zhang",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB/TS Bayesian optimization with random hypervolume scalarizations",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Black-box multi-objective Bayesian optimization, hypervolume regret",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\tilde{O}(\\sqrt T)",
+    "regime": null
+   },
+   "where": "Related Work"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:04:33",
+  "source_chars": 103214,
+  "input_tokens": 86813,
+  "output_tokens": 4695,
+  "cost_usd_equiv": 0.5708228,
+  "status": "extracted"
+ }
+}

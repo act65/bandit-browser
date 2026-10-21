@@ -1,0 +1,245 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Causal Bandits with Propagating Inference",
+  "arxiv_id": "1806.02252",
+  "arxiv_version": null,
+  "year": 2018,
+  "authors": [
+   "Akihiro Yabe",
+   "Daisuke Hatano",
+   "Hanna Sumita",
+   "Shinji Ito",
+   "Naonori Kakimura",
+   "Takuro Fukunaga",
+   "Ken-ichi Kawarabayashi"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Causal bandit problem (hard interventions, arbitrary intervention set)",
+   "objective": "simple_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "causal"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Known causal DAG over N binary variables; arms are interventions A in {0,1,*}^N; after each experiment the full realization of all N nodes is observed (richer than bandit feedback); conditional probabilities alpha_n unknown; target is P(V_N=1|do(A))"
+   ],
+   "definition_quote": "In the causal bandit problem, we are given a DAG $G=(\\cV,E)$ and a set $\\cA$ of interventions. However, the parameters $\\alpha_n$ ($n=1,\\ldots,N$) are not known. Our ideal goal is then to find an intervention $A^* \\in \\cA$ that maximizes the probability $\\mu (A^*)$ of realizing $V_N = 1$ ... $R_T = \\mu(A^*) - E[\\mu(\\hat{A})]$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Causal bandit with alpha_n known for every n<N",
+   "objective": "simple_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "causal"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Known causal DAG; conditional probabilities alpha_n known for all n<N, only those of the target node unknown (setting of Lattimore et al. 2016); full realization observed"
+   ],
+   "definition_quote": "Suppose that $\\alpha_n(\\pi)$ is known for every $n<N$ and $\\pi \\in \\{0,1\\}^{\\overline{\\cP_n}}$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Causal Bandit (Algorithm 3: estimation of beta then alpha with importance-sampling design)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(Max(gamma_star, N_nodes)*log(K*T)/T)",
+    "expression_latex": "O\\left( \\sqrt{\\frac{ \\max\\{\\gamma^*, N\\} \\log(|\\cA|T)}{T}} \\right)",
+    "regime": "N sufficiently small with respect to T"
+   },
+   "symbols": {
+    "gamma_star": "optimum value of the min-max design problem (optProb*) determined by the causal graph and interventions; N - min|A| <= gamma* <= min{NC, N|A|}",
+    "N_nodes": "number of nodes in the causal graph",
+    "K": "number of interventions |A|"
+   },
+   "conditions": [
+    "N >= 3",
+    "T >= 2",
+    "causal DAG structure known",
+    "N sufficiently small relative to T (hidden lower-order term 384 e^2 N C^7 log T / T)"
+   ],
+   "tuning": [
+    "lambda = C^3/N in Algorithm 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm_main",
+    "number": "Theorem 1",
+    "quote": "The regret $R_T$ of Algorithm~\\ref{algo_select} satisfies $R_T \\leq O\\left( \\sqrt{\\frac{ \\max\\{\\gamma^*, N\\} \\log(|\\cA|T)}{T}} \\right)$."
+   },
+   "confidence": "high",
+   "notes": "Proof gives explicit R_T <= sqrt(32 e^6 gamma* log(|A|T)/T) + (384 e^2 N C^7 log T + 16C + 2)/T where C = sum_n 2^{|P_n|}. Gamma* is graph-dependent; Proposition 2 bounds it by min{NC, N|A|} (so O(N^2) for bounded in-degree)."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(gamma_star_N*log(K*T)/T)",
+    "expression_latex": "R_T \\leq O(\\sqrt{\\gamma^* \\log (|\\cA|T) / T })",
+    "regime": null
+   },
+   "symbols": {
+    "gamma_star_N": "min over eta in simplex of max_A sum_{pi in {0,1}^{P_N}} beta_N^2(pi,A)/sum_{A'} eta_{A'} beta_N(pi,A')",
+    "K": "number of interventions |A|"
+   },
+   "conditions": [
+    "alpha_n known for every n < N",
+    "N >= 3",
+    "T >= 2"
+   ],
+   "tuning": [
+    "modified algorithm skipping experiments for known alpha_n"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Corollary 4",
+    "quote": "Suppose that $\\alpha_n(\\pi)$ is known for every $n<N$ and $\\pi \\in \\{0,1\\}^{\\overline{\\cP_n}}$. Then the regret $R_T$ of Algorithm~\\ref{algo_select} satisfies $R_T \\leq O(\\sqrt{\\gamma^* \\log (|\\cA|T) / T })$, where $\\gamma^* = \\min_{\\eta} \\max_{A} \\sum_{ \\pi \\in \\{0,1\\}^{\\cP_N}} \\frac{\\beta_{N}^2(\\pi, A)}{\\sum_{A'} \\eta_{A'} \\beta_N(\\pi,A')}$"
+   },
+   "confidence": "medium",
+   "notes": "Recovers Lattimore et al. (2016) Theorem 3 per the paper. Uses a minor modification of the algorithm (Remark 3)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "audibert2010best",
+   "cited_title": "Best arm identification in multi-armed bandits",
+   "cited_first_author": "Jean-Yves Audibert",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "General best-arm identification / simple regret in K-armed stochastic bandit without side information",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(K/T)",
+    "expression_latex": "\\Omega(\\sqrt{|\\cA|/T})",
+    "regime": null
+   },
+   "where": "Introduction and Section 3 (after Proposition 2)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:56:12",
+  "source_chars": 123042,
+  "input_tokens": 100640,
+  "output_tokens": 3817,
+  "cost_usd_equiv": 0.6638788,
+  "status": "extracted"
+ }
+}

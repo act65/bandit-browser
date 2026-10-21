@@ -1,0 +1,232 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Robust Budget Pacing with a Single Sample",
+  "arxiv_id": "2302.02006",
+  "arxiv_version": null,
+  "year": 2023,
+  "authors": [
+   "Santiago Balseiro",
+   "Rachitesh Kumar",
+   "Vahab Mirrokni",
+   "Balasubramanian Sivan",
+   "Di Wang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online allocation with a single resource (budget pacing) with one sample per distribution",
+   "objective": "cumulative_regret",
+   "feedback": "full_information",
+   "environment": "adversarial_oblivious",
+   "action_space": "continuum_other",
+   "function_class": [
+    "linear",
+    "bounded"
+   ],
+   "domain": "constrained",
+   "context": "stochastic_contexts",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "knapsack_constraints"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Online resource allocation / budget pacing where the request (reward and consumption functions) is observed before acting; not a bandit problem.",
+   "unmapped": [
+    "Requests drawn independently from unknown time-varying distributions P_t (not identical, not adversarial); environment mapping is approximate",
+    "Learner has one sample per period from sampling distributions tilde P_t, possibly different from P_t; regret degrades with total Wasserstein distance",
+    "Benchmark is the fluid-optimal value FLUID({P_t}) under a budget B",
+    "Rewards f(x) <= kappa b(x), f <= f_bar, b <= b_bar; general position assumption"
+   ],
+   "definition_quote": "The request $\\gamma_t$ at time $t$ is drawn from a distribution $\\PP_t \\in \\Delta(\\S)$ unknown to the decision maker, independently of the requests at other time steps... we focus on the setting where the decision maker has access to one independent sample $\\tilde \\gamma_t \\sim \\tilde \\PP_t$ for each $t \\in [T]$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Learning the Dual and Earning with It (Static Dual Policy)",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": []
+  },
+  {
+   "id": "a2",
+   "name": "Dual FTRL with Target Rate Estimation",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "kappa"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "12*kappa*b_bar + 16*kappa*b_bar*sqrt(T*log(T))",
+    "expression_latex": "12 \\kappa \\bar b + 2 \\kappa r(T),\\ r(T)=8\\bar b\\sqrt{T\\log T}",
+    "regime": null
+   },
+   "symbols": {
+    "kappa": "upper bound on reward-to-consumption ratio f(x) <= kappa b(x)",
+    "b_bar": "upper bound on per-request resource consumption"
+   },
+   "conditions": [
+    "sampling distributions equal request distributions (tilde P_t = P_t)",
+    "general position assumption (Assumption 1)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:learned-dual-regret",
+    "number": "Theorem 2",
+    "quote": "If $\\PP_t = \\tilde \\PP_t$ for all $t \\in [T]$, then Algorithm~\\ref{alg:learned-dual} (denoted by $A$) satisfies $\\regret(A) \\leq  12 \\kappa \\bar b + 2 \\kappa r(T)$."
+   },
+   "confidence": "medium",
+   "notes": "Regret = FLUID - E[reward], fluid benchmark; quantity marked other. r(T) substituted from Theorem 1."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(12*b_bar**2*sqrt(d_R)/sigma_h + sqrt(d_R) + 12*kappa*b_bar)*sqrt(T*log(T)) + 2*(1 + kappa)*W_total",
+    "expression_latex": "C_1 \\sqrt{T \\log(T)} + C_2 \\sum_{t=1}^T \\W(\\PP_t, \\tilde \\PP_t),\\ C_1 = \\frac{12 \\bar b^2 \\sqrt{d_R}}{\\sigma} +  \\sqrt{d_R} + 12 \\kappa \\bar b,\\ C_2 = 2(1+\\kappa)",
+    "regime": null
+   },
+   "symbols": {
+    "kappa": "upper bound on reward-to-consumption ratio",
+    "b_bar": "upper bound on per-request resource consumption",
+    "d_R": "max{h(0)-h(mu_1), h(kappa)-h(mu_1)} for regularizer h",
+    "sigma_h": "strong convexity parameter of the regularizer h",
+    "W_total": "sum_t Wasserstein distance W(P_t, tilde P_t)"
+   },
+   "conditions": [
+    "general position assumption (Assumption 1)",
+    "one sample per period from tilde P_t"
+   ],
+   "tuning": [
+    "eta = sqrt(d_R/T)",
+    "lambda_t = tilde b_t^*(tilde mu)",
+    "h differentiable and sigma-strongly convex"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main-result",
+    "number": "Theorem 4",
+    "quote": "Let $A$ be Algorithm~\\ref{alg:dual-descent} with target sequence $\\{\\lambda_t\\}_t$, where $\\lambda_t = \\tilde b_t^*(\\tilde \\mu)$ ..., regularizer $h(\\cdot)$ and step-size $\\eta = \\sqrt{d_R/ T}$... Then, $\\regret(A) \\leq C_1 \\sqrt{T \\log(T)} + C_2 \\sum_{t=1}^T \\W(\\PP_t, \\tilde \\PP_t)$ where $C_1 = \\frac{12 \\bar b^2 \\sqrt{d_R}}{\\sigma} +  \\sqrt{d_R} + 12 \\kappa \\bar b$ and $C_2 = 2(1+\\kappa)$."
+   },
+   "confidence": "medium",
+   "notes": "Fluid-benchmark regret in expectation. Theorem 3 (general regret decomposition R1+R2+R3) not recorded separately."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "arlotto2019uniformly",
+   "cited_title": null,
+   "cited_first_author": "Arlotto",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Online allocation / multi-secretary with i.i.d. known distributions, regret vs fluid/hindsight benchmark",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\Omega(\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 1 / Section 3"
+  },
+  {
+   "cited_key": "jiang2020online",
+   "cited_title": null,
+   "cited_first_author": "Jiang",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Dual gradient descent with targets from learned distributions",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online allocation with time-varying distributions, T log T samples per distribution (or full knowledge of tilde P_t)",
+   "bound": {
+    "notation": "O",
+    "expression": "Max(sqrt(T), W_total)",
+    "expression_latex": "O(\\max\\{\\sqrt{T}, \\sum_{t=1}^T \\W (\\tilde \\PP_t, \\PP_t)\\})",
+    "regime": null
+   },
+   "where": "Section 4"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:12:20",
+  "source_chars": 116578,
+  "input_tokens": 87871,
+  "output_tokens": 4346,
+  "cost_usd_equiv": 0.5723068,
+  "status": "extracted"
+ }
+}

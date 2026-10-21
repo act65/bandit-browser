@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", function () {
   data.edges.forEach(function (e, i) {
     elements.push({ group: "edges", data: Object.assign({ id: "e" + i, source: e.s, target: e.t }, e), classes: e.kind });
   });
-  // Overview: groups of settings (objective x environment x action space x feedback)
+  // Overview: groups of settings (environment x action space)
   (data.groups || []).forEach(function (g) {
     elements.push({ group: "nodes", classes: "grp", data: Object.assign({}, g, {
       size: 18 + 6 * Math.sqrt(g.results), total: g.results, short: g.name }) });
@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", function () {
       { selector: "node.local", style: { "label": "data(name)", "text-max-width": 150, "font-size": 12,
         "color": fg, "text-background-opacity": 0.85 } },
       { selector: "node.local.hl", style: { "font-weight": 700, "border-width": 4 } },
-      { selector: "node.grp", style: { "label": "data(name)", "text-max-width": 150, "font-size": 12, "color": fg } }
+      { selector: "node.grp", style: { "label": "data(name)", "text-max-width": 170, "font-size": 20, "color": fg, "text-wrap": "wrap" } }
     ];
   };
 
@@ -114,10 +114,18 @@ document.addEventListener("DOMContentLoaded", function () {
   runLayout(layoutName);
   // Overview layout (computed once): dagre over the group graph, labels counted in spacing
   if (groupEls.length) {
-    groupEls.layout(hasDagre
+    // groups joined by specialisation arrows in a hierarchy; the rest in a grid beside it
+    var gRanked = groupEls.edges().connectedNodes();
+    var gLoose = groupEls.nodes().not(gRanked);
+    gRanked.union(groupEls.edges()).layout(hasDagre
       ? { name: "dagre", rankDir: "BT", nodeSep: 30, rankSep: 90, edgeSep: 10, fit: false, animate: false,
           nodeDimensionsIncludeLabels: true }
       : { name: "cose", animate: false, fit: false }).run();
+    var gbb = gRanked.length ? gRanked.boundingBox() : { x2: 0, y1: 0 };
+    var gcols = Math.max(2, Math.ceil(Math.sqrt(gLoose.length * 0.5)));
+    gLoose.sort(function (a, b) { return b.data("n") - a.data("n"); }).forEach(function (n, i) {
+      n.position({ x: gbb.x2 + 200 + (i % gcols) * 230, y: gbb.y1 + Math.floor(i / gcols) * 130 });
+    });
   }
   var setView = function (v) {
     view = v;

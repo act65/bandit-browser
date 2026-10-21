@@ -1,0 +1,157 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Neural Thompson Sampling",
+  "arxiv_id": "2010.00827",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Weitong Zhang",
+   "Dongruo Zhou",
+   "Lihong Li",
+   "Quanquan Gu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Contextual K-armed bandit with neural-network (NTK) reward approximation",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "sigma",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "oblivious_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Reward r_{t,k} = h(x_{t,k}) + xi_{t,k} with unknown bounded function h (|h|<=1); complexity measured through the neural tangent kernel matrix H on the TK observed contexts and effective dimension d_tilde",
+    "NTK matrix assumed positive definite: H >= lambda_0 I (Assumption 4)",
+    "Contexts have unit norm and symmetric structure [x]_j = [x]_{j+d/2}",
+    "Each round K context vectors (one per arm) are revealed; the set of all TK contexts is treated as fixed for the analysis",
+    "Exploration variance nu requires knowledge of B = max{1/(22 e sqrt(pi)), sqrt(2 h^T H^{-1} h)} (an NTK-RKHS norm bound) and of d_tilde"
+   ],
+   "definition_quote": "In this work, we consider contextual $K$-armed bandits, where the total number of rounds $T$ is known. At round $t \\in [T]$, the agent observes $K$ contextual vectors $\\{\\xb_{t, k} \\in \\RR^d~|~ k \\in [K]\\}$. ... $r_{t, k} = h(\\xb_{t, k}) + \\xi_{t, k}$, with $|h(\\xb_{t, k})| \\le 1$ where $\\{\\xi_{t, k}\\}$ forms an $R$-sub-Gaussian martingale difference sequence"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Neural Thompson Sampling (NeuralTS)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma",
+    "K",
+    "B (NTK norm bound of h)",
+    "d_tilde (effective dimension)",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_3*(1 + sqrt(4*log(T) + 2*log(K)))*nu*sqrt(2*lam*L_depth*(d_tilde*log(1 + T*K) + 1)*T) + (4 + C_4*(1 + sqrt(4*log(T) + 2*log(K)))*nu*L_depth)*sqrt(2*log(3/delta)*T) + 5",
+    "expression_latex": "R_T \\le C_3(1 + c_T)\\nu\\sqrt{2\\lambda L(\\tilde d\\log(1 + TK) + 1)T} + (4 + C_4(1 + c_T)\\nu L)\\sqrt{2\\log(3 /\\delta) T} + 5",
+    "regime": "network width m >= poly(lambda, T, K, L, log(1/delta), 1/lambda_0)"
+   },
+   "symbols": {
+    "L_depth": "depth of the neural network",
+    "d_tilde": "effective dimension log det(I + H/lambda)/log(1 + TK/lambda) of the NTK matrix H",
+    "nu": "exploration variance B + R*sqrt(d_tilde*log(1+TK/lambda) + 2 + 2*log(1/delta))",
+    "C_3": "positive absolute constant",
+    "C_4": "positive absolute constant",
+    "lam": "regularisation parameter, set to 1 + 1/T"
+   },
+   "conditions": [
+    "Assumption 4: NTK matrix H >= lambda_0 I with lambda_0 > 0",
+    "contexts have ||x_{t,k}||_2 = 1 and [x]_j = [x]_{j+d/2}",
+    "|h(x)| <= 1",
+    "noise R-sub-Gaussian martingale difference sequence",
+    "network width m satisfies Condition 10 (polynomial in T, K, L, log(1/delta), 1/lambda_0)"
+   ],
+   "tuning": [
+    "lambda = 1 + 1/T",
+    "nu = B + R*sqrt(d_tilde*log(1+TK/lambda) + 2 + 2*log(1/delta)), B = max{1/(22 e sqrt(pi)), sqrt(2 h^T H^{-1} h)}",
+    "eta = C_1 (m lambda + m L T)^{-1}",
+    "J = (1 + LT/lambda)(C_2 + log(T^3 L lambda^{-1} log(1/delta)))/C_1 gradient descent iterations"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 5",
+    "quote": "Under Assumption \\ref{assumption:input}, set the parameters in Algorithm \\ref{alg:main} as $\\lambda = 1 + 1 / T$, $\\nu = B + R\\sqrt{\\tilde d \\log(1 + TK/\\lambda) + 2 + 2\\log (1 / \\delta)}$ ... If the network width $m$ satisfies: $m \\ge \\mathrm{poly}(\\lambda, T, K, L, \\log(1 / \\delta), \\lambda_0^{-1})$, then, with probability at least $1 - \\delta$, the regret of Algorithm \\ref{alg:main} is bounded as $R_T \\le C_3(1 + c_T)\\nu\\sqrt{2\\lambda L(\\tilde d\\log(1 + TK) + 1)T} + (4 + C_4(1 + c_T)\\nu L)\\sqrt{2\\log(3 /\\delta) T} + 5$, where $C_3, C_4$ are some positive absolute constants, and $c_T = \\sqrt{4\\log T + 2\\log K}$."
+   },
+   "confidence": "medium",
+   "notes": "R_T is defined as an expectation of the regret against the per-round best arm, but the theorem bounds it with probability 1-delta (over network initialisation etc.); recorded as high-probability. Remark 7 summarises the bound as O~(d_tilde sqrt(T)). Remark 9 states a doubling trick gives similar regret for unknown T (informal, not recorded). Action space mapped to kernel_rkhs because complexity is via the NTK; the reward function is only assumed bounded, with B measuring its NTK-RKHS norm. Environment set stochastic_iid with contexts as an oblivious sequence."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:17:21",
+  "source_chars": 108574,
+  "input_tokens": 88522,
+  "output_tokens": 3740,
+  "cost_usd_equiv": 0.5653948,
+  "status": "extracted"
+ }
+}

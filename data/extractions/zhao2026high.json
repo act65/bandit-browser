@@ -1,0 +1,411 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "High-Dimensional Dynamic Pricing Under Nonstationarity: Learning and Earning with Change-Point Detection",
+  "arxiv_id": "2303.07570",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Zifeng Zhao",
+   "Feiyu Jiang",
+   "Yi Yu",
+   "Xi Chen"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "High-dimensional dynamic pricing under non-stationarity (piecewise-stationary high-dimensional GLM demand)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "nonstationary_switching",
+   "action_space": "continuum_other",
+   "function_class": [],
+   "domain": "constrained",
+   "context": "stochastic_contexts",
+   "noise": "exponential_family",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Action is a scalar price p_t in [p_l,p_u]; demand y_t follows a GLM in x_t=(z_t,p_t) with parameter theta_t in R^d, revenue p_t*psi'(z_t'alpha_t+beta_t p_t)",
+    "Parameter theta_t is s-sparse with ||theta_t||_1 <= C_theta; covariates entry-wise bounded, i.i.d. within each stationary segment with (2+delta)-moment and min-eigenvalue conditions (distribution may change across segments)",
+    "Number of change-points Upsilon_T (mapped to S_T) unknown to the learner; change sizes unknown",
+    "Optimal price unique and inside [p_l,p_u]"
+   ],
+   "definition_quote": "we assume that there exist $\\Upsilon_T$ unknown time periods $1\\leq\\tau_1<\\tau_2<\\cdots <\\tau_{\\Upsilon_T} <T$ such that $\\theta_t \\neq \\theta_{t + 1}$ if and only if $t \\in \\{\\tau_1, \\ldots, \\tau_{\\Upsilon_T}\\}$. ... $R_T^\\pi(\\bm \\theta_T)= \\sum_{k=0}^{\\Upsilon_T}\\sum_{t=\\tau_{k}+1}^{\\tau_{k+1}} \\mathbb E\\left\\{ r(p_t^*,\\theta_t,z_t)-r(p_t^\\pi,\\theta_t,z_t) \\right\\}"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Online change-point detection for high-dimensional GLMs",
+   "objective": "other_pure_exploration",
+   "feedback": "full_information",
+   "environment": "nonstationary_switching",
+   "action_space": "generalized_linear",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "exponential_family",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "unspecified",
+    "parameter_set": "l1_ball",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Statistical change-point detection guarantee (false alarm / detection probability), not a bandit regret problem",
+   "unmapped": [
+    "Data with i.i.d. prices from the experiment set; test for at most one change-point in s-sparse GLM parameter"
+   ],
+   "definition_quote": "we declare non-stationarity in the data $\\{y_t,z_t,p_t\\}_{t=1}^n$ if $\\max_{t=m,m+1,\\cdots,n-m} \\mathcal{D}(t,n) >\\gamma$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "CPDP (change-point detection assisted dynamic pricing)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "restarts_or_sliding_window"
+   ],
+   "requires_knowledge_of": [
+    "T"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "CPT (penalized likelihood-ratio online change-point detection)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(S_T*T)*Max(kappa_min**(-2), s*log(T*d))",
+    "expression_latex": "C \\sqrt{\\Upsilon_TT}\\left(\\kappa_{\\min}^{-2}\\vee {s\\log (Td)}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "S_T": "number of change-points Upsilon_T",
+    "s": "sparsity level of theta_t",
+    "kappa_min": "minimal change size min_k ||theta_{tau_k} - theta_{tau_k+1}||_2"
+   },
+   "conditions": [
+    "Assumption 1: bounded covariates, ||theta_t||_1 <= C_theta, s-sparse, psi infinitely differentiable with psi''>0, unique optimal price in [p_l,p_u]",
+    "Assumption 2: covariates i.i.d. within segments, min eigenvalue >= sigma_l, (2+delta)-moment bound",
+    "Assumption 3 (SNR): min((tau_k - tau_{k-1})/l_{k-1}, (tau_{k+1}-tau_k)/l_{k-1}) kappa_k^2 > c*_snr"
+   ],
+   "tuning": [
+    "m = c_m s log(Td)",
+    "lambda = c_lambda sqrt(log(Td))",
+    "gamma = c_gamma s lambda^2",
+    "n_k = sqrt(T/(k+1))",
+    "c_lambda, c_gamma, c_m sufficiently large absolute constants"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem 1",
+    "quote": "Let $\\pi$ be the CPDP algorithm with $m=c_ms\\log(Td)$, $\\lambda=c_{\\lambda}\\sqrt{\\log(Td)}$, and $\\gamma=c_{\\gamma}s\\lambda^2$, where $c_{\\lambda}, c_{\\gamma}, c_m > 0$ are absolute constants. Under Assumptions~\\ref{assum_model} and \\ref{assum_moment}, it holds that $R_T^\\pi(\\bm \\theta_T)\\leq C \\sqrt{\\Upsilon_TT}\\left(\\kappa_{\\min}^{-2}\\vee {s\\log (Td)}\\right)$, for any $\\bm\\theta_T$ that satisfies \\Cref{ass_spacing}, where $C > 0$ is an absolute constant."
+   },
+   "confidence": "medium",
+   "notes": "Regret defined via expected revenue against per-round clairvoyant optimal price under piecewise-stationary parameters; recorded as dynamic regret. Absolute constant C hidden, so O notation. Setting mapping to continuum_other is approximate."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "s*sqrt(S_T*T)*log(T*d)",
+    "expression_latex": "C s\\sqrt{\\Upsilon_T T}\\log (Td)",
+    "regime": null
+   },
+   "symbols": {
+    "S_T": "number of change-points Upsilon_T",
+    "s": "sparsity level of theta_t"
+   },
+   "conditions": [
+    "Assumptions 1, 2 and 3 (SNR) as in Theorem 1",
+    "Assumption 4: pseudo-true mixture parameter in interior of Theta and within C_M ||theta_{tau_k}-theta_{tau_{k+1}}||_1 of both pre- and post-change parameters"
+   ],
+   "tuning": [
+    "m = c_m s log(Td)",
+    "lambda = c_lambda sqrt(log(Td))",
+    "gamma = c_gamma s lambda^2",
+    "n_k = sqrt(T/(k+1))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor_regret",
+    "number": "Corollary 1",
+    "quote": "In addition to all the conditions in \\Cref{thm:regret}, suppose that Assumption  \\ref{assum:mixture} also holds, we have that $R_T^\\pi(\\bm \\theta_T)\\leq C s\\sqrt{\\Upsilon_T T}\\log (Td)$, where $C>0$ is an absolute constant."
+   },
+   "confidence": "medium",
+   "notes": "Independent of change size kappa_min. Still requires SNR Assumption 3."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "dynamic_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(T*S_T)/log(S_T)",
+    "expression_latex": "C\\sqrt{T\\Upsilon_T}/\\log(\\Upsilon_T)",
+    "regime": null
+   },
+   "symbols": {
+    "S_T": "number of change-points Upsilon_T"
+   },
+   "conditions": [
+    "Instances satisfy Assumptions 1, 2 and 3 with exactly Upsilon_T change-points",
+    "Hard instances: linear Gaussian demand y_t = alpha_t + beta_t p_t + N(0,1) noise",
+    "Upsilon_T >= 1 (log(Upsilon_T) > 0 needed)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lowerbound",
+    "number": "Theorem 2",
+    "quote": "Let $\\mathcal{P}_T$ be the collection of distributions satisfying Assumptions \\ref{assum_model}, \\ref{assum_moment} and \\ref{ass_spacing}, with the corresponding $\\bm\\theta_T$ possessing~$\\Upsilon_T$ number of change-points, we have that $\\inf_{\\pi \\in \\Pi} \\sup_{P(\\bm\\theta_T) \\in \\mathcal{P}_T} R_T^{\\pi}(\\bm\\theta_T) \\geq C\\sqrt{T\\Upsilon_T}/\\log(\\Upsilon_T)$, where $C>0$ is an absolute constant."
+   },
+   "confidence": "medium",
+   "notes": "Paper remarks that without the SNR assumption the bound improves to C sqrt(T Upsilon_T). Does not involve sparsity s."
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "3*T**(-3)",
+    "expression_latex": "\\mathbb{P}(\\mathcal{T}_n = 0) \\geq 1 - 3T^{-3}",
+    "regime": "no change-point in {1,...,n}"
+   },
+   "symbols": {},
+   "conditions": [
+    "Assumptions 1 and 2",
+    "no change-point in the data"
+   ],
+   "tuning": [
+    "m = c_m s log(Td)",
+    "lambda = c_lambda sqrt(log(Td))",
+    "gamma = c_gamma s lambda^2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:cp",
+    "number": "Proposition 1",
+    "quote": "(i) If there is no change-point in $\\{1, \\ldots, n\\}$, then $\\mathbb{P}\\left(\\mbox{no change-point is detected} \\right) =\\mathbb{P}(\\mathcal{T}_n = 0) ... \\geq 1 - 3T^{-3}$."
+   },
+   "confidence": "medium",
+   "notes": "False alarm probability bound."
+  },
+  {
+   "id": "r5",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "3*T**(-4)",
+    "expression_latex": "\\mathbb{P}\\left(\\mathcal{T}_n=1 \\right) \\geq 1 - 3T^{-4}",
+    "regime": "single change-point tau with min(tau, n-tau) kappa^2 > c_snr s log(Td)"
+   },
+   "symbols": {
+    "kappa": "change size ||theta_{tau+1}-theta_tau||_2",
+    "s": "sparsity"
+   },
+   "conditions": [
+    "Assumptions 1 and 2",
+    "single change-point tau in {m,...,n-m}",
+    "min(tau, n-tau) kappa^2 > c_snr s log(Td)"
+   ],
+   "tuning": [
+    "m = c_m s log(Td)",
+    "lambda = c_lambda sqrt(log(Td))",
+    "gamma = c_gamma s lambda^2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:cp",
+    "number": "Proposition 1",
+    "quote": "(ii) If there exists a single change-point $\\tau \\in \\{m, \\ldots, n-m\\}$, assuming that $\\min(\\tau,n-\\tau)\\kappa^2>c_{\\mathrm{snr}}s\\log(Td)$ ... it holds that $\\mathbb{P}\\left(\\mathcal{T}_n=1 \\right) \\geq \\mathbb {P} \\left(\\mathcal{D}(\\tau,n)>\\gamma \\right)  \\geq 1 - 3T^{-4}$."
+   },
+   "confidence": "medium",
+   "notes": "Missed-detection probability bound; implies detection delay O(s log(Td)/kappa^2) w.h.p."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "ban2021personalized",
+   "cited_title": "Personalized dynamic pricing with machine learning: High-dimensional features and heterogeneous elasticity",
+   "cited_first_author": "Ban",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Dynamic pricing with stationary high-dimensional sparse GLM demand",
+   "bound": {
+    "notation": "Omega",
+    "expression": "s*sqrt(T)",
+    "expression_latex": "\\Omega(s\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 1.2 / Section 4.1"
+  },
+  {
+   "cited_key": "cao2019nearly",
+   "cited_title": "Nearly optimal adaptive procedure for piecewise-stationary bandit: a change-point detection approach",
+   "cited_first_author": "Cao",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Piecewise-stationary (switching) K-armed bandit with Upsilon_T change-points",
+   "bound": {
+    "notation": "O",
+    "expression": "kappa_min**(-2)*sqrt(K*S_T*T*log(T))",
+    "expression_latex": "O(\\kappa_{\\min}^{-2}\\sqrt{K\\Upsilon_T T\\log (T)})",
+    "regime": null
+   },
+   "where": "Section 4.1, after Theorem 1"
+  },
+  {
+   "cited_key": "besson2022efficient",
+   "cited_title": "Efficient change-point detection for tackling piecewise-stationary bandits",
+   "cited_first_author": "Besson",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Piecewise-stationary (switching) K-armed bandit with Upsilon_T change-points",
+   "bound": {
+    "notation": "O",
+    "expression": "kappa_min**(-2)*sqrt(K*S_T*T*log(T))",
+    "expression_latex": "O(\\kappa_{\\min}^{-2}\\sqrt{K\\Upsilon_T T\\log (T)})",
+    "regime": null
+   },
+   "where": "Section 4.1, after Theorem 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:48:00",
+  "source_chars": 234189,
+  "input_tokens": 154905,
+  "output_tokens": 7496,
+  "cost_usd_equiv": 1.1715788,
+  "status": "extracted"
+ }
+}

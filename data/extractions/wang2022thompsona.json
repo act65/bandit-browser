@@ -1,0 +1,323 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Thompson Sampling for (Combinatorial) Pure Exploration",
+  "arxiv_id": "2206.09150",
+  "arxiv_version": null,
+  "year": 2022,
+  "authors": [
+   "Siwei Wang",
+   "Jun Zhu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Pure Exploration in Combinatorial Multi-armed Bandit",
+   "objective": "other_pure_exploration",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "linear_optimization_oracle",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Fixed-confidence identification of the optimal super arm (combinatorial pure exploration); each round the learner pulls a single base arm and observes its reward",
+    "Super arm set I subset of 2^[m] is arbitrary; access via offline maximization oracle",
+    "Learner uses |I| (or 2^m as an upper bound)"
+   ],
+   "definition_quote": "The arms $i\\in [m]$ are called base arms, and there is also a super arm set $\\mathcal{I} \\subseteq 2^{[m]}$. For each super arm $S \\in \\mathcal{I}$, its expected reward is $\\sum_{i\\in S} \\mu_i$. ... At each time step $t$, the learning policy $\\pi$ can either pull a base arm $i(t) \\in [m]$, or output a super arm $S(t) \\in \\mathcal{I}$. The goal of the learning policy is to make sure that with probability at least $1-\\delta$, its output $S(t) = S^*$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Pure Exploration in Multi-armed Bandit",
+   "objective": "bai_fixed_confidence",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [],
+   "definition_quote": "A pure exploration problem instance of MAB is a tuple $([m], \\bm{D}, \\delta)$. ... we assume that all the distributions $D_i$'s are supported on $[0,1]$. ... we assume that the optimal arm is unique."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "TS-Explore",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "delta",
+    "|I| (or 2^m upper bound)",
+    "offline maximization oracle"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "H_1c*(log(1/delta) + log(I_size*H_1c))*log(1/delta)/log(1/q) + H_1c*log(I_size*H_1c)**2/log(1/q)",
+    "expression_latex": "O(H_{1,c}(\\log{1\\over \\delta} + \\log(|\\mathcal{I}|H_{1,c})){\\log{1\\over \\delta} \\over \\log{1\\over q}} + H_{1,c}{\\log^2(|\\mathcal{I}|H_{1,c}) \\over \\log{1\\over q}})",
+    "regime": null
+   },
+   "symbols": {
+    "H_1c": "width * sum_i 1/Delta_{i,c}^2, Delta_{i,c} gap between S* and best super arm containing (or not containing) i",
+    "I_size": "number of super arms |I|",
+    "q": "algorithm parameter in [delta, 0.1] controlling number of sample sets"
+   },
+   "conditions": [],
+   "tuning": [
+    "q in [delta, 0.1]",
+    "M = (1/q) log(12|I|^2 t^2/delta) sample sets, variance C(delta,q,t)/N_i"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "Theorem_Explore",
+    "number": "Theorem 4.1",
+    "quote": "In the CMAB setting, for $q \\in [\\delta, 0.1]$, with probability at least $1-\\delta$, TS-Explore will output the optimal super arm $S^*$ with complexity upper bounded by $O(H_{1,c}(\\log{1\\over \\delta} + \\log(|\\mathcal{I}|H_{1,c})){\\log{1\\over \\delta} \\over \\log{1\\over q}} + H_{1,c}{\\log^2(|\\mathcal{I}|H_{1,c}) \\over \\log{1\\over q}})$."
+   },
+   "confidence": "high",
+   "notes": "Correctness and complexity hold jointly with probability >= 1-delta. Polynomial given the offline oracle. Remark 4.2 extends to delta in (0.1,1) by running with (0.1,0.1)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "H_1c*log(1/delta) + H_1c*log(I_size*H_1c)**2",
+    "expression_latex": "O(H_{1,c}\\log{1\\over \\delta} + H_{1,c}\\log^2(|\\mathcal{I}|H_{1,c}))",
+    "regime": null
+   },
+   "symbols": {
+    "H_1c": "width * sum_i 1/Delta_{i,c}^2",
+    "I_size": "number of super arms |I|"
+   },
+   "conditions": [
+    "delta <= 0.1"
+   ],
+   "tuning": [
+    "q = delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "Theorem_Explore",
+    "number": "Theorem 4.1",
+    "quote": "Specifically, if we choose $q = \\delta$, then the complexity upper bound is $O(H_{1,c}\\log{1\\over \\delta} + H_{1,c}\\log^2(|\\mathcal{I}|H_{1,c}))$."
+   },
+   "confidence": "high",
+   "notes": "q = delta requires delta <= 0.1 since q in [delta, 0.1]; Remark 4.2 covers delta in (0.1,1)."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "H_m*(log(1/delta) + log(K*H_m))*log(1/delta)/log(1/q) + H_m*log(K*H_m)**2/log(1/q)",
+    "expression_latex": "O(H_{m}(\\log{1\\over \\delta} + \\log(mH_{m})){\\log{1\\over \\delta} \\over \\log{1\\over q}} + H_{m}{\\log^2(mH_m) \\over \\log{1\\over q}})",
+    "regime": null
+   },
+   "symbols": {
+    "H_m": "sum over all arms (including optimal, whose gap is mu* - second best) of 1/Delta_i^2",
+    "q": "algorithm parameter in [delta, 0.1]"
+   },
+   "conditions": [],
+   "tuning": [
+    "q in [delta, 0.1]"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "Corollary_Complexity",
+    "number": "Corollary 4.3",
+    "quote": "In the MAB setting, for $q \\in [\\delta, 0.1]$, with probability at least $1-\\delta$, TS-Explore will output the optimal arm $a^*$ with complexity upper bounded by $O(H_{m}(\\log{1\\over \\delta} + \\log(mH_{m})){\\log{1\\over \\delta} \\over \\log{1\\over q}} + H_{m}{\\log^2(mH_m) \\over \\log{1\\over q}})$."
+   },
+   "confidence": "high",
+   "notes": "Paper's m (number of arms) mapped to K."
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "H_m*log(1/delta) + H_m*log(K*H_m)**2",
+    "expression_latex": "O(H_{m}\\log{1\\over \\delta} + H_{m}\\log^2(mH_{m}))",
+    "regime": null
+   },
+   "symbols": {
+    "H_m": "sum over all arms (including optimal) of 1/Delta_i^2"
+   },
+   "conditions": [
+    "delta <= 0.1"
+   ],
+   "tuning": [
+    "q = delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "Corollary_Complexity",
+    "number": "Corollary 4.3",
+    "quote": "Specifically, if we choose $q = \\delta$, then the complexity upper bound is $O(H_{m}\\log{1\\over \\delta} + H_{m}\\log^2(mH_{m}))$."
+   },
+   "confidence": "high",
+   "notes": "Asymptotically optimal as delta -> 0 per the paper."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "kalyanakrishnan2012PAC",
+   "cited_title": "Pac subset selection in stochastic multi-armed bandits",
+   "cited_first_author": "Kalyanakrishnan",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Fixed-confidence best-arm identification in K-armed stochastic bandits",
+   "bound": {
+    "notation": "Omega",
+    "expression": "H_m*log(1/delta)",
+    "expression_latex": "\\Omega(H_{m} \\log{1\\over \\delta})",
+    "regime": null
+   },
+   "where": "Section 3.1"
+  },
+  {
+   "cited_key": "chen2017nearly",
+   "cited_title": "Nearly optimal sampling algorithms for combinatorial pure exploration",
+   "cited_first_author": "Chen",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Combinatorial pure exploration (fixed confidence); H_0c is the value of a convex program",
+   "bound": {
+    "notation": "Omega",
+    "expression": "H_0c*log(1/delta)",
+    "expression_latex": "\\Omega(H_{0,c}\\log{1\\over \\delta})",
+    "regime": null
+   },
+   "where": "Section 3.2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:51:57",
+  "source_chars": 75792,
+  "input_tokens": 66780,
+  "output_tokens": 5205,
+  "cost_usd_equiv": 0.4207588,
+  "status": "extracted"
+ }
+}

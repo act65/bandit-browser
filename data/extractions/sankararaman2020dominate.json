@@ -1,0 +1,345 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Dominate or Delete: Decentralized Competing Bandits in Serial Dictatorship",
+  "arxiv_id": "2006.15166",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Abishek Sankararaman",
+   "Soumya Basu",
+   "Karthik Abinav Sankararaman"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Decentralized serial dictatorship (competing bandits in matching markets)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "multi_player_collision"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "N agents, K >= N arms; two-sided matching market with arms having uniform known preference (ranking) over agents",
+    "asymmetric collisions: arm matches only the highest ranked proposing agent, others blocked (reward 0, notified)",
+    "heterogeneous agent-specific arm means, all distinct per agent",
+    "regret per agent measured against the unique stable matching partner",
+    "decentralized: each agent uses only its own observations, agents know N (used in protocol)"
+   ],
+   "definition_quote": "We consider $N$ agents, and $K\\geq N$ arms. ... An agent is \\emph{matched} to the arm of its choice in a given round, if and only if it is the highest ranked agent playing that arm at that time. Otherwise, it is \\emph{blocked}. ... The regret of any agent $j \\in [N]$, after $T$ time steps is ${R}_T^{(j)} = \\sum_{t=1}^T  \\mathbb{E} [\\mu_{jk^{(j)}_*} - \\mu_{j I^{(j)}(t)} \\mathbf{1}_{{M_{I^{(j)}(t)}(t)} = j}].$"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Decentralized serial dictatorship, Optimally Stable Bandits (lower bound)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K",
+    "T",
+    "reward_family"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "multi_player_collision"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "N agents, K >= N arms, serial dictatorship matching with asymmetric collisions",
+    "OSB instances: each agent's stable match partner is its overall optimal arm",
+    "regret per agent against stable matching"
+   ],
+   "definition_quote": "Let us consider the class of bandit instances where dominated arms are bad, i.e. for any instance $\\boldsymbol{\\nu}$ in this class, for all agents $j \\in [N]$,  $\\mu_{jk} < \\mu_{jk_*^{(j)}}$ for all arms $k \\in [K]\\setminus \\{k^{(j)}_*\\}$ . We call this class of instances Optimally Stable Bandits (OSB)"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "UCB-D3 (UCB with Decentralized Dominant-arm Deletion)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "elimination",
+    "doubling_trick"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*(j-1)*(log(T)/log(2)+1) + Coll_j + Sub_j + N + j*(2**i_star + i_star + 4*(N*K)**2 + 3*N*K) + 2*N*K/T**(2*alpha_ucb-4)",
+    "expression_latex": "2(j-1)(\\log_2(T)+1) + \\sum_{j'=1}^{j-1} \\sum_{k \\in \\mathcal{A}^{*}_j}\\left( \\frac{9\\alpha \\log(T)}{(\\Delta^{(j')}_k)^2} + 1 +\\frac{178T^{-4\\alpha}}{(\\Delta^{(j')}_k)^2} + T^{2-4\\alpha}\\right)\\mu_{jk^{(j)}_*} + \\sum_{k \\in \\mathcal{A}^{*}_j \\setminus \\{ k^{(j)}_* \\}}\\left( \\frac{9\\alpha \\log(T)}{(\\Delta^{(j)}_k)^2} + 1 +\\frac{178T^{-4\\alpha}}{(\\Delta^{(j)}_k)^2} + T^{2-4\\alpha}\\right)\\Delta^{(j)}_k + N + j(2^{i^*}+i^* + 4(NK)^2 + 3NK) + \\frac{2NK}{T^{2\\alpha-4}}",
+    "regime": null
+   },
+   "symbols": {
+    "j": "rank of the agent",
+    "N": "number of agents",
+    "alpha_ucb": "UCB exploration hyperparameter alpha >= 2",
+    "Coll_j": "sum_{j'<j} sum_{k in A*_j} (9 alpha log T/(Delta^{(j')}_k)^2 + 1 + 178 T^{-4alpha}/(Delta^{(j')}_k)^2 + T^{2-4alpha}) mu_{j k*_j}  (collision regret)",
+    "Sub_j": "sum_{k in A*_j minus k*_j} (9 alpha log T/(Delta^{(j)}_k)^2 + 1 + 178 T^{-4alpha}/(Delta^{(j)}_k)^2 + T^{2-4alpha}) Delta^{(j)}_k  (suboptimal pull regret)",
+    "i_star": "min{ i in N : 20 N K alpha i / Delta^2 <= 2^{i-1} }, Delta = smallest gap of non-dominated arms across all agents"
+   },
+   "conditions": [
+    "K >= N",
+    "arm means in (0,1) and distinct for each agent",
+    "all agents run UCB-D3"
+   ],
+   "tuning": [
+    "alpha >= 2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main_thm_algo",
+    "number": "Theorem 1",
+    "quote": "Suppose every agent runs \\name\\; with $\\alpha \\geq 2$, then the regret of any agent with rank $j$ satisfies \\mathbb{E}[R_T^{(j)}] \\leq 2(j-1)(\\log_2(T)+1) + ... +N + j(2^{i^*}+i^* + 4(NK)^2 + 3NK) + \\frac{2NK}{T^{2\\alpha-4}}, where $i^* {:=} \\min \\left\\{ i {\\in} \\mathbb{N}: \\tfrac{20 NK \\alpha i }{\\Delta^2} \\leq 2^{i-1} \\right\\}.$"
+   },
+   "confidence": "medium",
+   "notes": "Per-agent regret against the stable matching partner (comparator mapped to best_policy as the closest; it's the stable-matching benchmark). Regret defined via means so pseudo_regret. Complex sums encoded via declared symbols. Algorithm does not need T or gaps."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "9*alpha_ucb*log(T)*((j-1)*(K+1-j)/Delta**2 + Max(K-1-j, 0)/Delta) + (N*K)**2 + N*K/Delta**2*log(N*K/Delta**2)",
+    "expression_latex": "9\\alpha \\log(T) \\left(  \\tfrac{(j-1)(K+1-j)}{\\Delta^2} + \\tfrac{[K-1-j]_{+}}{\\Delta}\\right) + O \\left( (NK)^2 + \\tfrac{NK}{\\Delta^2}\\log \\left(\\tfrac{NK}{\\Delta^2} \\right) \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "j": "rank of the agent",
+    "N": "number of agents",
+    "alpha_ucb": "UCB hyperparameter alpha >= 2",
+    "Delta": "smallest gap of non-dominated arms across all agents (min_j min_k Delta^{(j)}_k)"
+   },
+   "conditions": [
+    "K >= N",
+    "arm means distinct for each agent"
+   ],
+   "tuning": [
+    "alpha >= 2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:UBcor",
+    "number": "Corollary 2",
+    "quote": "Suppose every agent runs \\name\\; with parameter $\\alpha \\geq  2$, then the regret of any agent with rank $j$ after $T$ time steps satisfies \\mathbb{E}[R_T^{(j)}] \\leq 9\\alpha \\log(T) \\left(  \\tfrac{(j-1)(K+1-j)}{\\Delta^2} + \\tfrac{[K-1-j]_{+}}{\\Delta}\\right) + O \\left( (NK)^2 + \\tfrac{NK}{\\Delta^2}\\log \\left(\\tfrac{NK}{\\Delta^2} \\right) \\right)"
+   },
+   "confidence": "medium",
+   "notes": "Leading term has explicit constant; additive term is O(.). Recorded with notation O overall. Proposition 4 (epsilon-Nash incentive property) not recorded as a regret bound."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "uniformly_good",
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_policy",
+   "probability": "asymptotic",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "Max(LB_coll_j, LB_sub_j)*log(T)",
+    "expression_latex": "\\liminf_{T\\to \\infty} \\frac{R_T^{(j)}(\\boldsymbol{\\nu}, \\pi)}{\\log T} \\geq \\max\\left\\{ \\sum_{j'=1}^{j-1} \\frac{ \\Delta^{(j)}_{\\min}}{D_{\\inf}(\\nu_{j'k_*^{(j)}}, \\mu_{j'k_*^{(j')}}, \\mathcal{P})}, \\sum_{k\\notin \\mathcal{A}_{j}\\setminus k_*^{(j)}} \\frac{\\Delta^{(j)}_k}{D_{\\inf}(\\nu_{jk}, \\mu_{jk_*^{(j)}}, \\mathcal{P})}\\right\\}",
+    "regime": "T -> infinity"
+   },
+   "symbols": {
+    "j": "rank of the agent",
+    "LB_coll_j": "sum_{j'<j} Delta^{(j)}_min / D_inf(nu_{j' k*_j}, mu_{j' k*_{j'}}, P)",
+    "LB_sub_j": "sum over arms k of Delta^{(j)}_k / D_inf(nu_{jk}, mu_{j k*_j}, P)"
+   },
+   "conditions": [
+    "OSB instance (stable match partner is each agent's optimal arm)",
+    "P = all distributions on [0,1]"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lower_bound",
+    "number": "Theorem 7",
+    "quote": "For any agent $j\\in [N]$, under any decentralized universally consistent algorithm $\\pi$  on a OSB instance $\\boldsymbol{\\nu}$ satisfies \\liminf\\limits_{T\\to \\infty} \\frac{R_T^{(j)}(\\boldsymbol{\\nu}, \\pi)}{\\log T} \\geq \\max\\left\\{ \\sum_{j'=1}^{j-1} \\frac{ \\Delta^{(j)}_{\\min}}{D_{\\inf}(...)}, \\sum_{k\\notin \\mathcal{A}_{j}\\setminus k_*^{(j)}} \\frac{\\Delta^{(j)}_k}{D_{\\inf}(...)}\\right\\}"
+   },
+   "confidence": "medium",
+   "notes": "Uniformly consistent: system regret o(T^a) for all a on all instances. D_inf is K_inf-type quantity for agent pairs; encoded via declared symbols."
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "uniformly_good",
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_policy",
+   "probability": "asymptotic",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "Max((j-1)*log(T)/Delta**2, K*log(T)/Delta)",
+    "expression_latex": "\\Omega\\left(\\max\\left\\{\\tfrac{(j-1)\\log T}{\\Delta^2}, \\tfrac{K\\log T}{\\Delta}\\right\\}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "j": "rank of the agent",
+    "Delta": "gap parameter of the constructed instance (smallest gap)"
+   },
+   "conditions": [
+    "exists an OSB instance with Bernoulli rewards",
+    "Delta small enough"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "corr:simple",
+    "number": "Corollary 8",
+    "quote": "There exists a OSB bandit instance with Bernoulli rewards, where the regert of agent $j$ is lower bounded as $\\Omega\\left(\\max\\left\\{\\tfrac{(j-1)\\log T}{\\Delta^2}, \\tfrac{K\\log T}{\\Delta}\\right\\}\\right)$."
+   },
+   "confidence": "medium",
+   "notes": "Derived from Theorem 7 for uniformly consistent policies; proof gives (j-1)log(T)/(16 Delta^2). Asymptotic in T."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "matching_bandits",
+   "cited_title": "Competing bandits in matching markets",
+   "cited_first_author": "Liu",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Centralized UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Centralized matching bandits (agents report rankings to central arbiter); per-agent stable regret",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)/Delta**2",
+    "expression_latex": "O(\\log(T)/\\Delta^2)",
+    "regime": null
+   },
+   "where": "Section 1 (Technical Contributions)"
+  },
+  {
+   "cited_key": "proutiere",
+   "cited_title": "Optimal algorithms for multiplayer multi-armed bandits",
+   "cited_first_author": "Wang",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Decentralized colliding (symmetric collision) multiplayer bandits; per-agent regret",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)/Delta",
+    "expression_latex": "O \\left( \\frac{\\log(T)}{\\Delta} \\right)",
+    "regime": null
+   },
+   "where": "Section 9.1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:45:03",
+  "source_chars": 123911,
+  "input_tokens": 90818,
+  "output_tokens": 7436,
+  "cost_usd_equiv": 0.6576828,
+  "status": "extracted"
+ }
+}

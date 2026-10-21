@@ -1,0 +1,400 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Double Thompson Sampling for Dueling Bandits",
+  "arxiv_id": "1604.07101",
+  "arxiv_version": null,
+  "year": 2016,
+  "authors": [
+   "Huasen Wu",
+   "Xin Liu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Copeland dueling bandits",
+   "objective": "cumulative_regret",
+   "feedback": "dueling",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Copeland winner objective: regret measured via normalized Copeland scores zeta_i of the two chosen arms, R(T) = zeta* T - 1/2 sum_t E[zeta_{a1} + zeta_{a2}]",
+    "Stationary preference matrix P with p_ij + p_ji = 1, p_ii = 1/2; comparison outcomes are Bernoulli(p_ij)",
+    "Condorcet dueling bandits included as special case zeta* = 1"
+   ],
+   "definition_quote": "The performance of a dueling bandit algorithm $\\Gamma$ is measured by its expected cumulative regret, which is defined as R_{\\Gamma}(T) = \\zeta^* T - \\frac{1}{2} \\sum_{t = 1}^T \\mathbb{E} [ \\zeta_{a_t^{(1)}} + \\zeta_{a_t^{(2)}}]."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "D-TS (Double Thompson Sampling)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling",
+    "optimism",
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "D-TS+",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling",
+    "optimism",
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_pairs_lose(4*alpha_rucb*log(T)/Delta_ij**2 + (1 + eps_alg)*log(T)/D_ij_half) + K**2/eps_alg**2",
+    "expression_latex": "\\sum_{i\\neq j: p_{ij} < 1/2}\\bigg[\\frac{4\\alpha\\log T}{\\Delta_{ij}^2} + (1+ \\epsilon) \\frac{\\log T}{D(p_{ij}||1/2)}\\bigg] +O(\\frac{K^2}{\\epsilon^2})",
+    "regime": null
+   },
+   "symbols": {
+    "sum_pairs_lose": "sum over ordered pairs (i,j), i != j, with p_ij < 1/2",
+    "alpha_rucb": "RUCB/RLCB scale parameter alpha of D-TS",
+    "Delta_ij": "|p_ij - 1/2|",
+    "D_ij_half": "Bernoulli KL divergence D(p_ij || 1/2)"
+   },
+   "conditions": [
+    "Assumption 1: p_ij != 1/2 for all i != j"
+   ],
+   "tuning": [
+    "alpha > 0.5",
+    "eps > 0 arbitrary analysis constant"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret_copeland",
+    "number": "Proposition 1",
+    "quote": "When applying D-TS with $\\alpha > 0.5$ in a Copeland dueling bandit with a preference matrix $P = [p_{ij}]_{K \\times K}$ satisfying Assumption~1, its regret is bounded as: R_{D-TS}(T) \\leq \\sum_{i\\neq j: p_{ij} < 1/2}\\bigg[\\frac{4\\alpha\\log T}{\\Delta_{ij}^2} + (1+ \\epsilon) \\frac{\\log T}{D(p_{ij}||1/2)}\\bigg] +O(\\frac{K^2}{\\epsilon^2}), where $\\epsilon > 0$ is an arbitrary constant"
+   },
+   "confidence": "medium",
+   "notes": "Leading terms are explicit; only the additive K^2/eps^2 term is in O(). Overall O(K^2 log T). Regret defined via Copeland scores in expectation -> pseudo_regret; comparator is the Copeland winner. Algorithm uses log t so anytime."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "W_terms*log(T) + U_terms*4*alpha_rucb*log(T) + beta_alg*(1 + eps_alg)**2*V_terms*log(log(T)) + K**3 + K**2/eps_alg**2",
+    "expression_latex": "\\sum_{i \\in \\mathcal{C}^*}\\bigg[\\sum_{j:p_{ji} > 1/2}\\frac{4\\alpha\\log T}{\\Delta_{ji}^2} + \\sum_{j:p_{ji} < 1/2}(1+ \\epsilon) \\frac{\\log T}{D(p_{ji}||1/2)}\\bigg] + \\sum_{i \\notin \\mathcal{C}^*} \\sum_{j=1}^{L_C+1} \\frac{4\\alpha\\log T}{\\Delta_{\\sigma_{i(j)},i}^2} + \\beta(1+ \\epsilon)^2\\sum_{i \\notin \\mathcal{C}^*} \\sum_{j = L_C + 2}^K \\frac{\\log \\log T}{D(p_{\\sigma_{i(j)},i}||p_{\\sigma_{i(L_C+1)},i})} + O(K^3) +O(\\frac{K^2}{\\epsilon^2})",
+    "regime": null
+   },
+   "symbols": {
+    "W_terms": "sum over Copeland winners i of [sum_{j: p_ji>1/2} 4 alpha/Delta_ji^2 + sum_{j: p_ji<1/2} (1+eps)/D(p_ji||1/2)]",
+    "U_terms": "sum over non-winners i of sum_{j=1}^{L_C+1} 1/Delta_{sigma_i(j),i}^2",
+    "V_terms": "sum over non-winners i of sum_{j=L_C+2}^K 1/D(p_{sigma_i(j),i} || p_{sigma_i(L_C+1),i})",
+    "alpha_rucb": "RUCB/RLCB scale parameter alpha",
+    "beta_alg": "analysis constant beta > 2",
+    "L_C": "number of arms that beat a Copeland winner"
+   },
+   "conditions": [
+    "Assumption 1: p_ij != 1/2 for all i != j",
+    "Assumption 2: for each non-winner i, p_{sigma_i(L_C+1),i} > p_{sigma_i(j),i} for all j > L_C+1 (no ties)"
+   ],
+   "tuning": [
+    "alpha > 0.5",
+    "beta > 2 and eps > 0 analysis constants"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret_copeland_refined",
+    "number": "Theorem 1",
+    "quote": "When applying D-TS with $\\alpha > 0.5$ in a Copeland dueling bandit with a preference matrix $P = [p_{ij}]_{K \\times K}$ satisfying Assumptions~1 and 2, its regret is bounded as: ... where $\\beta > 2$ and $\\epsilon > 0$ are constants, and $D(\\cdot || \\cdot)$ is the KL-divergence."
+   },
+   "confidence": "medium",
+   "notes": "W_terms already includes the 4*alpha and (1+eps) factors; written with log(T) factored out. Paper summarizes as O(K log T + K^2 log log T) when L_C is constant (e.g. Condorcet, L_C = 0)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "W_terms*log(T) + U_terms*4*alpha_rucb*log(T) + beta_alg*(1 + eps_alg)**2*V_terms*log(log(T)) + K**3 + K**2/eps_alg**2",
+    "expression_latex": "R_{D-TS^+}(T) satisfies inequality (eq:regret_copeland_refined)",
+    "regime": null
+   },
+   "symbols": {
+    "W_terms": "sum over Copeland winners i of [sum_{j: p_ji>1/2} 4 alpha/Delta_ji^2 + sum_{j: p_ji<1/2} (1+eps)/D(p_ji||1/2)]",
+    "U_terms": "sum over non-winners i of sum_{j=1}^{L_C+1} 1/Delta_{sigma_i(j),i}^2",
+    "V_terms": "sum over non-winners i of sum_{j=L_C+2}^K 1/D(p_{sigma_i(j),i} || p_{sigma_i(L_C+1),i})",
+    "alpha_rucb": "RUCB/RLCB scale parameter alpha",
+    "beta_alg": "analysis constant beta > 2",
+    "L_C": "number of arms that beat a Copeland winner"
+   },
+   "conditions": [
+    "Assumption 1: p_ij != 1/2 for all i != j",
+    "Assumption 2: no-tie assumption"
+   ],
+   "tuning": [
+    "alpha > 0.5",
+    "beta > 2 and eps > 0 analysis constants"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret_dts_plus",
+    "number": "Corollary 1",
+    "quote": "The regret of D-TS$^+$, $R_{\\dtsp}(T)$, satisfies inequality \\eqref{eq:regret_copeland_refined} under Assumptions~1 and 2."
+   },
+   "confidence": "medium",
+   "notes": "Same bound as Theorem 1 transferred to D-TS+ (only tie-breaking differs)."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "(1 + eps_alg)*log(T)/D_ji_half + 1/eps_alg**2",
+    "expression_latex": "\\mathbb{E}[N^{(1)}_{ij}(T)] \\leq (1+ \\epsilon) \\frac{\\log T}{D(p_{ji}||1/2)} + O(\\frac{1}{\\epsilon^2})",
+    "regime": null
+   },
+   "symbols": {
+    "D_ji_half": "KL divergence D(p_ji || 1/2)"
+   },
+   "conditions": [
+    "pair (i,j) with p_ji < 1/2"
+   ],
+   "tuning": [
+    "eps > 0 arbitrary"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:cmp_bounds_less_0p5",
+    "number": "Lemma 1",
+    "quote": "Under D-TS, for an arbitrary constant $\\epsilon>0$ and one pair $(i,j)$ with $p_{ji}<1/2$, we have \\mathbb{E}[N^{(1)}_{ij}(T)] \\leq (1+ \\epsilon) \\frac{\\log T}{D(p_{ji}||1/2)} + O(\\frac{1}{\\epsilon^2})."
+   },
+   "confidence": "medium",
+   "notes": "Bound on expected number of comparisons (a1,a2)=(i,j)."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "4*alpha_rucb*log(T)/Delta_ji**2 + 1",
+    "expression_latex": "\\mathbb{E}[N^{(1)}_{ij}(T)] \\leq \\frac{4 \\alpha \\log T}{\\Delta_{ji}^2} + O(1)",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_rucb": "RUCB/RLCB scale parameter alpha",
+    "Delta_ji": "|p_ji - 1/2|"
+   },
+   "conditions": [
+    "pair (i,j) with p_ji > 1/2"
+   ],
+   "tuning": [
+    "alpha > 0.5"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:cmp_bounds_larger_0p5",
+    "number": "Lemma 2",
+    "quote": "Under D-TS with $\\alpha > 0.5$, for one pair $(i, j)$ with $p_{ji} >1/2$, we have \\mathbb{E}[N^{(1)}_{ij}(T)] \\leq \\frac{4 \\alpha \\log T}{\\Delta_{ji}^2} + O(1)."
+   },
+   "confidence": "medium",
+   "notes": "Pull-count bound."
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "K",
+    "expression_latex": "\\mathbb{E}[N_{ii}(T)] \\leq O(K) + \\sum_{k: p_{ki} > 1/2} \\Theta\\big( \\frac{1}{\\Delta_{ki}^2} + \\frac{1}{\\Delta_{ki}^2 D(1/2|| p_{ki})} + \\frac{1}{\\Delta_{ki}^4}\\big) = O(K)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "arm i not a Copeland winner"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:cmp_bounds_eq_0p5",
+    "number": "Lemma 3",
+    "quote": "Under D-TS, for any arm $i \\notin \\mathcal{C}^*$, we have \\mathbb{E}[N_{ii}(T)] \\leq O(K) + \\sum_{k: p_{ki} > 1/2} \\Theta\\big( \\frac{1}{\\Delta_{ki}^2} + \\frac{1}{\\Delta_{ki}^2 D(1/2|| p_{ki})} + \\frac{1}{\\Delta_{ki}^4}\\big) = O(K)."
+   },
+   "confidence": "medium",
+   "notes": "Bound on self-comparisons of a non-winner arm; O(K) hides instance-dependent constants in Delta_ki."
+  },
+  {
+   "id": "r7",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "beta_alg*(1 + eps_alg)**2*log(log(T))/D_sigma + K + 1/eps_alg**2",
+    "expression_latex": "\\mathbb{E}[N_{i\\sigma_{i(j)}}^{(1)}(T)] \\leq \\frac{\\beta(1+\\epsilon)^2 \\log \\log T}{D(p_{\\sigma_{i(j)},i}||p_{\\sigma_{i(L_C+1)},i})} + O(K) + O(\\frac{1}{\\epsilon^2})",
+    "regime": null
+   },
+   "symbols": {
+    "beta_alg": "analysis constant beta > 2",
+    "D_sigma": "KL divergence D(p_{sigma_i(j),i} || p_{sigma_i(L_C+1),i})"
+   },
+   "conditions": [
+    "Assumptions 1 and 2",
+    "arm i not a Copeland winner and j > L_C + 1"
+   ],
+   "tuning": [
+    "beta > 2, eps > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret_refined_singlearm",
+    "number": "Lemma 5",
+    "quote": "Under Assumptions~1 and 2, for any suboptimal arm $i \\notin \\mathcal{C}^*$ and $j > L_C + 1$, we have \\mathbb{E}[N_{i\\sigma_{i(j)}}^{(1)}(T)] \\leq \\frac{\\beta(1+\\epsilon)^2 \\log \\log T}{D(p_{\\sigma_{i(j)},i}||p_{\\sigma_{i(L_C+1)},i})} + O(K) + O(\\frac{1}{\\epsilon^2}), where $\\beta > 2$ and $\\epsilon > 0$ are constants."
+   },
+   "confidence": "medium",
+   "notes": "Pull-count bound via back substitution."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Komiyama2016ICML:CWRMED",
+   "cited_title": "Copeland dueling bandit problem: Regret lower bound, optimal algorithm, and computationally efficient algorithm",
+   "cited_first_author": "J. Komiyama",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Copeland dueling bandits, stochastic preference matrix",
+   "bound": {
+    "notation": "Omega",
+    "expression": "log(T)",
+    "expression_latex": "\\Omega(\\log T)",
+    "regime": null
+   },
+   "where": "Section 4.2.1, after Proposition 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:34:00",
+  "source_chars": 114227,
+  "input_tokens": 89345,
+  "output_tokens": 7589,
+  "cost_usd_equiv": 0.6489588,
+  "status": "extracted"
+ }
+}

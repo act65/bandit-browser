@@ -31,7 +31,9 @@ dimensions:
     multi: false
     order_notes:
       - {pair: [full_information, graph_feedback], justification: "full information is the complete feedback graph"}
-      - {pair: [graph_feedback, bandit], justification: "a bandit algorithm can ignore side observations"}
+      - {pair: [graph_feedback, bandit], justification: "a bandit algorithm can ignore side observations",
+         requires: {feedback_graph.observability: [strongly_observable]},
+         caveat: "needs the played action's own loss to be observed (strongly observable graphs, e.g. with self-loops)"}
       - {pair: [full_information, two_point], justification: "two evaluations are a subset of the full loss function"}
       - {pair: [two_point, bandit], justification: "a one-point algorithm can ignore the second evaluation"}
       - {pair: [semi_bandit, bandit], justification: "a bandit algorithm can ignore per-arm feedback"}
@@ -135,7 +137,8 @@ dimensions:
       - {from: linear_infinite, to: generalized_linear, map: {}, note: "identity link"}
       - {from: finite_K, to: structured_general, map: {}, note: "unstructured arms are trivially structured"}
       - {from: linear_finite, to: structured_general, map: {}, note: "linear structure is a known parametric structure"}
-      - {from: combinatorial, to: linear_finite, map: {d: K}, note: "subsets of K base arms as {0,1}^K action vectors"}
+      # combinatorial -> linear_finite (d = K) removed in 0.4.1: combinatorial losses are bounded per base arm
+      # (total loss up to m), linear ones per inner product, so bounds moved across it were off by a factor m.
       - {from: linear_infinite, to: kernel_rkhs, map: {}, note: "linear kernel"}
     equivalences:
       - {a: "action_space=linear_infinite", b: "action_space=convex_body + function_class={bounded, linear}", note: "BCO book F_{b,lin}"}
@@ -337,9 +340,9 @@ node_parameters:
     applies_to: "feedback = graph_feedback; else all fields not_applicable"
     fields:
       observability:
-        values: [not_applicable, unspecified, strongly_observable, observable]
-        order: [[strongly_observable, observable], [unspecified, observable]]
-        note: "observable = strongly or weakly observable"
+        values: [not_applicable, unspecified, strongly_observable, observable, any_graph]
+        order: [[strongly_observable, observable], [observable, any_graph]]
+        note: "observable = strongly or weakly observable; any_graph also allows non-observable graphs (linear regret)"
       time_varying:
         values: [not_applicable, fixed, oblivious_sequence, adaptive_sequence]
         order: [[fixed, oblivious_sequence], [oblivious_sequence, adaptive_sequence]]
@@ -360,7 +363,7 @@ guidance:
   - "Expert / policy-class comparators: extras.expert_advice with comparator best_expert / best_policy; N_exp or a VC dimension as variables."
   - "Sign conventions (losses vs gains) are not setting features: losses in [0,1] are bounded_01, costs in [-1,1] are bounded_pm1; an unstated adversary is adversarial_unspecified."
   - "Corruption: environment = stochastic_corrupted (or adversarial_self_bounding with C_sb = 2C) plus node parameter corruption {adversary, budget_measure, structure, regret_reference}."
-  - "Feedback graphs: feedback = graph_feedback plus node parameter feedback_graph {observability, time_varying, knowledge}; weakly observable results go under observable."
+  - "Feedback graphs: feedback = graph_feedback plus node parameter feedback_graph {observability, time_varying, knowledge}; weakly observable results go under observable; results that also cover non-observable graphs (e.g. Omega(T) lower bounds) use any_graph."
   - "Lower-bound construction specifics (hard instance family, Delta range, algorithm classes such as 'algorithms with O(log^b T) stochastic regret' or 'LinTS without inflation') go in the result's conditions / algorithm_class, not the setting. A lower bound that holds even with full information should use feedback = full_information."
   - "Side conditions on T, K, d (n >= K >= 2, T >= max{55, K}) are result conditions; the confidence delta given to the algorithm is tuning."
 
@@ -416,3 +419,10 @@ vocabularies:
 #   + learner_knows L_feat, eps_m, N_exp, alpha_G, c_mu, L_star, r_K, prior
 #   + noise gaussian_unknown_variance; feedback decoupled
 #   + guidance (rendered into the prompt) for features that were expressible but left unmapped
+# 0.4.1 (2026-10-21): batch-1 conflicts. feedback_graph.observability: + any_graph (observable ⊑ any_graph);
+#   dropped unspecified ⊑ observable, which let lower bounds for non-observable graphs reach observable ones
+#   (unspecified is now compatible with a caveat, like every other node field). Prompt unchanged except the
+#   feedback-graph guidance line; no re-extraction needed.
+#   graph_feedback ⊑ bandit now requires feedback_graph.observability = strongly_observable (order_notes
+#   `requires`): a bandit algorithm needs its own loss, which weakly / non-observable graphs do not reveal.
+#   - reduction combinatorial -> linear_finite (loss scales differ by m; see the comment at the reduction).

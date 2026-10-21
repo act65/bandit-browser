@@ -1,0 +1,291 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Learning to Detect an Odd Restless Markov Arm with a Trembling Hand",
+  "arxiv_id": "2105.03603",
+  "arxiv_version": null,
+  "year": 2021,
+  "authors": [
+   "P. N. Karthik",
+   "Rajesh Sundaresan"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Odd arm identification in a restless multi-armed bandit with Markov arms (unknown TPMs), trembling hand",
+   "objective": "other_pure_exploration",
+   "feedback": "bandit",
+   "environment": "markovian",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "restless"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Goal is to identify the odd arm: one arm has TPM P1, all others share TPM P2 != P1; fixed-confidence (error probability <= epsilon for all configurations), expected stopping time",
+    "Each arm is an ergodic finite-state Markov chain; observations are noiseless states; arms are restless",
+    "Trembling hand: intended arm pulled w.p. 1-eta, uniformly random arm w.p. eta (eta>0), the actually pulled arm is observed",
+    "TPMs P1, P2 unknown to the learner",
+    "K >= 3",
+    "Initial states X_0^a ~ phi, a known full-support distribution"
+   ],
+   "definition_quote": "Consider a multi-armed bandit with $K\\geq 3$ arms ... discrete-time Markov process $\\{X_t^a:t\\geq 0\\}$ associated with arm $a$ that is time-homogeneous, ergodic and takes values in a common finite set $\\mathcal{S}$. ... Let the TPM of one of the arms (the {\\em odd} arm) be $P_1$, and that of each non-odd arm be $P_2$, where $P_2\\neq P_1$. ... A decision entity that knows neither $P_1$ nor $P_2$ wishes to find the odd arm index as quickly as possible while keeping the probability of its decision error small."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "pi^star(L, delta) (certainty-equivalence policy with modified GLR test statistic and ML estimates)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "track_and_stop",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "log(1/epsilon)/R_star",
+    "expression_latex": "\\liminf_{\\epsilon\\downarrow 0}\\inf_{\\pi\\in\\Pi(\\epsilon)}\\frac{E^\\pi[\\tau(\\pi)| C]}{\\log(1/\\epsilon)}\\geq \\frac{1}{R^*(h,P_1,P_2)}",
+    "regime": "epsilon -> 0"
+   },
+   "symbols": {
+    "R_star": "R^*(h,P_1,P_2): sup over stationary randomised strategies of inf over alternative configurations of the occupancy-weighted KL divergences between delayed-transition rows"
+   },
+   "conditions": [
+    "policies in Pi(epsilon): error probability <= epsilon for all arms configurations",
+    "trembling hand parameter eta > 0"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "prop:lower_bound",
+    "number": "Proposition 1",
+    "quote": "Under the arms configuration $C=(h, P_1, P_2)$, \\liminf_{\\epsilon\\downarrow 0}\\inf_{\\pi\\in\\Pi(\\epsilon)}\\frac{E^\\pi[\\tau(\\pi)| C]}{\\log(1/\\epsilon)}\\geq \\frac{1}{R^*(h,P_1,P_2)}, where R^*(h,P_1,P_2) := \\sup_{\\pi^\\lambda\\in\\Pi_{SRS}} \\inf_{C'=(h',P_1',P_2'): h'\\neq h, P_1'\\neq P_2'} \\sum_{(d,i)}\\sum_a \\nu^\\lambda(d,i,a) k_{CC'}(d,i,a)"
+   },
+   "confidence": "high",
+   "notes": "Restated as the first part of Theorem 1. Holds for all arms configurations. Algorithm class is the set of policies meeting the epsilon error constraint (delta-correct type)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "epsilon",
+    "expression_latex": "\\pi^{\\star}(L,\\delta)\\in\\Pi(\\epsilon)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "Assumption 1 (continuous selection of delta-optimal solutions)",
+    "Assumption 2: all TPMs lie in P(bar_eps*) with mutually absolutely continuous rows, for some bar_eps* in (0,1)"
+   ],
+   "tuning": [
+    "L = 1/epsilon",
+    "any delta > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:policy_satisfies_desried_error_probability",
+    "number": "Proposition 4",
+    "quote": "Fix an error probability $\\epsilon>0$. If $L=1/\\epsilon$, then $\\pi^{\\star}(L,\\delta)\\in\\Pi(\\epsilon)$ for all $\\delta>0$."
+   },
+   "confidence": "medium",
+   "notes": "The proof shows the error probability is at most 1/L. The assumptions are stated globally before the Section IV results. 'probability' field chosen loosely; this bounds the error probability itself."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "almost_sure",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "limsup",
+    "expression": "(1 + delta_alg)**2*log(L_thr)/R_star",
+    "expression_latex": "\\limsup_{L\\to\\infty} \\frac{\\tau(\\pi^\\star(L,\\delta))}{\\log L} \\leq \\frac{(1+\\delta)^2}{R^*(h, P_1, P_2)}",
+    "regime": "L -> infinity"
+   },
+   "symbols": {
+    "R_star": "R^*(h,P_1,P_2), lower-bound constant",
+    "delta_alg": "the policy's near-optimality parameter delta > 0",
+    "L_thr": "threshold parameter L of the policy (stop when M >= log((K-1)L)); L = 1/epsilon gives error <= epsilon"
+   },
+   "conditions": [
+    "Assumption 1 (continuous selection of delta-optimal solutions)",
+    "Assumption 2: all TPMs lie in P(bar_eps*) with mutually absolutely continuous rows"
+   ],
+   "tuning": [
+    "delta > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:almost_sure_upper_bound_for_policy",
+    "number": "Proposition 7",
+    "quote": "Suppose that $C=(h, P_1, P_2)$ is the underlying arms configuration. For all $\\delta>0$, the stopping time of policy $\\pi^\\star(L,\\delta)$ satisfies \\limsup_{L\\to\\infty} \\frac{\\tau(\\pi^\\star(L,\\delta))}{\\log L} \\leq \\frac{(1+\\delta)^2}{R^*(h, P_1, P_2)} almost surely."
+   },
+   "confidence": "high",
+   "notes": "Almost-sure bound on the stopping time."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "limsup",
+    "expression": "(1 + delta_alg)**2*log(L_thr)/R_star",
+    "expression_latex": "\\limsup_{L \\to \\infty} \\frac{E^\\pi[\\tau(\\pi)|C]}{\\log L} \\leq \\frac{(1+\\delta)^2}{R^*(h, P_1, P_2)}",
+    "regime": "L -> infinity"
+   },
+   "symbols": {
+    "R_star": "R^*(h,P_1,P_2), lower-bound constant",
+    "delta_alg": "the policy's near-optimality parameter delta > 0",
+    "L_thr": "threshold parameter L of the policy; L = 1/epsilon gives error <= epsilon"
+   },
+   "conditions": [
+    "Assumption 1 (continuous selection of delta-optimal solutions)",
+    "Assumption 2: all TPMs lie in P(bar_eps*) with mutually absolutely continuous rows"
+   ],
+   "tuning": [
+    "delta > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:upper_bound",
+    "number": "Proposition 8",
+    "quote": "Fix $\\delta>0$. Under the arms configuration $C=(h, P_1, P_2)$, the expected stopping time of the policy $\\pi=\\pi^{\\star}(L,\\delta)$ satisfies \\limsup_{L \\to \\infty} \\frac{E^\\pi[\\tau(\\pi)|C]}{\\log L} \\leq \\frac{(1+\\delta)^2}{R^*(h, P_1, P_2)}."
+   },
+   "confidence": "high",
+   "notes": "With L = 1/epsilon (Proposition 4), this bounds the expected stopping time by (1+delta)^2 log(1/epsilon)/R* asymptotically."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "limsup",
+    "expression": "log(L_thr)/R_star",
+    "expression_latex": "\\limsup_{\\delta\\downarrow 0} \\limsup_{L\\to\\infty}\\frac{E^{\\pi^\\star(L, \\delta)}[\\tau(\\pi^\\star(L, \\delta))|C]}{\\log L}\\leq \\frac{1}{R^*(h, P_1, P_2)}",
+    "regime": "L -> infinity, then delta -> 0"
+   },
+   "symbols": {
+    "R_star": "R^*(h,P_1,P_2), lower-bound constant",
+    "L_thr": "threshold parameter L of the policy; L = 1/epsilon gives error <= epsilon"
+   },
+   "conditions": [
+    "Assumption 1 (continuous selection of delta-optimal solutions)",
+    "Assumption 2: all TPMs lie in P(bar_eps*) with mutually absolutely continuous rows",
+    "K >= 3",
+    "eta in (0,1]"
+   ],
+   "tuning": [
+    "delta -> 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:main_result",
+    "number": "Theorem 1",
+    "quote": "Further, under Assumption 1 and Assumption 2, the policy $\\pi^\\star(L, \\delta)$ satisfies the asymptotic upper bound \\limsup_{\\delta\\downarrow 0} \\limsup_{L\\to\\infty}\\frac{E^{\\pi^\\star(L, \\delta)}[\\tau(\\pi^\\star(L, \\delta))|C]}{\\log L}\\leq \\frac{1}{R^*(h, P_1, P_2)}. Under these assumptions, we therefore have \\lim_{\\epsilon\\downarrow 0}\\inf_{\\pi\\in\\Pi(\\epsilon)}\\frac{E^\\pi[\\tau(\\pi)|C]}{\\log(1/\\epsilon)}=...=\\frac{1}{R^*(h, P_1, P_2)}."
+   },
+   "confidence": "high",
+   "notes": "The lower-bound part of Theorem 1 restates Proposition 1 (r1). Together they show asymptotic optimality, with the limit equal to 1/R*, under the assumptions."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:52:16",
+  "source_chars": 230113,
+  "input_tokens": 154449,
+  "output_tokens": 6292,
+  "cost_usd_equiv": 1.1438508,
+  "status": "extracted"
+ }
+}

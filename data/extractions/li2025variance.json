@@ -1,0 +1,365 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Variance-Aware Feel-Good Thompson Sampling for Contextual Bandits",
+  "arxiv_id": "2511.02123",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Xuheng Li",
+   "Quanquan Gu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Variance-aware contextual bandits with general reward function class (weak adversary with variance revealing)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "sigma",
+    "prior"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "adaptive_sequence",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "noise eps_t is sigma_t^2-subgaussian conditionally on history with time-varying sigma_t revealed to the agent at the start of round t",
+    "realizable general function class F (f_* in F) with mean rewards in [0,1]",
+    "regret depends on generalized decoupling coefficient dc and log|F|"
+   ],
+   "definition_quote": "In step $t$ over a total of $T$ steps, the agent first receives the context $x_t$ and the action set $\\cA_t\\subset\\cA$. The agent then selects an action $a_t\\in\\cA_t$ and receives randomized reward $r_t=f_*(x_t, a_t)+\\epsilon_t$, where $f_*:\\cX\\times\\cA_t\\to[0, 1]$ ... We assume that $\\sigma_t^2$ is revealed to the agent at the beginning of step $t$"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Variance-aware linear contextual bandits (variance revealing)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "sigma",
+    "d",
+    "prior"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "adaptive_sequence",
+    "access": "not_applicable",
+    "norm_bound": "unspecified",
+    "parameter_set": "l2_ball",
+    "loss_set": "bounded_mean_reward"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "per-round noise level sigma_t revealed to agent at start of round t"
+   ],
+   "definition_quote": "$f_{\\btheta}(x, a)=\\langle\\btheta, \\bphi(x, a)\\rangle\\in[0, 1]$, $\\Theta\\subset\\{\\wb\\in\\RR^d:\\|\\wb\\|_2\\le1\\}$ is the parameter space"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "FGTS-VA",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma",
+    "prior",
+    "dc",
+    "log|F|"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt((1 + Lambda_T)*dc*log(F_card)) + dc",
+    "expression_latex": "\\sqrt{(1+\\Lambda)\\dc_{\\lambda, \\epsilon, T}(\\cF)\\log|\\cF|}+\\dc_{\\lambda, \\epsilon, T}(\\cF)",
+    "regime": null
+   },
+   "symbols": {
+    "dc": "generalized decoupling coefficient dc_{lambda,epsilon,T}(F) with lambda=1, epsilon=T",
+    "F_card": "cardinality of the finite function class F"
+   },
+   "conditions": [
+    "sigma_t^2-subgaussian noise (Assumption 1), Lambda_T = sum_t sigma_t^2",
+    "F finite and realizable",
+    "prior p_0 uniform on F"
+   ],
+   "tuning": [
+    "alpha = 1/sqrt(T)",
+    "lambda = 1",
+    "epsilon = alpha^{-2}",
+    "c = 2*sqrt(log|F|/dc)",
+    "eta_s = bar_sigma_s^{-2}, lambda_t = c*sqrt(Lambda_t)/bar_sigma_t^2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:regret_upper_bound",
+    "number": "Theorem 6",
+    "quote": "Suppose that Assumption \\ref{assumption:subgaussian_noise} holds, the function class $\\cF$ has finite cardinality, and the prior distribution $p_0$ is the uniform distribution on $\\cF$. ... Then the total regret of \\FGTSVA~satisfies $\\EE[\\Regret(T)]\\lesssim\\sqrt{(1+\\Lambda)\\dc_{\\lambda, \\epsilon, T}(\\cF)\\log|\\cF|}+\\dc_{\\lambda, \\epsilon, T}(\\cF)$."
+   },
+   "confidence": "medium",
+   "notes": "Regret defined through f_* means, so pseudo-regret. Lambda here is sum of subgaussian parameters sigma_t^2 (upper bounds 4x conditional variance). Remarks 7-9 specialize: linear Õ(d sqrt(Lambda)+d), deterministic O(dc), sigma_t=1 gives Õ(sqrt(T dc log|F|)+dc)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "9/4*sqrt((alpha_hp**2*T + Lambda_T)*Z*dc) + dc",
+    "expression_latex": "\\frac94\\sqrt{(\\alpha^2T+\\Lambda)Z\\dc_{\\lambda, \\epsilon, T}(\\cF)}+\\dc_{\\lambda, \\epsilon, T}(\\cF)",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_hp": "hyperparameter alpha floor on bar_sigma_t",
+    "Z": "1 v sup max_t Z_t, a potential quantity (<= log|F| for finite class with uniform prior)",
+    "dc": "generalized decoupling coefficient dc_{lambda,epsilon,T}(F)"
+   },
+   "conditions": [
+    "sigma_t^2-subgaussian noise (Assumption 1)",
+    "f_* in F"
+   ],
+   "tuning": [
+    "lambda = 1",
+    "epsilon = alpha^{-2}",
+    "c = 2*sqrt(Z/dc)",
+    "eta_s, lambda_t per eq. (parameters)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:general",
+    "number": "Theorem 12",
+    "quote": "Suppose that the parameters are set as in \\eqref{eq:parameters}, and the hyperparameters are $\\lambda=1,\\quad\\epsilon=\\alpha^{-2},\\quad c=2\\sqrt{Z/\\dc_{\\lambda, \\epsilon, T}(\\cF)}$. Then the total regret satisfies $\\EE[\\Regret(T)]\\le\\frac94\\sqrt{(\\alpha^2T+\\Lambda)Z\\dc_{\\lambda, \\epsilon, T}(\\cF)}+\\dc_{\\lambda, \\epsilon, T}(\\cF)$."
+   },
+   "confidence": "medium",
+   "notes": "General version covering infinite classes; tuning c needs Z and dc."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(Lambda_T) + d",
+    "expression_latex": "\\tilde\\cO(d\\sqrt{\\Lambda}+d)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "Theta is the unit ball",
+    "sigma_t uniformly bounded by sigma",
+    "sigma_t^2-subgaussian noise"
+   ],
+   "tuning": [
+    "alpha <= 1",
+    "hyperparameters chosen as in Theorem 12"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "lemma:Z",
+    "number": "Lemma 14",
+    "quote": "For the linear reward function class where $\\Theta$ is the unit ball, we have $-\\log p_0(\\cF_\\delta(f_*))=\\tilde\\cO(d)$ according to \\citet{zhang2022feel}. Therefore, the regret of \\FGTSVA~in linear contextual bandits is $\\tilde\\cO(d\\sqrt{\\Lambda}+d)$, even if $\\cF$ is not the $\\epsilon$-net."
+   },
+   "confidence": "medium",
+   "notes": "Also stated in Remark 7 (via epsilon-net). Combines Lemma 14 with Theorem 12 and Proposition 4."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "zhou2022computationally",
+   "cited_title": "Computationally efficient horizon-free reinforcement learning for linear mixture mdps",
+   "cited_first_author": "Zhou, D.",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Weighted OFUL+",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "variance-aware linear contextual bandits, known variances",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(Lambda_T) + d",
+    "expression_latex": "\\tilde\\cO(d\\sqrt{\\Lambda}+d)",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "zhao2023variance",
+   "cited_title": "Variance-dependent regret bounds for linear bandits and reinforcement learning: Adaptivity and computational efficiency",
+   "cited_first_author": "Zhao, H.",
+   "cited_year": 2023,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SAVE",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "variance-aware linear contextual bandits, unknown variances",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(Lambda_T) + d",
+    "expression_latex": "\\tilde\\cO(d\\sqrt\\Lambda+d)",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "xu2023noise",
+   "cited_title": "Noise-adaptive thompson sampling for linear contextual bandits",
+   "cited_first_author": "Xu, R.",
+   "cited_year": 2023,
+   "cited_arxiv_id": null,
+   "algorithm_name": "LinVDTS",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "variance-aware linear contextual bandits, unknown variances",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**1.5*sqrt(Lambda_T) + d**1.5",
+    "expression_latex": "\\tilde\\cO(d^{1.5}\\sqrt\\Lambda+d^{1.5})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "zhang2022feel",
+   "cited_title": "Feel-good thompson sampling for contextual bandits and reinforcement learning",
+   "cited_first_author": "Zhang, T.",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "FGTS",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "linear contextual bandits",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\tilde\\cO(d\\sqrt T)",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "jia2024does",
+   "cited_title": "How does variance shape the regret in contextual bandits?",
+   "cited_first_author": "Jia, Z.",
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "variance-aware contextual bandits with general function class, strong adversary",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d_elu*sqrt(Lambda_T) + d_elu",
+    "expression_latex": "\\tilde\\cO\\big(d_{\\mathrm{elu}}\\sqrt{\\sum_{t=1}^T\\sigma_t^2}+d_{\\mathrm{elu}}\\big)",
+    "regime": null
+   },
+   "where": "Section 2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:15:20",
+  "source_chars": 77894,
+  "input_tokens": 70680,
+  "output_tokens": 5919,
+  "cost_usd_equiv": 0.4662388,
+  "status": "extracted"
+ }
+}

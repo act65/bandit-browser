@@ -114,6 +114,12 @@ def substitute(expr: str | None, mapping: dict) -> tuple[str | None, dict]:
     return str(e), used
 
 
+def mentions(r: dict, symbols: set[str]) -> bool:
+    """True if the result's bound is written in terms of any of `symbols`."""
+    expr = r["bound"].get("expression_normalised") or r["bound"]["expression"]
+    return bool(set(resolve.IDENT_RE.findall(expr)) & symbols)
+
+
 def main() -> None:
     ont = schema.load_ontology()
     order = Order(ont)
@@ -171,6 +177,8 @@ def main() -> None:
                 continue
             if via_reduction and r.get("dependence") == "instance_dependent":
                 continue  # per-arm bounds hold only on the embedded instances (e.g. K = d basis arms)
+            if any(ch.up_map for ch in changes) and not mentions(r, {k for ch in changes for k in (ch.up_map or {})}):
+                continue  # e.g. Omega(T) for non-observable graphs: not a statement about every graph, so no alpha_G = K
             expr, subs = substitute(r["bound"].get("expression_normalised") or r["bound"]["expression"], up_map)
             foreign = foreign_symbols(expr, canonical)
             note = [f"holds for {k} = {v} only" if pinned(v) else f"holds when {k}: {v}" for k, v in fixed.items()]

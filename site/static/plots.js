@@ -364,7 +364,9 @@ document.addEventListener("DOMContentLoaded", function () {
   };
   var drawPlane = function () {
     var reg = regimes.filter(function (r) { return r.key === state.reg; })[0];
-    var bs = inRegime().filter(function (b) { return b.prof && !b.dsub; });
+    // only bounds that take part in this regime's rate (pipeline/compare.py): restricted, model-change,
+    // small-T or algorithm-specific bounds stay in the table and the curves, not here
+    var bs = inRegime().filter(function (b) { return b.prof && !b.dsub && b.rate; });
     var ys = {};
     bs.forEach(function (b) { ["K", "d", "Delta"].forEach(function (v) { if (b.prof[v]) ys[v] = 1; }); });
     var yopts = ["K", "d", "Delta"].filter(function (v) { return ys[v]; });
@@ -381,7 +383,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     planeBox.innerHTML = "";
     if (!bs.length) {
-      planeNote.textContent = "No bound in this regime has a growth profile.";
+      planeNote.textContent = "No bound in this regime takes part in the rate comparison.";
       return;
     }
     var Y = state.planeY;
@@ -402,36 +404,63 @@ document.addEventListener("DOMContentLoaded", function () {
       var gy = function (side) { var r = Y && pv[Y] ? parseRate(pv[Y][side]) : [0, 0]; return r; };
       fu = { x: gx("upper"), y: gy("upper") }; fl = { x: gx("lower"), y: gy("lower") };
     }
-    var W = Math.max(280, planeBox.clientWidth || 600), H = Math.min(340, Math.max(240, W * 0.5));
-    var m = { l: 48, r: 16, t: 14, b: 38 };
-    var LOGW = 0.07;  // horizontal/vertical offset per extra log factor
-    var xv = function (r) { return r[0] + LOGW * r[1]; };
-    var xsV = gl.map(function (g) { return xv(g.x); }), ysV = gl.map(function (g) { return xv(g.y); });
-    var xmin = Math.min(0, Math.min.apply(null, xsV)), xmax = Math.max(1, Math.max.apply(null, xsV) + 0.15);
-    var ymin = Math.min(0, Math.min.apply(null, ysV)), ymax = Math.max(1, Math.max.apply(null, ysV) + 0.15);
-    var sx = function (v) { return m.l + (v - xmin) / (xmax - xmin) * (W - m.l - m.r); };
-    var sy = function (v) { return H - m.b - (v - ymin) / (ymax - ymin) * (H - m.t - m.b); };
+    // Ordinal axes: one column (row) per distinct rate, ordered by growth and labelled exactly
+    // ("log T", "√T·log T", "T^2/3"). A numeric axis would have to fake log factors as small
+    // exponent offsets, which reads log^6 T as T^0.4.
+    var rk = function (r) { return r[0].toFixed(4) + "|" + r[1].toFixed(4); };
+    var axis = function (rates) {
+      var seen = {}, out = [];
+      rates.forEach(function (r) { if (r && !seen[rk(r)]) { seen[rk(r)] = 1; out.push(r); } });
+      out.sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; });
+      var pos = {};
+      out.forEach(function (r, i) { pos[rk(r)] = i; });
+      return { rates: out, pos: function (r) { return pos[rk(r)]; } };
+    };
+    var FR = { "0.5": "1/2", "0.3333": "1/3", "0.6667": "2/3", "0.25": "1/4", "0.75": "3/4", "0.1667": "1/6",
+               "0.8333": "5/6", "1.5": "3/2", "1.3333": "4/3", "0.4": "2/5", "0.6": "3/5", "0.2": "1/5" };
+    var num = function (x) { var k = String(Math.round(x * 10000) / 10000); return FR[k] || String(Math.round(x * 100) / 100); };
+    var SUP = { "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶" };
+    var rateText = function (r, v) {
+      var base = !r[0] ? "" : r[0] === 1 ? v : r[0] === 0.5 ? "√" + v : v + "^" + num(r[0]);
+      var lp = Math.round(r[1] * 100) / 100;
+      var lg = !lp ? "" : "log" + (lp === 1 ? "" : SUP[String(lp)] || "^" + num(lp)) + " " + v;
+      return base && lg ? base + "·" + lg : base || lg || "1";
+    };
+    var vname = function (v) { return v === "Delta" ? "(1/Δ)" : v; };
+    var ax = axis(gl.map(function (g) { return g.x; }).concat(fu ? [fu.x, fl.x] : []));
+    var ay = axis(gl.map(function (g) { return g.y; }).concat(fu ? [fu.y, fl.y] : []));
+    var nx = ax.rates.length, ny = ay.rates.length;
+    var W = Math.max(280, planeBox.clientWidth || 600);
+    var rotX = nx > 5 && (W - 120) / nx < 90;  // rotate column labels when they would collide
+    var H = Math.min(360, Math.max(220, 70 + 46 * ny + (rotX ? 50 : 0)));
+    var ylong = Y ? Math.max.apply(null, ay.rates.map(function (r) { return rateText(r, vname(Y)).length; })) : 0;
+    var m = { l: Math.max(60, 30 + 6.5 * ylong), r: 24, t: 18, b: rotX ? 92 : 46 };
+    var sx = function (i) { return m.l + (nx === 1 ? 0.5 : (i + 0.5) / nx) * (W - m.l - m.r); };
+    var sy = function (i) { return H - m.b - (ny === 1 ? 0.5 : (i + 0.5) / ny) * (H - m.t - m.b); };
     var svg = el("svg", { width: W, height: H, viewBox: "0 0 " + W + " " + H, role: "img",
-                          "aria-label": "Rate plane: T exponent against " + (Y || "") + " exponent" }, planeBox);
+                          "aria-label": "Rate plane: growth in T against growth in " + (Y || "") }, planeBox);
     var g0 = el("g", { class: "rp-gridlines" }, svg);
-    for (var a = Math.ceil(xmin * 2) / 2; a <= xmax; a += 0.5) {
-      el("line", { x1: sx(a), x2: sx(a), y1: m.t, y2: H - m.b }, g0);
-      el("text", { x: sx(a), y: H - m.b + 15, "text-anchor": "middle", class: "rp-tick" }, svg).textContent = String(a);
-    }
-    for (var bb = Math.ceil(ymin * 2) / 2; bb <= ymax; bb += 0.5) {
-      el("line", { x1: m.l, x2: W - m.r, y1: sy(bb), y2: sy(bb) }, g0);
-      el("text", { x: m.l - 6, y: sy(bb) + 4, "text-anchor": "end", class: "rp-tick" }, svg).textContent = String(bb);
-    }
-    el("text", { x: (m.l + W - m.r) / 2, y: H - 4, "text-anchor": "middle", class: "rp-alabel" }, svg).textContent = "exponent of T";
-    var ylab = Y ? "exponent of " + (Y === "Delta" ? "1/Δ" : Y) : "";
+    ax.rates.forEach(function (r, i) {
+      el("line", { x1: sx(i), x2: sx(i), y1: m.t, y2: H - m.b }, g0);
+      var t = el("text", rotX ? { x: sx(i), y: H - m.b + 12, "text-anchor": "end", class: "rp-tick",
+                                  transform: "rotate(-35 " + sx(i) + " " + (H - m.b + 12) + ")" }
+                              : { x: sx(i), y: H - m.b + 16, "text-anchor": "middle", class: "rp-tick" }, svg);
+      t.textContent = rateText(r, "T");
+    });
+    ay.rates.forEach(function (r, i) {
+      el("line", { x1: m.l, x2: W - m.r, y1: sy(i), y2: sy(i) }, g0);
+      el("text", { x: m.l - 8, y: sy(i) + 4, "text-anchor": "end", class: "rp-tick" }, svg).textContent = Y ? rateText(r, vname(Y)) : "";
+    });
+    el("text", { x: (m.l + W - m.r) / 2, y: H - 4, "text-anchor": "middle", class: "rp-alabel" }, svg).textContent = "growth in T (ordered, not to scale)";
+    var ylab = Y ? "growth in " + (Y === "Delta" ? "1/Δ" : Y) : "";
     el("text", { x: 12, y: (m.t + H - m.b) / 2, "text-anchor": "middle", class: "rp-alabel",
                  transform: "rotate(-90 12 " + (m.t + H - m.b) / 2 + ")" }, svg).textContent = ylab;
     if (fu && fl) {
-      el("line", { x1: sx(xv(fu.x)), y1: sy(xv(fu.y)), x2: sx(xv(fl.x)), y2: sy(xv(fl.y)), class: "rp-gapline" }, svg);
+      el("line", { x1: sx(ax.pos(fu.x)), y1: sy(ay.pos(fu.y)), x2: sx(ax.pos(fl.x)), y2: sy(ay.pos(fl.y)), class: "rp-gapline" }, svg);
     }
     gl.sort(function (a, b) { return a.front - b.front; });
     gl.forEach(function (g) {
-      var cx = sx(xv(g.x)), cy = sy(xv(g.y));
+      var cx = sx(ax.pos(g.x)), cy = sy(ay.pos(g.y));
       var r = 5 + 2 * Math.sqrt(g.items.length - 1);
       var col = g.side === "lower" ? css("--s2") : css("--s1");
       if (g.front) el("circle", { cx: cx, cy: cy, r: r + 3.5, class: "rp-ring", stroke: col }, svg);
@@ -439,8 +468,7 @@ document.addEventListener("DOMContentLoaded", function () {
       var hit = el("circle", { cx: cx, cy: cy, r: Math.max(12, r + 4), fill: "transparent" }, svg);
       var show = function (ev) {
         tip.innerHTML = "";
-        var rt = function (p, v) { return (p[0] ? v + (p[0] === 1 ? "" : "^" + p[0]) : "") + (p[1] ? (p[0] ? "·" : "") + "log" + (p[1] === 1 ? "" : "^" + p[1]) : "") || "1"; };
-        h("div", "rp-thead", tip, (g.side === "upper" ? "Upper" : "Lower") + ": " + rt(g.x, "T") + (Y ? " · " + rt(g.y, Y === "Delta" ? "(1/Δ)" : Y) : "") +
+        h("div", "rp-thead", tip, (g.side === "upper" ? "Upper" : "Lower") + ": " + rateText(g.x, "T") + (Y ? " · " + rateText(g.y, vname(Y)) : "") +
           (g.front ? "  ★ best" : ""));
         g.items.slice(0, 10).forEach(function (b) { h("div", "rp-trow", tip, label(b) + (b.inh ? " (inherited)" : "")); });
         if (g.items.length > 10) h("div", "muted", tip, "+" + (g.items.length - 10) + " more");
@@ -453,9 +481,10 @@ document.addEventListener("DOMContentLoaded", function () {
       hit.addEventListener("pointerdown", show);
       hit.addEventListener("pointerleave", function () { tip.hidden = true; });
     });
-    var txt = "Each bound as a point (exponent of T, exponent of " + (Y === "Delta" ? "1/Δ" : (Y || "–")) +
-      "); size = number of bounds with that rate; ringed = best (front). Small offsets mark extra log factors (+" + LOGW + " per log).";
-    if (fu && fl) txt += " The grey segment joins the best upper and best lower rates: its length is the gap.";
+    var txt = "Each bound used in this regime's rate comparison as a point: its growth in T against its growth in " +
+      (Y === "Delta" ? "1/Δ" : (Y || "–")) + ". The axes list the rates that occur, in increasing order (not to scale); " +
+      "size = number of bounds with that rate; ringed = best (front). Restricted or algorithm-specific bounds are in the table above, not here.";
+    if (fu && fl) txt += " The grey segment joins the best upper and best lower rates (none: tight).";
     planeNote.textContent = txt;
   };
 

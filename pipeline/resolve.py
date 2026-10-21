@@ -61,6 +61,8 @@ def apply_corrections(r: dict, corrections: list[dict]) -> dict:
     for c in corrections:
         if c["op"] == "multiply_expression_by":
             r["bound"]["expression"] = f"({c['factor']})*({r['bound']['expression']})"
+        elif c["op"] == "add_condition":
+            r["conditions"] = (r.get("conditions") or []) + [c["value"]]
         elif c["op"] == "set":
             node = r
             *path, last = c["field"].split(".")
@@ -249,8 +251,9 @@ def main() -> None:
             local_algo[a["id"]] = aid
 
         for r in o["results"]:
-            if f"{paper}:{r['id']}" in corrections:
-                r = apply_corrections(r, corrections[f"{paper}:{r['id']}"])
+            todo = corrections.get(f"{paper}:*", []) + corrections.get(f"{paper}:{r['id']}", [])
+            if todo:  # paper-wide (paper:*) corrections first
+                r = apply_corrections(r, todo)
             if r["setting"] not in local_setting:
                 continue
             sid, s = local_setting[r["setting"]]

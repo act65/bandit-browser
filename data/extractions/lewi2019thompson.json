@@ -1,0 +1,384 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Thompson Sampling for Adversarial Bit Prediction",
+  "arxiv_id": "1906.09059",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Yuval Lewi",
+   "Haim Kaplan",
+   "Yishay Mansour"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "bit prediction (0-1 loss)",
+   "objective": "cumulative_regret",
+   "feedback": "full_information",
+   "environment": "adversarial_oblivious",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {
+    "K": "2"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Learner predicts a bit and then observes the true bit (arbitrary fixed binary sequence); loss is the 0-1 prediction error"
+   ],
+   "definition_quote": "At time $t\\in [T]$ the learner outputs a bit $\\hat{\\gamma}_t \\in \\{0,1\\}$. Then, the learner observes a bit $\\gamma_t \\in \\{0,1\\}$ and suffers a loss of $\\ell(\\hat{\\gamma}_t, \\gamma_t) = \\mathbb{I}\\{\\hat{\\gamma}_t \\neq \\gamma_t\\}$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "generalized bit prediction (trade-off parameter q)",
+   "objective": "cumulative_regret",
+   "feedback": "full_information",
+   "environment": "adversarial_oblivious",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {
+    "K": "2"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Asymmetric loss: false positives cost q, false negatives cost 1-q; q known to learner",
+    "Learner observes the true bit after predicting"
+   ],
+   "definition_quote": "Given a trade-off parameter $q \\in [0,1]$, we define a loss $\\ell^q$, as follows, $\\ell^q(\\hat{\\gamma}_t, \\gamma_t) = q \\mathbb{I}\\{\\hat{\\gamma}_t =1,\\gamma_t=0\\}+ (1-q)\\mathbb{I}\\{\\hat{\\gamma}_t =0 , \\gamma_t=1\\}$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "TS(q): Thompson sampling with Beta(1,1) prior for bit prediction",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "Theta",
+    "expression": "sqrt(k)",
+    "expression_latex": "\\Theta(\\sqrt{k})",
+    "regime": "k <= T/2"
+   },
+   "symbols": {
+    "k": "number of zeros (minority bit count) in the sequence"
+   },
+   "conditions": [
+    "sequence is W_T^k = {01}^k 1^{T-2k}, which by Theorem (thm:opt-half) attains the largest regret among sequences with k zeros"
+   ],
+   "tuning": [
+    "q = 1/2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:0-1-regret-half",
+    "number": "Theorem (thm:0-1-regret-half)",
+    "quote": "For every $T \\in \\mathbb{N}^+$ and $k \\le \\frac{T}{2}$ we have, $Regret^{1/2}_{TS( \\frac{1}{2})} (W_T^k)=\\Theta(\\sqrt{k})$."
+   },
+   "confidence": "medium",
+   "notes": "Theta bound (tight upper and lower for TS) on the worst-case sequence with k zeros; hence worst-case regret over sequences with k zeros is Theta(sqrt(k)). Remark 4 states regret Theta(sqrt(min(O_T,Z_T))). Regret here is Regret^{1/2} (half the error count)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)",
+    "expression_latex": "O(\\sqrt{T})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [
+    "q = 1/2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:regret-result-bound-half",
+    "number": "Corollary 3",
+    "quote": "For any sequence of length $T$, the regret of $TS ( \\frac{1}{2} )$ is at most $O ( \\sqrt{T} )$."
+   },
+   "confidence": "high",
+   "notes": ""
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "1",
+    "expression_latex": "Regret^{1/2}_{TS(1/2)}(B_T^k) \\leq 1",
+    "regime": "k <= T/2"
+   },
+   "symbols": {},
+   "conditions": [
+    "sequence is B_T^k = 1^{T-k}0^k (the best-case sequence with k zeros)"
+   ],
+   "tuning": [
+    "q = 1/2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:0-1-best-regret-half",
+    "number": "Theorem (thm:0-1-best-regret-half)",
+    "quote": "For every $T\\in \\mathbb{N}^+$ and $k \\le \\frac{T}{2}$ we have, $Regret^{1/2}_{TS( \\frac{1}{2} )} (B_T^k)\\leq 1$, where $B_T^k=1^{T-k}0^{k}$."
+   },
+   "confidence": "high",
+   "notes": "Best-case sequence bound, not a guarantee over all sequences."
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(q*k)",
+    "expression_latex": "O(\\sqrt{qk})",
+    "regime": "k <= (1-q)T - q"
+   },
+   "symbols": {
+    "q": "trade-off parameter (cost of false positive)",
+    "k": "number of zeros in the sequence"
+   },
+   "conditions": [
+    "q in [0, 1/2]",
+    "sequence is the worst-case sequence W_T^k with k zeros (largest regret among sequences with k zeros)"
+   ],
+   "tuning": [
+    "threshold equals q"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:0-1-regret",
+    "number": "Theorem (thm:0-1-regret)",
+    "quote": "For every $T\\in \\mathbb{N}^+$, $q \\in \\left[0,\\frac{1}{2}\\right]$ and $k$ zeros we have $Regret^q_{TS(q)} (W_T^k) = O ( \\sqrt{qk} )$ if $k \\le (1-q)T - q$, $O ( \\sqrt{(1-q)(T-k)} )$ if $k > (1-q)T - q$."
+   },
+   "confidence": "medium",
+   "notes": "Worst-case over sequences with k zeros (by Thm worst-given-K-T and Lemma same-regretq)."
+  },
+  {
+   "id": "r5",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt((1-q)*(T-k))",
+    "expression_latex": "O(\\sqrt{(1-q)(T-k)})",
+    "regime": "k > (1-q)T - q"
+   },
+   "symbols": {
+    "q": "trade-off parameter (cost of false positive)",
+    "k": "number of zeros in the sequence"
+   },
+   "conditions": [
+    "q in [0, 1/2]",
+    "sequence is the worst-case sequence W_T^k with k zeros"
+   ],
+   "tuning": [
+    "threshold equals q"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:0-1-regret",
+    "number": "Theorem (thm:0-1-regret)",
+    "quote": "For every $T\\in \\mathbb{N}^+$, $q \\in \\left[0,\\frac{1}{2}\\right]$ and $k$ zeros we have $Regret^q_{TS(q)} (W_T^k) = O ( \\sqrt{qk} )$ if $k \\le (1-q)T - q$, $O ( \\sqrt{(1-q)(T-k)} )$ if $k > (1-q)T - q$."
+   },
+   "confidence": "medium",
+   "notes": "Second regime of the same theorem."
+  },
+  {
+   "id": "r6",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(q*(1-q)*T)",
+    "expression_latex": "O\\left(\\sqrt{q(1-q)T}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "q": "trade-off parameter (cost of false positive)"
+   },
+   "conditions": [],
+   "tuning": [
+    "threshold equals q"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:worst-q-large",
+    "number": "Theorem (cor:worst-q-large)",
+    "quote": "For any observation sequence of length $T$, the regret of $TS ( q )$ is $O \\left(\\sqrt{q(1-q)T}\\right)$."
+   },
+   "confidence": "high",
+   "notes": ""
+  },
+  {
+   "id": "r7",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "1",
+    "expression_latex": "Regret^{q}_{TS(q)}(1^n0^m)\\leq 1 \\text{ (or } 0^m1^n)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "q in (0,1)",
+    "sequence is 1^n0^m if qm <= (1-q)n, otherwise 0^m1^n"
+   ],
+   "tuning": [
+    "threshold equals q"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:0-1-best-regret-q",
+    "number": "Theorem (thm:0-1-best-regret-q)",
+    "quote": "For every $q\\in (0,1)$ and $m,n \\in \\mathbb{N}$, if $qm\\leq (1-q)n$, then $Regret^{q}_{TS( q )} (1^n0^m)\\leq 1$ and otherwise $Regret^{q}_{TS( q )} (0^m1^n)\\leq 1$."
+   },
+   "confidence": "high",
+   "notes": "Existence of sequences with O(1) regret; not a guarantee over all sequences."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T13:56:02",
+  "source_chars": 107039,
+  "input_tokens": 90303,
+  "output_tokens": 5657,
+  "cost_usd_equiv": 0.6179827999999999,
+  "status": "extracted"
+ }
+}

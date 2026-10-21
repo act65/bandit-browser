@@ -1,0 +1,333 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Nearly Optimal Adaptive Procedure with Change Detection for Piecewise-Stationary Bandit",
+  "arxiv_id": "1802.03692",
+  "arxiv_version": null,
+  "year": 2018,
+  "authors": [
+   "Yang Cao",
+   "Zheng Wen",
+   "Branislav Kveton",
+   "Yao Xie"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Piecewise-stationary bandit",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "nonstationary_switching",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K",
+    "S_T"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Number of stationary segments M = S_T + 1; changes may be asynchronous across arms",
+    "Tuning (w, gamma) requires a lower bound on change amplitudes and minimum segment length (Assumption 1); Corollary 1 tuning of gamma uses M"
+   ],
+   "definition_quote": "A piecewise-stationary bandit is characterized by a triple ... Assume that arm $k$'s reward at time $t$, $X_{k,t}$, is independently drawn from $f_{k,t}$ ... assume that the support of $f_{k,t}$ is a subset of $ [0,1]$ ... $\\mathcal{R}(T) = \\sum_{t=1}^T \\max_{k} \\mathbb{E}[X_{k,t}] - \\mathbb{E}[\\sum_{t=1}^T X_{A_t,t}]$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "M-UCB (Monitored UCB)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "restarts_or_sliding_window",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "S_T"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_switching_sequence",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_tilde_total + gamma_alg*T + 2*K*D_c/gamma_alg + 3*M",
+    "expression_latex": "\\sum_{i=1}^M \\tilde{C}_i + \\gamma T + \\sum_{i=1}^{M-1}\\frac{2K \\cdot \\min(\\frac{w}{2},\\ceil{\\frac{b}{\\delta^{(i)}}}+3\\sqrt{w})}{\\gamma}+3M",
+    "regime": null
+   },
+   "symbols": {
+    "M": "number of stationary segments (S_T + 1)",
+    "gamma_alg": "uniform-exploration fraction gamma in [0,1]",
+    "w": "CD window length (even integer)",
+    "b": "CD threshold",
+    "C_tilde_total": "sum_{i=1}^M [8 sum_{k:Delta_k^(i)>0} log(T)/Delta_k^(i) + (1+pi^2/3+K) sum_k Delta_k^(i)]",
+    "D_c": "sum_{i=1}^{M-1} min(w/2, ceil(b/delta^(i)) + 3 sqrt(w)), delta^(i) = max_k |mu_k^{i+1}-mu_k^i|"
+   },
+   "conditions": [
+    "Assumption 1(a): M < floor(T/L) and nu_{i+1}-nu_i > L for all i, with L = w*ceil(K/gamma)",
+    "Assumption 1(b): at each change-point some arm has change amplitude >= 2 sqrt(log(2KT^2)/w) + 2 sqrt(log(2T)/w)"
+   ],
+   "tuning": [
+    "b = sqrt(w log(2KT^2)/2)",
+    "w and gamma chosen to satisfy Assumption 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:bandit",
+    "number": "Theorem 1",
+    "quote": "Running Algorithm~\\ref{alg:bandit} with $w$ and $\\gamma$ satisfying Assumption~\\ref{assu0} and $b=[w\\log(2KT^2)/2]^{1/2}$, we have \\mathcal{R}(T) \\leq \\sum_{i=1}^M \\tilde{C}_i +\\gamma T + \\sum_{i=1}^{M-1}\\frac{2K \\cdot \\min(\\frac{w}{2},\\ceil{\\frac{b}{\\delta^{(i)}}}+3\\sqrt{w})}{\\gamma}+3M ..."
+   },
+   "confidence": "high",
+   "notes": "Regret is measured against the per-round best arm (via means), i.e. dynamic regret; the per-round best sequence has at most M-1 switches."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_switching_sequence",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_tilde_total + 4*sqrt((M - 1)*T*K*Min(w/2, ceiling(b/delta_ch) + 3*sqrt(w))) + 3*M",
+    "expression_latex": "\\sum_{i=1}^M \\tilde{C}_i + 4 \\sqrt{ (M-1) TK\\cdot \\min(w/2,\\ceil{b/\\delta}+3\\sqrt{w})}+3M",
+    "regime": null
+   },
+   "symbols": {
+    "M": "number of stationary segments (S_T + 1)",
+    "w": "CD window length",
+    "b": "CD threshold = sqrt(w log(2KT^2)/2)",
+    "delta_ch": "known lower bound on min_i max_k delta_k^(i) (change amplitude)",
+    "C_tilde_total": "sum_{i=1}^M [8 sum_{k:Delta_k^(i)>0} log(T)/Delta_k^(i) + (1+pi^2/3+K) sum_k Delta_k^(i)]"
+   },
+   "conditions": [
+    "delta_ch > 0 is a lower bound on min_i max_k delta_k^(i)",
+    "Assumption 1 (inherited from Theorem 1): segments longer than L = w ceil(K/gamma), M < floor(T/L), change amplitudes above threshold"
+   ],
+   "tuning": [
+    "b = sqrt(w log(2KT^2)/2)",
+    "gamma = sqrt((M-1) K min(w/2, ceil(b/delta)+3 sqrt(w))/(2T))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "corr:regret",
+    "number": "Corollary 1",
+    "quote": "Assume $\\delta>0$ is a lower bound on $\\min_i \\max_{k \\in \\mathcal{K}} \\delta_k^{(i)}$. If we run Algorithm~\\ref{alg:bandit} with a window-length $w$, $b=[w\\log(2KT^2)/2]^{1/2}$, and $\\gamma = \\sqrt{(M-1) K\\cdot\\min(w/2,\\ceil{b/\\delta}+3\\sqrt{w})/(2T)}$, then we have \\mathcal{R}(T) \\leq \\sum_{i=1}^M \\tilde{C}_i + 4 \\sqrt{ (M-1) TK\\cdot \\min(w/2,\\ceil{b/\\delta}+3\\sqrt{w})}+3M."
+   },
+   "confidence": "medium",
+   "notes": "Corollary's gamma requires knowledge of M. Paper informally states this is O(sqrt(MKT log T)) for fixed w; Assumption 1 inheritance is implicit."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "garivier2011upper",
+   "cited_title": "On upper-confidence bound policies for switching bandit problems",
+   "cited_first_author": "Garivier",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "D-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "piecewise-stationary (switching) bandit with M segments",
+   "bound": {
+    "notation": "O",
+    "expression": "K*sqrt(M*T)*log(T)",
+    "expression_latex": "O(K \\sqrt{MT}\\log T)",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "garivier2011upper",
+   "cited_title": "On upper-confidence bound policies for switching bandit problems",
+   "cited_first_author": "Garivier",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SW-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "piecewise-stationary (switching) bandit with M segments",
+   "bound": {
+    "notation": "O",
+    "expression": "K*sqrt(M*T*log(T))",
+    "expression_latex": "O(K \\sqrt{MT \\log T})",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "auer2002nonstochastic",
+   "cited_title": "The nonstochastic multiarmed bandit problem",
+   "cited_first_author": "Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "EXP3.S",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "switching bandit with M segments",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(M*K*T*log(K*T))",
+    "expression_latex": "O(\\sqrt{MKT \\log(KT)})",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "auer2002using",
+   "cited_title": "Using confidence bounds for exploitation-exploration trade-offs",
+   "cited_first_author": "Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SHIFTBAND",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "switching bandit with M segments, with probability at least 1-delta",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(M*K*T*log(T**3*K/delta))",
+    "expression_latex": "O(\\sqrt{MKT \\log(T^3K/\\delta)})",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "besbes2014stochastic",
+   "cited_title": "Stochastic multi-armed-bandit problem with non-stationary rewards",
+   "cited_first_author": "Besbes",
+   "cited_year": 2014,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Rexp3",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "non-stationary bandit with total variation budget V_T",
+   "bound": {
+    "notation": "O",
+    "expression": "(K*log(K)*V_T)**(1/3)*T**(2/3)",
+    "expression_latex": "O((K\\log KV_T)^{1/3}T^{2/3})",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "yu2009piecewise",
+   "cited_title": "Piecewise-stationary bandit problems with side observations",
+   "cited_first_author": "Yu",
+   "cited_year": 2009,
+   "cited_arxiv_id": null,
+   "algorithm_name": "WMD",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "piecewise-stationary bandit with side observations of unpicked arms",
+   "bound": {
+    "notation": "O",
+    "expression": "K*M*log(T)",
+    "expression_latex": "O(KM\\log T)",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "allesiardo2015exp3",
+   "cited_title": "Exp3 with drift detection for the switching bandit problem",
+   "cited_first_author": "Allesiardo",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": "EXP3.R",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "switching bandit; N = number of switches of the best arm",
+   "bound": {
+    "notation": "O",
+    "expression": "N_sw*K*sqrt(T*log(T))",
+    "expression_latex": "O(NK\\sqrt{T\\log T})",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "garivier2011upper",
+   "cited_title": "On upper-confidence bound policies for switching bandit problems",
+   "cited_first_author": "Garivier",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "piecewise-stationary bandit",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\Omega(\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 1 (also attributed to garivier2008upper in Section 5)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:50:20",
+  "source_chars": 63257,
+  "input_tokens": 58861,
+  "output_tokens": 6094,
+  "cost_usd_equiv": 0.3751868,
+  "status": "extracted"
+ }
+}

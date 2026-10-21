@@ -1,0 +1,287 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Information-Directed Sampling for Causal Bandits",
+  "arxiv_id": "2607.15577",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Muhammad Qasim Elahi",
+   "Murat Kocaoglu",
+   "Mahsa Ghasemi"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Contextual causal bandits with non-manipulable variables (Bayesian formulation)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "prior",
+    "K"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [
+    "causal"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Known causal graph without latent confounders; arms are interventions from POMISs of the projected graph with non-manipulable variables",
+    "Learner observes reward and all non-intervened variables after each intervention (richer than bandit feedback)",
+    "Unknown parameter is the set of CPTs with independent Dirichlet priors (parameter independence)",
+    "Contexts are ancestrally closed, observed before action; need not be exogenous (may carry information about theta)",
+    "Regret is against the context-dependent oracle mapping Pi*(c)"
+   ],
+   "definition_quote": "We study contextual causal bandits with non-manipulable variables, where context variables are observed before action selection and additional variables are observed after each intervention. Assuming a known causal graph without latent confounding, we adopt a Bayesian formulation in which the conditional probability tables of the observational distribution constitute the unknown parameter."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Thompson Sampling for causal bandits with non-manipulable variables (Algorithm 1)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "prior"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Information-Directed Sampling for Causal Bandits with Non-Manipulable Variables (Algorithm 2, Monte Carlo)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "information_directed_sampling"
+   ],
+   "requires_knowledge_of": [
+    "prior",
+    "T"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "IDS with oracle access (exact information ratio)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "information_directed_sampling"
+   ],
+   "requires_knowledge_of": [
+    "prior"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "Gamma*sqrt(H_Pi*T)",
+    "expression_latex": "\\Gamma \\sqrt{H(\\Pi^\\star) \\, T}",
+    "regime": null
+   },
+   "symbols": {
+    "Gamma": "uniform upper bound on the information-ratio coefficients Gamma_t",
+    "H_Pi": "prior entropy of the optimal-action mapping Pi*"
+   },
+   "conditions": [
+    "Gamma >= Gamma_t for all t"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm1",
+    "number": "Theorem 1",
+    "quote": "The mean cumulative Bayesian regret of Algorithm~\\ref{alg: thom} is bounded for any $T \\in \\mathbb{N}$ as follows, where $\\Gamma \\geq \\Gamma_t$ for all $t \\in \\{1,\\ldots,T\\}$: \\mathbb{E}[\\sum_{t=1}^T (Y_{\\Pi^\\star(\\mathbf{C}_t),t} - Y_{A_t,t})] \\leq \\Gamma \\sqrt{H(\\Pi^\\star) \\, T}."
+   },
+   "confidence": "high",
+   "notes": "Prior-dependent (entropy) Bayesian regret bound; regret defined on realized rewards in expectation, which equals Bayesian regret."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(T*K*M_ctx*log(K)/2)",
+    "expression_latex": "\\sqrt{\\frac{T|\\mathcal{A}| |\\mathcal{C}|\\log\\!|\\mathcal{A}|}{2}}",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "context space C is finite with |C| = M_ctx",
+    "K = |A| is the number of POMIS-induced interventions"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "crr_reg",
+    "number": "Corollary 1",
+    "quote": "Suppose that the context space $\\mathcal{C}$ is finite. The mean cumulative Bayesian regret for Algorithm~\\ref{alg: thom} is bounded for any $T \\in \\mathbb{N}$ as follows: ... \\leq \\sqrt{\\frac{T|\\mathcal{A}| |\\mathcal{C}|\\log\\!|\\mathcal{A}|}{2}}."
+   },
+   "confidence": "high",
+   "notes": "Uses Gamma_t^2 <= |A|/2 and H(Pi*) <= |C| log|A|. Proof also gives intermediate sqrt(|A|/2 H(Pi*) T)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(H_Pi*(T*K/2 + 2*G_sum)) + delta_p",
+    "expression_latex": "\\sqrt{H(\\Pi^\\star)\\left(\\frac{T|\\mathcal{A}|}{2}+2\\sum_{t=1}^{T}\\mathbb{E}[\\gamma_t\\mathbbm{1}_{\\mathcal{E}_t}]\\right)}+\\delta'",
+    "regime": null
+   },
+   "symbols": {
+    "H_Pi": "prior entropy of the optimal-action mapping Pi*",
+    "G_sum": "sum_{t=1}^T E[gamma_t 1_{E_t}], where gamma_t is the sup deviation of the information ratio over Monte Carlo confidence sets",
+    "delta_p": "overall confidence level delta' of the Monte Carlo confidence bounds"
+   },
+   "conditions": [],
+   "tuning": [
+    "per-action confidence delta = delta'/(2 T |A|)",
+    "N posterior Monte Carlo samples per round"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm2",
+    "number": "Theorem 2",
+    "quote": "Fix $\\delta'\\in(0,1)$ and $T\\in\\mathbb{N}$. For each $t$, let $\\mathcal{E}_t$ denote the event that the confidence bounds in Lemmas~\\ref{lemm_2} and~\\ref{lemm_gt_conc} hold for all $a\\in\\mathcal{A}$ at round $t$, using $\\delta=\\delta'/(2T|\\mathcal{A}|)$. Then $\\mathbb{P}(\\cap_{t=1}^T\\mathcal{E}_t)\\geq1-\\delta'$, and \\mathbb{E}[\\sum_{t=1}^{T}(Y_{\\Pi^\\star(\\mathbf{C}_t),t}-Y_{A_t,t})]\\leq\\sqrt{H(\\Pi^\\star)(\\frac{T|\\mathcal{A}|}{2}+2\\sum_{t=1}^{T}\\mathbb{E}[\\gamma_t\\mathbbm{1}_{\\mathcal{E}_t}])}+\\delta'"
+   },
+   "confidence": "medium",
+   "notes": "Bound may be vacuous if gamma_t = +infinity. Compute: paper states O(NK) Monte Carlo cost plus O(K^2) pair optimization per round ignoring model-dependent reward evaluation cost."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(K/2*T*H_Pi)",
+    "expression_latex": "\\sqrt{\\frac{|\\mathcal{A}|}{2}\\,T\\,H(\\Pi^\\star)}",
+    "regime": null
+   },
+   "symbols": {
+    "H_Pi": "prior entropy of the optimal-action mapping Pi*"
+   },
+   "conditions": [
+    "Delta_t(a|c_t) and g_t(a|c_t) computed exactly and exact information ratio minimized"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "cor:oracle",
+    "number": "Corollary 2",
+    "quote": "Suppose that $\\Delta_t(a\\mid\\mathbf{c}_t)$ and $g_t(a\\mid\\mathbf{c}_t)$ can be computed exactly at every round and IDS minimizes the exact information ratio. Then, for any $T\\in\\mathbb{N}$, the mean cumulative regret satisfies ... \\leq \\sqrt{\\frac{|\\mathcal{A}|}{2}\\,T\\,H(\\Pi^\\star)}."
+   },
+   "confidence": "high",
+   "notes": "Oracle IDS; follows standard Russo & Van Roy IDS analysis."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "lu2020regret",
+   "cited_title": null,
+   "cited_first_author": "Lu",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Causal Thompson Sampling",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Causal bandit where intervention-induced distribution P(Pa_Y | a) is known; Y has n parents with k values each; Bayesian regret",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(k_par**n_par*T)",
+    "expression_latex": "\\widetilde{O}(\\sqrt{k^nT})",
+    "regime": null
+   },
+   "where": "Introduction and Section 5"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T13:58:36",
+  "source_chars": 131388,
+  "input_tokens": 101054,
+  "output_tokens": 5058,
+  "cost_usd_equiv": 0.6920108,
+  "status": "extracted"
+ }
+}

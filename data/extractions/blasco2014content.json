@@ -1,0 +1,257 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Content-Level Selective Offloading in Heterogeneous Networks: Multi-armed Bandit Optimization and Regret Bounds",
+  "arxiv_id": "1407.6154",
+  "arxiv_version": null,
+  "year": 2014,
+  "authors": [
+   "Pol Blasco",
+   "Deniz Gündüz"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Combinatorial MAB with switching cost (CMABSC) for optimal caching",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "switching_cost"
+   ],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "fixed",
+    "access": "linear_optimization_oracle",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Feasible arm combinations are sets of files satisfying a knapsack (cache capacity M, file sizes S_f) constraint",
+    "Reward of a set is U*sum S_f theta_f; switching cost w*sum of sizes of newly added files",
+    "Regret measured against alpha*beta times optimum using an (alpha,beta)-approximation oracle (solver succeeds w.p. beta)",
+    "Regret = sampling regret + w * switching regret"
+   ],
+   "definition_quote": "Since the instantaneous demand for each file is iid over time with an unknown mean value, and only the demands associated to $\\mathcal{M}^t_\\pi$ are observed, (\\ref{CAeq:opt_PG}) is a CMABSC problem."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "CUCBSC (CUCB with switching cost)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "log(T)*(6/gl**2*(w + Delta_u/(2*(M_u - M_l))) + w*gamma_sc/2)*2*K*(M_u - M_l) + sqrt(T)*(w*M_u + w*(M_u - M_l)*(1 - 2*beta_s) + K*Delta_u*gamma_sc) + (pi**2/3 + 4.12*gamma_sc + 1)*K*Delta_u + w*C_const",
+    "expression_latex": "\\log t [\\frac{6}{(g^{-1}(\\Delta_{l}))^2} ( w +\\frac{\\Delta_u}{2(M_u-M_l)})+w\\frac{\\gamma}{2} ]\\cdot 2 F(M_u-M_l) + \\sqrt{t} [ wM_u+w(M_u-M_l)(1-2\\beta) +F\\Delta_u\\gamma ] + ( \\frac{\\pi^2}{3}+4.12\\gamma +1 ) F \\Delta_{u}+wC",
+    "regime": null
+   },
+   "symbols": {
+    "gl": "g^{-1}(Delta_l), inverse of the linear reward-perturbation function evaluated at Delta_l",
+    "Delta_u": "alpha*r_opt minus the minimum reward of a bad arm combination",
+    "M_u": "maximum switching cost between two arm combinations",
+    "M_l": "maximum switching cost between two good arm combinations",
+    "w": "switching cost weight",
+    "gamma_sc": "parameter gamma in Delta(j)=ceil(gamma*sqrt(n_j))",
+    "beta_s": "success probability beta of the (alpha,beta)-solver",
+    "C_const": "constant independent of t defined in the appendix"
+   },
+   "conditions": [
+    "access to an (alpha,beta)-solver for the single-period problem",
+    "regret is w.r.t. alpha*beta*r_opt plus w times switching regret"
+   ],
+   "tuning": [
+    "Delta(j) = ceil(gamma*sqrt(n_j))",
+    "(F^2+F-1)/sqrt(F+1) >= gamma >= 2 + 1/sqrt(F+1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "CAthm:sqrt",
+    "number": "Theorem 1",
+    "quote": "The regret with switching cost of the CUCBSC algorithm with $\\Delta(j)=\\left \\lceil \\gamma \\sqrt{n_j}\\right \\rceil$ and $\\frac{F^2+F-1}{\\sqrt{F+1}}\\geq \\gamma \\geq 2+\\frac{1}{\\sqrt{F+1}}$ is bounded by ... where $C$ is a constant defined in Appendix"
+   },
+   "confidence": "medium",
+   "notes": "F (number of files) mapped to K, t to T. Regret defined via expected rewards (sampling regret) plus weighted expected switching cost; recorded as pseudo_regret. Comparator is the alpha-beta approximate optimal set."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "6*K*log(T)/gl**2*(Delta_u + w*2*M_u/L_sw) + K*Delta_u*(pi**2/3 + L_sw) + w*K*2*M_u/L_sw*(pi**2/(3*L_sw) + 3/(2*L_sw) - 1 + log(1 + (L_sw - 1)/(K + 1))/gl**2)",
+    "expression_latex": "\\frac{6F \\log t}{(g^{-1}(\\Delta_{l}))^2} (\\Delta_{u}+w\\frac{2M_u}{L} ) + F\\Delta_{u}(\\frac{\\pi^2}{3}+L) +\\frac{wF\\cdot 2M_u}{L}(\\frac{\\pi^2}{3L} +\\frac{3}{2L} -1 +\\frac{\\log ( 1+\\frac{L-1}{F+1})}{(g^{-1}(\\Delta_{l}))^2} )",
+    "regime": null
+   },
+   "symbols": {
+    "gl": "g^{-1}(Delta_l)",
+    "Delta_u": "alpha*r_opt minus the minimum reward of a bad arm combination",
+    "M_u": "maximum switching cost between two arm combinations",
+    "w": "switching cost weight",
+    "L_sw": "constant switching interval length L"
+   },
+   "conditions": [
+    "alpha = beta = 1: solver returns the unique optimal solution"
+   ],
+   "tuning": [
+    "Delta(j) = L for all j"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "CAthm:L",
+    "number": "Theorem 2",
+    "quote": "If $\\beta=\\alpha=1$, the regret with switching cost of the CUCBSC algorithm with $\\Delta(j)=L$ is bounded by ..."
+   },
+   "confidence": "medium",
+   "notes": "F mapped to K. With w=0, L=1 recovers the CUCB bound of Chen et al."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "MAB:T.Lai1985",
+   "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_first_author": "T. Lai",
+   "cited_year": 1985,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "stochastic K-armed bandit, asymptotic regret",
+   "bound": {
+    "notation": "Omega",
+    "expression": "log(T)",
+    "expression_latex": "O(\\log(t))",
+    "regime": "asymptotic"
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "MAB:P.Auer2002",
+   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
+   "cited_first_author": "P. Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "stochastic K-armed bandit, uniformly over time",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)",
+    "expression_latex": "O(\\log(t))",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "MAB:W.Chen2013",
+   "cited_title": "Combinatorial multi-armed bandit: General framework, results and applications",
+   "cited_first_author": "W. Chen",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "combinatorial semi-bandit (CMAB), uniformly over time",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)",
+    "expression_latex": "O(\\log(t))",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "MAB:R.Agrawal1990",
+   "cited_title": "Multi-armed bandit problems with multiple plays and switching cost",
+   "cited_first_author": "R. Agrawal",
+   "cited_year": 1990,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "multiple-play bandit with switching cost (fixed number of arms played), asymptotic",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)",
+    "expression_latex": "O(\\log(t))",
+    "regime": "asymptotic"
+   },
+   "where": "Section 2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T10:03:29",
+  "source_chars": 82669,
+  "input_tokens": 68729,
+  "output_tokens": 4575,
+  "cost_usd_equiv": 0.4237508,
+  "status": "extracted"
+ }
+}

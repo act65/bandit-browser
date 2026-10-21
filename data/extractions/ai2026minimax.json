@@ -1,0 +1,278 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Minimax-Optimal Online Contract Design with Unrestricted Bounded Contracts",
+  "arxiv_id": "2609.20353",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Rui Ai",
+   "David Simchi-Levi",
+   "Han Zhong"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online contract design with unrestricted bounded contracts and outcome-category feedback",
+   "objective": "cumulative_regret",
+   "feedback": "partial_monitoring",
+   "environment": "stochastic_iid",
+   "action_space": "continuum_other",
+   "function_class": [],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "strategic_arms"
+   ],
+   "action_set": {
+    "shape": "hypercube",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Principal-agent contract design: actions are payment vectors f in [0,1]^m over m outcomes; agent of random type best-responds with a fixed (history-independent) selection rule; principal utility u(f)=P(f).(v-f) may be discontinuous in f",
+    "Feedback is the realized outcome category (one-hot vector over m outcomes), which is stronger than scalar bandit reward feedback; hidden actions/types are not observed",
+    "Stackelberg regret against the best fixed contract",
+    "Learner knows number of outcomes m and value vector v"
+   ],
+   "definition_quote": "After posting $f$ given history $\\mathcal H$, the principal observes the realized outcome as a one-hot vector $X$ satisfying $\\mathbb E[X\\mid f,\\mathcal H]=P(f)$. ... The principal's expected one-period utility is $u(f)=P(f)\\cdot(v-f)$. ... $\\mathfrak R_T=T\\sup_{f\\in[0,1]^m}u(f)-\\mathbb E[\\sum_{t=1}^T u(f_t)]$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Minty-coordinate simulators with Rested-UCB master (Algorithms 1-2)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "m (number of outcomes)",
+    "v (value vector)",
+    "epsilon (grid resolution)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_m*(T*eps_alg + L_T*sqrt(T*K_eps) + K_eps)",
+    "expression_latex": "\\mathfrak R_T\\le C_m\\big(T\\varepsilon+L_T\\sqrt{TK_\\varepsilon}+K_\\varepsilon\\big)",
+    "regime": null
+   },
+   "symbols": {
+    "C_m": "constant depending only on number of outcomes m",
+    "eps_alg": "grid resolution epsilon in (0,1)",
+    "K_eps": "grid size, <= (1+3*sqrt(m_out-1)/eps_alg)^(m_out-1)",
+    "L_T": "1+log^3(16*K_eps*T^3)",
+    "m_out": "total number of outcomes"
+   },
+   "conditions": [
+    "m_out >= 2",
+    "T >= 2",
+    "selected best responses fixed independently of learner history (Assumption 1)"
+   ],
+   "tuning": [
+    "delta = T^{-2}",
+    "B_m sufficiently large dimension-only constant"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 2",
+    "quote": "For every fixed $m\\ge2$, there exists a finite constant $B_m$, depending only on $m$, such that, for every $T\\ge2$ and $\\varepsilon\\in(0,1)$, Algorithms~\\ref{alg:simulator}-\\ref{alg:master} with confidence $\\delta=T^{-2}$ use only $m$, $v$, $T$, and $\\varepsilon$ and satisfy, on every instance in $\\mathcal I_m$, \\[ \\mathfrak R_T\\le C_m\\big(T\\varepsilon+L_T\\sqrt{TK_\\varepsilon}+K_\\varepsilon\\big),\\]"
+   },
+   "confidence": "high",
+   "notes": "Regret is Stackelberg regret defined via expected utilities (pseudo-regret). Compute polynomial in T for fixed m but exponential in m."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(m_out/(m_out+1))",
+    "expression_latex": "\\mathfrak R_T\\le\\widetilde O_m(T^{m/(m+1)})",
+    "regime": null
+   },
+   "symbols": {
+    "m_out": "total number of outcomes (fixed); hidden constant depends on m_out"
+   },
+   "conditions": [
+    "m_out >= 2",
+    "T >= 2",
+    "selected best responses fixed independently of learner history (Assumption 1)"
+   ],
+   "tuning": [
+    "eps_alg ~ T^{-1/(m_out+1)} up to log factors",
+    "delta = T^{-2}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 2",
+    "quote": "Consequently, $\\varepsilon\\asymp T^{-1/(m+1)}$ up to logarithmic factors gives $\\mathfrak R_T\\le\\widetilde O_m(T^{m/(m+1)})$."
+   },
+   "confidence": "high",
+   "notes": "Hidden constant depends on m."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "c_m*T**(m_out/(m_out+1))",
+    "expression_latex": "\\mathfrak R_T\\ge c_mT^{m/(m+1)}",
+    "regime": null
+   },
+   "symbols": {
+    "c_m": "positive constant depending only on m_out",
+    "m_out": "total number of outcomes"
+   },
+   "conditions": [
+    "m_out >= 2",
+    "T >= 1",
+    "hard instances: single type, finite action set, value vector (1,...,1,0), nonnegative costs bounded by one, common deterministic action-priority tie-breaking"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lower",
+    "number": "Theorem 3",
+    "quote": "For every fixed $m\\ge2$, there is $c_m>0$ such that every adaptive outcome-feedback policy and every $T\\ge1$ incur $\\mathfrak R_T\\ge c_mT^{m/(m+1)}$ on some finite-action, single-type instance in $\\mathcal I_m$."
+   },
+   "confidence": "high",
+   "notes": "Holds for outcome-category feedback, hence also for weaker scalar feedback. Stated as explicit c_m T^{m/(m+1)}; recorded as Omega."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "zhu2023sample",
+   "cited_title": null,
+   "cited_first_author": "Zhu",
+   "cited_year": 2023,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online contract design with unrestricted bounded contracts, m outcomes, outcome feedback",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(m_out)*T**(1 - 1/(2*m_out+1))",
+    "expression_latex": "\\widetilde O(\\sqrt m\\,T^{1-1/(2m+1)})",
+    "regime": null
+   },
+   "where": "Section 3, 'What closes the previous gap?'"
+  },
+  {
+   "cited_key": "zhu2023sample",
+   "cited_title": null,
+   "cited_first_author": "Zhu",
+   "cited_year": 2023,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online contract design, two outcomes",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(4/5)",
+    "expression_latex": "\\widetilde O(T^{4/5})",
+    "regime": "m = 2"
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "bacchiocchi2025learning",
+   "cited_title": null,
+   "cited_first_author": "Bacchiocchi",
+   "cited_year": 2025,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online contract design, finite-action single-type, constant number of actions, high-probability regret",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(4/5)",
+    "expression_latex": "\\widetilde O(T^{4/5})",
+    "regime": "constant number of actions"
+   },
+   "where": "Appendix C (after proof of Lemma 9)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:52:28",
+  "source_chars": 66594,
+  "input_tokens": 59625,
+  "output_tokens": 4678,
+  "cost_usd_equiv": 0.3529788,
+  "status": "extracted"
+ }
+}

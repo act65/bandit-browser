@@ -1,0 +1,188 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Combining Diverse Information for Coordinated Action: Stochastic Bandit Algorithms for Heterogeneous Agents",
+  "arxiv_id": "2408.03405",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Lucia Gordon",
+   "Esther Rolf",
+   "Milind Tambe"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Stochastic multi-agent bandit with heterogeneous agent sensitivities",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "multi_agent_cooperative"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each of A agents has a known sensitivity s_a in (0,1]; agent a pulling arm n gets reward Bern(s_a*mu_n)",
+    "Super-arm is an injective assignment of A agents to N arms; reward is sum of agent rewards, so super-arm value is sum_a s_a*mu_{f(a)}",
+    "Learner (centralized planner) knows all agent sensitivities"
+   ],
+   "definition_quote": "There are $A$ agents $\\mathcal{A}=\\{a\\}_{a=1}^A$, $N$ arms ... The state of arm $n$ at time $t$ is a random variable $X_{t,n}\\sim$ Bern$(\\mu_n)$ ... $Y_{t,a,n}\\sim \\text{Bern}(s_a\\mu_n)$. ... $R_T=\\sum_{t=1}^T\\sum_{a=1}^As_a\\left(\\mu_{f^\\star(a)}-\\mu_{f_t(a)}\\right)$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Min-Width",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "agent sensitivities",
+    "delta"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "No-Sharing",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "agent sensitivities"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "Min-UCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "agent sensitivities"
+   ]
+  },
+  {
+   "id": "a4",
+   "name": "CUCB",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": []
+  },
+  {
+   "id": "a5",
+   "name": "UCB",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "m*(K - 1) + 2*sqrt(2*m*K*T*log(2*K*G_TA/delta))*s_max/s_min",
+    "expression_latex": "A(N-1)+2\\sqrt{2ANT\\ln\\left(\\frac{2NG(T,A)}{\\delta}\\right)}\\frac{\\max\\mathcal{S}}{\\min\\mathcal{S}}",
+    "regime": null
+   },
+   "symbols": {
+    "G_TA": "G(T,A)=sum_{t=1}^T binom(t+A-1, A-1) < (T+1)^A",
+    "s_max": "maximum agent sensitivity max S",
+    "s_min": "minimum agent sensitivity min S"
+   },
+   "conditions": [
+    "sensitivities s_a in (0,1] known to the planner",
+    "each agent assigned to a distinct arm (A <= N)"
+   ],
+   "tuning": [
+    "confidence parameter delta in (0,1) used in the confidence width"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:min-width-regret",
+    "number": "Theorem 2",
+    "quote": "Suppose we act according to the \\textsc{Min-Width} algorithm. Then $\\forall\\delta\\in(0,1)$, the cumulative regret at time $T$ is bounded by \\mathbb{P}\\left[R_T<A(N-1)+2\\sqrt{2ANT\\ln\\left(\\frac{2NG(T,A)}{\\delta}\\right)}\\frac{\\max\\mathcal{S}}{\\min\\mathcal{S}}\\right]>1-\\delta."
+   },
+   "confidence": "medium",
+   "notes": "Paper's N (arms) mapped to K, A (agents = arms pulled per round) mapped to m. Restated as Theorem 4 in appendix. Since G(T,A)<(T+1)^A, the paper notes the time dependence is O(sqrt(T log T)). Regret is defined through means; bound holds w.p. >1-delta."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:41:50",
+  "source_chars": 108184,
+  "input_tokens": 85526,
+  "output_tokens": 3189,
+  "cost_usd_equiv": 0.5304068,
+  "status": "extracted"
+ }
+}

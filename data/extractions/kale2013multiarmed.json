@@ -1,0 +1,223 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Multiarmed Bandits With Limited Expert Advice",
+  "arxiv_id": "1306.4653",
+  "arxiv_version": null,
+  "year": 2013,
+  "authors": [
+   "Satyen Kale"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "advice-efficient multiarmed bandits with expert advice (limited advice)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_unspecified",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K",
+    "N_exp"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "expert_advice"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Learner may observe the advice of at most M_adv of the N experts in each round (limited advice)"
+   ],
+   "definition_quote": "In each round $t = 1, 2, \\ldots, T$, we are required to pull one arm $A_t \\in \\{1, 2, \\ldots, K\\} =: \\mK$. Simultaneously, an adversary sets losses $\\ell_t(a) \\in [0, 1]$ for each arm $a \\in \\mK$. Assisting us in this task are $N$ experts ... The catch is that we can only observe the advice of at most $M$ experts of our choosing in each round."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Grouped-experts algorithm with MW forecaster",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "exponential_weights"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "N_exp",
+    "M_adv"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Grouped-experts algorithm with PolyINF forecaster",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "N_exp",
+    "M_adv"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_expert",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(2*Min(K, M_adv)*N_exp*log(N_exp)*T/M_adv)",
+    "expression_latex": "\\sqrt{\\frac{2K'N \\log(N)}{M} T}",
+    "regime": null
+   },
+   "symbols": {
+    "M_adv": "number of experts whose advice can be queried per round"
+   },
+   "conditions": [
+    "M divides N"
+   ],
+   "tuning": [
+    "eta = sqrt(M log(N)/(K' N T)) (proof uses sqrt(2 M log N/(K' N T)))",
+    "K' = min(K, M)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:mw",
+    "number": "Theorem 1",
+    "quote": "Set $\\eta = \\sqrt{\\frac{M \\log(N)}{K'NT}}$. Then the expected regret of the algorithm using the \\MW forecaster is bounded by $\\sqrt{\\frac{2K'N \\log(N)}{M} T}$."
+   },
+   "confidence": "high",
+   "notes": "K' = min{K,M}. Statement's eta differs from the proof's by a factor sqrt(2)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_expert",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*sqrt(Min(K, M_adv)*N_exp*log(8*M_adv/Min(K, M_adv))*T/M_adv)",
+    "expression_latex": "4\\sqrt{\\frac{K'N\\log(\\tfrac{8M}{K'})}{M} T}",
+    "regime": null
+   },
+   "symbols": {
+    "M_adv": "number of experts whose advice can be queried per round"
+   },
+   "conditions": [
+    "M divides N"
+   ],
+   "tuning": [
+    "c = log(8M/K')",
+    "eta = 2 N^{1/(2c)} [c (RK')^{1-1/c} T]^{-1/2}, R = N/M"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:inf",
+    "number": "Theorem 2",
+    "quote": "Set  $c = \\log(\\tfrac{8M}{K'})$ and $\\eta = 2N^{\\frac{1}{2c}}[c(RK')^{1 - \\cinv}T]^{-\\frac{1}{2}}$. Then the expected regret of the algorithm using the \\INF forecaster is bounded by $4\\sqrt{\\frac{K'N\\log(\\tfrac{8M}{K'})}{M} T}$."
+   },
+   "confidence": "high",
+   "notes": "K' = min{K,M}."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_expert",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(Min(K, M_adv/log(K))*N_exp*T/M_adv)",
+    "expression_latex": "\\Omega\\bigP{\\sqrt{\\frac{N}{f(K, M)} T}} = \\Omega\\bigP{\\sqrt{\\frac{\\min\\{K, \\frac{M}{\\log(K)}\\} N}{M}T}}",
+    "regime": null
+   },
+   "symbols": {
+    "M_adv": "number of experts whose advice can be queried per round"
+   },
+   "conditions": [
+    "hard instance: random uniform advice, Bernoulli losses with best expert's arm having mean 1/2 - eps"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 3",
+    "quote": "For any algorithm for the multiarmed bandit with limited expert advice setting, there is a sequence of expert advices and losses for each arm so that the expected regret of the algorithm is at least $\\Omega\\bigP{\\sqrt{\\frac{N}{f(K, M)} T}} = \\Omega\\bigP{\\sqrt{\\frac{\\min\\{K, \\frac{M}{\\log(K)}\\} N}{M}T}}$."
+   },
+   "confidence": "medium",
+   "notes": "Also stated as Omega(sqrt(N T / f(K,M))) where f(K,M) is expected max load of M balls into K bins; proof gives (1/32) sqrt(N T/f(K,M))."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T13:57:27",
+  "source_chars": 31260,
+  "input_tokens": 46357,
+  "output_tokens": 3474,
+  "cost_usd_equiv": 0.2227548,
+  "status": "extracted"
+ }
+}

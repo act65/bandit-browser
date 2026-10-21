@@ -9,6 +9,8 @@ ontology's dimensions:
   - multi-valued dimensions with an `order_rule` (function_class, learner_knows,
     instance_assumptions): more elements = special case (P ⊑ Q iff Q ⊆ P);
     multi-valued dimensions without one (extras) must be equal;
+  - an `order_notes` entry may `require` node-field values in the special setting (graph
+    feedback ⊑ bandit only for strongly observable graphs); unspecified gives a caveat;
   - node parameters (action_set, corruption, feedback_graph fields): per-field orders and
     value maps; computational-only fields are ignored; `not_applicable` on one side defers
     to the governing dimension; `unspecified` is compatible with a caveat;
@@ -37,6 +39,7 @@ class Change:
     justification: list = field(default_factory=list)  # one entry per ontology edge on the path
     caveats: list = field(default_factory=list)
     valid_for_comparator: set | None = None    # None = all comparators
+    requires: dict = field(default_factory=dict)  # node field -> values the special setting must have
 
 
 def _closure(pairs) -> set:
@@ -118,7 +121,8 @@ class Order:
             return Change(dim, a, b, "order",
                           justification=[n["justification"] for n in notes if n.get("justification")],
                           caveats=[n["caveat"] for n in notes if n.get("caveat")],
-                          valid_for_comparator=set.intersection(*scopes) if scopes else None)
+                          valid_for_comparator=set.intersection(*scopes) if scopes else None,
+                          requires={k: v for n in notes for k, v in (n.get("requires") or {}).items()})
         red = self.reductions.get(dim, {})
         if (a, b) in red:
             return Change(dim, a, b, "reduction", red[(a, b)])
@@ -166,6 +170,15 @@ class Order:
                     changes.append(Change(dim, va, vb, "order",
                                           caveats=[f"{dim} unspecified on one side ({va} vs {vb})"]))
                 else:
+                    return None
+        for ch in list(changes):
+            for path, allowed in ch.requires.items():
+                # e.g. graph feedback -> bandit only if the learner sees its own loss (strongly observable)
+                name, f = path.split(".")
+                v = (ka.get(name) or {}).get(f, "not_applicable")
+                if v == "unspecified":
+                    ch.caveats = ch.caveats + [f"{path} unspecified; the edge needs {' or '.join(allowed)}"]
+                elif v != "not_applicable" and v not in allowed:
                     return None
         pa, pb = ka.get("parameters", {}), kb.get("parameters", {})
         if pa != pb:

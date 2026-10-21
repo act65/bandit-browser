@@ -1,0 +1,370 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Online Learning of Rested and Restless Bandits",
+  "arxiv_id": "1102.3508",
+  "arxiv_version": null,
+  "year": 2011,
+  "authors": [
+   "Cem Tekin",
+   "Mingyan Liu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Rested bandit problem with Markovian rewards and multiple plays",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "markovian",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each arm is a finite-state irreducible aperiodic rested Markov chain (state frozen when not played) with unknown state space and transitions; reward is a positive function of the state",
+    "Player plays M of K arms per step (m = M); regret against always playing the M arms with highest stationary mean",
+    "Multiplicative symmetrizations of transition matrices assumed irreducible (Condition 1)",
+    "Exploration constant L must exceed 112 S_max^2 r_max^2 pi_hat_max^2/eps_min, requiring knowledge of a bound on this Markov-chain quantity"
+   ],
+   "definition_quote": "The system consists of a single player/user and a set of $K$ finite-state discrete-time Markov chains ({\\em arms}) with unknown state spaces and statistics. At each time step the player can play $M$, $M\\leq K$, arms. ... the state of a rested arm changes according to $P^i$ only when it is played and remains frozen otherwise."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Restless bandit problem with Markovian rewards and multiple plays",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "markovian",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "restless"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each arm is a finite-state irreducible aperiodic restless Markov chain (evolves regardless of play); state observed only when played; reward positive function of state",
+    "Player plays M of K arms per step (m = M); weak regret against the M best arms by stationary mean",
+    "Strict separation mu^M > mu^{M+1} assumed",
+    "Multiplicative symmetrizations irreducible (Condition 1)",
+    "Exploration constant L must exceed 112 S_max^2 r_max^2 pi_hat_max^2/eps_min"
+   ],
+   "definition_quote": "By contrast, the state of a restless arm changes according to $P^i$ regardless of the user's actions."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "UCB-M (Upper Confidence Bound - Multiple Plays)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "bound on S_max^2 r_max^2 pi_hat_max^2/eps_min (to set L)"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "RCA-M (Regenerative Cycle Algorithm - Multiple Plays)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "bound on S_max^2 r_max^2 pi_hat_max^2/eps_min (to set L)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "m + 4*L_expl*log(T)/(mu_M - mu_i)**2 + C_i_sum",
+    "expression_latex": "M + \\frac{4L\\ln n}{(\\mu^{M}-\\mu^i)^2} + \\sum_{j=1}^M \\frac{(|S^i|+|S^{j}|)\\beta}{\\pi_{\\min}}",
+    "regime": null
+   },
+   "symbols": {
+    "L_expl": "exploration constant L of the index",
+    "mu_M": "mean reward of the M-th best arm",
+    "C_i_sum": "sum_{j=1}^M (|S^i|+|S^j|) beta / pi_min, beta = sum 1/t^2",
+    "m": "number of plays per step M"
+   },
+   "conditions": [
+    "Condition 1: finite-state irreducible aperiodic chains with irreducible multiplicative symmetrizations, positive rewards",
+    "arms rested",
+    "i is a suboptimal arm"
+   ],
+   "tuning": [
+    "L >= 112 S_max^2 r_max^2 pi_hat_max^2 / eps_min"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "lemma:rev1",
+    "number": "Lemma 5",
+    "quote": "Under UCB-M with $L \\geq 112 S^2_{\\max} r^2_{\\max} \\hat{\\pi}^2_{\\max} /\\epsilon_{\\min}$, for any suboptimal arm $i$, we have E[T^i(n)] \\leq M + \\frac{4L\\ln n}{(\\mu^{M}-\\mu^i)^2} + \\sum_{j=1}^M \\frac{(|S^i|+|S^{j}|)\\beta}{\\pi_{\\min}}"
+   },
+   "confidence": "high",
+   "notes": "Bound on expected number of plays of a suboptimal arm."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*L_expl*log(T)*sum_subopt((mu_1 - mu_i)/(mu_M - mu_i)**2) + sum_subopt((mu_1 - mu_i)*(m + C_i_sum)) + C_SPr",
+    "expression_latex": "4L\\ln n \\sum_{i>M} \\frac{(\\mu^{1}-\\mu^i)}{(\\mu^{M}-\\mu^i)^2} + \\sum_{i>M} (\\mu^{1}-\\mu^i) \\left(M + \\sum_{j=1}^M C_{i,j} \\right) + C_{\\mathbf{S,P,r}}",
+    "regime": null
+   },
+   "symbols": {
+    "L_expl": "exploration constant L",
+    "mu_1": "mean of best arm",
+    "mu_M": "mean of M-th best arm",
+    "C_i_sum": "sum_{j=1}^M C_{i,j}, C_{i,j} = (|S^i|+|S^j|) beta / pi_min",
+    "C_SPr": "constant depending on state spaces, transition probabilities, rewards (Lemma 4)",
+    "m": "number of plays per step M"
+   },
+   "conditions": [
+    "Condition 1",
+    "arms rested",
+    "suboptimal arms are i > M"
+   ],
+   "tuning": [
+    "L >= 112 S_max^2 r_max^2 pi_hat_max^2 / eps_min"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:mainrested",
+    "number": "Theorem 1",
+    "quote": "Assume Condition 1 holds and all arms are rested. With constant $L \\geq 112 S^2_{\\max} r^2_{\\max} \\hat{\\pi}^2_{\\max} /\\epsilon_{\\min}$ the regret of UCB-M is upper bounded by R(n) \\leq 4L\\ln n \\sum_{i>M} \\frac{(\\mu^{1}-\\mu^i)}{(\\mu^{M}-\\mu^i)^2} + \\sum_{i>M} (\\mu^{1}-\\mu^i) (M + \\sum_{j=1}^M C_{i,j}) + C_{\\mathbf{S,P,r}}"
+   },
+   "confidence": "medium",
+   "notes": "Regret = n*sum of top-M stationary means minus expected collected reward; classified as pseudo_regret. The paper says strict separation mu^M>mu^{M+1} not needed for rested case."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*L_expl*log(T)*sum_subopt(((mu_1 - mu_i)*D_i + E_i)/(mu_M - mu_i)**2) + sum_subopt(((mu_1 - mu_i)*D_i + E_i)*(1 + m*C_i_sum)) + F_const",
+    "expression_latex": "4L \\ln n \\sum_{i>M} \\frac{1}{(\\mu^{M}-\\mu^i)^2}\\left((\\mu^{1}-\\mu^i) D_i + E_i\\right) + \\sum_{i>M} \\left((\\mu^{1}-\\mu^i)D_i+E_i\\right) \\left(1+ M \\sum_{j=1}^M C_{i,j}\\right) +F",
+    "regime": null
+   },
+   "symbols": {
+    "L_expl": "exploration constant L",
+    "mu_1": "mean of best arm",
+    "mu_M": "mean of M-th best arm",
+    "C_i_sum": "sum_{j=1}^M C_{i,j}, C_{i,j} = (|S^i|+|S^j|) beta / pi_min",
+    "D_i": "1/pi^i_min + M^i_max + 1 (M^i_max: max mean hitting time of arm i)",
+    "E_i": "mu^i (1 + M^i_max) + sum_{j=1}^M mu^j M^j_max",
+    "F_const": "sum_{j=1}^M mu^j (1/pi_min + max_i M^i_max + 1)",
+    "m": "number of plays per step M"
+   },
+   "conditions": [
+    "Condition 1",
+    "arms restless",
+    "mu^M > mu^{M+1}"
+   ],
+   "tuning": [
+    "L >= 112 S_max^2 r_max^2 pi_hat_max^2 / eps_min"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:restless1",
+    "number": "Theorem 2",
+    "quote": "Assume Condition 1 holds and all arms are restless. With constant $L \\geq 112 S^2_{\\max} r^2_{\\max} \\hat{\\pi}^2_{\\max} /\\epsilon_{\\min}$ the regret of RCA-M is upper bounded by R(n) < 4L \\ln n \\sum_{i>M} \\frac{1}{(\\mu^{M}-\\mu^i)^2}((\\mu^{1}-\\mu^i) D_i + E_i) + \\sum_{i>M} ((\\mu^{1}-\\mu^i)D_i+E_i) (1+ M \\sum_{j=1}^M C_{i,j}) +F"
+   },
+   "confidence": "medium",
+   "notes": "Weak regret vs best M arms by stationary mean. Paper says bound also holds with arbitrary passive dynamics (discussion). Strict inequality in theorem; recorded as exact upper bound."
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*L_expl*log(T)*sum_subopt((mu_1 - mu_i)*D_i/(mu_M - mu_i)**2) + sum_subopt((mu_1 - mu_i)*D_i*(1 + m*C_i_sum))",
+    "expression_latex": "4L \\sum_{i>M} \\frac{(\\mu^{1}-\\mu^i) D_i \\ln n}{(\\mu^{M}-\\mu^i)^2} +  \\sum_{i>M} (\\mu^{1}-\\mu^i) D_i \\left(1 + M \\sum_{j=1}^M   C_{i,j}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "L_expl": "exploration constant L",
+    "mu_1": "mean of best arm",
+    "mu_M": "mean of M-th best arm",
+    "C_i_sum": "sum_{j=1}^M C_{i,j}",
+    "D_i": "1/pi^i_min + M^i_max + 1",
+    "m": "number of plays per step M"
+   },
+   "conditions": [
+    "Condition 1",
+    "arms restless",
+    "mu^M > mu^{M+1}"
+   ],
+   "tuning": [
+    "L >= 112 S_max^2 r_max^2 pi_hat_max^2 / eps_min"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "lemma:restless1",
+    "number": "Lemma 6",
+    "quote": "Under RCA-M with a constant $L \\geq 112 S^2_{\\max} r^2_{\\max} \\hat{\\pi}^2_{\\max} /\\epsilon_{\\min}$, we have \\sum_{i>M} (\\mu^{1}-\\mu^i) E[T^i(n)] \\leq 4L \\sum_{i>M} \\frac{(\\mu^{1}-\\mu^i) D_i \\ln n}{(\\mu^{M}-\\mu^i)^2} + \\sum_{i>M} (\\mu^{1}-\\mu^i) D_i (1 + M \\sum_{j=1}^M C_{i,j})"
+   },
+   "confidence": "medium",
+   "notes": "Bound on gap-weighted expected plays of suboptimal arms (component of regret)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "agrawal1",
+   "cited_title": "Sample mean based index policies with o(log(n)) regret for the multi-armed bandit problem",
+   "cited_first_author": "R. Agrawal",
+   "cited_year": 1995,
+   "cited_arxiv_id": null,
+   "algorithm_name": "sample mean based index policies",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "iid stochastic multi-armed bandit",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)",
+    "expression_latex": "O(\\log n)",
+    "regime": null
+   },
+   "where": "Section 1"
+  },
+  {
+   "cited_key": "hliu1",
+   "cited_title": "Learning in a changing world: Non-bayesian restless multi-armed bandit",
+   "cited_first_author": "H. Liu",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": "exploration/exploitation blocks growing geometrically",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "restless Markovian multi-armed bandit",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)",
+    "expression_latex": "logarithmic regret",
+    "regime": null
+   },
+   "where": "Section 1 / Section 6"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:51:12",
+  "source_chars": 87849,
+  "input_tokens": 72668,
+  "output_tokens": 6778,
+  "cost_usd_equiv": 0.4993228,
+  "status": "extracted"
+ }
+}

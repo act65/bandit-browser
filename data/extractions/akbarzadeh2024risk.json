@@ -1,0 +1,158 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Risk-Aware Decision Making in Restless Bandits: Theory and Algorithms for Planning and Learning",
+  "arxiv_id": "2410.23029",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Nima Akbarzadeh",
+   "Yossiri Adulyasak",
+   "Erick Delage"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Learning Risk-aware FNRB (LRFNRB)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "markovian",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "T",
+    "prior"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [
+    "restless"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Episodic finite-horizon restless bandit: N arms, each a finite-state non-stationary MDP with unknown transition probabilities; agent activates at most M arms per step",
+    "Learner observes the full state of all arms (state transitions of every arm), not just a scalar reward",
+    "Risk-aware objective: sum over arms of a non-decreasing Lipschitz utility of each arm's cumulative reward; history-dependent policies",
+    "Rewards deterministic, known, in [r_min, r_max] with r_min >= 0",
+    "Regret measured over K episodes of length T against the optimal policy of the true model"
+   ],
+   "definition_quote": "Given a set of $N$ arms~$(\\mathcal{X}^i, \\mathcal{A}, \\{P^i_t(a)\\}_{a \\in \\{0, 1\\}, t \\in \\mathcal{T}}, \\{r^i_t\\}_{t \\in \\mathcal{T}}, x^i_0)$, $i \\in {\\cal N}$, where at most $M \\le N$ can be activated at a time, find a sequence of history-dependent policies $\\left\\{{\\bs \\pi}_k\\right\\}_{k \\geq 1}$ that minimizes $\\REGRET(K)$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "LRAP-TS (Learning Risk-Aware Policy using Thompson Sampling)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "prior"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "I-RAWIP-TSDE (Thompson Sampling with Dynamic Episodes, risk-aware Whittle index)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling",
+    "doubling_trick"
+   ],
+   "requires_knowledge_of": [
+    "prior"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "exponential",
+   "bound": {
+    "notation": "exact",
+    "expression": "12*N_arms**2*H*r_max*X_bar*sqrt(K_ep*H*(1 + log(K_ep*H)))",
+    "expression_latex": "12 N^2 T r_{\\max}\\bar{|\\mathcal{X}|} \\sqrt{KT (1 + \\log (KT))}",
+    "regime": null
+   },
+   "symbols": {
+    "N_arms": "number of arms (restless bandit processes), paper's N",
+    "H": "episode length, paper's T",
+    "K_ep": "number of episodes, paper's K",
+    "r_max": "upper bound on per-step reward",
+    "X_bar": "maximum state-space size over arms, max_i |X^i|"
+   },
+   "conditions": [
+    "rewards in [r_min, r_max] with r_min >= 0",
+    "utility functions non-decreasing Lipschitz",
+    "parameters of different arms independent under the prior; compact parameter sets"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem 12",
+    "quote": "The expected regret defined in \\eqref{eq:reg-def} under the LRAP-TS algorithm is bounded by: \\[{\\REGRET}(K) \\leq 12 N^2 T r_{\\max}\\bar{|\\mathcal{X}|} \\sqrt{KT (1 + \\log (KT))}.\\]"
+   },
+   "confidence": "medium",
+   "notes": "Bayesian regret over K episodes vs the optimal risk-aware policy of the true model. Paper's T (episode length) mapped to H, K (episodes) to K_ep, N (arms) to N_arms. Compute marked exponential because LRAP-TS computes the optimal policy of the sampled joint system, which the paper notes is intractable for large N. Lemma 11 (transition estimation error 12 N X_bar sqrt(KT(1+log KT))) is an intermediate step, not recorded."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:53:24",
+  "source_chars": 188742,
+  "input_tokens": 136465,
+  "output_tokens": 2726,
+  "cost_usd_equiv": 0.9286588,
+  "status": "extracted"
+ }
+}

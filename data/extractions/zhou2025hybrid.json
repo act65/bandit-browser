@@ -1,0 +1,189 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Hybrid Combinatorial Multi-armed Bandits with Probabilistically Triggered Arms",
+  "arxiv_id": "2512.21925",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Kongchang Zhou",
+   "Tingyu Zhang",
+   "Wei Chen",
+   "Fang Kong"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Hybrid CMAB-T (H-CMAB-T)",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "fixed",
+    "access": "linear_optimization_oracle",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Probabilistically triggered arms: semi-bandit feedback only on the randomly triggered set of base arms",
+    "Learner receives an offline dataset with N_i samples per base arm from a possibly biased distribution D^off",
+    "Learner knows a bias bound vector V with |mu_i^off - mu_i^on| <= V_i",
+    "Access to an (alpha,beta)-approximation oracle (not a linear optimization oracle); regret is (alpha,beta)-approximation regret",
+    "Reward function satisfies monotonicity and 1-norm TPM bounded smoothness with constant B",
+    "Reward is a general nonlinear function of the mean vector"
+   ],
+   "definition_quote": "The online environment consists of $m$ base arms, represented as random variables $X_1, \\ldots, X_m$, jointly distributed according to an unknown distribution $D^\\text{on}$ ... supported on $[0,1]^m$ ... before online learning, the player is given an offline data collection $\\mathcal{B}$ ... we adopt the bias control vector $V$ ... $|\\mu_i^{\\text{off}} - \\mu_i^{\\text{on}}| \\leq V_i$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Hybrid CUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "V (bias bound vector)",
+    "offline dataset",
+    "(alpha,beta)-approximation oracle"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_arms(Max(64*sqrt(2)*B_s**2*K_t*log(4*n_base*T**3)/Delta_min_i - 8*B_s*sqrt(2*N_prime_i*log(4*n_base*T**3)), 0)) + 4*B_s*n_base + pi**2/6*Delta_max",
+    "expression_latex": "\\sum_{i \\in [m]} \\max\\left\\{ \\frac{64 \\sqrt{2} B^2 K \\log(4mT^3)}{\\Delta_{\\min}^i} - 8B \\sqrt{2N_i' \\log(4mT^3)}, 0 \\right\\} + 4Bm + \\frac{\\pi^2}{6}\\Delta_{\\max}",
+    "regime": null
+   },
+   "symbols": {
+    "n_base": "number of base arms (paper's m)",
+    "K_t": "max number of arms that can be triggered by an action (paper's K)",
+    "B_s": "1-norm TPM bounded smoothness constant (paper's B)",
+    "Delta_min_i": "minimum positive action gap among actions that can trigger base arm i",
+    "N_prime_i": "effective offline samples N_i*max(1-2*B_s*K_t*omega_i/Delta_min_i,0)^2",
+    "N_i": "offline samples of base arm i",
+    "omega_i": "V_i + mu_i^off - mu_i^on in [0,2V_i]",
+    "Delta_max": "maximum action gap (paper's Delta_max)"
+   },
+   "conditions": [
+    "monotonicity (Condition 1)",
+    "1-norm TPM bounded smoothness with constant B (Condition 2)",
+    "valid bias bound |mu_i^off - mu_i^on| <= V_i"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret-bound",
+    "number": "Theorem 1",
+    "quote": "For an H-CMAB-T problem ... that satisfies monotonicity (Condition~1) and TPM bounded smoothness (Condition~2), the hybrid CUCB algorithm with an input bias control vector $V$ and an $(\\alpha, \\beta)$-approximation oracle achieves an $(\\alpha, \\beta)$-approximate gap-dependent regret bounded by: ... where $N_i' = N_i \\cdot \\max\\{ 1 - \\frac{2BK \\omega_i}{\\Delta_{\\min}^i}, 0 \\}^2$."
+   },
+   "confidence": "medium",
+   "notes": "Regret is the (alpha,beta)-approximation regret defined via expected reward r_S(mu); recorded as pseudo_regret. Sum is over all base arms."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "Min(8*sqrt(2)*B_s*sqrt(log(4*n_base*T**3))*(sum_arms(Max(sqrt(K_t*T/n_base) - sqrt(N_pp_i), 0)) + sqrt(n_base*K_t*T)), 16*B_s*K_t*T*sqrt(2*log(4*n_base*T**3)/tau_star) + B_s*K_t*T*omega_max) + 4*B_s*n_base + pi**2/6*Delta_max",
+    "expression_latex": "\\min\\{\\psi,\\gamma\\} + 4Bm + \\frac{\\pi^2}{6}\\Delta_{\\max}",
+    "regime": null
+   },
+   "symbols": {
+    "n_base": "number of base arms (paper's m)",
+    "K_t": "max number of triggerable arms per action (paper's K)",
+    "B_s": "TPM bounded smoothness constant (paper's B)",
+    "N_pp_i": "N_i*max(1 - omega_i/(4*sqrt(2))*sqrt(K_t*T/(n_base*log(4*n_base*T**3))), 0)^2",
+    "omega_max": "max_i omega_i, omega_i = V_i + mu_i^off - mu_i^on",
+    "tau_star": "optimal value of LP max tau s.t. tau <= N_i + n(i), sum_i n(i) <= K_t*T",
+    "Delta_max": "maximum action gap"
+   },
+   "conditions": [
+    "monotonicity (Condition 1)",
+    "1-norm TPM bounded smoothness with constant B (Condition 2)",
+    "valid bias bound |mu_i^off - mu_i^on| <= V_i"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:gap-indep",
+    "number": "Theorem 2",
+    "quote": "the hybrid CUCB algorithm with an input bias control vector $V$ and an $(\\alpha, \\beta)$-approximation oracle achieves an $(\\alpha, \\beta)$-approximate gap-independent regret bounded by: $\\min\\{ \\psi, \\gamma \\} +4Bm + \\frac{\\pi^2}{6}\\Delta_{\\max}$ where $\\psi = 8\\sqrt{2}B \\sqrt{\\log (4mT^3)} ( \\sum_{i} \\max\\{ \\sqrt{KT/m} - \\sqrt{N_i''}, 0 \\} + \\sqrt{mKT} )$, $\\gamma = 16BKT\\sqrt{2\\log(4mT^3)/\\tau_*}+BKT\\omega_{\\max}$"
+   },
+   "confidence": "medium",
+   "notes": "The proof's final display for gamma reads 16BT sqrt(...) (without K); theorem statement with 16BKT recorded. Paper notes psi is between 8B sqrt(mKT log) and 16B sqrt(mKT log). Contains a Delta_max term despite being 'gap-independent'."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:04:56",
+  "source_chars": 76653,
+  "input_tokens": 66915,
+  "output_tokens": 4468,
+  "cost_usd_equiv": 0.4070988,
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,262 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Meta-Thompson Sampling",
+  "arxiv_id": "2102.06129",
+  "arxiv_version": null,
+  "year": 2021,
+  "authors": [
+   "Branislav Kveton",
+   "Mikhail Konobeev",
+   "Manzil Zaheer",
+   "Chih-wei Hsu",
+   "Martin Mladenov",
+   "Craig Boutilier",
+   "Csaba Szepesvari"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Gaussian bandit with a Gaussian meta-prior (meta-learning over m tasks)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "T",
+    "K",
+    "sigma",
+    "prior"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Meta-learning: m sequential tasks of n rounds each; instance theta_{s,*} ~ P_* = N(mu_*, sigma_0^2 I_K) i.i.d. per task, with unknown mu_* ~ Q = N(0, sigma_q^2 I_K); learner knows meta-prior Q (sigma_q, sigma_0) but not P_*",
+    "Regret summed over all m tasks"
+   ],
+   "definition_quote": "We consider a Gaussian bandit with $K$ arms that is parameterized by arm means $\\theta \\in \\realset^K$. The reward of arm $i$ in instance $\\theta$ is drawn i.i.d.\\ from $\\cN(\\theta_i, \\sigma^2)$. We have a continuum of instance priors, parameterized by a vector of means $\\mu \\in \\realset^K$ and defined as $P(\\theta) = \\cN(\\theta; \\mu, \\sigma_0^2 I_K)$. ... The \\emph{meta-prior} is a Gaussian distribution over instance prior means $Q(\\mu) = \\cN(\\mu; \\mathbf{0}, \\sigma_q^2 I_K)$"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "K-armed Gaussian bandit with known Gaussian prior (single task)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "sigma",
+    "prior"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Prior is N(mu_*, sigma_0^2 I_K) with diagonal isotropic covariance"
+   ],
+   "definition_quote": "Let $\\theta_*$ be arm means in a $K$-armed Gaussian bandit that are generated as $\\theta_* \\sim P_* = \\cN(\\mu_*, \\sigma_0^2 I_K)$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "MetaTS",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "sigma",
+    "prior"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Thompson sampling with known Gaussian prior",
+   "registry_id": "thompson_sampling_gaussian",
+   "is_new": false,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "prior"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "4*sqrt(2*sigma**2*log(T))*sqrt(K)*(sqrt(T + sigma**2*K/sigma_0**2) - sqrt(sigma**2*K/sigma_0**2))*m_tasks + 2*(sqrt(2*sigma_q**2*log(2*K/delta)) + sqrt(2*sigma_0**2*log(T)))*8*sqrt((sigma_0**2 + sigma**2)*log(4*K/delta)/(pi*sigma_0**2))*K*T**2*sqrt(m_tasks) + K*m_tasks + T",
+    "expression_latex": "c_1 \\sqrt{K} \\left(\\sqrt{n + \\sigma^2 \\sigma_0^{-2} K} - \\sqrt{\\sigma^2 \\sigma_0^{-2} K}\\right) m + c_2(\\delta) c_3(\\delta) K n^2 \\sqrt{m} + \\tilde{O}(K m + n)",
+    "regime": null
+   },
+   "symbols": {
+    "m_tasks": "number of tasks m",
+    "sigma_0": "instance prior standard deviation",
+    "sigma_q": "meta-prior standard deviation"
+   },
+   "conditions": [
+    "Gaussian rewards N(theta_i, sigma^2)",
+    "mu_* ~ N(0, sigma_q^2 I_K), theta_{s,*} ~ N(mu_*, sigma_0^2 I_K)",
+    "holds with probability at least 1-(2m+1)delta over mu_*, theta_{s,*}, hat mu_s"
+   ],
+   "tuning": [
+    "each arm pulled once in the last K rounds of each task"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:meta-ts regret bound",
+    "number": "Theorem (thm:meta-ts regret bound)",
+    "quote": "The Bayes regret of \\metats over $m$ tasks with $n$ rounds each is R(m, n; P_*) \\leq c_1 \\sqrt{K} (\\sqrt{n + \\sigma^2 \\sigma_0^{-2} K} - \\sqrt{\\sigma^2 \\sigma_0^{-2} K}) m + c_2(\\delta) c_3(\\delta) K n^2 \\sqrt{m} + \\tilde{O}(K m + n) with probability at least $1 - (2 m + 1) \\delta$, where c_1 = 4 \\sqrt{2 \\sigma^2 \\log n}, c_2(\\delta) = 2 (\\sqrt{2 \\sigma_q^2 \\log(2 K / \\delta)} + \\sqrt{2 \\sigma_0^2 \\log n}), c_3(\\delta) = 8 \\sqrt{(\\sigma_0^2 + \\sigma^2) \\log(4 K / \\delta) / (\\pi \\sigma_0^2)}."
+   },
+   "confidence": "medium",
+   "notes": "Paper's n = T (rounds per task). Bound mixes explicit constants with an additive O~(Km+n) term; recorded with notation O_tilde and the explicit leading terms. Quantity is a Bayes regret conditional on P_* holding with high probability over mu_* etc. Dependence classed worst_case though it depends on prior parameters."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*sqrt(2*sigma_0**2*log(1/delta_alg))*K + sqrt(2*sigma_0**2/pi)*K*T*delta_alg + 4*sqrt(2*sigma**2*K*log(1/delta_alg))*(sqrt(T + sigma**2*K/sigma_0**2) - sqrt(sigma**2*K/sigma_0**2))",
+    "expression_latex": "c(\\delta) + 4 \\sqrt{2 \\sigma^2 K \\log(1 / \\delta)} \\left(\\sqrt{n + \\sigma^2 \\sigma_0^{-2} K} - \\sqrt{\\sigma^2 \\sigma_0^{-2} K}\\right), c(\\delta) = 2 \\sqrt{2 \\sigma_0^2 \\log(1 / \\delta)} K + \\sqrt{2 \\sigma_0^2 / \\pi} K n \\delta",
+    "regime": null
+   },
+   "symbols": {
+    "sigma_0": "prior standard deviation",
+    "delta_alg": "free analysis parameter delta > 0 (confidence level in the proof)"
+   },
+   "conditions": [
+    "theta_* ~ N(mu_*, sigma_0^2 I_K)",
+    "Gaussian rewards with variance sigma^2"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "lem:prior-dependent regret bound",
+    "number": "Lemma (lem:prior-dependent regret bound)",
+    "quote": "Let $\\theta_*$ be arm means in a $K$-armed Gaussian bandit that are generated as $\\theta_* \\sim P_* = \\cN(\\mu_*, \\sigma_0^2 I_K)$. Let $A_*$ be the optimal arm under $\\theta_*$ and $A_t$ be the pulled arm in round $t$ by TS with prior $P_*$. Then for any $\\delta > 0$, \\E{\\sum_{t = 1}^n \\theta_*(A_*) - \\theta_*(A_t)} \\leq c(\\delta) + 4 \\sqrt{2 \\sigma^2 K \\log(1 / \\delta)} (\\sqrt{n + \\sigma^2 \\sigma_0^{-2} K} - \\sqrt{\\sigma^2 \\sigma_0^{-2} K}), where $c(\\delta) = 2 \\sqrt{2 \\sigma_0^2 \\log(1 / \\delta)} K + \\sqrt{2 \\sigma_0^2 / \\pi} K n \\delta$."
+   },
+   "confidence": "high",
+   "notes": "Prior-dependent Bayes regret of TS with correct prior. delta is a free parameter (paper uses delta=1/n). TS does not need n, so marked anytime."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "russo14learning",
+   "cited_title": "Learning to optimize via posterior sampling",
+   "cited_first_author": "Russo",
+   "cited_year": 2014,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson sampling",
+   "algorithm_registry_id": "posterior_sampling",
+   "side": "upper",
+   "setting_description": "n-round Bayes regret of Thompson sampling with the true prior in a K-armed bandit",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "\\tilde{O}(\\sqrt{K n})",
+    "regime": null
+   },
+   "where": "Section 2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T13:59:52",
+  "source_chars": 95791,
+  "input_tokens": 79216,
+  "output_tokens": 5811,
+  "cost_usd_equiv": 0.5323667999999999,
+  "status": "extracted"
+ }
+}

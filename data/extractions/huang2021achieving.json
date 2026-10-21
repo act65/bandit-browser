@@ -1,0 +1,306 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Achieving Counterfactual Fairness for Causal Bandit",
+  "arxiv_id": "2109.10458",
+  "arxiv_version": null,
+  "year": 2021,
+  "authors": [
+   "Wen Huang",
+   "Lu Zhang",
+   "Xintao Wu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Contextual causal bandit with soft intervention and d-separation set (D-UCB setting)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "causal"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Known causal graph (Markovian SCM) with a d-separation set W separating reward from arm/user features",
+    "Conditional distributions P(z | x_{t,a}) are known to the learner",
+    "Learner observes the realized value of the d-separation set W each round",
+    "Policies are soft interventions on arm features; finite policy space; discrete variables",
+    "Mean rewards in [0,1], 1-sub-Gaussian noise (Assumptions 1-2)"
+   ],
+   "definition_quote": "For each customer arrived at time $t\\in [T]$ with feature vector $\\mathbf{x}_t\\in \\mathcal{X}$, the algorithm recommends an item with features $\\sa$ based on vector $\\mathbf{x}_{t,a}$ ... observes the reward $r_t$ ... Similarly to \\cite{lu2020regret}, we assume that distribution $P(\\mathbf{z}| \\x_{t,a})$ is known"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Fair causal bandit with counterfactual fairness constraint (F-UCB setting)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "causal",
+    "fairness",
+    "safety_constraints"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Known causal graph and known P(z | x_{t,a})",
+    "Each round's policy must satisfy a tau-counterfactual fairness constraint (conservative UCB of counterfactual discrepancy <= tau)",
+    "Existence of a safe policy pi_0 with Delta_{pi_0} <= tau every round (Assumption 3); learner uses tau and Delta_{pi_0}",
+    "Mean reward and fairness discrepancy in [0,1], 1-sub-Gaussian errors"
+   ],
+   "definition_quote": "\\min \\mathcal{R}_T = \\sum_{t=1}^{T} \\left( \\mathbb{E}_{\\sa \\sim \\pi_t^*}[\\mu_{a}] - \\mathbb{E}_{\\sa \\sim \\pi_t}[\\mu_{a}] \\right) ~~ \\mathrm{s.t.}  ~~ \\forall t, ~ \\pi_t\\in \\bar{\\Phi}_t"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "D-UCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "causal graph",
+    "P(z|x_{t,a})",
+    "delta"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "F-UCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "causal graph",
+    "P(z|x_{t,a})",
+    "tau",
+    "Delta_pi0",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(W_dom*T*log(T))*log(T) + sqrt(32*W_dom*T*log(1/delta))",
+    "expression_latex": "\\sqrt{|\\mathbf{W}| T\\log(T)}\\log(T) + \\sqrt{32|\\mathbf{W}|T \\log(1/\\delta)}",
+    "regime": null
+   },
+   "symbols": {
+    "W_dom": "domain size |W| of the d-separation set W"
+   },
+   "conditions": [
+    "1-sub-Gaussian noise, means in [0,1]",
+    "known causal graph and P(z|x_{t,a})",
+    "holds w.p. at least 1-2 delta T |W| - exp(-|W| log^3(T)/(32 log(1/delta)))"
+   ],
+   "tuning": [
+    "confidence parameter delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:rb",
+    "number": "Theorem 1",
+    "quote": "Given a causal graph $\\mathcal{G}$, with probability at least $1-2\\delta T |\\mathbf{W}| - \\exp(- \\frac{|\\mathbf{W}| \\log^3(T)}{32\\log(1/\\delta)})$, the regret of D-UCB is bounded by \\[   \\mathcal{R}_T \\leq \\sqrt{|\\mathbf{W}| T\\log(T)}log(T) + \\sqrt{32|\\mathbf{W}|T \\log(1/\\delta)}   \\] where $|\\mathbf{W}|$ is the domain space of set $\\W$."
+   },
+   "confidence": "medium",
+   "notes": "Regret defined as sum of mu_{a*} - mu_{a_t} with per-round optimal policy given context. Probability is unusual (depends on T)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "16*sqrt(W_dom*T*log(T))*log(T)",
+    "expression_latex": "R_T \\leq 16\\sqrt{|\\mathbf{W}| T\\log(T)}\\log(T)",
+    "regime": null
+   },
+   "symbols": {
+    "W_dom": "domain size |W| of the d-separation set W"
+   },
+   "conditions": [
+    "holds w.p. at least 1-2|W|/T - exp(-|W| log^2(T)/64)",
+    "1-sub-Gaussian noise, means in [0,1]"
+   ],
+   "tuning": [
+    "delta = 1/T^2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Corollary 1",
+    "quote": "By setting $\\delta = 1/T^2$, the causal bandit algorithm achieves $\\Tilde{O}(\\sqrt{|\\mathbf{W}| \\cdot T})$ regret bound."
+   },
+   "confidence": "medium",
+   "notes": "Explicit constant 16 from the proof of the corollary; statement itself says O~(sqrt(|W| T))."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "(2/(tau - Delta_pi0) + 1)*(2*sqrt(2*T*W_dom*log(1/delta_E)) + 4*sqrt(T*log(2/delta_E)*log(1/delta_E)))",
+    "expression_latex": "(\\frac{2}{\\tau - \\Delta_{\\pi_0}}+1) \\times \\left( 2\\sqrt{2T|\\mathbf{W}|\\log(1/\\delta_E)} + 4\\sqrt{T\\log(2/\\delta_E)\\log(1/\\delta_E)} \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "W_dom": "domain size |W| of the d-separation set W",
+    "tau": "fairness threshold",
+    "Delta_pi0": "maximum fairness discrepancy of the safe policy pi_0 across rounds",
+    "delta_E": "failure probability, delta_E = 4|W| T delta"
+   },
+   "conditions": [
+    "existence of safe policy pi_0 with Delta_{pi_0} <= tau each round",
+    "1-sub-Gaussian noise, means of reward and discrepancy in [0,1]",
+    "holds with probability at least 1 - delta_E"
+   ],
+   "tuning": [
+    "alpha_c = 1",
+    "alpha_r = 2/(tau - Delta_{pi_0})",
+    "delta_E = 4|W| T delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cfbound",
+    "number": "Theorem 3",
+    "quote": "Given a causal graph $\\mathcal{G}$, let $\\delta_E = 4|\\mathbf{W}|T\\delta$ and $\\Delta_{\\pi_0}$  denote the maximum fairness discrepancy of a safe policy $\\pi_0$ across all rounds. Setting $\\alpha_c = 1$ and $\\alpha_r = \\frac{2}{\\tau - \\Delta_{\\pi_0}}$, with probability at least $1-\\delta_E$, the cumulative regret of F-UCB is bounded by: ..."
+   },
+   "confidence": "medium",
+   "notes": "With delta_E = 1/T^2 the paper states O~(sqrt(|W|T)/(tau - Delta_pi0))."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "lu2020regret",
+   "cited_title": "Regret analysis of bandit problems with causal background knowledge",
+   "cited_first_author": "Yangyi Lu",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "C-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Causal contextual bandit exploiting reward's direct parents Pa(R)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(Pa_dom*T)",
+    "expression_latex": "\\Tilde{O}(\\sqrt{|Pa(R)| \\cdot T})",
+    "regime": null
+   },
+   "where": "Introduction"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:54:41",
+  "source_chars": 84854,
+  "input_tokens": 69736,
+  "output_tokens": 4864,
+  "cost_usd_equiv": 0.4375868,
+  "status": "extracted"
+ }
+}

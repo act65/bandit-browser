@@ -1,0 +1,224 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Thompson Sampling for 1-Dimensional Exponential Family Bandits",
+  "arxiv_id": "1307.3400",
+  "arxiv_version": null,
+  "year": 2013,
+  "authors": [
+   "Nathaniel Korda",
+   "Emilie Kaufmann",
+   "Remi Munos"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "exponential family K-armed bandit",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "exponential_family",
+   "learner_knows": [
+    "reward_family",
+    "K"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "1-dimensional canonical exponential family with general sufficient statistic T(x) (covers e.g. Pareto and Weibull, heavy-tailed); F twice differentiable with continuous second derivative"
+   ],
+   "definition_quote": "An \\emph{exponential family $K$-armed bandit} is a $K$-armed bandit for which the reward distributions $p_a$ are known to be elements of an exponential family of distributions $\\cP(\\Theta)$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Thompson Sampling with Jeffreys prior",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "reward_family"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "limsup",
+    "expression": "sum_subopt(Delta_i/KL_i)*log(T)",
+    "expression_latex": "\\lim_{T\\ra \\infty} \\frac {\\cR(\\phi^{TS,\\pi_J},T)}{\\ln T} = \\sum_{a = 1}^K \\frac{\\mu(\\theta_{a^*})-\\mu(\\theta_a)}{\\K(\\theta_a, \\theta_{a^*})}",
+    "regime": "T -> infinity"
+   },
+   "symbols": {},
+   "conditions": [
+    "rewards from a 1-dimensional canonical exponential family"
+   ],
+   "tuning": [
+    "Jeffreys prior"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "eq:as-opt",
+    "number": "Theorem 1",
+    "quote": "Suppose that the rewards distributions belong to a $1$-dimensional canonical exponential family and that $\\pi_J$ is the Jeffrey's prior. Then, \\lim_{T\\ra \\infty} \\frac {\\cR(\\phi^{TS,\\pi_J},T)}{\\ln T} = \\sum_{a = 1}^K \\frac{\\mu(\\theta_{a^*})-\\mu(\\theta_a)}{\\K(\\theta_a, \\theta_{a^*})}"
+   },
+   "confidence": "medium",
+   "notes": "Stated as a limit equality (matches Lai-Robbins); recorded as limsup upper bound. Follows from Theorem 2 which assumes a unique optimal arm. Regret defined via means, so pseudo-regret."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "(1 + eps_alg)/(1 - eps_alg)*sum_subopt(Delta_i/KL_i)*log(T) + C_eps_P",
+    "expression_latex": "\\frac{1+\\epsilon}{1-\\epsilon}\\left(\\sum_{a=2}^{K}\\frac{(\\mu_1-\\mu_a)}{\\K(\\theta_a,\\theta_1)}\\right)\\ln(T) + \\mathcal{C}(\\epsilon,\\mathcal{P})",
+    "regime": null
+   },
+   "symbols": {
+    "C_eps_P": "unspecified problem-dependent constant C(epsilon, P) depending on epsilon and the problem"
+   },
+   "conditions": [
+    "unique optimal arm: mu_1 > mu_a for all a != 1",
+    "rewards from a 1-dimensional canonical exponential family"
+   ],
+   "tuning": [
+    "Jeffreys prior"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 2",
+    "quote": "Assume that $\\mu_1>\\mu_a$ for all $a\\neq 1$, and that $\\pi_{a,0}$ is taken to be the Jeffrey's prior over $\\Theta$. Then for every $\\epsilon>0$ there exists a constant $\\cC(\\epsilon,\\cP)$ depending on $\\epsilon$ and on the problem $\\mathcal{P}$ such that the regret of Thompson Sampling using the Jeffrey's prior satisfies \\cR(\\phi^{TS,\\pi_J},T) \\leq \\frac{1+\\epsilon}{1-\\epsilon}\\left(\\sum_{a=2}^{K}\\frac{(\\mu_1-\\mu_a)}{\\K(\\theta_a,\\theta_1)}\\right)\\ln(T) + \\mathcal{C}(\\epsilon,\\mathcal{P})."
+   },
+   "confidence": "high",
+   "notes": "eps is a free analysis parameter, holds for every eps>0 (eps<1 implicitly). Constant not explicit."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Agrawal:GoyalAISTATS2013",
+   "cited_title": "Further optimal regret bounds for thompson sampling",
+   "cited_first_author": "S. Agrawal",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson Sampling (uniform prior, Bernoulli trick)",
+   "algorithm_registry_id": "thompson_sampling_bernoulli_reduction",
+   "side": "upper",
+   "setting_description": "stochastic K-armed bandit with bounded rewards, distribution-independent regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(T))",
+    "expression_latex": "O(\\sqrt{KT\\ln(T)})",
+    "regime": null
+   },
+   "where": "Related Work"
+  },
+  {
+   "cited_key": "RussoVonRoy:13",
+   "cited_title": "Learning to optimize via posterior sampling",
+   "cited_first_author": "D. Russo",
+   "cited_year": 2013,
+   "cited_arxiv_id": "1301.2609",
+   "algorithm_name": "Thompson Sampling",
+   "algorithm_registry_id": "posterior_sampling",
+   "side": "upper",
+   "setting_description": "parametric K-armed bandit, Bayesian regret averaged over the prior used by TS",
+   "bound": {
+    "notation": "exact",
+    "expression": "4 + K + 4*sqrt(K*T*log(T))",
+    "expression_latex": "4 + K + 4\\sqrt{KT\\log(T)}",
+    "regime": null
+   },
+   "where": "Related Work"
+  },
+  {
+   "cited_key": "BubeckLiu:13",
+   "cited_title": "A note on the bayesian regret of thompson sampling with an arbitrairy prior",
+   "cited_first_author": "S. Bubeck",
+   "cited_year": 2013,
+   "cited_arxiv_id": "1304.5758",
+   "algorithm_name": "Thompson Sampling",
+   "algorithm_registry_id": "posterior_sampling",
+   "side": "upper",
+   "setting_description": "parametric K-armed bandit, Bayesian regret averaged over the prior",
+   "bound": {
+    "notation": "exact",
+    "expression": "14*sqrt(K*T)",
+    "expression_latex": "14\\sqrt{KT}",
+    "regime": null
+   },
+   "where": "Related Work"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T10:03:27",
+  "source_chars": 55744,
+  "input_tokens": 59239,
+  "output_tokens": 3879,
+  "cost_usd_equiv": 0.3339108,
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,486 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Minimax Regret for Cascading Bandits",
+  "arxiv_id": "2203.12577",
+  "arxiv_version": null,
+  "year": 2022,
+  "authors": [
+   "Daniel Vial",
+   "Sujay Sanghavi",
+   "Sanjay Shakkottai",
+   "R. Srikant"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Tabular cascading bandits",
+   "objective": "cumulative_regret",
+   "feedback": "partial_monitoring",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Cascading feedback: the learner shows an ordered list of m distinct items out of K, the user clicks the first attractive item, and only items up to and including the click are observed (a partial semi-bandit feedback). Recorded as partial_monitoring because neither semi_bandit nor bandit fits exactly.",
+    "Reward is nonlinear: click probability 1 - prod_k (1 - w(a_k)).",
+    "Paper's L (number of items) is mapped to canonical K; paper's K (list length) is mapped to canonical m."
+   ],
+   "definition_quote": "A cascading bandit instance is defined by the triple $(L,K,\\bar{w})$, where $L \\in \\N$ is the total number of items, $K \\in [L]$ is the number of items the learner displays to the user at each round, and $\\bar{w} \\in [0,1]^L$ is the vector of attraction probabilities. ... the user scans the list and clicks on the first attractive item (if any)."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Linear cascading bandits",
+   "objective": "cumulative_regret",
+   "feedback": "partial_monitoring",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "d",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Cascading feedback (observe items until the first click).",
+    "Item mean rewards are linear: w(e) = <phi(e), theta> with known features phi(e) in the unit ball and theta in the unit ball.",
+    "Learner also knows the list length m (paper's K) and uses it in the algorithm.",
+    "Paper's L items = canonical K, paper's K list length = canonical m."
+   ],
+   "definition_quote": "we are also interested in the \\textit{linear case}, where $\\bar{w}(e) = \\ip{ \\phi(e) }{\\theta}$ for some known feature map $\\phi : [L] \\rightarrow \\R^d$ and unknown parameter vector $\\theta \\in \\R^d$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "CascadeKL-UCB",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": []
+  },
+  {
+   "id": "a2",
+   "name": "CascadeUCB-V",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": []
+  },
+  {
+   "id": "a3",
+   "name": "CascadeUCB1",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": []
+  },
+  {
+   "id": "a4",
+   "name": "CascadeWOFUL",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(T*K)",
+    "expression_latex": "\\Omega(\\sqrt{nL})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "K/m is an integer >= 4 (paper: N = L/K in {4,5,...})",
+    "T >= K (paper: n >= L)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thmLower",
+    "number": "Theorem 1",
+    "quote": "Suppose $N \\triangleq L/K \\in \\{4,5,\\ldots\\}$ and $n \\geq L$. Then for any policy $\\pi \\in \\Pi$, there exists a mean reward vector $\\bar{w} \\in [0,1]^L$ such that $R_{\\pi,\\bar{w}}(n) = \\Omega(\\sqrt{nL})$."
+   },
+   "confidence": "high",
+   "notes": "Paper's L = canonical K (items), paper's n = T. The proof gives the explicit constant sqrt(nL)/80. Regret is defined via mean click probabilities, so it is pseudo-regret."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T*K)",
+    "expression_latex": "\\tilde{O}(\\sqrt{nL})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [
+    "f(t) = t (log t)^3"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thmKl",
+    "number": "Theorem 2",
+    "quote": "Suppose $\\pi$ is \\texttt{CascadeKL-UCB} or \\texttt{CascadeUCB-V}, i.e., the policy from Algorithm \\ref{algUcb} with the UCBs given by \\eqref{eqKlUcb} or \\eqref{eqUcbV}. Then $R_{\\pi,\\bar{w}}(n) = \\tilde{O}(\\sqrt{nL})$ for any $\\bar{w} \\in [0,1]^L$."
+   },
+   "confidence": "high",
+   "notes": "Paper's L = canonical K. The UCB index uses only t, so the algorithm is anytime. Õ hides log terms in n and K (the list length)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T*K)",
+    "expression_latex": "\\tilde{O}(\\sqrt{nL})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thmKl",
+    "number": "Theorem 2",
+    "quote": "Suppose $\\pi$ is \\texttt{CascadeKL-UCB} or \\texttt{CascadeUCB-V}, i.e., the policy from Algorithm \\ref{algUcb} with the UCBs given by \\eqref{eqKlUcb} or \\eqref{eqUcbV}. Then $R_{\\pi,\\bar{w}}(n) = \\tilde{O}(\\sqrt{nL})$ for any $\\bar{w} \\in [0,1]^L$."
+   },
+   "confidence": "high",
+   "notes": "This is the same theorem as r2, here for CascadeUCB-V. Paper's L = canonical K."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": "a3",
+   "algorithm_class": "other",
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(T*K*m)",
+    "expression_latex": "\\Omega(\\sqrt{nLK})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "T >= max(K*m, 49*m^4) (paper: n >= max{LK, 49K^4})",
+    "K >= 800*m (paper: L >= 800K)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thmUcb",
+    "number": "Theorem 3",
+    "quote": "Suppose $n \\geq \\max \\{ LK , 49 K^4 \\}$, $L \\geq 800 K$, and $\\pi$ is \\texttt{CascadeUCB1}, i.e., the policy from Algorithm \\ref{algUcb} with the UCBs given by \\eqref{eqUcb1}. Then $R_{\\pi,\\bar{w}}(n)  = \\Omega(\\sqrt{nLK})$ for some $\\bar{w} \\in [0,1]^L$."
+   },
+   "confidence": "high",
+   "notes": "This lower bound holds only for the specific algorithm CascadeUCB1. Paper's L = canonical K, paper's K = canonical m."
+  },
+  {
+   "id": "r5",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a4",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "Min(sqrt(T*d*(d+m)) + T**(1/6)*d**(7/6)*(d+m)**(1/2)*m**(1/3), sqrt(T)*Max(d,m)*Min(d,m)**(1/3))",
+    "expression_latex": "\\tilde{O} \\left( \\min \\left\\{ \\sqrt{n d (d+K)}  + n^{\\frac{1}{6}} d^{\\frac{7}{6}} (d+K)^{\\frac{1}{2}} K^{\\frac{1}{3}} , \\sqrt{n} \\max \\{d,K\\} \\min\\{d,K\\}^{1/3} \\right\\} \\right)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "w(e) = <phi(e), theta> with phi(e) in the unit l2 ball and theta in the unit l2 ball"
+   ],
+   "tuning": [
+    "alpha_{t,H} = sqrt(d log(1 + t m/d) + 2 log T) + 1",
+    "alpha_{t,B} = 8 sqrt(d log(1 + t m/d) log(T^3 m)) + 4 sqrt(m) log(T^3 m) + sqrt(m)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thmLinear",
+    "number": "Theorem 4",
+    "quote": "Suppose $\\bar{w} \\in [0,1]^L$, $\\phi : [L] \\rightarrow \\mathscr{B}_d(1)$, and $\\theta \\in \\mathscr{B}_d(1)$ satisfy $\\bar{w}(e) = \\ip{ \\phi(e) }{ \\theta }$ for all $e \\in [L]$. Let $\\pi$ be the policy of Algorithm \\ref{algWoful} with inputs $\\alpha_{t,H} = ...$ and $\\alpha_{t,B} = ...$. Then $R_{\\pi,\\bar{w}}(n) = \\tilde{O} ( \\min \\{ \\sqrt{n d (d+K)}  + n^{1/6} d^{7/6} (d+K)^{1/2} K^{1/3} , \\sqrt{n} \\max \\{d,K\\} \\min\\{d,K\\}^{1/3} \\} )$."
+   },
+   "confidence": "high",
+   "notes": "Paper's K (list length) = canonical m. The bound does not depend on the number of items. The tuning uses n through log terms, so the horizon is treated as known. For large n the bound reduces to Õ(sqrt(n d (d+K)))."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "zong2016cascading",
+   "cited_title": "Cascading bandits for large-scale recommendation problems",
+   "cited_first_author": "Shi Zong",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CascadeLinUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Linear cascading bandits (paper's L items = K, list length = m), unit-norm features",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T*d**2*m**2)",
+    "expression_latex": "\\tilde{O}(\\sqrt{n d^2 K^2})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "wang2017improving",
+   "cited_title": "Improving regret bounds for combinatorial semi-bandits with probabilistically triggered arms and its applications",
+   "cited_first_author": "Qinshi Wang",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Tabular cascading bandits (paper's L items = K, list length = m)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T*K*m)",
+    "expression_latex": "\\tilde{O}(\\sqrt{nLK})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "lattimore2018toprank",
+   "cited_title": "Toprank: A practical algorithm for online stochastic ranking",
+   "cited_first_author": "Tor Lattimore",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "TopRank",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Tabular cascading bandits (paper's L items = K, list length = m)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T*K*m**3)",
+    "expression_latex": "\\tilde{O}(\\sqrt{nLK^3})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "li2018online",
+   "cited_title": "Online clustering of contextual cascading bandits",
+   "cited_first_author": "Shuai Li",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CascadeLinUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Linear cascading bandits (list length = m)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T*d**2*m)",
+    "expression_latex": "\\tilde{O}(\\sqrt{n d^2 K})",
+    "regime": "n large compared with d and K (additive o(sqrt(n)) terms suppressed)"
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "zhong2021thompson",
+   "cited_title": "Thompson sampling algorithms for cascading bandits",
+   "cited_first_author": "Zixin Zhong",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "TS-Cascade",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Tabular cascading bandits (paper's L items = K, list length = m)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T*K*m)",
+    "expression_latex": "\\tilde{O}(\\sqrt{nLK})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "zhong2021thompson",
+   "cited_title": "Thompson sampling algorithms for cascading bandits",
+   "cited_first_author": "Zixin Zhong",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Tabular cascading bandits, minimax lower bound (paper's L items = K, list length = m)",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(T*K/m)",
+    "expression_latex": "\\Omega(\\sqrt{nL/K})",
+    "regime": "L large compared with K, n large compared with L and K"
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "zhong2021thompson",
+   "cited_title": "Thompson sampling algorithms for cascading bandits",
+   "cited_first_author": "Zixin Zhong",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "LinTS-Cascade",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Linear cascading bandits (paper's L items = K, list length = m)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T*d**2*m**3*Min(d, log(K)))",
+    "expression_latex": "\\tilde{O}(\\sqrt{n d^2 K^3 \\min \\{ d , \\log L \\}})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "kveton2022value",
+   "cited_title": "On the value of prior in online learning to rank",
+   "cited_first_author": "Branislav Kveton",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Tabular cascading bandits, Bayesian regret (depends on the prior)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T*K*m)",
+    "expression_latex": "\\tilde{O}(\\sqrt{nLK})",
+    "regime": null
+   },
+   "where": "Table 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:06:44",
+  "source_chars": 168494,
+  "input_tokens": 123078,
+  "output_tokens": 8338,
+  "cost_usd_equiv": 0.9338028,
+  "status": "extracted"
+ }
+}

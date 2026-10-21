@@ -1,0 +1,277 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Regret Minimization in Bilateral Trade With Perturbed Markets",
+  "arxiv_id": "2605.10475",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Anna Lunghi",
+   "Matteo Castiglioni",
+   "Alberto Marchesi"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online bilateral trade in perturbed markets, distributional benchmark OPT^D, sigma-smooth unperturbed distribution",
+   "objective": "cumulative_regret",
+   "feedback": "partial_monitoring",
+   "environment": "stochastic_corrupted",
+   "action_space": "continuum_other",
+   "function_class": [],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "oblivious",
+    "budget_measure": "unspecified",
+    "structure": "arbitrary",
+    "regret_reference": "corrupted"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Bilateral trade: learner posts price pair (p,q) in [0,1]^2 to seller and buyer; reward is gain from trade",
+    "One-bit feedback: only whether the trade occurred is observed",
+    "Global budget balance constraint: cumulative revenue must be non-negative almost surely",
+    "Corruption C defined as sum_t TV(L_t, P) between per-round valuation distribution and an unperturbed distribution P",
+    "Unperturbed distribution P is sigma-smooth (sigma treated as constant)",
+    "Benchmark is best distribution over price pairs that is budget balanced in expectation"
+   ],
+   "definition_quote": "The environment is characterized by a probability distribution $\\cP$ ... there is a perturbation parameter $C$, which is defined as the cumulative total variation distance ... $C \\coloneq \\sum_{t=1}^T  \\lVert \\cL_t - \\mathcal{P} \\rVert_{\\textnormal{TV}}.$ ... we assume the unperturbed distribution $\\cP$ to be $\\sigma$-smoothed"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Online bilateral trade, fixed-price benchmark OPT^F, oblivious adversary",
+   "objective": "cumulative_regret",
+   "feedback": "partial_monitoring",
+   "environment": "adversarial_oblivious",
+   "action_space": "continuum_other",
+   "function_class": [],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Bilateral trade with one-bit feedback; valuations in [0,1]^2 drawn from distributions L_t chosen by an oblivious adversary",
+    "Global budget balance constraint on learner",
+    "Benchmark is best fixed price (p,p)"
+   ],
+   "definition_quote": "These valuations are realizations of a joint time-dependent probability distribution $\\mathcal{L}_t$ with support in $[0,1]^2$, chosen by an oblivious adversary. ... $\\opt^{\\,\\textnormal{F}} := \\max_{p \\in [0, 1]} \\sum_{t=1}^T \\gft_t(p, p)$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "No-Regret Algorithm (Primal-Dual alternating with Rev-Max)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent",
+    "exponential_weights",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(3/4) + C*log(T)",
+    "expression_latex": "\\opt^{\\,D}- O(C\\log(T)) - \\tilde \\cO(T^{3/4})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "unperturbed distribution P is sigma-smooth, sigma treated as constant",
+    "algorithm is GBB (cumulative revenue non-negative a.s.)"
+   ],
+   "tuning": [
+    "K = T^{1/4} grid (paper writes T^{-1/4})",
+    "alpha = T^{-1/4}",
+    "M = 16 log T",
+    "eta = 1/sqrt(T)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theo: main",
+    "number": "Theorem 2",
+    "quote": "There exists a GBB algorithm that, with probability $1-\\cO(1/T)$,  guarantees: \\[ \\sum_{t=1}^T \\gft_t(p_t,q_t)\\ge \\max\\{ \\opt^{\\,\\textnormal{D}}- O(C\\log(T)), \\opt^{\\,\\textnormal{F}}  \\} - \\tilde \\cO(T^{3/4}) . \\]"
+   },
+   "confidence": "medium",
+   "notes": "Regret against the best distribution over price pairs that is budget balanced in expectation (comparator is a fixed randomized policy). Bound is O~(T^{3/4}) + O(C log T); probability 1-O(1/T)."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(3/4)",
+    "expression_latex": "\\opt^{\\,F} - \\tilde \\cO(T^{3/4})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "no smoothness assumption required",
+    "algorithm is GBB"
+   ],
+   "tuning": [
+    "K = T^{1/4} grid",
+    "alpha = T^{-1/4}",
+    "M = 16 log T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theo: main",
+    "number": "Theorem 2",
+    "quote": "There exists a GBB algorithm that, with probability $1-\\cO(1/T)$,  guarantees: \\[ \\sum_{t=1}^T \\gft_t(p_t,q_t)\\ge \\max\\{ \\opt^{\\,\\textnormal{D}}- O(C\\log(T)), \\opt^{\\,\\textnormal{F}}  \\} - \\tilde \\cO(T^{3/4}) . \\]"
+   },
+   "confidence": "medium",
+   "notes": "Fixed-price benchmark part of Theorem 2; holds without sigma-smoothness and for any C in [0,T]."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "bernasconi2024glob",
+   "cited_title": "No-regret learning in bilateral trade via global budget balance",
+   "cited_first_author": "Martino Bernasconi",
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Adversarial bilateral trade, one-bit feedback, GBB learner, fixed-price benchmark OPT^F, no assumptions",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(3/4)",
+    "expression_latex": "\\tilde\\cO(T^{3/4})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "bernasconi2024glob",
+   "cited_title": "No-regret learning in bilateral trade via global budget balance",
+   "cited_first_author": "Martino Bernasconi",
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Adversarial bilateral trade, GBB learner, distributional benchmark OPT^D",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T",
+    "expression_latex": "\\Omega(T)",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "lunghi2026stronger",
+   "cited_title": "A stronger benchmark for online bilateral trade: From fixed prices to distributions",
+   "cited_first_author": "Anna Lunghi",
+   "cited_year": 2026,
+   "cited_arxiv_id": "2602.05681",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic bilateral trade (C=0), sigma-smooth valuations, GBB learner, distributional benchmark OPT^D",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(3/4)",
+    "expression_latex": "\\tilde\\cO(T^{3/4})",
+    "regime": null
+   },
+   "where": "Table 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:28:26",
+  "source_chars": 95475,
+  "input_tokens": 81033,
+  "output_tokens": 4487,
+  "cost_usd_equiv": 0.5204228,
+  "status": "extracted"
+ }
+}

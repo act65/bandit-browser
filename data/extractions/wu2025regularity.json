@@ -1,0 +1,226 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "On the Regularity and Fairness of Combinatorial Multi-Armed Bandit",
+  "arxiv_id": "2509.12457",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Xiaoyi Wu",
+   "Bin Li"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Combinatorial multi-armed bandit with fairness constraints and reward regularity",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "fairness"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Per-arm fairness constraints: each arm n must receive average reward at least lambda_n (known to the learner, used in virtual queues)",
+    "Feasibility with slack delta: there is a randomized stationary policy achieving lambda_n + delta for each arm",
+    "Regret is measured against the optimal randomized stationary policy solving the fairness-constrained LP, not against the best fixed subset",
+    "Reward regularity measured by Time-Since-Last-Reward (age-of-information-like) metrics",
+    "mu_min = min_n mu_n > 0; S_max maximum number of arms pulled per round; arbitrary collection of feasible activation vectors"
+   ],
+   "definition_quote": "We consider a combinatorial multi-armed bandit with $N$ arms, where multiple arms can be pulled simultaneously in each round. ... $\\{X_n(t)\\}_{t\\geq0}$ are independently and identically distributed (i.i.d.) Bernoulli random variables with unknown mean $\\mu_n\\in(0,1]$ ... the fairness means that each arm $n$ is at least received the reward $\\lambda_n>0$ on average"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Regular and Fair Learning (RFL) Algorithm",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "0",
+    "expression_latex": "\\sum_{n=1}^{N}\\left(\\sum_{\\tau=0}^{t-1}(\\lambda_n-\\bE[\\wh{S}_n(\\tau)X_n(\\tau)])\\right)^{+}=0",
+    "regime": "t >= t_0 = g_0(alpha,beta)/epsilon = O((alpha^2 log alpha + beta)/epsilon)"
+   },
+   "symbols": {
+    "alpha_rfl": "RFL weight on TSLR metrics",
+    "beta_rfl": "RFL weight on UCB estimates",
+    "eps_q": "virtual queue slack parameter epsilon",
+    "delta_s": "fairness tightness constant delta",
+    "g_0": "constant sqrt(N)(log(v_0+1)/theta + D + U), O(alpha^2 log alpha + beta)"
+   },
+   "conditions": [
+    "fairness requirements feasible with tightness delta",
+    "mu_min > 0",
+    "lambda_min > 0"
+   ],
+   "tuning": [
+    "epsilon <= delta/2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:zero_violation",
+    "number": "Proposition (prop:zero_violation)",
+    "quote": "[Zero Cumulative Fairness Violations] Under the RFL algorithm, if $\\epsilon \\leq \\delta/2$, there exists a zero violation point $t_0\\triangleq g_0(\\alpha,\\beta)/\\epsilon=O((\\alpha^2\\log\\alpha+\\beta)/\\epsilon)$ after which the zero cumulative fairness violation is achieved for any round $t\\geq t_0$"
+   },
+   "confidence": "medium",
+   "notes": "Quantity is cumulative expected fairness violation; zero after zero-violation point t0 = g_0/epsilon with explicit constants given in the statement."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "Min((K + g_0)/lambda_min, K**2/(delta_s*mu_min)*(1 + (3*beta_rfl + 4)/alpha_rfl))",
+    "expression_latex": "\\min\\bigg\\{\\frac{N+g_0(\\alpha,\\beta)}{\\lambda_{\\min}}, \\frac{N^2}{\\delta\\mu_{\\min}} \\left( 1 + \\frac{3\\beta+4}{\\alpha} \\right)\\bigg\\}",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_rfl": "RFL weight on TSLR metrics",
+    "beta_rfl": "RFL weight on UCB estimates",
+    "delta_s": "fairness tightness constant delta",
+    "mu_min": "minimum mean reward over arms",
+    "lambda_min": "minimum fairness requirement",
+    "g_0": "constant from Proposition zero_violation, O(alpha^2 log alpha + beta)"
+   },
+   "conditions": [
+    "fairness requirements feasible with tightness delta",
+    "mu_min > 0"
+   ],
+   "tuning": [
+    "epsilon <= delta/2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:age",
+    "number": "Proposition (prop:age)",
+    "quote": "[Short-term Reward Regularity] Under the RFL algorithm, if $\\epsilon\\leq\\delta/2$, then the running average of total expected TSLR metrics over consecutive $T$ rounds can be bounded as follows: \\frac{1}{T}\\sum_{t=0}^{T-1}\\sum_{n=1}^{N}\\bE[Z_n(t)] \\leq \\min\\{\\frac{N+g_0(\\alpha,\\beta)}{\\lambda_{\\min}}, \\frac{N^2}{\\delta\\mu_{\\min}} ( 1 + \\frac{3\\beta+4}{\\alpha} )\\}"
+   },
+   "confidence": "medium",
+   "notes": "Bound on the running average of total expected Time-Since-Last-Reward (reward regularity), not a regret; K = paper's N."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "Min(m*mu_max*T, K*T/mu_min*(alpha_rfl + 1)/beta_rfl + 2*sqrt(6*K*m*T*log(T)) + K*(1 + 5*pi**2/12))",
+    "expression_latex": "\\min \\bigg\\{S_{\\max}\\mu_{\\max}T, \\frac{NT}{\\mu_{\\min}} \\left(\\frac{\\alpha + 1}{\\beta }\\right) +2\\sqrt{6NS_{\\max}T\\log T} +N\\left(1+\\frac{5\\pi^2}{12}\\right) \\bigg\\}",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_rfl": "RFL weight on TSLR metrics",
+    "beta_rfl": "RFL weight on UCB estimates",
+    "mu_min": "minimum mean reward over arms",
+    "mu_max": "maximum mean reward over arms"
+   },
+   "conditions": [
+    "fairness requirements feasible with tightness delta",
+    "mu_min > 0",
+    "m = S_max, maximum number of arms pulled per round"
+   ],
+   "tuning": [
+    "epsilon <= delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:regret",
+    "number": "Proposition (prop:regret)",
+    "quote": "[Cumulative Regret] Under the RFL algorithm with $\\epsilon\\leq\\delta$, the cumulative regret $\\text{Reg}(T)$ over consecutive $T$ rounds can be bounded from above as follows: \\text{Reg}(T)\\leq \\min \\{S_{\\max}\\mu_{\\max}T, \\frac{NT}{\\mu_{\\min}} (\\frac{\\alpha + 1}{\\beta }) +2\\sqrt{6NS_{\\max}T\\log T} +N(1+\\frac{5\\pi^2}{12}) \\}."
+   },
+   "confidence": "medium",
+   "notes": "Regret is against the optimal fairness-constrained randomized stationary policy q*, defined via means (pseudo-regret). Comparator mapped to best_policy. Not tied to a choice of beta; with beta = O(sqrt(T)), alpha=0 gives O(sqrt(T log T)) per Table 1."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:05:11",
+  "source_chars": 108161,
+  "input_tokens": 82366,
+  "output_tokens": 4361,
+  "cost_usd_equiv": 0.5285668,
+  "status": "extracted"
+ }
+}

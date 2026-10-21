@@ -1,0 +1,195 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "A Latent Source Model for Online Collaborative Filtering",
+  "arxiv_id": "1411.6591",
+  "arxiv_version": null,
+  "year": 2014,
+  "authors": [
+   "Guy Bresler",
+   "George H. Chen",
+   "Devavrat Shah"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Latent source model for online recommendation (no repeat consumption)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [],
+   "instance_assumptions": [
+    "gap_bounded_below"
+   ],
+   "extras": [
+    "multi_agent_cooperative",
+    "sleeping_arms"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "n users each recommended one item per step; m items (arms); each item can be recommended to a given user at most once",
+    "k latent user types, each user's type uniform over k; users of same type share preference vector p_u in [0,1]^m; ratings +1/-1 Bernoulli(p_ui)",
+    "objective: expected number of likable items (p_ui > 1/2) recommended, compared with an oracle recommending all likable items first",
+    "A1: |p_ui - 1/2| >= Delta for all u,i (no Delta-ambiguous items); A2: gamma-incoherence between types",
+    "algorithm needs Delta and gamma to set threshold theta = 2 Delta^2 (1+gamma); does not need k",
+    "n = O(m^C) for constant C > 1"
+   ],
+   "definition_quote": "We consider a system with $n$ users and $m$ items. At each time step, each user is recommended an item that she or he hasn't consumed yet, upon which ... the user immediately consumes the item and rates it $+1$ (like) or $-1$ (dislike). ... we aim to maximize the expected number of \\emph{likable} items recommended up to time $T$: r_+^{(T)} = \\sum_{t=1}^T\\sum_{u=1}^n \\E[X_{ut}]"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Collaborative-Greedy",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "epsilon_greedy",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "Delta",
+    "gamma"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(1 - T_learn/T)*(1 - delta)",
+    "expression_latex": "\\frac{r_+^{(T)}}{T n} \\ge \\Big(1 - \\frac{\\tc}{T}\\Big)(1-\\delta)",
+    "regime": "T_learn <= T <= mu*m"
+   },
+   "symbols": {
+    "T_learn": "learning time Theta((log(K*m/(Delta*delta))/(Delta^4 (1-gamma)^2))^(1/(1-alpha)) + (4/delta)^(1/alpha))",
+    "gamma": "incoherence parameter in [0,1) (assumption A2)",
+    "mu": "minimum proportion of likable items for any user",
+    "m": "number of items",
+    "n_users": "number of users n",
+    "k_types": "number of user types k",
+    "alpha": "exploration decay rate in (0,4/7]"
+   },
+   "conditions": [
+    "A1: |p_ui - 1/2| >= Delta for all users and items",
+    "A2: gamma-incoherence",
+    "n = O(m^C) for some constant C > 1",
+    "n = Omega(k m log(1/delta) + (4/delta)^(1/alpha))",
+    "each user's type uniform over k types"
+   ],
+   "tuning": [
+    "theta = 2*Delta^2*(1+gamma)",
+    "alpha in (0, 4/7]",
+    "eps_R(n) = n^(-alpha), eps_J(t) = t^(-alpha)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1",
+    "quote": "Let $\\delta\\in(0,1)$ be some pre-specified tolerance. Take as input to \\textsc{Collaborative-Greedy} $\\theta = 2 \\Delta^2 (1 + \\gamma)$ ... if the number of users $n=O(m^C)$ satisfies $n = \\Omega(km \\log \\frac{1}{\\delta} + (\\frac{4}{\\delta})^{1/\\alpha})$, then for any $\\tc \\le T \\le \\mu m$, the expected proportion of likable items recommended by \\textsc{Collaborative-Greedy} up until time $T$ satisfies $\\frac{r_+^{(T)}}{T n} \\ge (1 - \\frac{\\tc}{T})(1-\\delta)$"
+   },
+   "confidence": "medium",
+   "notes": "This is a LOWER bound on the expected fraction of likable items recommended (a reward guarantee), not a regret bound; recorded with quantity 'other'. Implies a regret against the oracle of at most n*(T_learn + delta*T) but the paper does not state it that way. T_learn is given only up to Theta."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "1 - delta",
+    "expression_latex": "\\P(X_{ut}=1) \\ge 1 - \\delta",
+    "regime": "max{(2 log(10 k m n^alpha/Delta)/(Delta^4(1-gamma)^2))^(1/(1-alpha)), (20 log(96/delta)/(Delta^4(1-gamma)^2))^(1/(1-alpha)), (4/delta)^(1/alpha)} <= t <= mu*m"
+   },
+   "symbols": {
+    "X_ut": "indicator that the item recommended to user u at time t is likable",
+    "gamma": "incoherence parameter",
+    "mu": "minimum proportion of likable items",
+    "m": "number of items"
+   },
+   "conditions": [
+    "A1 and A2 hold",
+    "n >= max{8 k log(4/delta), (4/delta)^(1/alpha)}",
+    "n t^(1-alpha) >= (40 k m/Delta^2) log(16 m/delta)"
+   ],
+   "tuning": [
+    "theta = 2*Delta^2*(1+gamma)",
+    "alpha in (0, 4/7]"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "lem:general-conditions",
+    "number": "Lemma 3",
+    "quote": "Let $\\delta \\in (0,1)$ be some pre-specified tolerance. If the number of users $n$ and items $m$ satisfy ... then $\\P(X_{ut}=1) \\ge 1 - \\delta.$"
+   },
+   "confidence": "medium",
+   "notes": "Per-round probability that a likable item is recommended; a lower bound on success probability, recorded as 'other'."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:56:54",
+  "source_chars": 76125,
+  "input_tokens": 64720,
+  "output_tokens": 3481,
+  "cost_usd_equiv": 0.3697988,
+  "status": "extracted"
+ }
+}

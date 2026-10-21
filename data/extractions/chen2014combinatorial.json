@@ -1,0 +1,277 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Combinatorial Multi-Armed Bandit and Its Extension to Probabilistically Triggered Arms",
+  "arxiv_id": "1407.8339",
+  "arxiv_version": null,
+  "year": 2014,
+  "authors": [
+   "Wei Chen",
+   "Yajun Wang",
+   "Yang Yuan",
+   "Qinshi Wang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Combinatorial multi-armed bandit (CMAB) with probabilistically triggered arms",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "linear_optimization_oracle",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Nonlinear expected reward r_mu(S) satisfying monotonicity and bounded smoothness with function f",
+    "Base arms outside the played super arm may be probabilistically triggered (minimum triggering probability p_i); feedback is outcomes of all triggered arms",
+    "Access to an (alpha,beta)-approximation oracle (not a linear optimization oracle; oracle field is approximate)",
+    "Regret is (alpha,beta)-approximation regret against alpha*beta*opt",
+    "Outcomes of different base arms may be dependent within a round"
+   ],
+   "definition_quote": "A combinatorial multi-armed bandit (CMAB) problem consists of m base arms associated with a set of random variables X_{i,t} ... with bounded support on [0,1]. ... The outcomes of base arms in S may trigger other base arms not in S to be played ... Reg^A_{\\bp,\\alpha,\\beta}(n) = n \\alpha \\beta \\opt_{\\bp} - \\E_S[\\sum_{t=1}^n r_\\bp(S^A_t)]."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "CUCB (combinatorial UCB with computation oracle)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_arms(ell_n_min_i*Delta_min_i + Int_ell_i) + ((2 + I_p)*pi**2/6 + 1)*m_base*Delta_max",
+    "expression_latex": "\\sum_{i\\in [m], K_i>0} \\left(\\ell_n(\\Delta^i_{\\min},p_i) \\Delta^i_{\\min} + \\int_{\\Delta^i_{\\min}}^{\\Delta^i_{\\max}} \\ell_n(x,p_i) \\mathrm{d}x\\right ) + \\left(\\frac{(2+\\I\\{p^* < 1\\})\\pi^2}{6} +1\\right)\\cdot m \\cdot \\Delta_{\\max}",
+    "regime": null
+   },
+   "symbols": {
+    "m_base": "number of base arms m",
+    "Delta_min_i": "smallest gap alpha*opt - r(S) among bad super arms whose triggering set contains base arm i",
+    "ell_n_min_i": "sampling threshold ell_n(Delta_min_i, p_i) = max(12 ln n/((f^{-1}(Delta))^2 p), 24 ln n/p) if p<1, 6 ln n/(f^{-1}(Delta))^2 if p=1",
+    "Int_ell_i": "integral of ell_n(x,p_i) dx from Delta_min_i to Delta_max_i",
+    "I_p": "indicator that p* = min_i p_i < 1",
+    "p_i": "minimum nonzero triggering probability of base arm i"
+   },
+   "conditions": [
+    "expected reward satisfies monotonicity and bounded smoothness with function f",
+    "(alpha,beta)-approximation oracle available",
+    "sum over base arms with K_i>0"
+   ],
+   "tuning": [
+    "UCB radius sqrt(3 ln t/(2 T_i)) truncated at 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:cucb individual",
+    "number": "Theorem 1",
+    "quote": "The $(\\alpha,\\beta)$-approximation regret of the CUCB algorithm in $n$ rounds using an $(\\alpha,\\beta)$-approximation oracle is at most \\sum_{i\\in [m], K_i>0} (\\ell_n(\\Delta^i_{\\min},p_i) \\Delta^i_{\\min} + \\int ... ) + ((2+\\I\\{p^* < 1\\})\\pi^2/6 +1) m \\Delta_{\\max}"
+   },
+   "confidence": "medium",
+   "notes": "Quantity is (alpha,beta)-approximation regret (defined via expected rewards), recorded as 'other'. Delta_max is max gap over bad super arms. Text applications (PMC: sum 12|E|^2 ln n/Delta_min^i + (pi^2/3+1)|E|Delta_max; linear rewards: sum 12 a_max^2 L^2 ln n/Delta_min^i + ...; influence maximization: sum 24|V|^2|E|^2 ln n/(Delta_min^i p_i) + (pi^2/2+1)|E|Delta_max) are derived from this theorem; classical MAB gives sum 6 ln n/Delta_i + (pi^2/3+1) m Delta_max."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*gamma_f/(2 - omega)*(6*m_base*log(T))**(omega/2)*T**(1 - omega/2) + (pi**2/3 + 1)*m_base*Delta_max",
+    "expression_latex": "\\frac{2\\gamma}{2-\\omega}\\cdot (6m\\ln  n)^{\\omega/2} \\cdot n^{1-\\omega/2}+\\left(\\frac{\\pi^2}{3}+1\\right)\\cdot m \\cdot \\Delta_{\\max}",
+    "regime": "p* = 1 (no probabilistic triggering)"
+   },
+   "symbols": {
+    "m_base": "number of base arms m",
+    "gamma_f": "constant gamma in bounded smoothness function f(x)=gamma x^omega",
+    "omega": "exponent in f(x)=gamma x^omega, omega in (0,1]"
+   },
+   "conditions": [
+    "bounded smoothness function f(x) = gamma*x^omega with gamma>0, omega in (0,1]",
+    "monotonicity",
+    "(alpha,beta)-approximation oracle",
+    "p_i = 1 for all base arms"
+   ],
+   "tuning": [
+    "UCB radius sqrt(3 ln t/(2 T_i))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:worstbound",
+    "number": "Theorem 2",
+    "quote": "If the bounded smoothness function $f(x) = \\gamma \\cdot x^\\omega$ for some $\\gamma >0$ and $\\omega\\in (0,1]$, the regret of CUCB is at most: \\frac{2\\gamma}{2-\\omega}(6m\\ln n)^{\\omega/2} n^{1-\\omega/2}+(\\frac{\\pi^2}{3}+1) m \\Delta_{\\max}, if p^*=1"
+   },
+   "confidence": "medium",
+   "notes": "Distribution-independent (alpha,beta)-approximation regret. For omega=1 gives O(sqrt(m n ln n)) for classical MAB; text applications: PMC sqrt(24|E|^3 n ln n)+..., linear a_max L sqrt(24 m n ln n)+..."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*gamma_f/(2 - omega)*(12*m_base*log(T)/p_star)**(omega/2)*T**(1 - omega/2) + (pi**2/2 + 1)*m_base*Delta_max + sum_arms(24*log(T)/p_i)*Delta_max",
+    "expression_latex": "\\frac{2\\gamma}{2-\\omega}\\cdot \\left(\\frac{12m\\ln  n}{p^*}\\right)^{\\omega/2} \\cdot n^{1-\\omega/2}+\\left(\\frac{\\pi^2}{2}+1\\right)\\cdot m \\cdot \\Delta_{\\max} + \\sum_{i\\in [m]} \\frac{24\\ln  n}{p_i}  \\cdot \\Delta_{\\max}",
+    "regime": "0 < p* < 1"
+   },
+   "symbols": {
+    "m_base": "number of base arms m",
+    "gamma_f": "constant gamma in f(x)=gamma x^omega",
+    "omega": "exponent in f(x)=gamma x^omega",
+    "p_star": "min_i p_i, minimum triggering probability",
+    "p_i": "minimum nonzero triggering probability of base arm i"
+   },
+   "conditions": [
+    "bounded smoothness function f(x) = gamma*x^omega with gamma>0, omega in (0,1]",
+    "monotonicity",
+    "(alpha,beta)-approximation oracle"
+   ],
+   "tuning": [
+    "UCB radius sqrt(3 ln t/(2 T_i))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:worstbound",
+    "number": "Theorem 2",
+    "quote": "\\frac{2\\gamma}{2-\\omega}\\cdot \\left(\\frac{12m\\ln  n}{p^*}\\right)^{\\omega/2} \\cdot n^{1-\\omega/2}+\\left(\\frac{\\pi^2}{2}+1\\right)\\cdot m \\cdot \\Delta_{\\max} + \\sum_{i\\in [m]} \\frac{24\\ln  n}{p_i}  \\cdot \\Delta_{\\max}, if 0<p^*<1."
+   },
+   "confidence": "medium",
+   "notes": "Influence maximization application in text: |V| sqrt(48|E|^3 n ln n/p*) + (pi^2/2+1)|E|Delta_max."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "AuerCF02",
+   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
+   "cited_first_author": "Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB1",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "classical stochastic K-armed bandit, rewards in [0,1]",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(8*log(T)/Delta_i)",
+    "expression_latex": "\\sum_{i\\in [m],\\Delta^i>0} 8/\\Delta^i \\ln n",
+    "regime": null
+   },
+   "where": "Section 3.2 Discussions (Comparing to classical MAB)"
+  },
+  {
+   "cited_key": "KWAS15",
+   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
+   "cited_first_author": "Kveton",
+   "cited_year": 2015,
+   "cited_arxiv_id": "1410.0949",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "stochastic combinatorial semi-bandit with linear rewards, super arms of size at most L, m base arms",
+   "bound": {
+    "notation": "O",
+    "expression": "L_size*log(T)*sum_arms(1/Delta_min_i)",
+    "expression_latex": "O(L \\log n \\sum_i 1 / \\Delta_{\\min}^i)",
+    "regime": null
+   },
+   "where": "Section 4.2"
+  },
+  {
+   "cited_key": "KWAS15",
+   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
+   "cited_first_author": "Kveton",
+   "cited_year": 2015,
+   "cited_arxiv_id": "1410.0949",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "stochastic combinatorial semi-bandit with linear rewards, distribution-independent",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(L_size*m_base*T*log(T))",
+    "expression_latex": "O(\\sqrt{L m n \\log n})",
+    "regime": null
+   },
+   "where": "Section 4.2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:10:20",
+  "source_chars": 118816,
+  "input_tokens": 88238,
+  "output_tokens": 6146,
+  "cost_usd_equiv": 0.6112428,
+  "status": "extracted"
+ }
+}

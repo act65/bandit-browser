@@ -1,0 +1,257 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Detecting an Odd Restless Markov Arm with a Trembling Hand",
+  "arxiv_id": "2005.06255",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "P. N. Karthik",
+   "Rajesh Sundaresan"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Odd arm identification with restless Markov arms and a trembling hand",
+   "objective": "other_pure_exploration",
+   "feedback": "bandit",
+   "environment": "markovian",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "K",
+    "reward_family"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "restless"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Odd arm identification: one arm has transition matrix P1, all others P2 != P1; goal is to find the odd arm with error probability <= epsilon (fixed confidence)",
+    "Each arm is an ergodic Markov chain on a common finite state space, arms evolve whether or not pulled (restless)",
+    "P1 and P2 are known to the learner",
+    "Trembling hand: intended arm pulled w.p. 1-eta, otherwise uniformly random arm, eta in (0,1]; actual arm is observed",
+    "P1(j|i)>0 iff P2(j|i)>0",
+    "K >= 3"
+   ],
+   "definition_quote": "We consider a multi-armed bandit with $K\\geq 3$ arms ... The Markovian evolution of states on one of the arms (known as the \\emph{odd} arm) is governed by a transition probability matrix $P_1$, and the evolution of states on each of the non-odd arms is governed by $P_2$ ... the intended arm $B_{t}$ gets pulled with probability $1-\\eta$ and a uniformly random arm gets pulled with probability $\\eta$ ... The unobserved arms continue to undergo state evolution, making the arms \\emph{restless}."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Policy pi*(L, delta)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "track_and_stop",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "reward_family"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "log(1/delta)/R_star",
+    "expression_latex": "\\liminf_{\\epsilon\\downarrow 0}\\inf_{\\pi\\in\\Pi(\\epsilon)}\\frac{E_h[\\tau(\\pi)]}{\\log(1/\\epsilon)}\\geq \\frac{1}{R^*(P_1,P_2)}",
+    "regime": "error probability -> 0"
+   },
+   "symbols": {
+    "R_star": "R^*(P_1,P_2): sup over stationary randomised policies of min over alternative odd arms h' of the sum over (delays, last states, arm) of the ergodic state-action occupancy measure times KL divergences of d-step transition laws"
+   },
+   "conditions": [
+    "policies in Pi(epsilon): error probability <= epsilon for every odd arm location",
+    "eta in (0,1]",
+    "K >= 3",
+    "P1 != P2 known, ergodic, same support"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "prop:lower_bound",
+    "number": "Proposition 1",
+    "quote": "Let $\\eta\\in(0,1]$ and $h\\in\\mathcal{A}$ be fixed. Assume that $\\mathcal{H}_h$ is the true hypothesis. ... Then, \\liminf_{\\epsilon\\downarrow 0}\\inf_{\\pi\\in\\Pi(\\epsilon)}\\frac{E_h[\\tau(\\pi)]}{\\log(1/\\epsilon)}\\geq \\frac{1}{R^*(P_1,P_2)}"
+   },
+   "confidence": "high",
+   "notes": "Paper's epsilon (error probability) mapped to canonical delta."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "limsup",
+    "expression": "(1 + delta_alg)*log(L)/R_star",
+    "expression_latex": "\\limsup_{L\\to\\infty}\\frac{E_h[\\tau(\\pi^\\star(L, \\delta))]}{\\log L}\\leq \\frac{1+\\delta}{R^*(P_1,P_2)}",
+    "regime": "L -> infinity"
+   },
+   "symbols": {
+    "R_star": "R^*(P_1,P_2) as in Proposition 1",
+    "delta_alg": "the paper's policy parameter delta > 0 (approximation slack to the supremum)",
+    "L": "threshold parameter of the policy; L = 1/epsilon gives error probability <= epsilon"
+   },
+   "conditions": [
+    "eta in (0,1]",
+    "K >= 3",
+    "P1 != P2 known"
+   ],
+   "tuning": [
+    "stopping threshold log((K-1)L)",
+    "delta_alg > 0 fixed"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:upper_bound",
+    "number": "Proposition 2",
+    "quote": "Fix $h\\in\\mathcal{A}$ and $\\delta>0$, and let $\\mathcal{H}_h$ be the true hypothesis. The policy $\\pi^\\star(L, \\delta)$ satisfies \\limsup_{L\\to\\infty}\\frac{E_h[\\tau(\\pi^\\star(L, \\delta))]}{\\log L}\\leq \\frac{1+\\delta}{R^*(P_1,P_2)}."
+   },
+   "confidence": "high",
+   "notes": "With L = 1/epsilon (Lemma 3) the policy is epsilon-correct, so log L = log(1/delta) in canonical notation."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "delta",
+    "expression_latex": "\\pi^\\star(L,\\delta)\\in\\Pi(\\epsilon)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "eta in (0,1]"
+   ],
+   "tuning": [
+    "L = 1/epsilon",
+    "any delta_alg > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "lem:pi_star(L)_in_Pi(epsilon)",
+    "number": "Lemma 3",
+    "quote": "Fix error probability $\\epsilon>0$. If $L=1/\\epsilon$, then for every $\\delta>0$, $\\pi^\\star(L,\\delta)\\in\\Pi(\\epsilon)$."
+   },
+   "confidence": "medium",
+   "notes": "Error probability at stoppage <= epsilon (canonical delta); proof shows <= 1/L. Probability field set loosely."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "limsup",
+    "expression": "log(1/delta)/R_star",
+    "expression_latex": "\\lim_{\\epsilon\\downarrow 0}\\inf_{\\pi\\in\\Pi(\\epsilon)}\\frac{E_h[\\tau(\\pi)]}{\\log(1/\\epsilon)}=\\lim_{\\delta \\downarrow 0}\\lim_{L\\to\\infty}\\frac{E_h[\\tau(\\pi^\\star(L,\\delta))]}{\\log L}= \\frac{1}{R^*(P_1,P_2)}",
+    "regime": "error probability -> 0, then delta_alg -> 0"
+   },
+   "symbols": {
+    "R_star": "R^*(P_1,P_2) as in Proposition 1"
+   },
+   "conditions": [
+    "K >= 3",
+    "arms are time-homogeneous ergodic Markov chains on a finite state space",
+    "P1 != P2 known",
+    "eta in (0,1]"
+   ],
+   "tuning": [
+    "L = 1/epsilon",
+    "delta_alg -> 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:main_result",
+    "number": "Theorem 1",
+    "quote": "Consider a multi-armed bandit with $K\\geq 3$ arms in which each arm is a time homogeneous and ergodic Markov process ... the expected time required by the decision maker to identify the odd arm satisfies the asymptotic relation \\lim_{\\epsilon\\downarrow 0}\\inf_{\\pi\\in\\Pi(\\epsilon)}\\frac{E_h[\\tau(\\pi)]}{\\log(1/\\epsilon)}=\\lim_{\\delta \\downarrow 0}\\lim_{L\\to\\infty}\\frac{E_h[\\tau(\\pi^\\star(L,\\delta))]}{\\log L}= \\frac{1}{R^*(P_1,P_2)}."
+   },
+   "confidence": "medium",
+   "notes": "Theorem is an exact limit equality (matching lower bound Prop 1); recorded as the upper (achievability) side, which is asymptotically optimal."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:52:55",
+  "source_chars": 207841,
+  "input_tokens": 138998,
+  "output_tokens": 4720,
+  "cost_usd_equiv": 0.9888028000000001,
+  "status": "extracted"
+ }
+}

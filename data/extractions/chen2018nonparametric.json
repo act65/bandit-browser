@@ -1,0 +1,195 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Nonparametric Pricing Analytics with Customer Covariates",
+  "arxiv_id": "1805.01136",
+  "arxiv_version": null,
+  "year": 2018,
+  "authors": [
+   "Ningyuan Chen",
+   "Guillermo Gallego"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Personalized (nonparametric) pricing with customer covariates",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "continuum_other",
+   "function_class": [
+    "lipschitz"
+   ],
+   "domain": "constrained",
+   "context": "stochastic_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Action is a price p in [0,1]; reward Z_t = p_t * Bernoulli(d(X_t,p_t)), expected revenue f(x,p)=p d(x,p)",
+    "Covariates X_t i.i.d. in [0,1)^d with arbitrary distribution; f is nonparametric in x",
+    "f Lipschitz in x and p with constant M_1 (Assumption 2)",
+    "For every hyper-rectangle B, f_B(p)=E[f(X,p)|X in B] has a unique maximizer with quadratic growth M_2 (p*-p)^2 <= f_B(p*)-f_B(p) <= M_3 (p*-p)^2; p*(B) lies in the range of p*(x) over B; the range of p*(x) over B is at most M_4 diam(B) (Assumption 3)",
+    "Learner knows constants M_1..M_4 (only M_2 actually used)"
+   ],
+   "definition_quote": "In period $t\\in\\left\\{1,2,\\dots,T\\right\\}$, a customer arrives with covariate $\\bm X_t$. Upon observing $\\bm X_t$, the firm sets a price $p_t$. The revenue earned in period $t$ is denoted by $Z_t$ where $Z_t/p_t$ is a Bernoulli random variable with mean $d(\\bm X_t,p_t)$, independent of everything else. ... $R_{\\pi}(T) = \\sum_{t=1}^T \\E\\left[(f^{\\ast}(\\bm X_t)-f(\\bm X_t,p_t))\\right]$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Adaptive Binning and Exploration (ABE)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "elimination",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d",
+    "M_2"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "T**((2+d)/(4+d))*log(T)**2",
+    "expression_latex": "C T^{ \\frac{2+d}{4+d}}\\log(T)^2",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "f satisfies Assumption 2 (Lipschitz with M_1) and Assumption 3 (unique maximizer with quadratic growth M_2, M_3; maximizer containment; M_4 continuity of optimal price)",
+    "covariates i.i.d. (Assumption 1)"
+   ],
+   "tuning": [
+    "K = floor(log(T)/((d+4) log 2))",
+    "Delta_k = 2^{-k} log(T)",
+    "N_k = ceil(log(T))",
+    "n_k = max{0, ceil(2^{4k+15}/(M_2^2 log^3 T) (log T + log log T - (d+2) k log 2))}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:upper-bound",
+    "number": "Theorem 1",
+    "quote": "For any function $f$ satisfying Assumption~\\ref{asp:lipschitz} and~\\ref{asp:maximizer}, the regret incurred by the ABE algorithm is bounded by \\begin{equation*} R_{\\pi_{ABE}}(T)\\le C T^{ \\frac{2+d}{4+d}}\\log(T)^2 \\end{equation*} for a constant $C>0$ that is independent of $T$."
+   },
+   "confidence": "high",
+   "notes": "Constant C depends on d and M_1..M_4. Regret defined via expected revenue gap f*(X_t)-f(X_t,p_t), so pseudo-regret against per-context optimal price. Proof uses T >= max{exp(8 M_4 sqrt(d)), exp(4 sqrt(2M_3/M_2))}."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T**((2+d)/(4+d))",
+    "expression_latex": "\\sup_{f\\in \\mathcal C}R_\\pi(T)\\ge c T^{\\frac{2+d}{4+d}}",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "covariates uniformly distributed on [0,1)^d",
+    "constructed class C of f_w indexed by w in {0,1}^{M^d} with M = ceil(T^{1/(d+4)}), satisfying Assumptions 2 and 3 with M_1=4, M_2=1, M_3=2, M_4=1"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lower-bound",
+    "number": "Theorem 2",
+    "quote": "For the constructed $\\mathcal C$, any non-anticipating policy $\\pi$ has regret \\begin{equation*} \\sup_{f\\in \\mathcal C}R_\\pi(T)\\ge c T^{\\frac{2+d}{4+d}} \\end{equation*} for a constant $c>0$."
+   },
+   "confidence": "high",
+   "notes": "Minimax lower bound via KL / Tsybakov-style construction (similar to Rigollet & Zeevi). Lemmas 3 and 4 are intermediate steps."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "slivkins2014contextual",
+   "cited_title": "Contextual bandits with similarity information",
+   "cited_first_author": "Slivkins",
+   "cited_year": 2014,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Contextual zooming algorithm",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Contextual bandits with Lipschitz expected reward f(x,p) on Euclidean covariate space of dimension d_x=d and decision dimension d_p=1 (no smoothness/local concavity)",
+   "bound": {
+    "notation": "O",
+    "expression": "T**((2+d)/(3+d))",
+    "expression_latex": "T^{(2+d)/(3+d)}",
+    "regime": null
+   },
+   "where": "Introduction / Section 1.1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:18:53",
+  "source_chars": 112369,
+  "input_tokens": 86376,
+  "output_tokens": 3339,
+  "cost_usd_equiv": 0.5402068,
+  "status": "extracted"
+ }
+}

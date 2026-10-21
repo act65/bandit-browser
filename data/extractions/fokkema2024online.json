@@ -1,0 +1,332 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Online Newton Method for Bandit Convex Optimisation",
+  "arxiv_id": "2406.06506",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Hidde Fokkema",
+   "Dirk van der Hoeven",
+   "Tor Lattimore",
+   "Jack J. Mayo"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Adversarial bandit convex optimisation (zeroth-order, noisy)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_oblivious",
+   "action_space": "convex_body",
+   "function_class": [
+    "bounded"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "membership_oracle",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "losses are convex (no Lipschitz/smoothness assumption)",
+    "K positioned so that B(1) subset K subset 2B(d+1)",
+    "noise conditionally subgaussian in Orlicz sense E[exp(eps^2)] <= 2"
+   ],
+   "definition_quote": "At the beginning of the game the adversary secretly chooses a sequence of convex functions $\\ell_1,\\ldots,\\ell_n : K \\to [0,1]$. ... In round $t$ the learner chooses an action $A_t \\in K$, suffers loss $\\ell_t(A_t)$ and observes $\\ell_t(A_t) + \\varepsilon_t$ with the noise $\\varepsilon_t$ assumed to be conditionally subgaussian"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Stochastic bandit convex optimisation (l_t = l fixed, noisy)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "convex_body",
+   "function_class": [
+    "bounded"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "membership_oracle",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "loss convex, bounded in [0,1] on K",
+    "K positioned so that B(1) subset K subset 2B(d+1); learner uses mean width constant M in tuning",
+    "sampling oracle may be needed for positioning K"
+   ],
+   "definition_quote": "The regret bound can be improved in the stochastic setting, where $\\ell_t = \\ell$ is the same in every round"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Online Newton step for bandit convex optimisation with convex extension, bonuses and restarts (Algorithm 1)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent",
+    "restarts_or_sliding_window"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**(7/2)*sqrt(T)",
+    "expression_latex": "d^{3.5} \\sqrt{n} \\polylog(n, d, 1/\\delta)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "losses convex with values in [0,1] on K",
+    "K suitably positioned (B(1) subset K subset 2B(d+1))"
+   ],
+   "tuning": [
+    "lambda = 1/(d^3 L^5), gamma = 1/(4dL), eta = sqrt(d/(n L^3)), sigma^2 = 1/d^2, epsilon = d^3.5 L^8.5/sqrt(n), F_max = d^5 L^8"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1",
+    "quote": "There exists an algorithm such that with probability at least $1 - \\delta$, \\Reg_n \\leq d^{3.5} \\sqrt{n} \\polylog(n, d, 1/\\delta). Furthermore, the algorithm is computationally efficient given a membership oracle for $K$."
+   },
+   "confidence": "high",
+   "notes": "Polylog includes log(1/delta). Computationally efficient given membership oracle (positioning may need sampling oracle)."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "M_K*d**2*sqrt(T)",
+    "expression_latex": "M d^{2} \\sqrt{n} \\polylog(n, d, 1/\\delta)",
+    "regime": null
+   },
+   "symbols": {
+    "M_K": "max(d^{-1/2}, M(K°)), mean width of polar body; in [d^{-1/2}, d^{-1/4}] depending on geometry/positioning"
+   },
+   "conditions": [
+    "loss convex with values in [0,1] on K",
+    "K suitably positioned"
+   ],
+   "tuning": [
+    "gamma = 0, eta = M d/sqrt(n), lambda = 5/(M d^{3/2} L^3), sigma^2 = 1/(16 M^2 d L^3), epsilon = M d^2 L^5/sqrt(n), F_max = 25 M^2 d^3 L^5"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:stoch",
+    "number": "Theorem 2",
+    "quote": "There exists an algorithm such that in the stochastic setting with probability at least $1 - \\delta$, \\Reg_n \\leq M d^{2} \\sqrt{n} \\polylog(n, d, 1/\\delta), where $M \\in [d^{-1/2}, d^{-1/4}]$ is a constant that depends on the geometry of $K$ and the desired computational properties of the algorithm."
+   },
+   "confidence": "medium",
+   "notes": "M=d^{-1/2} without assumptions (possibly inefficient) giving d^1.5 sqrt(n); M=d^{-1/4} efficient with sampling+membership oracles giving d^1.75 sqrt(n); M=d^{-1/2} efficient for symmetric K. Compute depends on choice, so not_stated."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Lat20-cvx",
+   "cited_title": "Improved regret for zeroth-order adversarial bandit convex optimisation",
+   "cited_first_author": "T. Lattimore",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "adversarial bandit convex optimisation, bounded convex losses (non-constructive, minimax duality)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**(5/2)*sqrt(T)",
+    "expression_latex": "d^{2.5}\\sqrt{n}",
+    "regime": null
+   },
+   "where": "Related work"
+  },
+  {
+   "cited_key": "BEL16",
+   "cited_title": "Kernel-based methods for bandit convex optimization",
+   "cited_first_author": "S. Bubeck",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "kernel-based algorithm",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "adversarial bandit convex optimisation, polynomial time",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**(21/2)*sqrt(T)",
+    "expression_latex": "d^{10.5}\\sqrt{n}",
+    "regime": null
+   },
+   "where": "Related work"
+  },
+  {
+   "cited_key": "LG21a",
+   "cited_title": "Improved regret for zeroth-order stochastic convex bandits",
+   "cited_first_author": "T. Lattimore",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "ellipsoid method variant",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "stochastic bandit convex optimisation",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**4*sqrt(T)",
+    "expression_latex": "d^4\\sqrt{n}",
+    "regime": null
+   },
+   "where": "Related work"
+  },
+  {
+   "cited_key": "LG23",
+   "cited_title": "A second-order method for stochastic bandit convex optimisation",
+   "cited_first_author": "T. Lattimore",
+   "cited_year": 2023,
+   "cited_arxiv_id": null,
+   "algorithm_name": "bandit online Newton step",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "unconstrained stochastic bandit convex optimisation, Lipschitz losses",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**(3/2)*sqrt(T)",
+    "expression_latex": "d^{1.5}\\sqrt{n}",
+    "regime": null
+   },
+   "where": "Related work"
+  },
+  {
+   "cited_key": "BDKP15",
+   "cited_title": "Bandit convex optimization: $\\sqrt{T}$ regret in one dimension",
+   "cited_first_author": "S. Bubeck",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "adversarial bandit convex optimisation, d=1, bounded losses",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\sqrt{n}",
+    "regime": "d = 1"
+   },
+   "where": "Related work"
+  },
+  {
+   "cited_key": "hazan2012online",
+   "cited_title": "Online submodular minimization",
+   "cited_first_author": "E. Hazan",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "bandit submodular minimisation via Lovasz extension",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(2/3)",
+    "expression_latex": "O(n^{2/3})",
+    "regime": null
+   },
+   "where": "Discussion"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:23:39",
+  "source_chars": 115510,
+  "input_tokens": 92726,
+  "output_tokens": 4766,
+  "cost_usd_equiv": 0.6195468,
+  "status": "extracted"
+ }
+}

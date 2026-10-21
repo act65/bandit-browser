@@ -1,0 +1,380 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "A Lipschitz Bandits Approach for Continuous Hyperparameter Optimization",
+  "arxiv_id": "2302.01539",
+  "arxiv_version": null,
+  "year": 2023,
+  "authors": [
+   "Yasong Feng",
+   "Weijian Luo",
+   "Yimin Huang",
+   "Tianyu Wang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Pure Exploration Lipschitz Bandits with Batched Feedback",
+   "objective": "simple_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_oblivious",
+   "action_space": "lipschitz_metric",
+   "function_class": [
+    "lipschitz"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "not_applicable",
+   "learner_knows": [
+    "T",
+    "L_lip",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "batched",
+    "infinitely_many_arms"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Non-stochastic (hyperparameter-optimisation) model: assigning budget n to arm x returns a deterministic loss l(x,n) converging to a limit loss mu(x) with |l(x,n)-mu(x)| <= n^(-1/beta) (Assumption 1); the learner chooses the budget per pull and the total budget is T",
+    "Arm space ([0,1]^d, ||.||_inf); limit loss mu is L-Lipschitz",
+    "Learner uses the decay exponent beta of Assumption 1 (not the smoothness beta of the vocabulary)",
+    "Bounds depend on the zooming dimension d_z; the ACE sequence variant also needs d_z"
+   ],
+   "definition_quote": "For any $x\\in\\mathcal{X}$ and $n \\in \\mathbb{N}_+$, the error sequence $\\{\\ell(x,n)\\}_{n=1}^\\infty$ is bounded by $|\\ell(x,n)-\\mu(x)|\\leq n^{-\\frac{1}{\\beta}}$ ... The limiting loss $\\mu(x)$ is $L$-Lipschitz with respect to the metric on $\\mathcal{X}$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "BLiE (Batched Lipschitz Exploration), doubling edge-length sequence",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "L_lip",
+    "beta (loss decay exponent)"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "BLiE with ACE Sequence",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "L_lip",
+    "d",
+    "d_z",
+    "beta (loss decay exponent)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "almost_sure",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(-1/(d_z + beta_dec))",
+    "expression_latex": "\\Delta_{\\widetilde{x}^*}\\leq c\\cdot T^{-\\frac{1}{d_z+\\beta}}",
+    "regime": null
+   },
+   "symbols": {
+    "d_z": "zooming dimension",
+    "beta_dec": "exponent of Assumption 1: |l(x,n)-mu(x)| <= n^(-1/beta)"
+   },
+   "conditions": [
+    "Assumptions 1 and 2"
+   ],
+   "tuning": [
+    "r_m = 2^{-m}",
+    "alpha = 2L+2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:blin-upper",
+    "number": "Theorem 1",
+    "quote": "If Assumption \\ref{ass:hoeffding} and \\ref{ass:lip} are satisfied, then output arm $\\widetilde{x}^*$ of BLiE algorithm with total budget $T$, edge-length sequence $r_m=2^{-m}$, $\\alpha=2L+2$ and $\\beta$ satisfies $\\Delta_{\\widetilde{x}^*}\\leq c\\cdot T^{-\\frac{1}{d_z+\\beta}}$, where $d_z$ is the zooming dimension and $c$ is a constant. In addition, BLiE needs no more than $\\frac{1}{d_z+\\beta}\\log T$ batches to achieve this simple regret."
+   },
+   "confidence": "medium",
+   "notes": "Losses are deterministic so the bound holds surely; c = (8L+8)c_0 depends on L, C_z, d_z, beta. Recorded as O."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "almost_sure",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "log(T)/(d_z + beta_dec)",
+    "expression_latex": "\\frac{1}{d_z+\\beta}\\log T",
+    "regime": null
+   },
+   "symbols": {
+    "d_z": "zooming dimension",
+    "beta_dec": "exponent of Assumption 1"
+   },
+   "conditions": [
+    "Assumptions 1 and 2"
+   ],
+   "tuning": [
+    "r_m = 2^{-m}",
+    "alpha = 2L+2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:blin-upper",
+    "number": "Theorem 1",
+    "quote": "In addition, BLiE needs no more than $\\frac{1}{d_z+\\beta}\\log T$ batches to achieve this simple regret."
+   },
+   "confidence": "medium",
+   "notes": "Number of batches (communication rounds). The proof actually gives (1/(d_z+beta))log T - log c_0."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "almost_sure",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(-1/(d_z + beta_dec))",
+    "expression_latex": "\\Delta_{\\widetilde{x}^*}\\leq c\\cdot T^{-\\frac{1}{d_z+\\beta}}",
+    "regime": null
+   },
+   "symbols": {
+    "d_z": "zooming dimension",
+    "beta_dec": "exponent of Assumption 1"
+   },
+   "conditions": [
+    "Assumptions 1 and 2"
+   ],
+   "tuning": [
+    "ACE Sequence (Definition 1)",
+    "alpha = 2L+2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:ace",
+    "number": "Theorem 2",
+    "quote": "If Assumption \\ref{ass:hoeffding} and \\ref{ass:lip} are satisfied, then output arm $\\widetilde{x}^*$ of BLiE algorithm with total budget $T$, ACE Sequence $\\{r_m\\}$, $\\alpha=2L+2$ and $\\beta$ satisfies \\[\\Delta_{\\widetilde{x}^*}\\leq c\\cdot T^{-\\frac{1}{d_z+\\beta}},\\] where $d_z$ is the zooming dimension and $c$ is a constant. In addition, BLiE needs $\\mathcal{O}(\\log\\log T)$ batches to achieve this simple regret."
+   },
+   "confidence": "medium",
+   "notes": "ACE sequence uses d, d_z, T."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "almost_sure",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "log(log(T))",
+    "expression_latex": "\\mathcal{O}(\\log\\log T)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "Assumptions 1 and 2"
+   ],
+   "tuning": [
+    "ACE Sequence (Definition 1)",
+    "alpha = 2L+2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:ace",
+    "number": "Theorem 2",
+    "quote": "In addition, BLiE needs $\\mathcal{O}(\\log\\log T)$ batches to achieve this simple regret."
+   },
+   "confidence": "medium",
+   "notes": "Number of batches. Proof: at most 2 log log T / log((d+beta)/(d+1-d_z)) + 1."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "simple_regret",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "T**(-1/(d + beta_dec))/2",
+    "expression_latex": "\\E\\Delta_{\\widetilde{x}^*}\\geq \\frac{1}{2}T^{-\\frac{1}{d+\\beta}}",
+    "regime": null
+   },
+   "symbols": {
+    "beta_dec": "exponent of Assumption 1"
+   },
+   "conditions": [
+    "Holds for the uniform search strategy (Algorithm 3) with any grid length r",
+    "hard instance has zooming dimension d_z = 0, L = 1"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lower-us",
+    "number": "Theorem 3",
+    "quote": "For any total budget $T$, dimension $d$ and grid length $r$, there exists an instance with $d_z=0$ such that the uniform search strategy returns an arm $\\widetilde{x}^*$ with optimal gap $\\E\\Delta_{\\widetilde{x}^*}\\geq \\frac{1}{2}T^{-\\frac{1}{d+\\beta}}$."
+   },
+   "confidence": "high",
+   "notes": "Lower bound only for uniform search, not all algorithms."
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "simple_regret",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T**(-1/(d - d_z))",
+    "expression_latex": "\\E\\Delta_{\\widetilde{x}^*}\\geq c\\cdot T^{-\\frac{1}{d-d_z}}",
+    "regime": null
+   },
+   "symbols": {
+    "d_z": "zooming dimension"
+   },
+   "conditions": [
+    "Holds for random-search-based algorithms (sample N <= T arms uniformly, output one of them), e.g. Hyperband",
+    "for any given d, d_z, N"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lower-hb",
+    "number": "Theorem 4",
+    "quote": "For any total budget $T$, dimension $d$, zooming dimension $d_z$ and number of selected arms $N$, there exists an instance such that any random-search-based algorithm returns an arm $\\widetilde{x}^*$ with optimal gap $\\E\\Delta_{\\widetilde{x}^*}\\geq c\\cdot T^{-\\frac{1}{d-d_z}}$, where $c$ is a constant."
+   },
+   "confidence": "medium",
+   "notes": "Constant c = 7c_0/32 with c_0 = (8L+8)/C_z^{1/(d-d_z)}."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "li2017hyperband",
+   "cited_title": "Hyperband: a novel bandit-based approach to hyperparameter optimization",
+   "cited_first_author": "Li",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Hyperband",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Non-stochastic pure exploration for HPO, translated to the Lipschitz setting via gamma = d - d_z",
+   "bound": {
+    "notation": "exact",
+    "expression": "T**Max(-1/(d - d_z), -1/beta_dec)",
+    "expression_latex": "\\Delta_{\\widetilde{x}^*}\\leq T^{\\max\\left\\{-\\frac{1}{d-d_z},-\\frac{1}{\\beta}\\right\\}}",
+    "regime": null
+   },
+   "where": "Section 5.5 (Comparison with Hyperband)"
+  },
+  {
+   "cited_key": "kleinberg2005nearly",
+   "cited_title": "Nearly tight bounds for the continuum-armed bandit problem",
+   "cited_first_author": "Kleinberg",
+   "cited_year": 2005,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Continuum-armed (Lipschitz) bandit on a compact interval, cumulative regret",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T**(2/3)",
+    "expression_latex": "\\Omega (T^{2/3})",
+    "regime": null
+   },
+   "where": "Appendix A"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:24:30",
+  "source_chars": 87562,
+  "input_tokens": 72620,
+  "output_tokens": 5990,
+  "cost_usd_equiv": 0.4831788,
+  "status": "extracted"
+ }
+}

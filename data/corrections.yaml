@@ -1,8 +1,8 @@
 # Manual corrections to extractions (desiderata D5). Applied by pipeline/resolve.py on top of
 # data/extractions/ (which are never edited by hand). Every entry records who made it, why,
 # and its review status.
-#   target: <paper_id>:<result_id>
-#   op: set (field, value) | multiply_expression_by (factor)
+#   target: <paper_id>:<result_id>, or <paper_id>:* for every result of the paper
+#   op: set (field, value) | multiply_expression_by (factor) | add_condition (value)
 corrections:
   - target: auer2002exp3:r14
     op: multiply_expression_by
@@ -12,4 +12,44 @@ corrections:
       notes say so); multiplying by T states the same claim for total regret. Found by the
       conflict check (upper bound below the sqrt(KT) lower bound).
     by: assistant (Claude), 2026-10-20
+    status: pending_human_review
+  - target: joseph2016fairness:r6
+    op: set
+    field: conditions
+    value: ["noiseless rewards equal to the conjunction value (ConjunctionBandit model)"]
+    reason: >
+      The O(k^2 d) bound for ConjunctionBandit (Sec. 6) treats rewards as the deterministic conjunction
+      value (see the extractor's own note); without the condition it was carried by finite_K ->
+      structured_general to noisy K-armed settings, below the sqrt(KT) lower bound. Found by the
+      conflict check after batch 1.
+    by: assistant (Claude), 2026-10-21
+    status: pending_human_review
+  - target: bubeck2017sparsity:r5
+    op: set
+    field: conditions
+    value: ["starved bandit feedback protocol (Bubeck, Cohen & Li 2017, Thm 4)"]
+    reason: >
+      The n^{1/3} T^{2/3} / 20 lower bound is for the *starved* multi-armed bandit (source line
+      "For any strategy for the starved multi-armed bandit ..."), a weaker feedback protocol the
+      ontology does not express; it was extracted into the plain adversarial K-armed setting, above
+      the sqrt(KT) upper bounds. Found by the conflict check after batch 1.
+    by: assistant (Claude), 2026-10-21
+    status: pending_human_review
+  - target: liu2026quantum:*
+    op: add_condition
+    value: quantum reward oracle access (stronger than bandit feedback)
+    reason: >
+      Quantum multi-armed and linear bandits: the learner queries quantum reward oracles, which gives
+      K log T regret, below the classical sqrt(KT) lower bound. The ontology has no quantum-access value,
+      so the results were extracted into classical settings. Found by the conflict check after batch 1.
+    by: assistant (Claude), 2026-10-21
+    status: pending_human_review
+  - target: shah2018bandit:*
+    op: add_condition
+    value: "positive externalities: user arrivals depend on past rewards (externality function f)"
+    reason: >
+      Bandit learning with positive externalities: arrivals depend on past rewards, a different protocol
+      from the stochastic K-armed bandit it was extracted into (its log^2 T lower bound sat above the
+      UCB1 log T upper bound). Found by the conflict check after batch 1.
+    by: assistant (Claude), 2026-10-21
     status: pending_human_review

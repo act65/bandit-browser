@@ -1,0 +1,469 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Fast Rates for Bandit PAC Multiclass Classification",
+  "arxiv_id": "2406.12406",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Liad Erez",
+   "Alon Cohen",
+   "Tomer Koren",
+   "Yishay Mansour",
+   "Shay Moran"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Agnostic PAC bandit multiclass classification (finite hypothesis class)",
+   "objective": "pac_epsilon_best",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K",
+    "N_exp"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "expert_advice"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Multiclass classification structure: each example has a single correct label; reward of a label is the indicator that it equals the true label (sparse 0/1 rewards)",
+    "Agnostic PAC objective relative to a finite hypothesis class H of size N (N_exp = |H|); output hypothesis must be eps-optimal in 0-1 loss",
+    "Computational access through a weighted ERM oracle over H"
+   ],
+   "definition_quote": "In the PAC version of the problem, given parameters $\\eps, \\delta > 0$ the goal of the learner is to produce a hypothesis $\\hat{h} : \\calX \\to \\calY$, such that with probability at least $1 - \\delta$ ... $L_\\calD(\\hat{h}) - L_\\calD(h^\\star) \\leq \\eps$"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Agnostic PAC bandit multiclass classification (Natarajan class)",
+   "objective": "pac_epsilon_best",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "expert_advice"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Multiclass classification structure with single correct label (sparse 0/1 rewards)",
+    "Possibly infinite hypothesis class with finite Natarajan dimension d_N"
+   ],
+   "definition_quote": "Let $\\calH : \\calX \\to \\calY$ be a hypothesis class of finite Natarajan dimension $d_N$."
+  },
+  {
+   "id": "s3",
+   "name_in_paper": "Stochastic convex optimization with L1-smoothness (SPIDER Frank-Wolfe)",
+   "objective": "optimization_error",
+   "feedback": "full_information",
+   "environment": "stochastic_iid",
+   "action_space": "convex_body",
+   "function_class": [
+    "smooth",
+    "lipschitz"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "not_applicable",
+   "learner_knows": [
+    "beta",
+    "L_lip"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "linear_optimization_oracle",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Stochastic convex optimization with stochastic gradient access (sub-procedure), not a bandit problem",
+   "unmapped": [
+    "Smoothness and Lipschitzness with respect to the L1 norm (gradients bounded in L_inf)",
+    "Stochastic first-order (gradient) oracle",
+    "Domain has L1 diameter D"
+   ],
+   "definition_quote": "We assume that $f$ convex, $\\beta$-smooth and $G$-Lipschitz (in its first argument) with respect to the $L_1$ norm over $W$ ... We assume that the feasible domain $W$ has $L_1$ diameter $\\leq D$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Bandit PAC Multiclass Classification via Log Barrier Stochastic Optimization (Algorithm 1)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "ftrl_or_mirror_descent",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "N_exp",
+    "epsilon",
+    "delta"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Discretization + Algorithm 1 (Natarajan classes)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "epsilon",
+    "delta"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "Stochastic Frank-Wolfe with SPIDER gradient estimates",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "beta",
+    "L_lip"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "worst_case",
+   "comparator": "best_expert",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "(K**9 + 1/epsilon**2)*log(N_exp/delta)",
+    "expression_latex": "O \\brk*{\\brk*{K^9 + \\frac{1}{\\eps^2}} \\log\\frac{N}{\\delta} }",
+    "regime": null
+   },
+   "symbols": {
+    "N_exp": "size of the finite hypothesis class |H| (paper's N)"
+   },
+   "conditions": [
+    "finite hypothesis class H"
+   ],
+   "tuning": [
+    "gamma = 1/2",
+    "M_1 = Theta(K^8 log(N/delta))",
+    "M_2 = Theta(log(N/delta)(K/eps + 1/eps^2))",
+    "SPIDER FW run for T = Theta((K^4/gamma^4) sqrt(log(N/delta))) rounds, eta_t = 1/t, batch sizes b_t = (gamma/2K)^2 t^2 at t=2^k-1, b_t = t otherwise"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1",
+    "quote": "If we set $\\gamma = \\frac12$, $M_1 = \\Theta(K^8 \\log \\brk{N / \\delta})$, $M_2 = \\Theta \\brk*{\\log \\brk{N / \\delta} \\brk*{K / \\eps + 1 / \\eps^2}}$ ... then with probability at least $1-\\delta$ \\cref{alg:bandit-pac} outputs $\\hat{h} \\in \\calH$ with $L_\\calD(\\hat{h}) - L_\\calD(h^\\star) \\leq \\eps$, using a total sample complexity of $O ((K^9 + \\frac{1}{\\eps^2}) \\log\\frac{N}{\\delta} )$. Furthermore, ... makes a total number of $O(K^4 \\sqrt{\\log(N / \\delta)})$ calls to the weighted ERM oracle ... runs in total time polynomial in $K$, $1 / \\eps$ and $\\log(N / \\delta)$."
+   },
+   "confidence": "high",
+   "notes": "Proper learner; polynomial time given a weighted ERM oracle with O(1) cost per call; O(K^4 sqrt(log(N/delta))) oracle calls."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "worst_case",
+   "comparator": "best_expert",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "(K**9 + 1/epsilon**2)*d_N*log(1/delta)",
+    "expression_latex": "\\widetilde{O} \\brk{\\brk{K^9 + \\ifrac{1}{\\eps^2}}d_N \\log(\\ifrac{1}{\\delta})}",
+    "regime": null
+   },
+   "symbols": {
+    "d_N": "Natarajan dimension of the hypothesis class"
+   },
+   "conditions": [
+    "hypothesis class has finite Natarajan dimension d_N"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:natarajan-main",
+    "number": "Theorem 2",
+    "quote": "Let $\\calH : \\calX \\to \\calY$ be a hypothesis class of finite Natarajan dimension $d_N$. Then there exists a bandit multiclass classification algorithm which outputs a hypothesis $\\hat h$ with $L_\\calD(\\hat h) - \\inf_{h \\in \\calH} L_\\calD(h) \\leq \\eps$ with a sample complexity of $\\widetilde{O} ((K^9 + 1/\\eps^2)d_N \\log(1/\\delta))$."
+   },
+   "confidence": "medium",
+   "notes": "Probability 1-delta implicit (PAC model). Obtained via Proposition 1 (discretization with s samples then Theorem 1 on finite cover). Stated as existence; computational efficiency not discussed."
+  },
+  {
+   "id": "r3",
+   "setting": "s3",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "25*beta*D_1**2*sqrt(log(d))/t_it",
+    "expression_latex": "\\E\\sbr{ F(w_{t}) - F(w^*) } \\leq \\frac{25\\beta D^2}{t} \\sqrt{\\log{d}}",
+    "regime": "t >= 2"
+   },
+   "symbols": {
+    "D_1": "L1 diameter of the domain W",
+    "t_it": "iteration number of the Frank-Wolfe algorithm"
+   },
+   "conditions": [
+    "f convex, beta-smooth and G-Lipschitz w.r.t. L1 norm"
+   ],
+   "tuning": [
+    "eta_t = 1/t",
+    "b_t = (G/(beta D))^2 t^2 if t in {2^k-1}, b_t = t otherwise"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:fw-generic",
+    "number": "Theorem 3",
+    "quote": "\\cref{alg:fw} with step sizes $\\eta_t = 1/t$ and batch sizes $b_t$ defined as ... guarantees that, for all $t \\geq 2$ and any $\\delta>0$: $\\E\\sbr{ F(w_{t}) - F(w^*) } \\leq \\frac{25\\beta D^2}{t} \\sqrt{\\log{d}}$, and $\\Pr( F(w_{t}) - F(w^*) \\leq \\frac{25\\beta D^2}{t} \\sqrt{\\log\\frac{dt}{\\delta}} ) \\geq 1-\\delta$."
+   },
+   "confidence": "medium",
+   "notes": "Out-of-scope optimization subroutine result; optimization error in expectation after t iterations (not sample count)."
+  },
+  {
+   "id": "r4",
+   "setting": "s3",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "25*beta*D_1**2*sqrt(log(d*t_it/delta))/t_it",
+    "expression_latex": "F(w_{t}) - F(w^*) \\leq \\frac{25\\beta D^2}{t} \\sqrt{\\log\\frac{dt}{\\delta}}",
+    "regime": "t >= 2"
+   },
+   "symbols": {
+    "D_1": "L1 diameter of the domain W",
+    "t_it": "iteration number of the Frank-Wolfe algorithm"
+   },
+   "conditions": [
+    "f convex, beta-smooth and G-Lipschitz w.r.t. L1 norm"
+   ],
+   "tuning": [
+    "eta_t = 1/t",
+    "b_t = (G/(beta D))^2 t^2 if t in {2^k-1}, b_t = t otherwise"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:fw-generic",
+    "number": "Theorem 3",
+    "quote": "$\\Pr( F(w_{t}) - F(w^*) \\leq \\frac{25\\beta D^2}{t} \\sqrt{\\log\\frac{dt}{\\delta}} ) \\geq 1-\\delta$. Consequently, for convergence to within $\\epsilon > 0$ with probability at least $1-\\delta$, the algorithm requires $O((\\beta D^2/\\epsilon) \\sqrt{\\log(d/\\delta)})$ calls to LOO and $O(((G^2D^2 + \\beta^2 D^4)/ \\epsilon^2) \\log(d/\\delta))$ stochastic gradient computations."
+   },
+   "confidence": "medium",
+   "notes": "Out-of-scope optimization result. Corollary: O(((G^2 D^2 + beta^2 D^4)/eps^2) log(d/delta)) stochastic gradients for eps accuracy."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "daniely2011multiclass",
+   "cited_title": "Multiclass learnability and the erm principle",
+   "cited_first_author": "A. Daniely",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Agnostic PAC bandit multiclass classification, Natarajan dimension d_N, sample complexity",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "K*d_N/epsilon**2",
+    "expression_latex": "\\widetilde{O}(K d_N/\\eps^2)",
+    "regime": null
+   },
+   "where": "Section 4 / Introduction"
+  },
+  {
+   "cited_key": "natarajan1989learning",
+   "cited_title": "On learning sets and functions",
+   "cited_first_author": "B. K. Natarajan",
+   "cited_year": 1989,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Full-information agnostic PAC multiclass classification, Natarajan dimension d_N, sample complexity (stated as tight Theta-tilde)",
+   "bound": {
+    "notation": "Theta",
+    "expression": "d_N/epsilon**2",
+    "expression_latex": "\\widetilde\\Theta(d_N/\\eps^2)",
+    "regime": "up to logarithmic factors"
+   },
+   "where": "Section 4"
+  },
+  {
+   "cited_key": "erez2024real",
+   "cited_title": "The real price of bandit information in multiclass classification",
+   "cited_first_author": "L. Erez",
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online bandit multiclass classification, finite hypothesis class, regret (tight characterization)",
+   "bound": {
+    "notation": "Theta",
+    "expression": "Min(sqrt(K*T*log(N_exp)), N_exp + sqrt(T))",
+    "expression_latex": "\\Theta(\\min\\{\\sqrt{KT \\log |\\calH|}, |\\calH| + \\sqrt{T}\\})",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "auer2002nonstochastic",
+   "cited_title": "The nonstochastic multiarmed bandit problem",
+   "cited_first_author": "P. Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Exp4",
+   "algorithm_registry_id": "exp4",
+   "side": "upper",
+   "setting_description": "Online bandit multiclass classification as contextual bandit with finite hypothesis class, regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(N_exp))",
+    "expression_latex": "O(\\sqrt{KT \\log |\\calH|})",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "auer2002nonstochastic",
+   "cited_title": "The nonstochastic multiarmed bandit problem",
+   "cited_first_author": "P. Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "General contextual bandits, PAC sample complexity",
+   "bound": {
+    "notation": "Omega_tilde",
+    "expression": "K/epsilon**2",
+    "expression_latex": "\\wt \\Omega(K / \\eps^2)",
+    "regime": null
+   },
+   "where": "Section 1.2 (Contextual bandits)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:53:42",
+  "source_chars": 79365,
+  "input_tokens": 66396,
+  "output_tokens": 7528,
+  "cost_usd_equiv": 0.46414679999999997,
+  "status": "extracted"
+ }
+}

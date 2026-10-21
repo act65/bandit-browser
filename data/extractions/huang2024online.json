@@ -1,0 +1,185 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Online Learning for Function Placement in Serverless Computing",
+  "arxiv_id": "2410.13696",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Wei Huang",
+   "Richard Combes",
+   "Andrea Araldo",
+   "Hind Castel-Taleb",
+   "Badii Jouaber"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Virtual Function Placement (VFP) with stochastic costs and average resource constraints",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Arms are N computation nodes (canonical K); contexts are M i.i.d. function classes (M_ctx) with unknown arrival distribution lambda, including a null class",
+    "K_res resource types with known capacities beta_{i,k}; average resource constraints (sum_j lambda_j p_{i,j} a_{i,j,k}/beta_{i,k} <= 1) must hold with high probability",
+    "Resource requirements A_{i,j,k}(t) in [0,1] observed for all nodes after arrival (before placement); only the cost of the chosen node is observed",
+    "Comparator is the optimal static randomized placement policy solving a known-parameter LP; a fictitious reject node with infinite capacity and cost 1 ensures feasibility"
+   ],
+   "definition_quote": "We assume that placing a function of class~$j$ in node~$i$ has cost~$C_{i,j}$ ... for all $i,j$, $(C_{i,j}(t))_{t \\ge 0}$ is i.i.d. with mean $c_{i,j} \\in [0,1]$ ... $(A_{i,j,k}(t))_{t \\ge 0}$ is i.i.d. with mean $a_{i,j,k} \\in [0,1]$ ... $(j(t))_{t\\ge0}$ is i.i.d. with distribution $\\lambda$. R(T) = \\sum_{t=1}^T \\mathbb{E}(f({\\hat p}(t),c,\\lambda) - f(p^\\star,c,\\lambda))"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Base Algorithm (KL-UCB-style confidence bounds + LP)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Fast algorithm (base algorithm with geometric update times rho^k)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "K*M_ctx*(2*(sqrt(2) + 1)*sqrt(T*log(T)) + 6*K_res*(1 + log(T)))",
+    "expression_latex": "N M [ 2( \\sqrt{2} + 1) \\sqrt{T \\ln T} + 6 K (1 + \\ln T) ]",
+    "regime": null
+   },
+   "symbols": {
+    "M_ctx": "number of function classes M (contexts, including null class)",
+    "K_res": "number of resource types (paper's K)"
+   },
+   "conditions": [
+    "costs and resource requirements in [0,1]",
+    "known resource capacities beta_{i,k}",
+    "a fictitious reject node with infinite capacity and cost 1 is included"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "th:regret",
+    "number": "Theorem 1",
+    "quote": "Under the proposed algorithm the constraints are satisfied with high probability and the regret per unit of time vanishes at the rate: {R(T) \\over T} \\le {N M \\over T} [ 2( \\sqrt{2} + 1) \\sqrt{T \\ln T} + 6 K (1 + \\ln T) ] \\underset{T \\to \\infty}{\\sim} O( N M \\sqrt{\\ln T \\over T } )"
+   },
+   "confidence": "medium",
+   "notes": "Stated as per-round regret R(T)/T; multiplied by T. Paper's N (nodes) mapped to canonical K (arms); paper's K renamed K_res. Regret defined via expected mean costs of the policy, so pseudo-regret against best static policy. Algorithm uses ln t, so anytime."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "6*K*M_ctx*K_res*log(T)/T",
+    "expression_latex": "\\mathbb{P} (\\max_{i,k} g_{i,k}({\\hat p}(t)) \\le 1) \\ge 1 - 6 N M K {\\ln T \\over T}",
+    "regime": null
+   },
+   "symbols": {
+    "M_ctx": "number of function classes M",
+    "K_res": "number of resource types (paper's K)"
+   },
+   "conditions": [
+    "costs and resource requirements in [0,1]",
+    "known resource capacities beta_{i,k}"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "th:regret",
+    "number": "Theorem 1",
+    "quote": "\\mathbb{P} (\\max_{i,k} g_{i,k}({\\hat p}(t)) \\le 1) \\ge 1 - 6 N M K {\\ln T \\over T}\\underset{T \\to \\infty}{\\to} 1"
+   },
+   "confidence": "medium",
+   "notes": "Bound on probability that the selected policy violates the average resource constraints. Statement mixes t and T; the proof gives 6NMK/t per round. Recorded as violation probability."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:12:00",
+  "source_chars": 50977,
+  "input_tokens": 52429,
+  "output_tokens": 3226,
+  "cost_usd_equiv": 0.2663708,
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,554 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Decentralized Cooperative Stochastic Bandits",
+  "arxiv_id": "1810.04468",
+  "arxiv_version": null,
+  "year": 2018,
+  "authors": [
+   "David Martínez-Rubio",
+   "Varun Kanade",
+   "Patrick Rebeschini"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Decentralized cooperative stochastic multi-armed bandit on a network of N agents",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "sigma",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "multi_agent_cooperative"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "N agents on an undirected connected communication graph, each pulls one arm per round synchronously; rewards independent across agents and time",
+    "agents communicate only with neighbours via a gossip matrix P (doubly stochastic, real eigenvalues, |lambda_2|<1); poly(K) values per message",
+    "learner knows the number of agents N and (a bound on) the second-largest eigenvalue modulus |lambda_2| of P",
+    "regret is summed over all N agents"
+   ],
+   "definition_quote": "We consider a multi-agent network with $N$ agents. ... Agents play the same $K$-armed bandit problem for $T$ time steps, send some values to their neighbors after each play ... We assume that rewards come from distributions that are subgaussian with variance proxy $\\sigma^2$. ... R(T) := TN\\mu_1 - \\E{\\sum_{t=1}^T \\sum_{i=1}^N \\mu_{I_{t,i}}} = \\sum_{k=1}^K \\Delta_k \\E{n_{T}^k}."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Decentralized cooperative stochastic multi-armed bandit (lower bound)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "sigma",
+    "K",
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "multi_agent_cooperative"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "N agents pulling synchronously; regret summed over agents"
+   ],
+   "definition_quote": "The regret of our problem must be \\Omega(...)"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "DDUCB (Decentralized Delayed UCB, accelerated gossip)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "K",
+    "N",
+    "lambda_2"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Unaccelerated DDUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "K",
+    "N",
+    "lambda_2"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(32*(1 + 1/11)*sigma**2*log(T*N)/Delta_i) + (N*(6*C_stage + 1) + 4)*sum_arms(Delta_i)",
+    "expression_latex": "\\sum_{k:\\Delta_k > 0} \\frac{32(1+1/11)\\sigma^2\\ln(TN)}{\\Delta_k} +\\bigg( N(6C+1) + 4\\bigg)\\sum_{k=1}^K\\Delta_k",
+    "regime": null
+   },
+   "symbols": {
+    "C_stage": "stage length ceil(log(2N/eps)/sqrt(2 ln(1/|lambda_2|))) with eps=1/22",
+    "lambda_2": "second largest eigenvalue modulus of the gossip matrix P"
+   },
+   "conditions": [
+    "P has real eigenvalues, is doubly stochastic, |lambda_2|<1"
+   ],
+   "tuning": [
+    "eta = 2",
+    "epsilon = 1/22"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret_decentralized_delayed_ucb",
+    "number": "Theorem (thm:regret_decentralized_delayed_ucb), part 1",
+    "quote": "The algorithm DDUCB with exploration parameter $\\eta=2$ and $\\epsilon = 1/22$ satisfies: The following finite-time bound on the regret ... R(T) < \\sum_{k:\\Delta_k > 0} \\frac{32(1+1/11)\\sigma^2\\ln(TN)}{\\Delta_k} +\\bigg( N(6C+1) + 4\\bigg)\\sum_{k=1}^K\\Delta_k."
+   },
+   "confidence": "high",
+   "notes": "Regret summed over N agents, defined via means (pseudo-regret). Paper's C renamed C_stage. Algorithm uses T only as stopping time; treated as anytime. Also restated as item 4 of extended theorem."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(sigma**2*log(T*N)/Delta_i) + N*log(N)/sqrt(log(1/lambda_2))*sum_arms(Delta_i)",
+    "expression_latex": "\\sum_{k:\\Delta_k > 0} \\frac{\\sigma^2\\ln(TN)}{\\Delta_k} + \\frac{N \\ln(N)}{\\sqrt{\\ln(1/\\abs{\\lambda_2})}}\\sum_{k=1}^K \\Delta_k",
+    "regime": null
+   },
+   "symbols": {
+    "lambda_2": "second largest eigenvalue modulus |lambda_2| of P"
+   },
+   "conditions": [
+    "P has real eigenvalues, is doubly stochastic, |lambda_2|<1"
+   ],
+   "tuning": [
+    "eta = 2",
+    "epsilon = 1/22"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret_decentralized_delayed_ucb",
+    "number": "Theorem (thm:regret_decentralized_delayed_ucb), part 2",
+    "quote": "The corresponding asymptotic bound: R(T) \\lesssim \\sum_{k:\\Delta_k > 0} \\frac{\\sigma^2\\ln(TN)}{\\Delta_k} + \\frac{N \\ln(N)}{\\sqrt{\\ln(1/\\abs{\\lambda_2})}}\\sum_{k=1}^K \\Delta_k."
+   },
+   "confidence": "high",
+   "notes": "lambda_2 denotes |lambda_2|. Also item 5 of the extended theorem."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(16*eta*(1 + 2*eps_alg)*sigma**2*log(T*N)/Delta_i) + (N*(6*C_stage + 1) + 2*eta/(eta - 1))*sum_arms(Delta_i)",
+    "expression_latex": "\\sum_{k:\\Delta_k > 0} \\frac{16\\eta(1+2\\epsilon)\\sigma^2\\ln(TN)}{\\Delta_k} + \\bigg( N(6C+1) + \\frac{2\\eta}{(\\eta-1)}\\bigg)\\sum_{k=1}^K\\Delta_k",
+    "regime": null
+   },
+   "symbols": {
+    "C_stage": "ceil(ln(2N/eps)/sqrt(2 ln(1/|lambda_2|)))",
+    "eta": "UCB exploration parameter (>1)"
+   },
+   "conditions": [
+    "P has real eigenvalues, is doubly stochastic, |lambda_2|<1"
+   ],
+   "tuning": [
+    "eta > 1",
+    "0 < eps_alg < (eta-1)/(7(eta+1))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Extended Theorem (thm:regret_decentralized_delayed_ucb), item 1",
+    "quote": "Let $\\eta>1$, and let $\\epsilon>0$ be arbitrarily small and less than $\\frac{\\eta-1}{7(\\eta+1)}$. ... The finite-time bound on the regret: R(T) < \\sum_{k:\\Delta_k > 0} \\frac{16\\eta(1+2\\epsilon)\\sigma^2\\ln(TN)}{\\Delta_k} + \\bigg( N(6C+1) + \\frac{2\\eta}{(\\eta-1)}\\bigg)\\sum_{k=1}^K\\Delta_k."
+   },
+   "confidence": "high",
+   "notes": "Paper's epsilon is mixing precision, mapped to eps_alg."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(16*eta*(1 + 2*eps_alg)*sigma**2*log(T*N)/Delta_i) + (N*(2*C_stage + 1) + 2*N*C_stage/K**eta*(1 + 1/N**eta) + 2*eta/((eta - 1)*(N*C_stage)**(eta - 1)))*sum_arms(Delta_i)",
+    "expression_latex": "\\sum_{k:\\Delta_k > 0} \\frac{16\\eta(1+2\\epsilon)\\sigma^2\\ln(TN)}{\\Delta_k} + \\bigg( N(2C+1) + \\frac{2NC}{K^{\\eta}}\\left(1+\\frac{1}{N^{\\eta}}\\right) + \\frac{2\\eta}{(\\eta-1)(NC)^{\\eta-1}}\\bigg)\\sum_{k=1}^K \\Delta_k",
+    "regime": null
+   },
+   "symbols": {
+    "C_stage": "ceil(ln(2N/eps)/sqrt(2 ln(1/|lambda_2|)))",
+    "eta": "UCB exploration parameter (>1)"
+   },
+   "conditions": [
+    "P has real eigenvalues, is doubly stochastic, |lambda_2|<1"
+   ],
+   "tuning": [
+    "eta > 1",
+    "0 < eps_alg < (eta-1)/(7(eta+1))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Extended Theorem (thm:regret_decentralized_delayed_ucb), item 2",
+    "quote": "The sharper finite-time bound on the regret: R(T) < \\sum_{k:\\Delta_k > 0} \\frac{16\\eta(1+2\\epsilon)\\sigma^2\\ln(TN)}{\\Delta_k} + \\bigg( N(2C+1) + \\frac{2NC}{K^{\\eta}}\\left(1+\\frac{1}{N^{\\eta}}\\right) + \\frac{2\\eta}{(\\eta-1)(NC)^{\\eta-1}}\\bigg)\\sum_{k=1}^K \\Delta_k."
+   },
+   "confidence": "high",
+   "notes": ""
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(eta*(1 + eps_alg)*sigma**2*log(T*N)/Delta_i) + (N*log(N/eps_alg)/sqrt(log(1/lambda_2)) + eta/(eta - 1))*sum_arms(Delta_i)",
+    "expression_latex": "\\sum_{k:\\Delta_k > 0} \\frac{\\eta(1+\\epsilon)\\sigma^2\\ln(TN)}{\\Delta_k} + \\left( \\frac{N \\ln(N/\\epsilon)}{\\sqrt{\\ln(1/\\abs{\\lambda_2})}} + \\frac{\\eta}{\\eta-1} \\right)\\sum_{k=1}^K \\Delta_k",
+    "regime": null
+   },
+   "symbols": {
+    "lambda_2": "|lambda_2| of P",
+    "eta": "UCB exploration parameter (>1)"
+   },
+   "conditions": [
+    "P has real eigenvalues, is doubly stochastic, |lambda_2|<1"
+   ],
+   "tuning": [
+    "eta > 1",
+    "0 < eps_alg < (eta-1)/(7(eta+1))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "eq_regret_asymp_with_epsilon",
+    "number": "Extended Theorem (thm:regret_decentralized_delayed_ucb), item 3",
+    "quote": "The corresponding asymptotic bound: R(T) \\lesssim \\sum_{k:\\Delta_k > 0} \\frac{\\eta(1+\\epsilon)\\sigma^2\\ln(TN)}{\\Delta_k} + \\left( \\frac{N \\ln(N/\\epsilon)}{\\sqrt{\\ln(1/\\abs{\\lambda_2})}} + \\frac{\\eta}{\\eta-1} \\right)\\sum_{k=1}^K \\Delta_k."
+   },
+   "confidence": "high",
+   "notes": ""
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(sigma**2*log(T*N)/Delta_i) + N*log(N)/log(1/lambda_2)*sum_arms(Delta_i)",
+    "expression_latex": "\\sum_{k:\\Delta_k > 0} \\frac{\\sigma^2\\ln(TN)}{\\Delta_k} + \\frac{N \\ln(N)}{\\ln(1/\\abs{\\lambda_2})}\\sum_{k=1}^K \\Delta_k",
+    "regime": null
+   },
+   "symbols": {
+    "lambda_2": "|lambda_2| of P"
+   },
+   "conditions": [
+    "P has real eigenvalues, is doubly stochastic, |lambda_2|<1"
+   ],
+   "tuning": [
+    "eta = 2",
+    "epsilon = 1/22",
+    "C = ceil(ln(N/eps)/ln(1/|lambda_2|))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "eq_regret_unaccelerated",
+    "number": "Extended Theorem (thm:regret_decentralized_delayed_ucb), item 6",
+    "quote": "With the same choice of $\\eta$ and $\\epsilon$, mixing $\\beta_i$ and $b_i$ in an unaccelerated way ... with $C=\\lceil\\ln(N/\\epsilon)/\\ln(1/|\\lambda_2|)\\rceil$ the regret is : R(T) \\lesssim \\sum_{k:\\Delta_k > 0} \\frac{\\sigma^2\\ln(TN)}{\\Delta_k} + \\frac{N \\ln(N)}{\\ln(1/\\abs{\\lambda_2})}\\sum_{k=1}^K \\Delta_k."
+   },
+   "confidence": "high",
+   "notes": ""
+  },
+  {
+   "id": "r7",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*N*sigma**2*log(T*N)) + K*N*Delta_max*log(N)/sqrt(log(1/lambda_2))",
+    "expression_latex": "\\sqrt{KTN\\sigma^2 \\ln(TN)} + K \\frac{N\\Lambda\\ln N}{\\sqrt{\\ln(1/\\abs{\\lambda_2})}}",
+    "regime": null
+   },
+   "symbols": {
+    "lambda_2": "|lambda_2| of P"
+   },
+   "conditions": [
+    "P has real eigenvalues, is doubly stochastic, |lambda_2|<1"
+   ],
+   "tuning": [
+    "eta and epsilon hidden in constants"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:instance_independent_analysis",
+    "number": "Theorem (thm:instance_independent_analysis)",
+    "quote": "The regret achieved by the DDUCB algorithm is R(T) \\lesssim \\sqrt{KTN\\sigma^2 \\ln(TN)} + K \\frac{N\\Lambda\\ln N}{\\sqrt{\\ln(1/\\abs{\\lambda_2})}}, where $\\Lambda$ is an upper bound on the gaps $\\Delta_k$ ... Here, $\\lesssim$ does not only hide constants but also $\\eta$ and $\\epsilon$."
+   },
+   "confidence": "medium",
+   "notes": "Paper's Lambda (upper bound on gaps) mapped to Delta_max."
+  },
+  {
+   "id": "r8",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "consistent",
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sum_subopt(sigma**2*log(T*N)/Delta_i) + (N/K + 1)*sum_arms(Delta_i)",
+    "expression_latex": "\\Omega\\Big(\\sum_{k:\\Delta_k > 0} \\frac{\\sigma^2\\ln(TN)}{\\Delta_k} + \\Big(\\frac{N}{K}+1\\Big)\\sum_{k=1}^K \\Delta_k \\Big)",
+    "regime": "asymptotic"
+   },
+   "symbols": {},
+   "conditions": [
+    "informal argument combining Lai-Robbins with a first-round argument"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "remark:regret_interpretation",
+    "number": "Remark (remark:regret_interpretation)",
+    "quote": "Hence, by the lower bound above and the latter argument, we can give the following lower bound for the problem we consider. The regret of our problem must be \\Omega\\Big(\\sum_{k:\\Delta_k > 0} \\frac{\\sigma^2\\ln(TN)}{\\Delta_k} + \\Big(\\frac{N}{K}+1\\Big)\\sum_{k=1}^K \\Delta_k \\Big)"
+   },
+   "confidence": "low",
+   "notes": "Stated in a remark with an informal justification ('any asymptotically optimal algorithm in terms of N and K'); algorithm class is vague."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "lai1985asymptotically",
+   "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_first_author": "Tze Leung Lai",
+   "cited_year": 1985,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Centralized stochastic K-armed bandit, sigma-subgaussian rewards, consistent policies",
+   "bound": {
+    "notation": "liminf",
+    "expression": "sum_subopt(2*sigma**2/Delta_i)*log(T)",
+    "expression_latex": "\\liminf_{T\\to\\infty} \\frac{R(T)}{\\ln T} \\geq \\sum_{k:\\Delta_k > 0} \\frac{2\\sigma^2}{\\Delta_k}",
+    "regime": null
+   },
+   "where": "Remark (remark:regret_interpretation)"
+  },
+  {
+   "cited_key": "audibert2009minimax",
+   "cited_title": "Minimax policies for adversarial and stochastic bandits",
+   "cited_first_author": "Jean-Yves Audibert",
+   "cited_year": 2009,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Centralized adversarial K-armed bandit",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "\\sqrt{KT}",
+    "regime": null
+   },
+   "where": "Related Work"
+  },
+  {
+   "cited_key": "cesa2016delay",
+   "cited_title": "Delay and cooperation in nonstochastic bandits",
+   "cited_first_author": "Nicolo Cesa-Bianchi",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Decentralized adversarial bandit with N agents on a network",
+   "bound": {
+    "notation": "Omega",
+    "expression": "N*sqrt(T)",
+    "expression_latex": "N\\sqrt{T}",
+    "regime": null
+   },
+   "where": "Related Work"
+  },
+  {
+   "cited_key": "cesa2016delay",
+   "cited_title": "Delay and cooperation in nonstochastic bandits",
+   "cited_first_author": "Nicolo Cesa-Bianchi",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Decentralized adversarial bandit with N agents, messages forwarded for d=sqrt(K) rounds",
+   "bound": {
+    "notation": "O",
+    "expression": "N*(sqrt(sqrt(K)*T*log(K)) + sqrt(K)*log(T))",
+    "expression_latex": "N(\\sqrt{K^{1/2}T \\log K} + \\sqrt{K}\\log T)",
+    "regime": null
+   },
+   "where": "Related Work"
+  },
+  {
+   "cited_key": "awerbuch2008competitive",
+   "cited_title": "Competitive collaborative learning",
+   "cited_first_author": "Baruch Awerbuch",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Distributed adversarial bandit with N users, no Byzantine users, log N communication rounds",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(2/3)*(N + K)*log(N)*log(T)",
+    "expression_latex": "O(T^{2/3}(N+K)\\log N \\log T)",
+    "regime": null
+   },
+   "where": "Related Work"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:46:12",
+  "source_chars": 105069,
+  "input_tokens": 78951,
+  "output_tokens": 9841,
+  "cost_usd_equiv": 0.6108468,
+  "status": "extracted"
+ }
+}

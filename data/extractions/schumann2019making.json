@@ -1,0 +1,248 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Making the Cut: A Bandit-based Approach to Tiered Interviewing",
+  "arxiv_id": "1906.09621",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Candice Schumann",
+   "Zhi Lang",
+   "Jeffrey S. Foster",
+   "John P. Dickerson"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Tiered (multi-stage) combinatorial pure exploration, PAC / fixed confidence",
+   "objective": "other_pure_exploration",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "sigma",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "linear_optimization_oracle",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Goal: return a cohort (size-K_cohort subset of arms) whose linear objective w is within epsilon of optimal with probability >= 1-delta (combinatorial PAC identification)",
+    "Multiple interview stages i=1..m, each with pull cost j_i and information gain s_i (a pull in stage i gives sigma/sqrt(s_i)-sub-Gaussian noise); cost is total weighted pulls",
+    "Stage-wise shortlists of sizes K_i; arms cut between stages",
+    "Access to a maximization oracle over size-K subsets"
+   ],
+   "definition_quote": "Each of our $n$ applicants is an arm $a$ in the full set of arms $A$. Our goal is to select $K < n$ arms that maximize some objective $w$ using a maximization oracle. We split up the review/interview process into $m$ stages, such that each stage $i \\in [m]$ has per-interview information gain $s_i$, cost $j_i$, and number of required arms $K_i$ ... We want to solve this problem using either a confidence constraint ($\\delta$, $\\epsilon$), or a budget constraint over each stage ($T_i$)."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Tiered (multi-stage) combinatorial pure exploration, fixed budget",
+   "objective": "other_pure_exploration",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "linear_optimization_oracle",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Fixed-budget identification of the optimal cohort M_* (combinatorial decision class, linear objective); error probability Pr[Out != M_*]",
+    "Per-stage budgets T_bar_i, pull cost j_i and information gain s_i per stage",
+    "Number of accept/reject decisions K_tilde_i per stage is fixed in advance",
+    "Access to a constrained maximization oracle"
+   ],
+   "definition_quote": "Algorithm~\\ref{alg:bug_cut} provides pseudocode for \\brutas, which takes as input fixed budgets $\\bar{T}_i$ for each stage $i \\in [m]$, where $\\sum_{i\\in[m]}\\bar{T}_i=\\bar{T}$, the total budget. In this version of the tiered-interview problem, we also know how many decisions---whether to accept or reject an arm---we need to make in each stage."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "CACO (Cutting Arms using a Combinatorial Oracle)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "delta",
+    "epsilon",
+    "stage parameters (s_i, j_i, K_i)"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "BRUTaS (Budgeted Rounds Updated Targets Successively)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "per-stage budgets T_bar_i",
+    "stage parameters (s_i, j_i, K_tilde_i)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "sigma**2*sum_stages(j_i/s_i*H_eps_i*log(sigma**2*j_i**4/(s_i*delta)*H_eps_i))",
+    "expression_latex": "O\\left(\\sigma^2\\sum_{i\\in[m]}\\left( \\frac{j_i}{s_i}\\left(\\sum_{a\\in A_{i-1}} \\min\\left\\{\\frac{1}{\\Delta_a^2},\\frac{K_i^2}{\\epsilon^2}\\right\\}\\right)\\log\\left(\\frac{\\sigma^2j_i^4}{s_i\\delta}\\sum_{a\\in A_{i-1}} \\min\\left\\{\\frac{1}{\\Delta_a^2},\\frac{K_i^2}{\\epsilon^2}\\right\\}\\right) \\right)\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "sum_stages": "sum over interview stages i = 1..m (paper's m = number of stages)",
+    "j_i": "cost of a pull in stage i",
+    "s_i": "information gain of a pull in stage i",
+    "K_i": "number of arms kept after stage i",
+    "H_eps_i": "sum over active arms a in A_{i-1} of min{1/Delta_a^2, K_i^2/epsilon^2}",
+    "Delta_a": "gap score of arm a (combinatorial gap, Chen et al. 2014)"
+   },
+   "conditions": [
+    "w is a linear objective",
+    "reward of each arm sigma-sub-Gaussian with mean u(a)",
+    "delta, epsilon in (0,1)"
+   ],
+   "tuning": [
+    "rad_t(a) = sigma*sqrt(2 log(4 K_{i-1} Cost_{i,t}^3/delta)/T_{i,t}(a))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:scuc",
+    "number": "Theorem 1",
+    "quote": "Then, with probability at least $1-\\delta$, the \\cut\\ algorithm (Algorithm~\\ref{alg:conf_cut}) returns the set $\\out$ where $w(\\out)-w(M_m^*) < \\epsilon$ and T \\leq O(\\sigma^2\\sum_{i\\in[m]}( \\frac{j_i}{s_i}(\\sum_{a\\in A_{i-1}} \\min\\{\\frac{1}{\\Delta_a^2},\\frac{K_i^2}{\\epsilon^2}\\})\\log(\\frac{\\sigma^2j_i^4}{s_i\\delta}\\sum_{a\\in A_{i-1}} \\min\\{\\frac{1}{\\Delta_a^2},\\frac{K_i^2}{\\epsilon^2}\\}) ))."
+   },
+   "confidence": "medium",
+   "notes": "T is total cost (cost-weighted number of pulls), recorded as sample complexity. Also guarantees epsilon-correctness w.p. 1-delta. Restated as Theorem 3 in appendix (proof gives constant 499 with min{4/Delta_a^2, K_i^2/eps^2}). Reduces to CLUCB bound for one stage."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "K**2*exp(-sum_stages(s_b*(T_bar_b - K_tilde_b)/(j_b*logtilde(K_tilde_b)))/(72*sigma**2*H_tilde))",
+    "expression_latex": "n^2\\exp\\left(-\\frac{\\sum_{b=1}^m s_b(\\bar{T}_b-\\tilde{K}_b)/(j_b\\tlog(\\tilde{K}_b))}{72\\sigma^2\\tilde{\\mathbf{H}}}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "sum_stages": "sum over stages b = 1..m",
+    "s_b": "information gain of a pull in stage b",
+    "j_b": "cost of a pull in stage b",
+    "T_bar_b": "budget of stage b",
+    "K_tilde_b": "number of accept/reject decisions in stage b",
+    "logtilde": "logtilde(n) = sum_{i=1}^n 1/i",
+    "H_tilde": "max_i i*Delta_(i)^{-2} with sorted combinatorial gaps"
+   },
+   "conditions": [
+    "total budget sum_i T_bar_i > n (number of arms)",
+    "w is a linear objective",
+    "rewards sigma-sub-Gaussian"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:bcut",
+    "number": "Theorem 2",
+    "quote": "Then, Algorithm~\\ref{alg:bug_cut} uses at most $\\bar{T}_i$ samples per stage $i\\in[m]$ and outputs a solution $\\out\\in\\mathcal{M}_K\\cup\\{\\perp\\}$ such that \\Pr[\\out\\neq M_*] \\leq  n^2\\exp\\left(-\\frac{\\sum_{b=1}^m s_b(\\bar{T}_b-\\tilde{K}_b)/(j_b\\tlog(\\tilde{K}_b))}{72\\sigma^2\\tilde{\\mathbf{H}}}\\right)"
+   },
+   "confidence": "medium",
+   "notes": "Paper's n (number of arms) mapped to canonical K; paper's K is cohort size. Restated as Theorem 4 in the appendix. Reduces to CSAR bound for one stage."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:53:42",
+  "source_chars": 90191,
+  "input_tokens": 74339,
+  "output_tokens": 5286,
+  "cost_usd_equiv": 0.48285079999999997,
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,298 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Multi-armed Bandits with Cost Subsidy",
+  "arxiv_id": "2011.01488",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Deeksha Sinha",
+   "Karthik Abinav Sankararama",
+   "Abbas Kazerouni",
+   "Vashist Avadhanula"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "MAB with cost subsidy",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each arm has a deterministic cost c_i known a priori",
+    "Subsidy factor alpha known to the learner; target arm is the cheapest arm with mean >= (1-alpha) max mean",
+    "Performance measured by two regrets: quality regret E[sum max{(1-alpha)mu_{m*} - mu_{pi_t},0}] and cost regret E[sum max{c_{pi_t} - c_{i*},0}]; results bound their sum"
+   ],
+   "definition_quote": "in every round $t \\in [T]$ the agent chooses an arm $i \\in [K]$ and realizes a reward $r_{t},$ sampled independently from a fixed, but unknown distribution $\\mathcal{F}_i$ with mean $\\mu_i$ ... and incurs a cost $c_{i}$ ..., which is known a priori. ... we allow the agent to be agnostic between arms, whose expected reward is greater than $1- \\alpha$ fraction of the highest expected reward, for a fixed and known value of $\\alpha$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Cost-Subsidized TS (CS-TS)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "prior"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Cost-Subsidized UCB (CS-UCB)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "Cost-Subsidized Explore-Then-Commit (CS-ETC)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T",
+    "expression_latex": "\\Omega\\left(T\\right)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "Applies to the CS-TS algorithm with Gaussian prior/posterior",
+    "Hard instance has deterministic rewards (unknown to agent)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm::ts-lin-reg",
+    "number": "Theorem 1",
+    "quote": "For any given $K, \\alpha, T$  there exists an instance $\\phi$ of problem such that $\\qreg_{{\\sf \\consTS }}(T,\\alpha,\\phi) + \\creg_{{\\sf \\consTS }}(T,\\alpha,\\phi)$  is $\\Omega\\left(T\\right)$."
+   },
+   "confidence": "medium",
+   "notes": "Algorithm-specific lower bound for CS-TS (sum of quality and cost regret). Quantity is sum of quality and cost regret, recorded as 'other'."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "(1 - alpha_sub)**2*K**(1/3)*T**(2/3)",
+    "expression_latex": "\\Omega\\left((1-\\alpha)^2 K^{\\frac{1}{3}}T^{\\frac{2}{3}}\\right)",
+    "regime": "0 <= alpha <= 1, 1 <= K <= T"
+   },
+   "symbols": {
+    "alpha_sub": "subsidy factor alpha"
+   },
+   "conditions": [
+    "instance has K+1 Bernoulli arms",
+    "1 <= K <= T"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lower_bound",
+    "number": "Theorem 2",
+    "quote": "For any given $\\alpha, K, T$ and (possibly randomized) policy $\\pi$, there exists an instance $\\phi$ of problem \\eqref{eq:regret} with $K+1$ arms such that $    \\qreg_\\pi(T, \\alpha, \\phi) + \\creg_\\pi(T,\\alpha,\\phi) $ is  $ \\Omega\\left((1-\\alpha)^2 K^{\\frac{1}{3}}T^{\\frac{2}{3}}\\right)$ when $0 \\leq \\alpha \\leq 1$ and  $1 \\leq K \\leq T$."
+   },
+   "confidence": "high",
+   "notes": "Bound on sum of quality and cost regret. Paper notes it remains valid with unknown costs."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "p*K**(1/3)*T**(2/3)",
+    "expression_latex": "\\Omega\\left( pK^{\\frac{1}{3}}T^{\\frac{2}{3}} \\right)",
+    "regime": "0 < p <= 1/2, 1 <= K <= T"
+   },
+   "symbols": {
+    "p": "mean reward of the cheap arm 0 in the hard instance family"
+   },
+   "conditions": [
+    "alpha = 0",
+    "instance from the family Phi_{0,p,eps} of K+1 Bernoulli arms",
+    "1 <= K <= T"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "lem:alpha_0_neat",
+    "number": "Lemma 1",
+    "quote": "For any given $p, K, T$ and any (possibly randomized) policy $\\pi$, there exists an instance $\\phi$ (from the family $\\cIzero$) such that $\\qreg_{\\pi}(T, 0,\\phi) + \\creg_{\\pi}(T, 0,\\phi)$ is $\\Omega\\left( pK^{\\frac{1}{3}}T^{\\frac{2}{3}} \\right)$ when $0 < p \\leq 1/2$ and $1 \\leq  K \\leq T$."
+   },
+   "confidence": "medium",
+   "notes": "Special case alpha=0 used in proof of Theorem 2."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "K**(1/3)*T**(2/3)*sqrt(log(T))",
+    "expression_latex": "O(K^{1/3}T^{2/3}\\sqrt{\\log{T}})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [
+    "tau = (T/K)^{2/3} exploration pulls per arm"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:explore_first_regret",
+    "number": "Theorem 3",
+    "quote": "For an instance $\\phi$ with $K$ arms, when  the number of exploration pulls of each arm $ \\tau = (T/K)^{2/3}$, then the sum of cost and quality regret incurred by \\mainALG \\  (Algorithm \\ref{alg:explore_first}) on any instance $\\phi$ i.e. $\\qreg_{\\mainALG}(T, \\alpha,  \\phi) + \\creg_{\\mainALG}(T, \\alpha, \\phi)$ is $O(K^{1/3}T^{2/3}\\sqrt{\\log{T}})$."
+   },
+   "confidence": "high",
+   "notes": "Sum of quality and cost regret. Paper states (informally) it also holds for a modified algorithm with unknown random costs in [0,1]."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "(1 + delta_c)*sqrt(K*T*log(T))",
+    "expression_latex": "O((1+\\delta) \\sqrt{KT \\log{T}})",
+    "regime": null
+   },
+   "symbols": {
+    "delta_c": "consistency constant: |c_i - c_j| <= delta_c |mu_i - mu_j| for all arms i, j"
+   },
+   "conditions": [
+    "|c_i - c_j| <= delta_c |mu_i - mu_j| for all i, j (delta_c possibly unknown)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:cost_quality_consistent",
+    "number": "Theorem 4",
+    "quote": "If for an instance $\\phi$ with $K$ arms,  $|c_i - c_j| \\leq \\delta |\\mu_i - \\mu_j| \\ \\forall i, j \\in [K]$ and any (possibly unknown) $\\delta >0$, then $\\qreg_{\\consUCB}(T, \\alpha,  \\phi) + \\creg_{\\consUCB}(T, \\alpha, \\phi)$ is $O((1+\\delta) \\sqrt{KT \\log{T}})$."
+   },
+   "confidence": "high",
+   "notes": "Sum of quality and cost regret under cost-quality consistency."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:12:42",
+  "source_chars": 92859,
+  "input_tokens": 74332,
+  "output_tokens": 4911,
+  "cost_usd_equiv": 0.47529479999999996,
+  "status": "extracted"
+ }
+}

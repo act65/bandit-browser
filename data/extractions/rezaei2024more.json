@@ -1,0 +1,201 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Be More Diverse than the Most Diverse: Optimal Mixtures of Generative Models via Mixture-UCB Bandit Algorithms",
+  "arxiv_id": "2412.17622",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Parham Rezaei",
+   "Farzan Farnia",
+   "Cheuk Ting Li"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Mixture multi-armed bandit with quadratic loss (online selection of optimal mixtures)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Objective is the quadratic loss L(P_hat^(T)) = (1/T^2) sum_{s,t} kappa(x^(s),x^(t)) + (1/T) sum_t f(x^(t)) of the empirical distribution of all collected samples, compared with the best mixture of arms min_alpha L(alpha); comparator is the best mixture, not the best single arm",
+    "kappa is a bounded positive semidefinite kernel with values in [kappa_0,kappa_1], f bounded in [f_0,f_1]; samples x lie in an arbitrary space X",
+    "Algorithm uses the sensitivity Delta_L = 2 Delta_kappa + Delta_f and Delta_kappa (range bounds of kappa and f)"
+   ],
+   "definition_quote": "At time $t=1,\\ldots,T$, we choose and pull an arm $b^{(t)}\\in[m]$ (i.e., generate a sample from model $b^{(t)}$), and obtain a sample $x^{(t)}$ from the distribution $P_{b^{(t)}}$. ... here we minimize the loss $L(\\hat{P}^{(T)})$ which involve cross terms $\\kappa(x^{(s)},x^{(t)})$ between samples at different rounds."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Mixture-UCB-CAB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "Delta_L",
+    "Delta_kappa"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Mixture-UCB-OGD",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "Delta_L",
+    "Delta_kappa"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "Sparse-Mixture-UCB-CAB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "Delta_L",
+    "Delta_kappa",
+    "lambda"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*Delta_L*sqrt(beta_ucb*K*T*log(T))",
+    "expression_latex": "\\mathbb{E}\\big[L(\\hat{P}^{(T)})\\big]-\\min_{\\boldsymbol{\\alpha}}L(\\boldsymbol{\\alpha}) \\le4\\Delta_{L}\\sqrt{\\frac{\\beta m\\log T}{T}}",
+    "regime": null
+   },
+   "symbols": {
+    "Delta_L": "sensitivity of the loss, 2*Delta_kappa + Delta_f (ranges of kappa and f)",
+    "beta_ucb": "confidence parameter beta of Mixture-UCB-CAB"
+   },
+   "conditions": [
+    "K >= 2",
+    "T >= 2",
+    "kappa positive semidefinite and bounded, f bounded"
+   ],
+   "tuning": [
+    "beta >= 4"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:alg_converge",
+    "number": "Theorem 2",
+    "quote": "Suppose $m \\ge 2$, $\\beta\\ge4$. Consider bounded quadratic loss function (\\ref{eq:general_loss}) with $\\kappa$ being positive semidefinite. Let $\\hat{P}^{(T)}$ be the empirical distribution of the first $T\\ge2$ samples $\\mathbf{x}^{(T)}$ given by Mixture-UCB-CAB. Then the gap between the expected loss and the optimal loss is bounded by $\\mathbb{E}[L(\\hat{P}^{(T)})]-\\min_{\\boldsymbol{\\alpha}}L(\\boldsymbol{\\alpha}) \\le4\\Delta_{L}\\sqrt{\\frac{\\beta m\\log T}{T}}$."
+   },
+   "confidence": "medium",
+   "notes": "Paper's bound is on the average per-round (quadratic) regret; multiplied by T here. Paper's m = number of arms K. Quantity is a quadratic generalisation of regret against best mixture (reduces to pseudo-regret when kappa=0), hence 'other'. Proof gives improved constant 3.382. Algorithm's confidence widths use log t, not T, so recorded as anytime."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "bubeck2012regretanalysisstochasticnonstochastic",
+   "cited_title": "Regret analysis of stochastic and nonstochastic multi-armed bandit problems",
+   "cited_first_author": "Sébastien Bubeck",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic K-armed bandit, distribution-free regret of conventional UCB (stated per round as O(sqrt(m log T / T)); multiplied by T)",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(T))",
+    "expression_latex": "O(\\sqrt{(m \\log T)/T})",
+    "regime": null
+   },
+   "where": "Section 5.1, after Theorem 2"
+  },
+  {
+   "cited_key": "bubeck2012regretanalysisstochasticnonstochastic",
+   "cited_title": "Regret analysis of stochastic and nonstochastic multi-armed bandit problems",
+   "cited_first_author": "Sébastien Bubeck",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Stochastic K-armed bandit minimax lower bound (Theorem 3.4 of Bubeck & Cesa-Bianchi), stated per round as Omega(sqrt(m/T)); multiplied by T",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "\\Omega(\\sqrt{m/T})",
+    "regime": null
+   },
+   "where": "Section 5.1, after Theorem 2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:59:53",
+  "source_chars": 127869,
+  "input_tokens": 98175,
+  "output_tokens": 3660,
+  "cost_usd_equiv": 0.6410187999999999,
+  "status": "extracted"
+ }
+}

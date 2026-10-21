@@ -1,0 +1,438 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Best-of-Three-Worlds Linear Bandit Algorithm with Variance-Adaptive Regret Bounds",
+  "arxiv_id": "2302.12370",
+  "arxiv_version": null,
+  "year": 2023,
+  "authors": [
+   "Shinji Ito",
+   "Kei Takemura"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Adversarial regime (linear bandits)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_adaptive",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "T",
+    "d"
+   ],
+   "instance_assumptions": [
+    "arms_span_Rd"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "arbitrary_compact",
+    "time_varying": "fixed",
+    "access": "self_concordant_barrier",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "l2_ball"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "loss f_t(a) = <l_t,a> + eps_t(a) with f_t in [-1,1]; noise conditional mean xi_t need not be zero",
+    "action set closed bounded, not in a proper affine subspace, contained in the unit L2 ball"
+   ],
+   "definition_quote": "In the adversarial regime, by way of contrast to the stochastic regime, $( \\ell_t  )_{t=1}^T$ is an arbitrary sequence. More precisely, $\\ell_t$ can be chosen in an adversarial way depending on $(a_s)_{s=1}^{t-1}$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Stochastic regime with adversarial corruption (linear bandits)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_corrupted",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "T",
+    "d"
+   ],
+   "instance_assumptions": [
+    "arms_span_Rd"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "arbitrary_compact",
+    "time_varying": "fixed",
+    "access": "self_concordant_barrier",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "l2_ball"
+   },
+   "corruption": {
+    "adversary": "adaptive",
+    "budget_measure": "unspecified",
+    "structure": "linear_in_action",
+    "regret_reference": "corrupted"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "corruption level C = sum_t ||l_t - l*||_2",
+    "noise need not be zero-mean nor identically distributed (Remark 3)",
+    "C = 0 recovers the stochastic regime"
+   ],
+   "definition_quote": "It is parametrized by a true loss vector $\\ell^* \\in B_2^d(1)$ and by a \\textit{corruption level} $C \\geq 0$. In this regime, the sequence of $(\\ell_t)_{t=1}^T$ is subject to the constraint that $\\sum_{t=1}^T \\| \\ell_t - \\ell^* \\|_2 \\leq C$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Algorithm 1 (optimistic SCRiBLe-type FTRL with scaled-up sampling)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(vartheta*log(T)*(Min(Q_T, P_path) + E_noise)) + d*vartheta*log(T)",
+    "expression_latex": "d \\sqrt{ \\theta \\log T (\\min \\{ Q, P \\} + \\E [ \\sum_{t=1}^T (\\varepsilon_t( a_t ))^2 ] ) } + d \\theta \\log T",
+    "regime": null
+   },
+   "symbols": {
+    "P_path": "path length E[sum_t ||l_t - l_{t+1}||_2]",
+    "E_noise": "E[sum_t eps_t(a_t)^2], cumulative squared noise"
+   },
+   "conditions": [],
+   "tuning": [
+    "eta in (0,1/4)",
+    "beta_t = 6d + 2d sqrt(sum_{s<t} g_s(m_s)/(theta log T))",
+    "psi is a theta-self-concordant barrier for conv(A)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:adv",
+    "number": "Theorem 2",
+    "quote": "The regret for Algorithm~\\ref{alg:FTRL} is bounded as R_T = O ( d \\sqrt{ \\theta \\log T ( \\min \\{ Q, P \\} + \\E [ \\sum_{t=1}^T (\\varepsilon_t( a_t ))^2 ] ) } + d \\theta \\log T )."
+   },
+   "confidence": "medium",
+   "notes": "Q is quadratic variation min_lbar E sum ||l_t - lbar||^2 (mapped to Q_T). Valid for any choice of z_t; polynomial given barrier. Since Q <= T-ish, implies O(d sqrt(theta T log T)) when noise-free."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(vartheta*L_star*log(T)) + d*vartheta*log(T)",
+    "expression_latex": "d \\sqrt{ \\theta L^* \\log T } + d \\theta \\log T",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "f_t(a) >= 0 for all a in A and t"
+   ],
+   "tuning": [
+    "eta in (0,1/4)",
+    "beta_t as in (eq:defbetat)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:adv",
+    "number": "Theorem 2",
+    "quote": "Further, if $f_t(a) \\geq 0$ for any $a \\in \\cA$ and $t \\in [T]$, we have R_T = O ( d \\sqrt{ \\theta L^* \\log T } + d \\theta \\log T )."
+   },
+   "confidence": "high",
+   "notes": "First-order bound; L* = min_a E[sum f_t(a)]."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt((C + Sigma_sum)*vartheta*log(T)) + d*vartheta*log(T)",
+    "expression_latex": "d \\sqrt{ ( C + \\sum_{t=1}^T \\sigma_{t}^2 ) \\theta \\log T } + d \\theta \\log T",
+    "regime": null
+   },
+   "symbols": {
+    "Sigma_sum": "sum_t sigma_t^2 with sigma_t^2 = max_a E[eps_t(a)^2]"
+   },
+   "conditions": [],
+   "tuning": [
+    "eta in (0,1/4)",
+    "beta_t as in (eq:defbetat)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:sto",
+    "number": "Theorem 3",
+    "quote": "We have R_T = O( d \\sqrt{ ( C + \\sum_{t=1}^T \\sigma_{t}^2 ) \\theta \\log T } + d \\theta \\log T), where we define $\\sigma_{t}^2 = \\max_{a \\in \\cA} \\E [ (\\varepsilon_t(a))^2 ]$."
+   },
+   "confidence": "medium",
+   "notes": "Does not require assumption on z_t."
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "exponential",
+   "bound": {
+    "notation": "O",
+    "expression": "(kappa*d*sigma_sq_max/Delta_min + 1)*d*vartheta*log(T) + sqrt((kappa*sigma_sq_max/Delta_min + 1)*C*d**2*vartheta*log(T))",
+    "expression_latex": "( \\frac{\\kappa d \\sigma^2}{\\Delta_{\\min}} + 1 ) d\\theta \\log T + \\sqrt{ ( \\frac{ \\kappa \\sigma^2}{\\Delta_{\\min}}  + 1 ) C d^2 \\theta \\log T }",
+    "regime": null
+   },
+   "symbols": {
+    "kappa": "approximation factor of the reference point z_t in (eq:aspzt), kappa >= 1",
+    "sigma_sq_max": "max_t max_a E[eps_t(a)^2] (maximum noise second moment)"
+   },
+   "conditions": [
+    "a* = argmin_a <l*, a> is unique"
+   ],
+   "tuning": [
+    "z_t chosen so that r_t <= kappa * min_z max_{x in E_t} pi_{z,X}(x)",
+    "eta in (0,1/4)",
+    "beta_t as in (eq:defbetat)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:sto",
+    "number": "Theorem 3",
+    "quote": "Further, if $a^* \\in \\argmin_{a \\in \\cA} \\linner \\ell^*, a \\rinner$ exists uniquely, under the assumption of \\eqref{eq:aspzt}, we have R_T (a^*) = O( ( \\frac{\\kappa d \\sigma^2}{\\Delta_{\\min}} + 1 ) d\\theta \\log T + \\sqrt{ ( \\frac{ \\kappa \\sigma^2}{\\Delta_{\\min}}  + 1 ) C d^2 \\theta \\log T } )"
+   },
+   "confidence": "medium",
+   "notes": "With C=0 gives stochastic bound O((d sigma^2/Delta_min + 1) d theta log T). Computing z_t naively takes O(poly(d)|A|) time, possibly exponential in d. Regret includes corruption."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "bubeck2012towards",
+   "cited_title": "Towards minimax policies for online linear optimization with bandit feedback",
+   "cited_first_author": "S. Bubeck",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Exp2 with John's exploration",
+   "algorithm_registry_id": "exp2_john",
+   "side": "upper",
+   "setting_description": "adversarial linear bandits, finite action set",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(d*T*log(K))",
+    "expression_latex": "O( \\sqrt{d T \\log (|\\cA|)} )",
+    "regime": null
+   },
+   "where": "Table 2"
+  },
+  {
+   "cited_key": "abernethy2008competing",
+   "cited_title": "Competing in the dark: An efficient algorithm for bandit linear optimization",
+   "cited_first_author": "J. Abernethy",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SCRiBLe",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "adversarial linear bandits",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(vartheta*T*log(T))",
+    "expression_latex": "O( d \\sqrt{ \\theta T \\log T})",
+    "regime": null
+   },
+   "where": "Table 2"
+  },
+  {
+   "cited_key": "ito2021hybrid",
+   "cited_title": "Hybrid regret bounds for combinatorial semi-bandits and adversarial linear bandits",
+   "cited_first_author": "S. Ito",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "adversarial linear bandits, data-dependent",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(Min(T, L_star, Q_T, P_path))*log(T)**2",
+    "expression_latex": "O( d \\sqrt{ \\min \\{ T, L^*, Q, P \\} }(\\log T)^2 )",
+    "regime": null
+   },
+   "where": "Table 2"
+  },
+  {
+   "cited_key": "lattimore2017end",
+   "cited_title": "The end of optimism? an asymptotic analysis of finite-armed linear bandits",
+   "cited_first_author": "T. Lattimore",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Optimal Algorithm",
+   "algorithm_registry_id": "end_of_optimism_optimal",
+   "side": "upper",
+   "setting_description": "stochastic finite-armed linear bandits, asymptotic",
+   "bound": {
+    "notation": "limsup",
+    "expression": "C_lin*log(T)",
+    "expression_latex": "c^* \\log T + o(\\log T)",
+    "regime": null
+   },
+   "where": "Table 2"
+  },
+  {
+   "cited_key": "lee2021achieving",
+   "cited_title": "Achieving near instance-optimality and minimax-optimality in stochastic and adversarial linear bandits simultaneously",
+   "cited_first_author": "C.-W. Lee",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "stochastic linear bandits (BOTW algorithm)",
+   "bound": {
+    "notation": "O",
+    "expression": "C_lin*log(T*K)*log(T)",
+    "expression_latex": "O( c^* \\log ( T |\\cA| ) \\log T )",
+    "regime": null
+   },
+   "where": "Table 2"
+  },
+  {
+   "cited_key": "lee2021achieving",
+   "cited_title": "Achieving near instance-optimality and minimax-optimality in stochastic and adversarial linear bandits simultaneously",
+   "cited_first_author": "C.-W. Lee",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "adversarial linear bandits (BOTW algorithm)",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(d*T)*log(T*K*log(T))",
+    "expression_latex": "O( \\sqrt{ d T} \\log (T |\\cA| \\log T) )",
+    "regime": null
+   },
+   "where": "Table 2"
+  },
+  {
+   "cited_key": "lee2021achieving",
+   "cited_title": "Achieving near instance-optimality and minimax-optimality in stochastic and adversarial linear bandits simultaneously",
+   "cited_first_author": "C.-W. Lee",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "corrupted stochastic linear bandits (regret w.r.t. uncorrupted losses)",
+   "bound": {
+    "notation": "O",
+    "expression": "d*log(T*K)*log(T)/Delta_min + C",
+    "expression_latex": "O( \\frac{d  \\log (T |\\cA|) \\log T}{\\Delta_{\\min}} + C )",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "audibert2007tuning",
+   "cited_title": "Tuning bandit algorithms in stochastic environments",
+   "cited_first_author": "J.-Y. Audibert",
+   "cited_year": 2007,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB-V",
+   "algorithm_registry_id": "ucb_v",
+   "side": "upper",
+   "setting_description": "stochastic multi-armed bandit, variance-adaptive",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt((sigma_i**2/Delta_i + 1)*log(T))",
+    "expression_latex": "O( \\sum_{i} (\\frac{\\sigma_i^2}{\\Delta_i}+1) \\log T)",
+    "regime": null
+   },
+   "where": "Section 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:02:25",
+  "source_chars": 83398,
+  "input_tokens": 72885,
+  "output_tokens": 7607,
+  "cost_usd_equiv": 0.5176388000000001,
+  "status": "extracted"
+ }
+}

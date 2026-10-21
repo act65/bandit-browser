@@ -1,0 +1,392 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Learning to Play Sequential Games versus Unknown Opponents",
+  "arxiv_id": "2007.05271",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Pier Giuseppe Sessa",
+   "Ilija Bogunovic",
+   "Maryam Kamgarpour",
+   "Andreas Krause"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Repeated sequential game vs adversarial sequence of unknown opponent types",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_adaptive",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "sigma",
+    "S"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "unspecified",
+    "loss_set": "unspecified"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Two-player sequential game: learner's known reward r(x,y) in [0,1] is L_r-Lipschitz; opponent response y=b(x,theta) unknown, in RKHS with known kernel (k<=1) and norm bound B",
+    "Opponent type theta_t chosen by adaptive adversary and revealed to learner after acting, together with noisy response y_t",
+    "Learner can compute optimistic rewards for all actions (emulated full information)"
+   ],
+   "definition_quote": "In every round t: The learner computes a randomized strategy p_t ... samples action x_t ~ p_t. The opponent observes x_t and responds by selecting y_t = b(x_t,theta_t) ... The learner observes the opponent's type theta_t and response y_t, and receives reward r(x_t, y_t)."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Single (known) opponent type",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "sigma",
+    "S"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "unspecified",
+    "loss_set": "unspecified"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Bilevel objective r(x, b(x, theta_bar)) with known L_r-Lipschitz reward and unknown RKHS response b; noisy response observed"
+   ],
+   "definition_quote": "We now consider the special case where the learner is playing against the opponent of a single known type at every round of the game, i.e., theta_t = bar theta."
+  },
+  {
+   "id": "s3",
+   "name_in_paper": "Repeated Stackelberg games with unknown followers",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_adaptive",
+   "action_space": "continuum_other",
+   "function_class": [
+    "lipschitz"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "sigma",
+    "S",
+    "L_lip"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "simplex",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Leader's action is a mixed strategy in the n_l-simplex; follower best-responds; response function in RKHS with norm bound B and L_b-Lipschitz; follower type revealed after acting"
+   ],
+   "definition_quote": "we can map repeated Stackelberg games to our setup by letting x_t in X = Delta^{n_l} be the leader's mixed strategy at time t ... b(x_t,theta_t) = argmax_y U_{theta_t}(x_t,y)"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "StackelUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "exponential_weights",
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma",
+    "S",
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Optimistic bilevel strategy (eq. algorithm_single_opponent, GP-UCB-like)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "S"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(T*log(K)/2) + sqrt(T*log(1/delta)/2) + 4*L_r*beta_T*sqrt(T*lam*gamma_T)",
+    "expression_latex": "\\sqrt{\\tfrac{1}{2}T \\log |\\mathcal{X}|}  + \\sqrt{ \\tfrac{1}{2}T\\log{(\\tfrac{1}{\\delta})}} + \\ 4 L_r \\beta_T \\sqrt{T \\lambda \\gamma_T}",
+    "regime": null
+   },
+   "symbols": {
+    "L_r": "Lipschitz constant of learner's reward r w.r.t. ||.||_1",
+    "beta_T": "confidence parameter sigma*lam^{-1}*sqrt(2log(1/delta)+log det(I+K_T/lam)) + lam^{-1/2}*B"
+   },
+   "conditions": [
+    "||b||_k <= B (S denotes B)",
+    "kernel k <= 1",
+    "reward r in [0,1], L_r-Lipschitz",
+    "success probability at least 1-2*delta"
+   ],
+   "tuning": [
+    "lambda >= 1",
+    "beta_t = sigma lambda^{-1} sqrt(2 log(1/delta) + log det(I_t + K_t/lambda)) + lambda^{-1/2} B",
+    "eta = sqrt(8 log|X| / T)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:thm2",
+    "number": "Theorem 1",
+    "quote": "Consider the setting with multiple opponent types from $\\Theta$, and assume the learner's reward function is $L_r$-Lipschitz continuous. Then for any $\\delta \\in (0,1)$, the regret of \\ouralg when used with $\\lambda \\geq 1$, ... and learning step $\\eta = \\sqrt{8 \\log(|\\mathcal{X}|)/T}$, is bounded, with probability at least $1-2\\delta$, by R(T) \\leq \\sqrt{\\tfrac{1}{2}T \\log |\\mathcal{X}|} + \\sqrt{ \\tfrac{1}{2}T\\log{(\\tfrac{1}{\\delta})}} + 4 L_r \\beta_T \\sqrt{T \\lambda \\gamma_T}"
+   },
+   "confidence": "medium",
+   "notes": "K = |X|. Polynomial per-round compute assumes optimistic reward max over y is efficient. Setting mapping to kernel_rkhs is approximate."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*L_r*beta_T*sqrt(T*lam*gamma_T)",
+    "expression_latex": "4 L_r  \\beta_T \\sqrt{T \\lambda \\gamma_T}",
+    "regime": null
+   },
+   "symbols": {
+    "L_r": "Lipschitz constant of learner's reward",
+    "beta_T": "confidence parameter as in Theorem 1"
+   },
+   "conditions": [
+    "||b||_k <= B",
+    "kernel k <= 1",
+    "single known opponent type theta_bar every round",
+    "probability at least 1-delta"
+   ],
+   "tuning": [
+    "lambda >= 1",
+    "beta_t as in Theorem 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:Theorem1",
+    "number": "Corollary 2",
+    "quote": "Consider the setting where the learner plays against the same opponent $\\bar{\\theta} \\in \\Theta$ in every game round, and assume the learner's reward function is $L_r$-Lipschitz continuous. Then for any $\\delta \\in (0,1)$, the regret of the learner when playing according to~\\eqref{eq:algorithm_single_opponent} with $\\beta_t$ set as in Theorem~\\ref{thm:thm2} and $\\lambda \\geq 1$, is bounded with probability at least $1-\\delta$ by R(T) \\leq 4 L_r \\beta_T \\sqrt{T \\lambda \\gamma_T}"
+   },
+   "confidence": "medium",
+   "notes": "Horizon marked anytime since algorithm does not use T."
+  },
+  {
+   "id": "r3",
+   "setting": "s3",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "exponential",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(T*n_l*log(L_r*(1 + L_b)*sqrt(n_l*T))/2) + sqrt(T*n_l) + sqrt(T*log(1/delta)/2) + 4*L_r*beta_T*sqrt(T*lam*gamma_T)",
+    "expression_latex": "\\sqrt{ \\tfrac{1}{2} T  n_l \\log \\big(L_r (1 + L_b) \\sqrt{n_l T}\\big)} + \\sqrt{T n_l } + \\sqrt{\\tfrac{1}{2} T \\log{\\big(\\tfrac{1}{\\delta}\\big)}} + \\ 4 L_r \\beta_T \\sqrt{T \\lambda \\gamma_T}",
+    "regime": null
+   },
+   "symbols": {
+    "n_l": "number of leader actions (simplex dimension)",
+    "L_r": "Lipschitz constant of leader's reward",
+    "L_b": "Lipschitz constant of follower's response function",
+    "beta_T": "confidence parameter as in Theorem 1"
+   },
+   "conditions": [
+    "||b||_k <= B",
+    "b is L_b-Lipschitz",
+    "followers break ties consistently",
+    "probability at least 1-2*delta"
+   ],
+   "tuning": [
+    "StackelUCB run on uniform grid D of size (L_r(1+L_b)sqrt(n_l T))^{n_l}",
+    "lambda >= 1",
+    "beta_t as in Theorem 1",
+    "eta = sqrt(8 log|D| / T)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:corollary",
+    "number": "Corollary 3",
+    "quote": "Consider a repeated Stackelberg game with $n_l$ actions available to the leader. Let the leader use \\ouralg with $\\mathcal{D}$ from~\\eqref{eq:discretization} ... the regret of the leader is bounded, with probability at least $1-2\\delta$, by R(T) \\leq \\sqrt{ \\tfrac{1}{2} T n_l \\log (L_r (1 + L_b) \\sqrt{n_l T})} + \\sqrt{T n_l } + \\sqrt{\\tfrac{1}{2} T \\log(1/\\delta)} + 4 L_r \\beta_T \\sqrt{T \\lambda \\gamma_T}"
+   },
+   "confidence": "medium",
+   "notes": "Paper states the approach is computationally inefficient (exponential in n_l)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "balcan2015",
+   "cited_title": "Commitment Without Regrets: Online Learning in Stackelberg Security Games",
+   "cited_first_author": "Maria-Florina Balcan",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Repeated Stackelberg security games with known follower types and utilities, adversarial type sequence",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*poly_nl_nf_kf)",
+    "expression_latex": "\\mathcal{O}\\big(\\sqrt{T \\cdot \\text{poly}(n_l, n_f, k_f)}\\big)",
+    "regime": null
+   },
+   "where": "Section 3.3 (after Corollary 3)"
+  },
+  {
+   "cited_key": "auer2003",
+   "cited_title": "The Nonstochastic Multiarmed Bandit Problem",
+   "cited_first_author": "Peter Auer",
+   "cited_year": 2003,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Exp3",
+   "algorithm_registry_id": "exp3",
+   "side": "upper",
+   "setting_description": "Adversarial K-armed bandit",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*K*log(K))",
+    "expression_latex": "\\mathcal{O}(\\sqrt{T | \\mathcal{X} | \\log |\\mathcal{X}|})",
+    "regime": null
+   },
+   "where": "Section 3.1 (after Theorem 1)"
+  },
+  {
+   "cited_key": "freund1997",
+   "cited_title": "A Decision-Theoretic Generalization of On-Line Learning and an Application to Boosting",
+   "cited_first_author": "Yoav Freund",
+   "cited_year": 1997,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Hedge",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Full-information experts / adversarial online learning with K actions",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*log(K))",
+    "expression_latex": "\\mathcal{O}(\\sqrt{T \\log |\\mathcal{X}|})",
+    "regime": null
+   },
+   "where": "Section 3.1 (after Theorem 1)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:45:45",
+  "source_chars": 83141,
+  "input_tokens": 66247,
+  "output_tokens": 6390,
+  "cost_usd_equiv": 0.657768,
+  "status": "extracted"
+ }
+}

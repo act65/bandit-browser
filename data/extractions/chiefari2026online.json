@@ -1,0 +1,336 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Online Resource Allocation With General Constraints",
+  "arxiv_id": "2605.10519",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Eleonora Fidelia Chiefari",
+   "Francesco Emanuele Stradi",
+   "Matteo Castiglioni",
+   "Alberto Marchesi"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Stochastic setting (ORA with budget and general constraints)",
+   "objective": "cumulative_regret",
+   "feedback": "full_information",
+   "environment": "stochastic_iid",
+   "action_space": "continuum_other",
+   "function_class": [
+    "bounded"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "knapsack_constraints"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Online resource allocation: the full input (reward, cost and consumption functions) of the current round is revealed BEFORE the action is chosen; no bandit or partial feedback.",
+   "unmapped": [
+    "input tuple (f_t, g_t, h_t) revealed before the decision",
+    "m general long-term constraints with costs in [-1,1] (cumulative violation measured) plus n hard budget constraints with consumption in [0,1]",
+    "budgets B_j = Omega(T) known to the learner",
+    "void action with zero reward, cost and consumption exists",
+    "benchmark is the dynamic offline optimum OPT(gamma) over action sequences satisfying the constraints",
+    "Slater parameter rho unknown to the learner"
+   ],
+   "definition_quote": "In the stochastic setting, the inputs are drawn i.i.d. across rounds from a fixed but unknown probability distribution $\\mathcal{P}$ supported on $\\Gamma$. ... $R_T := \\text{OPT}_\\text{stoc} - \\mathbb{E}_{\\bm{\\gamma} \\sim \\mathcal{P}^T}[\\texttt{Rew}(T, \\bm{\\gamma})]$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Adversarial setting (ORA with budget and general constraints)",
+   "objective": "cumulative_regret",
+   "feedback": "full_information",
+   "environment": "adversarial_oblivious",
+   "action_space": "continuum_other",
+   "function_class": [
+    "bounded"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "knapsack_constraints"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Online resource allocation: the full input of the current round is revealed before the action is chosen; no bandit feedback.",
+   "unmapped": [
+    "input revealed before the decision",
+    "general long-term constraints plus hard budget constraints",
+    "budgets known",
+    "alpha-regret with alpha = rho_adv/(1+rho_adv) against the dynamic offline optimum",
+    "void action exists"
+   ],
+   "definition_quote": "In the adversarial setting, the dynamic-optimum is defined as $\\text{OPT}_\\text{adv} = \\text{OPT}(\\bm{\\gamma})$ for a given fixed input sequence ... $\\alpha\\text{-}R_T := \\alpha \\cdot\\text{OPT}_\\text{adv} - \\texttt{Rew}(T)$, where $\\alpha := \\nicefrac{\\rho_\\text{adv}}{1 + \\rho_\\text{adv}}$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Dual Gradient Descent",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "budgets B_j",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "840*M_cons**2/rho*sqrt(2*T*log(T**2/delta))",
+    "expression_latex": "V_T \\leq 840 \\frac{M^2}{\\rho} \\sqrt{2T \\ln\\left( \\frac{T^2}{\\delta} \\right)}",
+    "regime": null
+   },
+   "symbols": {
+    "M_cons": "total number of constraints M = m + n (general + budget)",
+    "rho": "Slater parameter rho_stoc (feasibility margin), unknown to learner"
+   },
+   "conditions": [],
+   "tuning": [
+    "eta = 1/(60 M sqrt(2T ln(T^2/delta)))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "vt",
+    "number": "Theorem (vt)",
+    "quote": "Let $\\delta\\in(0,1)$. Both in the stochastic and the adversarial setting, Algorithm~\\ref{alg:alg1} with learning rate $\\eta := ...$, attains with probability at least $1 - \\delta$: $V_T \\leq 840 \\frac{M^2}{\\rho} \\sqrt{2T \\ln( T^2/\\delta)}$ ... Moreover, the budget constraints are deterministically satisfied"
+   },
+   "confidence": "high",
+   "notes": "Cumulative violation of general constraints, stochastic case (rho = rho_stoc). Budget constraints satisfied deterministically."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "840*M_cons**2/rho*sqrt(2*T*log(T**2/delta))",
+    "expression_latex": "V_T \\leq 840 \\frac{M^2}{\\rho} \\sqrt{2T \\ln\\left( \\frac{T^2}{\\delta} \\right)}",
+    "regime": null
+   },
+   "symbols": {
+    "M_cons": "total number of constraints M = m + n",
+    "rho": "Slater parameter rho_adv, unknown to learner"
+   },
+   "conditions": [],
+   "tuning": [
+    "eta = 1/(60 M sqrt(2T ln(T^2/delta)))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "vt",
+    "number": "Theorem (vt)",
+    "quote": "Both in the stochastic and the adversarial setting, Algorithm~\\ref{alg:alg1} ... attains with probability at least $1 - \\delta$: $V_T \\leq 840 \\frac{M^2}{\\rho} \\sqrt{2T \\ln( T^2/\\delta)}$, where ... $\\rho \\coloneqq \\rho_\\textnormal{adv}$ in the adversarial setting."
+   },
+   "confidence": "high",
+   "notes": "Adversarial case of the violation bound."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "1/beta_min + 60*M_cons*sqrt(2*T*log(T**2/delta))/(2*beta_min**2) + sqrt(T)/(120*sqrt(2*log(T**2/delta)))",
+    "expression_latex": "R_T \\leq \\frac{1}{\\beta_{\\text{min}}} + \\frac{60 M \\sqrt{2 T \\ln( T^2/\\delta)}}{2 \\beta_{\\text{min}}^2} + \\frac{\\sqrt{T}}{120 \\sqrt{2 \\ln( T^2/\\delta)}}",
+    "regime": null
+   },
+   "symbols": {
+    "M_cons": "total number of constraints M = m + n",
+    "beta_min": "minimum per-round budget min_j B_j/T"
+   },
+   "conditions": [],
+   "tuning": [
+    "eta = 1/(60 M sqrt(2T ln(T^2/delta)))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "st_re",
+    "number": "Theorem (st_re)",
+    "quote": "Let $\\delta\\in(0,1)$. Consider Algorithm~\\ref{alg:alg1} with learning rate $\\eta = ...$. With probability at least $1 - \\delta$, in the stochastic setting it holds: $R_T \\leq \\frac{1}{\\beta_{\\text{min}}} + \\frac{60 M \\sqrt{2 T \\ln( T^2/\\delta)}}{2 \\beta_{\\text{min}}^2} + \\frac{\\sqrt{T}}{120 \\sqrt{2 \\ln( T^2/\\delta)}}$."
+   },
+   "confidence": "medium",
+   "notes": "R_T = OPT_stoc - E[Rew] is an expectation against the dynamic constrained offline optimum, yet the theorem is stated 'with probability at least 1-delta' (delta enters via eta); recorded as stated. Comparator is the constrained dynamic optimum sequence."
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "1/beta_min + 60*M_cons*sqrt(2*T*log(T**2/delta))/(2*beta_min**2) + sqrt(T)/(120*sqrt(2*log(T**2/delta)))",
+    "expression_latex": "\\alpha\\text{-}R_T \\leq \\frac{1}{\\beta_{\\text{min}}} + \\frac{60 M \\sqrt{2 T \\ln( T^2/\\delta)}}{2 \\beta_{\\text{min}}^2} + \\frac{\\sqrt{T}}{120 \\sqrt{2 \\ln( T^2/\\delta)}}",
+    "regime": null
+   },
+   "symbols": {
+    "M_cons": "total number of constraints M = m + n",
+    "beta_min": "minimum per-round budget"
+   },
+   "conditions": [],
+   "tuning": [
+    "eta = 1/(60 M sqrt(2T ln(T^2/delta)))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "adv_reg",
+    "number": "Theorem (adv_reg)",
+    "quote": "Let $\\delta\\in(0,1)$. Consider Algorithm~\\ref{alg:alg1} with learning rate $\\eta = ...$. With probability at least $1 - \\delta$, in the adversarial setting it holds: $\\alpha\\text{-}R_T \\leq \\frac{1}{\\beta_{\\text{min}}} + ...$"
+   },
+   "confidence": "medium",
+   "notes": "alpha-regret with alpha = rho_adv/(1+rho_adv) against the dynamic constrained offline optimum; quantity 'other' since it is alpha-regret."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "balseiro2023best",
+   "cited_title": null,
+   "cited_first_author": "Balseiro",
+   "cited_year": 2023,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Dual mirror descent (best-of-both-worlds ORA)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online resource allocation with budget constraints only, stochastic i.i.d. inputs, regret vs dynamic optimum",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\widetilde{\\mathcal{O}}(\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "balseiro2023best",
+   "cited_title": null,
+   "cited_first_author": "Balseiro",
+   "cited_year": 2023,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Dual mirror descent (best-of-both-worlds ORA)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online resource allocation with budget constraints only, adversarial inputs, alpha-regret with alpha depending on per-round budget",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\widetilde{\\mathcal{O}}(\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Introduction"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:01:49",
+  "source_chars": 88274,
+  "input_tokens": 77259,
+  "output_tokens": 6020,
+  "cost_usd_equiv": 0.5208908,
+  "status": "extracted"
+ }
+}

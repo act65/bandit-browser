@@ -1,0 +1,290 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Online learning with noisy side observations",
+  "arxiv_id": "2604.13740",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Tomáš Kocák",
+   "Gergely Neu",
+   "Michal Valko"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online learning with noisy side observations (weighted observation graphs)",
+   "objective": "cumulative_regret",
+   "feedback": "graph_feedback",
+   "environment": "adversarial_adaptive",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "strongly_observable",
+    "time_varying": "adaptive_sequence",
+    "knowledge": "revealed_after_action"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Weighted directed feedback graph with edge weights s in [0,1]; side observation c_{t,i} = s*loss + (1-s)*noise",
+    "Observation noise zero-mean, independent, bounded by known constant R",
+    "Self-loops have weight 1 (own loss observed without corruption)",
+    "Bounds depend on effective independence number alpha* = min_eps alpha(G(eps))/eps^2"
+   ],
+   "definition_quote": "The learner also observes $G_t$ and the feedback $c_{t,i} = s_{t,(I_t,i)}\\cdot \\ell_{t,i} + (1-s_{t,(I_t,i)})\\cdot \\xi_{t,i}$ for every arm $i$ ... We assume that each $\\xi_{t,i}$ is zero-mean, satisfies $|\\xi_{t,i}|\\le R$ for some known constant $R\\ge 0$ ... we consider adaptive (or non-oblivious) environments"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Online learning with noisy side observations (oblivious graph sequence, tuned thresholds)",
+   "objective": "cumulative_regret",
+   "feedback": "graph_feedback",
+   "environment": "adversarial_adaptive",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K",
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "strongly_observable",
+    "time_varying": "oblivious_sequence",
+    "knowledge": "revealed_after_action"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Weighted directed feedback graph with edge weights in [0,1], noisy side observations with noise bounded by known R",
+    "Proof assumes graphs chosen obliviously before the first round",
+    "Fixed eta, gamma optimized using knowledge of sum_t alpha(G_t(eps_t))/eps_t^2 and thresholds eps_t"
+   ],
+   "definition_quote": "consider an oblivious adversary that chooses the whole sequence of observations graphs deterministically before the first round."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Exp3-IXt",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "exponential_weights"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "thresholds eps_t",
+    "R"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Exp3-WIX",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "exponential_weights"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "R"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "(1 + R_noise)*sqrt(sum_alpha_eps)",
+    "expression_latex": "\\tOO\\pa{(1+R)\\sqrt{\\sum_{t=1}^T \\frac{\\alpha(G_t(\\varepsilon_t))}{\\varepsilon_t^2}}}",
+    "regime": null
+   },
+   "symbols": {
+    "R_noise": "bound on observation noise |xi| <= R",
+    "sum_alpha_eps": "sum_t alpha(G_t(eps_t))/eps_t^2, alpha(G_t(eps_t)) independence number of thresholded graph"
+   },
+   "conditions": [
+    "graph sequence chosen obliviously (as in proof)"
+   ],
+   "tuning": [
+    "fixed eta and gamma optimized",
+    "thresholds eps_t chosen by user"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:naive",
+    "number": "Theorem 1",
+    "quote": "For all $t$, let $\\alpha^*_t$ be the effective independence number of $G_t$. Then, there exists a setting of $(\\eta_t)$ and $(\\gamma_t)$ for which the regret of \\expixt is bounded as $R_T = \\tOO\\pa{(1+R)\\sqrt{\\sum_{t=1}^T \\frac{\\alpha(G_t(\\varepsilon_t))}{\\varepsilon_t^2}}}.$"
+   },
+   "confidence": "medium",
+   "notes": "Regret defined as max_i E[sum loss_{I_t} - sum loss_i]. Existential tuning; with optimal eps_t gives O~(sqrt(sum alpha*_t))."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "(1 + R_noise)*sqrt(K + sum_alpha_star)",
+    "expression_latex": "\\tOO\\pa{(1+R)\\sqrt{N+\\sum_{t=1}^T \\alpha^*_t}}",
+    "regime": null
+   },
+   "symbols": {
+    "R_noise": "bound on observation noise |xi| <= R",
+    "sum_alpha_star": "sum_t alpha*_t, sum of effective independence numbers of G_t"
+   },
+   "conditions": [
+    "self-loop weights s_{t,(i,i)} = 1"
+   ],
+   "tuning": [
+    "eta_t = sqrt(log N / (2(1+R+R^2)(N + sum_{s<t} Q_s)))",
+    "gamma_t = R eta_t"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:mainTheorem",
+    "number": "Theorem 2",
+    "quote": "For all $t$, let $\\alpha^*_t$ be the effective independence number of $G_t$. Then, setting $\\eta_t = \\sqrt{\\frac{{\\log N}}{{2(1+R+R^2)(N + \\sum_{s=1}^{t-1}Q_s)}}}$ and $\\gamma_t =R\\eta_t$, the regret of \\expwix is bounded as $R_T = \\tOO\\pa{(1+R)\\sqrt{N+\\sum_{t=1}^T \\alpha^*_t}}.$"
+   },
+   "confidence": "high",
+   "notes": "Paper's N is K. Parameter-free w.r.t. alpha* and T."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "auer2002finite",
+   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
+   "cited_first_author": "Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Exp3",
+   "algorithm_registry_id": "exp3",
+   "side": "upper",
+   "setting_description": "Adversarial multi-armed bandit (ignoring side observations)",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(K))",
+    "expression_latex": "\\OO(\\sqrt{NT\\log N})",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "alon2013from",
+   "cited_title": "From bandits to experts: A tale of domination and independence",
+   "cited_first_author": "Alon",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Online learning with binary (unweighted) feedback graphs; minimax regret",
+   "bound": {
+    "notation": "Omega_tilde",
+    "expression": "sqrt(alpha_G*T)",
+    "expression_latex": "\\wt\\Theta(\\sqrt{\\alpha T})",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "wu2015online",
+   "cited_title": "Online learning with Gaussian payoffs and side observations",
+   "cited_first_author": "Wu",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Side observations with all weights zero or a fixed constant eps (including self-loops); minimax regret (Corollary 4)",
+   "bound": {
+    "notation": "Theta",
+    "expression": "sqrt(alpha_G*T)/eps_w",
+    "expression_latex": "\\Theta(\\sqrt{\\alpha T}/\\varepsilon)",
+    "regime": null
+   },
+   "where": "Section 4"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:46:19",
+  "source_chars": 58655,
+  "input_tokens": 56565,
+  "output_tokens": 4515,
+  "cost_usd_equiv": 0.3252388,
+  "status": "extracted"
+ }
+}

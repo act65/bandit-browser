@@ -1,0 +1,326 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Online convex optimization in the bandit setting: gradient descent without a gradient",
+  "arxiv_id": "cs/0408007",
+  "arxiv_version": null,
+  "year": 2004,
+  "authors": [
+   "Abraham D. Flaxman",
+   "Adam Tauman Kalai",
+   "H. Brendan McMahan"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online bandit version of Zinkevich's model (bounded convex costs)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_oblivious",
+   "action_space": "convex_body",
+   "function_class": [
+    "bounded"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "T",
+    "d",
+    "r_K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "cost functions are convex and take values in [-C, C] (not [0,1]); learner knows C",
+    "r B subset S subset R B: S contains a ball of radius r and is contained in a ball of radius R around the origin; learner knows R",
+    "learner has access to a Euclidean projection oracle onto S"
+   ],
+   "definition_quote": "There is a fixed unknown sequence of convex functions $c_1, c_2, \\ldots, c_n\\cc S \\rightarrow [- C,C]$, where $C>0$ and $S \\subseteq \\reals^d$ is a convex feasible set. The decision-maker sequentially chooses points $x_1,x_2,\\ldots,x_n \\in S$. After $x_t$ is chosen, the value $c_t(x_t)$ is revealed"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Online bandit convex optimization with L-Lipschitz bounded convex costs",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_oblivious",
+   "action_space": "convex_body",
+   "function_class": [
+    "bounded",
+    "lipschitz"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "T",
+    "d",
+    "r_K",
+    "L_lip"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "cost functions are convex and take values in [-C, C]; learner knows C",
+    "r B subset S subset R B; learner knows R",
+    "learner has access to a Euclidean projection oracle onto S"
+   ],
+   "definition_quote": "If we make an additional assumption that the functions satisfy an $L$-Lipschitz condition ... A function $f$ is $L$-Lipschitz if $|f(x)-f(y)| \\leq L|x-y|$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "BGD (Bandit Gradient Descent)",
+   "registry_id": "osgd_one_point",
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d",
+    "r_K",
+    "L_lip"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "3*C_f*T**(5/6)*(d*R_out/r_K)**(1/3)",
+    "expression_latex": "3 C n^{5/6}\\sqrt[3]{dR/r}",
+    "regime": "n >= (3Rd/(2r))^2"
+   },
+   "symbols": {
+    "C_f": "bound on the absolute value of cost functions, |c_t| <= C",
+    "R_out": "radius of a ball centred at origin containing S"
+   },
+   "conditions": [
+    "n >= (3Rd/(2r))^2",
+    "r B subset S subset R B"
+   ],
+   "tuning": [
+    "nu = R/(C sqrt(n))",
+    "delta = (r R^2 d^2/(12 n))^(1/3)",
+    "alpha = (3Rd/(2r sqrt(n)))^(1/3)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:param",
+    "number": "Theorem 1",
+    "quote": "For any $n\\geq\\left(\\frac{3Rd}{2r}\\right)^2$ and $\\nu =\\frac{R}{C\\sqrt{n}}$, $\\delta=\\sqrt[3]{\\frac{rR^2d^2}{12n}}$, and $\\alpha=\\sqrt[3]{\\frac{3Rd}{2r\\sqrt{n}}}$, the expected regret of $\\mathrm{BGD}(\\nu,\\delta,\\alpha)$ is upper bounded by $\\E[\\sum c_t(x_t)] - \\min_{x \\in S} \\sum c_t(x) \\leq 3 C n^{5/6}\\sqrt[3]{dR/r}$."
+   },
+   "confidence": "high",
+   "notes": "Oblivious adversary; expected regret against best fixed point in hindsight. Uses projection oracle onto (1-alpha)S."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*T**(3/4)*sqrt(3*R_out*d*C_f*(L_lip + C_f/r_K))",
+    "expression_latex": "2n^{3/4}\\sqrt{3RdC(L+C/r)}",
+    "regime": "n sufficiently large"
+   },
+   "symbols": {
+    "C_f": "bound on the absolute value of cost functions, |c_t| <= C",
+    "R_out": "radius of a ball centred at origin containing S"
+   },
+   "conditions": [
+    "r B subset S subset R B"
+   ],
+   "tuning": [
+    "nu = R/(C sqrt(n))",
+    "alpha = delta/r",
+    "delta = n^{-1/4} sqrt(RdCr/(3(Lr+C)))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 2",
+    "quote": "If each $c_t$ is $L$-Lipschitz, then for $n$ sufficiently large and $\\nu =\\frac{R}{C\\sqrt{n}}$, $\\alpha = \\frac{\\delta}{r}$, and $\\delta = n^{-.25}\\sqrt{\\frac{RdCr}{3(Lr+C)}},$ $\\E[\\sum c_t(x_t)] -\\min_{x \\in S} \\sum c_t(x) \\leq 2n^{3/4}\\sqrt{3RdC(L+C/r)}.$"
+   },
+   "confidence": "high",
+   "notes": "'n sufficiently large' not quantified."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "6*T**(3/4)*d*(sqrt(C_f*L_lip*R_out) + C_f)",
+    "expression_latex": "6n^{3/4}d\\left(\\sqrt{CLR}+C\\right)",
+    "regime": "n sufficiently large"
+   },
+   "symbols": {
+    "C_f": "bound on the absolute value of cost functions, |c_t| <= C",
+    "R_out": "radius of a ball centred at origin containing S"
+   },
+   "conditions": [
+    "S preprocessed into near-isotropic position (B subset T(S) subset 1.01 d B)"
+   ],
+   "tuning": [
+    "parameters of Theorem 2 with r'=1, R'=1.01d, L'=LR"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Corollary 1",
+    "quote": "For a set $S$ of diameter $D$, and $c_t$ $L$-Lipschitz, after putting $S$ into near- isotropic position, the BGD algorithm has expected regret, $\\E[\\sum c_t(x_t)] -\\min_{x \\in S} \\sum c_t(x) \\leq 6n^{3/4}d\\left(\\sqrt{CLR}+C\\right).$"
+   },
+   "confidence": "medium",
+   "notes": "Statement mentions diameter D but bound uses R (the original containing radius). Preprocessing via Lovasz-Vempala runs in O(d^4) polylog time. Abstract/intro write sqrt(CLD) instead of sqrt(CLR)."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "6*T**(5/6)*d*C_f",
+    "expression_latex": "6n^{5/6}dC",
+    "regime": "n >= (3*1.01*d^2/2)^2 (Theorem 1 condition after reshaping)"
+   },
+   "symbols": {
+    "C_f": "bound on the absolute value of cost functions, |c_t| <= C"
+   },
+   "conditions": [
+    "S preprocessed into near-isotropic position (B subset T(S) subset 1.01 d B)"
+   ],
+   "tuning": [
+    "parameters of Theorem 1 with r'=1, R'=1.01d"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Corollary 1",
+    "quote": "Without the $L$-Lipschitz condition, $\\E[\\sum c_t(x_t)] -\\min_{x \\in S} \\sum c_t(x) \\leq 6n^{5/6}dC$"
+   },
+   "confidence": "medium",
+   "notes": "Regime inherited from Theorem 1 is my reading; corollary itself does not restate it. After reshaping, r_K and R are not needed in the bound."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Z",
+   "cited_title": "Online Convex Programming and Generalized Infinitesimal Gradient Ascent",
+   "cited_first_author": "M. Zinkevich",
+   "cited_year": 2003,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Online gradient descent",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online convex optimization, full information (gradient revealed), convex feasible set of diameter D, gradients bounded by G",
+   "bound": {
+    "notation": "exact",
+    "expression": "diam_K*G_grad*sqrt(T)",
+    "expression_latex": "DG\\sqrt{n}",
+    "regime": null
+   },
+   "where": "Section 1.2, Eq. (marty)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:28:23",
+  "source_chars": 37234,
+  "input_tokens": 47453,
+  "output_tokens": 5410,
+  "cost_usd_equiv": 0.2702428,
+  "status": "extracted"
+ }
+}

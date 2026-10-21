@@ -1,0 +1,279 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Non-Asymptotic Pure Exploration by Solving Games",
+  "arxiv_id": "1906.10431",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Rémy Degenne",
+   "Wouter M. Koolen",
+   "Pierre Ménard"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Pure exploration (fixed confidence, delta-PAC) in K-armed bandits with one-parameter exponential family arms",
+   "objective": "other_pure_exploration",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "exponential_family",
+   "learner_knows": [
+    "reward_family",
+    "K"
+   ],
+   "instance_assumptions": [
+    "means_in_known_interval"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "General pure exploration query: model set M, finite answer set I, correct-answer function i^*(mu) (covers Best Arm Identification and Minimum Threshold)",
+    "Fixed confidence delta-PAC: algorithm must be delta-correct; objective is expected stopping time",
+    "Model M contained in [mu_min, mu_max]^K (Assumption 2), sub-Gaussian exponential family (Assumption 1)"
+   ],
+   "definition_quote": "A pure exploration problem is parameterised by a set $\\mathcal M$ of $K$-armed bandit models (the possible environments), a finite set $\\mathcal I$ of candidate answers and a correct-answer function $i^* : \\mathcal M {\\to} \\mathcal I$. ... An algorithm is $\\delta$-PAC (or $\\delta$-correct) if $\\pr_\\vmu(\\ihat \\neq i^*(\\vmu)) \\le \\delta$ for each $\\vmu \\in \\mathcal M$. Among $\\delta$-PAC algorithms, we are interested in those minimising the sample complexity $\\ex_\\vmu[\\tau_\\delta]$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Pure exploration meta-algorithm (Algorithm 1: GLRT stopping + two no-regret learners + optimism + tracking)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "ftrl_or_mirror_descent",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "reward_family"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "AdaHedge (k-player) vs Best-Response (lambda-player)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "exponential_weights",
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "reward_family"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "FTPL (lambda-player) vs Best-Response (k-player)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "reward_family"
+   ]
+  },
+  {
+   "id": "a4",
+   "name": "Optimistic Track-and-Stop",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "track_and_stop"
+   ],
+   "requires_knowledge_of": [
+    "reward_family"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "delta",
+    "expression_latex": "\\delta",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "threshold beta(t,delta) satisfies P_mu{GLR_t({mu}) > beta(t,delta)} <= delta"
+   ],
+   "tuning": [
+    "GLRT stopping and recommendation rules with threshold beta(t,delta)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:GLRT_delta_correct",
+    "number": "Theorem 1",
+    "quote": "Any algorithm using the GLRT stopping and recommendation rules with threshold $\\beta(t,\\delta)$ such that $\\pr_\\vmu\\{\\mbox{GLR}_t^{\\Theta^K}(\\{\\vmu\\}) > \\beta(t, \\delta)\\}\\leq \\delta$ is $\\delta$-correct."
+   },
+   "confidence": "medium",
+   "notes": "Holds for any sampling rule with GLRT stopping; attached to Algorithm 1. Standard result (Garivier & Kaufmann 2016) restated; marked as paper's theorem."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "T_0 + 2*E*K/a**2",
+    "expression_latex": "\\ex_\\vmu[\\tau_\\delta] \\leq T_0(\\delta) + \\frac{2eK}{a^2}, T_0(\\delta) = \\max \\{t\\in\\N: t \\leq \\frac{\\beta(t,\\delta)}{D_\\vmu} + C_\\vmu(R_t^\\vlambda + R_t^k + h(t))\\}",
+    "regime": null
+   },
+   "symbols": {
+    "T_0": "max{t : t <= beta(t,delta)/D_mu + C_mu (R_t^lambda + R_t^k + h(t))}",
+    "a": "concentration parameter a>0 in f(t)",
+    "D_mu": "value of the pure exploration game (characteristic time inverse)",
+    "C_mu": "instance-dependent constant depending on mu and M",
+    "R_t^k": "regret bound of the k-player learner",
+    "R_t^lambda": "regret bound of the lambda-player learner",
+    "h": "h(t)=O(sqrt(t log t))"
+   },
+   "conditions": [
+    "Assumption 2: M subset of [mu_min,mu_max]^K inside Theta",
+    "arms in a one-parameter exponential family (sub-Gaussian)"
+   ],
+   "tuning": [
+    "f(t) = W((1+a)(1+b) log t), a,b>0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:sample_complexity",
+    "number": "Theorem 2",
+    "quote": "Under Assumption~\\ref{ass:compact_M}, the sample complexity of Algorithm~\\ref{alg:the_algorithm} on model $\\vmu\\in\\mathcal{M}$ is $\\ex_\\vmu[\\tau_\\delta] \\leq T_0(\\delta) + \\frac{2eK}{a^2}$ with $T_0(\\delta) = \\max \\{t\\in\\N: t \\leq \\frac{\\beta(t,\\delta)}{D_\\vmu} + C_\\vmu(R_t^\\vlambda + R_t^k + h(t))\\}$, where $C_\\vmu$ depends on $\\vmu$ and $\\mathcal{M}$ and $h(t) = \\mathcal{O}(\\sqrt{t\\log(t)})$."
+   },
+   "confidence": "medium",
+   "notes": "Implicit bound via T_0. Applies to instantiations such as AdaHedge vs Best-Response (Lemma 3: R_t^k = O(sqrt(t ln K) ln t), R^lambda <= 0) and FTPL (R^lambda = O(sqrt(t log t))). Asymptotically optimal as delta->0."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a4",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "T_0 + 2*E*K/a**2",
+    "expression_latex": "T_0(\\delta) + \\frac{2eK}{a^2}, T_0(\\delta) = \\max\\{t: t \\leq (\\beta(t,\\delta) + h(t))/D_\\vmu\\}, h(t) = 2\\sqrt{t}D_\\vmu + 3L\\sqrt{2\\sigma^2 f(t)}(K^2 + (2\\sqrt{2}+1/3)\\sqrt{Kt}) + f(t)(K^2 + 2K\\log(t/K)) + KD",
+    "regime": null
+   },
+   "symbols": {
+    "T_0": "maximal t in N with t <= (beta(t,delta)+h(t))/D_mu, h as in the statement",
+    "a": "concentration parameter a>0",
+    "D_mu": "value of the pure exploration game",
+    "L_d": "Lipschitz constant of x -> d(x,y) on [mu_min,mu_max] (paper's L)",
+    "D_d": "upper bound on d(x,y) (paper's D)"
+   },
+   "conditions": [
+    "Assumption 2: M subset of [mu_min,mu_max]^K",
+    "sigma^2-sub-Gaussian exponential family"
+   ],
+   "tuning": [
+    "b = 1 in f(t)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Lemma 4",
+    "quote": "Take $b=1$ in the definition of $f(t)$. Let $h(t) = 2\\sqrt{t}D_\\vmu + 3L\\sqrt{2\\sigma^2 f(t)}(K^2 + (2\\sqrt{2}+\\nicefrac{1}{3})\\sqrt{Kt}) + f(t)(K^2 + 2K\\log(t/K)) + KD$. Then the expected sample complexity is at most $T_0(\\delta) + \\frac{2eK}{a^2}$, where $T_0(\\delta)$ is the maximal $t\\in\\N$ such that $t \\leq (\\beta(t,\\delta) + h(t))/D_\\vmu$ ."
+   },
+   "confidence": "medium",
+   "notes": "Requires a max-max-min oracle per step. Implicit bound via T_0."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "garivier2016optimal",
+   "cited_title": "Optimal best arm identification with fixed confidence",
+   "cited_first_author": "Aurélien Garivier",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Fixed-confidence pure exploration with exponential family arms; any delta-correct algorithm",
+   "bound": {
+    "notation": "exact",
+    "expression": "kl(delta, 1 - delta)/D_mu",
+    "expression_latex": "\\ex_\\vmu[\\tau_\\delta] \\ge \\kl(\\delta, 1-\\delta)/D_\\vmu",
+    "regime": null
+   },
+   "where": "Introduction"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:52:54",
+  "source_chars": 107980,
+  "input_tokens": 90244,
+  "output_tokens": 5023,
+  "cost_usd_equiv": 0.6048308,
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,240 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Context-Aware Proactive Content Caching With Service Differentiation in Wireless Networks",
+  "arxiv_id": "1606.04236",
+  "arxiv_version": null,
+  "year": 2016,
+  "authors": [
+   "Sabrina Muller",
+   "Onur Atan",
+   "Mihaela van der Schaar",
+   "Anja Klein"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Context-aware proactive caching (contextual multi-armed bandit, select m of |F| files)",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Demands take values in [0, R_max] (not [0,1]); bounded after rescaling",
+    "Multiple contexts (up to U_max users) arrive per round, each in [0,1]^D; context sequence arbitrary",
+    "Expected demand mu_f(x) is Holder continuous in context with constants L, alpha",
+    "Known service weights v_s and file weights w_f (weighted rewards)",
+    "Learner must know Holder exponent alpha and context dimension D to tune K(t), h_T"
+   ],
+   "definition_quote": "The number of times a user with context vector $x\\in \\mathcal{X}$ requests a file $f\\in F$ within one time slot is a random variable with unknown distribution... The random demand is assumed to take values in $[0,R_{\\max}]$... R(T) = \\sum_{t=1}^T \\sum _{j=1}^m \\sum _{i=1}^{U_t} v_{s_{t,i}} ( w_{f_j^\\ast} E(d_{f_j^\\ast}(x_{t,i})) - E(w_{c_{t,j}}d_{c_{t,j}}(x_{t,i},t)))"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Rating-based context-aware proactive caching with missing ratings",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Reward is rating times demand, in [0, r_max*R_max]",
+    "Each user's rating revealed only with probability q (missing feedback)",
+    "Multiple Holder-continuous contexts per round in [0,1]^D",
+    "Known service and file weights"
+   ],
+   "definition_quote": "Let $q\\in (0,1)$ be the probability that a user reveals his rating after requesting a file."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "m-CAC (Context-Aware Proactive Caching with Cache Size m)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "alpha_h",
+    "D_ctx"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "v_max*w_max*m*U_max*R_max*n_files*T**((2*alpha_h + D_ctx)/(3*alpha_h + D_ctx))*log(T)",
+    "expression_latex": "O\\left(v_{\\max} w_{\\max} m U_{\\max}R_{\\max} |F| T^{\\frac{2\\alpha + D}{3\\alpha + D}} \\log(T) \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "v_max": "maximum service-type weight",
+    "w_max": "maximum file prioritization weight",
+    "U_max": "maximum number of simultaneously connected users",
+    "R_max": "maximum demand per user per slot",
+    "n_files": "file library size |F|",
+    "alpha_h": "Holder exponent",
+    "D_ctx": "context dimension D"
+   },
+   "conditions": [
+    "Assumption 1: mu_f is Holder continuous with constants L>0, alpha>0",
+    "contexts in [0,1]^D",
+    "demands independent across users and files and of past"
+   ],
+   "tuning": [
+    "K(t) = t^{2alpha/(3alpha+D)} log(t)",
+    "h_T = ceil(T^{1/(3alpha+D)})"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "Theorem_Regret",
+    "number": "Theorem 1",
+    "quote": "Let $K(t) = t^{\\frac{2\\alpha}{3 \\alpha + D}} \\log (t)$ and $h_T = \\ceil{T^{\\frac{1}{3\\alpha + D}}}$. If m-CAC is run with these parameters and Assumption \\ref{Ass_Hoelder} holds true, the leading order of the regret $R(T)$ is $O\\left(v_{\\max} w_{\\max} m U_{\\max}R_{\\max} |F| T^{\\frac{2\\alpha + D}{3\\alpha + D}} \\log(T) \\right)$."
+   },
+   "confidence": "medium",
+   "notes": "Regret defined via expected demands against per-round oracle top-m files. 'Leading order' bound. Also stated for ratings always available with extra r_max factor (in text, not a theorem)."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "(1/q)*v_max*w_max*r_max*m*U_max*R_max*n_files*T**((2*alpha_h + D_ctx)/(3*alpha_h + D_ctx))*log(T)",
+    "expression_latex": "O\\left(\\frac{1}{q} v_{\\max} w_{\\max} r_{\\max} m U_{\\max}R_{\\max} |F| T^{\\frac{2\\alpha + D}{3\\alpha + D}} \\log(T) \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "q": "probability a user reveals a rating",
+    "r_max": "maximum rating",
+    "v_max": "maximum service-type weight",
+    "w_max": "maximum file prioritization weight",
+    "U_max": "maximum number of simultaneously connected users",
+    "R_max": "maximum demand per user per slot",
+    "n_files": "file library size |F|",
+    "alpha_h": "Holder exponent",
+    "D_ctx": "context dimension D"
+   },
+   "conditions": [
+    "Assumption 1 holds for tilde d_f(x) = r_f(x) d_f(x)",
+    "rating revealed with probability q in (0,1)"
+   ],
+   "tuning": [
+    "K(t) = t^{2alpha/(3alpha+D)} log(t)",
+    "h_T = ceil(T^{1/(3alpha+D)})"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "Theorem_Regret_Rating",
+    "number": "Theorem 2",
+    "quote": "Let $K(t) = t^{\\frac{2\\alpha}{3 \\alpha + D}} \\log (t)$ and $h_T = \\ceil{T^{\\frac{1}{3\\alpha + D}}}$. If m-CAC is run with these parameters with respect to $\\tilde{d}_f(x)$, Assumption \\ref{Ass_Hoelder} holds true for $\\tilde{d}_f(x)$ and a user reveals his rating with probability $q$, the leading order of the regret $R(T)$ is $O\\left(\\frac{1}{q} v_{\\max} w_{\\max} r_{\\max} m U_{\\max}R_{\\max} |F| T^{\\frac{2\\alpha + D}{3\\alpha + D}} \\log(T) \\right)$."
+   },
+   "confidence": "medium",
+   "notes": "Proof in online appendix."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:20:07",
+  "source_chars": 86722,
+  "input_tokens": 64226,
+  "output_tokens": 4058,
+  "cost_usd_equiv": 0.3773868,
+  "status": "extracted"
+ }
+}

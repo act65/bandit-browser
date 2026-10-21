@@ -101,7 +101,9 @@ def main() -> None:
             "notation": nota, "inherited": inh, "from_setting": rec.get("from_setting"),
             "paper": src["paper"], "year": years.get(src["paper"]),
             "algorithm_id": src.get("algorithm_id"), "algorithm_family": family(src.get("algorithm_id")),
-            "confidence": src.get("confidence"), "restricted": compare.restricts_instances(src.get("conditions")),
+            "confidence": src.get("confidence"),
+            "restricted": src["side"] == "upper" and compare.restricts_instances(src.get("conditions")),
+            "rate_regime": cmp.get("rate_regime", {}).get(eid),  # None: shown, but not used for the rate
             "n_caveats": len(rec.get("caveats") or []), "expression": expr,
             "profile": {k: v for k, v in (profiles.get(eid) or {}).items() if not k.startswith("_")} or None,
             "js": js_function(expr, nota), "shape_only": nota in SHAPE_ONLY,

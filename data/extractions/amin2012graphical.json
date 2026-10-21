@@ -1,0 +1,280 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Graphical Models for Bandit Problems",
+  "arxiv_id": "1202.3782",
+  "arxiv_version": null,
+  "year": 2012,
+  "authors": [
+   "Kareem Amin",
+   "Michael Kearns",
+   "Umar Syed"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Graphical bandit problem (contextual bandit with payoff decomposition over a known interaction graph)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Actions and contexts are joint assignments of discrete variables; expected payoff F decomposes as a sum of unknown potential functions over known variable subsets P (Assumption 1), so F is linear in a binary coefficient vector v(x)",
+    "Learner knows the decomposition structure P / interaction graph and a tree decomposition of the action subgraph",
+    "Contexts chosen arbitrarily by Nature (arbitrary sequence)"
+   ],
+   "definition_quote": "In each round t = 1, . . . , T : 1. Nature chooses an arbitrary joint context assignment x^t_C, which is observed by the learning algorithm. 2. The learning algorithm chooses a joint action assignment x^t_A. 3. The learning algorithm receives an independent random payoff f^t \\in [0, 1] with expectation F(x^t_A, x^t_C). ... Assumption 1 (Payoff Decomposition). We are given a collection of variable subsets P such that F(x) = \\sum_{P} f_P(x_P)"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Graphical bandit problem, known horizon (Corollary 1 tuning)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Payoff decomposition over known interaction graph (Assumption 1); learner knows structure P and tree decomposition",
+    "Contexts chosen arbitrarily by Nature"
+   ],
+   "definition_quote": "Corollary 1. If GraphicalBandits is run with parameters \\epsilon = \\delta = 1/T^{1/3} ..."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "GraphicalBandits (BestAct + PayEst KWIK linear regression)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "payoff decomposition structure P / tree decomposition of action subgraph",
+    "epsilon",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "d*w/eps_alg**2*log(T*m_dom*n_E/(eps_alg*delta)) + 2*n_A*eps_alg*T + delta*T",
+    "expression_latex": "O\\left(\\frac{dw}{\\epsilon^2}\\log(Tm|E|/\\epsilon\\delta) + 2|A|\\epsilon T + \\delta T\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "d": "rank of the coefficient matrix M (dimension of the span of coefficient vectors)",
+    "w": "treewidth of the tree decomposition of the action subgraph",
+    "m_dom": "maximum domain size max_i |X_i| of a variable",
+    "n_E": "number of edges |E| of the tree decomposition",
+    "n_A": "number of action variables |A|",
+    "eps_alg": "accuracy parameter epsilon of GraphicalBandits/PayEst",
+    "delta": "failure probability parameter given to PayEst"
+   },
+   "conditions": [
+    "Expected payoff decomposes as in Assumption 1 with known P",
+    "payoffs in [0,1]"
+   ],
+   "tuning": [
+    "PayEst = KWIK linear regression of Cesa-Bianchi et al. (2009) with parameters epsilon, delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 4",
+    "quote": "Let d = rank(M) be the rank of the coefficient matrix, and let T = (A, E) be the tree decomposition of the action subgraph GA with treewidth w. The regret R(T) of GraphicalBandits after T rounds is at most R(T) \\le O(dw/\\epsilon^2 log(T m|E|/\\epsilon\\delta) + 2|A|\\epsilon T + \\delta T) and the computational complexity of each round is O(m^{2w}|E|)."
+   },
+   "confidence": "medium",
+   "notes": "Per-round computation O(m^{2w}|E|): polynomial for constant treewidth (exponential in w). The algorithm does not need T for fixed eps, delta, hence marked anytime. Section 7.1 gives an informal refinement for i.i.d. contexts from distribution D: R(T) <= T P(x_C in X'_C) + O(rank(M(not X'_C)) w |A| T^{2/3} log(T m|E|)) (not recorded separately)."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "d*w*n_A*T**(2/3)*log(T*m_dom*n_E)",
+    "expression_latex": "O\\left(dw|A|T^{2/3}\\log(Tm|E|)\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "d": "rank of the coefficient matrix M",
+    "w": "treewidth of the tree decomposition of the action subgraph",
+    "m_dom": "maximum domain size max_i |X_i|",
+    "n_E": "number of edges |E| of the tree decomposition",
+    "n_A": "number of action variables |A|"
+   },
+   "conditions": [
+    "Expected payoff decomposes as in Assumption 1 with known P",
+    "payoffs in [0,1]"
+   ],
+   "tuning": [
+    "epsilon = delta = T^{-1/3}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Corollary 1",
+    "quote": "If GraphicalBandits is run with parameters \\epsilon = \\delta = 1/T^{1/3} then R(T) \\le O(dw|A|T^{2/3} log(T m|E|))."
+   },
+   "confidence": "high",
+   "notes": "Per-round time O(m^{2w}|E|), polynomial for constant treewidth."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Slivkins2011",
+   "cited_title": "Contextual bandits with similarity information",
+   "cited_first_author": "Aleksandrs Slivkins",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Metric space contextual bandits with Lipschitz expected payoff; d a dimensionality constant of action and context spaces",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**((1+d)/(2+d))",
+    "expression_latex": "\\tilde O(T^{(1+d)/(2+d)})",
+    "regime": null
+   },
+   "where": "Section 2 (Related Work)"
+  },
+  {
+   "cited_key": "Lu2010",
+   "cited_title": "Contextual multi-armed bandits",
+   "cited_first_author": "Tyler Lu",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Metric space contextual bandits with Lipschitz expected payoff; d a dimensionality constant",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**((1+d)/(2+d))",
+    "expression_latex": "\\tilde O(T^{(1+d)/(2+d)})",
+    "regime": null
+   },
+   "where": "Section 2 (Related Work)"
+  },
+  {
+   "cited_key": "Beygelzimer2011",
+   "cited_title": "Contextual bandit algorithms with supervised learning guarantees",
+   "cited_first_author": "Alina Beygelzimer",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "VE",
+   "algorithm_registry_id": "ve",
+   "side": "upper",
+   "setting_description": "Contextual bandits (inefficient, exponential-time algorithm)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\tilde O(\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 7, after Corollary 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:47:34",
+  "source_chars": 43872,
+  "input_tokens": 46222,
+  "output_tokens": 4792,
+  "cost_usd_equiv": 0.2480348,
+  "status": "extracted"
+ }
+}

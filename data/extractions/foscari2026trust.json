@@ -1,0 +1,254 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Do Not Trust The Auctioneer: Learning to Bid in Feedback-Manipulated Auctions",
+  "arxiv_id": "2605.22438",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Luigi Foscari",
+   "Matilde Tullii",
+   "Vianney Perchet"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Repeated first-price auctions with max-shilling feedback",
+   "objective": "cumulative_regret",
+   "feedback": "partial_monitoring",
+   "environment": "stochastic_iid",
+   "action_space": "continuum_other",
+   "function_class": [
+    "bounded"
+   ],
+   "domain": "constrained",
+   "context": "stochastic_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Bids p_t in [0,1]; contexts are values v_t ~ V i.i.d.; competing bid b_t ~ B i.i.d.; reward (v_t - p_t) 1{p_t >= b_t}",
+    "Censored feedback: on a loss the learner observes o_t = max{b_t, s_t} where s_t ~ S is an independent shill bid (feedback-only manipulation)",
+    "The shill distribution F_S is known to the learner",
+    "Expected utility u_B(v,p) = (v-p) F_B(p); regret vs best bid for each realized value"
+   ],
+   "definition_quote": "The learner wins if \\(p_t\\ge b_t\\), receives reward \\(v_t-p_t\\), and otherwise receives reward \\(0\\) and observes the shilled report \\(o_t=\\max\\{b_t,s_t\\}\\), where \\(s_t\\) is a shill bid. ... R_T = E[ sum_t ( max_p u_B(v_t,p) - u_B(v_t,p_t) ) ]"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Interval elimination with robust and optimistic (debiased suffix, validated dyadic shill scale) branches (Algorithm known_FS)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination",
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "F_S (shill distribution)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "Min(T**(2/3), rho**(1/4)*sqrt(T)*gamma**(-1/4))",
+    "expression_latex": "\\widetilde O\\!\\left(\\min\\left\\{T^{2/3},\\rho^{1/4}\\sqrt T\\,\\gamma^{-1/4}\\right\\}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "rho": "number of active bid regions covering the active intervals at every epoch",
+    "gamma": "lower bound on F_S on the active regions ((gamma,C_S)-regularity)"
+   },
+   "conditions": [
+    "Assumption 1 (weak RHR condition on buyer distribution B)",
+    "F_S known to the learner",
+    "active intervals covered by at most rho active bid regions at every epoch",
+    "F_S is (gamma, C_S)-regular on each such region (Assumption 2)"
+   ],
+   "tuning": [
+    "value grid with |V| = T",
+    "confidence delta = 1/T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:upper-bound",
+    "number": "Theorem 1",
+    "quote": "Assume \\cref{ass:weak-rhr-buyer} and suppose that \\(F_S\\) is known to the learner. If, at every epoch, the active intervals maintained by the optimistic branch can be covered by at most \\(\\rho\\) active bid regions, and \\(F_S\\) is \\((\\gamma,C_S)\\)-regular on each such region ... then the algorithm satisfies R_T \\le \\widetilde O(\\min\\{T^{2/3},\\rho^{1/4}\\sqrt T\\,\\gamma^{-1/4}\\})."
+   },
+   "confidence": "medium",
+   "notes": "rho=1 special case gives min{T^{2/3}, sqrt(T) gamma^{-1/4}} (also restated in Corollary 2). Feedback mapped to partial_monitoring as censored/shilled feedback has no direct vocabulary term. Regret defined via expected utilities, recorded as pseudo-regret."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(2/3)",
+    "expression_latex": "R_T\\le \\widetilde O(T^{2/3})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "Assumption 1 (weak RHR condition on buyer distribution B)",
+    "F_S known to the learner"
+   ],
+   "tuning": [
+    "value grid with |V| = T",
+    "confidence delta = 1/T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:upper-bound",
+    "number": "Theorem 1",
+    "quote": "If the regularity condition fails on the intervals considered by the optimistic branch, or if the optimistic certificate does not validate, the same algorithm falls back to the robust branch and still guarantees \\(R_T\\le \\widetilde O(T^{2/3})\\)."
+   },
+   "confidence": "medium",
+   "notes": "Fallback guarantee via the robust interval-elimination branch, without regularity of F_S."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "Min(T**(2/3), sqrt(T)*gamma**(-1/4))",
+    "expression_latex": "R_T(\\pi) \\ge c \\min\\brc{ T^{2/3}, \\sqrt T\\,\\gamma^{-1/4}}",
+    "regime": null
+   },
+   "symbols": {
+    "gamma": "value of F_S on the hard bid interval J"
+   },
+   "conditions": [
+    "gamma in (0,1]",
+    "instance satisfies Assumption 1",
+    "F_S(q) = gamma for every q on the hard interval J",
+    "single active region (rho = 1)",
+    "holds even if F_S is known to the learner"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "th:single-region-lower-bound",
+    "number": "Theorem (th:single-region-lower-bound)",
+    "quote": "Fix $ T\\ge 1$ and $ \\gamma\\in(0,1]$. There is a constant $ c>0$ such that, for every learning algorithm $ \\pi$, there is an oblivious max-shilling instance satisfying \\cref{ass:weak-rhr-buyer} and satisfying $F_S(q) = \\gamma$ for every $q$ on a hard bid interval $J$, for which R_T(\\pi) \\ge c \\min\\brc{ T^{2/3}, \\sqrt T\\,\\gamma^{-1/4}}."
+   },
+   "confidence": "high",
+   "notes": "Hidden-cell construction with value v=1. Corollary 2 states minimax optimality up to logs for rho=1."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "han2020optimal",
+   "cited_title": null,
+   "cited_first_author": "Han",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Repeated first-price auctions with censored (truthful) feedback, stochastic setting",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\cO(\\sqrt T)",
+    "regime": null
+   },
+   "where": "Section 1.2 Related work"
+  },
+  {
+   "cited_key": "besbesDynamicPricingKnowing2009",
+   "cited_title": null,
+   "cited_first_author": "Besbes",
+   "cited_year": 2009,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Dynamic pricing with local (posted-price) feedback",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(2/3)",
+    "expression_latex": "T^{2/3}",
+    "regime": null
+   },
+   "where": "Section 1.2 Related work"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:46:25",
+  "source_chars": 48197,
+  "input_tokens": 49757,
+  "output_tokens": 4278,
+  "cost_usd_equiv": 0.26603479999999996,
+  "status": "extracted"
+ }
+}

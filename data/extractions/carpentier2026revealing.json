@@ -1,0 +1,328 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Revealing graph bandits for maximizing local influence",
+  "arxiv_id": "2605.00489",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Alexandra Carpentier",
+   "Michal Valko"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Restricted local influence bandit (observing only |S_{k_t,t}|)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Arms are the d nodes of an unknown graph (K = d); reward of node k is |S_{k,t}|, the number of nodes it influences, a sum of independent Bernoulli(p_{k,j}) variables, so rewards are integers in [0,d] with variance at most r_k"
+   ],
+   "definition_quote": "The restriction is that the learner, at round $t$, does not observe the set of influenced nodes $S_{k_t,t}$, but only the number number of elements in $S_{k_t,t}$, denoted by $\\left|S_{k_t,t}\\right|$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Unrestricted local influence bandit (identity of influenced nodes revealed)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Arms are the d nodes of an unknown graph (K = d); choosing node k_t reveals the random set S_{k_t,t} of nodes it influenced (each j independently with prob. p_{k_t,j}); reward is |S_{k_t,t}|",
+    "Side information reveals the graph progressively (first neighbourhood of chosen node), not the rewards of other arms; no prior knowledge of the graph",
+    "n may be smaller than d"
+   ],
+   "definition_quote": "At each round (time) $t$, the learner chooses a node $k_t$ and observes which nodes are influenced by $k_t$, i.e., the set $S_{k_t,t}$ of influenced nodes is \\emph{revealed}. ... Given a budget of  $n$ rounds, the objective is to maximize the number of \\emph{influences} that the selected node exerts."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "GraphMOSS",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "BARE (Bandit revelator)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination",
+    "explore_then_commit",
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "Min(mu_star*T, mu_star*K + sqrt(mu_star*T*K))",
+    "expression_latex": "\\upsilon \\min\\left( r_\\star n, r_\\star d+\\sqrt{r_{\\star}nd}\\right)",
+    "regime": "n large enough depending on epsilon"
+   },
+   "symbols": {
+    "eps_r": "fixed epsilon > 0 with eps_r*K < mu_star < (1-eps_r)*K"
+   },
+   "conditions": [
+    "eps_r*K < r_star < (1 - eps_r)*K for some fixed eps_r > 0",
+    "holds also for undirected graphs (symmetric M)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thls",
+    "number": "Theorem 1",
+    "quote": "Lower bound. If for some fixed $\\varepsilon >0$, we have $\\varepsilon d < r_\\star < (1-\\varepsilon)d$, then there exists a constant $\\upsilon >0$ such that for $n$ large enough, depending on $\\varepsilon$, we have that \\[\\inf\\sup\\EE{R_n} \\geq \\upsilon \\min\\left( r_\\star n, r_\\star d+\\sqrt{r_{\\star}nd}\\right),\\]"
+   },
+   "confidence": "medium",
+   "notes": "Paper's d (number of nodes = arms) mapped to K, n to T, r_star (best arm's expected reward) to mu_star. Regret n r_star - E[L_n] is pseudo-regret. Restated as Theorem 4 in appendix."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "Min(mu_star*T, mu_star*K + sqrt(mu_star*T*K))",
+    "expression_latex": "U \\min\\left( r_\\star n, r_\\star d + \\sqrt{r_{\\star}nd}\\right)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thls",
+    "number": "Theorem 1",
+    "quote": "Upper bound.  There exists a constant $U>0$ such that the regret of Algorithm~\\ref{alg:2} is bounded as \\[\\EE {R_n} \\leq U \\min\\left( r_\\star n, r_\\star d + \\sqrt{r_{\\star}nd}\\right).\\]"
+   },
+   "confidence": "medium",
+   "notes": "Proof only sketched (follows MOSS analysis with Bernstein confidence). d mapped to K, r_star to mu_star."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "Min(mu_star*T, D_star*mu_star + sqrt(mu_star*T*D_star) + T*eps_star)",
+    "expression_latex": "C\\min\\left(r_\\star n, D_\\star r_{\\star} + \\sqrt{r_{\\star}nD_\\star} + n \\varepsilon_\\star\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "D_star": "detectable dimension D(Delta_star): number of nodes whose dual influence is within the detectable gap of the maximal dual influence",
+    "eps_star": "influential-influenced gap: r_star minus max influence among the most influenced nodes"
+   },
+   "conditions": [],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "BARE",
+    "number": "Theorem 2",
+    "quote": "In the unrestricted local influence setting with information about the neighbors, \\BARE satisfies, for a constant $C>0$, \\[\\EE{R_n} \\leq C\\min\\left(r_\\star n, D_\\star r_{\\star} + \\sqrt{r_{\\star}nD_\\star} + n \\varepsilon_\\star\\right).\\]"
+   },
+   "confidence": "high",
+   "notes": "r_star mapped to mu_star, n to T."
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "Min(mu_star*T, D_star*mu_star + sqrt(mu_star*T*D_star))",
+    "expression_latex": "C\\min\\left(r_\\star n, D_\\star r_{\\star} + \\sqrt{r_{\\star}nD_\\star}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "D_star": "detectable dimension"
+   },
+   "conditions": [
+    "undirected graph (symmetric M), so eps_star = 0"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Corollary 1",
+    "quote": "For an undirected social network model the  expected regret of \\BARE is \\[\\EE{R_n} \\leq C\\min\\left(r_\\star n, D_\\star r_{\\star} + \\sqrt{r_{\\star}nD_\\star}\\right),\\]"
+   },
+   "confidence": "high",
+   "notes": "Special case of Theorem 2 with eps_star = 0."
+  },
+  {
+   "id": "r5",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "Min(r*T, D_bar*r + sqrt(r*T*D_bar) + T*eps_bar)",
+    "expression_latex": "C''\\min\\left(rn,  \\overline Dr + \\sqrt{rn\\overline D}  + n \\varepsilon\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "r": "bound on maximal influence of the problem class",
+    "D_bar": "upper bound on detectable dimension D_star of the problem class",
+    "eps_bar": "upper bound on the influential-influenced gap eps_star of the problem class"
+   },
+   "conditions": [
+    "K >= C*T for a universal constant C (paper's d >= Cn)",
+    "u*D_bar < r < (1-u)*D_bar for some fixed u > 0",
+    "problems with maximal influence bounded by r, D_star <= D_bar, eps_star <= eps_bar",
+    "eps_bar <= u*sqrt(K*r/T) for small u > 0 if K <= T"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "BARE2",
+    "number": "Theorem 3",
+    "quote": "Let $d \\geq Cn>0$, where $C>0$ is a universal constant. Consider the set of unrestricted settings and the set of all problems that have maximal influence bounded by $r$ (where for some fixed $u >0$, we have $u \\overline D < r < (1-u)\\overline D$), $D_\\star \\leq \\overline D$ and influential-influence gap smaller than $\\varepsilon$ ... Then the expected regret of the best possible algorithm in the worst case of these problems is lower bounded as \\[C''\\min\\left(rn,  \\overline Dr + \\sqrt{rn\\overline D}  + n \\varepsilon\\right),\\]"
+   },
+   "confidence": "medium",
+   "notes": "Minimax over a class parametrised by r, D_bar, eps_bar. Restated as Theorem 5 in appendix. Condition d >= Cn appears to conflict with 'if d <= n' clause; recorded as stated."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:46:31",
+  "source_chars": 67829,
+  "input_tokens": 61110,
+  "output_tokens": 5518,
+  "cost_usd_equiv": 0.3816588,
+  "status": "extracted"
+ }
+}

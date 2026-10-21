@@ -1,0 +1,266 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Finite-Time Analysis of Kernelised Contextual Bandits",
+  "arxiv_id": "1309.6869",
+  "arxiv_version": null,
+  "year": 2013,
+  "authors": [
+   "Michal Valko",
+   "Nathaniel Korda",
+   "Remi Munos",
+   "Ilias Flaounas",
+   "Nelo Cristianini"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Kernelised (RKHS) contextual bandit with N actions and changing contexts",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "unbounded",
+    "loss_set": "unspecified"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Expected reward is linear in the RKHS feature map: E(r_{a,t}|x_{a,t}) = phi(x_{a,t})^T theta*, theta* in H with arbitrary (unknown) RKHS norm",
+    "Learner accesses contexts only through the kernel function",
+    "Regret measured against the per-round best action a*_t for the current contexts; regret defined via realised rewards"
+   ],
+   "definition_quote": "For our non-linear contextual bandit model we assume the existence of a φ for which there exists a θ∗ ∈ H such that: E(ra,t | xa,t) = φ(xa,t)^T θ∗. Taking a∗t := arg max_{a∈A} {φ(xa,t)^T θ∗} we can define the regret as before in (1)."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "KernelUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "T"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "SupKernelUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(2 + 2*(1 + sqrt(lam/(2*log(2*T*K*(1 + log(T))/delta))))*theta_norm + 8*sqrt((12 + 15/lam)*Max(log(T/(d_eff*lam) + 1), log(T))**3)*sqrt(2*log(2*T*K*(1 + log(T))/delta)))*sqrt(d_eff*T)",
+    "expression_latex": "R(T) \\le \\Big[2 + 2\\Big(1+\\sqrt{\\frac{\\gamma}{2\\ln(2TN(1+\\ln T)/\\delta)}}\\Big)\\|\\theta^*\\| + 8\\sqrt{\\Big(12+\\frac{15}{\\gamma}\\Big)\\max\\Big(\\ln\\big(\\frac{T}{\\tilde d\\gamma}+1\\big),\\ln T\\Big)^3}\\sqrt{2\\ln\\frac{2TN(1+\\ln T)}{\\delta}}\\Big]\\sqrt{\\tilde d T}",
+    "regime": null
+   },
+   "symbols": {
+    "d_eff": "effective dimension d~ = min{j : j*gamma*ln T >= sum_{i>j} (lambda_{i,T} - gamma)}, data-dependent",
+    "theta_norm": "RKHS norm ||theta*|| of the reward parameter",
+    "lam": "regularisation parameter gamma of kernel ridge regression"
+   },
+   "conditions": [
+    "||phi(x_{a,t})|| <= 1 for all a, t",
+    "rewards r_{a,t} in [0,1]"
+   ],
+   "tuning": [
+    "eta = sqrt(2 ln(2TN/delta))",
+    "S = ln T levels"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "Assume that ‖φ(xa,t)‖ ≤ 1 and |ra,t| ∈ [0, 1] for all a ∈ A and t ≥ 1, and set η = sqrt(2 ln 2TN/δ). Then with probability 1 − δ, SupKernelUCB satisfies: R(T) ≤ [2 + 2(1 + sqrt(γ/(2 ln(2TN(1+ln T)/δ))))‖θ∗‖ + 8 sqrt((12 + 15/γ) max(ln(T/(d̃γ)+1), ln T)^3) × sqrt(2 ln(2TN(1+ln T)/δ))] sqrt(d̃T)"
+   },
+   "confidence": "medium",
+   "notes": "Text extracted from PDF; bracket placement and exponent 3 on the max term reconstructed from garbled pdftotext and the proof (S = ln T, l_T^{3/2}). N actions mapped to K. Remark 3 states informally Õ(sqrt(L d̃ T)) with gamma ~ 1/L when ||theta*|| <= L, and Õ(||theta*|| sqrt(d̃T)) with constant gamma; with linear kernel d̃ <= d recovering Chu et al. (2011). Regret is defined on realised rewards against per-round best action."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Chu et al., 2011",
+   "cited_title": "Contextual Bandits with Linear Payoff Functions",
+   "cited_first_author": "Chu",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SupLinUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Linear contextual bandits with N actions, d-dim contexts, w.p. 1-delta",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*d*log(K*T*log(T)/delta)**3)",
+    "expression_latex": "O(\\sqrt{Td\\ln^3(NT\\ln(T)/\\delta)})",
+    "regime": null
+   },
+   "where": "Section 2.3"
+  },
+  {
+   "cited_key": "Auer, 2002",
+   "cited_title": "Using confidence bounds for exploitation-exploration trade-offs",
+   "cited_first_author": "Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SupLinRel",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Linear contextual bandits with N actions, w.p. 1-delta",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*d*log(2*K*T*log(T)/delta)**(3/2))",
+    "expression_latex": "O((Td\\ln^{3/2}(2NT\\ln(T)/\\delta))^{1/2})",
+    "regime": null
+   },
+   "where": "Section 2.4"
+  },
+  {
+   "cited_key": "Dani et al., 2008",
+   "cited_title": "Stochastic Linear Optimization under Bandit Feedback",
+   "cited_first_author": "Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Continuous action space linear bandits",
+   "bound": {
+    "notation": "Omega",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\Omega(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 2.4"
+  },
+  {
+   "cited_key": "Chu et al., 2011",
+   "cited_title": "Contextual Bandits with Linear Payoff Functions",
+   "cited_first_author": "Chu",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Finite action space linear contextual bandits",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(d*T)",
+    "expression_latex": "\\Omega(\\sqrt{dT})",
+    "regime": null
+   },
+   "where": "Section 2.4"
+  },
+  {
+   "cited_key": "Beygelzimer et al., 2010",
+   "cited_title": "Contextual Bandit Algorithms with Supervised Learning Guarantees",
+   "cited_first_author": "Beygelzimer",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": "VE",
+   "algorithm_registry_id": "ve",
+   "side": "upper",
+   "setting_description": "Contextual bandits with hypothesis class of VC dimension d (d here is VC dimension)",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*d*log(T))",
+    "expression_latex": "O(\\sqrt{Td\\ln T})",
+    "regime": null
+   },
+   "where": "Section 2.4"
+  },
+  {
+   "cited_key": "Srinivas et al., 2010",
+   "cited_title": "Gaussian Process Optimization in the Bandit Setting: No Regret and Experimental Design",
+   "cited_first_author": "Srinivas",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GP-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Agnostic kernel bandit (reward function with bounded RKHS norm), I = information gain I(y_T; theta*)",
+   "bound": {
+    "notation": "O",
+    "expression": "(I_gain + theta_norm**2*sqrt(I_gain))*sqrt(T)",
+    "expression_latex": "O\\big(I(y_A;\\theta^*) + \\|\\theta^*\\|^2\\sqrt{I(y_A;\\theta^*)}\\sqrt{T}\\big)",
+    "regime": null
+   },
+   "where": "Section 4.1, eq. (12)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:47:23",
+  "source_chars": 41917,
+  "input_tokens": 48763,
+  "output_tokens": 5508,
+  "cost_usd_equiv": 0.2826828,
+  "status": "extracted"
+ }
+}

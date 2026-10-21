@@ -1,0 +1,367 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "lil' UCB : An Optimal Exploration Algorithm for Multi-Armed Bandits",
+  "arxiv_id": "1312.7308",
+  "arxiv_version": null,
+  "year": 2013,
+  "authors": [
+   "Kevin Jamieson",
+   "Matthew Malloy",
+   "Robert Nowak",
+   "Sébastien Bubeck"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "best arm problem in the fixed confidence setting",
+   "objective": "bai_fixed_confidence",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "K",
+    "sigma"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm",
+    "means_in_known_interval"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [],
+   "definition_quote": "Consider a MAB with $n$ arms, each with unknown mean payoff $\\mu_1, \\dots, \\mu_n$ in $[0,1]$. A sample of the $i$th arm is an independent realization of a sub-Gaussian random variable with mean $\\mu_i$. In the \\emph{fixed confidence setting}, the goal of the best arm problem is to devise a sampling procedure with a single input $\\delta$ that ... finds the arm with the largest mean with probability at least $1-\\delta$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "best arm problem in the fixed confidence setting with n=2 (lower bound)",
+   "objective": "bai_fixed_confidence",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "K",
+    "sigma",
+    "reward_family"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {
+    "K": "2"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "lower bound proved via reduction where one arm's value is known (Gaussian N(Delta,1) sign test)"
+   ],
+   "definition_quote": "Consider the best arm problem in the fixed confidence setting with $n=2$ and expected number of samples $\\E_{\\Delta}[T]$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "lil' UCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "H_1*log(1/delta) + sum_subopt(log(log(c_H/Delta_i**2))/Delta_i**2)",
+    "expression_latex": "c_1 \\Hn_1 \\log(1/\\delta) + c_3 \\Hn_3",
+    "regime": null
+   },
+   "symbols": {
+    "c_H": "positive constant from the analysis making log log well-defined for Delta_i in (0,1]",
+    "rho": "(2+eps)/eps * (1/log(1+eps))^(1+eps)"
+   },
+   "conditions": [
+    "means in [0,1], unique best arm",
+    "sub-Gaussian samples (scale implicitly 1 in the algorithm's confidence bound)"
+   ],
+   "tuning": [
+    "epsilon, beta > 0",
+    "delta in (0, log(1+epsilon)/e)",
+    "a >= (1 + log(2 log(((2+beta)/beta)^2/delta))/log(1/delta)) / (1 - delta - sqrt(sqrt(delta) log(1/delta))) * ((2+beta)/beta)^2",
+    "c_1, c_3 depend only on epsilon, beta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:lilucb",
+    "number": "Theorem 2",
+    "quote": "For any $\\epsilon, \\beta >0$, $\\delta \\in (0,\\log(1+\\epsilon)/e)$ and $a \\geq ...$, with probability at least $1-\\sqrt{\\rho \\delta} - \\frac{4 \\rho\\delta}{1-\\rho\\delta}$, lil' UCB stops after at most  $c_1 \\Hn_1 \\log(1/\\delta) + c_3 \\Hn_3 $ samples and outputs the optimal arm where $\\rho = \\frac{2+\\eps}{\\eps} \\left(\\frac{1}{\\log(1+\\eps)}\\right)^{1+\\epsilon}$ and $c_1,c_3 >0$ are constants that depend only on $\\epsilon, \\beta$."
+   },
+   "confidence": "medium",
+   "notes": "Success probability is 1 - sqrt(rho*delta) - 4 rho delta/(1-rho delta), not 1-delta; also guarantees correct output. Constants c_1, c_3 unspecified, so recorded with O notation."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "K + gamma*8*E*H_1*log(1/delta) + sum_subopt(gamma*log(2*log(gamma*(1+eps_alg)/Delta_i**2))/Delta_i**2)",
+    "expression_latex": "n + \\gamma 8e  \\Hn_1 \\log(1/\\delta) + \\sum_{i=2}^n \\gamma \\frac{\\log(2\\log(\\gamma (1+\\eps)/\\Delta_i^2))}{\\Delta_i^2}",
+    "regime": null
+   },
+   "symbols": {
+    "gamma": "2(2+beta)^2 (1+sqrt(eps))^2 (1+eps)",
+    "beta": "lil'UCB exploration parameter"
+   },
+   "conditions": [
+    "sub-Gaussian samples with scale 1"
+   ],
+   "tuning": [
+    "eps_alg = algorithm parameter epsilon",
+    "beta > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "lem:1",
+    "number": "Lemma 2",
+    "quote": "Let $\\gamma = 2(2+\\beta)^2 (1+\\sqrt{\\eps})^2 (1+\\eps)$ and $\\rho = ...$. With probability at least $1- 2\\rho \\delta$ one has for any $t\\geq1$, $$\\sum_{i=2}^n T_i(t) \\leq n + \\gamma 8e  \\Hn_1 \\log(1/\\delta) + \\sum_{i=2}^n \\gamma \\frac{\\log(2\\log(\\gamma (1+\\eps)/\\Delta_i^2))}{\\Delta_i^2}.$$"
+   },
+   "confidence": "medium",
+   "notes": "Bound on total number of pulls of suboptimal arms at any time t, with probability at least 1-2 rho delta. Here beta is the algorithm parameter, not smoothness."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "limsup",
+    "expression": "(2 - 4*delta)*log(log(Delta**(-2)))/Delta**2",
+    "expression_latex": "\\limsup_{{\\Delta} \\rightarrow 0} \\frac{\\E_{\\Delta} [T]}{\\Delta^{-2} \\log \\log {\\Delta^{-2}} } \\geq 2-4 \\delta",
+    "regime": "Delta -> 0"
+   },
+   "symbols": {},
+   "conditions": [
+    "procedure satisfies sup_{Delta != 0} P(wrong arm) <= delta",
+    "delta in (0, 1/2)",
+    "K = 2"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lim",
+    "number": "Corollary 1",
+    "quote": "Consider the best arm problem in the fixed confidence setting with $n=2$ and expected number of samples $\\E_{\\Delta}[T]$.  Any procedure with $\\sup_{\\Delta \\neq 0} \\; \\mathbb{P}(\\widehat{i} \\neq i^* ) \\leq \\delta$, $\\delta \\in (0,1/2)$, necessarily has $\\limsup_{{\\Delta} \\rightarrow 0} \\frac{\\E_{\\Delta} [T]}{\\Delta^{-2} \\log \\log {\\Delta^{-2}} } \\geq 2-4 \\delta.$"
+   },
+   "confidence": "medium",
+   "notes": "Obtained by reduction to Farrell (1964) Theorem 1 (Gaussian unit variance). Appendix Theorem 3 gives a weaker version (limsup > 0) with a self-contained proof; not recorded separately."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Farrell",
+   "cited_title": "Asymptotic behavior of expected sample size in certain one sided tests",
+   "cited_first_author": "R. H. Farrell",
+   "cited_year": 1964,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Sequential test of sign of Delta with X_i ~ N(Delta,1), delta-correct uniformly over Delta != 0, delta in (0,1/2)",
+   "bound": {
+    "notation": "limsup",
+    "expression": "(2 - 4*delta)*log(log(Delta**(-2)))/Delta**2",
+    "expression_latex": "\\limsup_{\\Delta\\rightarrow 0} \\frac{\\E_{\\Delta}[T]}{\\Delta^{-2} \\log \\log {\\Delta^{-2}} } \\geq 2-4 \\delta",
+    "regime": "Delta -> 0"
+   },
+   "where": "Theorem 1"
+  },
+  {
+   "cited_key": "even2002pac",
+   "cited_title": "Pac bounds for multi-armed bandit and markov decision processes",
+   "cited_first_author": "Eyal Even-Dar",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Successive Elimination",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Best arm identification, fixed confidence",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(log(K/Delta_i**2)/Delta_i**2)",
+    "expression_latex": "\\sum_{i\\neq i^*} \\Delta_i^{-2} \\log( n \\Delta_i^{-2})",
+    "regime": null
+   },
+   "where": "Section 1"
+  },
+  {
+   "cited_key": "mannor2004sample",
+   "cited_title": "The sample complexity of exploration in the multi-armed bandit problem",
+   "cited_first_author": "Shie Mannor",
+   "cited_year": 2004,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Best arm identification, fixed confidence",
+   "bound": {
+    "notation": "Omega",
+    "expression": "H_1",
+    "expression_latex": "\\sum_{i\\neq i^*} \\Delta_i^{-2}",
+    "regime": null
+   },
+   "where": "Section 1"
+  },
+  {
+   "cited_key": "jamieson2013finding",
+   "cited_title": "On finding the largest mean among many",
+   "cited_first_author": "Kevin Jamieson",
+   "cited_year": 2013,
+   "cited_arxiv_id": "1306.3917",
+   "algorithm_name": "PRISM",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Best arm identification, fixed confidence",
+   "bound": {
+    "notation": "O",
+    "expression": "H_1*log(log(H_1))",
+    "expression_latex": "\\sum_i \\Delta_i^{-2} \\log \\log \\left( \\sum_j \\Delta_j^{-2}\\right)",
+    "regime": "one parameterization"
+   },
+   "where": "Section 1"
+  },
+  {
+   "cited_key": "jamieson2013finding",
+   "cited_title": "On finding the largest mean among many",
+   "cited_first_author": "Kevin Jamieson",
+   "cited_year": 2013,
+   "cited_arxiv_id": "1306.3917",
+   "algorithm_name": "PRISM",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Best arm identification, fixed confidence",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(log(Delta_i**(-2))/Delta_i**2)",
+    "expression_latex": "\\sum_i \\Delta_i^{-2}  \\log \\left(  \\Delta_i^{-2}\\right)",
+    "regime": "other parameterization"
+   },
+   "where": "Section 1"
+  },
+  {
+   "cited_key": "karnin2013almost",
+   "cited_title": "Almost optimal exploration in multi-armed bandits",
+   "cited_first_author": "Zohar Karnin",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Exponential-Gap Elimination",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Best arm identification, fixed confidence, high probability",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(log(log(Delta_i**(-2)))/Delta_i**2)",
+    "expression_latex": "\\sum_i \\Delta_i^{-2} \\log \\log \\Delta_i^{-2}",
+    "regime": null
+   },
+   "where": "Section 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:56:40",
+  "source_chars": 54983,
+  "input_tokens": 56396,
+  "output_tokens": 6749,
+  "cost_usd_equiv": 0.36856679999999997,
+  "status": "extracted"
+ }
+}

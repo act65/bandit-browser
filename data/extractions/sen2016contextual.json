@@ -1,0 +1,321 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Contextual Bandits with Latent Confounders: An NMF Approach",
+  "arxiv_id": "1606.00119",
+  "arxiv_version": null,
+  "year": 2016,
+  "authors": [
+   "Rajat Sen",
+   "Karthikeyan Shanmugam",
+   "Murat Kocaoglu",
+   "Alexandros G. Dimakis",
+   "Sanjay Shakkottai"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Contextual bandits with latent confounders (U = AW)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "Delta_lower_bound",
+    "K"
+   ],
+   "instance_assumptions": [
+    "gap_bounded_below"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "L observed contexts drawn i.i.d. with probabilities beta_s; mean reward matrix U (L x K) factorizes as U = AW with non-negative A (L x m, row-stochastic, separable) and W (m x K): latent confounder of cardinality m",
+    "learner knows latent dimension m and min context probability beta, and WStRIP constants rho_1, rho_2",
+    "A satisfies l2-WStRIP and W satisfies l1-WStRIP"
+   ],
+   "definition_quote": "At each time t the algorithm observes a context S_t = s_t; After observing the context the algorithm selects an arm A_t = a_t ... The algorithm then obtains a Bernoulli reward Y_t with mean U_{s_t,a_t}. ... Therefore, we have U = AW."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Contextual bandits with latent confounders (lower bound)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "K",
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "L observed contexts, uniform context distribution; mean reward matrix U = AW with latent dimension m"
+   ],
+   "definition_quote": "Consider a problem instance (U,A,W) such that beta_s = 1/L for all s and |C(z_i)| = L/m ..."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "NMF-Bandit",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "epsilon_greedy",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "m (latent dimension)",
+    "beta (min context probability)",
+    "Delta_lower_bound",
+    "rho_1",
+    "rho_2",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "M_ctx*m_lat**5*log(K)**2*log(T)/Delta**2",
+    "expression_latex": "O\\left( L\\frac{\\mathrm{poly}(m,\\log(K))}{\\Delta ^2}\\log(T)\\right), \\mathrm{poly}(m,\\log(K)) = O(m^5 \\log^2 K)",
+    "regime": null
+   },
+   "symbols": {
+    "M_ctx": "number of observed contexts L",
+    "m_lat": "cardinality m of the latent confounder (rank of U)"
+   },
+   "conditions": [
+    "A separable",
+    "A satisfies l2-WStRIP with constants (delta/L, rho_2, m_1')",
+    "W satisfies l1-WStRIP with constants (delta, rho_1, m_2')",
+    "m' = Theta(m log K)",
+    "beta_s = Omega(1/L) for all s",
+    "L = Omega(K log K)",
+    "Delta = min gap over contexts, constant"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:existence",
+    "number": "Theorem 1",
+    "quote": "Consider the bandit model with reward matrix U = AW. Suppose A is separable. Let A satisfy l2-WStRIP with constants (delta/L, rho_2, m_1') while W satisfies l1-WStRIP with constants (delta, rho_1, m_2'). Let m' = max(m'_1,m'_2) = Theta(m log(K)). Suppose beta_s = Omega(1/L) for all s. We also assume that L = Omega(K log(K)). Then there exists a randomized algorithm whose regret at time T is bounded as R(T) = O(L poly(m,log K)/Delta^2 log T) with probability at least 1-delta. Here poly(m,log K) = O(m^5 log^2 K)."
+   },
+   "confidence": "medium",
+   "notes": "Regret defined via expected rewards (pseudo-regret) against per-context best arm; the 1-delta probability is over the algorithm's random choice of subsets. Restated with details as Theorem 8."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "theta*(m_lat + 2*m_prime)*log(T)/beta_min + 4*(M_ctx + K + 1)*m_prime*log(T)",
+    "expression_latex": "R(T) \\leq \\frac{\\theta(m+2m')\\log(T)}{\\beta} + 4(L+K+1)m' \\log(T) + o(1)",
+    "regime": null
+   },
+   "symbols": {
+    "M_ctx": "number of observed contexts L",
+    "m_lat": "latent dimension m",
+    "m_prime": "sampling subset size parameter m'",
+    "beta_min": "minimum context probability min_s beta_s",
+    "theta": "exploration constant, theta >= 4 max(2m'((16+Delta)rho_2+32m)/(Delta rho_1 rho_2), 15/(rho_1(1-lambda)))^2",
+    "rho_1": "l1-WStRIP constant of W",
+    "rho_2": "l2-WStRIP constant of A",
+    "lambda_W": "robustness parameter lambda in Hottopix condition"
+   },
+   "conditions": [
+    "U = AW, contexts arrive independently with probability beta_s",
+    "L = Omega(K log K)",
+    "beta = min_s beta_s = Omega(1/L)",
+    "W satisfies l1-WStRIP with parameters (delta, rho_1, 2m')",
+    "A in [0,1]^{L x m} satisfies l2-WStRIP with parameters (delta/L, rho_2, 2m') and is separable"
+   ],
+   "tuning": [
+    "epsilon_t = min(1, theta(2m'+m)/(beta t))",
+    "gamma(t) = max(1/t, 2/sqrt(theta))",
+    "theta >= 4 max(2m'((16+Delta)rho_2+32m)/(Delta rho_1 rho_2), 15/(rho_1(1-lambda)))^2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:mainub",
+    "number": "Theorem 8",
+    "quote": "... then with probability atleast 1-delta, Algorithm 1 with epsilon_t = min(1, theta(2m'+m)/(beta t)) and gamma(t) = max(1/t, 2/sqrt(theta)) has regret, R(T) <= theta(m+2m')log(T)/beta + 4(L+K+1)m' log(T) + o(1) = O(L poly(m,m')/Delta^2 log T) = O(L m^5 log^2 K/Delta^2 log T)"
+   },
+   "confidence": "medium",
+   "notes": "o(1) term dropped from the expression. The O form equals Theorem 1 (r1)."
+  },
+  {
+   "id": "r3",
+   "setting": "s2",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "(K - 1)*m_lat*D_U*((1 - alpha_c)*(log(T/(2*m_lat)) - log(M_ctx/m_lat)) - log(4*K*C_cons))",
+    "expression_latex": "R(T) \\geq (K-1)mD(\\mathbf{U})((1-\\alpha)(\\log(T/2m) - \\log(L/m)) - \\log(4KC))",
+    "regime": "T > tau"
+   },
+   "symbols": {
+    "M_ctx": "number of observed contexts L",
+    "m_lat": "latent dimension m",
+    "D_U": "instance constant D(U) = O(1/Delta) depending on entries of U, independent of L,K,m",
+    "alpha_c": "consistency exponent alpha in (0,1) of alpha-consistent policies",
+    "C_cons": "universal constant from alpha-consistency",
+    "tau": "universal constant threshold on T"
+   },
+   "conditions": [
+    "beta_s = 1/L for all s",
+    "|C(z_i)| = L/m for all latent contexts, m divides L",
+    "C(z_i) disjoint for distinct latent contexts",
+    "policy is alpha-consistent"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lb",
+    "number": "Theorem 9",
+    "quote": "Consider a problem instance (U,A,W) such that beta_s = 1/L for all s and |C(z_i)| = L/m (assume that m divides L) for all z_i. Further, we assume that C(z_i) cap C(z_j) = emptyset ... Then the regret of any alpha-consistent policy is lower-bounded as follows, R(T) >= (K-1)mD(U)((1-alpha)(log(T/2m) - log(L/m)) - log(4KC)) for any T > tau"
+   },
+   "confidence": "medium",
+   "notes": "Same statement appears as Theorem 4 in the main text (existence of instance with beta_s = Omega(1/L)). Lower bound for a specific instance class; alpha-consistent policies (algorithm_class other)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "wu2015algorithms",
+   "cited_title": "Algorithms with logarithmic or sublinear regret for constrained contextual bandits",
+   "cited_first_author": "H. Wu",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "stochastic contextual bandit with L contexts and K arms, constant gap",
+   "bound": {
+    "notation": "O",
+    "expression": "M_ctx*K*log(T)",
+    "expression_latex": "O(LK\\log T)",
+    "regime": null
+   },
+   "where": "Section 1.2 Related Work"
+  },
+  {
+   "cited_key": "bubeck2012regret",
+   "cited_title": "Regret analysis of stochastic and nonstochastic multi-armed bandit problems",
+   "cited_first_author": "S. Bubeck",
+   "cited_year": 2012,
+   "cited_arxiv_id": "1204.5721",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "adversarial contextual bandit with L contexts and K arms",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(M_ctx*K*T*log(K))",
+    "expression_latex": "O(\\sqrt{LKT \\log K})",
+    "regime": null
+   },
+   "where": "Section 1.2 Related Work"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:20:08",
+  "source_chars": 123199,
+  "input_tokens": 90934,
+  "output_tokens": 5523,
+  "cost_usd_equiv": 0.6203508,
+  "status": "extracted"
+ }
+}

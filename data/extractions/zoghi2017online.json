@@ -1,0 +1,167 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Online Learning to Rank in Stochastic Click Models",
+  "arxiv_id": "1703.02527",
+  "arxiv_version": null,
+  "year": 2017,
+  "authors": [
+   "Masrour Zoghi",
+   "Tomas Tunys",
+   "Mohammad Ghavamzadeh",
+   "Branislav Kveton",
+   "Csaba Szepesvari",
+   "Zheng Wen"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Stochastic click bandit",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Actions are ordered lists of K distinct items out of L (ranking); reward = number of clicks",
+    "Feedback: click indicators on each position, where click = examination indicator x attraction indicator; attraction of unexamined items is not observed (partial-monitoring-like click feedback)",
+    "Click model: independent Bernoulli attractions; examination probabilities general (covers cascade and position-based models) subject to order-independent, decreasing, correct-scaling and optimal examination assumptions (Assumptions 1-6)",
+    "Optimal list unique as a set"
+   ],
+   "definition_quote": "We refer to our learning problem as a \\emph{stochastic click bandit}. An instance of this problem is a tuple $(K, L, P_\\attrprob, P_\\examprob)$, where $K$ is the number of positions, $L$ is the number of items, $P_\\attrprob$ is a distribution over binary vectors $\\set{0, 1}^L$, and $P_\\examprob$ is a distribution over binary matrices"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "BatchRank",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination",
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "192*m**3*L_items/((1 - alpha_max)*Delta_min_att)*log(T) + 4*m*L_items*(3*E + m)",
+    "expression_latex": "\\frac{192 K^3 L}{(1 - \\attrprob_{\\max}) \\Delta_{\\min}} \\log T + 4 K L (3 e + K)",
+    "regime": null
+   },
+   "symbols": {
+    "m": "number of positions K in the ranked list (paper's K)",
+    "L_items": "number of items L (paper's L)",
+    "alpha_max": "highest attraction probability alpha(1)",
+    "Delta_min_att": "min_{k in [K]} (alpha(k) - alpha(k+1)), gap between consecutive attraction probabilities among the top K+1 items"
+   },
+   "conditions": [
+    "Assumptions 1-6 (independent attractions, attraction-examination independence, order-independent, decreasing, correct-scaling and optimal examination)",
+    "T >= 5",
+    "alpha(1) > ... > alpha(L) > 0",
+    "optimal list unique as a set"
+   ],
+   "tuning": [
+    "n_ell = ceil(16 * 2^{2 ell} log T)",
+    "delta_T = log T + 3 log log T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:upper bound",
+    "number": "Theorem 1",
+    "quote": "For any stochastic click bandit in \\cref{sec:stochastic click bandit} that satisfies Assumptions \\ref{ass:attraction independence} to \\ref{ass:optimal examination} and $T \\geq 5$, the expected $T$-step regret of $\\mergerank$ is bounded as R(T) \\leq \\frac{192 K^3 L}{(1 - \\attrprob_{\\max}) \\Delta_{\\min}} \\log T + 4 K L (3 e + K), where $\\Delta_{\\min} = \\min_{k \\in [K]} \\set{\\attrprob(k) - \\attrprob(k + 1)}$."
+   },
+   "confidence": "high",
+   "notes": "Regret is E of reward difference vs optimal list with shared randomness, equal to expected-reward gap, hence pseudo-regret. Paper's K (positions) renamed m; L (items) renamed L_items. Algorithm uses T in its stage lengths and confidence bounds."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "katariya17stochastic",
+   "cited_title": "Stochastic rank-1 bandits",
+   "cited_first_author": "Sumeet Katariya",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Rank1Elim",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Learning the most clicked item-position pair in a specific PBM (first position examined w.p. ~1, others ~0), solved as a stochastic rank-1 bandit; mu = O(1/K)",
+   "bound": {
+    "notation": "O",
+    "expression": "(m**3 + m**2*L_items/Delta_min_att)*log(T)",
+    "expression_latex": "O([K^3 + K^2 L \\Delta_{\\min}^{-1}] \\log T)",
+    "regime": null
+   },
+   "where": "Section 5.4 (Discussion)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:07:46",
+  "source_chars": 86443,
+  "input_tokens": 72633,
+  "output_tokens": 3049,
+  "cost_usd_equiv": 0.4244628,
+  "status": "extracted"
+ }
+}

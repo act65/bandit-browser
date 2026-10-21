@@ -1,0 +1,154 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Provably Efficient Online Hyperparameter Optimization with Population-Based Bandits",
+  "arxiv_id": "2002.02518",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Jack Parker-Holder",
+   "Vu Nguyen",
+   "Stephen Roberts"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Batch (parallel) time-varying Gaussian process bandit optimization (online hyperparameter schedule selection)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "nonstationary_drifting",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "T",
+    "sigma",
+    "d",
+    "prior"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [
+    "batched"
+   ],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Time-varying function f_{t+1} = sqrt(1-omega) f_t + sqrt(omega) g_{t+1} with g_t i.i.d. GP(0,k) samples (Bogunovic et al. 2016 model); forgetting parameter omega",
+    "Batch of B parallel agents per round; regret counts the best agent in each batch (min over b of instantaneous regret)",
+    "Domain D subset of [0,r]^d compact and convex",
+    "Kernel derivative tail (Lipschitz) assumption with constants a,b"
+   ],
+   "definition_quote": "We formulate this problem as optimizing the time-varying black-box reward function $f_t$, over $\\mathcal{D}$. Every $t_{\\mathrm{ready}}$ steps, we observe and record noisy observations, $y_t = f_t(x_t) + \\epsilon_t$, where $\\epsilon_t \\sim \\mathcal{N}(0, \\sigma^2\\mathbf{I})$ ... $f_1(x) = g_1(x), f_{t+1}(x) = \\sqrt{1-\\omega}f_t(x) + \\sqrt{\\omega}g_{t+1}(x)$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Population-Based Bandits (PB2)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma",
+    "d",
+    "prior",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(C_1*T*beta_T*(T/(N_tilde*B_pop) + 1)*(gamma_NB + (N_tilde*B_pop)**3*omega)) + 2",
+    "expression_latex": "\\sqrt{C_{1}T\\beta_{T}\\left(\\frac{T}{\\tilde{N}B}+1\\right)\\left(\\gamma_{\\tilde{N}B}+\\left[\\tilde{N}B\\right]^{3}\\omega\\right)}+2",
+    "regime": "any block length N_tilde in {1,...,T}, B << T"
+   },
+   "symbols": {
+    "C_1": "32/log(1+sigma_f^2), sigma_f^2 the noise variance",
+    "beta_T": "2 log(pi^2 T^2/(2 delta)) + 2 d log(r d b T^2 sqrt(log(d a pi^2 T^2/(2 delta))))",
+    "N_tilde": "block length, any value in {1,...,T}",
+    "B_pop": "population / batch size B",
+    "gamma_NB": "maximum information gain of the (time-invariant) kernel after N_tilde*B points",
+    "omega": "forgetting rate of the time-varying GP model"
+   },
+   "conditions": [
+    "D subset of [0,r]^d compact and convex",
+    "f_t ~ GP(0,k) a.s. continuously differentiable with P(sup|df_t/dx^(j)| >= L) <= a exp(-(L/b)^2)",
+    "B << T"
+   ],
+   "tuning": [
+    "beta_T set as stated",
+    "delta in (0,1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 2",
+    "quote": "Let the domain $\\mathcal{D}\\subset[0,r]^{d}$ be compact and convex ... set $\\beta_{T}=2\\log\\frac{\\pi^{2}T^{2}}{2\\delta}+2d\\log rdbT^{2}\\sqrt{\\log\\frac{da\\pi^{2}T^{2}}{2\\delta}}$ and define $C_{1}=32/\\log(1+\\sigma_{f}^{2})$, the PB2 algorithm satisfies the following regret bound after $T$ time steps over $B$ parallel agents with probability at least $1-\\delta$: $R_{TB}=\\sum_{t=1}^{T}f_{t}(\\bx_{t}^{*})-\\max_{b} f_{t}(\\bx_{t,b})\\le \\sqrt{C_{1}T\\beta_{T}(\\frac{T}{\\tilde{N}B}+1)(\\gamma_{\\tilde{N}B}+[\\tilde{N}B]^{3}\\omega)}+2$ the bound holds for any block length $\\tilde{N}\\in\\{1,...,T\\}$ and $B\\ll T$."
+   },
+   "confidence": "medium",
+   "notes": "Restated as Theorem 12 (main_theorem) in the appendix. The proof's final step has an extra 1/B factor and 1/sigma_f^2 on the omega term not in the statement; statement recorded as written. Regret is per-round against x_t^* with the best batch member counted, under a GP prior on f_t (Bayesian-type high-probability). Paper's C_1 definition is inconsistent across lemmas (sigma_f^2 vs sigma_f^-2)."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T13:59:33",
+  "source_chars": 97105,
+  "input_tokens": 77119,
+  "output_tokens": 3016,
+  "cost_usd_equiv": 0.4596908,
+  "status": "extracted"
+ }
+}

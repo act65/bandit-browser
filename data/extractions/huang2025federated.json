@@ -1,0 +1,338 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Federated Linear Dueling Bandits",
+  "arxiv_id": "2502.01085",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Xuhan Huang",
+   "Yan Hu",
+   "Zhiyan Li",
+   "Zhiyong Wang",
+   "Benyou Wang",
+   "Zhongxiang Dai"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Federated contextual linear dueling bandits (BTL model)",
+   "objective": "cumulative_regret",
+   "feedback": "dueling",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "federated",
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "oblivious_sequence",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "unspecified",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "N agents share the same latent linear utility f(x)=theta^T phi(x); agents communicate only gradients / information matrices with a central server",
+    "Preference feedback via logistic (Bradley-Terry-Luce) link on utility differences; kappa_mu = inf derivative of link over arm pairs > 0, known to the learner",
+    "Regret per round is 2f(x*) - f(x_1) - f(x_2), summed over all N agents",
+    "Feature differences bounded: ||phi(x)-phi(x')||_2 <= 1",
+    "Arm sets X_{t,i} i.i.d. across rounds and agents with diversity assumption lambda_f > 0 (Assumption 2.2)"
+   ],
+   "definition_quote": "In federated contextual dueling bandits involving $N$ agents, we assume that all agents share the same latent reward function $f(x)=\\theta^{\\top} \\phi(x)$. ... we analyze the total cumulative regret from all $N$ agents: $R_{T,N} = \\sum^T_{t=1}\\sum^N_{i=1} \\left(2 f(x^*_{t,i}) - f(x_{t,1,i}) - f(x_{t,2,i})\\right)$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "FLDB-GD",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "d",
+    "kappa_mu",
+    "delta"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "FLDB-OGD",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d",
+    "kappa_mu",
+    "alpha (strong convexity)",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*N*d*log(1 + T*N*kappa_mu/(d*lam)) + 3*sqrt(2)*sqrt(2*log(1/delta) + d*log(1 + T*N*kappa_mu/(d*lam)))/kappa_mu*sqrt(2*T*d*log(1 + T*N*kappa_mu/(d*lam)))",
+    "expression_latex": "R_{T,N} \\leq 2N d\\log ( 1 + T N \\kappa_{\\mu}/(d\\lambda) ) + 3 \\sqrt{2} \\frac{\\beta_T}{\\kappa_\\mu} \\sqrt{T 2 d\\log ( 1 + T N\\kappa_{\\mu}/(d\\lambda) )}",
+    "regime": null
+   },
+   "symbols": {
+    "N": "number of agents",
+    "kappa_mu": "inf over arm pairs of the derivative of the logistic link",
+    "beta_T": "sqrt(2 log(1/delta) + d log(1 + T N kappa_mu/(d lam)))"
+   },
+   "conditions": [
+    "Assumption 2.1 (kappa_mu > 0, link Lipschitz, ||phi(x)-phi(x')|| <= 1)",
+    "Assumption 2.2 (diversity, lambda_f > 0)",
+    "Assumption 4.1: the MLE is computed exactly after M gradient-exchange rounds"
+   ],
+   "tuning": [
+    "kappa_mu/lam <= 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:gd",
+    "number": "Theorem 4.3",
+    "quote": "With probability at least $1-\\delta$, the overall regrets of all agents in all iterations satisfy: R_{T,N} \\leq 2N d\\log ( 1 + T N \\kappa_{\\mu}/(d\\lambda) ) + 3 \\sqrt{2} \\frac{\\beta_T}{\\kappa_\\mu} \\sqrt{T 2 d\\log ( 1 + T N\\kappa_{\\mu}/(d\\lambda) )}"
+   },
+   "confidence": "medium",
+   "notes": "Regret summed over N agents. beta_T expanded. Relies on exact-MLE assumption; proof also uses lambda with kappa_mu/lambda<=1."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "N*d + d*sqrt(T)/kappa_mu",
+    "expression_latex": "R_{T,N} = \\widetilde{O}\\left(N d + \\frac{d}{\\kappa_\\mu} \\sqrt{T}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "N": "number of agents",
+    "kappa_mu": "inf over arm pairs of the derivative of the logistic link"
+   },
+   "conditions": [
+    "Assumptions 2.1, 2.2",
+    "Assumption 4.1: the MLE is computed exactly"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "theorem:gd",
+    "number": "Theorem 4.3",
+    "quote": "Ignoring all log factors, we have that $R_{T,N} = \\widetilde{O}\\left(N d + \\frac{d}{\\kappa_\\mu} \\sqrt{T}\\right)$."
+   },
+   "confidence": "high",
+   "notes": "Simplified form of r1."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "N*d + d*sqrt(T)/kappa_mu + N**(3/2)*sqrt(d)*sqrt(T)/alpha_sc",
+    "expression_latex": "R_{T,N} = \\widetilde{O}\\big(N d + \\frac{d}{\\kappa_\\mu} \\sqrt{T} +  \\frac{N^{\\frac{3}{2}} \\sqrt{d}}{\\alpha} \\sqrt{T}\\big)",
+    "regime": null
+   },
+   "symbols": {
+    "N": "number of agents",
+    "kappa_mu": "inf over arm pairs of the derivative of the logistic link",
+    "alpha_sc": "strong-convexity constant of the per-round federated loss, also used in OGD step size 1/(alpha t)"
+   },
+   "conditions": [
+    "Assumptions 2.1, 2.2",
+    "N >= ((C_1 sqrt(d) + C_2 sqrt(log(2/delta)))/lambda_f)^2 + 2 alpha/(kappa_mu lambda_f) (Proposition 4.4)"
+   ],
+   "tuning": [
+    "tau = 1",
+    "step size eta_t = 1/(alpha t)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:ogd",
+    "number": "Theorem 4.6",
+    "quote": "Ignoring all log factors, with probability of at least $1-\\delta$, the overall regret of \\texttt{FLDB-OGD} (when $\\tau=1$) can be bounded by R_{T,N} = \\widetilde{O}\\big(N d + \\frac{d}{\\kappa_\\mu} \\sqrt{T} +  \\frac{N^{\\frac{3}{2}} \\sqrt{d}}{\\alpha} \\sqrt{T}\\big)"
+   },
+   "confidence": "medium",
+   "notes": "Condition on N from Proposition 4.4 is implicitly required (via Lemma 4.5). Proof gives explicit version with 3 sqrt(2)(beta_T/kappa + N sqrt(N+lam/kappa) sqrt(1+log T)/alpha) sqrt(2Td log(...))."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "tau*N*d + d*sqrt(T)/(sqrt(tau)*kappa_mu) + tau*N**(3/2)*sqrt(d)*sqrt(T)/alpha_sc",
+    "expression_latex": "R_{T,N} = \\widetilde{O}\\big(\\tau N d + \\frac{d}{\\sqrt{\\tau} \\kappa_\\mu} \\sqrt{T} +  \\tau\\frac{N^{\\frac{3}{2}} \\sqrt{d}}{\\alpha} \\sqrt{T}\\big)",
+    "regime": "tau > 1"
+   },
+   "symbols": {
+    "N": "number of agents",
+    "tau": "communication period (number of local iterations between communication rounds)",
+    "kappa_mu": "inf over arm pairs of the derivative of the logistic link",
+    "alpha_sc": "strong-convexity constant used in OGD"
+   },
+   "conditions": [
+    "Assumptions 2.1, 2.2",
+    "condition on N of Proposition 4.4 (with N*tau effective agents)"
+   ],
+   "tuning": [
+    "communication period tau > 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:regret:local:update",
+    "number": "Proposition 4.7",
+    "quote": "Ignoring all log factors, with probability of at least $1-\\delta$, the overall regret of \\texttt{FLDB-OGD} (when $\\tau>1$) can be bounded by R_{T,N} = \\widetilde{O}\\big(\\tau N d + \\frac{d}{\\sqrt{\\tau} \\kappa_\\mu} \\sqrt{T} +  \\tau\\frac{N^{\\frac{3}{2}} \\sqrt{d}}{\\alpha} \\sqrt{T}\\big)"
+   },
+   "confidence": "medium",
+   "notes": "Derived via reduction to T/tau rounds with N*tau agents."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(3/2)/kappa_mu*sqrt(2*log(1/delta) + d*log(1 + T*kappa_mu/(d*lam)))*sqrt(2*T*d*log(1 + T*kappa_mu/(d*lam)))",
+    "expression_latex": "R_T \\leq \\frac{3}{2} \\frac{1}{\\kappa_\\mu} \\sqrt{2\\log(1/\\delta) + d\\log( 1 + T\\kappa_{\\mu}/(d\\lambda) )} \\sqrt{T 2 d\\log ( 1 + T\\kappa_{\\mu}/(d\\lambda) )}",
+    "regime": null
+   },
+   "symbols": {
+    "kappa_mu": "inf over arm pairs of the derivative of the logistic link"
+   },
+   "conditions": [
+    "N = 1 (single agent)",
+    "Assumption 2.1",
+    "Assumption 4.1: exact MLE"
+   ],
+   "tuning": [
+    "kappa_mu/lam <= 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem D.4",
+    "quote": "Let $\\beta_t \\triangleq \\sqrt{2\\log(1/\\delta) + d\\log( 1 + t\\kappa_{\\mu}/(d\\lambda) )}$. With probability of at least $1-\\delta$, we have that R_T \\leq \\frac{3}{2} \\frac{1}{\\kappa_\\mu} \\sqrt{2\\log(1/\\delta) + d\\log( 1 + T\\kappa_{\\mu}/(d\\lambda) )} \\sqrt{T 2 d\\log ( 1 + T\\kappa_{\\mu}/(d\\lambda) )}."
+   },
+   "confidence": "medium",
+   "notes": "Single-agent case; regret here defined with r_t = 2f(x*)-f(x1)-f(x2) (proof uses 2r_t inconsistently, giving 3/2 factor)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "ICML22_bengs2022stochastic",
+   "cited_title": "Stochastic contextual dueling bandits under linear stochastic transitivity models",
+   "cited_first_author": "Viktor Bengs",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "LDB (classical contextual linear dueling bandit)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Single-agent contextual linear dueling bandits, BTL/logistic link",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)/kappa_mu",
+    "expression_latex": "\\widetilde{O}(d\\sqrt{T}/\\kappa_\\mu)",
+    "regime": null
+   },
+   "where": "Section 4.1 (discussion after Theorem 4.3)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:32:53",
+  "source_chars": 107116,
+  "input_tokens": 83147,
+  "output_tokens": 6501,
+  "cost_usd_equiv": 0.5776148,
+  "status": "extracted"
+ }
+}

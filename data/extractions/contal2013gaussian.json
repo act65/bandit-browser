@@ -1,0 +1,344 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Gaussian Process Optimization with Mutual Information",
+  "arxiv_id": "1311.4825",
+  "arxiv_version": null,
+  "year": 2013,
+  "authors": [
+   "Emile Contal",
+   "Vianney Perchet",
+   "Nicolas Vayatis"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Sequential optimization of f sampled from a Gaussian process with noisy observations (GP optimization)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "sigma",
+    "prior"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "f is a sample from a zero-mean GP with known kernel k, k(x,x) <= 1",
+    "X subset R^d compact and convex",
+    "regret is a high-probability bound over the GP prior draw and noise (Bayesian high-probability regret)"
+   ],
+   "definition_quote": "Let $f:\\X \\to \\R$, where $\\X \\subset \\R^d$ is a compact and convex set ... $y_t = f(x_t)+\\epsilon_t$ ... noise variables ... $\\N(0,\\sigma^2)$ ... we assume that $f$ is sampled from a Gaussian process $\\mathcal{GP}(m, k)$ ... $k(x,x)\\leq 1$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Generic Optimization Scheme (phi_t)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "prior"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Generic scheme with phi_t(x) = sqrt(alpha)/2 sigma_t^2(x) (GP-UCB variant with fixed exploration)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "prior"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "GP-MI",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "prior"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "Sum_phi + 4*sqrt(log(2/delta)*(C_1*gamma_T + 1)) + sqrt(log(2/delta))/2*Sigma_star/sqrt(C_1*gamma_T + 1)",
+    "expression_latex": "\\sum_{t=1}^T (\\phi_t(x_t) -\\phi_t(x^\\star)) + 4\\sqrt{\\alpha (C_1\\gamma_T+1)} + \\frac{\\sqrt{\\alpha}}{2}\\frac{\\sum_{t=1}^T \\sigma_t^2(x^\\star)}{\\sqrt{C_1\\gamma_T+1}}",
+    "regime": null
+   },
+   "symbols": {
+    "Sum_phi": "sum_t (phi_t(x_t) - phi_t(x*)), data-dependent exploration term",
+    "Sigma_star": "sum_t sigma_t^2(x*), posterior variances at the optimum",
+    "C_1": "2/log(1+sigma^-2)"
+   },
+   "conditions": [
+    "f drawn from GP with kernel k(x,x)<=1",
+    "phi_t measurable w.r.t. past observations"
+   ],
+   "tuning": [
+    "alpha = log(2/delta)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:general_regret",
+    "number": "Theorem 1",
+    "quote": "For all $\\delta>0$ and $T>0$, the regret $R_T$ incurred by Algorithm \\ref{alg:gpopt} on $f$ distributed as a GP perturbed by independent Gaussian noise with variance $\\sigma^2$ satisfies ... $\\Pr[ R_T \\leq \\sum_{t=1}^T (\\phi_t(x_t) -\\phi_t(x^\\star)) + 4\\sqrt{\\alpha (C_1\\gamma_T+1)} + \\frac{\\sqrt{\\alpha}}{2}\\frac{\\sum_{t=1}^T \\sigma_t^2(x^\\star)}{\\sqrt{C_1\\gamma_T+1}} ] \\geq 1-\\delta$."
+   },
+   "confidence": "low",
+   "notes": "Authors' erratum states Lemma 1 (martingale claim) is wrong, invalidating the main theorem; they exhibit cases of linear regret for GP-MI. Recorded as stated."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "gamma_T",
+    "expression_latex": "R_T = \\O(\\gamma_T)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "general kernel with k(x,x)<=1"
+   ],
+   "tuning": [
+    "phi_t(x) = sqrt(alpha)/2 sigma_t^2(x)",
+    "alpha = log(2/delta)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:gpucb",
+    "number": "Corollary 1",
+    "quote": "Consider the Algorithm \\ref{alg:gpopt} where we set $\\phi_t(x) = \\frac{\\sqrt{\\alpha}}{2} \\sigma_t^2(x)$. ... For $f$ sampled from a GP with general kernel: $R_T = \\O(\\gamma_T)$."
+   },
+   "confidence": "low",
+   "notes": "Explicit form in text: R_T <= sqrt(alpha)/2 C_1 gamma_T + 4 sqrt(alpha(C_1 gamma_T+1)) w.p. 1-delta. Invalidated per authors' erratum."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)**(d + 1)",
+    "expression_latex": "R_T = \\O\\big( (\\log T)^{d+1} \\big)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "squared exponential (RBF) kernel"
+   ],
+   "tuning": [
+    "phi_t(x) = sqrt(alpha)/2 sigma_t^2(x)",
+    "alpha = log(2/delta)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:gpucb",
+    "number": "Corollary 1",
+    "quote": "For $f$ sampled from a GP with RBF kernel: $R_T = \\O\\big( (\\log T)^{d+1} \\big)$."
+   },
+   "confidence": "low",
+   "notes": "Text also states O(d log T) for linear kernel. Invalidated per authors' erratum."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "5*sqrt(log(2/delta)*C_1*gamma_T) + 4*sqrt(log(2/delta))",
+    "expression_latex": "5\\sqrt{\\alpha C_1 \\gamma_T} + 4\\sqrt{\\alpha}",
+    "regime": null
+   },
+   "symbols": {
+    "C_1": "2/log(1+sigma^-2)"
+   },
+   "conditions": [
+    "T > 1",
+    "kernel with k(x,x)<=1"
+   ],
+   "tuning": [
+    "alpha = log(2/delta)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem 2",
+    "quote": "For all $\\delta>0$ and $T>1$, the regret $R_T$ incurred by Algorithm \\ref{alg:gpmi} on $f$ distributed as a GP perturbed by independent Gaussian noise with variance $\\sigma^2$ satisfies ... $\\Pr\\Big[R_T \\leq 5\\sqrt{\\alpha C_1 \\gamma_T} + 4\\sqrt{\\alpha} \\Big] \\geq 1-\\delta$."
+   },
+   "confidence": "low",
+   "notes": "Lemma 5 restates this. The authors' erratum states the proof is wrong and GP-MI can incur linear regret; the result is invalid as stated."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)**((d + 1)/2)",
+    "expression_latex": "R_T = \\O\\Big((\\log T)^{\\frac{d+1}{2}}\\Big)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "squared exponential (RBF) kernel"
+   ],
+   "tuning": [
+    "alpha = log(2/delta)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:rbf_gpmi",
+    "number": "Corollary 2",
+    "quote": "The cumulative regret $R_T$ incurred by Algorithm \\ref{alg:gpmi} on $f$ sampled from a GP with RBF kernel satisfies with high probability, $R_T = \\O\\Big((\\log T)^{\\frac{d+1}{2}}\\Big)$."
+   },
+   "confidence": "low",
+   "notes": "Invalidated per authors' erratum."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "srinivas2012",
+   "cited_title": "Information-theoretic regret bounds for Gaussian process optimization in the bandit setting",
+   "cited_first_author": "Srinivas",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GP-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "GP bandit optimization, f sampled from GP, Gaussian noise, high-probability cumulative regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*log(T/delta)*gamma_T)",
+    "expression_latex": "R_T = \\O(\\sqrt{T \\beta_T \\gamma_T}), \\beta_T = \\O(\\log\\frac{T}{\\delta})",
+    "regime": null
+   },
+   "where": "Section 3.1"
+  },
+  {
+   "cited_key": "srinivas2012",
+   "cited_title": "Information-theoretic regret bounds for Gaussian process optimization in the bandit setting",
+   "cited_first_author": "Srinivas",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GP-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "GP bandit optimization with Gaussian (RBF) kernel",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*log(T)**(d + 1))",
+    "expression_latex": "\\O(\\sqrt{T (\\log T)^{d+1}})",
+    "regime": null
+   },
+   "where": "Introduction"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:00:49",
+  "source_chars": 51598,
+  "input_tokens": 54113,
+  "output_tokens": 5357,
+  "cost_usd_equiv": 0.3224628,
+  "status": "extracted"
+ }
+}

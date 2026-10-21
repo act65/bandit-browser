@@ -1,0 +1,476 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Achieving Fairness in the Stochastic Multi-armed Bandit Problem",
+  "arxiv_id": "1907.10516",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Vishakha Patil",
+   "Ganesh Ghalme",
+   "Vineet Nair",
+   "Y. Narahari"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Fair-MAB problem (uniform-time fairness, horizon-agnostic)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [
+    "fairness"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Fairness constraint vector r with r_i in [0,1/k), known to the learner; each arm i must be pulled at least floor(r_i t) - alpha times at every round t (unfairness tolerance alpha >= 0)",
+    "r-Regret: regret measured against the optimal fair policy that pulls each suboptimal arm max(0, floor(r_i T) - alpha) times",
+    "Horizon T unknown to the algorithm"
+   ],
+   "definition_quote": "An instance of the \\FSMAB problem is a tuple $\\langle T, [k], (\\mu_i)_{i\\in [k]}, (r_i)_{ i\\in [k]}\\rangle$ ... the algorithm also needs to ensure that uniformly (i.e., at the end of every round) each arm is pulled at least a pre-specified fraction of times. ... We assume that the reward distributions are $Bernoulli({\\mu}_i)$ ... $\\mu_1 > \\mu_2 > \\ldots > \\mu_k$"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Fair-MAB, horizon-aware (fairness only at end of T rounds)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "K",
+    "T"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [
+    "fairness"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Fairness constraint vector r known; each arm i must be pulled at least r_i T times by the end of T rounds only",
+    "r-Regret against the optimal fair policy (alpha = 0)"
+   ],
+   "definition_quote": "An algorithm that has access to time horizon $T$ and has to satisfy fairness constraints only at the end of $T$ rounds (and not uniformly at the end of all rounds) can trade-off fairness and regret more effectively."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Fair-Learn (meta-algorithm with black-box Learn)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Fair-UCB (Fair-Learn with UCB1)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "T-fair-ucb",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "explore_then_commit"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "T"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "almost_sure",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "alpha_tol",
+    "expression_latex": "\\floor{r_it} - N_{i,t} \\leq \\alpha",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_tol": "unfairness tolerance alpha >= 0"
+   },
+   "conditions": [
+    "r_i in [0, 1/k) for all arms"
+   ],
+   "tuning": [
+    "unfairness tolerance alpha >= 0 given as input"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem: fairness of fAlg",
+    "number": "Theorem (theorem: fairness of fAlg)",
+    "quote": "For a given $\\alpha \\geq 0$ and for any given fairness constraint vector $r = (r_1, r_2, \\ldots, r_k)$ where $r_i \\in [0, \\frac{1}{k})$ for all $i \\in [k]$, \\FALG is \\aFair irrespective of the choice of the learning algorithm \\learn($\\cdot$)."
+   },
+   "confidence": "medium",
+   "notes": "Fairness guarantee (not a regret bound): maximum fairness violation floor(r_i t) - N_{i,t} <= alpha for all t and all arms, deterministically, for any Learn."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(1 + pi**2/3)*sum_arms(Delta_i) + sum_S_T(Delta_i*(8*log(T)/Delta_i**2 - (r_i*T - alpha_tol)))",
+    "expression_latex": "\\Big(1 + \\frac{\\pi^2}{3} \\Big) \\cdot \\sum_{i \\in [k]}\\Delta_i + \\sum_{i \\in S(T), i \\neq 1}\\Delta_i \\cdot \\bigg( \\frac{8 \\ln T}{\\Delta_i^2} - \\Big(r_i \\cdot T - \\alpha \\Big) \\bigg)",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_tol": "unfairness tolerance alpha",
+    "r_i": "fairness quota of arm i",
+    "sum_S_T": "sum over suboptimal arms i in S(T) = {i : r_i T - alpha < 8 ln T / Delta_i^2}"
+   },
+   "conditions": [
+    "r_i in [0, 1/k)",
+    "Bernoulli rewards with distinct means"
+   ],
+   "tuning": [
+    "Learn = UCB1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem: FUCB regret",
+    "number": "Theorem (theorem: FUCB regret)",
+    "quote": "The \\rRegret of \\FUCB is given by \\mathcal{R}_{\\fucb}^{r}(T) \\leq \\Big(1 + \\frac{\\pi^2}{3} \\Big) \\cdot \\sum_{i \\in [k]}\\Delta_i + \\sum_{i \\in S(T), i \\neq 1}\\Delta_i \\cdot \\bigg( \\frac{8 \\ln T}{\\Delta_i^2} - \\Big(r_i \\cdot T - \\alpha \\Big) \\bigg) where $S(T) = \\Big\\{i \\in [k] ~\\big| ~r_i \\cdot T - \\alpha < \\frac{8 \\ln T}{\\Delta_i^2}\\Big\\}$."
+   },
+   "confidence": "medium",
+   "notes": "r-Regret is pseudo-regret relative to the optimal fair policy; recorded as pseudo_regret with comparator best_policy. Proof concludes O(sum ln T/Delta_i)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(1 + pi**2/3)*sum_arms(Delta_i)",
+    "expression_latex": "\\Big(1 + \\frac{\\pi^2}{3} \\Big) \\cdot \\sum_{i \\in [k]}\\Delta_i",
+    "regime": "T large enough (S(T) empty)"
+   },
+   "symbols": {},
+   "conditions": [
+    "r_i in [0, 1/k)",
+    "r_i > 0 for suboptimal arms implicitly needed for S(T) to become empty"
+   ],
+   "tuning": [
+    "Learn = UCB1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem: FUCB regret",
+    "number": "Theorem (theorem: FUCB regret)",
+    "quote": "In particular for large enough $T$, $\\mathcal{R}_{\\fucb}^{r}(T) \\leq \\Big(1 + \\frac{\\pi^2}{3} \\Big) \\cdot \\sum_{i \\in [k]}\\Delta_i$."
+   },
+   "confidence": "medium",
+   "notes": "Constant r-Regret once S(T) is empty."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*log(T))",
+    "expression_latex": "O(\\sqrt{T\\ln T})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [
+    "Learn = UCB1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm: instance independent regret",
+    "number": "Theorem (thm: instance independent regret)",
+    "quote": "The distribution-free \\rRegret of \\FUCB is $O(\\sqrt{T\\ln T})$."
+   },
+   "confidence": "medium",
+   "notes": "K dependence hidden in O (proof gives sqrt(kT ln T) + k)."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_S_T_all((r_i*T - alpha_tol)*Delta_i) + sum_S_T(8*log(T)/Delta_i) + (1 + pi**2/3)*sum_arms(Delta_i)",
+    "expression_latex": "\\sum_{i \\in S(T)} (r_i\\cdot T - \\alpha) \\cdot \\Delta_i + \\sum_{i \\in S(T), i \\neq 1} 8\\ln T/ \\Delta_i + \\sum_{i \\in [k]} (1 + \\pi^2/3)\\cdot \\Delta_i",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_tol": "unfairness tolerance alpha",
+    "r_i": "fairness quota of arm i",
+    "sum_S_T_all": "sum over arms i in S(T) = {i : r_i T - alpha < 8 ln T/Delta_i^2}",
+    "sum_S_T": "sum over suboptimal arms in S(T)"
+   },
+   "conditions": [
+    "r_i in [0, 1/k)"
+   ],
+   "tuning": [
+    "Learn = UCB1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:alpha regret",
+    "number": "Theorem (theorem:alpha regret)",
+    "quote": "The expected regret of \\FUCB is given by \\mathcal{R}(T) \\leq \\sum_{i \\in S(T)} (r_i\\cdot T - \\alpha) \\cdot \\Delta_i + \\sum_{i \\in S(T), i \\neq 1} 8\\ln T/ \\Delta_i + \\sum_{i \\in [k]} (1 + \\pi^2/3)\\cdot \\Delta_i (where $S(T) = \\{i ~|~ (r_i \\cdot T - \\alpha) < 8\\ln T/\\Delta_{i}^2\\}$.)"
+   },
+   "confidence": "low",
+   "notes": "Conventional regret (cost of fairness). Statement appears inconsistent with its proof: the appendix proof defines S(T) with >= and uses i not in S(T) in the second sum. Recorded as stated in the theorem."
+  },
+  {
+   "id": "r6",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(1 + pi**2/3)*sum_arms(Delta_i) + sum_S_T(Delta_i*(8*log(T)/Delta_i**2 - r_i*T))",
+    "expression_latex": "\\Big(1 + \\frac{\\pi^2}{3} \\Big) \\cdot \\sum_{i \\in [k]}\\Delta_i + \\sum_{i \\in S(T), i \\neq 1}\\Delta_i \\cdot \\bigg( \\frac{8 \\ln T}{\\Delta_i^2} - r_i \\cdot T \\bigg)",
+    "regime": null
+   },
+   "symbols": {
+    "r_i": "fairness quota of arm i",
+    "sum_S_T": "sum over suboptimal arms i in S(T) = {i : r_i T < 8 ln T/Delta_i^2}"
+   },
+   "conditions": [],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:TfucbRegret",
+    "number": "Theorem (thm:TfucbRegret)",
+    "quote": "For \\FSMAB problem, \\tfucb ~has \\rRegret $\\mathcal{R}_{\\tfucb}^{r}(T) = O(\\ln T)$. In particular, its $r$-dependent regret is given by \\mathcal{R}_{\\tfucb}^{r}(T) \\leq \\Big(1 + \\frac{\\pi^2}{3} \\Big) \\cdot \\sum_{i \\in [k]}\\Delta_i + \\sum_{i \\in S(T), i \\neq 1}\\Delta_i \\cdot \\bigg( \\frac{8 \\ln T}{\\Delta_i^2} - r_i \\cdot T \\bigg) where $S(T) = \\Big\\{i \\in [k] ~ \\big|~ r_i \\cdot T < \\frac{8 \\ln T}{\\Delta_i^2}\\Big\\}$."
+   },
+   "confidence": "medium",
+   "notes": "Horizon-aware algorithm; fairness only at the end of T rounds."
+  },
+  {
+   "id": "r7",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)",
+    "expression_latex": "O(\\ln T)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:TfucbRegret",
+    "number": "Theorem (thm:TfucbRegret)",
+    "quote": "For \\FSMAB problem, \\tfucb ~has \\rRegret $\\mathcal{R}_{\\tfucb}^{r}(T) = O(\\ln T)$."
+   },
+   "confidence": "medium",
+   "notes": "Instance-dependent constants hidden in O."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "AUER02",
+   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
+   "cited_first_author": "Peter Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB1",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic K-armed bandit, Bernoulli/[0,1] rewards, pseudo-regret",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(8*log(T)/Delta_i) + (1 + pi**2/3)*sum_arms(Delta_i)",
+    "expression_latex": "\\sum_{i \\neq 1} \\big(\\frac{8 \\ln T}{\\Delta_i} \\big) + \\big(1 + \\frac{\\pi^2}{3}\\big) \\sum_{i \\in [k]} \\Delta_i",
+    "regime": null
+   },
+   "where": "Appendix A, Theorem (theorem: UCB)"
+  },
+  {
+   "cited_key": "AUER02",
+   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
+   "cited_first_author": "Peter Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB1",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic K-armed bandit, distribution-free pseudo-regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*log(T))",
+    "expression_latex": "O\\big(\\sqrt{T \\ln T}\\big)",
+    "regime": null
+   },
+   "where": "Appendix A, Theorem (thm: ucb instance independent)"
+  },
+  {
+   "cited_key": "LLJ19",
+   "cited_title": "Combinatorial sleeping bandits with fairness constraints",
+   "cited_first_author": "Fengjiao Li",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "LFG (Learning with Fairness Guarantee)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Fair MAB with asymptotic fairness constraints, distribution-free r-Regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*log(T))",
+    "expression_latex": "O(\\sqrt{T\\ln T})",
+    "regime": null
+   },
+   "where": "Section Related Work (Comparison with LLJ19)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:13:41",
+  "source_chars": 84260,
+  "input_tokens": 72230,
+  "output_tokens": 8416,
+  "cost_usd_equiv": 0.5285788,
+  "status": "extracted"
+ }
+}

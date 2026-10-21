@@ -984,7 +984,7 @@ are linked; where the ontology orders the two values, the link is a <em>speciali
 <a class="card" href="graph.html"><h2>Settings graph →</h2><p>Every canonical setting as a node, sized by number of results.
 Arrows point from a special case to its generalisation.</p></a>
 <a class="card" href="settings/index.html"><h2>Settings →</h2><p>Browse settings by environment or action space, with counts of upper and lower bounds.</p></a>
-<a class="card" href="papers/index.html"><h2>Papers →</h2><p>The pilot corpus: what each paper proves, theorem by theorem.</p></a>
+<a class="card" href="papers/index.html"><h2>Papers →</h2><p>The corpus: what each paper proves, theorem by theorem.</p></a>
 {analysis_cards}
 <a class="card" href="ground-truth.html"><h2>Ground truth →</h2><p>Hand-curated bandit convex optimisation reference{"" if site.bco else " (not yet available)"},
 and the pilot facts the graph should rediscover.</p></a>
@@ -1698,16 +1698,17 @@ def graph_page(site: Site) -> str:
         return "".join(out)
 
     # Overview: group settings by their main problem axes; one node per group, with
-    # specialisation arrows between groups (transitively reduced). The full graph of 150+
-    # near-duplicate settings is unreadable as a first view.
-    group_dims = ["objective", "environment", "action_space", "feedback"]
+    # specialisation arrows between groups (transitively reduced). The full graph of 1000+
+    # near-duplicate settings is unreadable as a first view; objective and feedback are left to
+    # the group's members (adding them gives ~180 groups, too many to label).
+    group_dims = ["environment", "action_space"]
     gid_of, groups = {}, {}
     for n in site.nodes.values():
         gk = tuple(n["key"].get(d, "") for d in group_dims)
         gid = "G" + hashlib.sha1("|".join(gk).encode()).hexdigest()[:8]
         gid_of[n["id"]] = gid
         g = groups.setdefault(gid, {"id": gid, "name": setting_name(dict(zip(group_dims, gk))), "members": [],
-                                    "sa": act_slots.get(gk[2], 0), "se": env_slots.get(gk[1], 0), "results": 0})
+                                    "sa": act_slots.get(gk[1], 0), "se": env_slots.get(gk[0], 0), "results": 0})
         g["members"].append(n["id"])
         g["results"] += sum(site.counts(n))
     for x in nodes:
@@ -1742,8 +1743,8 @@ def graph_page(site: Site) -> str:
 <div class="graph-head">
 <div>
 <h1>Settings graph</h1>
-<p class="lede small"><b>Overview</b>: {len(gnodes)} groups of settings (objective × environment × action space ×
-feedback); click a group to see its settings. <b>All settings</b>: {len(nodes)} settings. <b>Arrows</b> run from a special case to its generalisation
+<p class="lede small"><b>Overview</b>: {len(gnodes)} groups of settings (environment × action space); click a
+group to see its settings. <b>All settings</b>: {len(nodes)} settings. <b>Arrows</b> run from a special case to its generalisation
 ({n_dir} after removing transitive ones): upper bounds flow against the arrow, lower bounds along it.
 <span class="faint-line"></span> faint lines join settings that differ in one unordered assumption.
 Node size ∝ number of results. Click a node to open it.</p>

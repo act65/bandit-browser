@@ -1,0 +1,589 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Dynamic Pricing with Limited Supply",
+  "arxiv_id": "1108.4142",
+  "arxiv_version": null,
+  "year": 2011,
+  "authors": [
+   "Moshe Babaioff",
+   "Shaddin Dughmi",
+   "Robert Kleinberg",
+   "Aleksandrs Slivkins"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "dynamic pricing with limited supply (regret w.r.t. fixed-price benchmark)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "continuum_other",
+   "function_class": [],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "knapsack_constraints"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Actions are posted prices p in [0,1]; feedback is the binary sale indicator (v_t >= p)",
+    "Limited supply: k identical items (B = k), n agents (T = n), k <= n; selling stops when supply exhausted; learner knows k",
+    "Valuations i.i.d. from unknown demand distribution F with support in [0,1]",
+    "Regret is against the best fixed-price strategy A_k^n(p) (expected revenue difference)"
+   ],
+   "definition_quote": "A seller has $k$ items she can sell to a set of $n$ agents ... The private values are independently drawn from the same {\\em demand distribution} $F$ ... $\\Regret(\\A) \\triangleq \\max_p \\Payoff[\\A_k^n(p)] - \\Payoff(\\A)$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "dynamic pricing with limited supply (regret w.r.t. offline benchmark)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "continuum_other",
+   "function_class": [],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "knapsack_constraints"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Posted prices in [0,1], binary sale feedback, k items (B) and n agents (T); learner knows k",
+    "Comparator is the offline benchmark: the optimal (Myerson) offline mechanism knowing the demand distribution"
+   ],
+   "definition_quote": "Our main benchmark is the maximal expected revenue of an offline mechanism that is allowed to use the demand distribution; henceforth, we will call it \\emph{offline benchmark}."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "CappedUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "B"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Descending prices (Mechanism 2)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "B"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "(B*log(T))**(2/3)",
+    "expression_latex": "O(k \\log n)^{2/3}",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "k <= n",
+    "holds for every demand distribution with support in [0,1]"
+   ],
+   "tuning": [
+    "delta = k^{-1/3} (log n)^{2/3}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "lm:UCBcap",
+    "number": "Lemma 4.3",
+    "quote": "$\\UCBcap$ with parameter $\\delta = k^{-1/3}\\, (\\log n)^{2/3}$ achieves regret $O(k \\log n)^{2/3}$."
+   },
+   "confidence": "high",
+   "notes": "B = k items, T = n agents. Regret is the fixed-price benchmark minus expected revenue (expected-revenue comparison, recorded as pseudo_regret). Same as the upper bound of Theorem 1.2."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "(B*log(T))**(2/3)",
+    "expression_latex": "O((k \\log n)^{2/3})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "demand distribution is regular (twice differentiable F, concave revenue function)"
+   ],
+   "tuning": [
+    "delta = k^{-1/3} (log n)^{2/3}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1.1",
+    "quote": "There exists a detail-free pricing strategy such that for any regular demand distribution its expected revenue is at least the offline benchmark minus $O((k \\log n)^{2/3})$."
+   },
+   "confidence": "medium",
+   "notes": "Comparator is the optimal offline (Myerson) mechanism; mapped to best_policy. Follows from Lemma 4.3 plus Yan's O(sqrt k) benchmark comparison."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "c_F*sqrt(B)*log(T)",
+    "expression_latex": "O(c_F\\,\\sqrt{k}\\log n)",
+    "regime": "k/n <= s_F"
+   },
+   "symbols": {
+    "c_F": "distribution-dependent constant, c_F = 1 + 1/g'(s_F) with g(s) = s S^{-1}(s)",
+    "s_F": "distribution-dependent positive constant; s_F = 1/4 for MHR distributions"
+   },
+   "conditions": [
+    "demand distribution is regular",
+    "k/n <= s_F"
+   ],
+   "tuning": [
+    "delta = k^{-1/2} log(n)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:improved-regret",
+    "number": "Theorem 5.2",
+    "quote": "For any regular demand distribution $F$ there exist positive constants $s_F$ and $c_F$ such that $\\UCBcap$ with parameter $\\delta = k^{-1/2}\\,\\log(n)$ achieves regret $O(c_F\\,\\sqrt{k}\\log n)$ whenever $\\fkn\\leq s_F$. For monotone hazard rate distributions we can take $s_F = \\tfrac{1}{4}$."
+   },
+   "confidence": "high",
+   "notes": "Regret w.r.t. fixed-price benchmark."
+  },
+  {
+   "id": "r4",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "c_F*sqrt(B)*log(T)",
+    "expression_latex": "O(c_F\\, \\sqrt{k} \\log n)",
+    "regime": "k/n <= s_F"
+   },
+   "symbols": {
+    "c_F": "distribution-dependent positive constant",
+    "s_F": "distribution-dependent positive constant; 1/4 for MHR distributions"
+   },
+   "conditions": [
+    "demand distribution is regular",
+    "k/n <= s_F"
+   ],
+   "tuning": [
+    "delta = k^{-1/2} log(n)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:MHR-intro",
+    "number": "Theorem 1.3",
+    "quote": "There exists a detail-free pricing strategy whose expected revenue, for any regular demand distribution $F$, is at least the offline benchmark minus $O(c_F\\, \\sqrt{k} \\log n)$ whenever $\\fkn\\leq s_F$, where $c_F$ and $s_F$ are positive constants that depend on $F$. For monotone hazard rate distributions one can take $s_F = \\tfrac14$."
+   },
+   "confidence": "medium",
+   "notes": "Offline benchmark comparator mapped to best_policy."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "B**(1 - gamma_tr)*(1 + 1/g_prime)",
+    "expression_latex": "\\tilde{O}(k^{1-\\gamma}) (1+1/g'(\\fkn))",
+    "regime": "gamma_tr in [1/3, 1/2]"
+   },
+   "symbols": {
+    "gamma_tr": "trade-off exponent gamma in [1/3,1/2]",
+    "g_prime": "g'(k/n) where g(s) = s S^{-1}(s)"
+   },
+   "conditions": [
+    "demand distribution is regular",
+    "g'(k/n) > 0"
+   ],
+   "tuning": [
+    "delta = O_tilde(k^{-gamma})"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:improved-regret-trade-off",
+    "number": "Theorem 5.3",
+    "quote": "For each $\\gamma\\in [\\tfrac13, \\tfrac12]$, consider pricing strategy $\\UCBcap$ with parameter $\\delta = \\tilde{O}(k^{-\\gamma})$. This pricing strategy achieves regret $\\tilde{O}(k^{1-\\gamma}) (1+1/g'(\\fkn))$ if the demand distribution is regular and $g'(\\fkn)>0$, and regret $\\tilde{O}(k^{2\\gamma})$ for arbitrary demand distributions."
+   },
+   "confidence": "medium",
+   "notes": "Regular-distribution branch."
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "B**(2*gamma_tr)",
+    "expression_latex": "\\tilde{O}(k^{2\\gamma})",
+    "regime": "gamma_tr in [1/3, 1/2]"
+   },
+   "symbols": {
+    "gamma_tr": "trade-off exponent gamma in [1/3,1/2]"
+   },
+   "conditions": [],
+   "tuning": [
+    "delta = O_tilde(k^{-gamma})"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:improved-regret-trade-off",
+    "number": "Theorem 5.3",
+    "quote": "... and regret $\\tilde{O}(k^{2\\gamma})$ for arbitrary demand distributions."
+   },
+   "confidence": "medium",
+   "notes": "Arbitrary-distribution branch."
+  },
+  {
+   "id": "r7",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "B**(2/3)",
+    "expression_latex": "o(k^{2/3}) \\text{ not achievable}",
+    "regime": "arbitrarily large k, n"
+   },
+   "symbols": {},
+   "conditions": [
+    "k <= n"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:LB",
+    "number": "Theorem 6.1",
+    "quote": "(a) No detail-free pricing strategy can achieve regret $o(k^{2/3})$ for arbitrarily large $k,n$."
+   },
+   "confidence": "medium",
+   "notes": "Stated as impossibility of o(k^{2/3}); recorded as Omega(k^{2/3}). Proved by reduction to Kleinberg-Leighton unlimited-supply lower bound."
+  },
+  {
+   "id": "r8",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "c_F*B**gamma_lb",
+    "expression_latex": "O(c_F\\, k^\\gamma) \\text{ not achievable for } \\gamma<1/2",
+    "regime": "for any gamma_lb < 1/2; arbitrarily large k, n"
+   },
+   "symbols": {
+    "gamma_lb": "any exponent < 1/2",
+    "c_F": "distribution-dependent constant"
+   },
+   "conditions": [
+    "k <= n"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:LB",
+    "number": "Theorem 6.1",
+    "quote": "(b) For any $\\gamma<\\tfrac12$, no detail-free pricing strategy can achieve regret $O(c_F\\, k^\\gamma)$ for all demand distributions $F$ and arbitrarily large $k,n$, where the constant $c_F$ can depend on $F$."
+   },
+   "confidence": "low",
+   "notes": "Statement is that no O(c_F k^gamma) bound with gamma<1/2 holds for all F; this is a negation of an upper bound, approximated as an Omega expression. Same as Theorem 1.5."
+  },
+  {
+   "id": "r9",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "B**(3/4)",
+    "expression_latex": "O\\left({k^{3/4}\\poly\\log(k)} \\right)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "demand distribution has monotone hazard rate (MHR)"
+   ],
+   "tuning": [
+    "epsilon = k^{-1/4}",
+    "delta = ((1/k) log k)^{1/4} (Lemma 7.3 uses delta = (log k log(1/eps) loglog(1/eps)/k)^{1/4})"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:descending",
+    "number": "Theorem 7.2",
+    "quote": "For some parameters $\\epsilon$ and $\\delta$, Mechanism~\\ref{alg:pp} achieves regret $O\\left({k^{3/4}\\poly\\log(k)} \\right) $ with respect to the offline benchmark, for any demand distribution that satisfies the monotone hazard rate condition."
+   },
+   "confidence": "medium",
+   "notes": "Polylog in k only (no dependence on n); recorded as O_tilde. Same as Theorem 1.6."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "KleinbergL03",
+   "cited_title": "The value of knowing a demand curve: Bounds on regret for online posted-price auctions",
+   "cited_first_author": "Robert D. Kleinberg",
+   "cited_year": 2003,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Dynamic pricing with unlimited supply (k = n), IID valuations",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(2/3)",
+    "expression_latex": "O(n^{2/3})",
+    "regime": null
+   },
+   "where": "Section 2 (Related Work)"
+  },
+  {
+   "cited_key": "KleinbergL03",
+   "cited_title": "The value of knowing a demand curve: Bounds on regret for online posted-price auctions",
+   "cited_first_author": "Robert D. Kleinberg",
+   "cited_year": 2003,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Dynamic pricing with unlimited supply, IID valuations, regularity-type assumption, distribution-dependent constant",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "c_F*sqrt(T)",
+    "expression_latex": "O(c_F\\, \\sqrt{n})",
+    "regime": null
+   },
+   "where": "Section 2 (Related Work)"
+  },
+  {
+   "cited_key": "KleinbergL03",
+   "cited_title": "The value of knowing a demand curve: Bounds on regret for online posted-price auctions",
+   "cited_first_author": "Robert D. Kleinberg",
+   "cited_year": 2003,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Online posted-price auctions with unlimited supply (adversarial valuations theorem, construction uses IID valuations)",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T**(2/3)",
+    "expression_latex": "\\Omega(n^{2/3})",
+    "regime": null
+   },
+   "where": "Section 2 (Related Work)"
+  },
+  {
+   "cited_key": "BZ09",
+   "cited_title": "Dynamic pricing without knowing the demand function: Risk bounds and near-optimal algorithms",
+   "cited_first_author": "Omar Besbes",
+   "cited_year": 2009,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Dynamic pricing with k = Omega(n), F and F^{-1} Lipschitz, fixed-price benchmark",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(3/4)",
+    "expression_latex": "O(n^{3/4})",
+    "regime": null
+   },
+   "where": "Section 2 (Related Work)"
+  },
+  {
+   "cited_key": "BZ09",
+   "cited_title": "Dynamic pricing without knowing the demand function: Risk bounds and near-optimal algorithms",
+   "cited_first_author": "Omar Besbes",
+   "cited_year": 2009,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Dynamic pricing with k = Omega(n), parameterized demand distributions",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(2/3)",
+    "expression_latex": "O(n^{2/3})",
+    "regime": null
+   },
+   "where": "Section 2 (Related Work)"
+  },
+  {
+   "cited_key": "BZ09",
+   "cited_title": "Dynamic pricing without knowing the demand function: Risk bounds and near-optimal algorithms",
+   "cited_first_author": "Omar Besbes",
+   "cited_year": 2009,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Dynamic pricing with k = Omega(n), single-parameter parametrization of demand",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)",
+    "expression_latex": "O(\\sqrt{n})",
+    "regime": null
+   },
+   "where": "Section 2 (Related Work)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:15:38",
+  "source_chars": 115297,
+  "input_tokens": 174099,
+  "output_tokens": 16572,
+  "cost_usd_equiv": 0.8645,
+  "status": "extracted"
+ }
+}

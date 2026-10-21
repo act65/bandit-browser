@@ -1,0 +1,238 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Online Learning of Optimally Diverse Rankings",
+  "arxiv_id": "2109.05899",
+  "arxiv_version": null,
+  "year": 2017,
+  "authors": [
+   "Stefan Magureanu",
+   "Alexandre Proutière",
+   "Marcus Isaksson",
+   "Boxun Zhang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online learning of diverse rankings (cascading-click model with hidden query topics)",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Cascade feedback: the learner observes only the position of the first clicked item (partial semi-bandit), not all item relevances",
+    "Actions are ordered lists of L items out of N; reward is probability of at least one click",
+    "Hidden context: query topic m(n) drawn i.i.d. from unknown distribution phi over M topics, revealed only a posteriori upon a click",
+    "Items partitioned into M known topics; theta_km = 0 if item k not in topic m",
+    "Lower bound is proved in an easier model where an oracle reveals phi and the topic of each query after the round"
+   ],
+   "definition_quote": "The set $\\mathcal{ N}$ of $N$ items is partitioned into $M$ non-overlapping subsets ... The decision maker is aware of this partition. ... we assume that $\\theta_{km}=0$ whenever $k\\notin \\mathcal{ N}_m$ ... the topic of the $n$-th query, denoted by $m(n)$, is unknown. $(m(n))_{n\\ge 1}$ is an i.i.d sequence ... with distribution $\\phi$ ... The user then scans the items in the list in order, and clicks on the first relevant item, if any. ... $R^\\pi(T) = T\\mu(u^\\star) - \\EE[\\sum_{n=1}^T \\mu(u^{\\pi}(n))]$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "LDR (Learning Diverse Rankings)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "f_T/I_1k + f_T/I_2k + C_NLdelta",
+    "expression_latex": "\\frac{f(T) }{ I(\\nu(L|y^k) + \\delta, \\nu(L|u^\\star))}+ \\frac{f(T)}{I(\\phi_{h(k)} \\theta_{k h(k)}+\\delta, \\phi_{h(k)} \\theta_{L_k h(k)}-\\delta)}+ C(N,L,\\delta)",
+    "regime": "T > n_0"
+   },
+   "symbols": {
+    "f_T": "log(T) + 4*log(log(T))",
+    "I_1k": "Bernoulli KL I(nu(L|y^k)+delta, nu(L|u*)), y^k = u* with last item replaced by k",
+    "I_2k": "Bernoulli KL I(phi_{h(k)} theta_{k h(k)} + delta, phi_{h(k)} theta_{L_k h(k)} - delta)",
+    "C_NLdelta": "constant C(N,L,delta) bounded explicitly in the theorem in terms of N, L, delta and constants C_1, C_2",
+    "delta": "analysis parameter delta in (0, Delta) (not a failure probability)"
+   },
+   "conditions": [
+    "k > L is a suboptimal item (k not in u*)",
+    "unique optimal list",
+    "delta in (0, Delta) where Delta is an instance-dependent separation"
+   ],
+   "tuning": [
+    "f(n) = log(n) + 4 log log(n)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:DiversiPIERegret",
+    "number": "Theorem (th:DiversiPIERegret)",
+    "quote": "There exists a constant $C(N,L,\\delta)$ depending on $N, L$ and $\\delta$, and a round $n_0$ such that under the LDR algorithm, we have: $\\forall T>n_0$, $\\delta>0$ and $\\forall k>L$, $\\EE[\\sum_{n=1}^T\\mathbbm{1}[k\\in u(n)]\\leq \\frac{f(T) }{ I(\\nu(L|y^k) + \\delta, \\nu(L|u^\\star))}+ \\frac{f(T)}{I(\\phi_{h(k)} \\theta_{k h(k)}+\\delta, \\phi_{h(k)} \\theta_{L_k h(k)}-\\delta)}+ C(N,L,\\delta)$."
+   },
+   "confidence": "medium",
+   "notes": "Bound on the expected number of rounds a suboptimal item k is displayed. Constant C(N,L,delta) has an explicit (long) upper bound involving unspecified finite constants C_1, C_2. Section referred to as Theorem 3.1 in the appendix."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "sum_subopt(Delta_y_k/I_1k + Delta_w_k/I_2k)*log(T)",
+    "expression_latex": "\\sum\\limits_{k>L} \\frac{\\mu(u^\\star) - \\mu(y^k)}{ I(\\nu(L|y^k) + \\delta, \\nu(L|u^\\star)-\\delta)} + \\frac{\\mu(u^\\star) - \\mu(w^k)}{I(\\phi_{h(k)} \\theta_{k h(k)}+\\delta, \\phi_{h(k)} \\theta_{L_k h(k)}-\\delta)}",
+    "regime": null
+   },
+   "symbols": {
+    "Delta_y_k": "mu(u*) - mu(y^k), y^k = u* with last item replaced by item k",
+    "Delta_w_k": "mu(u*) - mu(w^k), w^k = k prepended to u*",
+    "I_1k": "Bernoulli KL I(nu(L|y^k)+delta, nu(L|u*)-delta)",
+    "I_2k": "Bernoulli KL I(phi_{h(k)} theta_{k h(k)} + delta, phi_{h(k)} theta_{L_k h(k)} - delta)",
+    "delta": "analysis parameter delta in (0, Delta)"
+   },
+   "conditions": [
+    "sum over suboptimal items k > L (N - L items)",
+    "unique optimal list",
+    "delta in (0, Delta)"
+   ],
+   "tuning": [
+    "f(n) = log(n) + 4 log log(n)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:DiversiPIERegret",
+    "number": "Theorem (th:DiversiPIERegret)",
+    "quote": "Moreover: \\lim\\sup\\limits_{T\\to\\infty} \\frac{R^{\\text{LDR}}(T)}{\\log (T)} \\leq \\sum\\limits_{k>L} \\frac{\\mu(u^\\star) - \\mu(y^k)}{ I(\\nu(L|y^k) + \\delta, \\nu(L|u^\\star)-\\delta)} + \\frac{\\mu(u^\\star) - \\mu(w^k)}{I(\\phi_{h(k)} \\theta_{k h(k)}+\\delta, \\phi_{h(k)} \\theta_{L_k h(k)}-\\delta)}."
+   },
+   "confidence": "medium",
+   "notes": "Sum is over suboptimal items, giving the O((N-L) log T) scaling claimed. sum_subopt here ranges over items not in u*. Proof's final display uses I(nu(L|y^k)+delta, nu(L|u*)) without -delta; recorded as in theorem statement."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "uniformly_good",
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "sum_subopt(Delta_u_k/I_min_k)*log(T)",
+    "expression_latex": "\\sum_{k > L} \\frac{\\mu(u^\\star) - \\mu(u^k)}{\\min_{\\lambda\\in B_k(\\theta)} I(\\theta_{kh(k)},\\lambda_{kh(k)})}",
+    "regime": null
+   },
+   "symbols": {
+    "Delta_u_k": "mu(u*) - mu(u^k), u^k = best list containing item k in the first slot",
+    "I_min_k": "min over lambda in B_k(theta) of Bernoulli KL I(theta_{k h(k)}, lambda_{k h(k)})"
+   },
+   "conditions": [
+    "sum over suboptimal items k > L",
+    "uniformly good: R(T) = o(T^a) for all a > 0 on all instances",
+    "holds even if an oracle reveals phi and the topic of each query after each round"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "th:LowBoundRew1",
+    "number": "Theorem (th:LowBoundRew1)",
+    "quote": "For any parameter $(\\phi,\\theta)\\in\\Lambda\\times \\Theta$, and for any uniformly good policy $\\pi\\in \\Pi$, we have: $\\lim\\inf_{T\\to\\infty} \\frac{R^\\pi(T)}{\\log(T)} \\ge \\sum_{k > L} \\frac{\\mu(u^\\star) - \\mu(u^k)}{\\min_{\\lambda\\in B_k(\\theta)} I(\\theta_{kh(k)},\\lambda_{kh(k)})}.$"
+   },
+   "confidence": "high",
+   "notes": "Derived via Graves-Lai in an oracle-aided model; scales as Theta((N-L) log T)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "kohli2013fast",
+   "cited_title": "A fast bandit algorithm for recommendation to users with heterogenous tastes",
+   "cited_first_author": "Pushmeet Kohli",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "RBA (Ranked bandits, per-slot UCB)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online learning to rank with i.i.d. relevance vectors, full observation of displayed items' relevance; regret vs. offline optimum includes (1-1/e)T approximation term",
+   "bound": {
+    "notation": "O",
+    "expression": "(1 - 1/E)*T + N_items*L_list*log(T)",
+    "expression_latex": "(1-1/e)T+O(LN\\log(T))",
+    "regime": null
+   },
+   "where": "Introduction / Related Work"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:08:39",
+  "source_chars": 92117,
+  "input_tokens": 71643,
+  "output_tokens": 5579,
+  "cost_usd_equiv": 0.46714279999999997,
+  "status": "extracted"
+ }
+}

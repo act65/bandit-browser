@@ -1,0 +1,216 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Adaptive Incentive Design in Dynamic Principal-Agent Problem via Kernelized Bandits",
+  "arxiv_id": "2608.17614",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Arghya Mallick",
+   "Anuj S. Vora",
+   "Sergio Grammatico",
+   "Peyman Mohajerin Esfahani"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Dynamic principal-agent problem with stochastic agent utility (kernelized bandit over contract space [0,1]^m with heteroscedastic noise)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "hypercube",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Contract space X=[0,1]^m (paper's m = dimension = number of outcomes)",
+    "Reward function lies in RKHS of the arcsin (neural network) kernel with known RKHS norm bound B",
+    "Heteroscedastic noise whose variance lies in an RKHS (Gaussian kernel) with known norm bound B_v; noise bounded by sqrt(chi_u)",
+    "Sample-variance noise eta is rho_eta(x)-sub-Gaussian with known rho_eta",
+    "Learner takes ell>1 repeated samples per chosen contract",
+    "Agent has finite action set, hidden actions; agent utility has stochastic perturbation <w, delta(a)> with absolutely continuous w"
+   ],
+   "definition_quote": "\\Tilde{R}_T= T\\Tilde{U}^{\\mathrm{P}*} - \\sum_{t=1}^T \\Tilde{U}^{\\mathrm{PA}}(x_t), where \\Tilde{U}^{\\mathrm{P}*}= \\max_{x \\in \\mathcal{X}} \\:\\: \\Tilde{U}^{\\mathrm{PA}}(x). ... \\tilde{y}_t= \\tilde{U}^{\\mathrm{PA}}(x_t) + \\tilde{\\varepsilon}(x_t), where \\tilde{\\varepsilon}(x_t) is assumed to be a zero-mean heteroscedastic noise"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Heteroscedastic GP-UCB (with Neural Network / arcsin kernel)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "B (RKHS norm bound of utility)",
+    "B_v (RKHS norm bound of noise variance)",
+    "rho_eta (sub-Gaussian parameter of variance-estimate noise)",
+    "chi_u (noise variance bound)",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)*log(T)**(d+1)",
+    "expression_latex": "\\mathcal{O}\\left(\\sqrt{T}(\\log T)^{m+1}\\right)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "\\tilde U^{PA} in RKHS H_k of the arcsin kernel with ||.||_{H_k} <= B",
+    "Assumption 4.2: noise variance in RKHS of kernel kappa^v with norm <= B_v",
+    "Assumption 4.3: variance-estimate noise eta is rho_eta-sub-Gaussian with known rho_eta, independent in time",
+    "Agent has finite action set (Assumption 4.1)",
+    "contract space [0,1]^m; d here denotes the paper's m"
+   ],
+   "tuning": [
+    "lambda = 1",
+    "beta_t as in eq. (beta_t) with confidence delta",
+    "ell > 1 repeated samples per round"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "main_theorem",
+    "number": "Theorem 4.5",
+    "quote": "Consider $\\tilde{U}^{\\mathrm{PA}} \\in \\mathcal{H}_k$ with bounded RKHS-norm (i.e., $\\|\\tilde{U}^{\\mathrm{PA}}\\|_{\\mathcal{H}_k} \\le B$) and sampling model in \\eqref{feedback_eq} with unknown variance ... that satisfies Assumptions~\\ref{var_proxy_assumption} and~\\ref{noise_assumption}. Let $\\{x_t\\}_{t=1}^{T}$ denote the set of actions chosen by Algorithm~\\ref{algo}. Setting $\\lambda=1$ in \\eqref{beta_t}, the cumulative regret $\\Tilde{R}_T$ ... is bounded as $\\mathbb{P}\\left[\\Tilde{R}_T \\leq \\mathcal{O}\\left(\\sqrt{T}(\\log T)^{m+1}\\right)\\right] \\geq 1 - \\delta$"
+   },
+   "confidence": "medium",
+   "notes": "Paper's m is the dimension of the contract space, mapped to d. Regret defined via expected utility but stated with probability 1-delta. Proof is asymptotic (T -> infinity) and hides delta, ell, chi_u, B. Horizon labelled anytime since algorithm loop does not use T, but this is not explicitly stated."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "ho2014adaptive",
+   "cited_title": "Adaptive contract design for crowdsourcing markets: Bandit algorithms for repeated principal-agent problems",
+   "cited_first_author": "Chien-Ju Ho",
+   "cited_year": 2014,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Agnostic Zooming",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Repeated principal-agent, monotone contracts in [0,1]^m, first-order stochastic dominance",
+   "bound": {
+    "notation": "O",
+    "expression": "alpha_z*log(T)*T**((m_out+1)/(m_out+2))",
+    "expression_latex": "\\mathcal{O}(\\alpha \\log T)T^{\\frac{m+1}{m+2}}",
+    "regime": null
+   },
+   "where": "Section 2.1"
+  },
+  {
+   "cited_key": "zhu2023sample",
+   "cited_title": "The sample complexity of online contract design",
+   "cited_first_author": "Banghua Zhu",
+   "cited_year": 2023,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Repeated principal-agent with general utilities, m outcomes, regret in expectation",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(m_out)*log(T)*T**(2*m_out/(2*m_out+1))",
+    "expression_latex": "\\mathcal{O}(\\sqrt{m}\\log(T) T^{\\frac{2m}{2m+1}})",
+    "regime": null
+   },
+   "where": "Section 2.1"
+  },
+  {
+   "cited_key": "bacchiocchi2023learning",
+   "cited_title": "Learning optimal contracts: How to exploit small action spaces",
+   "cited_first_author": "Francesco Bacchiocchi",
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Discover and Cover",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Repeated principal-agent with finite agent actions n, m outcomes, high-probability regret",
+   "bound": {
+    "notation": "O",
+    "expression": "m_out**n_A*I_c*log(T)*T**(4/5)",
+    "expression_latex": "\\mathcal{O}(m^n \\mathcal{I}\\log (T)T^{4/5})",
+    "regime": null
+   },
+   "where": "Section 2.1"
+  },
+  {
+   "cited_key": "makarova2021risk",
+   "cited_title": "Risk-averse heteroscedastic bayesian optimization",
+   "cited_first_author": "Anastasia Makarova",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "RAHBO (risk coefficient alpha=0)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Kernelized bandit with heteroscedastic noise, repeated sampling ell per round, high probability",
+   "bound": {
+    "notation": "exact",
+    "expression": "beta_T*ell*sqrt(2*gamma_T*T/log(1+ell/chi_u**2))",
+    "expression_latex": "\\beta_T \\ell \\sqrt{\\frac{2 \\hat{\\gamma}_T T}{\\log(1+\\frac{\\ell}{\\chi_u^2})}}",
+    "regime": null
+   },
+   "where": "Section 4.3"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T13:58:31",
+  "source_chars": 95853,
+  "input_tokens": 73980,
+  "output_tokens": 4406,
+  "cost_usd_equiv": 0.4623788,
+  "status": "extracted"
+ }
+}

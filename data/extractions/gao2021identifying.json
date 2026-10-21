@@ -1,0 +1,189 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Identifying Best Fair Intervention",
+  "arxiv_id": "2111.04272",
+  "arxiv_version": null,
+  "year": 2021,
+  "authors": [
+   "Ruijiang Gao",
+   "Han Feng"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Best fair intervention identification in a causal model under a budget constraint",
+   "objective": "bai_fixed_budget",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "causal",
+    "budgeted_exploration",
+    "fairness"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Arms are K known soft interventions P_k(V|pa(V)) on a node V of a causal DAG; learner knows these conditionals and P(X|pa(X)) for children of the binary sensitive attribute S, enabling importance-sampling information leakage between arms",
+    "Goal: identify the best arm among E-fair arms, where fairness is a counterfactual constraint |zeta_k^{s',s}|, |zeta_k^{s,s'}| < E",
+    "Average sampling cost constraint with per-arm costs c_k, a_k, b_k and budget B; learner may also sample with chosen sensitive attribute (hard intervention on S)",
+    "Learner observes S, V, pa(V), children of S and their parents, and Y after each pull",
+    "Outcome Y implicitly bounded (used in concentration), range not stated explicitly"
+   ],
+   "definition_quote": "The goal is to find a soft intervention on a given node to maximize the outcome while meeting a fairness constraint by counterfactual estimation with only partial knowledge of the causal model. ... we restrict our theoretical analysis to bounding the error probability of the problem defined as $e(B) = \\mathbb{P}(\\hat{k}(B)\\neq k^\\star)$. Here $k^\\star$ is the best fair intervention"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Constraint Successive Rejection (CSR)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "budget B and costs",
+    "intervention conditionals P_k(V|pa(V))",
+    "conditionals P(X|pa(X)) for children of S",
+    "fairness threshold E"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "8*K**2*rho_star*exp(-T/(8*H_bar*logbar_nT))",
+    "expression_latex": "e(T,B) \\leq 8K^2\\rho^\\star\\exp(-\\frac{T}{8\\bar{H}\\overline{\\log}(n(T))})",
+    "regime": null
+   },
+   "symbols": {
+    "rho_star": "problem-dependent constant max{log(20/Delta), log(12/Delta^{s'}), log(12/Delta^s)} from outcome and fairness gaps",
+    "H_bar": "hardness max_{k != k*} rho_k^3 / (2^{-2 rho_k} v*(B,R*(k))^2)",
+    "logbar_nT": "harmonic number sum_{i=1}^{n(T)} 1/i with n(T) = ceil(log2 log10 sqrt(T))"
+   },
+   "conditions": [
+    "K > 1",
+    "a best fair arm k* exists with |xi_{k*}^{s,s'}|, |xi_{k*}^{s',s}| < E",
+    "proof assumes min{Delta, Delta^{s'}, Delta^s} > 10/sqrt(T)"
+   ],
+   "tuning": [
+    "epsilon = 2^{-(l-1)} in phase l",
+    "budget allocation via max-min LP (Algorithm 3)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "Consider a problem instance with $K$ candidate arms. Suppose $K>1$ and there exists a best fair arm $k^*$ satisfying $\\abs{\\xi_{k^*}^{s,s'}},\\abs{\\xi_{k^*}^{s',s}} < \\mathcal{E}$. ... The error probability of Algorithm 1 is bounded as e(T,B) \\leq 8K^2\\rho^\\star\\exp(-\\frac{T}{8\\bar{H}\\overline{\\log}(n(T))})"
+   },
+   "confidence": "medium",
+   "notes": "Restated in appendix as Theorem 10. Probability field set to expectation as it bounds a probability (not a high-probability statement); problem constants depend on budget LP value v*."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*K*n_T*exp(-xi_star**2*T*v_star**2/(32*n_T**3*logbar_nT))",
+    "expression_latex": "1 - 4 K n(T)  \\exp (-\\frac{(\\xi^*)^2 T }{32 n(T)^3 \\overline{\\log}\\left(n(T)\\right)}v^*(B)^2)",
+    "regime": null
+   },
+   "symbols": {
+    "n_T": "number of phases n(T) = ceil(log2 log10 sqrt(T))",
+    "logbar_nT": "harmonic number sum_{i=1}^{n(T)} 1/i",
+    "xi_star": "min over arms of distance of |xi_k| to fairness threshold E",
+    "v_star": "v*(B) = min over nonempty arm subsets R of the budget-allocation LP value v*(B,R)"
+   },
+   "conditions": [
+    "K > 1",
+    "no fair arm exists: for all k, |xi_k^{s,s'}| >= E or |xi_k^{s',s}| >= E"
+   ],
+   "tuning": [
+    "epsilon = 2^{-(l-1)} in phase l"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 2",
+    "quote": "Suppose that $K > 1$ and for all arms $k\\in [K]$ either $\\abs*{\\xi_k^{s,s'}} \\geq \\mathcal{E}$ or $\\abs*{\\xi_k^{s', s}} \\geq \\mathcal{E}$. ... Then, the probability that the algorithm declares no fair arm exists is at least $$1 - 4 K n(T)  \\exp (-\\frac{(\\xi^*)^2 T }{32 n(T)^3 \\overline{\\log}\\left(n(T)\\right)}v^*(B)^2),$$"
+   },
+   "confidence": "medium",
+   "notes": "Stated as lower bound on probability of correctly declaring no fair arm; recorded as upper bound on the failure probability (complement)."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:52:06",
+  "source_chars": 83303,
+  "input_tokens": 72033,
+  "output_tokens": 3456,
+  "cost_usd_equiv": 0.42780280000000004,
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,185 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Bayesian Decision Making around Experts",
+  "arxiv_id": "2510.08113",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Daniel Jarne Ornia",
+   "Joel Dyer",
+   "Nicholas Bishop",
+   "Anisoara Calinescu",
+   "Michael Wooldridge"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Bayesian multi-armed bandit with offline expert outcome data",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "prior",
+    "reward_family"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Before interaction the learner receives N i.i.d. outcomes D_N^* sampled from the optimal action of the true bandit (without action labels)",
+    "Outcome distributions parameterised by theta in Theta (countable in parts of the analysis), with a known model p_{theta,a}"
+   ],
+   "definition_quote": "The learner gets an initial dataset $D^*_N=\\{Y_{n}^*\\}_{1\\leq n\\leq N}$ ... of samples from the optimal action, but cannot identify (yet) what action these correspond to."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Thompson Sampling with expert-updated prior P_1(theta)=P(theta | D_N^*)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "prior",
+    "reward_family"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Information Choice: Who To Learn From (Algorithm 1)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling",
+    "information_directed_sampling"
+   ],
+   "requires_knowledge_of": [
+    "prior",
+    "reward_family"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "Information Choice with Trust Inference (Algorithm 2)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling",
+    "information_directed_sampling"
+   ],
+   "requires_knowledge_of": [
+    "prior",
+    "reward_family"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_prob*sqrt(T*(H_0 - I_0))",
+    "expression_latex": "C \\sqrt{T \\left( \\mathbb{H}_0(A^*) - \\mathbb{I}_0(A^*; D_N^*) \\right)}",
+    "regime": null
+   },
+   "symbols": {
+    "C_prob": "problem-dependent constant C (from Russo & Van Roy information-ratio bound)",
+    "H_0": "entropy of the optimal action under the prior P_0",
+    "I_0": "mutual information between optimal action A^* and expert data D_N^* under P_0"
+   },
+   "conditions": [
+    "expectation taken over all randomness including the expert data D_N^*"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret_reduction",
+    "number": "Theorem 1",
+    "quote": "Let an agent follow a Thompson Sampling algorithm with a prior inferred from the expert-updated posterior $P_1(\\theta) = P(\\theta \\mid D_N^*)$. Their expected Bayesian regret taken over all sources of randomness including the expert data $D_N^*$, is \\mathbb{E}[Reg_{\\text{TS}_1}(T)] \\le C \\sqrt{T \\left( \\mathbb{H}_0(A^*) - \\mathbb{I}_0(A^*; D_N^*) \\right)} where $C$ is a problem-dependent constant..."
+   },
+   "confidence": "medium",
+   "notes": "Paper's C renamed C_prob (not corruption). Derived from Russo & Van Roy (2016) via Jensen. Horizon recorded as anytime since TS does not use T; not explicitly stated."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "russo2016information",
+   "cited_title": "An information-theoretic analysis of thompson sampling",
+   "cited_first_author": "Daniel Russo",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson Sampling / general Bayesian online learner",
+   "algorithm_registry_id": "posterior_sampling",
+   "side": "upper",
+   "setting_description": "Bayesian multi-armed bandit, Bayesian regret bounded via information ratio upper bound Gamma_bar and entropy of optimal action",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(Gamma_bar*H_A*T)",
+    "expression_latex": "\\sqrt{\\overline{\\Gamma}\\mathbb{H}_t(A^*)T}",
+    "regime": null
+   },
+   "where": "Section 3.2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T13:58:36",
+  "source_chars": 79022,
+  "input_tokens": 65629,
+  "output_tokens": 2488,
+  "cost_usd_equiv": 0.35721080000000005,
+  "status": "extracted"
+ }
+}

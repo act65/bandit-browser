@@ -1,0 +1,479 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "The multi-armed bandit problem with covariates",
+  "arxiv_id": "1110.6084",
+  "arxiv_version": null,
+  "year": 2011,
+  "authors": [
+   "Vianney Perchet",
+   "Philippe Rigollet"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Static (K+1)-armed bandit problem",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Horizon may be a random variable N with expectation n, independent of the rewards",
+    "The paper uses K+1 arms, so its K is the number of suboptimal arms"
+   ],
+   "definition_quote": "Let $\\cI=\\{1,\\ldots, K+1\\}$ be a given set of $K+1 \\ge2$ arms. Successive pulls of arm $i \\in\\cI$ yield rewards $Y_1^{(i)}, Y_2^{(i)}, \\ldots$ that are i.i.d. random variables in $[0,1]$ with expectation given by $\\E[Y_t^{(i)}] = f^{(i)}\\in[0,1]$. ... we further assume that the best arm is \\textit{unique}"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "K-armed nonparametric bandit with covariates, class M_X^K(alpha, beta, L)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "i.i.d. covariates X_t in [0,1]^d with density bounded above and below",
+    "mean reward functions f^(i)(x) are (beta, L)-Hölder with beta in (0,1]",
+    "margin condition with parameter alpha: P_X[0 < f* - f# <= delta] <= C_0 delta^alpha for delta <= delta_0",
+    "learner knows Hölder exponent beta (and L for ABSE); does not need alpha",
+    "regret measured against the oracle policy pulling argmax_i f^(i)(X_t) at each round"
+   ],
+   "definition_quote": "We denote by $\\cM_{\\cX}^K(\\alpha,\\beta,L)$ the class of $K$-armed bandit problems with covariates in $\\cX=[0,1]^d$ with a machine satisfying the margin condition with parameter $\\alpha>0$, the smoothness condition with parameters $(\\beta,L)$ and such that $P_X$ has a density, with respect to the Lebesgue measure, bounded above and below"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Successive Elimination (SE)",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": []
+  },
+  {
+   "id": "a2",
+   "name": "Binned Successive Elimination (BSE)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "d"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "Adaptively Binned Successive Elimination (ABSE)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "392*gamma_se**2*(1 + T/T_se)*K_s/Delta_free*Max(log(T_se*Delta_free**2/(18*gamma_se**2)), 1) + T*Delta_minus",
+    "expression_latex": "392 \\gamma^2 (1+\\frac{n}{T})\\frac{K}{\\Delta}\\blog(\\frac{T\\Delta^2}{18\\gamma^2}) + n \\Delta^-",
+    "regime": "for any Delta >= 0"
+   },
+   "symbols": {
+    "K_s": "paper's K: number of suboptimal arms (K+1 arms total)",
+    "T_se": "SE parameter T",
+    "gamma_se": "SE parameter gamma >= 1",
+    "Delta_free": "arbitrary threshold Delta >= 0",
+    "Delta_minus": "largest gap Delta_j strictly smaller than Delta_free (0 if none)"
+   },
+   "conditions": [
+    "horizon is a random variable N with expectation n (T here), independent of rewards"
+   ],
+   "tuning": [
+    "T_se >= 1, gamma_se >= 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "THstatic",
+    "number": "Theorem 2.1",
+    "quote": "Consider a $(K+1)$-armed bandit problem where horizon is a random variable $N$ of expectation $n$ that is independent of the random rewards. When implemented with parameters $T, \\gamma\\geq1$, the \\textsc{se} policy $\\hpi$ exhibits an expected regret bounded, for any $\\Delta\\ge0$, as \\E[R_N(\\hpi)]\\leq392 \\gamma^2 (1+\\frac{n}{T})\\frac{K}{\\Delta}\\blog(\\frac{T\\Delta^2}{18\\gamma^2}) + n \\Delta^-"
+   },
+   "confidence": "medium",
+   "notes": "blog(x)=max(log x,1). Regret defined via means, so pseudo-regret. The policy does not need n; T is a tuning parameter."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "646*Sum(Max(log(T*Delta_i**2), 1)/Delta_i, (i, 1, K_0)) + 304*(K_s - K_0)/Delta_K0*Max(log(T*Delta_K0**2), 1) + T*Delta_K0p1",
+    "expression_latex": "646\\sum_{i=1}^{K_0} \\frac{\\blog(n\\Delta^2_{i} )}{\\Delta_{i}}+304\\frac{K-K_0}{\\Delta_{K_0}}\\blog(n\\Delta^2_{K_0})+n\\Delta_{K_0+1}",
+    "regime": "for any K_0 <= K"
+   },
+   "symbols": {
+    "K_s": "paper's K: number of suboptimal arms",
+    "K_0": "any integer K_0 <= K_s (gaps sorted decreasingly)",
+    "Delta_K0": "gap of arm K_0 (gaps sorted Delta_1 >= ... >= Delta_K)",
+    "Delta_K0p1": "gap of arm K_0+1"
+   },
+   "conditions": [
+    "horizon random N with expectation n"
+   ],
+   "tuning": [
+    "T = n",
+    "gamma = 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "CorStatic",
+    "number": "Corollary 2.1",
+    "quote": "Under the setup of Theorem~\\ref{THstatic}, the \\textsc{se} policy $\\hpi$ run with parameter $T=n$ and $\\gamma=1$ satisfies for any $K_0 \\leq K$, \\E R_N(\\hpi)\\leq646\\sum_{i=1}^{K_0} \\frac{\\blog(n\\Delta^2_{i} )}{\\Delta_{i}}+304\\frac{K-K_0}{\\Delta_{K_0}}\\blog(n\\Delta^2_{K_0})+n\\Delta_{K_0+1}."
+   },
+   "confidence": "medium",
+   "notes": "Gaps indexed in decreasing order; arms sorted with Delta_1 >= ... >= Delta_K."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "646*sum_subopt(Max(log(T*Delta_i**2), 1)/Delta_i)",
+    "expression_latex": "646\\sum_{i=1}^{K} \\frac{\\blog(n\\Delta^2_{i} )}{\\Delta_{i}}",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "horizon random N with expectation n"
+   ],
+   "tuning": [
+    "T = n",
+    "gamma = 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "CorStatic",
+    "number": "Corollary 2.1",
+    "quote": "In particular, \\E R_N(\\hpi)\\leq\\min\\{ 646\\sum_{i=1}^{K} \\frac{\\blog(n\\Delta^2_{i} )}{\\Delta_{i}}, 166\\sqrt{nK\\log(K)} \\}."
+   },
+   "confidence": "high",
+   "notes": "First branch of the min."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "166*sqrt(T*K_s*log(K_s))",
+    "expression_latex": "166\\sqrt{nK\\log(K)}",
+    "regime": null
+   },
+   "symbols": {
+    "K_s": "paper's K: number of suboptimal arms (K+1 arms total)"
+   },
+   "conditions": [
+    "horizon random N with expectation n"
+   ],
+   "tuning": [
+    "T = n",
+    "gamma = 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "CorStatic",
+    "number": "Corollary 2.1",
+    "quote": "In particular, \\E R_N(\\hpi)\\leq\\min\\{ 646\\sum_{i=1}^{K} \\frac{\\blog(n\\Delta^2_{i} )}{\\Delta_{i}}, 166\\sqrt{nK\\log(K)} \\}."
+   },
+   "confidence": "high",
+   "notes": "Gap-free branch of the min."
+  },
+  {
+   "id": "r5",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "T*(K*log(K)/T)**(beta_h*(alpha_m + 1)/(2*beta_h + d))",
+    "expression_latex": "C n (\\frac{K\\log K}{n})^{{\\beta(\\alpha+1)}/({2\\beta+d})}",
+    "regime": "alpha_m in (0,1)"
+   },
+   "symbols": {
+    "alpha_m": "margin parameter alpha",
+    "beta_h": "Hölder smoothness exponent beta in (0,1]"
+   },
+   "conditions": [
+    "margin parameter alpha in (0,1)",
+    "beta in (0,1], L > 0"
+   ],
+   "tuning": [
+    "M = floor((n/(K log K))^(1/(2 beta + d)))",
+    "SE in each bin with T = n M^{-d}, gamma = 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "THmain",
+    "number": "Theorem 4.1",
+    "quote": "Fix $\\beta\\in(0,1]$, $L>0$ and $\\alpha\\in(0,1)$ and consider a problem in $\\cM^K_{\\cX}(\\alpha,\\beta,L)$. Then the \\textsc{bse} policy $\\bpi$ with $M=\\lfloor(\\frac{n}{K\\log(K)} )^{1/(2\\beta+d)}\\rfloor$ has an expected regret at time $n$ bounded as follows: \\E R_n(\\bpi)\\le C n (\\frac{K\\log K}{n})^{{\\beta(\\alpha+1)}/({2\\beta+d})}, where $C>0$ is a positive constant that does not depend on $K$."
+   },
+   "confidence": "high",
+   "notes": "Constant C does not depend on K but depends on other problem constants."
+  },
+  {
+   "id": "r6",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "T*(K*log(K)/T)**(beta_h*(alpha_m + 1)/(2*beta_h + d))",
+    "expression_latex": "C n (\\frac{K\\log(K)}{n})^{{\\beta(\\alpha+1)}/({2\\beta+d})}",
+    "regime": "alpha_m < infinity"
+   },
+   "symbols": {
+    "alpha_m": "margin parameter alpha",
+    "beta_h": "Hölder smoothness exponent beta in (0,1]"
+   },
+   "conditions": [
+    "n >= K log K",
+    "alpha > 0 finite",
+    "beta in (0,1], L > 0"
+   ],
+   "tuning": [
+    "SE in each bin with T = n|B|^d, gamma = 2",
+    "c_0 = 2 L d^{beta/2}",
+    "k_0 smallest integer with 2^{-k_0} <= (K log K / n)^{1/(d+2beta)}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "THmainadap",
+    "number": "Theorem 5.1",
+    "quote": "Fix $\\beta\\in(0,1]$, $L>0$, $\\alpha>0$, assume that $n \\ge K\\log(K)$ and consider a problem in $\\cM^K_{\\cX}(\\alpha,\\beta,L)$. If $\\alpha<\\infty$, then the \\textsc{abse} policy $\\tpi$ has an expected regret at time $n$ bounded by \\E R_n(\\tpi)\\le C n (\\frac{K\\log(K)}{n})^{{\\beta(\\alpha+1)}/({2\\beta+d})}, where $C>0$ does not depend on $K$. If $\\alpha=\\infty$, then $\\E R_n(\\tpi)\\le C K\\log(n)$."
+   },
+   "confidence": "high",
+   "notes": "Minimax optimal for K=2 by cited lower bounds. ABSE does not need alpha."
+  },
+  {
+   "id": "r7",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "K*log(T)",
+    "expression_latex": "C K\\log(n)",
+    "regime": "alpha_m = infinity"
+   },
+   "symbols": {
+    "alpha_m": "margin parameter alpha"
+   },
+   "conditions": [
+    "n >= K log K",
+    "alpha = infinity (one arm optimal everywhere, others bounded away)"
+   ],
+   "tuning": [
+    "SE in each bin with T = n|B|^d, gamma = 2",
+    "c_0 = 2 L d^{beta/2}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "THmainadap",
+    "number": "Theorem 5.1",
+    "quote": "If $\\alpha=\\infty$, then $\\E R_n(\\tpi)\\le C K\\log(n)$."
+   },
+   "confidence": "high",
+   "notes": "Constant C may depend on problem constants (e.g. gap lower bound) but not K."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "RigZee10",
+   "cited_title": "Nonparametric bandits with covariates",
+   "cited_first_author": "Rigollet",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Two-armed nonparametric bandit with covariates, Hölder(beta) smoothness and margin alpha, covariates in [0,1]^d",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T*(1/T)**(beta_h*(alpha_m + 1)/(2*beta_h + d))",
+    "expression_latex": "n^{1-\\beta(1+\\alpha)/(2\\beta+d)}",
+    "regime": "K = 2"
+   },
+   "where": "Discussion after Theorem 5.1"
+  },
+  {
+   "cited_key": "AudTsy07",
+   "cited_title": "Fast learning rates for plug-in classifiers",
+   "cited_first_author": "Audibert",
+   "cited_year": 2007,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Full-information (both arms observed) two-armed problem with covariates, Hölder smoothness and margin condition",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T*(1/T)**(beta_h*(alpha_m + 1)/(2*beta_h + d))",
+    "expression_latex": "n^{1-\\beta(1+\\alpha)/(2\\beta+d)}",
+    "regime": "K = 2"
+   },
+   "where": "Discussion after Theorem 5.1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:21:14",
+  "source_chars": 93013,
+  "input_tokens": 79926,
+  "output_tokens": 8552,
+  "cost_usd_equiv": 0.5928668,
+  "status": "extracted"
+ }
+}

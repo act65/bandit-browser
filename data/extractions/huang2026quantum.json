@@ -1,0 +1,230 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Quantum-Enhanced Neural Contextual Bandit Algorithms",
+  "arxiv_id": "2601.02870",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Yuqi Huang",
+   "Vincent Y. F Tan",
+   "Sharu Theresa Jose"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Stochastic K-armed contextual bandit with QNTK-realizable reward",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "sigma",
+    "S",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "oblivious_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "arbitrary_bounded",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Unknown mean reward h: R^d -> [0,1], modelled through the quantum neural tangent kernel (QNTK) of a randomly initialised quantum neural network with m qubits; the kernel is the empirical QNTK, and its limiting Gram matrix on all TK contexts must be positive definite (min eigenvalue lambda_0 > 0)",
+    "The context set X_{1:TK} over the whole horizon is treated as a fixed dataset; whether contexts are adversarial or stochastic is not stated",
+    "Noise is nu-sub-Gaussian conditionally on the history",
+    "Context vectors have unit l2 norm",
+    "QNN architecture assumptions (Assumptions 1-3, from Girardi & De Palma)"
+   ],
+   "definition_quote": "At each round $t \\in [T]$, the agent observes a set of {\\em context vectors} $\\mathcal{X}_t = \\{\\xbf_{t,a}: a \\in [K]\\}$ ... $r_{t,a_t}=h(\\xbf_{t,a_t})+ \\xi_t$, where $h: \\mathbb{R}^d \\to [0, 1]$ is an unknown, $[0,1]$-bounded, mean reward function and $\\xi_t$ is $\\nu$-sub-Gaussian noise conditioned on the history"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "QNTK-UCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma",
+    "S",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "3*sqrt(T)*sqrt(d_q*log(1 + T*K/lam) + 1)*(sigma*sqrt(d_q*log(1 + T*K/lam) + 1 + 2*log(1/delta)) + sqrt(lam)*S)",
+    "expression_latex": "3\\sqrt{T}\\sqrt{\\widetilde{d}_{\\mathrm{q}}\\log (1+\\frac{TK}{\\lambda})+1}\\Big(\\nu\\sqrt{\\widetilde{d}_{\\mathrm{q}}\\log(1+\\frac{TK}{\\lambda})+ 1 +2\\log(\\frac{1}{\\delta})}+\\sqrt{\\lambda}S\\Big)",
+    "regime": null
+   },
+   "symbols": {
+    "d_q": "quantum effective dimension log det(I + Kbar/lambda)/log(1+TK/lambda) of the limiting QNTK Gram matrix on all TK contexts",
+    "m_qubits": "number of qubits of the QNN"
+   },
+   "conditions": [
+    "number of qubits m = Omega((TK)^3/lambda^2 * log((TK)^2/delta))",
+    "S >= sqrt(2 h^T Kbar^{-1} h), with h the vector of mean rewards over all TK contexts",
+    "limiting QNTK Gram matrix positive definite with min eigenvalue lambda_0 > 0",
+    "contexts have unit l2 norm",
+    "QNN architecture satisfies Assumptions 1-3 (Gaussian process limit, convergence of analytic QNTK, light-cone scaling condition)",
+    "mean rewards in [0,1]"
+   ],
+   "tuning": [
+    "lambda >= max{1, S^{-2}}",
+    "beta_{t-1} = nu*sqrt(log det(Z_{t-1})/det(lambda I) + 2 log(1/delta)) + sqrt(lambda)*S"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem (thm:regret)",
+    "quote": "Fix any $\\delta\\in(0,1)$. Let $m = \\bigOmega\\left( \\frac{(TK)^3}{\\lambda^2}\\log\\left(\\frac{(TK)^2}{\\delta}\\right) \\right)$. Then, with probability at least $1-\\delta$, the cumulative regret of QNTK-UCB (Algorithm \\ref{alg:qntk-ucb}) satisfies R_T \\le 3\\sqrt{T}\\sqrt{\\widetilde{d}_{\\mathrm{q}}\\log (1+\\frac{TK}{\\lambda})+1}(\\nu\\sqrt{...+2\\log(1/\\delta)}+\\sqrt{\\lambda}S), where $S \\geq \\sqrt{2\\hbf^\\top \\bar{\\Kbf}^{-1} \\hbf}$ ... and $\\lambda \\geq \\max\\{1,S^{-2}\\}$."
+   },
+   "confidence": "medium",
+   "notes": "Regret R_T is the realized sum of mean-reward gaps (no noise), bounded w.p. 1-delta (over noise and random initialisation). nu (sub-Gaussian parameter) mapped to sigma. Mapping to kernel_rkhs is approximate."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d_q*sqrt(T)",
+    "expression_latex": "R_T = \\tilde{\\mathcal{O}}\\left(\\widetilde{d}_{\\mathrm{q}} \\sqrt{T} \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "d_q": "quantum effective dimension of the limiting QNTK Gram matrix"
+   },
+   "conditions": [
+    "number of qubits m = Omega((TK)^3/lambda^2 * log((TK)^2/delta))",
+    "S >= sqrt(2 h^T Kbar^{-1} h)",
+    "limiting QNTK Gram matrix positive definite",
+    "contexts have unit l2 norm",
+    "QNN architecture satisfies Assumptions 1-3"
+   ],
+   "tuning": [
+    "lambda >= max{1, S^{-2}}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem (thm:regret)",
+    "quote": "Ignoring logarithmic terms and constants, this bound simplifies to $$ R_T = \\tilde{\\mathcal{O}}\\left(\\widetilde{d}_{\\mathrm{q}} \\sqrt{T} \\right)$$"
+   },
+   "confidence": "medium",
+   "notes": "Simplified form of r1; hides S, lambda, nu dependence."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "3*sqrt(T)*sqrt(d_q*log(1 + T*K/lam) + 1)*(sigma*sqrt(d_q*log(1 + T*K/lam) + 1 + 2*log(T)) + sqrt(lam)*S) + 1",
+    "expression_latex": "3\\sqrt{T}\\sqrt{\\widetilde{d}_{\\mathrm{q}}\\log (1+\\frac{TK}{\\lambda})+1}\\Big(\\nu\\sqrt{\\widetilde{d}_{\\mathrm{q}}\\log(1+\\frac{TK}{\\lambda})+ 1 +2\\log T}+\\sqrt{\\lambda}S\\Big) +1",
+    "regime": null
+   },
+   "symbols": {
+    "d_q": "quantum effective dimension of the limiting QNTK Gram matrix"
+   },
+   "conditions": [
+    "same conditions as Theorem (thm:regret), with delta = 1/T in the qubit-count requirement",
+    "S >= sqrt(2 h^T Kbar^{-1} h)",
+    "limiting QNTK Gram matrix positive definite",
+    "contexts have unit l2 norm"
+   ],
+   "tuning": [
+    "delta = 1/T",
+    "lambda >= max{1, S^{-2}}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Corollary 2",
+    "quote": "Under the same conditions as Theorem~\\ref{thm:regret}, the expected cumulative regret satisfies $$ \\bar{R}_T \\le 3\\sqrt{T}\\sqrt{...}\\Big(\\nu\\sqrt{...+2\\log T}+\\sqrt{\\lambda}S\\Big) +1 = \\tilde{\\mathcal{O}}\\left(\\widetilde{d}_{\\mathrm{q}} \\sqrt{T} \\right)$$"
+   },
+   "confidence": "medium",
+   "notes": "The expected regret is defined as the sum of expected mean-reward gaps, i.e. pseudo-regret. The corollary also states the O_tilde(d_q sqrt(T)) form."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:14:38",
+  "source_chars": 85636,
+  "input_tokens": 70287,
+  "output_tokens": 4878,
+  "cost_usd_equiv": 0.44227479999999997,
+  "status": "extracted"
+ }
+}

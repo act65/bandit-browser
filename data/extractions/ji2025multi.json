@@ -1,0 +1,403 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Multi-Armed Bandits With Machine Learning-Generated Surrogate Rewards",
+  "arxiv_id": "2506.16658",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Wenlong Ji",
+   "Yihan Pan",
+   "Ruihao Zhu",
+   "Lihua Lei"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "MAB with surrogate rewards (Gaussian model)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_unknown_variance",
+   "learner_knows": [],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each pull also reveals a surrogate (ML-predicted) reward; true and surrogate rewards are jointly bivariate Gaussian with unknown means, variances and correlation rho_k (|rho_k|<1)",
+    "Learner has an offline pool of N_k i.i.d. surrogate rewards per arm; surrogate means may be arbitrarily biased",
+    "No ties between arm means"
+   ],
+   "definition_quote": "In the online phase, if the arm $k$ is pulled for the $s$-th time, the decision maker can observe a surrogate reward $\\hat{R}_{k, s}$ alongside a true reward $R_{k, s}$ ... In the offline phase, the decision maker has access to a static pool of surrogate rewards $\\{\\hat{R}_{k,s}^\\off\\}_{s=1}^{N_k}$ for arm $k$. ... we assume that the true and surrogate rewards are bivariate Gaussian with unknown mean and covariance matrix"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "MAB with batched reward (non-Gaussian) and surrogate rewards",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each pull deploys the arm to a batch of m i.i.d. units, yielding m pairs of true and surrogate rewards (not the classical limited-adaptivity batched bandit)",
+    "Offline pool of m*N_k i.i.d. surrogate rewards per arm",
+    "Rewards, surrogates and projection residuals sub-Gaussian with normalized psi_2 norm <= L and bounded skewness ratios; variances and sub-Gaussian norms unknown to learner",
+    "Local regime sigma_k^2/(m Delta_k^2) = Omega(1), sigma_max/sigma_min = O(1), m >= 8 (ln T)^4 etc. (Assumption 2)"
+   ],
+   "definition_quote": "If $A_t=k$, then arm $k$ is deployed to $m$ independent units in that round and we observe a new batch of $m$ i.i.d. pairs of true and surrogate rewards ... the cumulative regret over $T$ decision rounds is $\\mathrm{Reg}_T=\\sum_{t=1}^T m(\\mu^\\star-\\mu_{A_t})$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "MLA-UCB (Machine Learning-Assisted Upper Confidence Bound)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": []
+  },
+  {
+   "id": "a2",
+   "name": "MLA-UCB for MAB with batched rewards",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(2*Delta_i*log(T)/log(1 + Delta_i**2/(sigma_i**2*(sqrt(1 - rho_i**2) + sqrt(delta_i))**2))) + log(T)**(5/6)",
+    "expression_latex": "\\sum_{k\\neq k^\\star}\\frac{2\\Delta_k\\ln T}{\\ln\\lb 1+\\frac{\\Delta_k^2}{\\sigma_{k}^2}\\frac{1}{(\\sqrt{1-\\rho_k^2}+\\sqrt{\\delta_k})^2}\\rb}+O\\lb(\\ln T)^{5/6}\\rb",
+    "regime": "T >= 4K"
+   },
+   "symbols": {
+    "rho_i": "correlation between true and surrogate reward of arm i",
+    "delta_i": "constant < 1 controlling offline sample size requirement for arm i",
+    "N_i": "offline surrogate sample size for arm i"
+   },
+   "conditions": [
+    "T >= 4K",
+    "N_i >= (1/delta_i)*(2 ln T / ln(1 + Delta_i^2/(24 sigma_i^2)) + 3) for all suboptimal i, for some delta_i < 1",
+    "true and surrogate rewards jointly Gaussian"
+   ],
+   "tuning": [
+    "significance level 1/(2t sqrt(ln t))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm: regret bound",
+    "number": "Theorem 1",
+    "quote": "Under the Gaussian reward model \\eqref{eqn: gaussian model}, for any $T\\geq 4K$, if offline sample size satisfies $N_k\\geq \\frac{1}{\\delta_k}\\lb\\frac{2\\ln T}{\\ln\\lb 1+\\frac{\\Delta_k^2}{24\\sigma_{k}^2} \\rb}+3\\rb, \\forall k \\neq k^\\star$, for some $\\delta_k<1,$ then the expected regret of Algorithm \\ref{alg:PPUCB} can be bounded by: ..."
+   },
+   "confidence": "medium",
+   "notes": "Leading term is exact (constant 2); only the remainder is O((ln T)^{5/6}). Regret defined via means, hence pseudo-regret. Algorithm does not use T, but the offline sample size condition depends on T."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(2*Delta_i*log(T)/log(1 + Delta_i**2/(sigma_i**2*(1 - rho_i**2)))) + log(T)**(5/6)",
+    "expression_latex": "\\sum_{k\\neq k^\\star}\\frac{2\\Delta_k\\ln T}{\\ln\\lb 1+\\frac{\\Delta_k^2}{\\sigma_{k}^2(1-\\rho_k^2)}\\rb}+O\\lb(\\ln T)^{5/6}\\rb",
+    "regime": null
+   },
+   "symbols": {
+    "rho_i": "correlation between true and surrogate reward of arm i",
+    "N_i": "offline surrogate sample size for arm i"
+   },
+   "conditions": [
+    "N_i = Omega((ln T)^{4/3}) for all suboptimal arms",
+    "true and surrogate rewards jointly Gaussian"
+   ],
+   "tuning": [
+    "significance level 1/(2t sqrt(ln t))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor: regret bound inf N",
+    "number": "Corollary 1",
+    "quote": "Under the Gaussian data generation model \\eqref{eqn: gaussian model}, if $N_k = \\Omega ((\\ln T)^{4/3}), \\forall k\\neq k^\\star$, then the expected regret of Algorithm \\ref{alg:PPUCB} can be bounded by: ..."
+   },
+   "confidence": "high",
+   "notes": "Leading term exact; matches lower bound of Theorem 2."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "uniformly_good",
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "sum_subopt(2*Delta_i/log(1 + Delta_i**2/(sigma_i**2*(1 - rho_i**2))))*log(T)",
+    "expression_latex": "\\liminf_{T\\to\\infty}\\frac{\\mathbb E_\\theta^\\pi[\\mathrm{Reg}_T]}{\\ln T}\\ge\\sum_{k\\ne k^\\star}\\frac{2\\Delta_k}{\\ln\\lb1+\\dfrac{\\Delta_k^2}{\\sigma_k^2(1-\\rho_k^2)}\\rb}",
+    "regime": null
+   },
+   "symbols": {
+    "rho_i": "correlation between true and surrogate reward of arm i"
+   },
+   "conditions": [
+    "policy uniformly good over all Gaussian instances (mu, tilde mu, Sigma)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm: lower bound",
+    "number": "Theorem 2",
+    "quote": "Under the Gaussian data generation model \\eqref{eqn: gaussian model}, let $\\pi$ be any uniformly good policy as defined in Definition \\ref{def: uniformly good policy}, then $\\liminf_{T\\to\\infty}\\frac{\\mathbb E_\\theta^\\pi[\\mathrm{Reg}_T]}{\\ln T}\\ge\\sum_{k\\ne k^\\star}\\frac{2\\Delta_k}{\\ln\\lb1+\\dfrac{\\Delta_k^2}{\\sigma_k^2(1-\\rho_k^2)}\\rb}$."
+   },
+   "confidence": "high",
+   "notes": "Holds regardless of offline sample size (proof uses only the online likelihood)."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt((2*log(T)/log(1 + Delta_i**2/sigma_i**2*(1 - eps_alg)**2/(1 + eps_alg)/(sqrt(1 - rho_i**2) + sqrt(delta_i))**2) + C_u*(1 + sigma_star**2/(eps_alg**2*Delta_i**2))*sqrt(log(T)) + C_u/eps_alg**2*(1 + sigma_i**2/Delta_i**2))*Delta_i)",
+    "expression_latex": "\\sum_{k\\neq k^\\star}\\lb\\frac{2\\ln T}{\\ln\\lb 1+\\frac{\\Delta_k^2}{\\sigma_{k}^2}\\frac{(1-\\epsilon)^2}{(1+\\epsilon)}\\frac{1}{(\\sqrt{1-\\rho_k^2}+\\sqrt{\\delta_k})^2}\\rb}+C\\lb1+\\frac{\\sigma_{k^\\star}^2}{\\epsilon^2\\Delta_k^2}\\rb\\sqrt{\\ln T}+\\frac{C}{\\epsilon^2}\\lb1+\\frac{\\sigma_{k}^2}{\\Delta_k^2}\\rb\\rb\\Delta_k",
+    "regime": "T >= 4K, eps in (0,1)"
+   },
+   "symbols": {
+    "rho_i": "correlation between true and surrogate reward of arm i",
+    "delta_i": "constant < 1 in the offline sample size condition",
+    "C_u": "universal constant",
+    "sigma_star": "standard deviation of the optimal arm's true reward"
+   },
+   "conditions": [
+    "T >= 4K",
+    "N_i >= (1/delta_i)*(2 ln T/ln(1 + Delta_i^2/(4 sigma_i^2) (1-eps)^2/(1+eps)) + 3) for all suboptimal i, some delta_i < 1",
+    "true and surrogate rewards jointly Gaussian"
+   ],
+   "tuning": [
+    "eps_alg in (0,1) is an analysis parameter"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm: MLA-UCB",
+    "number": "Theorem 4",
+    "quote": "Under the Gaussian data generation model \\eqref{eqn: gaussian model}, for any $\\epsilon\\in(0,1)$ and $T\\geq 4K$, if the sample size of offline predictions satisfies ... for some $\\delta_k<1$, then the expected regret of Algorithm \\ref{alg:PPUCB} can be bounded by: ... where $C>0$ is a universal constant."
+   },
+   "confidence": "medium",
+   "notes": "Generalized finite-time version in appendix; Theorem 1 follows with eps = 1/(2 (ln T)^{1/6})."
+  },
+  {
+   "id": "r5",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(2*(1 - rho_i**2)*sigma_i**2*log(T)/Delta_i + C_u*sigma_i**2*log(T)**(2/3)/Delta_i)",
+    "expression_latex": "\\frac{1}{m}\\E[\\reg]\\leq \\sum_{k\\neq k^\\star}\\lb \\frac{2(1-\\rho_k^2)\\sigma_k^2\\ln T}{m\\Delta_k^2} +\\frac{C\\sigma_k^2(\\ln T)^{2/3}}{m\\Delta_k^2}\\rb\\Delta_k",
+    "regime": "T >= max(K+1, 5)"
+   },
+   "symbols": {
+    "rho_i": "correlation between true and surrogate reward of arm i",
+    "C_u": "constant independent of means, variances and T",
+    "m_batch": "batch size (units per pull)"
+   },
+   "conditions": [
+    "Assumptions 1 and 2 (sub-Gaussian rewards/surrogates/residuals, bounded skewness, m >= 8(ln T)^4 etc., sigma_k^2/(m Delta_k^2)=Omega(1), sigma_max/sigma_min=O(1))",
+    "N_i = Omega(sigma_i^2/(m_batch Delta_i^2) (ln T)^{5/3}) for all suboptimal arms",
+    "T >= max(K+1, 5)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm: regret bound non Gaussian",
+    "number": "Theorem 3",
+    "quote": "Under Assumption \\ref{asm: batch reward} and \\ref{asm: m and T}, if $T\\geq \\max\\{K+1, 5\\}$, and the offline sample size $N_k = \\Omega (\\frac{\\sigma_k^2}{m\\Delta_k^2}(\\ln T)^{5/3}), \\forall k\\neq k^\\star$, then the expected regret of Algorithm \\ref{alg:PPUCB batch} can be bounded by: ... where $C>0$ is a constant independent of $\\mu_k, \\sigma_k^2, \\tilde\\mu_k, \\tilde\\sigma_k^2, T$."
+   },
+   "confidence": "medium",
+   "notes": "Paper bounds (1/m)E[Reg_T] where Reg_T = sum_t m(mu*-mu_{A_t}); expression multiplied by m_batch to give total regret (the m cancels). Equivalently the stated bound is per-unit-normalized regret."
+  },
+  {
+   "id": "r6",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "m_batch*(sum_subopt(((sqrt(delta_i) + sqrt(1 - rho_i**2))**2*2*sigma_i**2*log(T)/(m_batch*Delta_i**2) + C_u*sigma_i**2/(m_batch*Delta_i**2*eps_alg**2) + C_u*eps_alg*sigma_i**2*log(T)/(m_batch*Delta_i**2) + C_u/(log(T)**4*eps_alg**2) + C_u*sqrt(log(T)))*Delta_i) + C_u*Delta_max*T*(exp(-C_u*m_batch**(1/3))/(1 - exp(-C_u*m_batch**(1/3))) + exp(-C_u*m_batch*eps_alg**2)/(1 - exp(-C_u*m_batch*eps_alg**2))))",
+    "expression_latex": "\\frac{1}{m}\\E[\\reg]\\leq \\sum_{k\\neq k^\\star}\\lb\\lb\\sqrt{\\delta_k}+\\sqrt{1-\\rho_k^2}\\rb^2 \\frac{2\\sigma_k^2\\ln T}{m\\Delta_k^2} + \\frac{C\\sigma_k^2}{m\\Delta_k^2\\epsilon^2} + \\frac{C\\epsilon\\sigma_k^2\\ln T}{m\\Delta_k^2} +\\frac{C}{(\\ln T)^4\\epsilon^2}+ C\\sqrt{\\ln T} \\rb\\Delta_k +C\\Delta_{\\max}T\\lb\\frac{\\exp(-Cm^{1/3})}{1-\\exp(-Cm^{1/3})} + \\frac{\\exp(-Cm\\epsilon^2)}{1-\\exp(-Cm\\epsilon^2)}\\rb",
+    "regime": "T >= max(K+1, 5), eps in (0, 1/2)"
+   },
+   "symbols": {
+    "rho_i": "correlation between true and surrogate reward of arm i",
+    "delta_i": "constant <= 1 in the offline sample size condition",
+    "C_u": "constant (unspecified)",
+    "m_batch": "batch size (units per pull)"
+   },
+   "conditions": [
+    "Assumptions 1 and 2",
+    "m_batch*N_i >= (1/delta_i)*(8 sigma_i^2 ln T/Delta_i^2 * (1+m^{-1/3})^2 (1+eps)/(1-eps)^2 + 2 ln T/m) for some delta_i <= 1",
+    "T >= max(K+1, 5)"
+   ],
+   "tuning": [
+    "eps_alg in (0,1/2) is an analysis parameter"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm: MLA-UCB non Gaussian",
+    "number": "Theorem 5",
+    "quote": "Under Assumption \\ref{asm: batch reward} and \\ref{asm: m and T}, for any $\\epsilon\\in(0,1/2)$ and $T\\geq \\max\\{K+1, 5\\}$, if the sample size of offline predictions satisfies ... for some $\\delta_k\\leq1$, then the expected regret of Algorithm \\ref{alg:PPUCB batch} can be bounded by: ..."
+   },
+   "confidence": "medium",
+   "notes": "Paper bounds (1/m)E[Reg]; multiplied by m_batch here. Constant C appears both as multiplier and in exponents in the paper."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "cowan2018normal",
+   "cited_title": null,
+   "cited_first_author": null,
+   "cited_year": null,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB for normal bandits with unknown variance (index mu_hat + sigma_hat*sqrt(t^{2/(n-2)}-1))",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "K-armed Gaussian bandits with unknown means and variances, no surrogate rewards; T >= 3K",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(2*Delta_i*log(T)/log(1 + Delta_i**2/sigma_i**2)) + log(T)**(3/4)*log(log(T))",
+    "expression_latex": "\\sum_{k\\neq k^\\star}\\frac{2\\Delta_k\\ln T}{\\ln\\lb 1+\\frac{\\Delta_k^2}{\\sigma_{k}^2}\\rb} + O((\\ln T)^{3/4}\\ln\\ln T)",
+    "regime": "T >= 3K"
+   },
+   "where": "Section 2.1, eq. (UCB regret)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:59:04",
+  "source_chars": 173450,
+  "input_tokens": 126933,
+  "output_tokens": 10356,
+  "cost_usd_equiv": 1.0050028,
+  "status": "extracted"
+ }
+}

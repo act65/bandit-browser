@@ -1,0 +1,182 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "LNUCB-TA: Linear-nonlinear Hybrid Bandit Learning with Temporal Attention",
+  "arxiv_id": "2503.00387",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Hamed Khosravi",
+   "Mohammad Reza Shafie",
+   "Ahmed Shoyeb Raihan",
+   "Srinjoy Das",
+   "Imtiaz Ahmed"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Hybrid contextual MAB problem (linear + k-NN reward in joint context/reward-history space)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "T",
+    "sigma",
+    "S"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "bounded_L",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "A finite arms with per-arm linear parameter plus a k-NN term computed from each arm's own reward history",
+    "Noise bounded in absolute value by sigma",
+    "Expected reward depends on past observed rewards (history-dependent), so not strictly i.i.d. rewards"
+   ],
+   "definition_quote": "We consider a hybrid contextual MAB problem within a metric space (X x Z, rho) ... The reward corresponding to each arm a for a given context x_t at time t is denoted as a random variable Y_t^a, constrained within the interval [-1,1] ... o^a_t(x_t^a, z_t^a) = E[Y_t^a | X_t = x_t, Z_t = z_t] = l^a_t(x_t^a) + f_{k,t}^a(x_t^a, z_t^a) ... The feature vector X_t is drawn i.i.d. from a fixed marginal distribution D over X."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "LNUCB-TA",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma",
+    "S"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "b*sigma*sqrt(T*(d*log(1 + T*L_feat**2*S**2/(d*sigma**2) + U_sum/(d*sigma**2)) + log(4/delta)))",
+    "expression_latex": "R_T \\leq b \\sigma \\sqrt{T \\left( d \\log \\left( 1 + \\frac{TB^2 W^2}{d \\sigma^2} + \\frac{\\sum_{a=1}^A T^a (u_{t,k}^a)^2}{d \\sigma^2} \\right) + \\log \\left( \\frac{4}{\\delta} \\right) \\right)}",
+    "regime": null
+   },
+   "symbols": {
+    "b": "absolute constant",
+    "U_sum": "sum_a T^a (u_{t,k}^a)^2, sum of squared k-NN uncertainties weighted by pull counts",
+    "sigma": "bound on |xi_t^a| (paper also calls sigma^2 total variance of linear and k-NN components)"
+   },
+   "conditions": [
+    "|xi_t^a| <= sigma",
+    "||(mu^a)^*|| <= W (S)",
+    "||x|| <= B (L_feat) for all x in D",
+    "rewards in [-1,1]"
+   ],
+   "tuning": [
+    "lambda = sigma^2/W^2",
+    "beta_t^a = sigma^2(2 + 4d log(1 + T B^2 W^2/d + sum_a T^a (u_{t,k}^a)^2/d) + 8 log(4/delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem 1",
+    "quote": "Suppose the noise |\\xi_t^a| is bounded by \\sigma ..., the true parameter vector (\\mu^a)^* has a norm bounded by W ..., and the context vectors x are bounded such that \\|x\\| \\leq B ..., and let \\lambda = \\sigma^2/W^2. ... with probability greater than 1-\\delta, for all t \\geq 0, R_T \\leq b \\sigma \\sqrt{T ( d \\log ( 1 + \\frac{TB^2 W^2}{d \\sigma^2} + \\frac{\\sum_{a=1}^A T^a (u_{t,k}^a)^2}{d \\sigma^2} ) + \\log ( \\frac{4}{\\delta} ) )}"
+   },
+   "confidence": "low",
+   "notes": "Regret defined via realized rewards Y against per-round oracle. Paper's B renamed L_feat, W renamed S. Proof is non-rigorous; the bound depends on data-dependent k-NN uncertainties. Setting mapping is approximate."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(d*T*log(T))",
+    "expression_latex": "R_T = \\mathcal{O}(\\sqrt{dT \\log T})",
+    "regime": "large T"
+   },
+   "symbols": {},
+   "conditions": [
+    "|xi_t^a| <= sigma",
+    "||(mu^a)^*|| <= W",
+    "||x|| <= B",
+    "rewards in [-1,1]"
+   ],
+   "tuning": [
+    "lambda = sigma^2/W^2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem 1",
+    "quote": "Given these conditions, the simplified regret bound for LNUCB-TA is R_T = \\mathcal{O}(\\sqrt{dT \\log T}), which, by absorbing logarithmic factors into \\tilde{\\mathcal{O}}, we can state: R_T = \\tilde{\\mathcal{O}}(\\sqrt{dT})."
+   },
+   "confidence": "low",
+   "notes": "Simplified form of r1; also stated as O~(sqrt(dT)). Suppresses sigma, B, W and k-NN uncertainty terms."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:15:14",
+  "source_chars": 155096,
+  "input_tokens": 104408,
+  "output_tokens": 3290,
+  "cost_usd_equiv": 0.6834828,
+  "status": "extracted"
+ }
+}

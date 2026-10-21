@@ -1,0 +1,263 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Sharper Guarantees for Misspecified Kernelized Bandit Optimization",
+  "arxiv_id": "2605.05967",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Davide Maran",
+   "Csaba Szepesvári"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Offline optimization (misspecified KRR, i.i.d. design)",
+   "objective": "simple_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Query points are not chosen by the learner: inputs sampled i.i.d. from a fixed distribution D (passive/offline data)",
+    "Misspecification: target f not in RKHS; sup-norm distance eps to some f_star in H",
+    "Regret measured against a finite competitor set X° subset of X",
+    "Stationary bounded kernel (Assumption 1), domain subset of [-1,1]^m"
+   ],
+   "definition_quote": "(Offline optimization) data $(\\bm x,\\bm y)$ are collected as independent pairs, with the inputs sampled from a common probability distribution $\\inpdist$ supported on $\\Xs$ and the labels being $R$-subgaussian conditionally on the input."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Online optimization (misspecified kernelized bandit)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "sigma",
+    "S",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "hypercube",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Misspecification: f not in RKHS, sup-norm distance eps to f_star with ||f_star||_H <= B; learner knows eps",
+    "Kernel satisfies polynomial eigendecay on subdomains (D2+) and bounded eigenfunctions on subdomains (D3)",
+    "Regret measured against a finite competitor set X°"
+   ],
+   "definition_quote": "(Online optimization) the agent sequentially queries points $\\rX_t$, receiving a label $y_t$ that is conditionally independent of the past and $R$-subgaussian given the input."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Plug-in KRR maximization",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": []
+  },
+  {
+   "id": "a2",
+   "name": "π-Misspec-GPUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma",
+    "S",
+    "d",
+    "epsilon_misspecification",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "(sigma*sqrt(log(2*N_comp/delta)/(T*tau)) + H_norm)*sigma_post_max + Lambda_P*eps_mis",
+    "expression_latex": "\\left(R\\sqrt{\\frac{\\log(2|\\Xs^\\circ|/\\delta)}{n\\tau}}+\\|\\fwithin\\|_{\\Hs}\\right)\\max_{x\\in \\Xs^\\circ}\\sigma_{\\bm x,\\tau}(x) +\\Lambda(\\mathsf{P}_{\\tau})\\varepsilon",
+    "regime": null
+   },
+   "symbols": {
+    "N_comp": "size of the finite competitor set X°",
+    "tau": "normalized KRR regularization parameter",
+    "H_norm": "RKHS norm of f_star",
+    "sigma_post_max": "max over X° of the KRR posterior standard deviation sigma_{x,tau}(x)",
+    "Lambda_P": "Lebesgue constant (L_inf to L_inf norm) of the population KRR operator P_tau",
+    "eps_mis": "sup-norm misspecification ||f - f_star||_inf"
+   },
+   "conditions": [
+    "Assumption 1: stationary PSD kernel bounded by kappa >= 1",
+    "inputs i.i.d. from D",
+    "labels conditionally R-subgaussian"
+   ],
+   "tuning": [
+    "tau > 0 fixed",
+    "confidence delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:unif_to_regret",
+    "number": "Corollary 4",
+    "quote": "The following holds for the plug-in maximization algorithm $\\mathscr A$ that estimates $f$ on $\\Xs^\\circ$ with KRR. With probability at least $1-\\delta$, $$r_n^{\\mathscr A}\\lesssim \\left(R\\sqrt{\\frac{\\log(2|\\Xs^\\circ|/\\delta)}{n\\tau}}+\\|\\fwithin\\|_{\\Hs}\\right)\\max_{x\\in \\Xs^\\circ}\\sigma_{\\bm x,\\tau}(x) +\\Lambda(\\mathsf{P}_{\\tau})\\varepsilon.$$"
+   },
+   "confidence": "medium",
+   "notes": "Combined with Cor. 5 / Thm 15 Lebesgue constant bounds, Lambda_P <= sqrt(d_eff) generically, O(log(e+kappa/tau)) for 1D monotone spectra with log spectral Lebesgue growth, O_m(log^{2m-1}(e+kappa^m/tau)) for Fourier-diagonal product kernels; these Lebesgue bounds are not themselves regret statements and are not recorded separately."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**((2*d + alpha_dec)/(2*d + 2*alpha_dec)) + T*eps_mis",
+    "expression_latex": "\\widetilde \\Os\\left(n^\\frac{2m+\\alpha}{2m+2\\alpha}+n\\varepsilon\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_dec": "subdomain eigendecay exponent alpha in D2+ (mu_i <= C_3 rho^alpha i^{-s} on cubes of side rho)",
+    "eps_mis": "sup-norm misspecification ||f - f_star||_inf"
+   },
+   "conditions": [
+    "domain [-1,1]^d (paper's m is the dimension)",
+    "Assumption 1: stationary bounded kernel",
+    "kernel satisfies polynomial eigendecay on subdomains (D2+) and bounded eigenfunctions on subdomains (D3)",
+    "||f_star||_H <= B and ||f - f_star||_inf <= eps"
+   ],
+   "tuning": [
+    "lambda = 1",
+    "b = alpha",
+    "confidence delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regretbound",
+    "number": "Theorem (thm:regretbound)",
+    "quote": "Consider the online model of \\cref{def:online} on $[-1,1]^m$. Under \\cref{ass:valboundisoker}, let $\\fwithin\\in\\Hs$ satisfy $\\|\\fwithin\\|_\\Hs\\le B$ and $\\|f-\\fwithin\\|_\\infty\\le\\varepsilon$, and suppose the kernel satisfies $\\defpolysub$ and $\\defbounded$. Then running \\cref{alg:pigpucb} with parameters $\\lambda = 1$ and $b=\\alpha$ yields, with probability at least $1-\\delta$, a regret bound of order $$R_n^\\mathscr{A}\\le \\widetilde \\Os\\left(n^\\frac{2m+\\alpha}{2m+2\\alpha}+n\\varepsilon\\right).$$"
+   },
+   "confidence": "high",
+   "notes": "Paper notes this equals O_tilde(sqrt(gamma_n n) + n eps) since gamma_n = Theta_tilde(n^{m/(m+alpha)}). Regret is realized cumulative regret f(x*)-f(x_t) with probability 1-delta. Algorithm uses eps and B in its bonus."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "bogunovic2021misspecified",
+   "cited_title": "Misspecified Gaussian process bandit optimization",
+   "cited_first_author": "Ilija Bogunovic",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "EC-GP-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Misspecified kernelized bandit, cumulative regret, sup-norm misspecification eps",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "gamma_T*sqrt(T) + sqrt(gamma_T)*T*eps_mis",
+    "expression_latex": "\\widetilde \\Os(\\gamma_n\\sqrt{n}+\\varepsilon \\sqrt{\\gamma_n}n)",
+    "regime": null
+   },
+   "where": "Table 1 and Section 4"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T14:21:54",
+  "source_chars": 127097,
+  "input_tokens": 88200,
+  "output_tokens": 5017,
+  "cost_usd_equiv": 0.5883588,
+  "status": "extracted"
+ }
+}

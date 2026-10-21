@@ -1,0 +1,315 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Parallelizing Exploration-Exploitation Tradeoffs with Gaussian Process Bandit Optimization",
+  "arxiv_id": "1206.6402",
+  "arxiv_version": null,
+  "year": 2012,
+  "authors": [
+   "Thomas Desautels",
+   "Andreas Krause",
+   "Joel Burdick"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Parallel / delayed GP bandit optimization, f sampled from a known GP prior",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "sigma",
+    "prior"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [
+    "batched",
+    "delayed_feedback"
+   ],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Feedback available at round t only up to round fb[t] with t - fb[t] <= B for a known constant B (batch size / delay bound)",
+    "Decision set D either finite, or compact convex subset of [0,l]^d with kernel whose sample-path derivatives satisfy a sub-Gaussian tail bound",
+    "Learner knows a bound C on the maximum conditional mutual information within a batch"
+   ],
+   "definition_quote": "we assume there is some mapping fb : N → N0 such that fb[t] ≤ t − 1 ... In the following, we only assume that t − fb[t] ≤ B for some known constant B. ... One effective formalism is to model f as a sample from a Gaussian process (GP) prior."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Parallel / delayed GP bandit optimization, f with bounded RKHS norm",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "gamma_T"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "batched",
+    "delayed_feedback"
+   ],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Noise is a martingale difference sequence uniformly bounded by sigma_n",
+    "Learner knows RKHS norm bound M (||f||_k <= M)",
+    "Feedback delay/batch bound t - fb[t] <= B known",
+    "Learner knows a bound C on the maximum conditional mutual information within a batch"
+   ],
+   "definition_quote": "D is arbitrary; f has RKHS norm ||f||_k ≤ M. The noise εt form an arbitrary martingale difference sequence (meaning that E[εt | ε1 , . . . , εt−1 ] = 0 for all t ∈ N), uniformly bounded by σn."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "GP-BUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "prior",
+    "sigma",
+    "B (batch/delay bound)",
+    "C (mutual information bound)",
+    "delta"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "GP-BUCB with uncertainty-sampling initialization",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "explore_then_commit"
+   ],
+   "requires_knowledge_of": [
+    "prior",
+    "sigma",
+    "B (batch/delay bound)",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "8/log(1 + sigma_n**(-2))*sqrt(T*exp(2*C_mi)*alpha_T*gamma_T) + 2",
+    "expression_latex": "C_1\\sqrt{T \\exp(2C)\\alpha_T\\gamma_T} + 2, \\quad C_1 = 8/\\log(1+\\sigma_n^{-2})",
+    "regime": null
+   },
+   "symbols": {
+    "C_mi": "bound on the maximum conditional mutual information obtainable within a batch (paper's C)",
+    "alpha_T": "confidence parameter alpha_T, e.g. 2 log(|D| T^2 pi^2/(6 delta)) for finite D, or the compact-domain formula",
+    "sigma_n": "noise standard deviation"
+   },
+   "conditions": [
+    "Either (1) D finite, or (2) D ⊆ [0,l]^d compact convex with Pr(sup|∂f/∂x_j| > L) <= a exp(-(L/b)^2)",
+    "max_{|A|<=B-1} I(f; y_A | y_{1:fb[t]}) <= C for all t",
+    "holds simultaneously for all T >= 1 with probability >= 1 - delta"
+   ],
+   "tuning": [
+    "beta_t = exp(2C) alpha_{fb[t]}",
+    "alpha_t = 2 log(|D| t^2 pi^2/(6 delta)) (finite D) or 2 log(t^2 2 pi^2/(3 delta)) + 2d log(t^2 d b l sqrt(log(4da/delta))) (compact D)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "Theorem 1. Let δ ∈ (0, 1). Suppose one of the following assumptions holds: 1. D is finite, f is sampled from a known GP prior with known noise variance σn2 ... Then, the cumulative regret of GP-BUCB, using βt = exp(2C)αfb[t], is bounded by O∗(sqrt(T γT exp(2C)αT)) w.h.p. Precisely, Pr{RT ≤ C1 sqrt(T exp(2C)αT γT) + 2 ∀T ≥ 1} ≥ 1−δ where C1 = 8/log(1 + σn−2)."
+   },
+   "confidence": "medium",
+   "notes": "Covers assumptions 1 and 2 of Theorem 1 (GP prior). Regret is realized regret sum f(x*)-f(x_t) bounded w.p. 1-delta. Bound depends on gamma_T, worst-case in the sense of not gap-dependent. Expression parsed from pdftotext; the sqrt is inferred."
+  },
+  {
+   "id": "r2",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "8/log(1 + sigma_n**(-2))*sqrt(T*exp(2*C_mi)*alpha_T*gamma_T) + 2",
+    "expression_latex": "C_1\\sqrt{T \\exp(2C)\\alpha_T\\gamma_T} + 2, \\quad C_1 = 8/\\log(1+\\sigma_n^{-2})",
+    "regime": null
+   },
+   "symbols": {
+    "C_mi": "bound on the maximum conditional mutual information obtainable within a batch (paper's C)",
+    "alpha_T": "2 M^2 + 300 gamma_T ln^3(T/delta)",
+    "sigma_n": "uniform bound on the noise magnitude",
+    "M": "RKHS norm bound on f"
+   },
+   "conditions": [
+    "||f||_k <= M",
+    "noise is a martingale difference sequence uniformly bounded by sigma_n",
+    "max_{|A|<=B-1} I(f; y_A | y_{1:fb[t]}) <= C for all t",
+    "holds simultaneously for all T >= 1 with probability >= 1 - delta"
+   ],
+   "tuning": [
+    "beta_t = exp(2C) alpha_{fb[t]}",
+    "alpha_t = 2M^2 + 300 gamma_t ln^3(t/delta)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "3. D is arbitrary; f has RKHS norm ||f||k ≤ M. The noise εt form an arbitrary martingale difference sequence ... uniformly bounded by σn. Further define αt = 2M2 + 300γt ln3(t/δ). ... Pr{RT ≤ C1 sqrt(T exp(2C)αT γT) + 2 ∀T ≥ 1} ≥ 1−δ where C1 = 8/log(1 + σn−2)."
+   },
+   "confidence": "medium",
+   "notes": "Assumption 3 (RKHS) case of Theorem 1."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_prime*R_seq + 2*f_inf*T_init",
+    "expression_latex": "R_T \\le C' R_T^{seq} + 2\\|f\\|_\\infty T^{init}",
+    "regime": null
+   },
+   "symbols": {
+    "C_prime": "constant independent of B given in Table 1 (e.g. exp(2/e) for linear kernel, e for Matern, exp((2d/e)^d) for RBF)",
+    "R_seq": "regret bound of sequential GP-UCB from Srinivas et al. (2010) (Theorem 1 with B=1)",
+    "f_inf": "sup norm of f",
+    "T_init": "size of uncertainty-sampling initialization set, as in Table 1 as a function of B"
+   },
+   "conditions": [
+    "one of the conditions of Theorem 1 holds",
+    "kernel is linear, Matern or RBF with gamma_t bounds as in Table 1, and T_init as listed in Table 1"
+   ],
+   "tuning": [
+    "first T_init rounds: uncertainty sampling ignoring feedback"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 2",
+    "quote": "Theorem 2. Suppose one of the conditions of Theorem 1 is satisfied. Further suppose the kernel and T init are as listed in Table 1. Fix δ > 0. Let RT be the regret of GP-BUCB, which ignores feedback for the first T init rounds. Then there exists a constant C 0 independent of B such that for any T ≥ 0, it holds with probability at least 1 − δ that RT ≤ C 0 RTseq + 2||f||∞ T init , where C 0 takes the value shown in Table 1."
+   },
+   "confidence": "medium",
+   "notes": "Applies also to the RKHS setting (s2) via condition 3 of Theorem 1; recorded under s1. Table values garbled by pdftotext."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Srinivas2010",
+   "cited_title": "Gaussian process optimization in the bandit setting: No regret and experimental design",
+   "cited_first_author": "Srinivas",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GP-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Sequential GP bandit optimization (f from GP prior or bounded RKHS norm)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T*alpha_T*gamma_T)",
+    "expression_latex": "R_T = O^*(\\sqrt{T\\alpha_T\\gamma_T})",
+    "regime": null
+   },
+   "where": "Section 4"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T09:48:04",
+  "source_chars": 37561,
+  "input_tokens": 44642,
+  "output_tokens": 5423,
+  "cost_usd_equiv": 0.24801479999999998,
+  "status": "extracted"
+ }
+}

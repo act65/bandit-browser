@@ -1,0 +1,199 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "A Multi-Armed Bandit Approach for Online Expert Selection in Markov Decision Processes",
+  "arxiv_id": "1707.05714",
+  "arxiv_version": null,
+  "year": 2017,
+  "authors": [
+   "Eric Mazumdar",
+   "Roy Dong",
+   "Vicenç Rúbies Royo",
+   "Claire Tomlin",
+   "S. Shankar Sastry"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Multi-armed bandit approach to choosing experts in MDPs",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "markovian",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [
+    "expert_advice"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Arms are N expert stationary policies acting on a shared finite (partially observed) MDP; pulling an arm runs the expert for T_n MDP steps and observes the average reward",
+    "Markov chain induced by each expert is irreducible and aperiodic with mixing constants C_e, alpha_e",
+    "Arm 'means' are steady-state average rewards of the experts' stationary distributions; state is shared across arms (not restless/rested independent chains)",
+    "UCB algorithm requires knowledge of mixing constants K_e = C_e/(1-alpha_e) and block lengths T_n >= T_0"
+   ],
+   "definition_quote": "We define the best expert as $e^* =\\arg\\max_{e \\in \\Ec} \\bar R^e$ ... The cumulative regret, $r(n)$ after $n$ iterations of a multi-armed bandit algorithm is defined as: \\[r(n)=n\\bar R^* -  \\sum_{k = 0}^{n}\\frac{1}{T_k}\\sum_{t=t_k}^{t_{k+1}-1} r_t\\]"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Upper Confidence Bounds for MDPs (UCB with mixing-corrected confidence bounds)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "K_e (mixing constants C_e/(1-alpha_e))",
+    "T_0"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Any multi-armed bandit algorithm within the MAB approach to MDPs (Algorithm 1)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_expert",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(N_i*(Delta_i + C_i/(T_0*(1 - alpha_i)))) + C_star/(1 - alpha_star)*H_sum",
+    "expression_latex": "\\E[r(n)]\\le \\sum_{e \\ne e^*} \\E[ T_e(n) ] \\left[ \\Delta_e + \\frac{C_e}{T_0(1 -\\alpha_e)} \\right] + \\frac{C_{*}}{1-\\alpha_{*}}\\sum_{k = 0}^{n-1} \\frac{1}{T_k}",
+    "regime": null
+   },
+   "symbols": {
+    "N_i": "E[T_e(n)], expected number of iterations expert i is chosen up to iteration n",
+    "C_i": "mixing constant C_e of the Markov chain induced by expert i",
+    "alpha_i": "mixing rate alpha_e of expert i's chain",
+    "C_star": "mixing constant of the best expert",
+    "alpha_star": "mixing rate of the best expert",
+    "T_0": "lower bound on all block lengths T_n",
+    "H_sum": "sum_{k=0}^{n-1} 1/T_k over block lengths",
+    "Delta_i": "bar R^* - bar R^e, steady-state reward gap"
+   },
+   "conditions": [
+    "induced Markov chains of each expert are irreducible and aperiodic",
+    "T_n >= T_0 for all n",
+    "rewards in [0,1]"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "prop:rdi",
+    "number": "Proposition 2",
+    "quote": "If the induced Markov chains for each expert $e \\in \\Ec$ are irreducible and aperiodic, then the expected cumulative regret at time $n$ can be bounded with: \\E[r(n)]\\le \\sum_{e \\ne e^*} \\E[ T_e(n) ] \\left[ \\Delta_e + \\frac{C_e}{T_0(1 -\\alpha_e)} \\right] + \\frac{C_{*}}{1-\\alpha_{*}}\\sum_{k = 0}^{n-1} \\frac{1}{T_k}"
+   },
+   "confidence": "medium",
+   "notes": "Regret decomposition identity holding for any bandit algorithm; n (bandit iterations) not appearing explicitly. Regret is n*R̄* minus realized average block rewards; mapped to pseudo_regret but comparator is the steady-state reward rather than an i.i.d. mean."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_expert",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt((32*log(T)/(Delta_i - 2*K_i/T_n)**2 + 1 + pi**2/3)*(Delta_i + K_i/T_0)) + K_star*H_sum",
+    "expression_latex": "\\E[r(n)]\\le \\sum_{e\\ne e^*}{\\bigg[ \\bigg( \\frac{32 \\log{n}}{(\\Delta_e -\\frac{2K_e}{T_n})^2} +1+\\frac{\\pi^2}{3} \\bigg) \\bigg( \\Delta_e+\\frac{K_e}{T_0}}\\bigg) \\bigg]+K_*\\sum_{k = 0}^{n-1} \\frac{1}{T_k}",
+    "regime": null
+   },
+   "symbols": {
+    "K_i": "K_e = C_e/(1-alpha_e), mixing constant term of expert i",
+    "K_star": "K_e for the best expert",
+    "T_n": "block length (MDP steps) at bandit iteration n",
+    "T_0": "initial block length, T_n >= T_0",
+    "H_sum": "sum_{k=0}^{n-1} 1/T_k",
+    "Delta_i": "bar R^* - bar R^e, steady-state reward gap"
+   },
+   "conditions": [
+    "induced Markov chains of each expert are irreducible and aperiodic",
+    "Delta_e > 2 K_e / T_0 for all suboptimal experts e",
+    "T_n >= T_0 for all n",
+    "rewards in [0,1]"
+   ],
+   "tuning": [
+    "delta(n) = n^{-4}",
+    "confidence bound c_{k,n}^e = K_e/T_0 + sqrt(8 log(n)/k)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:ucbregret",
+    "number": "Proposition 4",
+    "quote": "For a set of experts $\\Ec$ and initial time horizon $T_0$ such that $\\bar{R^*}-\\bar{R}^e > \\frac{2K_e}{T_0}$ for all $e \\in \\Ec$, and for a choice of $\\delta(n)=n^{-4}$, the expected regret of the UCB algorithm after $n$ time steps of the algorithm, $\\E[r(n)]$, satisfies: ..."
+   },
+   "confidence": "medium",
+   "notes": "T here is the paper's n = number of bandit iterations (not MDP time steps). Paper subsequently (in text) chooses T_n = T_0 + c n giving H_sum <= (1/c) log((T_0+cn-c)/T_0) and O(log n) regret; not a separate formal statement. Quantity mapping as in r1."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-21T10:02:54",
+  "source_chars": 67952,
+  "input_tokens": 60054,
+  "output_tokens": 4562,
+  "cost_usd_equiv": 0.3540908,
+  "status": "extracted"
+ }
+}

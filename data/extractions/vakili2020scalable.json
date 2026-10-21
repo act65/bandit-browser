@@ -1,0 +1,247 @@
+{
+ "schema_version": "0.4",
+ "ontology_version": "bandits-0.3",
+ "paper": {
+  "title": "Scalable Thompson Sampling using Sparse Gaussian Process Models",
+  "arxiv_id": "2006.05356",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Sattar Vakili",
+   "Henry Moss",
+   "Artem Artemev",
+   "Vincent Dutordoir",
+   "Victor Picheny"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Batch sequential optimization of f in RKHS with sub-Gaussian noise (kernelized bandit)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "S",
+    "sigma",
+    "gamma_T"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "batched"
+   ],
+   "action_set": {
+    "shape": "arbitrary_compact",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Batch of B points queried per round; regret summed over T*B evaluations",
+    "Kernel k(x,x') <= 1; RKHS norm ||f||_Hk <= S",
+    "Discretization D_t of X with |f(x)-f(x^(t))| <= 1/t^2 and |D_t| <= C(d,B) t^{2d}"
+   ],
+   "definition_quote": "A sequential learning policy selects a batch of $B$ observation points $\\{x_{t,b}\\}_{b\\in [B]}$ at each time step $t=1,2,\\dots,T$ and receives the corresponding real-valued and noisy rewards $\\{y_{t,b}=f(x_{t,b})+\\epsilon_{t,b}\\}$ ... Given an RKHS $H_k$, the norm of the objective function is bounded: $||f||_{H_k}\\le \\Bc$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "S-GP-TS (scalable GP Thompson sampling with sparse variational GP and decoupled sampling)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "S",
+    "sigma",
+    "gamma_T"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "30*a_bar*beta_T*B_batch*sqrt(2*T*gamma_T/log(1 + 1/tau)) + (31*beta_T + alpha_T)*eps_approx*T*B_batch + 15*B_batch*S + 2*B_batch",
+    "expression_latex": "30\\bar{a}\\beta_TB\\sqrt{\\frac{2T\\gamma_T}{\\log(1+\\frac{1}{\\tau})}}+(31\\beta_T+\\alpha_T)\\epsilon TB + 15B\\Bc+2B",
+    "regime": null
+   },
+   "symbols": {
+    "B_batch": "batch size B",
+    "a_bar": "upper multiplicative approximation constant for posterior std (Assumption 3)",
+    "beta_T": "alpha_T(b_T+1/2), b_T = sqrt(2 log(N_T T^2))",
+    "alpha_T": "covariance scaling 2*u_T(1/T^2)",
+    "eps_approx": "additive approximation error bound on posterior std (Assumption 3)",
+    "tau": "GP noise/regularisation parameter"
+   },
+   "conditions": [
+    "Assumptions 3 and 4 on approximation quality of posterior mean/std",
+    "discretization satisfying Assumption 5",
+    "k(x,x') <= 1, ||f||_Hk <= S",
+    "i.i.d. R-sub-Gaussian noise"
+   ],
+   "tuning": [
+    "alpha_t = 2*u_t(1/t^2)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "The:RegretBoundsApproximate",
+    "number": "Theorem 1",
+    "quote": "Consider S-GP-TS with $\\alpha_t = 2\\u_{t}(1/(t^2))$. Under Assumptions ... the regret defined in~\\eqref{eq:regdef}, satisfies R(T,B;f) \\le 30\\bar{a}\\beta_TB\\sqrt{\\frac{2T\\gamma_T}{\\log(1+\\frac{1}{\\tau})}}+(31\\beta_T+\\alpha_T)\\epsilon TB + 15B\\Bc+2B"
+   },
+   "confidence": "medium",
+   "notes": "Holds for any TS with approximate GP satisfying Assumptions 3-4. Regret is E[sum f(x*)-f(x_tb)] for fixed f, i.e. pseudo-regret."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "a_low*a_bar*B_batch*sigma*sqrt(d*gamma_T*(gamma_TB + log(T))*T*log(T)) + a_low*eps_approx*T*B_batch*sigma*sqrt(d*(gamma_TB + log(T))*log(T))",
+    "expression_latex": "{O}\\left( \\underline{a}\\bar{a}BR\\sqrt{d\\gamma_T(\\gamma_{TB}+\\log(T)) T\\log(T)} + \\underline{a}\\epsilon TBR\\sqrt{d(\\gamma_{TB}+\\log(T))\\log(T)}  \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "B_batch": "batch size B",
+    "a_low": "lower multiplicative approximation constant (Assumption 3)",
+    "a_bar": "upper multiplicative approximation constant (Assumption 3)",
+    "eps_approx": "additive approximation error bound on posterior std",
+    "gamma_TB": "maximal information gain after T*B observations"
+   },
+   "conditions": [
+    "Assumptions 3 and 4 on approximation quality",
+    "discretization satisfying Assumption 5"
+   ],
+   "tuning": [
+    "alpha_t = 2*u_t(1/t^2)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "The:RegretBoundsApproximate",
+    "number": "Theorem 1",
+    "quote": "={O}\\left( \\underline{a}\\bar{a}BR\\sqrt{d\\gamma_T(\\gamma_{TB}+\\log(T)) T\\log(T)} + \\underline{a}\\epsilon TBR\\sqrt{d(\\gamma_{TB}+\\log(T))\\log(T)}  \\right)"
+   },
+   "confidence": "medium",
+   "notes": "Order form of Theorem 1."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "B_batch*sqrt(gamma_T*gamma_TB*T*log(T))",
+    "expression_latex": "O(B\\sqrt{\\gamma_T\\gamma_{TB}T\\log(T)})",
+    "regime": null
+   },
+   "symbols": {
+    "B_batch": "batch size B",
+    "gamma_TB": "maximal information gain after T*B observations"
+   },
+   "conditions": [
+    "Matern kernel (nu > d/2, nu sufficiently larger than d/2 for inducing points) or SE kernel",
+    "Mercer decomposition of kernel used; inducing points from eps_0-close k-DPP (rule with inducing points)"
+   ],
+   "tuning": [
+    "m_t and M as in Table 1 (e.g. Matern inducing features: m_t ~ T^{d/(2nu)}, M ~ T^{(2nu+d)d/(4nu^2)}; SE: m_t, M ~ log(T)^d)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "The:MatSE",
+    "number": "Theorem 2",
+    "quote": "Under Assumptions~\\ref{AssNoise} and \\ref{AssNorm}, with the algorithmic parameters, kernels and sampling rules specified in Table \\ref{Table:CC}, S-GP-TS offers $R(T,B;f) = O(B\\sqrt{\\gamma_T\\gamma_{TB}T\\log(T)})$."
+   },
+   "confidence": "medium",
+   "notes": "Horizon marked known since m_t, M are set in terms of T. With B=1 matches exact GP-TS."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Chowdhury2017bandit",
+   "cited_title": "On kernelized multi-armed bandits",
+   "cited_first_author": "Sayak Ray Chowdhury",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GP-TS",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Kernelized bandit, RKHS-bounded f, sub-Gaussian noise, sequential (B=1)",
+   "bound": {
+    "notation": "O",
+    "expression": "gamma_T*sqrt(T*log(T))",
+    "expression_latex": "R( T,1; f) = {O}\\left(\\gamma_T\\sqrt{T\\log(T)}\\right)",
+    "regime": null
+   },
+   "where": "Appendix B, proof of Theorem 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5[1m]"
+  ],
+  "effort": null,
+  "prompt_sha": "5fab7281a4a2",
+  "schema_version": "0.4",
+  "ontology_version": "bandits-0.4",
+  "variables_version": "0.3",
+  "algorithm_registry_size": 132,
+  "date": "2026-10-20T13:59:47",
+  "source_chars": 100859,
+  "input_tokens": 78837,
+  "output_tokens": 4672,
+  "cost_usd_equiv": 0.5065548,
+  "status": "extracted"
+ }
+}
