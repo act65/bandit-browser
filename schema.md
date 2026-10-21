@@ -3,7 +3,7 @@
 This file has three parts:
 
 1. **The prompt**: the system prompt given to the LLM extractor, verbatim (everything inside the `PROMPT` fence).
-2. **Controlled vocabulary**: the bandits ontology, maintained in [`ontology/bandits-0.4.yaml`](ontology/bandits-0.4.yaml), with variables in [`ontology/variables.yaml`](ontology/variables.yaml), and rendered into the prompt by `pipeline/extract.py`.
+2. **Controlled vocabulary**: the bandits ontology, maintained in [`ontology/bandits-0.5.yaml`](ontology/bandits-0.5.yaml), with variables in [`ontology/variables.yaml`](ontology/variables.yaml), and rendered into the prompt by `pipeline/extract.py`.
 3. **Design notes**: why the schema looks the way it does, and open questions.
 
 The core of the schema (`paper`, `results`, `bound`, provenance) is domain-agnostic ([desiderata.md](desiderata.md) D3). Only the `setting` dimensions and the variable vocabulary are bandit-specific.
@@ -66,8 +66,8 @@ Known algorithms, as `id: name (aliases)`. For each algorithm in the paper, set 
 ## Output schema (JSON)
 
 {
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.3",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
   "paper": {
     "title": str,
     "arxiv_id": str | null,
@@ -193,7 +193,7 @@ with setting s1 = {objective: cumulative_regret, feedback: bandit, environment: 
 
 ## 2. Controlled vocabulary
 
-The vocabulary lives in [`ontology/bandits-0.4.yaml`](ontology/bandits-0.4.yaml), variables in [`ontology/variables.yaml`](ontology/variables.yaml) and algorithms in [`data/algorithms.yaml`](data/algorithms.yaml). These are the single sources of truth. `pipeline/extract.py` renders it into the prompt in place of `{{ONTOLOGY}}`, and `pipeline/schema.py` turns it into the JSON Schema enums. Version history:
+The vocabulary lives in [`ontology/bandits-0.5.yaml`](ontology/bandits-0.5.yaml), variables in [`ontology/variables.yaml`](ontology/variables.yaml) and algorithms in [`data/algorithms.yaml`](data/algorithms.yaml). These are the single sources of truth. `pipeline/extract.py` renders it into the prompt in place of `{{ONTOLOGY}}`, and `pipeline/schema.py` turns it into the JSON Schema enums. Version history:
 
 - **v0.1** ([`ontology/bandits-0.1.yaml`](ontology/bandits-0.1.yaml)): dimensions objective, feedback, environment, action_space, context, noise, learner_knows and extras; per-dimension orders; K-armed → linear reduction.
 - **v0.2**: added the `function_class` (multi-select) and `domain` (improper ⊑ constrained, improper ⊑ unconstrained) dimensions, so bandit convex optimisation is expressible. Also added node `parameters` and a result-level `compute` field. New values: noise `conditionally_subgaussian` and `noise_free`, feedback `two_point`, environment `adversarial_unspecified`, objective `epsilon_optimal_point`, quantities `regret_unspecified` and `minimax_bayesian_regret`. `L` is split into `L_feat` / `L_lip`, and BCO variables are added. Driven by [`data/ground_truth/bco-ontology-notes.md`](data/ground_truth/bco-ontology-notes.md) and the OFUL test extraction.
@@ -204,6 +204,11 @@ The vocabulary lives in [`ontology/bandits-0.4.yaml`](ontology/bandits-0.4.yaml)
   - more `learner_knows` values (L, ε, N, α(G), c_μ, L*, r_K, prior);
   - noise `gaussian_unknown_variance` and feedback `decoupled`;
   - a `guidance` list rendered into the prompt, covering features that were expressible but left unmapped.
+- **v0.5**: applies [`ontology/review-v0.4.md`](ontology/review-v0.4.md) (after the 500-paper batch 1), minus the themes cut to limit scope (multi-agent, state-dependent dynamics, multi-objective, quantum; privacy, causal, offline data and risk functionals are not expanded):
+  - `learner_knows` is open over the variable registry (any problem parameter or instance quantity) plus a few named items;
+  - a `scope` section: settings matching `out_of_scope_when` are dropped by `resolve.py`, and the prompt tells the extractor what to mark `in_scope: false`;
+  - new values for objective (thresholding, general identification, mean estimation), feedback (multi-point, first-order, triggered semi-bandit, cascade, limited advice), environment (bounded-memory and smoothed adversaries), function class (convex, Hölder, unimodal) and action-set shapes; quantities policy / alpha-regret and competitive ratio;
+  - node parameters `noise_detail`, `combinatorial` (incl. `loss_scale`), `reward_model`, `constraints`, `preference`, `partial_monitoring`, `delay`, and feedback-graph `self_loops` (graph feedback ⊑ bandit needs self-loops).
 
 ## 3. Design notes and open questions
 

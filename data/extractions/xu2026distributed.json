@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Distributed Online Submodular Maximization under Communication Delays: A Simultaneous Decision-Making Approach",
   "arxiv_id": "2603.27803",
@@ -25,8 +25,8 @@
    "noise": "not_applicable",
    "learner_knows": [
     "T",
-    "D",
-    "K"
+    "K",
+    "D"
    ],
    "instance_assumptions": [],
    "extras": [
@@ -34,35 +34,67 @@
     "multi_agent_cooperative"
    ],
    "action_set": {
-    "shape": "finite",
+    "shape": "not_applicable",
     "time_varying": "fixed",
     "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "matroid",
+    "reward": "submodular",
+    "loss_scale": "unspecified"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "fixed"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Multi-agent: each agent i chooses one action from its own finite set V_i; joint action is the product",
-    "Objective f_t is a time-varying normalized, monotone, submodular and 2nd-order submodular set function",
-    "Guarantee is an approximation-ratio (1/(1+kappa_f)) regret against the optimal fixed joint action, with an extra decentralization cost (centralization of information, coin)",
-    "Communication network arbitrary (possibly directed/disconnected); agent i sees marginal-gain feedback with delay d_i equal to its neighborhood radius",
-    "Each agent knows its own delay d_i, its action set size |V_i| and T"
+    "Each of N agents picks one action from its own set V_i (partition-matroid joint action); objective f_t is normalized, non-decreasing, submodular and 2nd-order submodular",
+    "Each agent observes only marginal gain of its action given its multi-hop in-neighbours' actions, delayed by d_i (radius of its neighbourhood)",
+    "Communication network may be directed and disconnected; suboptimality depends on centralization of information (coin) and curvature kappa_f",
+    "Rewards normalised to [0,1] by the algorithm; range of f_t not otherwise stated"
    ],
-   "definition_quote": "At each time step $t\\in[T]$, given the multi-hop neighborhood $\\calN_i$, each agent $i\\in\\calN$ needs to select an action $a_{i,t}$ to jointly solve $\\max_{a_{i,t}\\in\\mathcal{V}_i} \\sum_{t=1}^T f_t(\\{a_{i,t}\\}_{i\\in \\calN})$ where $f_t$ is a normalized, non-decreasing submodular, and 2nd-order submodular set function, and each agent $i$ can access the value of $f_t(\\calA)$ only after it has selected $a_{i,t}$ at time $t$ and received $\\{a_{j,t}\\}_{j\\in \\calN_{i}}$ at time $t+d_i$"
+   "definition_quote": "At each time step $t\\in[T]$, given the multi-hop neighborhood $\\calN_i$, each agent $i\\in\\calN$ needs to select an action $a_{i,t}$ to jointly solve $\\max \\sum_{t=1}^T f_t(\\{a_{i,t}\\}_{i\\in \\calN})$ where $f_t$ is a normalized, non-decreasing submodular, and 2nd-order submodular set function, and each agent $i$ can access the value of $f_t(\\calA)$ only after it has selected $a_{i,t}$ at time $t$ and received $\\{a_{j,t}\\}_{j\\in \\calN_{i}}$ at time $t+d_i$"
   }
  ],
  "algorithms": [
@@ -76,8 +108,8 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "D",
-    "K"
+    "K",
+    "D"
    ]
   }
  ],
@@ -88,7 +120,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "other",
+   "quantity": "alpha_regret",
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
@@ -96,19 +128,18 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O_tilde",
-    "expression": "kappa_f/(1+kappa_f)*coin_sum + N*sqrt(V_plus_d*T)",
-    "expression_latex": "\\frac{1}{1+\\curv_f}\\sum_{t} f_t(\\solopt) - \\mathbb{E}[\\sum_t f_t(\\calA_t)] \\le \\frac{\\kappa_f}{1+\\curv_f} \\sum_{i\\in\\calN} \\mathbb{E}[\\sum_{t=1}^T \\ourcurv_{f_t,i}(\\calN_{i})] + \\Tilde{O}(|\\calN|\\sqrt{\\overline{|\\calV|+d}\\,T})",
+    "expression": "N*sqrt(V_plus_d*T)",
+    "expression_latex": "\\Tilde{O}\\mleft(|\\calN|\\sqrt{{\\overline{|\\calV|\\,+\\,d}}\\,{T}}\\mright)",
     "regime": null
    },
    "symbols": {
     "N": "number of agents |N|",
-    "V_plus_d": "max_i (|V_i| + d_i)",
-    "kappa_f": "max_t curvature of f_t",
-    "coin_sum": "sum over agents of E[sum_t coin_{f_t,i}(N_i)], centralization-of-information cost"
+    "V_plus_d": "max_i (|V_i| + d_i): action-set size plus communication delay",
+    "kappa_f": "max_t curvature of f_t"
    },
    "conditions": [
-    "f_t normalized, non-decreasing, submodular and 2nd-order submodular",
-    "marginal-gain rewards normalized to [0,1]"
+    "approximation factor alpha = 1/(1+kappa_f), with an additional subtracted term kappa_f/(1+kappa_f) * sum_i E[sum_t coin_{f_t,i}(N_i)] (centralization of information)",
+    "f_t normalized, non-decreasing, submodular and 2nd-order submodular"
    ],
    "tuning": [
     "eta_i = sqrt(log|V_i| / ((|V_i|+d_i) T))"
@@ -117,10 +148,10 @@
    "source": {
     "label": "th:main",
     "number": "Theorem 1",
-    "quote": "Over $t\\in [T]$, given the communication network $\\{\\calN_{i}\\}_{i\\in\\calN}$, \\alg instructs each agent $i\\in\\calN$ to select actions $\\{a_{i,t}\\}_{t\\in[T]}$ that guarantee $\\mathbb{E}[\\sum_{t=1}^T f_t(\\calA_t)] \\geq \\frac{1}{1+\\curv_f}\\sum_{t=1}^T f_t(\\solopt) - \\frac{\\kappa_f}{1+\\curv_f} \\sum_{i\\in\\calN} \\mathbb{E}[\\sum_{t=1}^T \\ourcurv_{f_t,i}(\\calN_{i})] - \\Tilde{O}(|\\calN|\\sqrt{{\\overline{|\\calV|\\,+\\,d}}\\,{T}})$"
+    "quote": "E[sum f_t(A_t)] >= 1/(1+kappa_f) sum f_t(A^OPT) - kappa_f/(1+kappa_f) sum_i E[sum_t coin_{f_t,i}(N_i)] - \\Tilde{O}(|N| sqrt(\\overline{|V|+d} T))"
    },
    "confidence": "medium",
-   "notes": "Rewritten as a 1/(1+kappa_f)-approximate regret against the best fixed joint action; the coin term is exact while the last term is O-tilde. Stated as a lower bound on utility in the paper."
+   "notes": "Recorded the additive regret term psi(T) of the approximation guarantee; the multiplicative factor and coin penalty are in conditions. Relies on Thune et al. 2019 Theorem 1 for each agent's delayed-bandit regret."
   },
   {
    "id": "r2",
@@ -128,7 +159,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "other",
+   "quantity": "alpha_regret",
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
@@ -137,8 +168,8 @@
    "bound": {
     "notation": "O_tilde",
     "expression": "N*sqrt(V_plus_d*T)",
-    "expression_latex": "\\frac{1}{1+\\curv_f}\\sum_t f_t(\\solopt) - \\mathbb{E}[\\sum_t f_t(\\calA_t)] \\le \\Tilde{O}(|\\calN|\\sqrt{\\overline{|\\calV|+d}\\,T})",
-    "regime": "fully centralized network, N_i = N \\ {i}"
+    "expression_latex": "\\Tilde{O}\\mleft(|\\calN|\\sqrt{\\overline{|\\calV|\\,+\\,d}\\,{T}}\\mright)",
+    "regime": "fully centralized network N_i = N \\ {i}"
    },
    "symbols": {
     "N": "number of agents |N|",
@@ -146,23 +177,64 @@
     "kappa_f": "max_t curvature of f_t"
    },
    "conditions": [
-    "f_t normalized, non-decreasing, submodular and 2nd-order submodular",
-    "fully centralized network"
+    "fully centralized network",
+    "alpha = 1/(1+kappa_f)",
+    "f_t normalized, non-decreasing, submodular and 2nd-order submodular"
    ],
    "tuning": [
     "eta_i = sqrt(log|V_i| / ((|V_i|+d_i) T))"
    ],
    "is_new": true,
    "source": {
-    "label": "eq:thm-1",
-    "number": "Theorem 1 (eq. thm-1)",
-    "quote": "In particular, when the network is fully centralized, \\ie $\\calN_{i}\\equiv\\calN\\setminus\\{i\\}$, $\\mathbb{E}[\\sum_{t=1}^T f_t(\\calA_t)] \\geq \\frac{1}{1+\\curv_f}\\sum_{t=1}^T f_t(\\solopt) - \\Tilde{O}(|\\calN|\\sqrt{\\overline{|\\calV|\\,+\\,d}\\,{T}})$."
+    "label": "th:main",
+    "number": "Theorem 1",
+    "quote": "In particular, when the network is fully centralized, E[sum f_t(A_t)] >= 1/(1+kappa_f) sum f_t(A^OPT) - \\Tilde{O}(|N| sqrt(\\overline{|V|+d} T))"
    },
    "confidence": "medium",
-   "notes": "1/(1+kappa_f)-approximate regret; special case stated after Theorem 1."
+   "notes": "Special case (eq. thm-1) stated after Theorem 1."
   },
   {
    "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "alpha_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "N*sqrt(V_plus_d*T)",
+    "expression_latex": "\\Tilde{O}\\mleft(|\\calN|\\sqrt{\\overline{|\\calV|\\,+\\,d}\\,{T}}\\mright)",
+    "regime": "fully decentralized network N_i = empty"
+   },
+   "symbols": {
+    "N": "number of agents |N|",
+    "V_plus_d": "max_i (|V_i| + d_i)",
+    "kappa_f": "max_t curvature of f_t"
+   },
+   "conditions": [
+    "fully decentralized network",
+    "alpha = 1 - kappa_f",
+    "f_t normalized, non-decreasing, submodular and 2nd-order submodular"
+   ],
+   "tuning": [
+    "eta_i = sqrt(log|V_i| / ((|V_i|+d_i) T))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:main",
+    "number": "Theorem 1",
+    "quote": "When the network is fully decentralized, E[sum f_t(A_t)] >= (1-kappa_f) sum f_t(A^OPT) - \\Tilde{O}(|N| sqrt(\\overline{|V|+d} T))"
+   },
+   "confidence": "medium",
+   "notes": "Special case (eq. thm-2) stated after Theorem 1."
+  },
+  {
+   "id": "r4",
    "setting": "s1",
    "side": "upper",
    "algorithm": "a1",
@@ -175,49 +247,48 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O_tilde",
-    "expression": "N*sqrt(V_plus_d*T)",
-    "expression_latex": "(1-\\curv_f)\\sum_t f_t(\\solopt) - \\mathbb{E}[\\sum_t f_t(\\calA_t)] \\le \\Tilde{O}(|\\calN|\\sqrt{\\overline{|\\calV|+d}\\,T})",
-    "regime": "fully decentralized network, N_i = empty"
+    "expression": "(tau_f + tau_c*d_bar)*V_plus_d*N**2/epsilon",
+    "expression_latex": "\\Tilde{O}\\mleft[\\mleft(\\tau_f+\\tau_c\\,\\bar{d}\\mright)\\,\\overline{|\\calV|\\,+\\,d}\\,|\\calN|^2/\\epsilon\\mright]",
+    "regime": null
    },
    "symbols": {
-    "N": "number of agents |N|",
+    "N": "number of agents",
     "V_plus_d": "max_i (|V_i| + d_i)",
-    "kappa_f": "max_t curvature of f_t"
+    "tau_f": "time for one function evaluation",
+    "tau_c": "time to transmit one action over one hop",
+    "d_bar": "max_i d_i"
    },
    "conditions": [
-    "f_t normalized, non-decreasing, submodular and 2nd-order submodular",
-    "fully decentralized network"
+    "wall-clock convergence time to epsilon-convergence of the approximation guarantee"
    ],
-   "tuning": [
-    "eta_i = sqrt(log|V_i| / ((|V_i|+d_i) T))"
-   ],
+   "tuning": [],
    "is_new": true,
    "source": {
-    "label": "eq:thm-2",
-    "number": "Theorem 1 (eq. thm-2)",
-    "quote": "When the network is fully decentralized, \\ie $\\calN_{i}\\equiv\\emptyset$, $\\mathbb{E}[\\sum_{t=1}^T f_t(\\calA_t)] \\geq (1-\\curv_f)\\sum_{t=1}^T f_t(\\solopt) -\\Tilde{O}(|\\calN|\\sqrt{\\overline{|\\calV|\\,+\\,d}\\,{T}})$."
+    "label": "th:speed",
+    "number": "Theorem 2",
+    "quote": "\\alg achieves $\\epsilon$-convergence to near-optimal actions in $\\Tilde{O}\\mleft[\\mleft(\\tau_f+\\tau_c\\,\\bar{d}\\mright)\\,\\overline{|\\calV|\\,+\\,d}\\,|\\calN|^2/\\epsilon\\mright]$."
    },
-   "confidence": "medium",
-   "notes": "(1-kappa_f)-approximate regret; special case stated after Theorem 1."
+   "confidence": "low",
+   "notes": "Convergence time (wall-clock) rather than regret; epsilon is average per-round approximation error."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T13:54:32",
+  "date": "2026-10-21T15:02:48",
   "source_chars": 53784,
-  "input_tokens": 56697,
-  "output_tokens": 4613,
-  "cost_usd_equiv": 0.545828,
+  "input_tokens": 63284,
+  "output_tokens": 4959,
+  "cost_usd_equiv": 0.336422,
   "status": "extracted"
  }
 }

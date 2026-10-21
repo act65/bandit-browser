@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Online Least Squares Estimation with Self-Normalized Processes: An Application to Bandit Problems",
   "arxiv_id": "1102.2670",
@@ -23,9 +23,10 @@
    "function_class": [],
    "domain": "not_applicable",
    "context": "none",
-   "noise": "conditionally_subgaussian",
+   "noise": "subgaussian",
    "learner_knows": [
-    "K"
+    "K",
+    "sigma"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -35,18 +36,51 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
@@ -66,8 +100,10 @@
    "context": "none",
    "noise": "conditionally_subgaussian",
    "learner_knows": [
+    "S",
     "sigma",
-    "S"
+    "L_feat_sq",
+    "d"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -77,26 +113,57 @@
     "access": "explicit",
     "norm_bound": "bounded_L",
     "parameter_set": "l2_ball",
-    "loss_set": "bounded_mean_reward"
+    "loss_set": "bounded_mean_reward",
+    "parameter_structure": "unspecified"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
-   "unmapped": [
-    "Action norm bound is on the squared norm: ||x||^2 <= L"
-   ],
-   "definition_quote": "Assume the actions lie in $\\MD\\subset \\real^d$ and for any $x\\in \\MD$, $\\norm{x}^2\\leq L$. Assume the reward of taking action $x\\in \\MD$ has the form of $h_t(x)=\\theta_*\\ttop x + \\eta_t$ and assume $\\forall x\\in \\MD,\\, \\theta_*\\ttop x \\in [-1,1]$."
+   "unmapped": [],
+   "definition_quote": "Assume the actions lie in $\\MD\\subset \\real^d$ and for any $x\\in \\MD$, $\\norm{x}^2\\leq L$. Assume the reward of taking action $x\\in \\MD$ has the form of $h_t(x)=\\theta_*\\ttop x + \\eta_t$ and assume $\\forall x\\in \\MD,\\, \\theta_*\\ttop x \\in [-1,1]$. Define the regret by $R(T)=\\sum_{t=1}^T (\\theta_*\\ttop x_*  - \\theta_*\\ttop x_t)$"
   }
  ],
  "algorithms": [
@@ -110,7 +177,8 @@
    ],
    "requires_knowledge_of": [
     "K",
-    "delta"
+    "delta",
+    "sigma"
    ]
   },
   {
@@ -122,9 +190,9 @@
     "optimism"
    ],
    "requires_knowledge_of": [
-    "sigma",
-    "S",
     "delta",
+    "S",
+    "sigma",
     "lam"
    ]
   },
@@ -137,9 +205,9 @@
     "optimism"
    ],
    "requires_knowledge_of": [
-    "sigma",
-    "S",
     "delta",
+    "S",
+    "sigma",
     "lam"
    ]
   }
@@ -177,7 +245,7 @@
     "quote": "With probability at least $1-\\delta$, the total regret of the UCB($\\delta$) algorithm with the action selection rule~\\eqref{eq:actSelFinite} is constant and is bounded by $$R(T) \\leq \\sum_{i: \\Delta_i >0} \\left( 3 \\Delta_i + \\frac{16}{\\Delta_i} \\log \\frac{2K}{\\Delta_i \\delta} \\right).$$"
    },
    "confidence": "medium",
-   "notes": "Regret defined as sum Delta_i N_{i,T} (random pull counts), bound holds w.p. 1-delta. Noise scale R implicitly 1 since c_{i,s} has no R."
+   "notes": "Regret R(T)=sum Delta_i N_{i,T} (pseudo-regret form) bounded with probability 1-delta, uniformly in T. Noise level implicitly R=1."
   },
   {
    "id": "r2",
@@ -200,8 +268,7 @@
    "symbols": {},
    "conditions": [
     "||theta_*|| <= S",
-    "theta_*^T x in [-1,1] for all actions",
-    "||x||^2 <= L"
+    "theta_*^T x in [-1,1] for all actions"
    ],
    "tuning": [
     "regularization lambda > 0",
@@ -214,7 +281,7 @@
     "quote": "With probability at least $1-\\delta$, the regret of the Linear Bandit Algorithm shown in Table~\\ref{alg:LinBandit} satisfies $$\\forall T\\geq 1,\\quad R(T) \\leq 4 \\sqrt{T d \\log (\\lambda + T L /d)} \\left( \\lambda^{1/2} S + R \\sqrt{2\\log 1/\\delta + d \\log( 1+ T L/(\\lambda d) )} \\right).$$"
    },
    "confidence": "high",
-   "notes": "Paper's L bounds squared action norm -> L_feat_sq; R is sub-Gaussian parameter -> sigma. Action selection is NP-hard in general."
+   "notes": "Paper's L bounds the squared action norm (||x||^2 <= L) -> L_feat_sq; R is the sub-Gaussian parameter -> sigma. Action selection is NP-hard in general."
   },
   {
    "id": "r3",
@@ -237,12 +304,11 @@
    "symbols": {},
    "conditions": [
     "||theta_*|| <= S",
-    "theta_*^T x in [-1,1] for all actions",
-    "||x||^2 <= L"
+    "theta_*^T x in [-1,1] for all actions"
    ],
    "tuning": [
     "regularization lambda > 0",
-    "confidence delta given as input"
+    "policy recomputed only when det(V_t) > 2 det(V_tau)"
    ],
    "is_new": true,
    "source": {
@@ -251,7 +317,7 @@
     "quote": "With probability at least $1-\\delta$, $\\forall T\\geq 1$, the regret of the Linear Bandit Algorithm shown in Table~\\ref{alg:LinBanditFixAct} satisfies R(T) \\leq 4 \\sqrt{2T d \\log (\\lambda + T L /d)} \\left( \\lambda^{1/2} S + R \\sqrt{2\\log 1/\\delta + d \\log( 1+T L/(\\lambda d) )} \\right)+ 4\\sqrt{d\\log(T/d)}."
    },
    "confidence": "high",
-   "notes": "Policy switched only O(log t) times; the proof's final display omits the additive 4 sqrt(d log(T/d)) term."
+   "notes": "Proof's conclusion omits the additive 4 sqrt(d log(T/d)) term; recorded as stated in theorem. Argmax solved only O(log t) times."
   },
   {
    "id": "r4",
@@ -273,15 +339,13 @@
    },
    "symbols": {},
    "conditions": [
-    "Delta > 0 (gap as in Dani et al. 2008)",
+    "Delta > 0 for the gap of Dani et al. (2008)",
     "S >= 1",
     "||theta_*|| <= S",
-    "theta_*^T x in [-1,1] for all actions",
-    "||x||^2 <= L"
+    "theta_*^T x in [-1,1] for all actions"
    ],
    "tuning": [
-    "lambda >= 1",
-    "confidence delta given as input"
+    "lambda >= 1"
    ],
    "is_new": true,
    "source": {
@@ -290,28 +354,10 @@
     "quote": "Assume that $\\Delta>0$ for the gap $\\Delta$ defined in~\\citep{DaniStoch}. Further assume that $\\lambda \\geq 1$ and $S\\geq 1$. With probability at least $1-\\delta$, $\\forall T\\geq 1$, the regret of the algorithm shown in Table~\\ref{alg:LinBandit} satisfies $$R(T)=\\frac{16 R^2 \\lambda S^2}{\\Delta} \\left(\\log (L T) + ...\\right)^2.$$"
    },
    "confidence": "medium",
-   "notes": "Statement writes '=' but means upper bound. Paper mixes L and L^2 (T L^2 term) inconsistently; transcribed literally with L -> L_feat_sq."
+   "notes": "Theorem writes R(T)= but means <=. Paper mixes L and L^2 inside the expression; transcribed literally with L -> L_feat_sq. Remark 18 summarizes as O((log^2 T + d log T + d^2 log log T)/Delta)."
   }
  ],
  "cited_results": [
-  {
-   "cited_key": "LaiRo85",
-   "cited_title": "Asymptotically efficient adaptive allocation rules",
-   "cited_first_author": "T. L. Lai",
-   "cited_year": 1985,
-   "cited_arxiv_id": null,
-   "algorithm_name": null,
-   "algorithm_registry_id": null,
-   "side": "lower",
-   "setting_description": "Stochastic K-armed bandit, consistent algorithms, expected regret",
-   "bound": {
-    "notation": "liminf",
-    "expression": "sum_subopt(1/KL_i)*log(T)",
-    "expression_latex": "(\\sum_{i\\neq i_*}1/D(p_j,p_{i_*})-o(1))\\log T",
-    "regime": "asymptotic"
-   },
-   "where": "Introduction"
-  },
   {
    "cited_key": "AuerBandit",
    "cited_title": "Finite time analysis of the multiarmed bandit problem",
@@ -321,12 +367,30 @@
    "algorithm_name": "UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic K-armed bandit, expected regret",
+   "setting_description": "K-armed stochastic bandit, expected regret, Delta = gap between best and second best",
    "bound": {
     "notation": "O",
-    "expression": "K*log(T)/Delta_min",
+    "expression": "K*log(T)/Delta",
     "expression_latex": "O((K \\log T)/ \\Delta)",
     "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "LaiRo85",
+   "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_first_author": "T. L. Lai",
+   "cited_year": 1985,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "K-armed stochastic bandit, expected regret of consistent algorithms",
+   "bound": {
+    "notation": "liminf",
+    "expression": "sum_subopt(1/KL_i)*log(T)",
+    "expression_latex": "(\\sum_{i\\neq i_*}1/D(p_j,p_{i_*})-o(1))\\log T",
+    "regime": "asymptotic"
    },
    "where": "Introduction"
   },
@@ -370,19 +434,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "225d94076f15",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T09:10:57",
+  "date": "2026-10-21T14:58:55",
   "source_chars": 60186,
-  "input_tokens": 62939,
-  "output_tokens": 6522,
-  "cost_usd_equiv": 0.41676080000000004,
+  "input_tokens": 69576,
+  "output_tokens": 7355,
+  "cost_usd_equiv": 0.434678,
   "status": "extracted"
  }
 }

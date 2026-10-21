@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Relative Upper Confidence Bound for the K-Armed Dueling Bandit Problem",
   "arxiv_id": "1312.3393",
@@ -36,27 +36,59 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "general",
+    "winner": "condorcet",
+    "comparison": "pair"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Existence of a Condorcet winner a_1 with p_{1i} > 1/2 for all i > 1 (no total ordering or stochastic transitivity required)",
-    "Per-round regret r_t = (Delta_i + Delta_j)/2 for compared pair (a_i, a_j), with Delta_k = p_{1k} - 1/2"
+    "Regret per round r_t = (Delta_{1i}+Delta_{1j})/2 with Delta_k = p_{1k} - 1/2 (average advantage of the Condorcet winner over the two compared arms)"
    ],
-   "definition_quote": "we choose a pair $(a_i,a_j)$ and receive one of the two as the better choice, with the probability of $a_i$ being picked equal to a constant $p_{ij}$ ... we assume that there exists a \\emph{Condorcet winner}: an arm, which without loss of generality we label $a_1$, such that $p_{1i} > \\frac{1}{2}$ for all $i>1$. ... regret at that time is set to be $r_t := \\frac{\\Delta_{1i}+\\Delta_{1j}}{2}$, with $\\Delta_{k} := p_{1k}-\\frac{1}{2}$"
+   "definition_quote": "we choose a pair $(a_i,a_j)$ and receive one of the two as the better choice, with the probability of $a_i$ being picked equal to a constant $p_{ij}$ ... we assume that there exists a \\emph{Condorcet winner}: an arm, which without loss of generality we label $a_1$, such that $p_{1i} > \\frac{1}{2}$ for all $i>1$. ... regret at that time is set to be $r_t := \\frac{\\Delta_{1i}+\\Delta_{1j}}{2}$"
   }
  ],
  "algorithms": [
@@ -68,52 +100,12 @@
    "techniques": [
     "optimism"
    ],
-   "requires_knowledge_of": [
-    "K"
-   ]
+   "requires_knowledge_of": []
   }
  ],
  "results": [
   {
    "id": "r1",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "other",
-   "dependence": "instance_dependent",
-   "comparator": "not_applicable",
-   "probability": "high_probability",
-   "horizon": "anytime",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "exact",
-    "expression": "Max(((4*alpha_ucb - 1)*K**2/((2*alpha_ucb - 1)*delta))**(1/(2*alpha_ucb - 1)), 4*alpha_ucb/Min(Delta_i**2, Delta_j**2)*log(T))",
-    "expression_latex": "N_{ij}(t) \\leq \\max\\Big\\{C(\\delta),D_{ij}\\ln t\\Big\\}",
-    "regime": "simultaneously for all t, any pair (i,j) != (1,1)"
-   },
-   "symbols": {
-    "alpha_ucb": "RUCB exploration parameter alpha > 1/2",
-    "Delta_i": "preference gap of arm i: 1/2 - p_{i1} = p_{1i} - 1/2",
-    "Delta_j": "preference gap of arm j: 1/2 - p_{j1}"
-   },
-   "conditions": [
-    "a_1 is a Condorcet winner"
-   ],
-   "tuning": [
-    "alpha > 1/2"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "thm:HighProbBound",
-    "number": "Theorem 2",
-    "quote": "Then, if we apply Algorithm 1 to the $K$-armed dueling bandit problem defined by $\\vP$, given any pair $(i,j) \\neq (1,1)$, the number of comparisons between arms $a_i$ and $a_j$ performed up to time $t$, denoted by $N_{ij}(t)$, satisfies P(\\forall t, N_{ij}(t) \\leq \\max\\{C(\\delta),D_{ij}\\ln t\\}) > 1-\\delta."
-   },
-   "confidence": "medium",
-   "notes": "Bound on number of comparisons of pair (i,j); holds with probability > 1-delta for all t simultaneously. T denotes the current time t. For i = j != 1, D_ii = 0."
-  },
-  {
-   "id": "r2",
    "setting": "s1",
    "side": "upper",
    "algorithm": "a1",
@@ -126,19 +118,19 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "((4*alpha_ucb - 1)*K**2/((2*alpha_ucb - 1)*delta))**(1/(2*alpha_ucb - 1))*Delta_max + sum_pairs(4*alpha_ucb/Min(Delta_i**2, Delta_j**2)*(Delta_i + Delta_j)/2*log(T))",
-    "expression_latex": "R_t \\leq C(\\delta)\\Delta^*+\\sum_{i>j} D_{ij} \\Delta_{ij} \\ln t",
-    "regime": "simultaneously for all t"
+    "expression": "((4*alpha_rucb - 1)*K**2/((2*alpha_rucb - 1)*delta))**(1/(2*alpha_rucb - 1))*Delta_dstar + sum_pairs(4*alpha_rucb/Min(Delta_d_i**2, Delta_d_j**2)*(Delta_d_i + Delta_d_j)/2*log(T))",
+    "expression_latex": "C(\\delta)\\Delta^*+\\sum_{i>j} D_{ij} \\Delta_{ij} \\ln t",
+    "regime": null
    },
    "symbols": {
-    "alpha_ucb": "RUCB exploration parameter alpha > 1/2",
-    "sum_pairs": "sum over pairs of arms i > j",
-    "Delta_i": "preference gap 1/2 - p_{i1}",
-    "Delta_j": "preference gap 1/2 - p_{j1}",
-    "Delta_max": "Delta^* = max_i Delta_i (preference gaps)"
+    "alpha_rucb": "RUCB exploration parameter alpha > 1/2",
+    "Delta_d_i": "dueling gap of arm i: 1/2 - p_{i1} = p_{1i} - 1/2",
+    "Delta_d_j": "dueling gap of arm j",
+    "Delta_dstar": "max_i Delta_d_i",
+    "sum_pairs": "sum over pairs i > j of arms (D_ii = 0)"
    },
    "conditions": [
-    "a_1 is a Condorcet winner"
+    "a Condorcet winner exists"
    ],
    "tuning": [
     "alpha > 1/2"
@@ -150,7 +142,45 @@
     "quote": "Moreover, we have the following high probability bound for the regret accrued by the algorithm: P(\\forall t, R_t \\leq C(\\delta)\\Delta^*+\\sum_{i>j} D_{ij} \\Delta_{ij} \\ln t) > 1-\\delta, where $\\Delta^* := \\max_i \\Delta_i$ and $\\Delta_{ij} := \\frac{\\Delta_i+\\Delta_j}{2}$"
    },
    "confidence": "high",
-   "notes": "D_ij = 4 alpha / min(Delta_i^2, Delta_j^2), C(delta) = ((4alpha-1)K^2/((2alpha-1)delta))^{1/(2alpha-1)}. T is current time t; algorithm is horizonless. Gaps are dueling preference gaps."
+   "notes": "Holds simultaneously for all t with prob > 1-delta; t written as T. delta is an analysis parameter, not an input to RUCB. Theorem also bounds pair counts N_ij(t) <= max{C(delta), D_ij ln t} (recorded separately)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "Max(((4*alpha_rucb - 1)*K**2/((2*alpha_rucb - 1)*delta))**(1/(2*alpha_rucb - 1)), 4*alpha_rucb/Min(Delta_d_i**2, Delta_d_j**2)*log(T))",
+    "expression_latex": "N_{ij}(t) \\leq \\max\\Big\\{C(\\delta),D_{ij}\\ln t\\Big\\}",
+    "regime": "pair (i,j) != (1,1)"
+   },
+   "symbols": {
+    "alpha_rucb": "RUCB exploration parameter alpha > 1/2",
+    "Delta_d_i": "dueling gap of arm i: 1/2 - p_{i1}",
+    "Delta_d_j": "dueling gap of arm j"
+   },
+   "conditions": [
+    "a Condorcet winner exists"
+   ],
+   "tuning": [
+    "alpha > 1/2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:HighProbBound",
+    "number": "Theorem 2",
+    "quote": "given any pair $(i,j) \\neq (1,1)$, the number of comparisons between arms $a_i$ and $a_j$ performed up to time $t$, denoted by $N_{ij}(t)$, satisfies P(\\forall t, N_{ij}(t) \\leq \\max\\{C(\\delta),D_{ij}\\ln t\\}) > 1-\\delta."
+   },
+   "confidence": "medium",
+   "notes": "Bound on the number of comparisons of a pair; for i=j!=1, D_ii=0 so the bound is C(delta)."
   },
   {
    "id": "r3",
@@ -166,19 +196,19 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "Delta_max*((4*alpha_ucb - 1)*K**2/(2*alpha_ucb - 1))**(1/(2*alpha_ucb - 1))*(2*alpha_ucb - 1)/(2*alpha_ucb - 2) + sum_pairs(2*alpha_ucb*(Delta_i + Delta_j)/Min(Delta_i**2, Delta_j**2)*log(T))",
-    "expression_latex": "\\mathbb{E}[R_t] \\leq \\Delta^*\\left(\\frac{(4\\alpha-1)K^2}{2\\alpha-1}\\right)^{\\frac{1}{2\\alpha-1}} \\frac{2\\alpha-1}{2\\alpha-2} +\\sum_{i>j}2\\alpha\\frac{\\Delta_i+\\Delta_j}{\\min\\{\\Delta_i^2,\\Delta_j^2\\}}\\ln t",
+    "expression": "Delta_dstar*((4*alpha_rucb - 1)*K**2/(2*alpha_rucb - 1))**(1/(2*alpha_rucb - 1))*(2*alpha_rucb - 1)/(2*alpha_rucb - 2) + sum_pairs(2*alpha_rucb*(Delta_d_i + Delta_d_j)/Min(Delta_d_i**2, Delta_d_j**2)*log(T))",
+    "expression_latex": "\\Delta^*\\left(\\frac{(4\\alpha-1)K^2}{2\\alpha-1}\\right)^{\\frac{1}{2\\alpha-1}} \\frac{2\\alpha-1}{2\\alpha-2} +\\sum_{i>j}2\\alpha\\frac{\\Delta_i+\\Delta_j}{\\min\\{\\Delta_i^2,\\Delta_j^2\\}}\\ln t",
     "regime": null
    },
    "symbols": {
-    "alpha_ucb": "RUCB exploration parameter alpha > 1",
-    "sum_pairs": "sum over pairs of arms i > j",
-    "Delta_i": "preference gap 1/2 - p_{i1}",
-    "Delta_j": "preference gap 1/2 - p_{j1}",
-    "Delta_max": "Delta^* = max_i Delta_i (preference gaps)"
+    "alpha_rucb": "RUCB exploration parameter alpha > 1",
+    "Delta_d_i": "dueling gap of arm i: 1/2 - p_{i1}",
+    "Delta_d_j": "dueling gap of arm j",
+    "Delta_dstar": "max_i Delta_d_i",
+    "sum_pairs": "sum over pairs i > j of arms"
    },
    "conditions": [
-    "a_1 is a Condorcet winner"
+    "a Condorcet winner exists"
    ],
    "tuning": [
     "alpha > 1"
@@ -190,7 +220,7 @@
     "quote": "Given $\\alpha > 1$, the expected regret accumulated by RUCB after $t$ iterations is bounded by \\mathbb{E}[R_t] \\leq \\Delta^*\\left(\\frac{(4\\alpha-1)K^2}{2\\alpha-1}\\right)^{\\frac{1}{2\\alpha-1}} \\frac{2\\alpha-1}{2\\alpha-2} +\\sum_{i>j}2\\alpha\\frac{\\Delta_i+\\Delta_j}{\\min\\{\\Delta_i^2,\\Delta_j^2\\}}\\ln t."
    },
    "confidence": "high",
-   "notes": "Regret defined through preference gaps of compared arms (deterministic given choices), so expectation is pseudo-regret. T denotes iteration count t; horizonless."
+   "notes": "Regret defined through preference probabilities (gaps), so pseudo-regret. Holds for every t (anytime)."
   }
  ],
  "cited_results": [
@@ -203,11 +233,11 @@
    "algorithm_name": "Interleaved Filter (IF)",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "K-armed dueling bandits under total ordering and strong stochastic transitivity, known horizon T, expected regret",
+   "setting_description": "K-armed dueling bandit, finite horizon T known, total ordering + strong stochastic transitivity; expected regret",
    "bound": {
     "notation": "O",
     "expression": "K*log(T)/Delta_min",
-    "expression_latex": "\\mathbb{E}[R^{IF_T}_T] \\leq C \\frac{K \\log T}{\\min_{j=2}^K \\Delta_j}",
+    "expression_latex": "C \\frac{K \\log T}{\\min_{j=2}^K \\Delta_j}",
     "regime": "large T"
    },
    "where": "Section 3 (Related Work)"
@@ -221,14 +251,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "K-armed dueling bandits (restrictive class), lower bound matched by IF (Theorem 4 of cited paper)",
+   "setting_description": "K-armed dueling bandit (restrictive class), lower bound matching IF bound",
    "bound": {
     "notation": "Omega",
     "expression": "K*log(T)/Delta_min",
-    "expression_latex": "C \\frac{K \\log T}{\\min_{j=2}^K \\Delta_j}",
+    "expression_latex": "\\frac{K \\log T}{\\min_j \\Delta_j}",
     "regime": null
    },
-   "where": "Section 3 (Related Work)"
+   "where": "Section 3 (Related Work), citing Theorem 4 of yue12"
   },
   {
    "cited_key": "YueJoachims:2011",
@@ -239,29 +269,11 @@
    "algorithm_name": "Beat the Mean (BTM)",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "K-armed dueling bandits under total ordering and relaxed stochastic transitivity with parameter gamma, known horizon T, high-probability regret",
+   "setting_description": "K-armed dueling bandit, total ordering + relaxed stochastic transitivity with parameter gamma; high-probability regret, known horizon",
    "bound": {
     "notation": "O",
     "expression": "gamma**7*K*log(T)/Delta_min",
-    "expression_latex": "R^{BTM_T}_T \\leq C' \\frac{\\gamma^7 K \\log T}{\\min_{j=2}^K \\Delta_j}",
-    "regime": "large T, with high probability"
-   },
-   "where": "Section 3 (Related Work)"
-  },
-  {
-   "cited_key": "Urvoy:2013",
-   "cited_title": "Generic exploration and k-armed voting bandits",
-   "cited_first_author": "Urvoy",
-   "cited_year": 2013,
-   "cited_arxiv_id": null,
-   "algorithm_name": "Condorcet SAVAGE",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "K-armed dueling bandits with Condorcet winner, known horizon T; number of iterations before termination with probability 1-delta (gaps sorted increasingly)",
-   "bound": {
-    "notation": "O",
-    "expression": "Sum(j*log(K*T/delta)/Delta_jp1**2, (j, 1, K - 1))",
-    "expression_latex": "\\widehat{T}_{CSAVAGE_T} \\leq C'' \\sum_{j=1}^{K-1} \\frac{j \\cdot \\log(\\frac{KT}{\\delta})}{\\Delta_{j+1}^2}",
+    "expression_latex": "C^{'} \\frac{\\gamma^7 K \\log T}{\\min_{j=2}^K \\Delta_j}",
     "regime": "large T"
    },
    "where": "Section 3 (Related Work)"
@@ -275,11 +287,29 @@
    "algorithm_name": "Condorcet SAVAGE",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "K-armed dueling bandits with Condorcet winner, known horizon T, expected regret (gaps sorted increasingly)",
+   "setting_description": "K-armed dueling bandit with Condorcet winner; number of iterations before termination, w.p. 1-delta, gaps sorted increasingly",
    "bound": {
     "notation": "O",
-    "expression": "Sum(j*log(K*T**2)/Delta_j**2, (j, 2, K)) + 1",
-    "expression_latex": "\\mathbb{E}[R^{CSAVAGE_T}_T] \\leq C'' \\sum_{j=2}^K \\frac{j \\cdot \\log(KT^2)}{\\Delta_{j}^2} + 1",
+    "expression": "sum_subopt(log(K*T/delta)/Delta_i**2)*K",
+    "expression_latex": "C^{''} \\sum_{j=1}^{K-1} \\frac{j \\cdot \\log\\left(\\frac{KT}{\\delta}\\right)}{\\Delta_{j+1}^2}",
+    "regime": "large T"
+   },
+   "where": "Section 3 (Related Work)"
+  },
+  {
+   "cited_key": "Urvoy:2013",
+   "cited_title": "Generic exploration and k-armed voting bandits",
+   "cited_first_author": "Urvoy",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Condorcet SAVAGE",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "K-armed dueling bandit with Condorcet winner; expected regret with known horizon T (factor j over sorted gaps, approximated by K)",
+   "bound": {
+    "notation": "O",
+    "expression": "K*sum_subopt(log(K*T**2)/Delta_i**2) + 1",
+    "expression_latex": "C^{''} \\sum_{j=2}^K \\frac{j \\cdot \\log\\left(KT^2\\right)}{\\Delta_{j}^2} + 1",
     "regime": "large T"
    },
    "where": "Section 3 (Related Work)"
@@ -288,19 +318,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:34:49",
+  "date": "2026-10-21T15:46:40",
   "source_chars": 85598,
-  "input_tokens": 71950,
-  "output_tokens": 6075,
-  "cost_usd_equiv": 0.4795188,
+  "input_tokens": 78537,
+  "output_tokens": 6051,
+  "cost_usd_equiv": 0.480286,
   "status": "extracted"
  }
 }

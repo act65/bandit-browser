@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Ranked bandits in metric spaces: learning optimally diverse rankings over large document collections",
   "arxiv_id": "1005.5197",
@@ -15,64 +15,98 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "k-slot ranked bandit problem in metric spaces (conditionally L-continuous user distribution)",
+   "name_in_paper": "Ranked bandits in metric spaces (k-slot MAB with conditionally L-continuous user distribution)",
    "objective": "cumulative_regret",
-   "feedback": "bandit",
+   "feedback": "cascade",
    "environment": "stochastic_iid",
-   "action_space": "lipschitz_metric",
-   "function_class": [
-    "lipschitz"
-   ],
-   "domain": "constrained",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
    "context": "none",
    "noise": "bernoulli",
    "learner_knows": [
-    "T"
+    "m"
    ],
    "instance_assumptions": [],
-   "extras": [],
+   "extras": [
+    "infinitely_many_arms"
+   ],
    "action_set": {
     "shape": "not_applicable",
-    "time_varying": "not_applicable",
+    "time_varying": "fixed",
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "ordered_list",
+    "reward": "click_model",
+    "loss_scale": "per_action"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Action is an ordered list of k documents (k slots); users scan top-down and click the first relevant document (cascade-type feedback)",
-    "Objective is fraction of satisfied users (non-abandonment); guarantees are relative to (1-1/e)*OPT or the greedy optimum",
-    "User distribution is conditionally L-continuous w.r.t. a known metric: mu(.|Z_S) is Lipschitz for every set S of skipped documents",
-    "Bounds depend on covering dimension d of the metric space with constant alpha"
+    "Documents lie in a known metric space (X,D) with covering dimension d; the user distribution is conditionally L-continuous: mu(.|Z_S) is Lipschitz for every set S of skipped documents",
+    "Reward per round is 1 if the user (binary relevance vector drawn i.i.d.) clicks any of the k shown documents (query non-abandonment)",
+    "Benchmark is (1-1/e) OPT, the greedy approximation of the optimal ranking"
    ],
-   "definition_quote": "Formally, we define the \\problem, an instance of which consists of a triple $(X,\\D,\\P)$, where $(X,\\D)$ is a metric space that is known to an algorithm, and $\\P$ is a latent user distribution which is conditionally L-continuous w.r.t. $(X,\\D)$."
+   "definition_quote": "Formally, we define the \\emph{\\problem}, an instance of which consists of a triple $(X,\\D,\\P)$, where $(X,\\D)$ is a metric space that is known to an algorithm, and $\\P$ is a latent user distribution which is conditionally L-continuous w.r.t. $(X,\\D)$."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "RankedGridEXP3",
+   "name": "RankedGridEXP3 (ranked version of GridEXP3)",
    "registry_id": null,
    "is_new": false,
    "techniques": [
     "exponential_weights",
-    "other"
+    "doubling_trick"
    ],
-   "requires_knowledge_of": []
+   "requires_knowledge_of": [
+    "m"
+   ]
   },
   {
    "id": "a2",
@@ -80,48 +114,23 @@
    "registry_id": null,
    "is_new": true,
    "techniques": [
-    "optimism",
-    "other"
+    "optimism"
    ],
    "requires_knowledge_of": [
+    "m",
     "T"
    ]
   },
   {
    "id": "a3",
-   "name": "anytime-RankedContextualZooming",
+   "name": "RankedZooming / CorrelatedZooming (light-weight ranked contextual)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
-    "optimism",
-    "doubling_trick",
-    "other"
-   ],
-   "requires_knowledge_of": []
-  },
-  {
-   "id": "a4",
-   "name": "RankedCorrelatedZooming (light-weight ranked contextual zooming)",
-   "registry_id": null,
-   "is_new": true,
-   "techniques": [
-    "optimism",
-    "other"
+    "optimism"
    ],
    "requires_knowledge_of": [
-    "T"
-   ]
-  },
-  {
-   "id": "a5",
-   "name": "RankedZooming",
-   "registry_id": null,
-   "is_new": false,
-   "techniques": [
-    "optimism",
-    "other"
-   ],
-   "requires_knowledge_of": [
+    "m",
     "T"
    ]
   }
@@ -133,26 +142,26 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "other",
+   "quantity": "alpha_regret",
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
-   "horizon": "anytime",
+   "horizon": "not_applicable",
    "compute": "not_stated",
    "bound": {
     "notation": "O_tilde",
-    "expression": "alpha_cov*k_slots*T**((d_cov+1)/(d_cov+2))",
-    "expression_latex": "\\frac{\\E[\\#clicks]}{T} \\geq (1-\\tfrac{1}{e})\\OPT - \\tilde{O}\\left( \\frac{\\alpha k}{T^{1/(d+2)}} \\right)",
+    "expression": "alpha_cov*m*T**((d+1)/(d+2))",
+    "expression_latex": "\\frac{\\E[\\#clicks]}{T} \\geq (1-\\tfrac{1}{e})\\,\\OPT - \\tilde{O}\\left( \\frac{\\alpha k}{T^{1/(d+2)}} \\right)",
     "regime": null
    },
    "symbols": {
-    "alpha_cov": "constant in the covering-dimension definition N_r(X) <= alpha r^{-d}",
-    "k_slots": "number of slots in the ranking",
-    "d_cov": "covering dimension of the metric space (X,D)"
+    "alpha_cov": "constant in covering-dimension definition N_r(X) <= alpha r^{-d}",
+    "d": "covering dimension of the document metric space (X,D)",
+    "m": "number of slots k in the ranking"
    },
    "conditions": [
-    "user distribution conditionally L-continuous w.r.t. the known metric",
-    "metric space has covering dimension d with constant alpha"
+    "metric space has covering dimension d with constant alpha",
+    "alpha_apx = 1 - 1/e: benchmark is (1-1/e)*OPT"
    ],
    "tuning": [],
    "is_new": true,
@@ -162,7 +171,7 @@
     "quote": "Consider the \\problem{} on a metric space with covering dimension $d$ (as defined in~\\eqref{eq:dim-defn}, with constant $\\alpha$). Then after $T$ rounds $\\rankedGridEXP$ achieves \\frac{\\E[\\mathtt{\\#clicks}]}{T} \\geq (1-\\tfrac{1}{e})\\,\\OPT - \\tilde{O}\\left( \\frac{\\alpha k}{T^{1/(d+2)}} \\right)."
    },
    "confidence": "medium",
-   "notes": "Bound on (1-1/e)-approximate regret: (1-1/e)*T*OPT - E[#clicks]; paper states a per-round bound, multiplied by T here. Comparator is the optimal ranking scaled by (1-1/e). Horizon type unclear (GridEXP3 phases are T-independent)."
+   "notes": "Paper's bound is on average per-round clicks; multiplied by T. Paper's k (slots) mapped to m, its alpha (covering constant) renamed alpha_cov. Follows directly from prior results (GridEXP3 regret + ranked bandit reduction). Horizon knowledge not specified."
   },
   {
    "id": "r2",
@@ -170,7 +179,7 @@
    "side": "upper",
    "algorithm": "a2",
    "algorithm_class": null,
-   "quantity": "other",
+   "quantity": "alpha_regret",
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
@@ -178,18 +187,18 @@
    "compute": "not_stated",
    "bound": {
     "notation": "O_tilde",
-    "expression": "alpha_cov*k_slots*T**(1 - 1/(k_slots*d_cov+2))",
-    "expression_latex": "\\frac{\\E[\\#clicks]}{T} \\geq (1-\\tfrac{1}{e})\\OPT - \\tilde{O}\\left( \\frac{\\alpha k}{T^{1/(kd+2)}} \\right)",
+    "expression": "alpha_cov*m*T**((m*d+1)/(m*d+2))",
+    "expression_latex": "\\frac{\\E[\\#clicks]}{T} \\geq (1-\\tfrac{1}{e})\\,\\OPT - \\tilde{O}\\left( \\frac{\\alpha k}{T^{1/(kd+2)}} \\right)",
     "regime": null
    },
    "symbols": {
-    "alpha_cov": "constant in the covering-dimension definition N_r(X) <= alpha r^{-d}",
-    "k_slots": "number of slots in the ranking",
-    "d_cov": "covering dimension of the metric space (X,D)"
+    "alpha_cov": "constant in covering-dimension definition N_r(X) <= alpha r^{-d}",
+    "d": "covering dimension of the document metric space (X,D)",
+    "m": "number of slots k in the ranking"
    },
    "conditions": [
-    "user distribution conditionally L-continuous w.r.t. the known metric",
-    "metric space has covering dimension d with constant alpha"
+    "metric space has covering dimension d with constant alpha",
+    "alpha_apx = 1 - 1/e: benchmark is (1-1/e)*OPT"
    ],
    "tuning": [],
    "is_new": true,
@@ -199,37 +208,7 @@
     "quote": "Consider the \\problem{} on a metric space with covering dimension $d$ (as defined in~\\eqref{eq:dim-defn}, with constant $\\alpha$). Then after $T$ rounds algorithm \\rankedContextualZooming{} achieves \\frac{\\E[\\mathtt{\\#clicks}]}{T} \\geq (1-\\tfrac{1}{e})\\,\\OPT - \\tilde{O}\\left( \\frac{\\alpha k}{T^{1/(kd+2)}} \\right)."
    },
    "confidence": "medium",
-   "notes": "(1-1/e)-approximate regret; per-round bound multiplied by T. Zooming confidence radius uses horizon T."
-  },
-  {
-   "id": "r3",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a3",
-   "algorithm_class": null,
-   "quantity": "other",
-   "dependence": "instance_dependent",
-   "comparator": "not_applicable",
-   "probability": "asymptotic",
-   "horizon": "anytime",
-   "compute": "not_stated",
-   "bound": {
-    "notation": "limsup",
-    "expression": "0",
-    "expression_latex": "\\text{performance} = \\text{greedy optimum} - f(t),\\ f(t)\\to 0",
-    "regime": "t -> infinity"
-   },
-   "symbols": {},
-   "conditions": [],
-   "tuning": [],
-   "is_new": true,
-   "source": {
-    "label": "thm:convergence",
-    "number": "Theorem 7.2",
-    "quote": "Fix an instance of the $k$-slot MAB problem. The performance of anytime-\\rankedContextualZooming{} up to any given time $t$ is equal to the greedy optimum minus $f(t)$ such that $f(t)\\to 0$."
-   },
-   "confidence": "low",
-   "notes": "Convergence result without rate: time-averaged performance gap to the greedy optimum vanishes. Stated for the metric-less k-slot ranked bandit setting. Encoded as limsup of per-round gap = 0."
+   "notes": "Per-round bound multiplied by T. Theorem 7.2 (convergence of anytime version to the greedy optimum, with no rate) is not recorded since it has no explicit bound."
   }
  ],
  "cited_results": [
@@ -242,10 +221,10 @@
    "algorithm_name": "RankedBandit",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "k-slot ranked bandits; E[#clicks] >= (1-1/e) T OPT - k R(T), R(T) regret bound of per-slot bandit algorithm",
+   "setting_description": "Ranked bandits with k slots; (1-1/e)-approximate regret in terms of per-slot regret R(T) of the base bandit algorithm",
    "bound": {
     "notation": "exact",
-    "expression": "k_slots*R_T",
+    "expression": "m*R_T",
     "expression_latex": "\\E[\\#clicks] \\geq (1-\\tfrac{1}{e})\\,T\\times \\OPT - k\\, R(T)",
     "regime": null
    },
@@ -260,10 +239,10 @@
    "algorithm_name": "GridEXP3",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Lipschitz bandits on metric space with covering dimension d, oblivious adversary",
+   "setting_description": "Lipschitz bandits, oblivious adversary, metric space with covering dimension d",
    "bound": {
     "notation": "O_tilde",
-    "expression": "alpha_cov*T**((d_cov+1)/(d_cov+2))",
+    "expression": "alpha_cov*T**((d+1)/(d+2))",
     "expression_latex": "R(T) = \\tilde{O}(\\alpha\\,T^{(d+1)/(d+2)})",
     "regime": null
    },
@@ -278,29 +257,11 @@
    "algorithm_name": "EXP3",
    "algorithm_registry_id": "exp3",
    "side": "upper",
-   "setting_description": "adversarial K-armed bandit, oblivious adversary",
+   "setting_description": "K-armed adversarial bandit, oblivious adversary",
    "bound": {
     "notation": "O_tilde",
     "expression": "sqrt(K*T)",
     "expression_latex": "R(T) = \\tilde{O}(\\sqrt{nT})",
-    "regime": null
-   },
-   "where": "Appendix A.1"
-  },
-  {
-   "cited_key": "bandits-ucb1",
-   "cited_title": "Finite-time analysis of the multiarmed bandit problem",
-   "cited_first_author": "Peter Auer",
-   "cited_year": 2002,
-   "cited_arxiv_id": null,
-   "algorithm_name": "UCB1",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "stochastic K-armed bandit",
-   "bound": {
-    "notation": "O",
-    "expression": "sum_subopt(log(T)/Delta_i)",
-    "expression_latex": "\\sum_x O(\\log T)/\\Delta(x)",
     "regime": null
    },
    "where": "Appendix A.1"
@@ -309,19 +270,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:11:00",
+  "date": "2026-10-21T15:20:08",
   "source_chars": 132611,
-  "input_tokens": 91603,
-  "output_tokens": 5441,
-  "cost_usd_equiv": 0.6240628,
+  "input_tokens": 98190,
+  "output_tokens": 4619,
+  "cost_usd_equiv": 0.60887,
   "status": "extracted"
  }
 }

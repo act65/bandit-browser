@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Adversarial Attacks on Adversarial Bandits",
   "arxiv_id": "2301.12595",
@@ -14,8 +14,8 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Reward (loss) poisoning attack on adversarial multi-armed bandits",
-   "objective": "cumulative_regret",
+   "name_in_paper": "Reward (loss) poisoning attack on no-regret adversarial bandit algorithms",
+   "objective": "other_pure_exploration",
    "feedback": "bandit",
    "environment": "adversarial_oblivious",
    "action_space": "finite_K",
@@ -23,7 +23,9 @@
    "domain": "not_applicable",
    "context": "none",
    "noise": "bounded_01",
-   "learner_knows": [],
+   "learner_knows": [
+    "T"
+   ],
    "instance_assumptions": [],
    "extras": [],
    "action_set": {
@@ -32,25 +34,58 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
-   "in_scope": true,
-   "out_of_scope_reason": null,
+   "in_scope": false,
+   "out_of_scope_reason": "Guarantees are for an attacker (loss-poisoning adversary) that forces a victim no-regret bandit learner to pull a target arm, not for the learner.",
    "unmapped": [
-    "The guarantees are for an ATTACKER, not the learner: the attacker perturbs observed losses (kept in [0,1]) to force a victim no-regret bandit algorithm to pull a target arm a^dagger T-o(T) times at o(T) cumulative attack cost C_T = sum |tilde l_t - l_t|; no vocabulary objective covers this",
-    "Victim is any bandit algorithm with regret O(T^alpha_r), alpha_r in [1/2,1); attacker knows alpha_r but not the losses or the victim algorithm"
+    "Attacker perturbs observed losses within [0,1]; objective is maximizing target-arm pulls N_T(a_dagger) with small cumulative attack cost C_T",
+    "Victim is any bandit algorithm with regret O(T^alpha), alpha in [1/2,1); attacker knows alpha but not the victim algorithm nor the clean losses"
    ],
    "definition_quote": "The focus of our paper is to design efficient attack algorithms that can achieve $\\E{}{N_T(a^\\dagger)}=T-o(T)$ and $\\E{}{C_T}=o(T)$ while being \\textbf{\\textit{agnostic}} to the concrete victim bandit algorithms."
   }
@@ -58,7 +93,7 @@
  "algorithms": [
   {
    "id": "a1",
-   "name": "Easy-scenario template attack (eq. easy_Ell)",
+   "name": "Template-based attack (easy scenario, eq. easy_Ell)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -68,14 +103,14 @@
   },
   {
    "id": "a2",
-   "name": "General template attack (eq. maximum_target_loss_Ell)",
+   "name": "Template-based attack (general scenario, eq. maximum_target_loss_Ell)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
     "other"
    ],
    "requires_knowledge_of": [
-    "regret rate alpha of the victim"
+    "alpha_reg"
    ]
   },
   {
@@ -102,22 +137,22 @@
    "dependence": "instance_dependent",
    "comparator": "not_applicable",
    "probability": "expectation",
-   "horizon": "anytime",
+   "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "M*T**alpha_r/rho",
-    "expression_latex": "\\E{}{N_T(a^\\dagger)}\\ge T-MT^\\alpha/\\rho",
+    "expression": "M*T**alpha_reg/rho",
+    "expression_latex": "\\E{}{C_T}\\le MT^\\alpha/\\rho",
     "regime": null
    },
    "symbols": {
-    "alpha_r": "regret rate exponent of victim algorithm, R_T = O(T^alpha_r)",
-    "M": "constant from victim's regret bound (depends on K)",
-    "rho": "margin: target loss <= 1-rho in every round"
+    "alpha_reg": "regret rate of victim algorithm, R_T = O(T^alpha)",
+    "rho": "target-arm loss is at most 1-rho in every round",
+    "M": "constant from victim regret bound"
    },
    "conditions": [
-    "Assumption 4.1: L_t(a^dagger) in [0,1-rho] for all t",
-    "victim has regret <= M T^alpha_r on the perturbed losses, alpha_r in [1/2,1)"
+    "L_t(a_dagger) in [0,1-rho] for all t",
+    "victim has regret <= M T^alpha"
    ],
    "tuning": [],
    "is_new": true,
@@ -127,7 +162,7 @@
     "quote": "Assume assumption~\\ref{assump:easier} holds, and the attacker applies~\\eqref{eq:easy_Ell} to perform attack. Then there exists a constant $M>0$ such that the expected number of target arm selections satisfies $\\E{}{N_T(a^\\dagger)}\\ge T-MT^\\alpha/\\rho$, and the expected cumulative attack cost satisfies $\\E{}{C_T}\\le MT^\\alpha/\\rho$."
    },
    "confidence": "medium",
-   "notes": "Recorded as upper bound on expected number of non-target pulls T - E[N_T(a^dagger)]."
+   "notes": "Bound on expected cumulative attack cost. Out-of-scope attacker guarantee."
   },
   {
    "id": "r2",
@@ -139,32 +174,32 @@
    "dependence": "instance_dependent",
    "comparator": "not_applicable",
    "probability": "expectation",
-   "horizon": "anytime",
+   "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "M*T**alpha_r/rho",
-    "expression_latex": "\\E{}{C_T}\\le MT^\\alpha/\\rho",
+    "expression": "M*T**alpha_reg/rho",
+    "expression_latex": "\\E{}{N_T(a^\\dagger)}\\ge T-MT^\\alpha/\\rho",
     "regime": null
    },
    "symbols": {
-    "alpha_r": "regret rate exponent of victim",
-    "M": "constant from victim's regret bound",
-    "rho": "target loss margin"
+    "alpha_reg": "regret rate of victim algorithm",
+    "rho": "target-arm loss margin",
+    "M": "constant from victim regret bound"
    },
    "conditions": [
-    "Assumption 4.1: L_t(a^dagger) in [0,1-rho] for all t",
-    "victim has regret <= M T^alpha_r"
+    "L_t(a_dagger) in [0,1-rho] for all t",
+    "victim has regret <= M T^alpha"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:non-maximum_target_loss",
     "number": "Theorem (thm:non-maximum_target_loss)",
-    "quote": "...and the expected cumulative attack cost satisfies $\\E{}{C_T}\\le MT^\\alpha/\\rho$."
+    "quote": "Then there exists a constant $M>0$ such that the expected number of target arm selections satisfies $\\E{}{N_T(a^\\dagger)}\\ge T-MT^\\alpha/\\rho$"
    },
    "confidence": "medium",
-   "notes": "Bound on expected cumulative attack cost."
+   "notes": "Recorded as upper bound on expected number of non-target pulls T - E[N_T(a_dagger)]."
   },
   {
    "id": "r3",
@@ -176,32 +211,32 @@
    "dependence": "worst_case",
    "comparator": "not_applicable",
    "probability": "expectation",
-   "horizon": "anytime",
+   "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "T**(1-alpha_r-eps_alg)/(alpha_r+eps_alg) + M*T**(1-eps_alg)",
+    "expression": "T**(1-alpha_reg-eps_alg)/(alpha_reg+eps_alg) + M*T**(1-eps_alg)",
     "expression_latex": "\\E{}{N_T(a^\\dagger)}\\ge T-\\frac{1}{\\alpha+\\epsilon}T^{1-\\alpha-\\epsilon}-MT^{1-\\epsilon}",
     "regime": null
    },
    "symbols": {
-    "alpha_r": "regret rate exponent of victim",
-    "M": "constant from victim's regret bound"
+    "alpha_reg": "regret rate of victim",
+    "M": "constant from victim regret bound"
    },
    "conditions": [
-    "victim has regret <= M T^alpha_r, alpha_r in [1/2,1)"
+    "victim has regret <= M T^alpha"
    ],
    "tuning": [
-    "eps_alg in [0, 1-alpha_r)"
+    "eps_alg in [0, 1-alpha)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:maximum_target_loss",
     "number": "Theorem (thm:maximum_target_loss)",
-    "quote": "Assume the attacker applies~\\eqref{eq:maximum_target_loss_Ell} to perform attack. Then there exists a constant $M>0$ such that the expected number of target arm selections satisfies \\E{}{N_T(a^\\dagger)}\\ge T-\\frac{1}{\\alpha+\\epsilon}T^{1-\\alpha-\\epsilon}-MT^{1-\\epsilon}, and the expected cumulative attack cost satisfies ..."
+    "quote": "Assume the attacker applies~\\eqref{eq:maximum_target_loss_Ell} to perform attack. Then there exists a constant $M>0$ such that the expected number of target arm selections satisfies \\E{}{N_T(a^\\dagger)}\\ge T-\\frac{1}{\\alpha+\\epsilon}T^{1-\\alpha-\\epsilon}-MT^{1-\\epsilon}"
    },
    "confidence": "medium",
-   "notes": "Bound on T - E[N_T(a^dagger)]."
+   "notes": "Upper bound on T - E[N_T(a_dagger)]."
   },
   {
    "id": "r4",
@@ -213,23 +248,23 @@
    "dependence": "worst_case",
    "comparator": "not_applicable",
    "probability": "expectation",
-   "horizon": "anytime",
+   "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "T**(1-alpha_r-eps_alg)/(alpha_r+eps_alg) + M*T**(1-eps_alg) + T**(alpha_r+eps_alg)/(alpha_r+eps_alg)",
+    "expression": "T**(1-alpha_reg-eps_alg)/(alpha_reg+eps_alg) + M*T**(1-eps_alg) + T**(alpha_reg+eps_alg)/(alpha_reg+eps_alg)",
     "expression_latex": "\\E{}{C_T}\\le \\frac{1}{\\alpha+\\epsilon}T^{1-\\alpha-\\epsilon}+MT^{1-\\epsilon}+\\frac{1}{\\alpha+\\epsilon} T^{\\alpha+\\epsilon}",
     "regime": null
    },
    "symbols": {
-    "alpha_r": "regret rate exponent of victim",
-    "M": "constant from victim's regret bound"
+    "alpha_reg": "regret rate of victim",
+    "M": "constant from victim regret bound"
    },
    "conditions": [
-    "victim has regret <= M T^alpha_r, alpha_r in [1/2,1)"
+    "victim has regret <= M T^alpha"
    ],
    "tuning": [
-    "eps_alg in [0, 1-alpha_r)"
+    "eps_alg in [0, 1-alpha)"
    ],
    "is_new": true,
    "source": {
@@ -238,7 +273,7 @@
     "quote": "and the expected cumulative attack cost satisfies \\E{}{C_T}\\le \\frac{1}{\\alpha+\\epsilon}T^{1-\\alpha-\\epsilon}+MT^{1-\\epsilon}+\\frac{1}{\\alpha+\\epsilon} T^{\\alpha+\\epsilon}."
    },
    "confidence": "medium",
-   "notes": "Expected cumulative attack cost."
+   "notes": "Attack cost bound."
   },
   {
    "id": "r5",
@@ -250,31 +285,29 @@
    "dependence": "worst_case",
    "comparator": "not_applicable",
    "probability": "expectation",
-   "horizon": "anytime",
+   "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "T**((1+alpha_r)/2)",
-    "expression_latex": "\\E{}{N_T(a^\\dagger)}= T-O(T^{\\frac{1+\\alpha}{2}})",
+    "expression": "T**((1+alpha_reg)/2)",
+    "expression_latex": "\\E{}{C_T}=O(T^{\\frac{1+\\alpha}{2}})",
     "regime": null
    },
    "symbols": {
-    "alpha_r": "regret rate exponent of victim"
+    "alpha_reg": "regret rate of victim"
    },
-   "conditions": [
-    "victim has regret O(T^alpha_r), alpha_r in [1/2,1)"
-   ],
+   "conditions": [],
    "tuning": [
-    "eps_alg = (1-alpha_r)/2"
+    "eps_alg = (1-alpha)/2"
    ],
    "is_new": true,
    "source": {
     "label": "col:minimum_cost",
     "number": "Corollary 4.6",
-    "quote": "Assume the attacker applies~\\eqref{eq:maximum_target_loss_Ell} to perform attack. Then when the attacker chooses $\\epsilon=\\frac{1-\\alpha}{2}$, the expected cumulative attack cost achieves the minimum value asymptotically. Correspondingly, we have $\\E{}{N_T(a^\\dagger)}= T-O(T^{\\frac{1+\\alpha}{2}})$ and $\\E{}{C_T}=O(T^{\\frac{1+\\alpha}{2}})$."
+    "quote": "Then when the attacker chooses $\\epsilon=\\frac{1-\\alpha}{2}$, the expected cumulative attack cost achieves the minimum value asymptotically. Correspondingly, we have $\\E{}{N_T(a^\\dagger)}= T-O(T^{\\frac{1+\\alpha}{2}})$ and $\\E{}{C_T}=O(T^{\\frac{1+\\alpha}{2}})$."
    },
    "confidence": "medium",
-   "notes": "Non-target pulls."
+   "notes": "Also T - E[N_T(a_dagger)] = O(T^{(1+alpha)/2})."
   },
   {
    "id": "r6",
@@ -283,115 +316,40 @@
    "algorithm": "a2",
    "algorithm_class": null,
    "quantity": "other",
-   "dependence": "worst_case",
-   "comparator": "not_applicable",
-   "probability": "expectation",
-   "horizon": "anytime",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "O",
-    "expression": "T**((1+alpha_r)/2)",
-    "expression_latex": "\\E{}{C_T}=O(T^{\\frac{1+\\alpha}{2}})",
-    "regime": null
-   },
-   "symbols": {
-    "alpha_r": "regret rate exponent of victim"
-   },
-   "conditions": [
-    "victim has regret O(T^alpha_r), alpha_r in [1/2,1)"
-   ],
-   "tuning": [
-    "eps_alg = (1-alpha_r)/2"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "col:minimum_cost",
-    "number": "Corollary 4.6",
-    "quote": "Correspondingly, we have $\\E{}{N_T(a^\\dagger)}= T-O(T^{\\frac{1+\\alpha}{2}})$ and $\\E{}{C_T}=O(T^{\\frac{1+\\alpha}{2}})$."
-   },
-   "confidence": "medium",
-   "notes": "Attack cost."
-  },
-  {
-   "id": "r7",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a2",
-   "algorithm_class": null,
-   "quantity": "other",
    "dependence": "instance_dependent",
    "comparator": "not_applicable",
    "probability": "expectation",
-   "horizon": "anytime",
+   "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "rho**(1/(alpha_r+eps_alg-1)) + tau + M*T**alpha_r/rho",
-    "expression_latex": "\\E{}{N_T(a^\\dagger)}\\ge T-\\rho^{\\frac{1}{\\alpha+\\epsilon-1}}-\\tau-MT^\\alpha/\\rho",
-    "regime": null
-   },
-   "symbols": {
-    "alpha_r": "regret rate exponent of victim",
-    "M": "constant from victim's regret bound",
-    "rho": "any constant in (0,1]",
-    "tau": "number of rounds with L_t(a^dagger) > 1-rho"
-   },
-   "conditions": [
-    "victim has regret <= M T^alpha_r"
-   ],
-   "tuning": [
-    "eps_alg in [0, 1-alpha_r)"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "thm:thmHardReoverEasy",
-    "number": "Theorem (thm:thmHardReoverEasy)",
-    "quote": "Let $\\rho\\in(0,1]$ be any constant. Define $\\T_\\rho=\\{t\\mid \\Ell_t(a^\\dagger)>1-\\rho\\}$... Let $|\\T_\\rho|=\\tau$. ... \\E{}{N_T(a^\\dagger)}\\ge T-\\rho^{\\frac{1}{\\alpha+\\epsilon-1}}-\\tau-MT^\\alpha/\\rho"
-   },
-   "confidence": "medium",
-   "notes": "Non-target pulls."
-  },
-  {
-   "id": "r8",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a2",
-   "algorithm_class": null,
-   "quantity": "other",
-   "dependence": "instance_dependent",
-   "comparator": "not_applicable",
-   "probability": "expectation",
-   "horizon": "anytime",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "exact",
-    "expression": "rho**(1/(alpha_r+eps_alg-1)) + tau + M*T**alpha_r/rho",
+    "expression": "rho**(1/(alpha_reg+eps_alg-1)) + tau + M*T**alpha_reg/rho",
     "expression_latex": "\\E{}{C_T}\\le \\rho^{\\frac{1}{\\alpha+\\epsilon-1}}+\\tau+MT^\\alpha/\\rho",
     "regime": null
    },
    "symbols": {
-    "alpha_r": "regret rate exponent of victim",
-    "M": "constant from victim's regret bound",
+    "alpha_reg": "regret rate of victim",
     "rho": "any constant in (0,1]",
-    "tau": "number of rounds with L_t(a^dagger) > 1-rho"
+    "tau": "number of rounds where L_t(a_dagger) > 1-rho",
+    "M": "constant from victim regret bound"
    },
    "conditions": [
-    "victim has regret <= M T^alpha_r"
+    "victim has regret <= M T^alpha"
    ],
    "tuning": [
-    "eps_alg in [0, 1-alpha_r)"
+    "eps_alg in [0, 1-alpha)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:thmHardReoverEasy",
     "number": "Theorem (thm:thmHardReoverEasy)",
-    "quote": "and the cumulative attack cost satisfies \\E{}{C_T}\\le \\rho^{\\frac{1}{\\alpha+\\epsilon-1}}+\\tau+MT^\\alpha/\\rho."
+    "quote": "then there exists a constant $M>0$ such that the expected number of target arm selections satisfies \\E{}{N_T(a^\\dagger)}\\ge T-\\rho^{\\frac{1}{\\alpha+\\epsilon-1}}-\\tau-MT^\\alpha/\\rho, and the cumulative attack cost satisfies \\E{}{C_T}\\le \\rho^{\\frac{1}{\\alpha+\\epsilon-1}}+\\tau+MT^\\alpha/\\rho."
    },
    "confidence": "medium",
-   "notes": "Attack cost."
+   "notes": "Same expression also bounds T - E[N_T(a_dagger)]."
   },
   {
-   "id": "r9",
+   "id": "r7",
    "setting": "s1",
    "side": "lower",
    "algorithm": null,
@@ -400,20 +358,20 @@
    "dependence": "worst_case",
    "comparator": "not_applicable",
    "probability": "expectation",
-   "horizon": "not_applicable",
+   "horizon": "known",
    "compute": "not_stated",
    "bound": {
     "notation": "Omega",
-    "expression": "T**alpha_r",
+    "expression": "T**alpha_reg",
     "expression_latex": "\\E{}{C_T}=\\Omega(T^\\alpha)",
-    "regime": null
+    "regime": "T -> infinity"
    },
    "symbols": {
-    "alpha_r": "regret rate exponent of victim, in [1/2,1)"
+    "alpha_reg": "regret rate of victim, in [1/2,1)"
    },
    "conditions": [
-    "applies to victim-agnostic attackers achieving E[N_T(a^dagger)] = T - o(T) against all victims with regret O(T^alpha_r)",
-    "hard instance: K=2, losses 0 and 0.5, target is the 0.5 arm; victim Exp3 with eta = Theta(T^-alpha_r)"
+    "attacker is victim-agnostic and achieves E[N_T(a_dagger)] = T - o(T) on all victims with regret O(T^alpha)",
+    "hard instance: K=2, losses 0 and 0.5, target the 0.5-loss arm; victim Exp3 with eta = Theta(T^-alpha)"
    ],
    "tuning": [],
    "is_new": true,
@@ -423,7 +381,7 @@
     "quote": "Assume some victim-agnostic attack algorithm achieves $\\E{}{N_T(a^\\dagger)}=T-o(T)$ on all victim bandit algorithms that has regret rate $O(T^\\alpha)$, where $\\alpha\\in[\\frac{1}{2}, 1)$. Then there exists a bandit task such that the attacker must induce at least expected attack cost $\\E{}{C_T}=\\Omega(T^\\alpha)$ on some victim algorithm. Specifically, one such victim is the Exp3 algorithm with parameter $\\eta=\\Theta(T^{-\\alpha})$."
    },
    "confidence": "medium",
-   "notes": "Lower bound on the attacker's cumulative cost, not on regret."
+   "notes": "Lower bound on attack cost for victim-agnostic attackers."
   }
  ],
  "cited_results": [
@@ -436,7 +394,7 @@
    "algorithm_name": "ExpRb",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Adversarial K-armed bandits with corruption budget Phi known to the learner",
+   "setting_description": "Adversarial K-armed bandit with corruption budget Phi known to learner",
    "bound": {
     "notation": "O",
     "expression": "sqrt(K*log(K)*T) + K*Phi*log(T)",
@@ -444,24 +402,42 @@
     "regime": null
    },
    "where": "Related Works"
+  },
+  {
+   "cited_key": "auer1995gambling",
+   "cited_title": "Gambling in a rigged casino: The adversarial multi-armed bandit problem",
+   "cited_first_author": "Peter Auer",
+   "cited_year": 1995,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Adversarial multi-armed bandit regret lower bound",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\Omega(\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Footnote to Assumption 2.2"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:29:59",
+  "date": "2026-10-21T15:40:56",
   "source_chars": 78152,
-  "input_tokens": 67211,
-  "output_tokens": 7825,
-  "cost_usd_equiv": 0.4766068,
+  "input_tokens": 73798,
+  "output_tokens": 6726,
+  "cost_usd_equiv": 0.455874,
   "status": "extracted"
  }
 }

@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Online Learning for Multi-Layer Hierarchical Inference under Partial and Policy-Dependent Feedback",
   "arxiv_id": "2603.04247",
@@ -18,7 +18,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Multi-layer hierarchical inference routing with terminal-only, policy-dependent feedback (node-level contextual bandit with threshold-destination experts)",
+   "name_in_paper": "Online routing for multi-layer hierarchical inference under long-term resource constraints and terminal-only feedback",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "adversarial_unspecified",
@@ -28,11 +28,12 @@
    "context": "stochastic_contexts",
    "noise": "not_applicable",
    "learner_knows": [
-    "N_exp"
+    "T"
    ],
    "instance_assumptions": [],
    "extras": [
     "expert_advice",
+    "knapsack_constraints",
     "multi_agent_cooperative"
    ],
    "action_set": {
@@ -41,31 +42,63 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "agnostic_policy_class"
+   },
+   "constraints": {
+    "kind": "long_term_average",
+    "violation": "unspecified"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Loss of a node is observed only if the job reaches the terminal oracle layer; observation probability is policy-dependent and decays with depth (not standard bandit feedback)",
-    "Loss defined recursively across layers of a hierarchy of decentralized learners",
-    "Long-term per-node resource constraints handled via Lyapunov virtual queues",
-    "Job arrivals i.i.d. with bounded first and second moments (Assumption 3.1); no stochastic assumption on induced losses",
-    "Context = (task type, confidence score); experts are threshold-destination pairs",
-    "Periodic model placement under memory constraints"
+    "Multi-layer hierarchical routing: each node's loss is defined recursively via downstream routing decisions",
+    "Terminal-only, policy-dependent feedback: a job's loss is observed only if it reaches the oracle layer, with probability depending on downstream policies",
+    "Experts are threshold-destination pairs over a confidence score; regret is per node and per task type",
+    "Job arrivals are i.i.d. over time slots with bounded first and second moments",
+    "Long-term resource constraints are handled through Lyapunov virtual queues; periodic model placement under memory constraints"
    ],
-   "definition_quote": "We model HI routing as a decentralized online learning problem with partial and policy-dependent feedback. ... Feedback is revealed only if a job is routed to the oracle layer; as a result, the probability of observing loss at a node depends recursively on downstream routing decisions under the global policy."
+   "definition_quote": "We study online routing for multi-layer hierarchical inference under long-term resource constraints and terminal-only feedback. ... Feedback is revealed only if a job is routed to the oracle layer; as a result, the probability of observing loss at a node depends recursively on downstream routing decisions under the global policy."
   }
  ],
  "algorithms": [
@@ -75,10 +108,11 @@
    "registry_id": null,
    "is_new": true,
    "techniques": [
-    "exponential_weights"
+    "exponential_weights",
+    "other"
    ],
    "requires_knowledge_of": [
-    "N_exp"
+    "T"
    ]
   }
  ],
@@ -89,7 +123,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "pseudo_regret",
+   "quantity": "expected_regret",
    "dependence": "instance_dependent",
    "comparator": "best_expert",
    "probability": "expectation",
@@ -102,25 +136,25 @@
     "regime": null
    },
    "symbols": {
-    "N_exp": "|E_n(y)|, number of joint threshold-destination experts at node n for task type y",
-    "V_sum": "sum over jobs of E[1{y(j)=y} 1{n on path} V_{n,y}(j)], V_{n,y}(j) = weighted mean plus max of squared variance-reduced loss estimates",
-    "eta": "learning rate"
+    "N_exp": "|E_n(y)| = |H_y||U_n|, number of joint threshold-destination experts at node n for task type y",
+    "V_sum": "sum over jobs j of E[1{y(j)=y} 1{n in path} V_{n,y}(j)], where V_{n,y}(j) is the weighted second moment plus the max squared value of the variance-reduced loss estimates"
    },
    "conditions": [
-    "Assumption 3.1 (i.i.d. arrivals with bounded moments)",
-    "eta * F_max < 1 where F_max bounds the shifted estimator (used in proof)"
+    "Assumption 3.1 (i.i.d. stationary arrivals with bounded first and second moments)",
+    "the proof assumes eta * F_max < 1, where F_max bounds the shifted loss estimates"
    ],
    "tuning": [
-    "eta > 0"
+    "eta > 0",
+    "uniform exploration with lambda in (0,1)"
    ],
    "is_new": true,
    "source": {
     "label": "theorem:regret",
     "number": "Theorem 4.3",
-    "quote": "For $\\eta > 0$, the expected node-level regret $R_{n,y}(\\Gamma)$ relative to the best fixed threshold-destination pair $(h^*, n'^{*}) \\in \\mathcal{E}_n(y)$ is strictly bounded by R_{n,y}(\\Gamma) \\le \\frac{\\ln(|\\mathcal{E}_n(y)|)}{\\eta} + \\eta \\sum_{j=1}^\\Gamma \\mathbb{E}[ ... V_{n,y}(j) ]"
+    "quote": "For $\\eta > 0$, the expected node-level regret $R_{n,y}(\\Gamma)$ relative to the best fixed threshold-destination pair $(h^*, n'^{*}) \\in \\mathcal{E}_n(y)$ is strictly bounded by R_{n,y}(\\Gamma) \\le \\frac{\\ln(|\\mathcal{E}_n(y)|)}{\\eta} + \\eta \\sum_{j=1}^\\Gamma \\mathbb{E}[ \\mathbbm{1}_{y(j)=y} \\mathbbm{1}_{n \\in \\Omega^{\\boldsymbol{\\pi},j}} V_{n,y}(j) ]"
    },
    "confidence": "medium",
-   "notes": "Horizon measured in jobs Gamma. Regret is node-level, per task type, defined with min outside expectations (pseudo-regret style). Bound is data-dependent via variance proxy; paper remarks eta ∝ 1/sqrt(Gamma) gives O(sqrt(Gamma)). Feedback mapping to 'bandit' is approximate."
+   "notes": "The horizon is Gamma jobs, not T slots. The bound depends on the data through a variance proxy. With eta proportional to 1/sqrt(Gamma) the paper claims O(sqrt(Gamma)). Regret is measured on per-node Lyapunov-weighted losses. 'Expected regret' is defined through expectations of per-job losses."
   },
   {
    "id": "r2",
@@ -136,28 +170,29 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "alpha_L/(v*A_bar) + 2*N_nodes/v*sqrt(Y_types*Psi_max*log(E_max)/Gamma) + eps_0",
+    "expression": "alpha_ly/(v*A_bar) + 2*N_nodes/v*sqrt(Y_types*Psi_max*log(E_max)/Gamma) + eps_0",
     "expression_latex": "\\frac{\\alpha}{v \\bar{A}} + \\frac{2 |\\mathcal{N}|}{v} \\sqrt{\\frac{|\\mathcal{Y}| \\Psi_{max} \\ln|\\mathcal{E}_{max}|}{\\Gamma}} + \\varepsilon_0",
     "regime": null
    },
    "symbols": {
-    "alpha_L": "Lyapunov drift constant",
+    "alpha_ly": "Lyapunov drift constant bounding the per-slot squared cost deviation",
     "v": "drift-plus-penalty control parameter",
     "A_bar": "average job arrival rate Gamma/T",
     "N_nodes": "number of nodes |N|",
     "Y_types": "number of task types |Y|",
-    "Psi_max": "uniform bound on expected variance term",
-    "E_max": "maximum joint expert space cardinality",
+    "Psi_max": "uniform upper bound on the expected variance proxy",
+    "E_max": "maximum cardinality of the joint expert space",
     "Gamma": "total number of jobs",
-    "eps_0": "expert-grid discretization error"
+    "eps_0": "discretization error of the expert threshold grid"
    },
    "conditions": [
-    "Assumption 3.1",
-    "Psi_max finite (ensured by lambda-exploration)",
-    "best discretized policy satisfies resource constraints"
+    "Assumption 3.1 (i.i.d. arrivals with bounded moments)",
+    "deterministic model placements",
+    "the best fixed discretized policy satisfies the resource constraints"
    ],
    "tuning": [
-    "eta = sqrt(|Y| ln|E_max| / (Gamma Psi_max))"
+    "eta = sqrt(|Y| ln|E_max| / (Gamma Psi_max))",
+    "lambda in (0,1)"
    ],
    "is_new": true,
    "source": {
@@ -166,26 +201,26 @@
     "quote": "By setting the learning rate to $\\eta = \\sqrt{\\frac{|\\mathcal{Y}| \\ln |\\mathcal{E}_{max}|}{\\Gamma \\Psi_{max}}}$, the optimality gap of the proposed VR-Ly-EXP4 algorithm is strictly bounded by: $$\\Phi_\\Gamma(\\boldsymbol{\\pi}) - \\Phi_\\Gamma(\\boldsymbol{\\pi}^*) \\le \\frac{\\alpha}{v \\bar{A}} + \\frac{2 |\\mathcal{N}|}{v} \\sqrt{\\frac{|\\mathcal{Y}| \\Psi_{max} \\ln|\\mathcal{E}_{max}|}{\\Gamma}} + \\varepsilon_0$$"
    },
    "confidence": "medium",
-   "notes": "Bound on time-averaged expected inference error gap versus optimal continuous routing policy (per-job average, not total regret). Requires Gamma and Psi_max to tune eta."
+   "notes": "This bounds the time-averaged system inference error gap (per job) against the optimal continuous policy, not a cumulative regret. Multiplying by Gamma would give the total gap. The learning rate needs Gamma and Psi_max. The proof uses N for the number of intermediate nodes."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:10:51",
+  "date": "2026-10-21T15:20:17",
   "source_chars": 110502,
-  "input_tokens": 84210,
-  "output_tokens": 3746,
-  "cost_usd_equiv": 0.5310188,
+  "input_tokens": 90797,
+  "output_tokens": 4088,
+  "cost_usd_equiv": 0.539106,
   "status": "extracted"
  }
 }

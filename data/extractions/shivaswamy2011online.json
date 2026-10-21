@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Online Learning with Preference Feedback",
   "arxiv_id": "1111.0712",
@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Online preference learning model (alpha-informative feedback)",
+   "name_in_paper": "Online preference learning model (alpha-informative feedback, linear utility)",
    "objective": "cumulative_regret",
    "feedback": "dueling",
    "environment": "adversarial_unspecified",
@@ -25,37 +25,68 @@
    "noise": "not_applicable",
    "learner_knows": [],
    "instance_assumptions": [],
-   "extras": [
-    "time_varying_action_sets"
-   ],
+   "extras": [],
    "action_set": {
-    "shape": "unspecified",
+    "shape": "arbitrary_compact",
     "time_varying": "adaptive_sequence",
     "access": "linear_optimization_oracle",
     "norm_bound": "bounded_L",
     "parameter_set": "unbounded",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "unspecified"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "unspecified",
+    "winner": "utility_best",
+    "comparison": "pair"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Coactive/preference feedback: learner presents object y_t and receives an improved object bar y_t (no utility observed); this is not standard dueling feedback",
-    "Feedback is alpha-informative: U(x,bar y)-U(x,y) = alpha(U(x,y*)-U(x,y)) - xi_t with unknown alpha in (0,1] and slack xi_t >= 0",
-    "Linear utility U(x,y)=w*^T phi(x,y) with joint feature map ||phi(x,y)|| <= R; contexts x_t arbitrary"
+    "Coactive feedback: user returns an improved object bar y_t rather than a reward or a pairwise comparison outcome",
+    "Feedback quality defined by alpha-informativeness with per-round slack xi_t >= 0: U(x,bar y)-U(x,y) = alpha(U(x,y*)-U(x,y)) - xi_t",
+    "Utility U(x,y) = w*^T phi(x,y) with joint feature map ||phi(x,y)|| <= R; cardinal utilities never observed"
    ],
-   "definition_quote": "At each round $t$, the learning algorithm receives a context $\\bx_t \\in {\\cal X}$ and presents a (possibly structured) object $\\by_t \\in {\\cal Y}$. In response, the user returns an object $\\bby_t \\in {\\cal Y}$ which the algorithm receives as feedback. ... We say that user feedback is {\\em $\\alpha$-informative}, if for some $\\alpha \\in (0,1]$ and $\\xi_t \\ge 0$ ... $U(\\bx,\\by) = \\bw^{*\\top} \\phi(\\bx,\\by)$ ... such that $\\|\\phi(\\bx,\\by)\\| \\le R$"
+   "definition_quote": "At each round $t$, the learning algorithm receives a context $\\bx_t \\in {\\cal X}$ and presents a (possibly structured) object $\\by_t \\in {\\cal Y}$. In response, the user returns an object $\\bby_t \\in {\\cal Y}$ which the algorithm receives as feedback. ... We say that user feedback is {\\em $\\alpha$-informative}, if for some $\\alpha \\in (0,1]$ and $\\xi_t \\ge 0$ ... U(\\bx,\\by) = \\bw^{*\\top} \\phi(\\bx,\\by) ... such that $\\|\\phi(\\bx,\\by)\\| \\le R$"
   }
  ],
  "algorithms": [
@@ -85,19 +116,19 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "Xi_T/alpha_inf + 2*L_feat*w_norm*sqrt(T)/alpha_inf",
+    "expression": "Xi_T/alpha_inf + 2*L_feat*S*sqrt(T)/alpha_inf",
     "expression_latex": "\\text{REGRET}_T \\le \\frac{1}{\\alpha T} \\! \\sum_{t=1}^T \\xi_t + \\frac{2R \\|\\bw^* \\|}{ \\alpha \\sqrt{T}}",
     "regime": null
    },
    "symbols": {
     "alpha_inf": "informativeness parameter alpha in (0,1] of the user feedback",
     "Xi_T": "sum_{t=1}^T xi_t, total slack (feedback noise)",
-    "w_norm": "||w*||, Euclidean norm of the unknown utility parameter"
+    "L_feat": "bound R on the joint feature norm ||phi(x,y)||",
+    "S": "||w*||, norm of the unknown utility parameter"
    },
    "conditions": [
-    "user feedback is alpha-informative with slacks xi_t >= 0",
-    "||phi(x,y)|| <= R for all x, y",
-    "linear utility U(x,y) = w*^T phi(x,y)"
+    "feedback is alpha-informative with slacks xi_t >= 0",
+    "utility is linear: U(x,y) = w*^T phi(x,y) with ||phi(x,y)|| <= R"
    ],
    "tuning": [],
    "is_new": true,
@@ -107,26 +138,26 @@
     "quote": "Under $\\alpha$-informative feedback the algorithm in Figure \\ref{perceptron} has regret \\text{REGRET}_T \\le \\frac{1}{\\alpha T} \\! \\sum_{t=1}^T \\xi_t + \\frac{2R \\|\\bw^* \\|}{ \\alpha \\sqrt{T}}."
    },
    "confidence": "medium",
-   "notes": "Paper's REGRET_T is average regret; multiplied by T. Bound is deterministic (holds for every sequence). R mapped to L_feat. Setting mapping (dueling feedback, linear_infinite) is approximate."
+   "notes": "Paper's REGRET_T is the average regret (divided by T); multiplied by T here. The bound is deterministic (holds for every sequence), recorded as realized_regret/almost_sure. Mapping of coactive feedback to 'dueling' is approximate. Algorithm requires an argmax oracle over Y."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:35:00",
+  "date": "2026-10-21T15:46:34",
   "source_chars": 21379,
-  "input_tokens": 38943,
-  "output_tokens": 2570,
-  "cost_usd_equiv": 0.1453628,
+  "input_tokens": 45530,
+  "output_tokens": 2881,
+  "cost_usd_equiv": 0.15283,
   "status": "extracted"
  }
 }

@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "An Information-Theoretic Analysis of Thompson Sampling for Logistic Bandits",
   "arxiv_id": "2412.02861",
@@ -26,8 +26,10 @@
    "context": "none",
    "noise": "bernoulli",
    "learner_knows": [
+    "T",
+    "d",
     "prior",
-    "d"
+    "reward_family"
    ],
    "instance_assumptions": [
     "bayesian_prior"
@@ -39,28 +41,60 @@
     "access": "explicit",
     "norm_bound": "unit_l2",
     "parameter_set": "l2_ball",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Logistic link with known slope parameter beta>0: P(R=1|a,theta)=exp(beta<a,theta>)/(1+exp(beta<a,theta>))",
-    "Action set A and parameter set O both subsets of the d-dimensional unit ball; minimax alignment constant alpha = min_theta max_a <a,theta> assumed >= 0",
-    "Action set A assumed compact"
+    "logistic link exp(beta x)/(1+exp(beta x)) with known slope parameter beta>0",
+    "minimax alignment constant alpha = min_theta max_a <a,theta> assumed >= 0"
    ],
-   "definition_quote": "We consider a logistic bandit problem, where at each time step $t \\in \\{1,\\ldots, T\\}$, an agent selects an action $A_t \\in \\cA$ and receives a binary reward $R_t\\in \\{0,1\\}$ with probability following a logistic function ... Here, $\\beta>0$ is a known scale parameter ... both the action $a$ and the parameter vector $\\theta$ lie within the $d$-dimensional Euclidean unit ball ... we assume the parameter vector $\\Theta\\in\\cO$ is sampled from a known prior distribution $\\bP_{\\Theta}$."
+   "definition_quote": "an agent selects an action $A_t \\in \\cA$ and receives a binary reward $R_t\\in \\{0,1\\}$ with probability following a logistic function ... Here, $\\beta>0$ is a known scale parameter ... both the action $a$ and the parameter vector $\\theta$ lie within the $d$-dimensional Euclidean unit ball ... we assume the parameter vector $\\Theta\\in\\cO$ is sampled from a known prior distribution"
   }
  ],
  "algorithms": [
@@ -73,7 +107,8 @@
     "thompson_sampling"
    ],
    "requires_knowledge_of": [
-    "prior"
+    "prior",
+    "reward_family"
    ]
   }
  ],
@@ -88,32 +123,32 @@
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
-   "horizon": "anytime",
+   "horizon": "known",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "sqrt(Gamma_IR*T*(H_eps + eps_q*beta_s*T))",
+    "expression": "sqrt(Gamma*T*(H_Theta_eps + eps_alg*beta_slope*T))",
     "expression_latex": "\\sqrt{\\Gamma T \\left(\\ent(\\Theta_\\varepsilon)+\\varepsilon \\beta T \\right)}",
     "regime": null
    },
    "symbols": {
-    "Gamma_IR": "upper bound on the average expected TS information ratio",
-    "H_eps": "entropy of the parameter quantized on an epsilon-net",
-    "eps_q": "quantization scale epsilon>0 (analysis parameter)",
-    "beta_s": "slope parameter of the logistic function"
+    "Gamma": "upper bound on the average expected TS information ratio",
+    "H_Theta_eps": "entropy of the parameter quantized on an eps-net",
+    "eps_alg": "quantization scale epsilon>0 (analysis parameter)",
+    "beta_slope": "slope of the logistic function"
    },
    "conditions": [
-    "(1/T) sum_t E[Gamma_t] <= Gamma_IR"
+    "(1/T) sum_t E[Gamma_t] <= Gamma"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:quantized_bound",
     "number": "Theorem (thm:quantized_bound)",
-    "quote": "For all $\\beta>0$, under the logistic bandit setting with logistic function $\\phi_{\\beta}(x)$, let the quantized parameter $\\Theta_\\varepsilon$ be defined as in~\\Cref{def:quantized_parameter} for some $\\varepsilon>0$. If the average expected TS information ratio is bounded, $\\frac{1}{T} \\sum_{t=1}^T \\bE[\\Gamma_t] \\leq \\Gamma$, for some $\\Gamma>0$, then the TS regret is bounded as $\\bE[\\textnormal{Regret}(T)] \\leq \\sqrt{\\Gamma T \\left(\\ent(\\Theta_\\varepsilon)+\\varepsilon \\beta T \\right)}$."
+    "quote": "For all $\\beta>0$, under the logistic bandit setting with logistic function $\\phi_{\\beta}(x)$, let the quantized parameter $\\Theta_\\varepsilon$ be defined as in~\\Cref{def:quantized_parameter} for some $\\varepsilon>0$. If the average expected TS information ratio is bounded, ... then the TS regret is bounded as $\\bE[\\textnormal{Regret}(T)] \\leq \\sqrt{\\Gamma T \\left(\\ent(\\Theta_\\varepsilon)+\\varepsilon \\beta T \\right)}$."
    },
    "confidence": "medium",
-   "notes": "Conditional bound given an information-ratio bound. Regret defined with realized rewards under a prior; recorded as Bayesian regret."
+   "notes": "Generic bound in terms of information-ratio bound and quantized entropy. Regret defined with prior on Theta, so Bayesian."
   },
   {
    "id": "r2",
@@ -125,20 +160,20 @@
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "almost_sure",
-   "horizon": "anytime",
+   "horizon": "not_applicable",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "9*d/(2*alpha_a**2)",
+    "expression": "9*d/(2*alpha_align**2)",
     "expression_latex": "\\Gamma_t \\leq \\frac{9}{2} d\\alpha^{-2}",
     "regime": null
    },
    "symbols": {
-    "alpha_a": "minimax alignment constant min_theta max_a <a,theta>"
+    "alpha_align": "minimax alignment constant min_theta max_a <a,theta>"
    },
    "conditions": [
-    "A, O subsets of the d-dimensional unit ball",
-    "alpha_a >= 0"
+    "A, O subsets of unit ball",
+    "alpha >= 0"
    ],
    "tuning": [],
    "is_new": true,
@@ -148,7 +183,7 @@
     "quote": "For all $\\beta>0$, and for all $\\cA, \\cO \\subseteq \\mathbf{B}_d(0,1)$ with minimax alignment constant $\\alpha$, under the logistic bandit setting with logistic function $\\phi_{\\beta}(x)$ the TS information ratio is bounded as $\\Gamma_t \\leq \\frac{9}{2} d\\alpha^{-2}$."
    },
    "confidence": "medium",
-   "notes": "Bound on the TS information ratio (not regret); quantity 'other'."
+   "notes": "Bound on the TS information ratio (not regret), independent of beta."
   },
   {
    "id": "r3",
@@ -160,21 +195,22 @@
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
-   "horizon": "anytime",
+   "horizon": "known",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "3*d/alpha_a*sqrt(T*log(sqrt(3 + 6*beta_s*T/d)))",
+    "expression": "3*d/alpha_align*sqrt(T*log(sqrt(3 + 6*beta_slope*T/d)))",
     "expression_latex": "3d/\\alpha\\sqrt{ T \\log\\left(\\sqrt{3+\\frac{6 \\beta T}{d}}\\right)}",
     "regime": null
    },
    "symbols": {
-    "alpha_a": "minimax alignment constant min_theta max_a <a,theta>",
-    "beta_s": "slope parameter of the logistic function"
+    "alpha_align": "minimax alignment constant min_theta max_a <a,theta>",
+    "beta_slope": "slope of the logistic function"
    },
    "conditions": [
-    "A, O subsets of the d-dimensional unit ball",
-    "alpha_a >= 0"
+    "A, O subsets of unit ball",
+    "alpha >= 0",
+    "A compact"
    ],
    "tuning": [],
    "is_new": true,
@@ -184,7 +220,7 @@
     "quote": "For all $\\beta>0$, and for all $\\cA, \\cO \\subseteq \\mathbf{B}_d(0,1)$ with minimax alignment constant $\\alpha$, under the logistic bandit setting with logistic function $\\phi_{\\beta}(x)$, the TS regret is bounded as $\\bE[\\textnormal{Regret}(T)] \\leq 3d/\\alpha\\sqrt{ T \\log\\left(\\sqrt{3+\\frac{6 \\beta T}{d}}\\right)}$."
    },
    "confidence": "high",
-   "notes": "Bayesian regret under known prior; TS does not use T so anytime."
+   "notes": "Main result; O(d/alpha sqrt(T log(beta T/d)))."
   },
   {
    "id": "r4",
@@ -196,21 +232,21 @@
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
-   "horizon": "anytime",
+   "horizon": "known",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "3*d*sqrt(T*log(sqrt(3 + 6*beta_s*T/d)))",
+    "expression": "3*d*sqrt(T*log(sqrt(3 + 6*beta_slope*T/d)))",
     "expression_latex": "3d\\sqrt{T \\log\\left(\\sqrt{3+\\frac{6 \\beta T}{d}}\\right)}",
     "regime": null
    },
    "symbols": {
-    "beta_s": "slope parameter of the logistic function"
+    "beta_slope": "slope of the logistic function"
    },
    "conditions": [
-    "parameter set O is a subset of the unit sphere",
-    "O is a subset of the action set A",
-    "A subset of the unit ball"
+    "A subset of unit ball",
+    "O subset of unit sphere",
+    "O subset of A (implies alpha = 1)"
    ],
    "tuning": [],
    "is_new": true,
@@ -220,7 +256,7 @@
     "quote": "For all $\\beta>0$, under the logistic bandit setting with logistic function $\\phi_{\\beta}(x)$, let $\\cA \\subseteq \\mathbf{B}_d(0,1)$ and $\\cO \\subseteq \\mathbf{S}_d(0,1)$ be such that $\\cO \\subseteq \\cA$. Then the TS regret is bounded as $\\bE[\\textnormal{Regret}(T)] \\leq 3d\\sqrt{T \\log\\left(\\sqrt{3+\\frac{6 \\beta T}{d}}\\right)}$."
    },
    "confidence": "high",
-   "notes": "Special case alpha=1 of main theorem."
+   "notes": "Special case alpha=1 of the main theorem."
   },
   {
    "id": "r5",
@@ -232,20 +268,20 @@
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
-   "horizon": "anytime",
+   "horizon": "known",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "6*d*sqrt(T*log(sqrt(3 + 6*beta_s*T/d)))",
+    "expression": "6*d*sqrt(T*log(sqrt(3 + 6*beta_slope*T/d)))",
     "expression_latex": "6d\\sqrt{ T \\log\\left(\\sqrt{3+\\frac{6 \\beta T}{d}}\\right)}",
     "regime": null
    },
    "symbols": {
-    "beta_s": "slope parameter of the logistic function"
+    "beta_slope": "slope of the logistic function"
    },
    "conditions": [
-    "action set A is chosen as a 1/2-net of the unit sphere with |A| <= 2d*3^(d-1)",
-    "parameter set O is any subset of the unit sphere"
+    "O subset of unit sphere",
+    "action space A is designed (a 1/2-net of the sphere) with |A| <= 2d*3^(d-1)"
    ],
    "tuning": [],
    "is_new": true,
@@ -255,41 +291,7 @@
     "quote": "For all $\\beta>0$, under the logistic bandit setting with logistic function $\\phi_{\\beta}(x)$, there exists an action space $\\cA$ with $|\\cA| \\leq 2d\\cdot 3^{d-1}$ such that for any $\\cO \\subseteq \\mathbf{S}_d(0,1)$, the TS regret is bounded as $\\bE[\\textnormal{Regret}(T)] \\leq 6d\\sqrt{ T \\log\\left(\\sqrt{3+\\frac{6 \\beta T}{d}}\\right)}$."
    },
    "confidence": "medium",
-   "notes": "Action set is designed (existence); alpha >= 1/2."
-  },
-  {
-   "id": "r6",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "other",
-   "dependence": "worst_case",
-   "comparator": "best_fixed_action",
-   "probability": "almost_sure",
-   "horizon": "anytime",
-   "compute": "not_stated",
-   "bound": {
-    "notation": "exact",
-    "expression": "d*(1 + exp(beta_s))**4/(32*exp(beta_s)**2)",
-    "expression_latex": "d \\frac{(1+\\exp(\\beta))^4}{32 \\exp(\\beta)^2}",
-    "regime": null
-   },
-   "symbols": {
-    "beta_s": "slope parameter of the logistic function"
-   },
-   "conditions": [
-    "compressed parameters satisfy the conditions of Dong & Van Roy (2018) Proposition 2"
-   ],
-   "tuning": [],
-   "is_new": true,
-   "source": {
-    "label": "prop:adaptation",
-    "number": "Proposition 13",
-    "quote": "For all $\\beta>0$, under the logistic bandit setting with logistic function $\\phi_{\\beta}(x)$, letting $\\tilde{\\Theta}_t^\\star$ and $\\tilde{\\Theta}_t$ satisfy the conditions in~\\citet[Proposition 2]{dong_information-theoretic_2018}, the \\emph{one-step compressed TS} information ratio is bounded as ... \\leq d \\frac{(1+\\exp(\\beta))^4}{32 \\exp(\\beta)^2}."
-   },
-   "confidence": "low",
-   "notes": "Bound on the one-step compressed TS information ratio, an extension of Dong et al. 2019 Prop 17; algorithm is the compressed TS analysis device, not a regret bound."
+   "notes": "Existence of a designed action set ensuring alpha >= 1/2."
   }
  ],
  "cited_results": [
@@ -305,7 +307,7 @@
    "setting_description": "Logistic bandit, Bayesian regret",
    "bound": {
     "notation": "O",
-    "expression": "exp(beta_s)*d*sqrt(T)*log(T)**(3/2)",
+    "expression": "exp(beta_slope)*d*sqrt(T)*log(T)**(3/2)",
     "expression_latex": "O\\left(e^\\beta\\cdot d \\cdot T^{1/2}\\cdot\\log( T)^{3/2} \\right)",
     "regime": null
    },
@@ -323,7 +325,7 @@
    "setting_description": "Logistic bandit, frequentist regret",
    "bound": {
     "notation": "O",
-    "expression": "exp(beta_s)*d**(3/2)*sqrt(log(d))*sqrt(T)*log(T)**(3/2)",
+    "expression": "exp(beta_slope)*d**(3/2)*sqrt(log(d))*sqrt(T)*log(T)**(3/2)",
     "expression_latex": "O\\left(e^\\beta\\cdot d^{3/2}\\cdot\\log(d)^{1/2} \\cdot T^{1/2}\\log( T)^{3/2} \\right)",
     "regime": null
    },
@@ -338,10 +340,10 @@
    "algorithm_name": "Thompson Sampling",
    "algorithm_registry_id": "posterior_sampling",
    "side": "upper",
-   "setting_description": "Logistic bandit, Bayesian regret",
+   "setting_description": "Logistic bandit, Bayesian regret (paper argues the analysis is flawed)",
    "bound": {
     "notation": "O",
-    "expression": "exp(beta_s)*d*sqrt(T*log(T/d))",
+    "expression": "exp(beta_slope)*d*sqrt(T)*sqrt(log(T/d))",
     "expression_latex": "O\\left(e^\\beta\\cdot d\\cdot T^{1/2}\\log(T/d)^{1/2} \\right)",
     "regime": null
    },
@@ -359,7 +361,7 @@
    "setting_description": "Logistic bandit, frequentist regret",
    "bound": {
     "notation": "O",
-    "expression": "d*sqrt(T)*log(T) + exp(beta_s)*beta_s**6*d**2*log(T)**2",
+    "expression": "d*sqrt(T)*log(T) + exp(beta_slope)*beta_slope**6*d**2*log(T)**2",
     "expression_latex": "O\\left(d\\cdot T^{1/2}\\cdot\\log(T) + e^\\beta \\beta^6 d^2 \\log(T)^2 \\right)",
     "regime": null
    },
@@ -377,7 +379,7 @@
    "setting_description": "Logistic bandit, frequentist regret",
    "bound": {
     "notation": "O",
-    "expression": "d*sqrt(T)*log(T) + exp(beta_s)*d**2*log(T)**2",
+    "expression": "d*sqrt(T)*log(T) + exp(beta_slope)*d**2*log(T)**2",
     "expression_latex": "O\\left(d\\cdot T^{1/2}\\cdot\\log(T) + e^\\beta\\cdot d^2 \\cdot \\log(T)^2 \\right)",
     "regime": null
    },
@@ -392,32 +394,50 @@
    "algorithm_name": "Thompson Sampling",
    "algorithm_registry_id": "posterior_sampling",
    "side": "upper",
-   "setting_description": "Logistic bandit with finite action set, Bayesian regret",
+   "setting_description": "Logistic bandit, Bayesian regret, finite action set",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(d*T*K*log(beta_s*T))",
+    "expression": "sqrt(d*T*K*log(beta_slope*T))",
     "expression_latex": "O(\\sqrt{dT|\\cA|\\log(\\beta T)})",
     "regime": null
    },
-   "where": "Section 1 (Introduction)"
+   "where": "Section 1"
+  },
+  {
+   "cited_key": "dong_information-theoretic_2018",
+   "cited_title": "An information-theoretic analysis for thompson sampling with many actions",
+   "cited_first_author": "S. Dong",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson Sampling",
+   "algorithm_registry_id": "posterior_sampling",
+   "side": "upper",
+   "setting_description": "d-dimensional linear bandit, Bayesian regret",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(T*log(T))",
+    "expression_latex": "O(d \\sqrt{T \\log T})",
+    "regime": null
+   },
+   "where": "Section 1"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T13:59:28",
+  "date": "2026-10-21T15:08:21",
   "source_chars": 108139,
-  "input_tokens": 83680,
-  "output_tokens": 7895,
-  "cost_usd_equiv": 0.6097588,
+  "input_tokens": 90267,
+  "output_tokens": 8275,
+  "cost_usd_equiv": 0.618606,
   "status": "extracted"
  }
 }

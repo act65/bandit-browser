@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "PAC-Bayesian Lifelong Learning For Multi-Armed Bandits",
   "arxiv_id": "2203.03303",
@@ -25,8 +25,12 @@
    "domain": "not_applicable",
    "context": "none",
    "noise": "bounded_01",
-   "learner_knows": [],
-   "instance_assumptions": [],
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
    "extras": [],
    "action_set": {
     "shape": "not_applicable",
@@ -34,26 +38,59 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Lifelong / meta-learning: a sequence of n MAB tasks, each with m rounds, tasks drawn i.i.d. from an unknown task environment",
-    "Objective is a PAC-Bayesian lower bound on the marginal transfer reward (expected average reward over first m rounds of a new task using a prior drawn from a hyperposterior), not regret",
-    "Assumption (1): expected reward of later tasks is no smaller than earlier tasks for any prior"
+    "Lifelong / meta-learning over a sequence of n MAB tasks, each with m rounds, tasks drawn i.i.d. from an unknown task environment (bayesian_prior used to express the task distribution)",
+    "Objective is a PAC-Bayesian lower bound on the marginal transfer reward (expected average reward over m rounds on a new task using a prior sampled from a hyperposterior), not regret",
+    "Guarantee is relative to an observable empirical importance-weighted multi-task reward"
    ],
    "definition_quote": "We represent a multi-armed bandit (MAB) task as a couple T_i = (\\mathcal{A}, \\rho_i), where \\mathcal{A} is a finite set of actions and \\rho_i(r|a) is a distribution over rewards r that is conditioned on the action a. We assume that rewards are always between 0 and 1 and that tasks are sampled i.i.d. from an environment \\mathcal{T}."
   }
@@ -95,38 +132,39 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "(1/lambda_1 + 1/(n_tasks*lambda_2))*KL_hyper + KL_base/(n_tasks*m_steps*lambda_2) + c_n + lambda_1/(8*n_tasks) + lambda_2*(E - 2)/(b_min*m_steps) + log(2/delta)/lambda_1 + log(2*m_steps/delta)/(n_tasks*lambda_2)",
+    "expression": "(1/lambda_1 + 1/(n_tasks*lambda_2))*KL_hyper + KL_post_sum/(n_tasks*m_task*lambda_2) + c_n + lambda_1/(8*n_tasks) + lambda_2*(E - 2)/(b_min*m_task) + log(2/delta)/lambda_1 + log(2*m_task/delta)/(n_tasks*lambda_2)",
     "expression_latex": "\\mathcal{R}(\\mathcal{Q}) \\geq \\widehat{\\mathcal{R}}(\\mathcal{Q}) - (\\frac{1}{\\lambda_1} + \\frac{1}{n\\lambda_2})D_{KL}(\\mathcal{Q}||\\mathcal{P}) - \\frac{1}{nm\\lambda_2}\\mathbb{E}_{P\\sim\\mathcal{Q}}[\\sum_i\\sum_j D_{KL}(A(D_i^{:j-1},P)||P)] - c_n - \\frac{\\lambda_1}{8n} - \\frac{\\lambda_2(e-2)}{b_{min} m} - \\frac{1}{\\lambda_1}\\ln(2/\\delta) - \\frac{1}{n\\lambda_2}\\ln(2m/\\delta)",
     "regime": null
    },
    "symbols": {
     "n_tasks": "number of observed tasks n",
-    "m_steps": "number of rounds per task m",
-    "lambda_1": "free positive parameter, lambda_1 > 0",
-    "lambda_2": "free parameter in [0, m*b_min]",
-    "KL_hyper": "KL divergence between hyperposterior and hyperprior",
-    "KL_base": "E_{P~Q}[sum_i sum_j KL(A(D_i^{:j-1},P)||P)]",
-    "c_n": "non-computable term measuring dependence of task rewards on previous tasks' data",
+    "m_task": "number of rounds per task m",
+    "lambda_1": "free positive parameter lambda_1 > 0",
+    "lambda_2": "free parameter lambda_2 in [0, m b_min]",
+    "KL_hyper": "KL divergence between hyperposterior Q and hyperprior P",
+    "KL_post_sum": "E_{P~Q}[sum_i sum_j KL(A(D_i^{:j-1},P)||P)]",
+    "c_n": "term measuring dependence of expected reward on past data (defined in Lemma 3)",
     "b_min": "minimum behaviour-policy probability over all tasks, rounds and actions"
    },
    "conditions": [
-    "condition (1): expected reward for any prior is non-decreasing across tasks",
+    "assumption (1): marginal expected reward of task n+k is at least that of task n for all priors P and j",
+    "b_min > 0",
     "rewards in [0,1]",
-    "b_min > 0"
+    "hyperprior chosen before observing any task"
    ],
    "tuning": [
     "lambda_1 > 0",
     "lambda_2 in [0, m*b_min]",
-    "hyperprior chosen before observing data"
+    "holds simultaneously for all hyperposteriors Q"
    ],
    "is_new": true,
    "source": {
     "label": "thm:big_bound_bern",
     "number": "Theorem 2",
-    "quote": "If condition (1) is satisfied, then for any hyperprior P, any lambda_1 > 0, any lambda_2 in [0, m b_min] and any delta in (0,1], inequality holds with probability at least 1 - delta ... R(Q) >= hat R(Q) - (1/lambda_1 + 1/(n lambda_2)) KL(Q||P) - 1/(nm lambda_2) E[sum sum KL(A(D_i^{:j-1},P)||P)] - c_n - lambda_1/(8n) - lambda_2(e-2)/(b_min m) - (1/lambda_1) ln(2/delta) - 1/(n lambda_2) ln(2m/delta)"
+    "quote": "If condition (\\ref{eqn:const_exp_assump}) is satisfied, then for any hyperprior $\\mathcal{P}$, any $\\lambda_1 > 0$, any $\\lambda_2 \\in [0, mb_{\\mathrm{min}}]$ and any $\\delta \\in (0, 1]$, inequality (\\ref{eqn:main_bern_lower}) holds with probability at least $1 - \\delta$ over the tasks and their training sets ... and for all hyperposteriors $\\mathcal{Q}$"
    },
    "confidence": "medium",
-   "notes": "Recorded as an upper bound on the deficit hat R(Q) - R(Q) (empirical multi-task reward minus marginal transfer reward), holding simultaneously for all hyperposteriors Q. This is a PAC-Bayesian generalisation bound, not a regret bound. Combines Lemma 3 and Lemma 6. With lambda_1 ~ sqrt(n), lambda_2 ~ sqrt(m), the paper says the gap is O(1/sqrt(n) + 1/sqrt(m) + ...), ignoring c_n."
+   "notes": "Recorded as an upper bound on the deficit Rhat(Q) - R(Q) between the empirical importance-weighted multi-task reward and the marginal transfer reward (paper states it as a lower bound on R(Q)). Holds for any hyperposterior / base learner, not a specific algorithm; used as objective by PAC-Bayes VI/MCMC (with epsilon-soft behaviour, b_min >= eps/K). Combines Lemma 3 and Lemma 6. Paper notes with lambda_1 ~ sqrt(n), lambda_2 ~ sqrt(m) the gap is O(1/sqrt(n) + 1/sqrt(m) + ...) ignoring c_n."
   },
   {
    "id": "r2",
@@ -142,38 +180,39 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "(1/lambda_1 + 1/(n_tasks*lambda_2))*KL_hyper + KL_base/(n_tasks*m_steps*lambda_2) + c_n + lambda_1/(8*n_tasks) + lambda_2*(1 + tau)**2/(8*m_steps) + log(2/delta)/lambda_1 + log(2*m_steps/delta)/(n_tasks*lambda_2)",
+    "expression": "(1/lambda_1 + 1/(n_tasks*lambda_2))*KL_hyper + KL_post_sum/(n_tasks*m_task*lambda_2) + c_n + lambda_1/(8*n_tasks) + lambda_2*(1 + tau)**2/(8*m_task) + log(2/delta)/lambda_1 + log(2*m_task/delta)/(n_tasks*lambda_2)",
     "expression_latex": "\\mathcal{R}(\\mathcal{Q}) \\geq \\widehat{\\mathcal{R}}_{\\tau}(\\mathcal{Q}) - (\\frac{1}{\\lambda_1} + \\frac{1}{n\\lambda_2})D_{KL}(\\mathcal{Q}||\\mathcal{P}) - \\frac{1}{nm\\lambda_2}\\mathbb{E}_{P\\sim\\mathcal{Q}}[\\sum_i\\sum_j D_{KL}(A(D_i^{:j-1},P)||P)] - c_n - \\frac{\\lambda_1}{8n} - \\frac{\\lambda_2(1+\\tau)^2}{8m} - \\frac{1}{\\lambda_1}\\ln(2/\\delta) - \\frac{1}{n\\lambda_2}\\ln(2m/\\delta)",
     "regime": null
    },
    "symbols": {
     "n_tasks": "number of observed tasks n",
-    "m_steps": "number of rounds per task m",
-    "lambda_1": "free positive parameter",
-    "lambda_2": "free positive parameter",
-    "tau": "importance-weight clipping parameter, weights clipped to [0, 1+tau]",
-    "KL_hyper": "KL divergence between hyperposterior and hyperprior",
-    "KL_base": "E_{P~Q}[sum_i sum_j KL(A(D_i^{:j-1},P)||P)]",
-    "c_n": "non-computable term measuring dependence of task rewards on previous tasks' data"
+    "m_task": "number of rounds per task m",
+    "lambda_1": "free positive parameter lambda_1 > 0",
+    "lambda_2": "free positive parameter lambda_2 > 0",
+    "tau": "importance-weight clipping level (weights clipped to [0,1+tau])",
+    "KL_hyper": "KL divergence between hyperposterior Q and hyperprior P",
+    "KL_post_sum": "E_{P~Q}[sum_i sum_j KL(A(D_i^{:j-1},P)||P)]",
+    "c_n": "term measuring dependence of expected reward on past data (defined in Lemma 3)"
    },
    "conditions": [
-    "condition (1): expected reward for any prior is non-decreasing across tasks",
-    "rewards in [0,1]"
+    "assumption (1): marginal expected reward of task n+k is at least that of task n for all priors P and j",
+    "rewards in [0,1]",
+    "hyperprior chosen before observing any task"
    ],
    "tuning": [
     "lambda_1 > 0",
     "lambda_2 > 0",
     "tau > 0",
-    "hyperprior chosen before observing data"
+    "holds simultaneously for all hyperposteriors Q"
    ],
    "is_new": true,
    "source": {
     "label": "thm:big_bound_trunc",
     "number": "Theorem 3",
-    "quote": "If condition (1) is satisfied, then for any hyperprior P, any lambda_1 > 0, any lambda_2 > 0, any tau > 0 and any delta in (0,1], inequality holds with probability at least 1 - delta ... R(Q) >= hat R_tau(Q) - (1/lambda_1 + 1/(n lambda_2)) KL(Q||P) - ... - c_n - lambda_1/(8n) - lambda_2(1+tau)^2/(8m) - (1/lambda_1) ln(2/delta) - 1/(n lambda_2) ln(2m/delta)"
+    "quote": "If condition (\\ref{eqn:const_exp_assump}) is satisfied, then for any hyperprior $\\mathcal{P}$, any $\\lambda_1 > 0$, any $\\lambda_2 > 0$, any $\\tau > 0$ and any $\\delta \\in (0, 1]$, inequality (\\ref{eqn:main_trunc_lower}) holds with probability at least $1 - \\delta$ over the tasks and their training sets ... and for all hyperposteriors $\\mathcal{Q}$"
    },
    "confidence": "medium",
-   "notes": "Recorded as an upper bound on hat R_tau(Q) - R(Q) (clipped empirical multi-task reward minus marginal transfer reward), uniformly over hyperposteriors. Combines Lemma 3 and Lemma 8. Not a regret bound."
+   "notes": "Recorded as an upper bound on the deficit between clipped empirical multi-task reward Rhat_tau(Q) and marginal transfer reward R(Q). Combines Lemma 3 and Lemma 8. Not a regret bound; holds for any hyperposterior."
   }
  ],
  "cited_results": [
@@ -186,10 +225,10 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Single stochastic MAB with rewards in [0,1], adaptive behaviour policies bounded below by eps_m; PAC-Bayes-Bernstein bound on R_hat(Q_m) - R(Q_m), uniformly over Q_m and m, w.p. >= 1-delta",
+   "setting_description": "Single stochastic K-armed bandit with rewards in [0,1], adaptive sampling distributions bounded below by eps_m; PAC-Bayes-Bernstein bound on R(Q_m) - Rhat(Q_m) for all m simultaneously w.p. 1-delta",
    "bound": {
     "notation": "exact",
-    "expression": "(KL_QP + 2*log(m_steps + 1) + log(1/delta))/(m_steps*lambda_m) + (E - 2)*lambda_m/eps_m",
+    "expression": "(KL_QP + 2*log(m_rounds + 1) + log(1/delta))/(m_rounds*lambda_m) + (E - 2)*lambda_m/eps_m_lb",
     "expression_latex": "R(Q_m) \\geq \\widehat{R}(Q_m, D^{:m}) - \\frac{D_{KL}(Q_m||P_m) + 2\\ln(m+1) + \\ln(1/\\delta)}{m\\lambda_m} - \\frac{(e-2)\\lambda_m}{\\epsilon_m}",
     "regime": "lambda_m <= eps_m"
    },
@@ -199,19 +238,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T13:59:33",
+  "date": "2026-10-21T15:08:23",
   "source_chars": 99170,
-  "input_tokens": 80261,
-  "output_tokens": 5155,
-  "cost_usd_equiv": 0.5276068,
+  "input_tokens": 86848,
+  "output_tokens": 5773,
+  "cost_usd_equiv": 0.541214,
   "status": "extracted"
  }
 }

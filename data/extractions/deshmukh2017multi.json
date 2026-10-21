@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Multi-Task Learning for Contextual Bandits",
   "arxiv_id": "1705.08618",
@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Contextual bandits with multi-task kernel regression (KMTL)",
+   "name_in_paper": "Contextual bandits with kernelized multi-task reward model (KMTL)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -26,39 +26,75 @@
    "noise": "bounded_01",
    "learner_knows": [
     "T",
+    "K",
     "S",
-    "K"
+    "kernel",
+    "loss_range"
    ],
    "instance_assumptions": [],
-   "extras": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
    "action_set": {
     "shape": "finite",
     "time_varying": "adaptive_sequence",
     "access": "explicit",
     "norm_bound": "bounded_L",
-    "parameter_set": "arbitrary_bounded",
-    "loss_set": "not_applicable"
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "K arms each observe a context x_{a,t} per round; mean reward f*((z_a, x_{a,t})) with f* in RKHS of product kernel k_Z * k_X on augmented contexts",
-    "task similarity kernel matrix K_Z known to the learner",
-    "kernel bounded: k(x,x) <= c_k"
+    "Each of N arms has its own context x_{a,t} each round; reward mean f*(z_a, x_{a,t}) with f* in RKHS of product kernel k_Z(z,z') k_X(x,x') on augmented contexts",
+    "Task-similarity kernel matrix K_Z over arms is known to the learner"
    ],
-   "definition_quote": "Suppose the rewards $ [r_{a_{\\tau},\\tau}]_{\\tau = 1}^T$ are independent random variables with means $\\mathbb{E}[r_{a_{\\tau},\\tau}|x_{a_{\\tau},\\tau}] = f^*(\\tilde{x}_{a_{\\tau},\\tau}) $, where $f^* \\in {\\sH_{\\tilde{k}}}$ and $ \\|f^*\\|_{\\sH_{\\tilde{k}}} \\leq c$."
+   "definition_quote": "Observe context $x_{a,t} \\in \\mathbb{R}^d$ for all arms $a \\in [N]$ ... Choose an arm $a_t \\in [N]$ ... Receive a reward $r_{a_t,t}$ ... $R(T) =\\sum_{t =1}^T r_{a_t^*,t} - \\sum_{t =1}^T r_{a_t,t}$. ... $\\tilde{k}((z, x),(z',x')) = k_{\\sZ}(z,z')k_{\\sX}(x,x')$"
   }
  ],
  "algorithms": [
@@ -73,8 +109,10 @@
    ],
    "requires_knowledge_of": [
     "T",
+    "K",
     "S",
-    "K"
+    "kernel",
+    "lam"
    ]
   },
   {
@@ -85,7 +123,9 @@
    "techniques": [
     "optimism"
    ],
-   "requires_knowledge_of": []
+   "requires_knowledge_of": [
+    "kernel"
+   ]
   }
  ],
  "results": [
@@ -103,34 +143,33 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "2*sqrt(T) + 10*(sqrt(log(2*T*K*(log(T)+1)/delta)/2) + S*sqrt(lam))*sqrt(2*m_k*log(g_T))*sqrt(T*ceiling(log(T)))",
+    "expression": "2*sqrt(T) + 10*(sqrt(log(2*T*K*(log(T)+1)/delta)/2) + S*sqrt(lam))*sqrt(2*Max(1, c_k/lam)*log(g_T))*sqrt(T*ceiling(log(T)))",
     "expression_latex": "2 \\sqrt{T} + 10 \\Bigg( \\sqrt{\\frac{\\log \\Big( 2TN(\\log(T)+1)/\\delta \\Big)}{2}} +c \\sqrt{\\lambda} \\Bigg) \\sqrt{2m \\log g([T]}) \\sqrt{T \\lceil\\log(T)\\rceil}",
     "regime": null
    },
    "symbols": {
-    "g_T": "det(K_tilde_{T+1} + lam I)/lam^(T+1), data-dependent information-gain term",
-    "m_k": "max(1, c_k/lam)",
-    "c_k": "bound on kernel diagonal k(x,x) <= c_k"
+    "c_k": "upper bound on the product kernel diagonal, k~(x~,x~) <= c_k",
+    "g_T": "g([T]) = det(K~_{T+1} + lam I)/lam^{T+1}, data-dependent information-gain-like quantity"
    },
    "conditions": [
-    "rewards in [0,1]",
-    "||f*||_H <= S (paper's c)",
-    "k(x,x) <= c_k for all augmented contexts",
+    "rewards r_{a,t} in [0,1]",
+    "||f*||_H <= c (c mapped to S)",
+    "k~(x~,x~) <= c_k for all augmented contexts",
     "task similarity matrix K_Z known",
     "T >= 1"
    ],
    "tuning": [
-    "regularisation lam > 0",
-    "confidence parameter delta"
+    "lambda > 0 regularisation",
+    "alpha = sqrt(log(2TN/delta)/2) with delta replaced by delta/(Q+1)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:RB",
     "number": "Theorem 1",
-    "quote": "Assume that $r_{a,t} \\in [0,1], \\forall a \\in [N] $, $ T \\geq 1 $, $ \\| f^* \\|_{\\sH_{\\tilde{k}}} \\leq c $,  $ \\tilde{k}(\\tilde{x},\\tilde{x}) \\leq c_{\\tilde{k}}, \\forall \\tilde{x} \\in \\sXt$ and the task similarity matrix $K_Z$ is known. With probability at least $ 1-\\delta $, SupKMTL-UCB satisfies R(T) \\leq 2 \\sqrt{T} + 10 (...) \\sqrt{2m \\log g([T]}) \\sqrt{T \\lceil\\log(T)\\rceil} = O(\\sqrt{T \\log(g([T]))})"
+    "quote": "Assume that $r_{a,t} \\in [0,1], \\forall a \\in [N] $, $ T \\geq 1 $, $ \\| f^* \\|_{\\sH_{\\tilde{k}}} \\leq c $,  $ \\tilde{k}(\\tilde{x},\\tilde{x}) \\leq c_{\\tilde{k}}, \\forall \\tilde{x} \\in \\sXt$ and the task similarity matrix $K_Z$ is known. With probability at least $ 1-\\delta $, SupKMTL-UCB satisfies R(T) \\leq 2 \\sqrt{T} + 10 ( ... ) \\sqrt{2m \\log g([T]}) \\sqrt{T \\lceil\\log(T)\\rceil} = O(\\sqrt{T \\log(g([T]))})"
    },
    "confidence": "medium",
-   "notes": "Paper's N is K (number of arms), c is norm bound S. R(T) defined on realised rewards vs per-round best arm; proof bounds expected-reward regret then applies Azuma. Analysis uses a modified ridge problem without 1/n_{a,t-1} weights."
+   "notes": "N arms mapped to K; RKHS norm bound c mapped to S. Regret defined with realized rewards against per-round best arm; bound holds w.p. 1-delta. g([T]) is data dependent. Analysis is for the modified (unweighted) ridge objective."
   },
   {
    "id": "r2",
@@ -151,13 +190,13 @@
     "regime": null
    },
    "symbols": {
-    "g_T": "det(K_tilde_{T+1} + lam I)/lam^(T+1)"
+    "g_T": "g([T]) = det(K~_{T+1} + lam I)/lam^{T+1}"
    },
    "conditions": [
     "rewards in [0,1]",
     "||f*||_H <= S",
     "bounded kernel",
-    "task similarity matrix K_Z known"
+    "K_Z known"
    ],
    "tuning": [],
    "is_new": true,
@@ -167,7 +206,7 @@
     "quote": "&=& O \\Big(\\sqrt{T \\log(g([T]))} \\Big)"
    },
    "confidence": "medium",
-   "notes": "Simplified form from the same theorem; hides log(T N/delta) factors. Theorem 2 further bounds log g([T]) <= r_z r_x log(((T+1)c_k+lam)/lam) (ranks of task and context kernel matrices)."
+   "notes": "Big-O summary of Theorem 1, hiding log(TN/delta) factors."
   },
   {
    "id": "r3",
@@ -188,7 +227,7 @@
     "regime": null
    },
    "symbols": {
-    "r_eff": "effective rank of K_tilde_{T+1}: min{j : j lam log T >= sum_{i>j} lambda_i}"
+    "r_eff": "effective rank of K~_{T+1}: min{j : j*lam*log T >= sum_{i>j} lambda_i}"
    },
    "conditions": [
     "same as Theorem 1"
@@ -201,7 +240,7 @@
     "quote": "$\\log(g([T])) \\leq  r \\log\\Big(2T\\frac{2(T+1)c_{\\tilde{k}} + r\\lambda - r\\lambda \\log T }{r \\lambda}\\Big) $, and therefore $ R(T) = \\tilde{O}(\\sqrt{rT})$"
    },
    "confidence": "medium",
-   "notes": "Recovers the Kernel-UCB bound."
+   "notes": "Recovers Kernel-UCB-type bound. Theorem 2 further gives log g <= r_z r_x log(((T+1)c_k+lam)/lam), implying Õ(sqrt(r_z r_x T)) regret, not separately recorded since it is stated only as a bound on log g."
   }
  ],
  "cited_results": [
@@ -214,32 +253,50 @@
    "algorithm_name": "CGP-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Contextual GP bandit, agnostic case (no Gaussian prior on f*), RKHS-norm bounded reward function",
+   "setting_description": "Contextual GP bandit, agnostic case (f in RKHS, no GP prior)",
    "bound": {
     "notation": "O",
     "expression": "log(g_T)*sqrt(T)",
     "expression_latex": "O(\\log(g([T]))\\sqrt{T})",
     "regime": null
    },
-   "where": "Section 4.3 (Comparison with CGP-UCB)"
+   "where": "Section 4.3"
+  },
+  {
+   "cited_key": "chu2011contextual",
+   "cited_title": "Contextual bandits with linear payoff functions",
+   "cited_first_author": "W. Chu",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Lin-UCB (pooled, SupLinUCB analysis)",
+   "algorithm_registry_id": "lin_ucb",
+   "side": "upper",
+   "setting_description": "Linear contextual bandit, single shared parameter, d-dimensional contexts",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(d*T)",
+    "expression_latex": "\\tilde{O}(\\sqrt{d T})",
+    "regime": null
+   },
+   "where": "Section 4.2"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:19:36",
+  "date": "2026-10-21T15:29:22",
   "source_chars": 81571,
-  "input_tokens": 74022,
-  "output_tokens": 4691,
-  "cost_usd_equiv": 0.4684148,
+  "input_tokens": 80609,
+  "output_tokens": 4813,
+  "cost_usd_equiv": 0.47210199999999997,
   "status": "extracted"
  }
 }

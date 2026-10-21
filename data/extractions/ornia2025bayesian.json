@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Bayesian Decision Making around Experts",
   "arxiv_id": "2510.08113",
@@ -40,33 +40,66 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Before interaction the learner receives N i.i.d. outcomes D_N^* sampled from the optimal action of the true bandit (without action labels)",
-    "Outcome distributions parameterised by theta in Theta (countable in parts of the analysis), with a known model p_{theta,a}"
+    "learner receives before interaction an offline dataset of N i.i.d. outcomes from the expert's optimal action, without action labels",
+    "outcome distributions parameterised by theta in a (countable) parameter set Theta with prior P_0"
    ],
-   "definition_quote": "The learner gets an initial dataset $D^*_N=\\{Y_{n}^*\\}_{1\\leq n\\leq N}$ ... of samples from the optimal action, but cannot identify (yet) what action these correspond to."
+   "definition_quote": "Consider the case where a \\emph{learner} has to act optimally in an unknown environment, and is able to observe an \\emph{expert} (i.e. an agent that knows $\\theta^*$). This can manifest via (i) The learner gets an initial dataset $D^*_N=\\{Y_{n}^*\\}_{1\\leq n\\leq N}$ and (ii) The learner gets to observe new samples $Y_t^*$ as they start learning."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Thompson Sampling with expert-updated prior P_1(theta)=P(theta | D_N^*)",
+   "name": "Thompson Sampling with expert-updated prior P_1(theta)=P(theta|D_N^*)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -90,20 +123,6 @@
     "prior",
     "reward_family"
    ]
-  },
-  {
-   "id": "a3",
-   "name": "Information Choice with Trust Inference (Algorithm 2)",
-   "registry_id": null,
-   "is_new": true,
-   "techniques": [
-    "thompson_sampling",
-    "information_directed_sampling"
-   ],
-   "requires_knowledge_of": [
-    "prior",
-    "reward_family"
-   ]
   }
  ],
  "results": [
@@ -117,7 +136,7 @@
    "dependence": "instance_dependent",
    "comparator": "best_fixed_action",
    "probability": "expectation",
-   "horizon": "anytime",
+   "horizon": "known",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
@@ -126,22 +145,23 @@
     "regime": null
    },
    "symbols": {
-    "C_prob": "problem-dependent constant C (from Russo & Van Roy information-ratio bound)",
-    "H_0": "entropy of the optimal action under the prior P_0",
-    "I_0": "mutual information between optimal action A^* and expert data D_N^* under P_0"
+    "C_prob": "problem-dependent constant (from the information-ratio bound of Russo & Van Roy)",
+    "H_0": "prior entropy of the optimal action H_0(A^*)",
+    "I_0": "mutual information between optimal action and expert dataset D_N^* under P_0"
    },
    "conditions": [
-    "expectation taken over all randomness including the expert data D_N^*"
+    "expectation over all randomness including expert data D_N^*",
+    "expert data are N i.i.d. samples from the true optimal action distribution"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:regret_reduction",
     "number": "Theorem 1",
-    "quote": "Let an agent follow a Thompson Sampling algorithm with a prior inferred from the expert-updated posterior $P_1(\\theta) = P(\\theta \\mid D_N^*)$. Their expected Bayesian regret taken over all sources of randomness including the expert data $D_N^*$, is \\mathbb{E}[Reg_{\\text{TS}_1}(T)] \\le C \\sqrt{T \\left( \\mathbb{H}_0(A^*) - \\mathbb{I}_0(A^*; D_N^*) \\right)} where $C$ is a problem-dependent constant..."
+    "quote": "Let an agent follow a Thompson Sampling algorithm with a prior inferred from the expert-updated posterior $P_1(\\theta) = P(\\theta \\mid D_N^*)$. Their expected Bayesian regret taken over all sources of randomness including the expert data $D_N^*$, is \\mathbb{E}[Reg_{\\text{TS}_1}(T)] \\le C \\sqrt{T \\left( \\mathbb{H}_0(A^*) - \\mathbb{I}_0(A^*; D_N^*) \\right)} where $C$ is a problem-dependent constant"
    },
    "confidence": "medium",
-   "notes": "Paper's C renamed C_prob (not corruption). Derived from Russo & Van Roy (2016) via Jensen. Horizon recorded as anytime since TS does not use T; not explicitly stated."
+   "notes": "Direct consequence of Russo & Van Roy (2016) plus Jensen. Constant C is unspecified (related to the information ratio). Horizon: TS does not need T; marked known conservatively? Bound stated for fixed T. Regret defined with realized outcomes R(Y*_t)-R(Y_t) in expectation, which equals Bayesian pseudo-regret."
   }
  ],
  "cited_results": [
@@ -151,10 +171,10 @@
    "cited_first_author": "Daniel Russo",
    "cited_year": 2016,
    "cited_arxiv_id": null,
-   "algorithm_name": "Thompson Sampling / general Bayesian online learner",
+   "algorithm_name": "Thompson Sampling",
    "algorithm_registry_id": "posterior_sampling",
    "side": "upper",
-   "setting_description": "Bayesian multi-armed bandit, Bayesian regret bounded via information ratio upper bound Gamma_bar and entropy of optimal action",
+   "setting_description": "Bayesian bandit, finite actions, Bayesian regret of Thompson sampling / Bayesian learners bounded through information ratio Gamma_bar and entropy of the optimal action",
    "bound": {
     "notation": "exact",
     "expression": "sqrt(Gamma_bar*H_A*T)",
@@ -167,19 +187,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T13:58:36",
+  "date": "2026-10-21T15:07:33",
   "source_chars": 79022,
-  "input_tokens": 65629,
-  "output_tokens": 2488,
-  "cost_usd_equiv": 0.35721080000000005,
+  "input_tokens": 72216,
+  "output_tokens": 3023,
+  "cost_usd_equiv": 0.369158,
   "status": "extracted"
  }
 }

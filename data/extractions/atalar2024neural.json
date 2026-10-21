@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Neural Combinatorial Clustered Bandits for Recommendation Systems",
   "arxiv_id": "2410.14586",
@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Contextual combinatorial bandit with semi-bandit feedback and neural reward models",
+   "name_in_paper": "Contextual combinatorial bandit with semi-bandit feedback and neural (NTK) reward model",
    "objective": "cumulative_regret",
    "feedback": "semi_bandit",
    "environment": "stochastic_iid",
@@ -25,7 +25,7 @@
    "noise": "conditionally_subgaussian",
    "learner_knows": [
     "T",
-    "K",
+    "m",
     "S",
     "sigma"
    ],
@@ -33,33 +33,65 @@
    "extras": [],
    "action_set": {
     "shape": "finite",
-    "time_varying": "fixed",
-    "access": "explicit",
+    "time_varying": "adaptive_sequence",
+    "access": "not_applicable",
     "norm_bound": "unit_l2",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "m_set",
+    "reward": "nonlinear_monotone_lipschitz",
+    "loss_scale": "per_base_arm"
+   },
+   "reward_model": {
+    "kind": "neural_ntk"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "N base arms, super arms are all subsets of size K (paper's N is number of base arms, K super-arm size)",
-    "Unknown base-arm reward function h(x) in [0,1] learned by an overparameterized ReLU network (NTK regime); unknown monotone Lipschitz super-arm reward u(S,h) learned by a monotone neural network; no oracle",
-    "Clustered context-space structure (Assumptions 5-6)",
-    "Context sequence not specified as stochastic; contexts change across rounds"
+    "super arm reward function u is unknown (no optimization oracle) and is learned by a monotone neural network; learner also observes super arm reward",
+    "context space assumed to have a clustered structure (Assumptions 5-6)",
+    "base arm reward h(x) in [0,1] Lipschitz in context (l1 norm)"
    ],
-   "definition_quote": "At the start of every round t, the agent observes the context vectors of all arms ... and chooses a subset of the available arms, namely a super arm S_t \\subset [N] with a fixed size, or budget, K ... r_{t,i} = h(x_{t,i}) + \\xi_{t,i} ... where h is an unknown function satisfying 0 \\leq h(x) \\leq 1 and \\xi_{t,i} is \\zeta-sub-Gaussian noise"
+   "definition_quote": "we consider a contextual combinatorial bandit with $N$ being the total number of arms and $T$ the total number of rounds. At the start of every round $t$, the agent observes the context vectors of all arms ... and chooses ... a super arm $S_t \\subset [N]$ with a fixed size, or budget, $K$ ... r_{t,i} = h(x_{t,i}) + \\xi_{t,i} ... where h is an unknown function satisfying 0 <= h(x) <= 1 and \\xi_{t,i} is \\zeta-sub-Gaussian noise"
   }
  ],
  "algorithms": [
@@ -74,7 +106,7 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "K",
+    "m",
     "S",
     "sigma"
    ]
@@ -87,64 +119,58 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "regret_unspecified",
-   "dependence": "instance_dependent",
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
    "comparator": "best_action_per_round",
    "probability": "high_probability",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "O_tilde",
-    "expression": "d_tilde*sqrt(T)",
-    "expression_latex": "\\mathcal{R}(T) = \\widetilde{O}\\left(\\widetilde{d}\\sqrt{T}\\right)",
+    "expression": "d_eff*sqrt(T)",
+    "expression_latex": "\\widetilde{O}\\left(\\widetilde{d}\\sqrt{T}\\right)",
     "regime": null
    },
-   "symbols": {
-    "d_tilde": "effective dimension of the NTK matrix H with regularization lambda_1: log det(I + H/lambda_1)/log(1+TN/lambda_1)"
-   },
+   "symbols": {},
    "conditions": [
-    "Assumption 1: h Lipschitz in context (constant B')",
-    "Assumption 2: u Lipschitz in base-arm means (constant B)",
-    "Assumption 3: u monotone non-decreasing",
-    "Assumption 4: ||x||_2 = 1, symmetric context entries, NTK H >= lambda_0 I",
-    "Assumption 5: clustering assumption with decreasing delta_t (proof takes delta_t = C_5/t) and non-decreasing P_t",
-    "Assumption 6: mean cluster contexts have no zero entries",
-    "network width m satisfies Condition 1 (overparameterized)",
+    "Assumptions 1-6: h Lipschitz in context (B'), u Lipschitz (B) and monotone in base rewards, ||x||_2=1 with symmetric entries and NTK H >= lambda_0 I, clustering assumption (delta_t decreasing, P_t non-decreasing), nonzero mean cluster contexts",
+    "proof takes delta_t = C_5/t and P_t = C_6 sqrt(t)",
+    "network width m satisfies Condition 1 (overparameterization)",
     "S >= sqrt(2 h^T H^{-1} h)"
    ],
    "tuning": [
-    "eta_1 = C_1 (TKmL + m lambda_1)^{-1}",
-    "C_2 L K <= lambda_1 <= 16 m 81 T^{-2 beta alpha+1} K^2 n^{2L_m} / e_T^2",
+    "eta_1 = C_1 (T K m L + m lambda_1)^{-1}",
+    "C_2 L K <= lambda_1 <= 16 m 81 T^{-2 beta alpha+1} K^2 n^{2 L_m} / e_T^2",
     "J = 2 log(sqrt(lambda_1/(TK))/(lambda_1 + C_3 T K L)) T K L/(C_1 lambda_1)",
-    "beta*alpha = 1 in the proof"
+    "beta*alpha = 1"
    ],
    "is_new": true,
    "source": {
     "label": "thm_1",
     "number": "Theorem 1",
-    "quote": "Supposing that Assumptions 1-6 hold, let h=[h(x^i)]_{i=1}^{TN}, and select the hyperparameters ... Then if m is chosen such that it satisfies Condition 1, the cumulative expected regret of NeUClust over T rounds is bounded by \\mathcal{R}(T) = \\widetilde{O}(\\widetilde{d}\\sqrt{T})"
+    "quote": "Supposing that Assumptions \\ref{continuity_h}-\\ref{ell0_assump} hold, let $\\mathbf{h}=[h(\\mathbf{x}^i)]_{i=1}^{TN}]$, and select the hyperparameters of the algorithm as follows ... Then if $m$ is chosen such that it satisfies Condition 1, the cumulative expected regret of NeUClust over $T$ rounds is bounded by $\\mathcal{R}(T) = \\widetilde{O}\\left(\\widetilde{d}\\sqrt{T}\\right)$"
    },
    "confidence": "medium",
-   "notes": "Regret defined as sum of u(S_t*,h) - u(S_t,h) without explicit expectation; paper calls it 'cumulative expected regret' but the proof relies on high-probability events (1-Delta) from lemmas, so recorded as high-probability / regret_unspecified quantity ambiguity. Full explicit bound in appendix contains K, K^2, N, sqrt(d), n^{L_m} factors hidden in O-tilde. Appendix restates as Theorem 2 (same result)."
+   "notes": "d_eff is the NTK effective dimension. Regret is defined through expected super-arm rewards (pseudo-regret). The theorem calls it 'cumulative expected regret' but states no probability; the proof combines lemmas that each hold with probability 1-Delta (the explicit bound contains a -2 log Delta term), so I recorded it as high-probability. Canonical mapping: the paper's N (number of arms) is the canonical K, and the paper's K (super-arm size) is the canonical m. The explicit bound in the proof is linear in K (super-arm size) and depends on n^{L_m}, N and sqrt(d). The appendix 'Theorem 2' repeats this result."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:05:24",
+  "date": "2026-10-21T15:14:24",
   "source_chars": 107691,
-  "input_tokens": 82420,
-  "output_tokens": 2542,
-  "cost_usd_equiv": 0.4926188,
+  "input_tokens": 89007,
+  "output_tokens": 3636,
+  "cost_usd_equiv": 0.515746,
   "status": "extracted"
  }
 }

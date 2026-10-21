@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Analysis of Thompson Sampling for Combinatorial Multi-armed Bandit with Probabilistically Triggered Arms",
   "arxiv_id": "1809.02707",
@@ -16,7 +16,7 @@
    "id": "s1",
    "name_in_paper": "CMAB with probabilistically triggered arms (CMAB-PTA), semi-bandit feedback",
    "objective": "cumulative_regret",
-   "feedback": "semi_bandit",
+   "feedback": "triggered_semi_bandit",
    "environment": "stochastic_iid",
    "action_space": "combinatorial",
    "function_class": [],
@@ -25,37 +25,68 @@
    "noise": "bounded_01",
    "learner_knows": [],
    "instance_assumptions": [],
+   "extras": [],
    "action_set": {
     "shape": "finite",
     "time_varying": "fixed",
     "access": "linear_optimization_oracle",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
    },
-   "extras": [],
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "arbitrary_subset",
+    "reward": "unspecified",
+    "loss_scale": "unspecified"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Probabilistically triggered base arms: selected super arm triggers a random superset S'(t) of base arms whose outcomes are observed",
-    "Base arm outcomes mutually independent (Assumption 1)",
-    "Expected reward r(S,mu) depends only on S and mu (Assumption 2) and is B-Lipschitz in l1 norm over the triggering set (Assumption 3); nonlinear, non-monotone reward allowed",
-    "Learner has an exact computation oracle returning an optimal super arm for any parameter vector (not a linear optimization oracle per se)",
-    "Triggering process D^trig and reward function R are known; only outcome distribution D is unknown"
+    "Base arm outcomes mutually independent (D = D_1 x ... x D_m), outcomes in [0,1]",
+    "Expected reward r(S, mu) depends only on S and mean vector; Lipschitz in l1 norm over triggering set with constant B (no monotonicity assumed)",
+    "Learner knows the problem structure (feasible super arms, triggering function, reward function) and has an exact computation oracle; only D unknown"
    ],
-   "definition_quote": "At each round $t$, the environment draws a random outcome vector $\\pmb{X}(t)$ from a fixed probability distribution $D$ on $[0,1]^m$ independent of the previous rounds... We consider the semi-bandit feedback model, where at the end of round $t$, the learner observes the individual outcomes of the triggered arms... $\\text{Reg}(T) := \\mathbb{E}[ \\sum_{t=1}^T(r(S^*,\\pmb{\\mu})-r(S(t),\\pmb{\\mu})) ]$"
+   "definition_quote": "In short, the tuple $([m], {\\cal I}, D, D^{\\text{trig}}, R)$ constitutes a CMAB-PTA problem instance. Among the elements of this tuple only $D$ is unknown to the learner."
   }
  ],
  "algorithms": [
@@ -85,40 +116,39 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "sum_arms(16*B_lip**2*log(T)*G_i/((1 - rho)*p_i)) + (3 + K_trig**2/((1 - rho)*p_star*eps_alg**2) + 2*I_p/(rho**2*p_star))*m_base*Delta_max + alpha_const*8*k_trig/(p_star*eps_alg**2)*(4/eps_alg**2 + 1)**k_trig*log(k_trig/eps_alg**2)*Delta_max",
+    "expression": "16*L_lip**2*log(T)/(1 - rho)*sum_arms(F_i/p_i) + (3 + K_tilde**2/((1 - rho)*p_star*eps_alg**2) + 2*I_p/(rho**2*p_star))*m_base*Delta_max + alpha_c*8*k_tilde/(p_star*eps_alg**2)*(4/eps_alg**2 + 1)**k_tilde*log(k_tilde/eps_alg**2)*Delta_max",
     "expression_latex": "\\sum_{i=1}^m \\max_{S \\in {\\cal I} - \\text{OPT} :i\\in \\tilde{S}} \\frac{16B^2|\\tilde{S}|\\log T}{(1-\\rho)p_i(\\Delta_S - 2B(\\tilde{k}^{*2}+2)\\varepsilon)} + \\left( 3+\\frac{\\tilde{K}^2}{(1-\\rho)p^*\\varepsilon^2}+\\frac{2\\mathbb{I}\\{p^*<1\\}}{\\rho^2p^*} \\right) m\\Delta_{\\max} + \\alpha\\frac{8\\tilde{k}^*}{p^*\\varepsilon^2}\\left(\\frac{4}{\\varepsilon^2}+1\\right)^{\\tilde{k}^*}\\log\\frac{\\tilde{k}^*}{\\varepsilon^2} \\Delta_{\\max}",
-    "regime": "for all rho in (0,1) and 0 < eps <= 1/sqrt(e) with Delta_S > 2B(k_trig^2+2) eps for all suboptimal S"
+    "regime": "for all rho in (0,1) and 0 < eps <= 1/sqrt(e) with Delta_S > 2B(k_tilde^2+2)eps for all suboptimal S"
    },
    "symbols": {
-    "B_lip": "Lipschitz constant B of the expected reward (Assumption 3)",
-    "G_i": "max over suboptimal super arms S whose triggering set contains base arm i of |tilde S|/(Delta_S - 2*B*(k_trig^2+2)*eps)",
+    "L_lip": "Lipschitz constant B of the expected reward in l1 norm (Assumption 3)",
+    "m_base": "number of base arms m",
     "p_i": "minimum nonzero triggering probability of base arm i",
-    "p_star": "minimum nonzero triggering probability over all base arms",
-    "rho": "free analysis parameter in (0,1)",
-    "K_trig": "maximum triggering set size over all super arms",
-    "k_trig": "triggering set size of the optimal super arm S* (tilde k*)",
+    "F_i": "max over suboptimal S with i in triggering set of |S_tilde|/(Delta_S - 2B(k_tilde^2+2)eps)",
+    "K_tilde": "maximum triggering set size over super arms",
+    "k_tilde": "size of triggering set of optimal super arm S* with minimal triggering set",
     "I_p": "indicator that p_star < 1",
-    "m_base": "number of base arms m (sum_arms ranges over base arms)",
-    "alpha_const": "problem-independent constant alpha > 0, independent of T"
+    "rho": "free analysis parameter in (0,1)",
+    "alpha_c": "problem-independent constant alpha",
+    "eps_alg": "free analysis parameter epsilon"
    },
    "conditions": [
-    "Assumption 1: base arm outcomes mutually independent",
-    "Assumption 2: expected reward depends only on S and mu",
-    "Assumption 3: reward B-Lipschitz in l1 norm over triggering set",
-    "exact computation oracle available",
-    "outcomes in [0,1]"
+    "Base arm outcomes mutually independent (Assumption 1)",
+    "Expected reward depends only on S and mu (Assumption 2)",
+    "Expected reward Lipschitz in l1 norm over triggering set with constant B (Assumption 3)",
+    "Exact computation oracle available"
    ],
    "tuning": [
-    "Beta(1,1) priors with Bernoulli trial updates"
+    "Beta(1,1) priors with Bernoulli-trial update"
    ],
    "is_new": true,
    "source": {
     "label": "t:gapdependent",
     "number": "Theorem 1",
-    "quote": "Under Assumptions 1, 2 and 3, for all $D$, the regret of CTS by round $T$ is bounded as follows: \\text{Reg}(T) \\leq \\sum_{i=1}^m \\max_{S \\in {\\cal I} - \\text{OPT} :i\\in \\tilde{S}} \\frac{16B^2|\\tilde{S}|\\log T}{(1-\\rho)p_i(\\Delta_S - 2B(\\tilde{k}^{*2}+2)\\varepsilon)} + ... for all $\\rho\\in(0,1)$, and for all $0 < \\varepsilon\\leq 1/\\sqrt{e}$ such that $\\forall S\\in\\mathcal{I}-\\text{OPT}$, $\\Delta_S>2B(\\tilde{k}^{*2}+2)\\varepsilon$"
+    "quote": "Under Assumptions \\ref{a:independence}, \\ref{a:rdependence} and \\ref{a:rsmoothness}, for all $D$, the regret of CTS by round $T$ is bounded as follows: ... for all $\\rho\\in(0,1)$, and for all $0 < \\varepsilon\\leq 1/\\sqrt{e}$ such that $\\forall S\\in\\mathcal{I}-\\text{OPT}$, $\\Delta_S>2B(\\tilde{k}^{*2}+2)\\varepsilon$, where $B$ is the Lipschitz constant ..., $\\alpha >0$ is a problem independent constant ..., and $\\tilde{K} := \\max_{S\\in\\mathcal{I}}|\\tilde{S}|$ is the maximum triggering set size among all super arms."
    },
    "confidence": "medium",
-   "notes": "Abstract summarises as O(sum_i log T/(p_i Delta_i)). The per-arm max term encoded via declared symbol G_i. Regret is defined via expected reward gaps, so pseudo-regret. CTS does not use T."
+   "notes": "Regret defined via expected reward gaps, so pseudo-regret. CTS does not use T, so anytime. Abstract summarises as O(sum_i log T/(p_i Delta_i)). The max over S was folded into the declared per-arm symbol F_i. Paper's m (number of base arms) is renamed m_base because canonical m means something else."
   }
  ],
  "cited_results": [
@@ -141,6 +171,42 @@
    "where": "Section 4.1"
   },
   {
+   "cited_key": "kvetonlinear",
+   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
+   "cited_first_author": "B. Kveton",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CombUCB1",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic combinatorial semi-bandit, linear reward; m base arms, K max super-arm size, Delta gap",
+   "bound": {
+    "notation": "O",
+    "expression": "K*m_base*log(T)/Delta",
+    "expression_latex": "O(K m \\log T/ \\Delta)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "kvetonlinear",
+   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
+   "cited_first_author": "B. Kveton",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CombUCB1",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic combinatorial semi-bandit, linear reward; gap-free",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*m_base*T*log(T))",
+    "expression_latex": "O( \\sqrt{K m T \\log T})",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
    "cited_key": "chen2013combinatorial",
    "cited_title": "Combinatorial multi-armed bandit: General framework and applications",
    "cited_first_author": "W. Chen",
@@ -149,14 +215,14 @@
    "algorithm_name": "CUCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "General CMAB with monotone, bounded smooth reward (f(x)=gamma x), approximation oracle, alpha-beta regret",
+   "setting_description": "General CMAB with monotone bounded-smooth reward, approximation oracle, alpha-beta regret, f(x)=gamma x",
    "bound": {
     "notation": "O",
     "expression": "sum_arms(log(T)/Delta_i)",
     "expression_latex": "O(\\sum_{i=1}^m \\log T / \\Delta_{i})",
     "regime": null
    },
-   "where": "Section 1"
+   "where": "Introduction"
   },
   {
    "cited_key": "wang18cts",
@@ -167,68 +233,32 @@
    "algorithm_name": "CTS",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "General CMAB (no triggering) with Lipschitz expected reward and exact oracle",
+   "setting_description": "General CMAB (no triggering), Lipschitz expected reward, exact oracle",
    "bound": {
     "notation": "O",
     "expression": "sum_arms(log(T)/Delta_i)",
     "expression_latex": "O(\\sum_{i=1}^m \\log T / \\Delta_{i})",
     "regime": null
    },
-   "where": "Section 1"
-  },
-  {
-   "cited_key": "kvetonlinear",
-   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
-   "cited_first_author": "B. Kveton",
-   "cited_year": 2015,
-   "cited_arxiv_id": null,
-   "algorithm_name": "CombUCB1",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Linear combinatorial semi-bandit; paper's m = number of base arms, K = max super arm size (canonical m); Delta = gap between best and second best super arm",
-   "bound": {
-    "notation": "O",
-    "expression": "K*m*log(T)/Delta",
-    "expression_latex": "O(K m \\log T/ \\Delta)",
-    "regime": null
-   },
-   "where": "Section 1"
-  },
-  {
-   "cited_key": "kvetonlinear",
-   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
-   "cited_first_author": "B. Kveton",
-   "cited_year": 2015,
-   "cited_arxiv_id": null,
-   "algorithm_name": "CombUCB1",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Linear combinatorial semi-bandit, gap-free; paper's m = number of base arms, K = max super arm size",
-   "bound": {
-    "notation": "O",
-    "expression": "sqrt(K*m*T*log(T))",
-    "expression_latex": "O( \\sqrt{K m T \\log T})",
-    "regime": null
-   },
-   "where": "Section 1"
+   "where": "Introduction"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:08:14",
+  "date": "2026-10-21T15:16:56",
   "source_chars": 67456,
-  "input_tokens": 136948,
-  "output_tokens": 8812,
-  "cost_usd_equiv": 0.539037,
+  "input_tokens": 72640,
+  "output_tokens": 5067,
+  "cost_usd_equiv": 0.41343,
   "status": "extracted"
  }
 }

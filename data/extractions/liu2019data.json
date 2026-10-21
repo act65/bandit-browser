@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Data Poisoning Attacks on Stochastic Bandits",
   "arxiv_id": "1905.06494",
@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Online attack system model (reward poisoning of stochastic bandits)",
+   "name_in_paper": "Online attack on stochastic bandits",
    "objective": "other_pure_exploration",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -24,8 +24,8 @@
    "context": "none",
    "noise": "subgaussian",
    "learner_knows": [
-    "sigma",
-    "K"
+    "K",
+    "sigma"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -35,43 +35,74 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
-   "in_scope": true,
-   "out_of_scope_reason": null,
+   "in_scope": false,
+   "out_of_scope_reason": "Guarantees are for an attacker (reward-poisoning adversary) rather than the learner.",
    "unmapped": [
-    "The 'learner' analysed is an attacker that observes (a_t, r_t) and adds a perturbation eps_t to the reward fed to an unknown bandit algorithm with O(log T) regret",
-    "Objective: force the bandit algorithm to pull a suboptimal target arm a* T-o(T) times while minimizing l1 attack cost sum_t |eps_t|",
-    "learner_knows refers to the attacker's knowledge (sigma, K, delta)"
+    "attacker observes the learner's arm and perturbs the reward; goal is to force pulls of a target arm with small l1 attack cost",
+    "the learner is any algorithm with O(log T) regret"
    ],
-   "definition_quote": "The attacker stealthily monitors the decision of the bandit algorithm $a_t$ at each time $t$ and poisons the reward signal returned from the bandit environment by equation (\\ref{eqn:poison}). Then the bandit algorithm receives the manipulated reward signal $r'_t$ and updates unaware of the attacker."
+   "definition_quote": "The attacker eavesdrops on the decision (i.e., $a_t$) of the bandit algorithm and poisons the reward by adding an arbitrary $\\epsilon_t\\in\\mathcal{R}$. ... we consider the $l^1$-norm attack cost."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Adaptive attack by Constant Estimation (ACE)",
+   "name": "ACE (Adaptive attack by Constant Estimation)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
-    "other"
+    "optimism"
    ],
    "requires_knowledge_of": [
-    "sigma",
     "K",
-    "delta"
+    "sigma"
    ]
   },
   {
@@ -82,9 +113,7 @@
    "techniques": [
     "other"
    ],
-   "requires_knowledge_of": [
-    "C_a upper bounds on [mu_a - mu_{a*}]^+"
-   ]
+   "requires_knowledge_of": []
   }
  ],
  "results": [
@@ -97,13 +126,13 @@
    "quantity": "other",
    "dependence": "instance_dependent",
    "comparator": "not_applicable",
-   "probability": "high_probability",
+   "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
     "expression": "sum_nontarget(Max(mu_i - mu_target, 0) + 4*beta_1)*log(T)",
-    "expression_latex": "\\sum_{t=1}^T|\\epsilon_t| \\leq O\\left(\\sum_{a\\not= a^*}\\left([\\mu_a-\\mu_{a^*}]^+ + 4\\beta(1)\\right) \\log T\\right)",
+    "expression_latex": "O\\left(\\sum_{a\\not= a^*}\\left([\\mu_a-\\mu_{a^*}]^+ + 4\\beta(1)\\right) \\log T\\right)",
     "regime": null
    },
    "symbols": {
@@ -112,21 +141,21 @@
     "beta_1": "beta(1) = sqrt(2 sigma^2 log(pi^2 K/(3 delta)))"
    },
    "conditions": [
-    "the bandit algorithm achieves O(log T) regret with probability at least 1-delta",
-    "target arm a* is suboptimal",
-    "delta in (0, 0.5)"
+    "learner achieves O(log T) regret with probability at least 1-delta",
+    "delta in (0,0.5)",
+    "holds with probability at least 1-2delta"
    ],
    "tuning": [
-    "confidence parameter delta used in beta(n)"
+    "confidence delta"
    ],
    "is_new": true,
    "source": {
     "label": "thm:adaptive",
     "number": "Theorem 4",
-    "quote": "Given any $\\delta\\in(0,0.5)$, assume that the bandit algorithm achieves an $O(\\log T)$ regret bound with probability at least $1-\\delta$. With probability at least $1-2\\delta$, the ACE attacker forces the bandit algorithm to play the target arm $a^*$ in $N_{a^*}(T)$ times, such that $N_{a^*}(T) = T-o(T)$, ... In particular, with probability at least $1-2\\delta$, the ACE attack is successful and the accumulated attack cost is $\\sum_{t=1}^T|\\epsilon_t| \\leq O(\\sum_{a\\not= a^*}([\\mu_a-\\mu_{a^*}]^+ + 4\\beta(1)) \\log T)$."
+    "quote": "Given any $\\delta\\in(0,0.5)$, assume that the bandit algorithm achieves an $O(\\log T)$ regret bound with probability at least $1-\\delta$. With probability at least $1-2\\delta$, the ACE attacker forces the bandit algorithm to play the target arm $a^*$ in $N_{a^*}(T)$ times, such that $N_{a^*}(T) = T-o(T)$ ... the accumulated attack cost is $\\sum_{t=1}^T|\\epsilon_t| \\leq O(\\sum_{a\\not= a^*}([\\mu_a-\\mu_{a^*}]^+ + 4\\beta(1)) \\log T)$."
    },
    "confidence": "medium",
-   "notes": "Bound on the attacker's cumulative l1 attack cost (not regret), holding w.p. >= 1-2delta; also guarantees N_{a*}(T)=T-o(T), i.e. linear regret for the victim. Theorem also gives a per-round cost bound."
+   "notes": "Bound is on the attacker's cumulative l1 cost, holding with probability 1-2delta (the probability enum has no high-prob option for 'other'; it is recorded in the conditions). Also forces N_{a*}(T) = T - o(T)."
   },
   {
    "id": "r2",
@@ -151,7 +180,7 @@
     "C_a": "constant attack magnitude for arm a"
    },
    "conditions": [
-    "the bandit algorithm achieves O(log T) regret",
+    "learner achieves O(log T) regret",
     "C_a > [mu_a - mu_{a*}]^+ for all a != a*"
    ],
    "tuning": [],
@@ -162,20 +191,20 @@
     "quote": "Assume that the bandit algorithm achieves an $O(\\log T)$ regret bound. Then the constant attack with $\\{C_a\\}_{a\\not=a^*}$ succeeds if and only if $C_a > [\\mu_{a}-\\mu_{a^*}]^+$, $\\forall a \\not= a^*$. If the attack succeeds, then the expected attack cost is $O(\\sum_{a\\not= a^*}C_a\\log T)$."
    },
    "confidence": "medium",
-   "notes": "Expected attack cost of the oracle constant attack; quantity is attack cost, not regret."
+   "notes": "Expected l1 attack cost of the oracle constant attack."
   }
  ],
  "cited_results": [
   {
    "cited_key": "jun2018adversarial",
    "cited_title": "Adversarial attacks on stochastic bandits",
-   "cited_first_author": "Jun, K.-S.",
+   "cited_first_author": "Jun",
    "cited_year": 2018,
    "cited_arxiv_id": "1810.12188",
    "algorithm_name": "Oracle attack",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Online reward-poisoning attack on a stochastic bandit algorithm with O(log T) regret; attacker knows the means; expected attack cost",
+   "setting_description": "Expected attack cost of the oracle reward-poisoning attack (knows the means) against any bandit algorithm with O(log T) regret",
    "bound": {
     "notation": "O",
     "expression": "sum_nontarget(Max(mu_i - mu_target + xi, 0))*log(T)",
@@ -188,19 +217,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:31:05",
+  "date": "2026-10-21T15:42:46",
   "source_chars": 58797,
-  "input_tokens": 55862,
-  "output_tokens": 3444,
-  "cost_usd_equiv": 0.2981948,
+  "input_tokens": 62449,
+  "output_tokens": 3894,
+  "cost_usd_equiv": 0.308442,
   "status": "extracted"
  }
 }

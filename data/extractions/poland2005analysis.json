@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "FPL Analysis for Adaptive Bandits",
   "arxiv_id": "cs/0507062",
@@ -33,25 +33,56 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
-   "unmapped": [
-    "costs (losses) rather than rewards"
-   ],
+   "unmapped": [],
    "definition_quote": "Assume that $c_1,c_2,\\ldots\\in [0,1]^n$ is a sequence of cost vectors. There are $n\\geq 1$ experts. ... Then an adaptive adversary is a function $A:[0,1]^{n\\times t-1}\\times \\{1\\ldots n\\}^{t-1}\\to[0,1]^n$."
   },
   {
@@ -76,25 +107,57 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "countably infinite arm set (action_space finite_K used as closest unstructured option)",
-    "learner knows prior weights w^i summing to at most 1"
+    "countably infinite arm set; each arm has a prior weight w^i known to the learner, weights summing to at most 1; regret bound depends on the reference arm's weight"
    ],
    "definition_quote": "The adversary subsequently generates cost vectors $c_t\\in[0,1]^\\infty$, and at each time $t$ we have to select one index or expert $i$ and incur its cost $c_t^i$. We learn only the cost of the selected expert. As a prerequisite, we need that each of the infinitely many experts is associated with a prior weight $w^i$"
   }
@@ -102,12 +165,12 @@
  "algorithms": [
   {
    "id": "a1",
-   "name": "bFPL (bandit-FPL, exploration rounds only)",
+   "name": "bFPL (bandit-FPL with designated exploration rounds)",
    "registry_id": null,
    "is_new": false,
    "techniques": [
     "other",
-    "explore_then_commit"
+    "epsilon_greedy"
    ],
    "requires_knowledge_of": [
     "K"
@@ -143,7 +206,8 @@
    "registry_id": null,
    "is_new": false,
    "techniques": [
-    "other"
+    "other",
+    "epsilon_greedy"
    ],
    "requires_knowledge_of": []
   }
@@ -179,77 +243,13 @@
    "source": {
     "label": "thMain",
     "number": "Theorem 2",
-    "quote": "Let $\\gamma_t=\\min\\big\\{1,t^{-\\frac{1}{3}}\\big(n\\sqrt{\\log n}\\big)^{\\frac{2}{3}}\\big\\}$ and $\\eta_t=\\frac{\\gamma_t}{n^2} t^{-\\frac{1}{3}}\\big(n\\sqrt{\\log n}\\big)^{\\frac{2}{3}}$. Then, for any $T\\geq(n\\log n)^2$, each expert $i\\in\\{1\\ldots n\\}$, and \\emph{any} adaptive assignment of the costs $c_1,c_2,\\ldots$, bFPL satisfies the regret bound \\Expect c\\leqT\\bfpl-c\\leqT^i \\leq 4\\Big(Tn\\sqrt{\\log n}\\Big)^{\\frac{2}{3}}."
+    "quote": "Let $\\gamma_t=\\min\\big\\{1,t^{-\\frac{1}{3}}\\big(n\\sqrt{\\log n}\\big)^{\\frac{2}{3}}\\big\\}$ and $\\eta_t=\\frac{\\gamma_t}{n^2} t^{-\\frac{1}{3}}\\big(n\\sqrt{\\log n}\\big)^{\\frac{2}{3}}$. Then, for any $T\\geq(n\\log n)^2$, each expert $i\\in\\{1\\ldots n\\}$, and \\emph{any} adaptive assignment of the costs $c_1,c_2,\\ldots$, bFPL satisfies the regret bound $\\Expect c\\leqT\\bfpl-c\\leqT^i \\leq 4\\Big(Tn\\sqrt{\\log n}\\Big)^{\\frac{2}{3}}$."
    },
-   "confidence": "high",
-   "notes": "Regret E[cost] - E[c^i_{1:T}] for each fixed expert i (max outside expectation), recorded as pseudo_regret. n = K. Rates do not depend on T, so anytime. Also holds in label-efficient setting."
+   "confidence": "medium",
+   "notes": "n = number of experts = K. Regret is E[cost] minus cost of fixed expert i, for each i (max outside expectation), so recorded as pseudo-regret. Parenthetical: for T<(n log n)^2 regret at most (n log n)^2. Also holds for label-efficient setting per Section 4."
   },
   {
    "id": "r2",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "pseudo_regret",
-   "dependence": "worst_case",
-   "comparator": "best_fixed_action",
-   "probability": "expectation",
-   "horizon": "anytime",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "exact",
-    "expression": "(K*log(K))**2",
-    "expression_latex": "(n\\log n)^2",
-    "regime": "T < (K*log(K))**2"
-   },
-   "symbols": {},
-   "conditions": [
-    "T < (n log n)^2"
-   ],
-   "tuning": [
-    "same as Theorem 2"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "thMain",
-    "number": "Theorem 2",
-    "quote": "(For $T<(n\\log n)^2$, the regret is clearly at most $(n\\log n)^2$.)"
-   },
-   "confidence": "medium",
-   "notes": "Trivial branch stated parenthetically in Theorem 2."
-  },
-  {
-   "id": "r3",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "other",
-   "dependence": "worst_case",
-   "comparator": "not_applicable",
-   "probability": "high_probability",
-   "horizon": "anytime",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "exact",
-    "expression": "sqrt(2*T*log(2/delta))",
-    "expression_latex": "c\\leqT\\bfpl\\leq\\Expect c\\leqT\\bfpl+\\sqrt{2T\\log\\tfrac{2}{\\delta}}",
-    "regime": null
-   },
-   "symbols": {},
-   "conditions": [],
-   "tuning": [],
-   "is_new": true,
-   "source": {
-    "label": "propHP",
-    "number": "Proposition 3",
-    "quote": "For each $T\\geq 1$ and $0\\leq\\delta\\leq 1$, the actual costs of bFPL are bounded with probability at least $1-\\delta$ by c\\leqT\\bfpl\\leq\\Expect c\\leqT\\bfpl+\\sqrt{2T\\log\\tfrac{2}{\\delta}}."
-   },
-   "confidence": "medium",
-   "notes": "Bound on deviation of actual cumulative cost above expected cost (Azuma), not itself a regret bound."
-  },
-  {
-   "id": "r4",
    "setting": "s1",
    "side": "upper",
    "algorithm": "a2",
@@ -268,22 +268,22 @@
    },
    "symbols": {},
    "conditions": [
-    "sampling probabilities P(I_t = i) provided by an oracle"
+    "sampling probabilities P(I_t = i) are provided by an oracle"
    ],
    "tuning": [
-    "eta_t = sqrt(log n / (2 n t))"
+    "eta_t = sqrt(log n/(2 n t))"
    ],
    "is_new": true,
    "source": {
     "label": "thChati",
     "number": "Theorem 4",
-    "quote": "The algorithm FPL (\\ref{eqFPL}), obtaining cost estimates according to (\\ref{eq:chati}) and with learning rate $\\eta_t=\\sqrt{\\frac{\\log n}{2nt}}$ achieves a regret of at most \\Expect c\\leqT\\fpl-c\\leqT^i \\leq 2\\sqrt{2Tn\\log n} for any i."
+    "quote": "The algorithm FPL (\\ref{eqFPL}), obtaining cost estimates according to (\\ref{eq:chati}) and with learning rate $\\eta_t=\\sqrt{\\frac{\\log n}{2nt}}$ achieves a regret of at most $\\Expect c\\leqT\\fpl-c\\leqT^i \\leq 2\\sqrt{2Tn\\log n}$ for any $i\\in\\{1\\ldots n\\}$."
    },
-   "confidence": "high",
-   "notes": "Requires oracle access to FPL's selection probabilities (computationally infeasible per the paper). Holds against adaptive adversary via the paper's argument."
+   "confidence": "medium",
+   "notes": "Requires oracle access to FPL's sampling probabilities (computationally infeasible per paper). Adaptive adversary."
   },
   {
-   "id": "r5",
+   "id": "r3",
    "setting": "s1",
    "side": "upper",
    "algorithm": "a3",
@@ -304,20 +304,20 @@
    "conditions": [],
    "tuning": [
     "gamma_t = 1/(2 sqrt t)",
-    "k = ceil(2 t^2 log(2 sqrt t)) Monte Carlo samples",
-    "eta_t = sqrt(log n / (2 n t))"
+    "k = ceil(2 t^2 log(2 sqrt t)) Monte Carlo samples per round",
+    "eta_t = sqrt(log n/(2 n t))"
    ],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Theorem 6",
-    "quote": "Let $\\gamma_t=\\frac{1}{2\\sqrt t}$ be the exploration threshold. In each time step, after selecting one expert $i$, let FPL obtain an estimate $\\hat p_t^i=\\max\\{\\gamma_t,\\tfrac{a^i(k)}{k}-\\tfrac{\\gamma_t^2}{\\sqrt 2}\\}$ ... by sampling the perturbed leader $k=\\lceil2t^{2}\\log(2\\sqrt{t})\\rceil$ times ... Then the algorithm FPL with learning rate $\\eta_t=\\sqrt{\\frac{\\log n}{2nt}}$ achieves a regret of at most \\Expect c\\leqT\\fpl-c\\leqT^i \\leq 2\\sqrt{2Tn\\log n} +7\\sqrt T"
+    "quote": "Let $\\gamma_t=\\frac{1}{2\\sqrt t}$ be the exploration threshold. ... by sampling the perturbed leader $k=\\big\\lceil2t^{2}\\log(2\\sqrt{t})\\big\\rceil$ times ... Then the algorithm FPL (\\ref{eqFPL}) with learning rate $\\eta_t=\\sqrt{\\frac{\\log n}{2nt}}$ achieves a regret of at most $\\Expect c\\leqT\\fpl-c\\leqT^i \\leq 2\\sqrt{2Tn\\log n} +7\\sqrt T$ for any $i\\in\\{1\\ldots n\\}$."
    },
-   "confidence": "high",
-   "notes": "O(t^2 log t) samples per step, polynomial time per round."
+   "confidence": "medium",
+   "notes": "O(t^2 log t) samples per step; polynomial time per round."
   },
   {
-   "id": "r6",
+   "id": "r4",
    "setting": "s2",
    "side": "upper",
    "algorithm": "a4",
@@ -335,10 +335,10 @@
     "regime": null
    },
    "symbols": {
-    "w_i": "prior weight of reference expert i (weights sum to at most 1)"
+    "w_i": "prior weight of the reference expert i (weights sum to at most 1)"
    },
    "conditions": [
-    "prior weights sum to at most 1"
+    "prior weights w^i sum to at most 1"
    ],
    "tuning": [
     "tau^i = ceil((1/w^i)^8)",
@@ -349,10 +349,10 @@
    "source": {
     "label": "thInf",
     "number": "Theorem 7",
-    "quote": "Consider a bandit problem with countably many arms/experts, each expert $i$ having a prior weight $w^i$ such that the weights sum up to at most $1$. Then the above described bFPL variant with entering times ..., exploration rate $\\gamma_t=t^{-\\frac{1}{4}}$, and learning rate $\\eta_t=t^{-\\frac{3}{4}}$, satisfies the regret bound \\Expect c\\leqT\\bfpl-c\\leqT^i \\leq O(...) for all $T\\geq 1$, any adaptive assignment of the cost vectors and any reference expert $i$."
+    "quote": "Consider a bandit problem with countably many arms/experts, each expert $i$ having a prior weight $w^i$ such that the weights sum up to at most $1$. Then the above described bFPL variant with entering times $\\tau^i=\\left\\lceil\\big(\\frac{1}{w^i}\\big)^8\\right\\rceil$, exploration rate $\\gamma_t=t^{-\\frac{1}{4}}$, and learning rate $\\eta_t=t^{-\\frac{3}{4}}$, satisfies the regret bound $\\Expect c\\leqT\\bfpl-c\\leqT^i \\leq O\\left(\\Big(\\tfrac{1}{w^i}\\Big)^{11}+T^{\\frac{3}{4}}\\log w^i\\right)$ for all $T\\geq 1$"
    },
-   "confidence": "medium",
-   "notes": "Proof omitted in paper. Expression recorded as printed (log w^i, presumably meant log(1/w^i))."
+   "confidence": "low",
+   "notes": "Recorded as written; 'log w^i' is presumably meant as log(1/w^i) (as written it is negative). Formal proof omitted in paper."
   }
  ],
  "cited_results": [
@@ -365,7 +365,7 @@
    "algorithm_name": "weighted forecaster (Auer et al.)",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "adversarial K-armed bandit against adaptive adversary",
+   "setting_description": "adversarial K-armed bandit against adaptive adversary, costs in [0,1]",
    "bound": {
     "notation": "O",
     "expression": "sqrt(T*K*log(K))",
@@ -380,10 +380,10 @@
    "cited_first_author": "H. B. McMahan",
    "cited_year": 2004,
    "cited_arxiv_id": null,
-   "algorithm_name": "FPL bandit workaround (McMahan & Blum)",
+   "algorithm_name": "FPL-based bandit algorithm (McMahan & Blum)",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "adversarial bandit online decision / geometric online optimization against adaptive adversary",
+   "setting_description": "bandit online decision / geometric online optimization against adaptive adversary",
    "bound": {
     "notation": "O",
     "expression": "T**(3/4)*sqrt(log(T))",
@@ -401,7 +401,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "label efficient prediction problem, any forecaster",
+   "setting_description": "label efficient prediction problem; any forecaster",
    "bound": {
     "notation": "Omega",
     "expression": "T**(2/3)",
@@ -414,19 +414,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T13:58:02",
+  "date": "2026-10-21T15:06:39",
   "source_chars": 51592,
-  "input_tokens": 55168,
-  "output_tokens": 6974,
-  "cost_usd_equiv": 0.3632428,
+  "input_tokens": 61755,
+  "output_tokens": 6494,
+  "cost_usd_equiv": 0.35489,
   "status": "extracted"
  }
 }

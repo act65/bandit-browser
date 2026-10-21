@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Stochastic Linear Optimization with Adversarial Corruption",
   "arxiv_id": "1909.02109",
@@ -25,7 +25,8 @@
    "context": "none",
    "noise": "subgaussian",
    "learner_knows": [
-    "T"
+    "T",
+    "d"
    ],
    "instance_assumptions": [
     "unique_optimal_arm"
@@ -37,27 +38,59 @@
     "access": "explicit",
     "norm_bound": "unit_l2",
     "parameter_set": "l2_ball",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
    },
    "corruption": {
     "adversary": "adaptive",
     "budget_measure": "per_path",
     "structure": "arbitrary",
-    "regret_reference": "uncorrupted"
+    "regret_reference": "uncorrupted",
+    "model": "budget",
+    "target": "rewards"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "corruption functions c_t: D -> [-1,1]; C = sum_t max_x |c_t(x)| unknown to the learner",
-    "action set D is a d-dimensional polytope"
+    "corruption functions c_t: D -> [-1,1] chosen per round; corruption budget C unknown to the learner"
    ],
-   "definition_quote": "Let $\\xSet \\subseteq \\reals^\\dimension$ be a $\\dimension$-polytope... $\\{\\noise_t\\}$ a sequence of sub-Gaussian random noise with mean 0 and variance proxy 1... there is an adaptive adversary who may corrupt the observed reward by choosing a corruption function $c_t:D \\to [-1, 1]$... The value of $C$ is unknown to the algorithm, which is, in turn, evaluated by pseudo-regret"
+   "definition_quote": "Let $\\xSet \\subseteq \\reals^\\dimension$ be a $\\dimension$-polytope. ... reward as $\\reward_t(\\context_t) = \\inner{\\context_t}{\\hidden} + \\noise_t$ ... sub-Gaussian random noise with mean 0 and variance proxy 1 ... $\\norm{\\hidden}_2 \\leq 1$ and $\\norm{\\context}_2 \\leq 1$ ... there is an adaptive adversary who may corrupt the observed reward by choosing a corruption function $\\corruptionf_t:\\xSet \\to [-1, 1]$ ... The value of $\\corruption$ is unknown to the algorithm, which is, in turn, evaluated by pseudo-regret"
   }
  ],
  "algorithms": [
@@ -68,25 +101,12 @@
    "is_new": true,
    "techniques": [
     "explore_then_commit",
+    "elimination",
     "other"
    ],
    "requires_knowledge_of": [
     "T",
-    "delta"
-   ]
-  },
-  {
-   "id": "a2",
-   "name": "SBE with polynomial-time weak Löwner-John ellipsoid (zeta = 2^14 d^6 log(4d log T/delta))",
-   "registry_id": null,
-   "is_new": true,
-   "techniques": [
-    "explore_then_commit",
-    "other"
-   ],
-   "requires_knowledge_of": [
-    "T",
-    "delta"
+    "d"
    ]
   }
  ],
@@ -106,34 +126,33 @@
    "bound": {
     "notation": "O",
     "expression": "d**2*C*log(T)/Delta_lin + d**5*log(d*log(T)/delta)*log(T)/Delta_lin**2",
-    "expression_latex": "\\frac{d^{2} C \\log T}{\\Delta} + \\frac{d^5 \\log (d \\log T/\\delta)\\log T}{\\Delta^2}",
+    "expression_latex": "\\bigO{\\frac{\\dimension^{2} \\corruption \\log \\horizon}{\\truediff} + \\frac{\\dimension^5 \\log (\\sfrac{\\dimension \\log \\horizon}{\\delta})\\log \\horizon}{\\truediff^2}}",
     "regime": null
    },
    "symbols": {},
    "conditions": [
-    "sub-Gaussian noise with variance proxy 1",
-    "||theta||_2 <= 1, ||x||_2 <= 1",
-    "unique optimal action",
-    "corruption values in [-1,1]"
+    "sigma = 1 (variance proxy 1)",
+    "||theta||_2 <= 1 and ||x||_2 <= 1",
+    "exact Lowner-John ellipsoid of D used for the exploration set"
    ],
    "tuning": [
-    "zeta = 2^14 d^5 log(4 d log T / delta) (as used in the proof)",
+    "zeta = 2^14 d^5 log(4 d log T / delta) (as in proof)",
     "confidence delta given to algorithm"
    ],
    "is_new": true,
    "source": {
     "label": "thm:final regret",
     "number": "Theorem 5.1",
-    "quote": "With probability at least $1-\\confidence$, the regret is bounded by \\regret = \\bigO{ \\frac{\\dimension^{2} \\corruption \\log \\horizon}{\\truediff} + \\frac{\\dimension^5 \\log (\\sfrac{\\dimension \\log \\horizon}{\\delta})\\log \\horizon}{\\truediff^2}}."
+    "quote": "With probability at least $1-\\confidence$, the regret is bounded by \\regret = \\bigO{\\frac{\\dimension^{2} \\corruption \\log \\horizon}{\\truediff} + \\frac{\\dimension^5 \\log (\\sfrac{\\dimension \\log \\horizon}{\\delta})\\log \\horizon}{\\truediff^2}}."
    },
    "confidence": "medium",
-   "notes": "Regret is pseudo-regret on uncorrupted means, holding w.p. 1-delta. Delta is gap between best and second-best extreme point (Delta_lin). Uses an exact Löwner-John ellipsoid (computation not discussed); the algorithm box sets zeta with d^6 while the proof uses d^5 — inconsistency in paper."
+   "notes": "Regret is pseudo-regret sum <x*-x_t, theta> bounded w.p. 1-delta. Delta is gap between best and second-best extreme points (Delta_lin). Algorithm box sets zeta with d^6 while the proof uses d^5; the d^5 version corresponds to exact John ellipsoid. Computation of exact John ellipsoid not claimed polynomial."
   },
   {
    "id": "r2",
    "setting": "s1",
    "side": "upper",
-   "algorithm": "a2",
+   "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "high_probability_regret",
    "dependence": "instance_dependent",
@@ -144,47 +163,29 @@
    "bound": {
     "notation": "O",
     "expression": "d**(5/2)*C*log(T)/Delta_lin + d**6*log(d*log(T)/delta)*log(T)/Delta_lin**2",
-    "expression_latex": "\\frac{d^{5/2} C \\log T}{\\Delta} + \\frac{d^6 \\log (d \\log T/\\delta)\\log T}{\\Delta^2}",
+    "expression_latex": "\\bigO{\\frac{\\dimension^{5/2} \\corruption \\log \\horizon}{\\truediff} + \\frac{\\dimension^6 \\log (\\sfrac{\\dimension \\log \\horizon}{\\delta}) \\log \\horizon}{\\truediff^2}}",
     "regime": null
    },
    "symbols": {},
    "conditions": [
-    "sub-Gaussian noise with variance proxy 1",
-    "||theta||_2 <= 1, ||x||_2 <= 1",
-    "unique optimal action"
+    "sigma = 1 (variance proxy 1)",
+    "||theta||_2 <= 1 and ||x||_2 <= 1"
    ],
    "tuning": [
-    "zeta = 2^14 d^6 log(4 d log T / delta)"
+    "zeta = 2^14 d^6 log(4 d log T / delta)",
+    "weak Lowner-John ellipsoid computed in polynomial time (Lovasz)"
    ],
    "is_new": true,
    "source": {
     "label": null,
-    "number": "Section 6 (text)",
+    "number": "Section 6 (sec:efficiency)",
     "quote": "By plugging the polynomial time algorithm for finding John's ellipsoid from \\citet{lovasz1990geometric} into our \\Cref{alg:explobycoor}, and setting the parameter $\\parameter = 2^{14} \\dimension^6 \\log (\\sfrac{4\\dimension \\log \\horizon}{\\delta})$, we have an computationally efficient algorithm whose regret is of $\\bigO{\\frac{\\dimension^{5/2} \\corruption \\log \\horizon}{\\truediff} + \\frac{\\dimension^6 \\log (\\sfrac{\\dimension \\log \\horizon}{\\delta}) \\log \\horizon}{\\truediff^2}}$."
    },
    "confidence": "medium",
-   "notes": "Stated in text, not a formal theorem; probability 1-delta stated in the conclusion. Conclusion also says delta=1/T gives expected regret O(d^{5/2} C log T/Delta + d^6 log^2 T/Delta^2) (not recorded separately)."
+   "notes": "Stated in text, not a formal theorem; high-probability (w.p. 1-delta) per conclusion. Conclusion also states expected regret O(d^{5/2} C log T/Delta + d^6 log^2 T/Delta^2) with delta=1/T (not recorded separately)."
   }
  ],
  "cited_results": [
-  {
-   "cited_key": "dani2008stochastic",
-   "cited_title": "Stochastic linear optimization under bandit feedback",
-   "cited_first_author": "Dani",
-   "cited_year": 2008,
-   "cited_arxiv_id": null,
-   "algorithm_name": "CONFIDENCEBALL",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Stochastic linear bandits, infinite action set, worst-case regret, no corruption",
-   "bound": {
-    "notation": "O",
-    "expression": "d*sqrt(T*log(T)**3)",
-    "expression_latex": "d\\sqrt{T \\log^3 T}",
-    "regime": null
-   },
-   "where": "Section 1.1"
-  },
   {
    "cited_key": "abbasi2011improved",
    "cited_title": "Improved algorithms for linear stochastic bandits",
@@ -194,32 +195,50 @@
    "algorithm_name": "OFUL",
    "algorithm_registry_id": "oful",
    "side": "upper",
-   "setting_description": "Stochastic linear bandits on a polytope, problem-dependent regret, no corruption",
+   "setting_description": "Stochastic linear bandit, polytope action set, gap-dependent, no corruption",
    "bound": {
     "notation": "O",
     "expression": "log(1/delta)/Delta_lin*(log(T) + d*log(log(T)))**2",
-    "expression_latex": "\\frac{\\log (1/\\delta)}{\\Delta} (\\log T + d \\log \\log T)^2",
+    "expression_latex": "\\bigO{\\frac{\\log (\\sfrac{1}{\\delta})}{\\truediff} (\\log \\horizon + \\dimension \\log \\log \\horizon)^2}",
     "regime": null
    },
-   "where": "Section 1.1"
+   "where": "Section 1.1 Related works"
+  },
+  {
+   "cited_key": "dani2008stochastic",
+   "cited_title": "Stochastic linear optimization under bandit feedback",
+   "cited_first_author": "Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": "ConfidenceBall",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic linear bandit, infinite action set, worst case",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(T*log(T)**3)",
+    "expression_latex": "\\bigO{d\\sqrt{\\horizon \\log^3 \\horizon}}",
+    "regime": null
+   },
+   "where": "Section 1.1 Related works"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:31:05",
+  "date": "2026-10-21T15:42:41",
   "source_chars": 53664,
-  "input_tokens": 57202,
-  "output_tokens": 3744,
-  "cost_usd_equiv": 0.3149148,
+  "input_tokens": 63789,
+  "output_tokens": 4011,
+  "cost_usd_equiv": 0.321502,
   "status": "extracted"
  }
 }

@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Volumetric Spanners: an Efficient Exploration Basis for Learning",
   "arxiv_id": "1312.6214",
@@ -36,26 +36,57 @@
     "access": "membership_oracle",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "polar_of_action_set"
+    "loss_set": "polar_of_action_set",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
-   "unmapped": [
-    "Learner needs (a bound on) the size of a 1/T-net of K, log|K|_{1/T}, to tune eta and gamma"
-   ],
-   "definition_quote": "The set $\\K$ is equipped with a membership oracle. ... The losses are bounded in absolute values by 1. That is, the loss functions are always chosen (by an oblivious adversary)  from a convex set $\\cal Z$ such that $\\K$ is contained in its polar, i.e. $\\forall L \\in {\\cal Z}, x \\in \\K$, $|L^\\top x| \\leq 1$."
+   "unmapped": [],
+   "definition_quote": "iteratively at each time sequence $t$, the environment chooses a loss vector $L_t$ that is not revealed to the player. The player chooses a vector $x_t \\in \\K$ where $\\K \\subseteq \\reals^d$ is convex, and once she commits to her choice, the loss $\\ell_t = x_t^\\top L_t$ is revealed. ... the loss functions are always chosen (by an oblivious adversary) from a convex set $\\cal Z$ such that $\\K$ is contained in its polar"
   }
  ],
  "algorithms": [
@@ -88,22 +119,21 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "(s + d)*sqrt(T*log(N_net)/d)",
+    "expression": "(s + d)*sqrt(T*logN_K/d)",
     "expression_latex": "O\\left(  (s+d)\\sqrt{\\frac{T \\log |\\K|_{1/T} }{d}} \\right)",
     "regime": null
    },
    "symbols": {
     "s": "max_t |S_t|, size of the exploration spanner set",
-    "N_net": "|K|_{1/T}, size of a 1/T-net of K w.r.t. the norm defined by the loss set"
+    "logN_K": "log |K|_{1/T}, log of the size of a 1/T-net of K w.r.t. the norm defined by the loss set"
    },
    "conditions": [
-    "K convex with membership oracle",
-    "losses satisfy |L^T x| <= 1 for all x in K (loss set in polar of K)",
-    "oblivious adversary"
+    "K equipped with a membership oracle",
+    "losses satisfy |L^T x| <= 1 for all x in K"
    ],
    "tuning": [
-    "eta = sqrt(log|K|_{1/T}/(dT))",
-    "gamma = s*sqrt(log|K|_{1/T}/(dT))"
+    "eta = sqrt(log|K|_{1/T}/(d T))",
+    "gamma = s*sqrt(log|K|_{1/T}/(d T))"
    ],
    "is_new": true,
    "source": {
@@ -112,7 +142,7 @@
     "quote": "Under the assumptions stated above, and let $s=\\max_t |S_t|$, $ \\eta = \\sqrt{\\frac{\\log |\\K|_{1/T}}{dT}}$ and let $\\gamma = s\\sqrt{\\frac{\\log(|\\K|_{1/T})}{dT}} $. Algorithm \\ref{alg:BLO} given parameters $\\gamma,\\eta$ suffers a regret bounded by $$ O\\left(  (s+d)\\sqrt{\\frac{T \\log |\\K|_{1/T} }{d}} \\right)$$"
    },
    "confidence": "medium",
-   "notes": "Regret is E[sum L_t^T x_t] - sum L_t^T x* against oblivious adversary. Efficiency per Corollary 7.2 (polynomial per-iteration time with approximate sampling)."
+   "notes": "Regret is E[sum L_t^T x_t] - sum L_t^T x* against an oblivious adversary. Compute: polynomial per round via approximate log-concave sampling (Corollary 7.2: O~(d^5 + d^3 T^6) per iteration)."
   },
   {
    "id": "r2",
@@ -128,56 +158,18 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(d*T*log(N_net))",
-    "expression_latex": "O\\left(  \\sqrt{dT \\log |\\K|_{1/T}  } \\right)",
-    "regime": null
-   },
-   "symbols": {
-    "N_net": "|K|_{1/T}, size of a 1/T-net of K"
-   },
-   "conditions": [
-    "K convex with membership oracle",
-    "losses satisfy |L^T x| <= 1 for all x in K",
-    "oblivious adversary"
-   ],
-   "tuning": [
-    "eta, gamma as in Theorem 7.1 with s = d"
-   ],
-   "is_new": true,
-   "source": {
-    "label": null,
-    "number": "Corollary 7.1",
-    "quote": "There exist an efficient algorithm for BLO for any convex set $\\K$ with regret of $$ O\\left(  \\sqrt{dT \\log |\\K|_{1/T}  } \\right) = O\\left(  d\\sqrt{T \\log(T)  } \\right) $$"
-   },
-   "confidence": "medium",
-   "notes": "Follows from Theorem 7.1 with s = d (the paper's argument; the exp-volumetric spanner part is from sampling). Running time per iteration O~(d^5 + d^3 T^6) per Corollary 7.2."
-  },
-  {
-   "id": "r3",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "expected_regret",
-   "dependence": "worst_case",
-   "comparator": "best_fixed_action",
-   "probability": "expectation",
-   "horizon": "known",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "O",
     "expression": "d*sqrt(T*log(T))",
-    "expression_latex": "O\\left(  d\\sqrt{T \\log(T)  } \\right)",
+    "expression_latex": "O\\left(  \\sqrt{dT \\log |\\K|_{1/T}  } \\right) = O\\left(  d\\sqrt{T \\log(T)  } \\right)",
     "regime": null
    },
    "symbols": {},
    "conditions": [
-    "K convex with membership oracle",
-    "losses satisfy |L^T x| <= 1 for all x in K",
-    "oblivious adversary"
+    "K equipped with a membership oracle",
+    "losses satisfy |L^T x| <= 1 for all x in K"
    ],
    "tuning": [
-    "eta, gamma as in Theorem 7.1 with s = d"
+    "eta = sqrt(log|K|_{1/T}/(d T))",
+    "gamma = d*sqrt(log|K|_{1/T}/(d T))"
    ],
    "is_new": true,
    "source": {
@@ -186,26 +178,26 @@
     "quote": "There exist an efficient algorithm for BLO for any convex set $\\K$ with regret of $$ O\\left(  \\sqrt{dT \\log |\\K|_{1/T}  } \\right) = O\\left(  d\\sqrt{T \\log(T)  } \\right) $$"
    },
    "confidence": "high",
-   "notes": "Uses log|K|_{1/T} <= d log T."
+   "notes": "Obtained from Theorem 7.1 with s = d (barycentric-spanner-based ratio spanner) and log|K|_{1/T} <= d log T. Running time O~(d^5 + d^3 T^6) per iteration (Corollary 7.2)."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "225d94076f15",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T09:13:35",
+  "date": "2026-10-21T15:01:17",
   "source_chars": 102805,
-  "input_tokens": 77918,
-  "output_tokens": 3205,
-  "cost_usd_equiv": 0.47025279999999997,
+  "input_tokens": 84555,
+  "output_tokens": 3093,
+  "cost_usd_equiv": 0.46927,
   "status": "extracted"
  }
 }

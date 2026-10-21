@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "On the Low-Complexity of Fair Learning for Combinatorial Multi-Armed Bandit",
   "arxiv_id": "2501.00924",
@@ -25,7 +25,7 @@
    "context": "none",
    "noise": "bernoulli",
    "learner_knows": [
-    "K"
+    "m"
    ],
    "instance_assumptions": [],
    "extras": [
@@ -37,31 +37,61 @@
     "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "binary_vectors"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "arbitrary_subset",
+    "reward": "linear",
+    "loss_scale": "per_base_arm"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "fairness",
+    "violation": "bounded_cumulative"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Long-term fairness constraints: each arm n must receive average reward at least lambda_n (known to the learner)",
-    "Slater-type slackness: a randomized stationary policy achieves lambda_n + delta for every arm, delta > 0",
-    "Arbitrary known collection of feasible super arms (e.g. interference constraints), possibly exponentially many; at most S_max arms per super arm",
-    "mu_min = min_n mu_n > 0",
-    "Regret measured against the optimal fairness-feasible randomized stationary policy q*",
-    "Computational complexity measured in number of comparisons M per round"
+    "Each arm n must receive at least average reward lambda_n (known to the learner); feasibility with slack delta > 0 (Slater-type condition)",
+    "Collection of feasible super arms S is known and may be exponentially large; regret is against the optimal stationary randomized policy over S satisfying the fairness constraints with slack delta",
+    "mu_min = min_n mu_n > 0"
    ],
-   "definition_quote": "We consider a combinatorial multi-armed bandit with $N$ arms, allowing for the simultaneous selection of multiple arms in each round. ... $\\{X_n(t)\\}_{t\\geq0}$ are independently and identically distributed (i.i.d.) Bernoulli random variables with an unknown mean $\\mu_n\\in(0,1]$. ... ensures fairness among arms through guaranteeing each arm $n$ to receive at least the reward $\\lambda_n>0$ on average"
+   "definition_quote": "We consider a combinatorial multi-armed bandit with $N$ arms, allowing for the simultaneous selection of multiple arms in each round. ... $\\{X_n(t)\\}_{t\\geq0}$ are i.i.d. Bernoulli random variables with an unknown mean $\\mu_n\\in(0,1]$. ... ensures fairness among arms through guaranteeing each arm $n$ to receive at least the reward $\\lambda_n>0$ on average ... $\\text{Reg}(T) \\triangleq \\sum_{t=0}^{T-1}\\sum_{n=1}^{N}\\mu_n(\\bE[S^*_n]-\\bE[S_n(t)])$"
   }
  ],
  "algorithms": [
@@ -74,13 +104,7 @@
     "optimism",
     "other"
    ],
-   "requires_knowledge_of": [
-    "lambda_n (fairness requirements)",
-    "feasible super-arm collection",
-    "M",
-    "eta",
-    "epsilon (requires delta / gamma to tune)"
-   ]
+   "requires_knowledge_of": []
   }
  ],
  "results": [
@@ -92,32 +116,32 @@
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "worst_case",
-   "comparator": "best_policy",
+   "comparator": "best_feasible_policy",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
     "expression": "Min(K*T/(eta*mu_min) + 2*sqrt(6*K*m*T*log(T)) + K*(1 + 5*pi**2/12) + 2*C_1*K*T/eta + C_2*K*pi**2/6 + (1 + log(T))/C_3*K*log(m*T/K) + C_2*K + (1 + log(T))*sqrt(6*K*m*T*log(T))/(2*C_3), m*mu_max*T)",
-    "expression_latex": "\\min \\bigg\\{ \\frac{NT}{\\eta\\mu_{\\min}}  +2\\sqrt{6NS_{\\max}T\\log T} +N\\left(1+\\frac{5\\pi^2}{12}\\right) + \\frac{2C_1(M) NT}{\\eta} + C_2(M) \\frac{N\\pi^2}{6}  + \\frac{1+\\log T}{C_3(M)}N\\log \\frac{S_{\\max}T}{N} + C_2(M) N + \\frac{\\left(1+\\log T\\right)\\sqrt{6NS_{\\max}T\\log T}}{2C_3(M)}, S_{\\max}\\mu_{\\max}T\\bigg\\}",
+    "expression_latex": "\\min \\bigg\\{ \\frac{NT}{\\eta\\mu_{\\min}} +2\\sqrt{6NS_{\\max}T\\log T} +N(1+\\frac{5\\pi^2}{12}) + \\frac{2C_1(M) NT}{\\eta} + C_2(M) \\frac{N\\pi^2}{6} + \\frac{1+\\log T}{C_3(M)}N\\log \\frac{S_{\\max}T}{N} + C_2(M) N + \\frac{(1+\\log T)\\sqrt{6NS_{\\max}T\\log T}}{2C_3(M)}, S_{\\max}\\mu_{\\max}T \\bigg\\}",
     "regime": null
    },
    "symbols": {
     "mu_min": "minimum mean reward over arms",
     "mu_max": "maximum mean reward over arms",
-    "C_1": "(alpha_M^2 - 3 alpha_M + 2)/alpha_M^2",
+    "C_1": "(alpha_M^2 - 3 alpha_M + 2)/alpha_M^2 with alpha_M = M/|S|",
     "C_2": "1/alpha_M - 1",
     "C_3": "-log(1 - alpha_M)",
-    "alpha_M": "M/|S|, probability that the random pick includes the max-weight super arm",
-    "M": "number of randomly picked super arms per round",
-    "n_S": "|S|, number of feasible super arms"
+    "alpha_M": "M/|S|, M = number of randomly picked super arms per round, |S| = number of feasible super arms"
    },
    "conditions": [
-    "Bernoulli rewards with means in (0,1], mu_min > 0",
-    "slackness delta > 0: a randomized stationary policy achieves lambda_n + delta for all n"
+    "fairness constraints feasible with slack delta > 0",
+    "mu_n in (0,1], mu_min > 0"
    ],
    "tuning": [
-    "epsilon <= delta/2"
+    "epsilon <= delta/2",
+    "eta >= 0 control parameter",
+    "M random picks per round"
    ],
    "is_new": true,
    "source": {
@@ -126,48 +150,10 @@
     "quote": "[Cumulative Regret] Under the \\lc{} algorithm with $\\epsilon\\leq \\delta/2$, the cumulative regret $\\text{Reg}(T)$ over consecutive $T$ rounds can be bounded from above as follows: ... where $C_1(M)\\triangleq (\\alpha^2(M)-3\\alpha(M)+2)/\\alpha^2(M)$, $C_2(M)\\triangleq 1/\\alpha(M) -1$ and $C_3(M)\\triangleq -\\log (1-\\alpha(M))$."
    },
    "confidence": "medium",
-   "notes": "Paper's N (number of base arms) mapped to K; S_max (max arms per super arm) mapped to m. Regret is against the optimal fairness-constrained randomized stationary policy q*, defined via means (pseudo-regret); mapped comparator to best_policy. Proposition is numbered by its own counter (first proposition). Note mu_max is not defined in the paper."
+   "notes": "Paper's N (number of base arms) mapped to K; S_max (max super-arm size) mapped to m. Regret against optimal stationary randomized fair policy. Horizon: algorithm uses log t, but eta may be tuned with T (e.g. eta = sqrt(T)); marked anytime for the stated bound with fixed eta. Proposition number inferred from separate proposition counter."
   },
   {
    "id": "r2",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "pseudo_regret",
-   "dependence": "worst_case",
-   "comparator": "best_policy",
-   "probability": "expectation",
-   "horizon": "known",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "O_tilde",
-    "expression": "n_S*sqrt(T)/M",
-    "expression_latex": "\\wt{\\mc{O}}((|\\mc{S}|\\sqrt{T})/M)",
-    "regime": null
-   },
-   "symbols": {
-    "n_S": "|S|, number of feasible super arms",
-    "M": "number of randomly picked super arms per round"
-   },
-   "conditions": [
-    "slackness delta > 0"
-   ],
-   "tuning": [
-    "eta = O(sqrt(T))",
-    "epsilon = O(T^(-1/3))"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "table:tradeoff",
-    "number": "Table 1",
-    "quote": "$(O(\\sqrt{T}),O(1/\\sqrt[3]{T}),M)$ &$O((|\\mc{S}|\\sqrt[6]{T^5})/M)$ & $\\wt{\\mc{O}}((|\\mc{S}|\\sqrt{T})/M) $& $M$"
-   },
-   "confidence": "low",
-   "notes": "Derived from Proposition 1 in a table/remark, not a formal statement. With M=|S| the table gives O_tilde(sqrt(T)) regret and zero-violation point O(T^{5/6}); with eta=0, linear regret."
-  },
-  {
-   "id": "r3",
    "setting": "s1",
    "side": "upper",
    "algorithm": "a1",
@@ -180,31 +166,33 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "0",
-    "expression_latex": "\\sum_{n=1}^{N}\\left(\\sum_{\\tau=0}^{t-1}(\\lambda_n-\\bE[\\wh{S}_n(\\tau)X_n(\\tau)])\\right)^{+}=0, \\quad\\forall t\\geq t_0",
-    "regime": "t >= t_0 = g_0(eta)/eps_alg = O(eta/eps_alg)"
+    "expression": "sqrt(K)*(log(v_0 + 1)/theta_g + zeta + U)/eps_q",
+    "expression_latex": "t_0\\triangleq g_0(\\eta)/\\epsilon=O(\\eta/\\epsilon),\\ g_0(\\eta)\\triangleq\\sqrt{N}((\\log(v_0(\\gamma)+1))/\\theta(\\gamma)+\\zeta+U(\\eta,\\gamma))",
+    "regime": null
    },
    "symbols": {
-    "t_0": "zero violation point g_0(eta)/eps_alg",
-    "g_0": "sqrt(N)(log(v_0+1)/theta + zeta + U(eta,gamma)) = O(eta)",
-    "gamma": "1-(1-M/|S|)^D >= 1/(delta+1)",
-    "D": "positive constant in Lemma 3"
+    "eps_q": "virtual-queue parameter epsilon of the algorithm",
+    "zeta": "N/mu_min",
+    "U": "2N/(mu_min(gamma delta+gamma-1)) + 8 N D (1+eta)/(gamma delta+gamma-1)",
+    "theta_g": "3(gamma delta+gamma-1)/(12 zeta^2 + (gamma delta+gamma-1) zeta)",
+    "v_0": "8/((gamma delta+gamma-1) theta_g)",
+    "gamma": "1-(1-M/|S|)^D",
+    "D": "positive constant chosen so that gamma >= 1/(1+delta)"
    },
    "conditions": [
-    "slackness delta > 0",
-    "mu_min > 0"
+    "fairness constraints feasible with slack delta > 0"
    ],
    "tuning": [
-    "eps_alg <= (gamma*delta + gamma - 1)/2"
+    "epsilon <= (gamma*delta + gamma - 1)/2"
    ],
    "is_new": true,
    "source": {
     "label": "prop:zero_violation",
     "number": "Proposition 2",
-    "quote": "[Zero Cumulative Fairness Violations] Under the \\lc{} algorithm, if $\\epsilon \\leq  (\\gamma\\delta+\\gamma-1)/2  $, there exists a zero violation point $t_0\\triangleq g_0(\\eta)/\\epsilon=O(\\eta/\\epsilon)$ after which the zero cumulative fairness violation is achieved for any round $t\\geq t_0$"
+    "quote": "[Zero Cumulative Fairness Violations] Under the \\lc{} algorithm, if $\\epsilon \\leq (\\gamma\\delta+\\gamma-1)/2$, there exists a zero violation point $t_0\\triangleq g_0(\\eta)/\\epsilon=O(\\eta/\\epsilon)$ after which the zero cumulative fairness violation is achieved for any round $t\\geq t_0$ ..."
    },
    "confidence": "medium",
-   "notes": "Bound on cumulative expected fairness violation (not regret); quantity 'other'. Paper's epsilon is the virtual-queue tightness parameter (eps_alg)."
+   "notes": "Bound is on the zero-violation time t_0: for all t >= t_0, sum_n (sum_{tau<t}(lambda_n - E[S_n X_n]))^+ = 0. N mapped to K."
   }
  ],
  "cited_results": [
@@ -214,35 +202,35 @@
    "cited_first_author": "X. Liu",
    "cited_year": 2021,
    "cited_arxiv_id": null,
-   "algorithm_name": "pessimistic-optimistic algorithm",
+   "algorithm_name": "Pessimistic-optimistic algorithm",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic (combinatorial/linear) bandits with general constraints; regret over T rounds plus zero cumulative constraint violation after some rounds",
+   "setting_description": "CMAB / linear bandits with fairness (general) constraints; regret with zero cumulative constraint violation after some rounds",
    "bound": {
     "notation": "O_tilde",
     "expression": "sqrt(T)",
     "expression_latex": "\\mc{\\wt{O}}(\\sqrt{T})",
     "regime": null
    },
-   "where": "Section 1 (Introduction)"
+   "where": "Section 1"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:05:31",
+  "date": "2026-10-21T15:14:28",
   "source_chars": 91032,
-  "input_tokens": 79518,
-  "output_tokens": 5482,
-  "cost_usd_equiv": 0.5282028,
+  "input_tokens": 86105,
+  "output_tokens": 4712,
+  "cost_usd_equiv": 0.51405,
   "status": "extracted"
  }
 }

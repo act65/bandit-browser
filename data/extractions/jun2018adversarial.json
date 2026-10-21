@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Adversarial Attacks on Stochastic Bandits",
   "arxiv_id": "1810.12188",
@@ -16,8 +16,8 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Reward-manipulation attack on a stochastic K-armed bandit learner (Alice attacks Bob)",
-   "objective": "other_pure_exploration",
+   "name_in_paper": "Reward-manipulation attack on stochastic MAB (Alice attacks Bob)",
+   "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
    "action_space": "finite_K",
@@ -37,30 +37,60 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": false,
-   "out_of_scope_reason": "The guarantees are for an attacker (not a bandit learner): attack cost needed to force a fixed bandit algorithm (epsilon-greedy or UCB) to pull a suboptimal target arm; no regret objective for the analysed algorithm.",
+   "out_of_scope_reason": "Guarantees are for the attacker (Alice), who manipulates rewards to force a bandit learner to pull a target arm; the objective is attack cost and target-arm pulls, not the learner's regret.",
    "unmapped": [
-    "Attacker observes chosen arm and pre-attack reward and subtracts alpha_t from the reward before the learner sees it",
-    "Objective: force target arm K to be pulled T - o(T) times while minimising cumulative attack cost sum |alpha_t|",
-    "Attacker does not know the means mu_i; knows sigma",
-    "Victim learner is a fixed algorithm (epsilon-greedy or (alpha,psi)-UCB with alpha=4.5)",
-    "Target arm K is suboptimal: mu_K < max_i mu_i"
+    "Objective is the attacker's: force target arm K to be pulled T-o(T) times while minimising cumulative attack cost sum_t |alpha_t|",
+    "Attacker observes the chosen arm and pre-attack reward each round and does not know the means; the learner runs a fixed known algorithm (epsilon-greedy or UCB)"
    ],
-   "definition_quote": "Alice sits in-between the world and Bob and manipulates the reward into $r_t = r^0_t - \\alpha_t$. ... Alice's goal is to manipulate Bob into pulling arm $K$ very often while making small attacks."
+   "definition_quote": "We say the attack is \\emph{successful} after $T$ rounds if the number of target-arm pulls is $N_K(T) = T - o(T)$ in expectation or with high probability, while minimizing the cumulative attack cost $\\sum_{t=1}^T |\\alpha_t|$."
   }
  ],
  "algorithms": [
@@ -84,13 +114,11 @@
    "techniques": [
     "other"
    ],
-   "requires_knowledge_of": [
-    "A"
-   ]
+   "requires_knowledge_of": []
   },
   {
    "id": "a3",
-   "name": "Attack on epsilon-greedy (Algorithm 1 with attack Eq. alpha)",
+   "name": "Alice's attack on epsilon-greedy Bob",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -98,13 +126,12 @@
    ],
    "requires_knowledge_of": [
     "sigma",
-    "K",
-    "delta"
+    "K"
    ]
   },
   {
    "id": "a4",
-   "name": "Attack on UCB (Eq. ucb-attack)",
+   "name": "Alice's attack on UCB Bob",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -112,9 +139,7 @@
    ],
    "requires_knowledge_of": [
     "sigma",
-    "K",
-    "delta",
-    "Delta_0"
+    "K"
    ]
   }
  ],
@@ -133,16 +158,15 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sum_arms(Deps_i)*log(T)",
+    "expression": "sum_subopt(D_eps_i)*log(T)",
     "expression_latex": "O\\left(\\sum_{i=1}^{K-1} \\Delta^\\eps_i \\log T\\right)",
     "regime": null
    },
    "symbols": {
-    "Deps_i": "truncated gap max(mu_i - mu_K + eps, 0) for non-target arm i (0 for target arm K)"
+    "D_eps_i": "truncated gap max(mu_i - mu_K + eps, 0) of non-target arm i relative to target arm K; sum is over the K-1 non-target arms"
    },
    "conditions": [
-    "Bob's bandit algorithm achieves O(log T) regret",
-    "attacker knows the means"
+    "Bob's bandit algorithm achieves O(log T) regret"
    ],
    "tuning": [
     "eps > 0"
@@ -154,7 +178,7 @@
     "quote": "Assume that Bob's bandit algorithm achieves an $O(\\log T)$ regret bound. Then, Alice's oracle attack with $\\eps > 0$ succeeds; i.e., $\\EE N_K(T) = T - o(T)$. Furthermore, the expected total attack cost is $O\\left(\\sum_{i=1}^{K-1} \\Delta^\\eps_i \\log T\\right)$."
    },
    "confidence": "medium",
-   "notes": "Quantity is the expected cumulative attack cost, not regret. Also states E N_K(T) = T - o(T)."
+   "notes": "Quantity is the expected cumulative attack cost; sum_subopt here denotes the sum over non-target arms."
   },
   {
    "id": "r2",
@@ -170,12 +194,12 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "A*log(T)",
+    "expression": "A_const*log(T)",
     "expression_latex": "O(A \\log T)",
     "regime": null
    },
    "symbols": {
-    "A": "constant attack amount applied on non-target arm pulls"
+    "A_const": "constant attack amount A"
    },
    "conditions": [
     "Bob's bandit algorithm achieves O(log T) regret",
@@ -189,7 +213,7 @@
     "quote": "Assume that Bob's bandit algorithm achieves an $O(\\log T)$ regret bound. Then, Alice's heuristic constant attack with $A$ succeeds if and only if $A > \\max_i \\Delta_i$. If the attack succeeds, then the expected attack cost is $O(A \\log T)$."
    },
    "confidence": "medium",
-   "notes": "Expected attack cost; attack succeeds iff A exceeds the max gap to the target arm."
+   "notes": "Expected attack cost; also the iff condition for success."
   },
   {
    "id": "r3",
@@ -205,20 +229,18 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "sum_arms(Dk_i)*N_tilde + (K - 1)*(N_tilde*beta_N + 3*N_tilde*beta_NK)",
+    "expression": "sum_arms(D_i)*N_til + (K - 1)*(N_til*beta_Ntil + 3*N_til*beta_NtilK)",
     "expression_latex": "\\lt(\\sum_{i=1}^K \\Delta_i \\rt) \\tilN(T) + (K-1)\\cdot\\lt( \\tilN(T)\\beta(\\tilN(T)) + 3\\tilN(T)\\beta(\\tilN_K(T)) \\rt)",
-    "regime": "sum_t eps_t >= K/(e-2) * log(K/delta)"
+    "regime": "sum_t eps_t >= K/(e-2) log(K/delta)"
    },
    "symbols": {
-    "Dk_i": "gap to target arm, max(mu_i - mu_K, 0)",
-    "N_tilde": "sum_t eps_t / K + sqrt(3 log(K/delta) sum_t eps_t / K)",
-    "N_tilde_K": "T - sum_t eps_t - sqrt(3 log(K/delta) sum_t eps_t)",
-    "beta_N": "beta(N_tilde) with beta(N) = sqrt(2 sigma^2/N * log(pi^2 K N^2/(3 delta)))",
-    "beta_NK": "beta(N_tilde_K)"
+    "D_i": "[mu_i - mu_K]_+, gap of arm i above the target arm K",
+    "N_til": "sum_t eps_t / K + sqrt(3 log(K/delta) sum_t eps_t / K)",
+    "beta_Ntil": "beta(N_til) with beta(N)=sqrt(2 sigma^2/N log(pi^2 K N^2/(3 delta)))",
+    "beta_NtilK": "beta(N_til_K) with N_til_K = T - sum_t eps_t - sqrt(3 log(K/delta) sum_t eps_t)"
    },
    "conditions": [
     "Bob runs epsilon-greedy with exploration schedule eps_t",
-    "sigma^2-sub-Gaussian rewards with known sigma",
     "target arm pulled first"
    ],
    "tuning": [
@@ -231,7 +253,7 @@
     "quote": "Let $\\delta \\le 1/2$. With probability at least $1-2\\delta$, for any $T$ satisfying $\\sum_{t=1}^T \\eps_t \\ge \\fr{K}{e-2}\\log(K/\\dt)$, Alice forces Bob running $\\epsilon$-greedy to choose the target arm in at least $\\tilN_K(T)$ rounds, using a cumulative attack cost at most ..."
    },
    "confidence": "medium",
-   "notes": "Bound on cumulative attack cost w.p. >= 1-2delta; also target arm pulled at least N_tilde_K(T) times."
+   "notes": "Holds w.p. >= 1-2delta; also guarantees target arm pulled at least N_til_K(T) times."
   },
   {
    "id": "r4",
@@ -247,16 +269,15 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O_tilde",
-    "expression": "sum_arms(Dk_i)*log(T) + sigma*K*sqrt(log(T))",
+    "expression": "sum_arms(D_i)*log(T) + sigma*K*sqrt(log(T))",
     "expression_latex": "\\widehat O\\left( \\lt(\\sum_{i=1}^K \\Delta_i \\rt) \\log T + \\sigma K\\sqrt{\\log T}\\right)",
-    "regime": "T large enough"
+    "regime": "T large enough; K and delta fixed"
    },
    "symbols": {
-    "Dk_i": "gap to target arm, max(mu_i - mu_K, 0)"
+    "D_i": "[mu_i - mu_K]_+"
    },
    "conditions": [
-    "Bob runs epsilon-greedy with eps_t = cK/t",
-    "K and delta fixed"
+    "Bob runs epsilon-greedy with eps_t = cK/t"
    ],
    "tuning": [
     "delta <= 1/2"
@@ -268,7 +289,7 @@
     "quote": "Inherit the assumptions in \\thmref{thm:egreedy-main}. Fix $K$ and $\\delta$. If $\\epsilon_t=cK/t$ for some constant $c>0$, then $\\sum_{t=1}^T | \\alpha_t | = \\widehat O\\left( \\lt(\\sum_{i=1}^K \\Delta_i \\rt) \\log T + \\sigma K\\sqrt{\\log T}\\right)$, where $\\widehat O$ ignores $\\log \\log$ factors."
    },
    "confidence": "medium",
-   "notes": "Hat-O ignores loglog factors; recorded as O_tilde."
+   "notes": "Widehat-O ignores loglog factors; recorded as O_tilde."
   },
   {
    "id": "r5",
@@ -286,7 +307,7 @@
     "notation": "exact",
     "expression": "(K - 1)*(2 + 9*sigma**2*log(T)/Delta_0**2)",
     "expression_latex": "(K-1) \\left(2 + \\frac{9\\sigma^2}{\\Delta_0^2}\\log T\\right)",
-    "regime": null
+    "regime": "T >= 2K"
    },
    "symbols": {
     "Delta_0": "attacker's margin parameter Delta_0 > 0"
@@ -302,10 +323,10 @@
    "source": {
     "label": "thm:ucb-main",
     "number": "Theorem 2",
-    "quote": "Suppose $T \\ge 2K$ and $\\delta \\le 1/2$.  Then, with probability at least $1-\\delta$, Alice forces Bob to choose the target arm in at least $T- (K-1) \\left(2 + \\frac{9\\sigma^2}{\\Delta_0^2}\\log T\\right)$, rounds, ..."
+    "quote": "Suppose $T \\ge 2K$ and $\\delta \\le 1/2$. Then, with probability at least $1-\\delta$, Alice forces Bob to choose the target arm in at least $T- (K-1) \\left(2 + \\frac{9\\sigma^2}{\\Delta_0^2}\\log T\\right)$, rounds"
    },
    "confidence": "medium",
-   "notes": "Bound on number of non-target arm pulls (T minus target pulls)."
+   "notes": "Recorded as upper bound on total number of non-target arm pulls (equivalently target pulls >= T minus this)."
   },
   {
    "id": "r6",
@@ -321,16 +342,16 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "(2 + 9*sigma**2*log(T)/Delta_0**2)*sum_arms(Dk_i + Delta_0) + sigma*(K - 1)*sqrt(32*(2 + 9*sigma**2*log(T)/Delta_0**2)*log(pi**2*K*(2 + 9*sigma**2*log(T)/Delta_0**2)**2/(3*delta)))",
-    "expression_latex": "\\left(2 + \\frac{9\\sigma^2}{\\Delta_0^2}\\log T\\right) \\sum_{i<K} (\\Delta_i + \\Delta_0) + \\sigma(K-1) \\sqrt{ 32(2 + \\frac{9\\sigma^2}{\\Delta_0^2}\\log T) \\log\\frac{\\pi^2K(2 + \\frac{9\\sigma^2}{\\Delta_0^2}\\log T)^2}{3\\delta}  }",
-    "regime": null
+    "expression": "(2 + 9*sigma**2*log(T)/Delta_0**2)*sum_subopt(D_i + Delta_0) + sigma*(K - 1)*sqrt(32*(2 + 9*sigma**2*log(T)/Delta_0**2)*log(pi**2*K*(2 + 9*sigma**2*log(T)/Delta_0**2)**2/(3*delta)))",
+    "expression_latex": "\\left(2 + \\frac{9\\sigma^2}{\\Delta_0^2}\\log T\\right) \\sum_{i<K} (\\Delta_i + \\Delta_0) + \\sigma(K-1) \\sqrt{ 32(2 + \\frac{9\\sigma^2}{\\Delta_0^2}\\log T) \\log\\frac{\\pi^2K(2 + \\frac{9\\sigma^2}{\\Delta_0^2}\\log T)^2}{3\\delta} }",
+    "regime": "T >= 2K"
    },
    "symbols": {
     "Delta_0": "attacker's margin parameter",
-    "Dk_i": "gap to target arm, max(mu_i - mu_K, 0); sum is over non-target arms i<K"
+    "D_i": "[mu_i - mu_K]_+; sum over non-target arms i<K"
    },
    "conditions": [
-    "Bob runs (alpha,psi)-UCB with index mu_hat + 3 sigma sqrt(log t / N_i)",
+    "Bob runs (alpha,psi)-UCB with alpha=4.5, sub-Gaussian psi",
     "T >= 2K"
    ],
    "tuning": [
@@ -340,10 +361,10 @@
    "source": {
     "label": "thm:ucb-main",
     "number": "Theorem 2",
-    "quote": "... using a cumulative attack cost at most \\sum_{t=1}^T \\alpha_t \\le  \\left(2 + \\frac{9\\sigma^2}{\\Delta_0^2}\\log T\\right) \\sum_{i<K} (\\Delta_i + \\Delta_0) + \\sigma(K-1) \\sqrt{ 32(2 + \\frac{9\\sigma^2}{\\Delta_0^2}\\log T) \\log\\frac{\\pi^2K(2 + \\frac{9\\sigma^2}{\\Delta_0^2}\\log T)^2}{3\\delta}  }"
+    "quote": "using a cumulative attack cost at most \\sum_{t=1}^T \\alpha_t \\le \\left(2 + \\frac{9\\sigma^2}{\\Delta_0^2}\\log T\\right) \\sum_{i<K} (\\Delta_i + \\Delta_0) + \\sigma(K-1) \\sqrt{ 32(2 + \\frac{9\\sigma^2}{\\Delta_0^2}\\log T) \\log\\frac{\\pi^2K(2 + \\frac{9\\sigma^2}{\\Delta_0^2}\\log T)^2}{3\\delta} }"
    },
    "confidence": "medium",
-   "notes": "sum over i<K written as sum_arms over non-target arms (Delta_0 summed K-1 times)."
+   "notes": "Cumulative attack cost w.p. >= 1-delta."
   },
   {
    "id": "r7",
@@ -358,19 +379,16 @@
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
-    "notation": "O_tilde",
-    "expression": "(1 + sigma**2*log(T)/Delta_0**2)*sum_arms(Dk_i + Delta_0) + sigma*K*(1 + sigma*sqrt(log(T))/Delta_0)*sqrt(log(1 + K*sigma/Delta_0))",
-    "expression_latex": "\\widehat{O}\\Bigg(\\lt(1 + \\frac{\\sigma^2}{\\Delta_0^2}\\log T \\rt) \\sum_{i<K} (\\Delta_i+\\Delta_0) + \\sigma K\\cdot\\lt(1 + \\fr{\\sigma }{\\Delta_0}\\sqrt{\\log T}\\rt)\\sqrt{\\log\\lt(1+\\fr{K\\sigma}{\\Delta_0}\\rt)}\\Bigg)",
-    "regime": null
+    "notation": "O",
+    "expression": "K + K*sigma**2*log(T)/Delta_0**2",
+    "expression_latex": "O\\left(K + \\frac{K\\sigma^2}{\\Delta_0^2}\\log T\\right)",
+    "regime": "T >= 2K, delta fixed"
    },
    "symbols": {
-    "Delta_0": "attacker's margin parameter",
-    "Dk_i": "gap to target arm over non-target arms"
+    "Delta_0": "attacker's margin parameter"
    },
    "conditions": [
-    "Bob runs (alpha,psi)-UCB",
-    "T >= 2K",
-    "delta fixed"
+    "Bob runs UCB as in Section 4"
    ],
    "tuning": [
     "delta <= 1/2"
@@ -379,29 +397,66 @@
    "source": {
     "label": "cor:ucb-main",
     "number": "Corollary 2",
-    "quote": "Inherit the assumptions in \\thmref{thm:ucb-main} and fix $\\delta$.  Then, the total number of non-target arm pulls is $O\\left(K + \\frac{K\\sigma^2}{\\Delta_0^2}\\log T\\right)$, and the cumulative attack cost is ..."
+    "quote": "Inherit the assumptions in \\thmref{thm:ucb-main} and fix $\\delta$. Then, the total number of non-target arm pulls is $O\\left(K + \\frac{K\\sigma^2}{\\Delta_0^2}\\log T\\right)$"
    },
    "confidence": "medium",
-   "notes": "Hat-O ignores loglog(T) factors. Non-target pulls O(K + K sigma^2 log T / Delta_0^2) restates Theorem 2."
+   "notes": "Number of non-target arm pulls."
+  },
+  {
+   "id": "r8",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a4",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "(1 + sigma**2*log(T)/Delta_0**2)*sum_subopt(D_i + Delta_0) + sigma*K*(1 + sigma*sqrt(log(T))/Delta_0)*sqrt(log(1 + K*sigma/Delta_0))",
+    "expression_latex": "\\widehat{O}\\Bigg(\\lt(1 + \\frac{\\sigma^2}{\\Delta_0^2}\\log T \\rt) \\sum_{i<K} (\\Delta_i+\\Delta_0) + \\sigma K\\cdot\\lt(1 + \\fr{\\sigma }{\\Delta_0}\\sqrt{\\log T}\\rt)\\sqrt{\\log\\lt(1+\\fr{K\\sigma}{\\Delta_0}\\rt)}\\Bigg)",
+    "regime": "T >= 2K, delta fixed"
+   },
+   "symbols": {
+    "Delta_0": "attacker's margin parameter",
+    "D_i": "[mu_i - mu_K]_+; sum over non-target arms"
+   },
+   "conditions": [
+    "Bob runs UCB as in Section 4"
+   ],
+   "tuning": [
+    "delta <= 1/2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:ucb-main",
+    "number": "Corollary 2",
+    "quote": "and the cumulative attack cost is \\widehat{O}\\Bigg(\\lt(1 + \\frac{\\sigma^2}{\\Delta_0^2}\\log T \\rt) \\sum_{i<K} (\\Delta_i+\\Delta_0) + \\sigma K\\cdot\\lt(1 + \\fr{\\sigma }{\\Delta_0}\\sqrt{\\log T}\\rt)\\sqrt{\\log\\lt(1+\\fr{K\\sigma}{\\Delta_0}\\rt)}\\Bigg), where $\\widehat{O}$ ignores $\\log \\log(T)$ factors."
+   },
+   "confidence": "medium",
+   "notes": "Widehat-O ignores loglog T factors."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:31:56",
+  "date": "2026-10-21T15:43:37",
   "source_chars": 62267,
-  "input_tokens": 60770,
-  "output_tokens": 6951,
-  "cost_usd_equiv": 0.40759880000000004,
+  "input_tokens": 67357,
+  "output_tokens": 7653,
+  "cost_usd_equiv": 0.422886,
   "status": "extracted"
  }
 }

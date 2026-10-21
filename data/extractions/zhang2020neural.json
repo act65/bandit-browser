@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Neural Thompson Sampling",
   "arxiv_id": "2010.00827",
@@ -16,54 +16,84 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Contextual K-armed bandit with neural-network (NTK) reward approximation",
+   "name_in_paper": "contextual K-armed bandits with unknown bounded reward function (neural / NTK analysis)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
-   "action_space": "kernel_rkhs",
+   "action_space": "finite_K",
    "function_class": [],
    "domain": "not_applicable",
    "context": "adversarial_contexts",
    "noise": "conditionally_subgaussian",
    "learner_knows": [
     "T",
+    "K",
     "sigma",
-    "K"
+    "d_eff",
+    "S"
    ],
    "instance_assumptions": [],
-   "extras": [
-    "time_varying_action_sets"
-   ],
+   "extras": [],
    "action_set": {
-    "shape": "finite",
-    "time_varying": "oblivious_sequence",
-    "access": "explicit",
-    "norm_bound": "unit_l2",
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "neural_ntk"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Reward r_{t,k} = h(x_{t,k}) + xi_{t,k} with unknown bounded function h (|h|<=1); complexity measured through the neural tangent kernel matrix H on the TK observed contexts and effective dimension d_tilde",
-    "NTK matrix assumed positive definite: H >= lambda_0 I (Assumption 4)",
-    "Contexts have unit norm and symmetric structure [x]_j = [x]_{j+d/2}",
-    "Each round K context vectors (one per arm) are revealed; the set of all TK contexts is treated as fixed for the analysis",
-    "Exploration variance nu requires knowledge of B = max{1/(22 e sqrt(pi)), sqrt(2 h^T H^{-1} h)} (an NTK-RKHS norm bound) and of d_tilde"
+    "Reward r_{t,k} = h(x_{t,k}) + noise for an arbitrary unknown function h with |h| <= 1; complexity measured via the NTK Gram matrix H on all TK contexts",
+    "Contexts are an arbitrary (not stated stochastic) sequence of K feature vectors per round"
    ],
-   "definition_quote": "In this work, we consider contextual $K$-armed bandits, where the total number of rounds $T$ is known. At round $t \\in [T]$, the agent observes $K$ contextual vectors $\\{\\xb_{t, k} \\in \\RR^d~|~ k \\in [K]\\}$. ... $r_{t, k} = h(\\xb_{t, k}) + \\xi_{t, k}$, with $|h(\\xb_{t, k})| \\le 1$ where $\\{\\xi_{t, k}\\}$ forms an $R$-sub-Gaussian martingale difference sequence"
+   "definition_quote": "we consider contextual $K$-armed bandits, where the total number of rounds $T$ is known. At round $t \\in [T]$, the agent observes $K$ contextual vectors ... We assume that there exists an unknown reward function $h$ such that ... $r_{t, k} = h(\\xb_{t, k}) + \\xi_{t, k}$, with $|h(\\xb_{t, k})| \\le 1$ where $\\{\\xi_{t, k}\\}$ forms an $R$-sub-Gaussian martingale difference sequence"
   }
  ],
  "algorithms": [
@@ -77,10 +107,11 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "sigma",
     "K",
-    "B (NTK norm bound of h)",
-    "d_tilde (effective dimension)",
+    "sigma",
+    "d_eff",
+    "S",
+    "lambda_0",
     "delta"
    ]
   }
@@ -93,65 +124,86 @@
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "high_probability_regret",
-   "dependence": "instance_dependent",
+   "dependence": "worst_case",
    "comparator": "best_action_per_round",
    "probability": "high_probability",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "C_3*(1 + sqrt(4*log(T) + 2*log(K)))*nu*sqrt(2*lam*L_depth*(d_tilde*log(1 + T*K) + 1)*T) + (4 + C_4*(1 + sqrt(4*log(T) + 2*log(K)))*nu*L_depth)*sqrt(2*log(3/delta)*T) + 5",
+    "expression": "C_3*(1 + c_T)*nu*sqrt(2*lam*L_depth*(d_eff*log(1 + T*K) + 1)*T) + (4 + C_4*(1 + c_T)*nu*L_depth)*sqrt(2*log(3/delta)*T) + 5",
     "expression_latex": "R_T \\le C_3(1 + c_T)\\nu\\sqrt{2\\lambda L(\\tilde d\\log(1 + TK) + 1)T} + (4 + C_4(1 + c_T)\\nu L)\\sqrt{2\\log(3 /\\delta) T} + 5",
-    "regime": "network width m >= poly(lambda, T, K, L, log(1/delta), 1/lambda_0)"
+    "regime": null
    },
    "symbols": {
+    "d_eff": "effective dimension tilde d = log det(I + H/lambda) / log(1 + TK/lambda) of the NTK matrix H",
     "L_depth": "depth of the neural network",
-    "d_tilde": "effective dimension log det(I + H/lambda)/log(1 + TK/lambda) of the NTK matrix H",
-    "nu": "exploration variance B + R*sqrt(d_tilde*log(1+TK/lambda) + 2 + 2*log(1/delta))",
+    "nu": "exploration variance, nu = B + R*sqrt(d_eff*log(1+TK/lam) + 2 + 2*log(1/delta))",
+    "B_ntk": "max{1/(22 e sqrt(pi)), sqrt(2 h^T H^{-1} h)}, NTK-norm-like bound on reward function",
+    "c_T": "sqrt(4*log(T) + 2*log(K))",
     "C_3": "positive absolute constant",
     "C_4": "positive absolute constant",
-    "lam": "regularisation parameter, set to 1 + 1/T"
+    "lambda_0": "lower bound on smallest eigenvalue of NTK matrix H"
    },
    "conditions": [
-    "Assumption 4: NTK matrix H >= lambda_0 I with lambda_0 > 0",
-    "contexts have ||x_{t,k}||_2 = 1 and [x]_j = [x]_{j+d/2}",
+    "NTK matrix H on all TK contexts satisfies H >= lambda_0 I for some lambda_0 > 0",
+    "||x_{t,k}||_2 = 1 and [x_{t,k}]_j = [x_{t,k}]_{j+d/2}",
     "|h(x)| <= 1",
-    "noise R-sub-Gaussian martingale difference sequence",
-    "network width m satisfies Condition 10 (polynomial in T, K, L, log(1/delta), 1/lambda_0)"
+    "noise is R-sub-Gaussian martingale difference sequence (sigma = R)"
    ],
    "tuning": [
     "lambda = 1 + 1/T",
-    "nu = B + R*sqrt(d_tilde*log(1+TK/lambda) + 2 + 2*log(1/delta)), B = max{1/(22 e sqrt(pi)), sqrt(2 h^T H^{-1} h)}",
+    "nu = B + R*sqrt(d_eff*log(1 + TK/lambda) + 2 + 2*log(1/delta))",
     "eta = C_1 (m lambda + m L T)^{-1}",
-    "J = (1 + LT/lambda)(C_2 + log(T^3 L lambda^{-1} log(1/delta)))/C_1 gradient descent iterations"
+    "J = (1 + LT/lambda)(C_2 + log(T^3 L lambda^{-1} log(1/delta)))/C_1 gradient descent iterations",
+    "network width m >= poly(lambda, T, K, L, log(1/delta), lambda_0^{-1}) (Condition 10)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:main",
     "number": "Theorem 5",
-    "quote": "Under Assumption \\ref{assumption:input}, set the parameters in Algorithm \\ref{alg:main} as $\\lambda = 1 + 1 / T$, $\\nu = B + R\\sqrt{\\tilde d \\log(1 + TK/\\lambda) + 2 + 2\\log (1 / \\delta)}$ ... If the network width $m$ satisfies: $m \\ge \\mathrm{poly}(\\lambda, T, K, L, \\log(1 / \\delta), \\lambda_0^{-1})$, then, with probability at least $1 - \\delta$, the regret of Algorithm \\ref{alg:main} is bounded as $R_T \\le C_3(1 + c_T)\\nu\\sqrt{2\\lambda L(\\tilde d\\log(1 + TK) + 1)T} + (4 + C_4(1 + c_T)\\nu L)\\sqrt{2\\log(3 /\\delta) T} + 5$, where $C_3, C_4$ are some positive absolute constants, and $c_T = \\sqrt{4\\log T + 2\\log K}$."
+    "quote": "Under Assumption \\ref{assumption:input}, set the parameters in Algorithm \\ref{alg:main} as $\\lambda = 1 + 1 / T$, $\\nu = B + R\\sqrt{\\tilde d \\log(1 + TK/\\lambda) + 2 + 2\\log (1 / \\delta)}$ ... If the network width $m$ satisfies: $m \\ge \\mathrm{poly}(\\lambda, T, K, L, \\log(1 / \\delta), \\lambda_0^{-1})$, then, with probability at least $1 - \\delta$, the regret of Algorithm \\ref{alg:main} is bounded as $R_T \\le C_3(1 + c_T)\\nu\\sqrt{2\\lambda L(\\tilde d\\log(1 + TK) + 1)T} + (4 + C_4(1 + c_T)\\nu L)\\sqrt{2\\log(3 /\\delta) T} + 5$"
    },
    "confidence": "medium",
-   "notes": "R_T is defined as an expectation of the regret against the per-round best arm, but the theorem bounds it with probability 1-delta (over network initialisation etc.); recorded as high-probability. Remark 7 summarises the bound as O~(d_tilde sqrt(T)). Remark 9 states a doubling trick gives similar regret for unknown T (informal, not recorded). Action space mapped to kernel_rkhs because complexity is via the NTK; the reward function is only assumed bounded, with B measuring its NTK-RKHS norm. Environment set stochastic_iid with contexts as an oblivious sequence."
+   "notes": "R_T is defined as pseudo-regret (expectation), but the theorem holds with probability 1-delta (over network initialization and noise), so recorded as high-probability regret. Remark 7 summarizes as O_tilde(d_eff sqrt(T)); Remark 9 says doubling trick gives similar bound for unknown T (not formally stated). Learner needs B (via nu), mapped to S in learner_knows, and d_eff via nu. Paper's L is network depth, renamed L_depth."
   }
  ],
- "cited_results": [],
+ "cited_results": [
+  {
+   "cited_key": "zhou2019neural",
+   "cited_title": "Neural contextual bandits with UCB-based exploration",
+   "cited_first_author": "Dongruo Zhou",
+   "cited_year": 2019,
+   "cited_arxiv_id": "1911.04462",
+   "algorithm_name": "NeuralUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "contextual K-armed bandit with neural network / NTK reward model",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d_eff*sqrt(T)",
+    "expression_latex": "\\tilde O(\\tilde d T^{1/2})",
+    "regime": null
+   },
+   "where": "Remark 7"
+  }
+ ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:17:21",
+  "date": "2026-10-21T15:26:47",
   "source_chars": 108574,
-  "input_tokens": 88522,
-  "output_tokens": 3740,
-  "cost_usd_equiv": 0.5653948,
+  "input_tokens": 95109,
+  "output_tokens": 4227,
+  "cost_usd_equiv": 0.576382,
   "status": "extracted"
  }
 }

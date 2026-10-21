@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Combinatorial Semi-Bandits with Knapsacks",
   "arxiv_id": "1705.08110",
@@ -24,7 +24,8 @@
    "context": "none",
    "noise": "bounded_01",
    "learner_knows": [
-    "T"
+    "T",
+    "B"
    ],
    "instance_assumptions": [],
    "extras": [
@@ -36,30 +37,62 @@
     "access": "separation_oracle",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "binary_vectors"
+    "loss_set": "binary_vectors",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "arbitrary_subset",
+    "reward": "linear",
+    "loss_scale": "per_base_arm"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "hard_budget",
+    "violation": "never"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Learner knows the budgets B_j (all equal to B w.l.o.g.) and the action family F",
-    "d resources; per-atom reward and consumption vector in [0,1] and [0,1]^d, additive over atoms of the chosen subset",
-    "Outcome matrix i.i.d. across rounds, arbitrary correlations within a round",
-    "Action set F is linearizable (convex hull is a polytope) and admits a negatively correlated randomized rounding scheme (e.g. matroid)",
-    "Algorithm stops when any resource is exhausted; benchmark OPT is the expected reward of the optimal all-knowing policy"
+    "d resources, each with budget B; algorithm stops when any resource is exhausted",
+    "regret measured against OPT, the expected total reward of the optimal all-knowing (dynamic) policy",
+    "action set must be linearizable and admit a negatively correlated randomized rounding scheme (e.g. matroids)",
+    "arbitrary within-round correlations of rewards and consumptions across atoms"
    ],
-   "definition_quote": "Actions correspond to subsets of a finite ground set $\\mA$, with $n=|\\mA|$; we refer to elements of $\\mA$ as \\emph{atoms}. ... for each round $t$ and each atom $a$ there is a reward $\\mu_t(a)\\in [0,1]$ and consumption vector $\\vec{C}_t(a)\\in [0,1]^d$ ... We assume that the outcome matrix is chosen independently from a fixed distribution $\\BigD$ over such matrices."
+   "definition_quote": "in each round t=1..T, an algorithm chooses an action S_t from a fixed set of actions F ... There are d resources being consumed by the algorithm. The algorithm starts out with budget B_j >= 0 of each resource j. ... for each round t and each atom a there is a reward mu_t(a) in [0,1] and consumption vector C_t(a) in [0,1]^d ... Our goal is to minimize regret, defined as OPT minus algorithm's total reward."
   }
  ],
  "algorithms": [
@@ -86,8 +119,8 @@
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "pseudo_regret",
-   "dependence": "instance_dependent",
-   "comparator": "best_policy",
+   "dependence": "worst_case",
+   "comparator": "best_feasible_policy",
    "probability": "expectation",
    "horizon": "known",
    "compute": "polynomial",
@@ -95,18 +128,17 @@
     "notation": "O",
     "expression": "log(n_atoms*d_res*T)*sqrt(n_atoms)*(OPT/sqrt(B) + sqrt(T + OPT))",
     "expression_latex": "O(\\log(ndT)) \\;\\sqrt{n} \\left( \\OPT /\\sqrt{B} + \\sqrt{T+\\OPT}\\right)",
-    "regime": null
+    "regime": "B > 3(alpha n + sqrt(alpha n T)), alpha = Theta(log(ndT))"
    },
    "symbols": {
-    "n_atoms": "number of atoms (ground set size)",
+    "n_atoms": "number of atoms (base arms), n = |A|",
     "d_res": "number of resources",
-    "OPT": "expected total reward of the optimal all-knowing policy",
-    "alpha_conf": "confidence radius parameter Theta(log(ndT))"
+    "OPT": "expected total reward of the optimal all-knowing policy"
    },
    "conditions": [
     "action set F is linearizable and admits a negatively correlated randomized rounding scheme",
-    "B > 3(alpha_conf*n + sqrt(alpha_conf*n*T)) with alpha_conf = Theta(log(ndT))",
-    "all budgets equal to B (w.l.o.g. smallest budget)"
+    "B > 3(alpha*n + sqrt(alpha*n*T)) with alpha = Theta(log(ndT))",
+    "all budgets equal B (w.l.o.g. by rescaling)"
    ],
    "tuning": [
     "eps = sqrt(alpha n/B) + alpha n/B + sqrt(alpha n T)/B",
@@ -116,23 +148,23 @@
    "source": {
     "label": "mainresult",
     "number": "Theorem 4",
-    "quote": "Consider the \\SemiBwK problem with a linearizable action set $\\mF$ that admits a negatively correlated $\\RRS$. Then algorithm $\\algorithm$ with this $\\RRS$ achieves expected regret bound at most O(\\log(ndT)) \\;\\sqrt{n} ( \\OPT /\\sqrt{B} + \\sqrt{T+\\OPT}). ... We require $B > 3(\\alpha n + \\sqrt{\\alpha nT})$, where $\\alpha = \\Theta(\\log(ndT))$ ..."
+    "quote": "Consider the \\SemiBwK problem with a linearizable action set $\\mF$ that admits a negatively correlated $\\RRS$. Then algorithm $\\algorithm$ with this $\\RRS$ achieves expected regret bound at most O(\\log(ndT)) \\;\\sqrt{n} ( \\OPT /\\sqrt{B} + \\sqrt{T+\\OPT}). ... We require B > 3(\\alpha n + \\sqrt{\\alpha nT}), where \\alpha = \\Theta(\\log(ndT)) ... Parameter \\eps ... set to \\sqrt{\\frac{\\alpha n}{B}} + \\frac{\\alpha n}{B} + \\frac{\\sqrt{\\alpha nT}}{B}."
    },
    "confidence": "medium",
-   "notes": "Regret = OPT minus algorithm's expected total reward; benchmark is the optimal all-knowing policy. Quantity classified as pseudo_regret (expectation-based). Corollary 5 restates this for matroid constraints using the Chekuri et al. RRS (same bound). Polynomial time via ellipsoid with matroid separation oracle. Application bounds in Section 5 (dynamic pricing, assortment, auctions) are informal plug-ins and not recorded."
+   "notes": "Regret = OPT minus algorithm's expected total reward; recorded as pseudo_regret against best feasible (dynamic) policy. Corollary 5 restates the same bound for matroid action sets using the Chekuri et al. RRS (polynomial-time via ellipsoid + separation oracle). Application bounds in Section 5 (dynamic pricing, assortment, auctions) are informal instantiations, not recorded."
   }
  ],
  "cited_results": [
   {
-   "cited_key": "CBwK-nips16",
-   "cited_title": "Linear contextual bandits with knapsacks",
+   "cited_key": "AgrawalDevanur-ec14",
+   "cited_title": "Bandits with concave rewards and convex knapsacks",
    "cited_first_author": "S. Agrawal",
-   "cited_year": 2016,
+   "cited_year": 2014,
    "cited_arxiv_id": null,
-   "algorithm_name": "linCBwK",
+   "algorithm_name": "linear-contextual BwK algorithm (linCBwK)",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "SemiBwK solved via linear contextual BwK, at most one unit of each resource consumed per round, rewards rescaled",
+   "setting_description": "SemiBwK solved via linear contextual BwK, ignoring semi-bandit feedback, per-round consumption at most one unit per resource (rescaled rewards)",
    "bound": {
     "notation": "O_tilde",
     "expression": "n_atoms*sqrt(T)*OPT/B + n_atoms**2*sqrt(T)",
@@ -150,10 +182,10 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Bandits with knapsacks with n arms",
+   "setting_description": "Bandits with knapsacks with K arms, budget B, OPT > Omega(T)",
    "bound": {
     "notation": "Omega_tilde",
-    "expression": "T*sqrt(n_atoms/B) + sqrt(n_atoms*T)",
+    "expression": "T*sqrt(K/B) + sqrt(K*T)",
     "expression_latex": "\\tilde{O}( T \\sqrt{n/B} + \\sqrt{nT})",
     "regime": "OPT > Omega(T)"
    },
@@ -168,7 +200,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Combinatorial semi-bandits, feasible subsets of at most k atoms out of n",
+   "setting_description": "Stochastic combinatorial semi-bandits, n atoms, feasible subsets of at most k atoms",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(k*n_atoms*T)",
@@ -181,19 +213,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:13:21",
+  "date": "2026-10-21T15:22:38",
   "source_chars": 125921,
-  "input_tokens": 90630,
-  "output_tokens": 3829,
-  "cost_usd_equiv": 0.5840388,
+  "input_tokens": 97217,
+  "output_tokens": 4137,
+  "cost_usd_equiv": 0.591446,
   "status": "extracted"
  }
 }

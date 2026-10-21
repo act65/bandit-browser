@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Contextual Combinatorial Bandits with Changing Action Sets via Gaussian Processes",
   "arxiv_id": "2110.02248",
@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Contextual combinatorial multi-armed bandit with changing action sets (C3-MAB) with GP-sampled base arm outcomes",
+   "name_in_paper": "Contextual combinatorial multi-armed bandit with changing action sets (C3-MAB), GP-sampled base arm outcomes",
    "objective": "cumulative_regret",
    "feedback": "semi_bandit",
    "environment": "stochastic_iid",
@@ -25,7 +25,9 @@
    "context": "adversarial_contexts",
    "noise": "gaussian_known_variance",
    "learner_knows": [
+    "m",
     "sigma",
+    "kernel",
     "prior"
    ],
    "instance_assumptions": [
@@ -37,33 +39,65 @@
    "action_set": {
     "shape": "finite",
     "time_varying": "adaptive_sequence",
-    "access": "explicit",
+    "access": "linear_optimization_oracle",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "arbitrary_subset",
+    "reward": "nonlinear_monotone_lipschitz",
+    "loss_scale": "unspecified"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Base arm expected outcome function f over context space is a sample from a Gaussian process with known kernel k(x,x)<=1",
-    "Expected super-arm reward u is a known monotone function, B-Lipschitz (in l1) in expected base-arm outcomes",
-    "Learner uses an alpha-approximation (deterministic) oracle; regret is alpha-approximation regret",
-    "Number of available base arms per round bounded by M (known, used in beta_t); super arm size at most K",
-    "Sequence of available context sets is arbitrary (regret holds for any given availability sequence)"
+    "Base arms are defined by contexts in a compact context space X; mean outcome function f is a sample from a GP with known kernel (k(x,x)<=1)",
+    "Available base arms and their contexts change arbitrarily each round (at most M available arms); learner knows M",
+    "Expected super-arm reward u is known, monotone and B-Lipschitz (L1) in base arm means",
+    "Learner uses an alpha-approximation oracle; regret is alpha-approximation regret"
    ],
-   "definition_quote": "We assume that there exists a function $f:\\XX \\rightarrow \\mathbb{R}$, such that we have $r(x)=f(x) +\\eta$ ... $\\eta \\sim {\\cal N} (0,\\sigma^2)$ ... we model $f$ as a sample from a Gaussian process ... $R_{\\alpha} (T)  =  \\alpha \\sum^T_{t=1}   \\textup{opt}(f_t ) -  \\sum^T_{t=1} u(f(  \\bs{x}_{t,S_t}  ))$"
+   "definition_quote": "We assume that there exists a function $f:\\XX \\rightarrow \\mathbb{R}$, such that we have $r(x)=f(x) +\\eta$, for every $x\\in \\XX$, where $\\eta \\sim {\\cal N} (0,\\sigma^2)$. ... we use the standard notion of $\\alpha$-approximation regret ... $R_{\\alpha} (T) = \\alpha \\sum^T_{t=1} \\textup{opt}(f_t ) - \\sum^T_{t=1} u(f( \\bs{x}_{t,S_t} ))$."
   }
  ],
  "algorithms": [
@@ -76,11 +110,26 @@
     "optimism"
    ],
    "requires_knowledge_of": [
+    "kernel",
     "prior",
     "sigma",
-    "M (max number of available base arms)",
+    "M",
     "delta",
-    "alpha-approximation oracle"
+    "alpha-approximation oracle (deterministic)"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "SO'CLOK-UCB (sparse GP variant)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "kernel",
+    "prior",
+    "sigma"
    ]
   }
  ],
@@ -91,7 +140,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "high_probability_regret",
+   "quantity": "alpha_regret",
    "dependence": "instance_dependent",
    "comparator": "best_action_per_round",
    "probability": "high_probability",
@@ -99,22 +148,21 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "sqrt(8*B_lip**2*(lambda_star + sigma**2)*m*2*log(M_max*pi**2*T**2/(3*delta))*T*gamma_KT)",
+    "expression": "sqrt(8*B_lip**2*(lambda_star + sigma**2)*m*2*log(M*pi**2*T**2/(3*delta))*T*gamma_KT)",
     "expression_latex": "R_{\\alpha}(T) \\leq \\sqrt{C(K)K\\beta_T T \\gamma_{KT}(\\mathcal{X}_{\\overline{T}})},\\ C(K)= 8B^2(\\lambda^*(K)+\\sigma^2)",
     "regime": null
    },
    "symbols": {
-    "m": "maximum cardinality K of any feasible super arm (paper's K)",
-    "B_lip": "Lipschitz constant B of expected reward w.r.t. expected base arm outcomes",
-    "lambda_star": "maximum eigenvalue of posterior covariance matrices of selected actions over T rounds (lambda^*(K))",
-    "M_max": "upper bound M on number of available base arms per round",
-    "gamma_KT": "maximum information gain over feasible super-arm context sequences given the available context sets X_1..X_T"
+    "B_lip": "Lipschitz constant of expected reward u in base arm means (Assumption 2)",
+    "lambda_star": "maximum eigenvalue of posterior covariance matrices of selected actions up to T",
+    "M": "maximum number of available base arms per round",
+    "gamma_KT": "maximum information gain over feasible super-arm context sequences from the arrived context sets"
    },
    "conditions": [
-    "f sampled from GP with k(x,x)<=1",
-    "u monotone and B-Lipschitz (Assumptions 1-2)",
+    "u monotone (Assumption 1) and Lipschitz (Assumption 2)",
+    "f sampled from GP with k(x,x) <= 1",
     "deterministic alpha-approximation oracle",
-    "max_t M_t <= M"
+    "|S| <= K (=m) for all feasible super arms"
    ],
    "tuning": [
     "beta_t = 2 log(M pi^2 t^2 / (3 delta))"
@@ -123,10 +171,10 @@
    "source": {
     "label": "mainthm",
     "number": "Theorem 1",
-    "quote": "Let $\\delta \\in (0,1)$, $T \\in \\mathbb{N}$. Given $\\beta_t = 2\\log (M\\pi^2t^2/ 3\\delta )$, the regret incurred by O'CLOK-UCB in $T$ rounds is upper bounded as $R_{\\alpha}(T) \\leq \\sqrt{C(K)K\\beta_T T \\gamma_{KT}(\\mathcal{X}_{\\overline{T}})},$ with probability at least $1-\\delta$,  where $C(K)= 8B^2(\\lambda^*(K)+\\sigma^2)$, and $\\lambda^*(K)$ is the maximum eigenvalue of all covariance matrices of selected actions over $T$ rounds."
+    "quote": "Let $\\delta \\in (0,1)$, $T \\in \\mathbb{N}$. Given $\\beta_t = 2\\log (M\\pi^2t^2/ 3\\delta )$, the regret incurred by O'CLOK-UCB in $T$ rounds is upper bounded as $R_{\\alpha}(T) \\leq \\sqrt{C(K)K\\beta_T T \\gamma_{KT}(\\mathcal{X}_{\\overline{T}})},$ with probability at least $1-\\delta$, where $C(K)= 8B^2(\\lambda^*(K)+\\sigma^2)$, and $\\lambda^*(K)$ is the maximum eigenvalue of all covariance matrices of selected actions over $T$ rounds."
    },
-   "confidence": "high",
-   "notes": "Alpha-approximation regret; probability over GP sample and noise. lambda_star is a data-dependent quantity. beta_t schedule does not depend on T, so anytime."
+   "confidence": "medium",
+   "notes": "Paper's K (max super-arm cardinality) mapped to m. Probability is over GP prior and noise. lambda_star is data-dependent. Comparator is per-round optimal super arm scaled by alpha."
   },
   {
    "id": "r2",
@@ -134,7 +182,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "high_probability_regret",
+   "quantity": "alpha_regret",
    "dependence": "worst_case",
    "comparator": "best_action_per_round",
    "probability": "high_probability",
@@ -143,17 +191,15 @@
    "bound": {
     "notation": "O_tilde",
     "expression": "sqrt(lambda_star*d*m*T)",
-    "expression_latex": "R_\\alpha (T) \\leq \\tilde{O} \\left( \\sqrt{\\lambda^*(K)DKT}\\right)",
-    "regime": "linear kernel"
+    "expression_latex": "\\tilde{O} \\left( \\sqrt{\\lambda^*(K)DKT}\\right)",
+    "regime": null
    },
    "symbols": {
-    "m": "maximum super arm cardinality K",
-    "lambda_star": "maximum eigenvalue of covariance matrices of selected actions",
-    "d": "context space dimension D"
+    "lambda_star": "maximum eigenvalue of posterior covariance matrices of selected actions up to T"
    },
    "conditions": [
-    "context space compact and convex in R^D",
     "linear kernel",
+    "context space X subset R^D compact and convex",
     "conditions of Theorem 1"
    ],
    "tuning": [
@@ -166,7 +212,7 @@
     "quote": "For the linear kernel we have: $R_\\alpha (T) \\leq \\tilde{O} \\left( \\sqrt{\\lambda^*(K)DKT}\\right) $."
    },
    "confidence": "medium",
-   "notes": "Via gamma bounds of Srinivas et al."
+   "notes": "D (context dimension) mapped to d; K mapped to m."
   },
   {
    "id": "r3",
@@ -174,7 +220,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "high_probability_regret",
+   "quantity": "alpha_regret",
    "dependence": "worst_case",
    "comparator": "best_action_per_round",
    "probability": "high_probability",
@@ -183,17 +229,15 @@
    "bound": {
     "notation": "O_tilde",
     "expression": "sqrt(lambda_star*m*T*log(T)**d)",
-    "expression_latex": "R_\\alpha (T) \\leq \\tilde{O} \\left(  \\sqrt{\\lambda^*(K)KT\\log^{D}T}\\right)",
-    "regime": "RBF kernel"
+    "expression_latex": "\\tilde{O} \\left( \\sqrt{\\lambda^*(K)KT\\log^{D}T}\\right)",
+    "regime": null
    },
    "symbols": {
-    "m": "maximum super arm cardinality K",
-    "lambda_star": "maximum eigenvalue of covariance matrices of selected actions",
-    "d": "context space dimension D"
+    "lambda_star": "maximum eigenvalue of posterior covariance matrices of selected actions up to T"
    },
    "conditions": [
-    "context space compact and convex in R^D",
-    "RBF kernel",
+    "RBF (squared exponential) kernel",
+    "context space X subset R^D compact and convex",
     "conditions of Theorem 1"
    ],
    "tuning": [
@@ -203,10 +247,10 @@
    "source": {
     "label": "explicitbounds",
     "number": "Corollary 1",
-    "quote": "For the RBF kernel we have: $R_\\alpha (T) \\leq \\tilde{O} \\left(  \\sqrt{\\lambda^*(K)KT\\log^{D}T}\\right) $."
+    "quote": "For the RBF kernel we have: $R_\\alpha (T) \\leq \\tilde{O} \\left( \\sqrt{\\lambda^*(K)KT\\log^{D}T}\\right) $."
    },
    "confidence": "medium",
-   "notes": "Table 1 additionally shows a D factor."
+   "notes": "Table 1 states sqrt(lambda* K D T log^D T) instead; recorded the corollary statement."
   },
   {
    "id": "r4",
@@ -214,7 +258,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "high_probability_regret",
+   "quantity": "alpha_regret",
    "dependence": "worst_case",
    "comparator": "best_action_per_round",
    "probability": "high_probability",
@@ -222,19 +266,16 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O_tilde",
-    "expression": "sqrt(lambda_star*m)*T**((d + nu)/(d + 2*nu))",
-    "expression_latex": "R_\\alpha (T) \\leq \\tilde{O}  \\left( \\sqrt{\\lambda^*(K)K} T^{ (D+ \\nu )/(D+2\\nu )} \\right)",
-    "regime": "Matern kernel, nu > 1"
+    "expression": "sqrt(lambda_star*m)*T**((d + nu_matern)/(d + 2*nu_matern))",
+    "expression_latex": "\\tilde{O} \\left( \\sqrt{\\lambda^*(K)K} T^{ (D+ \\nu )/(D+2\\nu )} \\right)",
+    "regime": null
    },
    "symbols": {
-    "m": "maximum super arm cardinality K",
-    "lambda_star": "maximum eigenvalue of covariance matrices of selected actions",
-    "d": "context space dimension D",
-    "nu": "Matern smoothness parameter"
+    "lambda_star": "maximum eigenvalue of posterior covariance matrices of selected actions up to T"
    },
    "conditions": [
-    "context space compact and convex in R^D",
     "Matern kernel with nu > 1",
+    "context space X subset R^D compact and convex",
     "conditions of Theorem 1"
    ],
    "tuning": [
@@ -244,10 +285,10 @@
    "source": {
     "label": "explicitbounds",
     "number": "Corollary 1",
-    "quote": "For the Matérn kernel we have: $R_\\alpha (T) \\leq \\tilde{O}  \\left( \\sqrt{\\lambda^*(K)K} T^{ (D+ \\nu )/(D+2\\nu )} \\right) $, where $\\nu >1$ is the Matérn parameter."
+    "quote": "For the Matérn kernel we have: $R_\\alpha (T) \\leq \\tilde{O} \\left( \\sqrt{\\lambda^*(K)K} T^{ (D+ \\nu )/(D+2\\nu )} \\right) $, where $\\nu >1$ is the Matérn parameter."
    },
    "confidence": "medium",
-   "notes": "Uses gamma bounds of Vakili et al. Table 1 states lambda^*(K) T^{...} instead."
+   "notes": "Uses information gain bounds of Vakili et al. Table 1 states lambda* T^{(D+nu)/(D+2nu)} (different factors)."
   }
  ],
  "cited_results": [
@@ -260,12 +301,12 @@
    "algorithm_name": "CUCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Combinatorial semi-bandit, finite arms, Lipschitz reward, (alpha,beta)-approx oracle, no contexts",
+   "setting_description": "Stochastic combinatorial semi-bandit, finite base arms, Lipschitz reward, (alpha,beta)-approximation oracle, no contexts",
    "bound": {
     "notation": "O_tilde",
     "expression": "sqrt(m*T)",
-    "expression_latex": "\\tilde{O}(\\sqrt{KT})",
-    "regime": "m = super arm cardinality K"
+    "expression_latex": "\\tilde{O} \\left( \\sqrt{KT} \\right)",
+    "regime": null
    },
    "where": "Table 1"
   },
@@ -278,12 +319,12 @@
    "algorithm_name": "CC-MAB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Contextual combinatorial volatile bandit, submodular reward, Holder-continuous outcomes, (1-1/e) oracle",
+   "setting_description": "Contextual combinatorial volatile bandit, submodular reward, Hölder-continuous outcomes, (1-1/e) oracle",
    "bound": {
     "notation": "O_tilde",
     "expression": "m*T**((d + 2*eta_h)/(d + 3*eta_h))",
-    "expression_latex": "\\tilde{O}(K T^{(D+2\\eta)/(D+3\\eta)})",
-    "regime": "d = context dimension D, eta_h = Holder constant"
+    "expression_latex": "\\tilde{O} \\left( K T^{(D+2\\eta )/(D+3\\eta )} \\right)",
+    "regime": null
    },
    "where": "Table 1"
   },
@@ -300,7 +341,7 @@
    "bound": {
     "notation": "O_tilde",
     "expression": "m*T**((D_bar + 1)/(D_bar + 2) + eps_alg)",
-    "expression_latex": "\\tilde{O}(KT^{(\\overline{D}+1)/(\\overline{D}+2)+ \\epsilon})",
+    "expression_latex": "\\tilde{O} \\left( KT^{(\\overline{D}+1)/(\\overline{D}+2)+ \\epsilon} \\right)",
     "regime": "any eps > 0; D_bar approximate optimality dimension"
    },
    "where": "Table 1"
@@ -309,19 +350,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:06:33",
+  "date": "2026-10-21T15:15:39",
   "source_chars": 103854,
-  "input_tokens": 81240,
-  "output_tokens": 5706,
-  "cost_usd_equiv": 0.5464588,
+  "input_tokens": 87827,
+  "output_tokens": 6016,
+  "cost_usd_equiv": 0.553906,
   "status": "extracted"
  }
 }

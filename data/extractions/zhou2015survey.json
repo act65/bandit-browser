@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "A Survey on Contextual Multi-armed Bandits",
   "arxiv_id": "1508.03326",
@@ -13,7 +13,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Reduce to K-armed bandits (finite context set, policies = all mappings from contexts to arms)",
+   "name_in_paper": "Reduce to K-Armed Bandits (finite contexts, EXP3 per context)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "adversarial_unspecified",
@@ -24,34 +24,68 @@
    "noise": "bounded_01",
    "learner_knows": [
     "T",
-    "K"
+    "K",
+    "M_ctx"
    ],
    "instance_assumptions": [],
+   "extras": [],
    "action_set": {
     "shape": "not_applicable",
     "time_varying": "not_applicable",
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
-   "extras": [],
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "finite set of M_ctx = C distinct contexts, enumerable"
+    "finite set of C distinct contexts; comparator is the best mapping from contexts to arms"
    ],
    "definition_quote": "Suppose there are $C$ distinct contexts in the context set $\\mathcal{X}$, and the context at time $t$ is $x_t \\in \\{1, 2, ..., C\\}$. ... Define the policy set to be all the possible mappings from contexts to arms as $\\Pi = \\{f: \\mathcal{X} \\rightarrow \\mathcal{A}\\}$, then the regret of the agent is defined as: R_T = \\sup_{f\\in \\Pi} \\mathrm{E}[ \\sum_{t=1}^T(r_{t, f(x_t)} - r_{t, a_t}) ]"
   }
@@ -59,7 +93,7 @@
  "algorithms": [
   {
    "id": "a1",
-   "name": "EXP3 applied independently on each context",
+   "name": "EXP3 applied on each context",
    "registry_id": null,
    "is_new": false,
    "techniques": [
@@ -91,9 +125,11 @@
     "regime": null
    },
    "symbols": {},
-   "conditions": [],
+   "conditions": [
+    "contexts take one of C distinct values"
+   ],
    "tuning": [
-    "EXP3 tuned as in Auer et al. (2002) per context"
+    "EXP3 tuned per context"
    ],
    "is_new": true,
    "source": {
@@ -102,7 +138,7 @@
     "quote": "Apply EXP3 \\citep{auer2002nonstochastic}, a non-contextual multi-armed bandits algorithm, on each context, then the regret is R_T \\le 2.63\\sqrt{TCK\\ln K}"
    },
    "confidence": "medium",
-   "notes": "Survey's own simple derivation (folklore). Paper's C = number of contexts (M_ctx). Regret defined as sup over policies of expectation. Table says T must be known."
+   "notes": "Paper's C (number of contexts) mapped to M_ctx. Simple derivation from the EXP3 bound via Cauchy-Schwarz; folklore, but not attributed in the survey. Table states T must be known."
   }
  ],
  "cited_results": [
@@ -115,7 +151,7 @@
    "algorithm_name": "EXP3",
    "algorithm_registry_id": "exp3",
    "side": "upper",
-   "setting_description": "Adversarial K-armed bandit, rewards in [0,1], known T",
+   "setting_description": "Adversarial K-armed bandit, rewards in [0,1]",
    "bound": {
     "notation": "exact",
     "expression": "2.63*sqrt(T*K*log(K))",
@@ -131,16 +167,16 @@
    "cited_year": 2002,
    "cited_arxiv_id": null,
    "algorithm_name": "EXP4",
-   "algorithm_registry_id": "exp4_mixing",
+   "algorithm_registry_id": "exp4",
    "side": "upper",
-   "setting_description": "Adversarial bandits with N experts' advice (including a uniform expert), rewards in [0,1], expected regret vs best expert, known T",
+   "setting_description": "Adversarial bandits with N expert advice, rewards in [0,1], expert set includes uniform expert; known T",
    "bound": {
     "notation": "O",
     "expression": "sqrt(T*K*log(N_exp))",
     "expression_latex": "O(\\sqrt{TK\\ln N})",
     "regime": null
    },
-   "where": "Table 2; Theorem 5.1"
+   "where": "Theorem 5.1, Table 2"
   },
   {
    "cited_key": "beygelzimer2010contextual",
@@ -151,14 +187,14 @@
    "algorithm_name": "EXP4.P",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Adversarial bandits with N experts including a uniform expert, rewards in [0,1], high-probability regret vs best expert, ln(N/delta) <= KT, known T",
+   "setting_description": "Adversarial bandits with N experts including a uniform expert, rewards in [0,1], ln(N/delta) <= KT; high-probability regret",
    "bound": {
     "notation": "exact",
     "expression": "6*sqrt(K*T*log(N_exp/delta))",
     "expression_latex": "6\\sqrt{KT\\ln (N/\\delta)}",
-    "regime": "ln(N/delta) <= KT"
+    "regime": null
    },
-   "where": "Table 2; Theorem 5.4"
+   "where": "Theorem 5.4, Table 2"
   },
   {
    "cited_key": "beygelzimer2010contextual",
@@ -169,10 +205,10 @@
    "algorithm_name": "VE",
    "algorithm_registry_id": "ve",
    "side": "upper",
-   "setting_description": "Contextual bandits with a policy class of VC dimension d, rewards in [0,1], high-probability regret vs best policy",
+   "setting_description": "Contextual bandits with policy class of VC dimension d (finite K arms), high probability",
    "bound": {
     "notation": "exact",
-    "expression": "9*sqrt(2*T*(d*log(E*T/d) + log(2/delta)))",
+    "expression": "9*sqrt(2*T*(d_VC*log(E*T/d_VC) + log(2/delta)))",
     "expression_latex": "9\\sqrt{2T\\left(d\\ln\\frac{eT}{d}+\\ln\\frac{2}{\\delta}\\right)}",
     "regime": null
    },
@@ -187,14 +223,14 @@
    "algorithm_name": "LinUCB with self-normalized confidence width (OFUL)",
    "algorithm_registry_id": "oful",
    "side": "upper",
-   "setting_description": "Linear contextual bandits, R-sub-Gaussian noise, ||theta*|| <= S, ||x|| <= L, lambda >= max(1, L^2), high probability",
+   "setting_description": "Linear contextual bandit, R-sub-Gaussian noise, ||theta*|| <= S, ||x|| <= L, lambda >= max(1, L^2); high probability",
    "bound": {
     "notation": "exact",
     "expression": "sqrt(T*d*log(1 + T*L_feat**2/(d*lam)))*(sigma*sqrt(d*log(1 + T*L_feat**2/(lam*d)) + 2*log(1/delta)) + sqrt(lam)*S)",
-    "expression_latex": "\\sqrt{T d \\log (1 + TL^2/(d \\lambda))} \\left( R \\sqrt{d\\log(1 + TL^2/ (\\lambda d)) + 2\\log(1/\\delta)} +\\lambda^{1/2}S \\right)",
+    "expression_latex": "\\sqrt{T d \\log (1 + TL^2/(d \\lambda))} \\times ( R \\sqrt{d\\log(1 + TL^2/ (\\lambda d)) + 2\\log(1/\\delta)} +\\lambda^{1/2}S )",
     "regime": null
    },
-   "where": "Theorem 4.3 (Table 2 lists O(d sqrt(T ln((1+T)/delta))))"
+   "where": "Theorem 4.3"
   },
   {
    "cited_key": "chu2011contextual",
@@ -205,14 +241,14 @@
    "algorithm_name": "SupLinUCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Linear contextual bandits with K arms, high probability",
+   "setting_description": "Linear contextual bandit with K arms, high probability",
    "bound": {
     "notation": "O",
     "expression": "sqrt(T*d*log(K*T*log(T)/delta)**3)",
     "expression_latex": "O\\left( \\sqrt{Td\\ln^3(KT\\ln (T)/\\delta)} \\right)",
     "regime": null
    },
-   "where": "Table 2; Section 4.1.1"
+   "where": "Section 4.1.1, Table 2"
   },
   {
    "cited_key": "auer2003using",
@@ -223,14 +259,14 @@
    "algorithm_name": "SupLinREL",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Linear contextual bandits with K arms, high probability",
+   "setting_description": "Linear contextual bandit with K arms, high probability",
    "bound": {
     "notation": "O",
     "expression": "sqrt(T*d)*(1 + log(2*K*T*log(T)/delta))**(3/2)",
     "expression_latex": "O\\left( \\sqrt{Td}(1+\\ln (2KT\\ln T / \\delta))^{3/2} \\right)",
     "regime": null
    },
-   "where": "Table 2"
+   "where": "Table 2 (text omits delta)"
   },
   {
    "cited_key": "agrawal2012thompson",
@@ -241,14 +277,14 @@
    "algorithm_name": "Thompson Sampling with Linear Payoff",
    "algorithm_registry_id": "lin_ts",
    "side": "upper",
-   "setting_description": "Linear contextual bandits, conditionally R-sub-Gaussian noise, adversarial contexts, high probability",
+   "setting_description": "Linear contextual bandit, adversarial contexts, conditionally R-sub-Gaussian noise, high probability",
    "bound": {
     "notation": "O",
-    "expression": "d**2/eps_alg*sqrt(T**(1 + eps_alg))*log(T*d)*log(1/delta)",
+    "expression": "d**2/eps_alg*sqrt(T**(1+eps_alg))*log(T*d)*log(1/delta)",
     "expression_latex": "O\\left(\\frac{d^2}{\\epsilon}\\sqrt{T^{1+\\epsilon}} (\\ln(Td)\\ln\\frac{1}{\\delta})\\right)",
     "regime": "eps_alg in (0,1)"
    },
-   "where": "Table 2; Theorem 4.8"
+   "where": "Theorem 4.8, Table 2"
   },
   {
    "cited_key": "agrawal2013further",
@@ -256,10 +292,10 @@
    "cited_first_author": "Shipra Agrawal",
    "cited_year": 2013,
    "cited_arxiv_id": null,
-   "algorithm_name": "Thompson Sampling",
+   "algorithm_name": "Thompson sampling",
    "algorithm_registry_id": "thompson_sampling_beta",
    "side": "upper",
-   "setting_description": "Non-contextual stochastic K-armed bandit (paper writes N arms)",
+   "setting_description": "Non-contextual stochastic multi-armed bandit with N arms",
    "bound": {
     "notation": "O",
     "expression": "sqrt(K*T*log(T))",
@@ -277,7 +313,7 @@
    "algorithm_name": "GP-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "GP bandit with f drawn from GP prior, finite domain of size K, high probability",
+   "setting_description": "GP bandit with f sampled from GP prior, finite domain of size K, high probability, beta_t = 2 ln(K t^2 pi^2/(6 delta))",
    "bound": {
     "notation": "O_tilde",
     "expression": "sqrt(T*gamma_T*log(K))",
@@ -295,14 +331,14 @@
    "algorithm_name": "GP-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Agnostic RKHS bandit, RKHS norm <= B, noise bounded by sigma, high probability",
+   "setting_description": "Agnostic RKHS setting, <f,f>_H <= B (symbol B_sq), noise bounded by sigma, high probability",
    "bound": {
     "notation": "O_tilde",
-    "expression": "sqrt(T)*(B_rkhs*sqrt(gamma_T) + gamma_T)",
+    "expression": "sqrt(T)*(B_sq*sqrt(gamma_T) + gamma_T)",
     "expression_latex": "\\tilde{O}\\left(\\sqrt{T}\\left( B\\sqrt{\\gamma_T}+\\gamma_T \\right) \\right)",
     "regime": null
    },
-   "where": "Table 2; Theorem 4.9 (B_rkhs = RKHS norm bound)"
+   "where": "Theorem 4.9, Table 2"
   },
   {
    "cited_key": "valko2013finite",
@@ -313,14 +349,14 @@
    "algorithm_name": "SupKernelUCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Kernelised contextual bandits, RKHS norm <= B, effective dimension d_tilde, high probability",
+   "setting_description": "Kernelised contextual bandit with RKHS norm sqrt(<f,f>) <= B (symbol B_H), effective dimension d_tilde",
    "bound": {
     "notation": "O_tilde",
-    "expression": "sqrt(B_rkhs*d_tilde*T)",
+    "expression": "sqrt(B_H*d_eff*T)",
     "expression_latex": "\\tilde{O}(\\sqrt{B\\tilde{d}T})",
     "regime": null
    },
-   "where": "Table 2; Section 4.2.2 (B_rkhs = RKHS norm bound, d_tilde = effective dimension)"
+   "where": "Section 4.2.2, Table 2"
   },
   {
    "cited_key": "langford2008epoch",
@@ -331,14 +367,14 @@
    "algorithm_name": "Epoch-Greedy",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic contextual bandits, finite policy class of size N, rewards in [0,1], high probability, T unknown",
+   "setting_description": "Stochastic contextual bandit with finite policy class of size N, rewards in [0,1], probability 1-delta",
    "bound": {
     "notation": "O",
     "expression": "T**(2/3)*(K*log(N_exp/delta))**(1/3)",
-    "expression_latex": "c T^{2/3}(K \\ln (|\\mathcal{H}|/\\delta))^{1/3}",
+    "expression_latex": "R_T \\le c T^{2/3}(K \\ln (|\\mathcal{H}|/\\delta))^{1/3}",
     "regime": null
    },
-   "where": "Table 2; Theorem 4.12"
+   "where": "Theorem 4.12, Table 2"
   },
   {
    "cited_key": "dudik2011efficient",
@@ -349,7 +385,7 @@
    "algorithm_name": "POLICYELIMINATION",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic contextual bandits, finite policy class of size N, rewards in [0,1], known context distribution, high probability",
+   "setting_description": "Stochastic contextual bandit, finite policy class of size N, known context distribution, probability 1-delta",
    "bound": {
     "notation": "O",
     "expression": "16*sqrt(2*T*K*log(4*T**2*N_exp/delta))",
@@ -367,14 +403,14 @@
    "algorithm_name": "RandomizedUCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic contextual bandits, finite policy class of size N, rewards in [0,1], high probability",
+   "setting_description": "Stochastic contextual bandit, finite policy class of size N, high probability",
    "bound": {
     "notation": "O",
     "expression": "sqrt(T*K*log(T*N_exp/delta))",
     "expression_latex": "O(\\sqrt{TK\\ln(TN/\\delta)})",
     "regime": null
    },
-   "where": "Section 4.3.2 (Table 2 lists O(sqrt(TK ln(N/delta))))"
+   "where": "Section 4.3.2 (Table 2 states O(sqrt(TK ln(N/delta))))"
   },
   {
    "cited_key": "agarwal2014taming",
@@ -385,7 +421,7 @@
    "algorithm_name": "ILOVETOCONBANDITS",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic contextual bandits, finite policy class of size N, rewards in [0,1], high probability",
+   "setting_description": "Stochastic contextual bandit, finite policy class of size N, rewards in [0,1], probability 1-delta",
    "bound": {
     "notation": "O",
     "expression": "sqrt(K*T*log(T*N_exp/delta)) + K*log(T*N_exp/delta)",
@@ -393,24 +429,42 @@
     "regime": null
    },
    "where": "Theorem 4.18"
+  },
+  {
+   "cited_key": "auer2002nonstochastic",
+   "cited_title": "The nonstochastic multiarmed bandit problem",
+   "cited_first_author": "Peter Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "EXP4",
+   "algorithm_registry_id": "exp4",
+   "side": "upper",
+   "setting_description": "Adversarial experts, expected regret in terms of best expert cumulative reward G_max",
+   "bound": {
+    "notation": "exact",
+    "expression": "2.63*sqrt(G_max*K*log(N_exp))",
+    "expression_latex": "G_{max} - \\mathrm{E} G_{exp4} \\le 2.63 \\sqrt{G_{max} K \\ln N}",
+    "regime": null
+   },
+   "where": "Proof of Theorem 5.1"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:20:42",
+  "date": "2026-10-21T15:30:43",
   "source_chars": 104796,
-  "input_tokens": 85284,
-  "output_tokens": 7651,
-  "cost_usd_equiv": 0.6177108,
+  "input_tokens": 91871,
+  "output_tokens": 9536,
+  "cost_usd_equiv": 0.656658,
   "status": "extracted"
  }
 }

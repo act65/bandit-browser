@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Cascading Bandits for Large-Scale Recommendation Problems",
   "arxiv_id": "1603.05359",
@@ -20,7 +20,7 @@
    "id": "s1",
    "name_in_paper": "Linear cascading bandits",
    "objective": "cumulative_regret",
-   "feedback": "partial_monitoring",
+   "feedback": "cascade",
    "environment": "stochastic_iid",
    "action_space": "combinatorial",
    "function_class": [],
@@ -29,9 +29,10 @@
    "noise": "bernoulli",
    "learner_knows": [
     "T",
-    "S",
+    "K",
+    "m",
     "d",
-    "K"
+    "S"
    ],
    "instance_assumptions": [
     "unique_optimal_arm"
@@ -43,27 +44,58 @@
     "access": "explicit",
     "norm_bound": "unit_l2",
     "parameter_set": "unspecified",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "ordered_list",
+    "reward": "click_model",
+    "loss_scale": "per_action"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Cascade (click) feedback: user scans an ordered list of K items out of L and clicks on the first attractive one; only items up to the click are observed",
-    "Reward is non-linear: f(A,w) = 1 - prod_k (1 - w(a_k))",
-    "Attraction probabilities are linear in known item features: wbar(e) = x_e^T theta*, ||x_e||_2 <= 1",
-    "Items attract independently (Bernoulli)"
+    "Attraction probability of each item is linear in known item features: w(e) = x_e^T theta*, with theta* unknown and shared across items",
+    "Ground set of L items (canonical K); list of K items (canonical m) recommended; reward = 1 - prod(1 - w(a_k)), items attract independently"
    ],
    "definition_quote": "we assume that the attraction probability of each item $e$, $\\bar{w}(e)$, can be approximated by a linear combination of some known $d$-dimensional feature vector $x_e$ and an unknown $d$-dimensional parameter vector of $\\theta^\\ast$ ... We first derive a regret bound on CascadeLinUCB, under the assumptions that (1) $\\bar{w}(e) = x_e^T \\theta^\\ast$ for all $e \\in E$ and (2) $\\| x_e \\|_2 \\leq 1$ for all $e \\in E$."
   }
@@ -79,7 +111,7 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "K",
+    "m",
     "d",
     "S"
    ]
@@ -89,6 +121,26 @@
    "name": "CascadeLinTS",
    "registry_id": null,
    "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": []
+  },
+  {
+   "id": "a3",
+   "name": "CascadeUCB1",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": []
+  },
+  {
+   "id": "a4",
+   "name": "RankedLinTS",
+   "registry_id": null,
+   "is_new": false,
    "techniques": [
     "thompson_sampling"
    ],
@@ -110,31 +162,33 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "2*c_alg*K*sqrt(d*T*log(1 + T*K/(d*sigma_alg**2))/log(1 + 1/sigma_alg**2)) + 1",
+    "expression": "2*c_alg*m*sqrt(d*T*log(1 + T*m/(d*sigma_alg**2))/log(1 + 1/sigma_alg**2)) + 1",
     "expression_latex": "R(n) \\leq 2c K \\sqrt{\\frac{dn \\log [1+ \\frac{nK}{d\\sigma^2}]}{\\log ( 1 + \\frac{1}{\\sigma^2} )} }+ 1",
     "regime": null
    },
    "symbols": {
-    "c_alg": "confidence-width constant c of CascadeLinUCB",
-    "sigma_alg": "algorithm parameter sigma > 0 (assumed noise std / learning-rate parameter), not the noise level"
+    "sigma_alg": "algorithm parameter sigma > 0 controlling the learning rate (Gram matrix M_t = sigma^-2 X^T X + I)",
+    "m": "paper's K: number of recommended items in the list",
+    "K": "paper's L: number of items in the ground set (not appearing in bound)"
    },
    "conditions": [
-    "wbar(e) = x_e^T theta* exactly for all items e",
+    "w(e) = x_e^T theta* for all items (perfect linear generalization)",
     "||x_e||_2 <= 1 for all items",
+    "items attract independently (Bernoulli)",
     "optimal list unique as a set"
    ],
    "tuning": [
-    "sigma_alg > 0 arbitrary",
-    "c_alg >= (1/sigma_alg)*sqrt(d*log(1 + T*K/(d*sigma_alg**2)) + 2*log(T*K)) + ||theta*||_2"
+    "any sigma > 0",
+    "c >= (1/sigma) sqrt(d log(1 + nK/(d sigma^2)) + 2 log(nK)) + ||theta*||_2"
    ],
    "is_new": true,
    "source": {
     "label": "thm:bound",
     "number": "Theorem 1",
-    "quote": "Under the above assumptions, for any $\\sigma > 0$ and any \\[ c \\geq \\frac{1}{\\sigma} \\sqrt{d \\log ( 1 + \\frac{nK}{d \\sigma^2} )+ 2 \\log ( nK ) } + \\|\\theta^*\\|_2 , \\] if we run CascadeLinUCB with parameters $\\sigma$ and $c$, then \\[ R(n) \\leq 2c K \\sqrt{ \\frac{dn \\log [ 1+ \\frac{nK}{d\\sigma^2} ]}{\\log ( 1 + \\frac{1}{\\sigma^2} )} }+ 1. \\]"
+    "quote": "Under the above assumptions, for any $\\sigma > 0$ and any $c \\geq \\frac{1}{\\sigma} \\sqrt{d \\log ( 1 + \\frac{nK}{d \\sigma^2} )+ 2 \\log ( nK ) } + \\|\\theta^*\\|_2$, if we run CascadeLinUCB with parameters $\\sigma$ and $c$, then $R(n) \\leq 2c K \\sqrt{\\frac{dn \\log [1+ \\frac{nK}{d\\sigma^2}]}{\\log ( 1 + \\frac{1}{\\sigma^2} )} }+ 1.$"
    },
-   "confidence": "medium",
-   "notes": "Regret is E[sum_t f(A*,w_t) - f(A_t,w_t)] with A* fixed, i.e. pseudo-regret. Text remarks that with sigma=1 and c = sqrt(d log(1+nK/d) + 2 log(nK)) + eta (eta >= ||theta*||), R(n) = O_tilde(K d sqrt(n)). Bound is independent of number of items L. Cascade feedback mapped to partial_monitoring."
+   "confidence": "high",
+   "notes": "Regret defined as expected f(A*,w_t)-f(A_t,w_t) with fixed A*, equivalent to pseudo-regret. Paper's n=T, K=m (list length), L=ground set size. With sigma=1 and c=sqrt(d log(1+nK/d)+2log(nK))+eta, eta>=||theta*||, paper remarks R(n)=O~(K d sqrt(n)) (in canonical: O~(m d sqrt(T))). Bound independent of L."
   }
  ],
  "cited_results": [
@@ -147,10 +201,10 @@
    "algorithm_name": "CascadeUCB1",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Cascading bandits with L items, K recommended, Bernoulli independent attractions, no features",
+   "setting_description": "Cascading bandits (no features), L items, recommend K; canonical K=L, m=K",
    "bound": {
     "notation": "O",
-    "expression": "(L - K)*log(T)/Delta",
+    "expression": "(K - m)*log(T)/Delta",
     "expression_latex": "O((L - K) (1 / \\Delta) \\log n)",
     "regime": null
    },
@@ -165,10 +219,10 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Cascading bandits with L items, K recommended",
+   "setting_description": "Cascading bandits (no features), L items, recommend K; canonical K=L, m=K",
    "bound": {
     "notation": "Omega",
-    "expression": "L - K",
+    "expression": "K - m",
     "expression_latex": "\\Omega(L - K)",
     "regime": null
    },
@@ -178,19 +232,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:08:18",
+  "date": "2026-10-21T15:17:53",
   "source_chars": 77058,
-  "input_tokens": 67663,
-  "output_tokens": 3141,
-  "cost_usd_equiv": 0.38654279999999996,
+  "input_tokens": 74250,
+  "output_tokens": 3635,
+  "cost_usd_equiv": 0.39767,
   "status": "extracted"
  }
 }

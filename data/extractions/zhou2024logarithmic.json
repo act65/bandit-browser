@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Logarithmic Regret for Unconstrained Submodular Maximization Stochastic Bandit",
   "arxiv_id": "2410.08578",
@@ -16,7 +16,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Online unconstrained submodular maximization (Online USM) with stochastic (full-)bandit feedback",
+   "name_in_paper": "Online unconstrained submodular maximization (Online USM) with stochastic full-bandit feedback",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -27,8 +27,9 @@
    "noise": "conditionally_subgaussian",
    "learner_knows": [
     "T",
+    "d",
     "sigma",
-    "d"
+    "loss_range"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -38,29 +39,60 @@
     "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "arbitrary_subset",
+    "reward": "submodular",
+    "loss_scale": "per_action"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Action set is the full power set P(D) of d items (unconstrained)",
-    "Mean reward is a non-monotone submodular set function f: P(D) -> [0, c], with range bound c known to the learner",
-    "Regret is the 1/2-approximate pseudo-regret sum_t [f(A*)/2 - f(A_t)]",
-    "Single noisy scalar feedback per action (full-bandit), noise sigma^2-sub-Gaussian conditionally on the past, sigma known"
+    "Reward function f is a possibly non-monotone submodular set function over all subsets of d items, with values in a known interval [0,c]",
+    "Regret is the 1/2-approximate pseudo-regret sum_t [f(A*)/2 - f(A_t)]"
    ],
-   "definition_quote": "The player receives noisy rewards from a non monotone submodular set-function $f: \\cP(\\cD)\\rightarrow [0, c]$ with $c>0$. At each round $t\\in[T]$, the player chooses an action $A_t\\in\\cP(\\cD)$ and receives $Z_t = f(A_t) + \\eta_t$, where $\\eta_t$ is a random variable. Let $\\sigma>0$ (known), we assume that $\\eta_t$ is $\\sigma^2$-sub-Gaussian conditionally to the past ... $R_T = \\sum_{t=1}^T\\Big[\\frac{1}{2}f(A^*) - f(A_t)\\Big]$"
+   "definition_quote": "The player receives noisy rewards from a non monotone submodular set-function $f: \\cP(\\cD)\\rightarrow [0, c]$ with $c>0$. At each round $t\\in[T]$, the player chooses an action $A_t\\in\\cP(\\cD)$ and receives $Z_t = f(A_t) + \\eta_t$, where $\\eta_t$ is a random variable. Let $\\sigma>0$ (known), we assume that $\\eta_t$ is $\\sigma^2$-sub-Gaussian conditionally to the past"
   }
  ],
  "algorithms": [
@@ -70,15 +102,13 @@
    "registry_id": null,
    "is_new": true,
    "techniques": [
-    "explore_then_commit",
-    "other"
+    "explore_then_commit"
    ],
    "requires_knowledge_of": [
     "T",
-    "sigma",
     "d",
-    "c (range of f)",
-    "delta"
+    "sigma",
+    "loss_range"
    ]
   }
  ],
@@ -89,7 +119,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "high_probability_regret",
+   "quantity": "alpha_regret",
    "dependence": "instance_dependent",
    "comparator": "best_fixed_action",
    "probability": "high_probability",
@@ -98,29 +128,28 @@
    "bound": {
     "notation": "O",
     "expression": "Min(H_f*log(d*T), d*T**(2/3)*log(d*T)**(1/3))",
-    "expression_latex": "R_T \\leq C_1\\min\\Big\\{H_f\\log(dT),\\ dT^{2/3}\\log(dT)^{1/3}\\Big\\}",
+    "expression_latex": "C_1\\min\\Big\\{H_f\\log(dT),\\ dT^{2/3}\\log(dT)^{1/3}\\Big\\}",
     "regime": null
    },
    "symbols": {
-    "H_f": "global DG-hardness: sum over items of local hardness h_{f,i} = max_X (alpha_+ + beta_+)^2/(alpha_+ - beta_+)^4"
+    "H_f": "global DG-hardness, sum over items of local DG-hardness h_{f,i} (depends on item ordering)"
    },
    "conditions": [
-    "d*(T*sqrt(log(dT)))^(2/3) <= T/2",
+    "d(T sqrt(log(dT)))^{2/3} <= T/2",
     "f submodular with values in [0,c]",
-    "holds with probability at least 1 - 10*delta/T"
+    "approximation factor alpha_apx = 1/2"
    ],
    "tuning": [
-    "delta > 0 confidence input",
-    "tau_max = T^(2/3) log(dT)^(1/3)"
+    "confidence parameter delta > 0; bound holds with probability >= 1 - 10 delta/T"
    ],
    "is_new": true,
    "source": {
     "label": "th:DGETC",
     "number": "Theorem 2",
-    "quote": "Then, with probability greater than $1-10\\delta/T$, \\DGETC satisfies \\[ R_T \\leq C_1\\min\\Big\\{H_f\\log(dT),\\ dT^{2/3}\\log(dT)^{1/3}\\Big\\}\\,, \\] where $C_1$ is a constant independent from $d$, $T$ and $\\delta$."
+    "quote": "Then, with probability greater than $1-10\\delta/T$, \\DGETC satisfies $R_T \\leq C_1\\min\\Big\\{H_f\\log(dT),\\ dT^{2/3}\\log(dT)^{1/3}\\Big\\}$, where $C_1$ is a constant independent from $d$, $T$ and $\\delta$."
    },
    "confidence": "medium",
-   "notes": "Regret is the 1/2-approximate pseudo-regret. Constant C_1 claimed independent of delta though the proof's g_{T,delta} depends on log(1/delta); recorded as O."
+   "notes": "R_T is the 1/2-approximate pseudo-regret. Constant C_1 independent of d,T,delta (may depend on c, sigma)."
   },
   {
    "id": "r2",
@@ -128,42 +157,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "high_probability_regret",
-   "dependence": "worst_case",
-   "comparator": "best_fixed_action",
-   "probability": "high_probability",
-   "horizon": "known",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "O",
-    "expression": "d*T**(2/3)*log(d*T)**(1/3)",
-    "expression_latex": "C_1 dT^{2/3}\\log(dT)^{1/3}",
-    "regime": null
-   },
-   "symbols": {},
-   "conditions": [
-    "d*(T*sqrt(log(dT)))^(2/3) <= T/2",
-    "holds with probability at least 1 - 10*delta/T"
-   ],
-   "tuning": [
-    "delta > 0 confidence input"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "th:DGETC",
-    "number": "Theorem 2",
-    "quote": "Then, with probability greater than $1-10\\delta/T$, \\DGETC satisfies \\[ R_T \\leq C_1\\min\\Big\\{H_f\\log(dT),\\ dT^{2/3}\\log(dT)^{1/3}\\Big\\}\\,, \\]"
-   },
-   "confidence": "high",
-   "notes": "Problem-free branch of the min in Theorem 2 (1/2-approximate regret)."
-  },
-  {
-   "id": "r3",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "pseudo_regret",
+   "quantity": "alpha_regret",
    "dependence": "instance_dependent",
    "comparator": "best_fixed_action",
    "probability": "expectation",
@@ -176,10 +170,12 @@
     "regime": null
    },
    "symbols": {
-    "H_f": "global DG-hardness (sum of local DG-hardnesses h_{f,i})"
+    "H_f": "global DG-hardness, sum over items of local DG-hardness h_{f,i} (depends on item ordering)"
    },
    "conditions": [
-    "d*(T*sqrt(log(dT)))^(2/3) <= T/2"
+    "d(T sqrt(log(dT)))^{2/3} <= T/2",
+    "f submodular with values in [0,c]",
+    "approximation factor alpha_apx = 1/2"
    ],
    "tuning": [
     "delta = 1"
@@ -188,52 +184,18 @@
    "source": {
     "label": "th:DGETC",
     "number": "Theorem 2",
-    "quote": "Likewise, in expectation, \\[ \\bE[R_T] \\leq C_2 \\min\\Big\\{H_f\\log(dT),\\ dT^{2/3}\\log(dT)^{1/3}\\Big\\}\\,, \\] where $C_1$ is a constant independent from $d$ and $T$."
+    "quote": "Likewise, in expectation, $\\bE[R_T] \\leq C_2 \\min\\Big\\{H_f\\log(dT),\\ dT^{2/3}\\log(dT)^{1/3}\\Big\\}$, where $C_1$ is a constant independent from $d$ and $T$."
    },
-   "confidence": "high",
-   "notes": "Expectation obtained by choosing delta=1 per the analysis. 1/2-approximate pseudo-regret."
+   "confidence": "medium",
+   "notes": "Expected 1/2-approximate pseudo-regret; proof sketch says choosing delta=1 yields the expectation bound. Includes worst-case O(dT^{2/3}log(dT)^{1/3})."
   },
   {
-   "id": "r4",
+   "id": "r3",
    "setting": "s1",
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "pseudo_regret",
-   "dependence": "worst_case",
-   "comparator": "best_fixed_action",
-   "probability": "expectation",
-   "horizon": "known",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "O",
-    "expression": "d*T**(2/3)*log(d*T)**(1/3)",
-    "expression_latex": "C_2 dT^{2/3}\\log(dT)^{1/3}",
-    "regime": null
-   },
-   "symbols": {},
-   "conditions": [
-    "d*(T*sqrt(log(dT)))^(2/3) <= T/2"
-   ],
-   "tuning": [
-    "delta = 1"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "th:DGETC",
-    "number": "Theorem 2",
-    "quote": "Likewise, in expectation, \\[ \\bE[R_T] \\leq C_2 \\min\\Big\\{H_f\\log(dT),\\ dT^{2/3}\\log(dT)^{1/3}\\Big\\}\\,, \\]"
-   },
-   "confidence": "high",
-   "notes": "Problem-free branch of the expectation bound."
-  },
-  {
-   "id": "r5",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "high_probability_regret",
+   "quantity": "alpha_regret",
    "dependence": "instance_dependent",
    "comparator": "best_fixed_action",
    "probability": "high_probability",
@@ -241,28 +203,30 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sum_arms(Min(h_i*log(d*T), T**(2/3)*log(d*T)**(1/3)))",
-    "expression_latex": "R_T\\leq C_3 \\sum_{i\\in[d]}\\min\\Big\\{h_{f,i}\\log(dT),\\ T^{2/3}\\log(dT)^{1/3}\\Big\\}",
+    "expression": "sum_items(Min(h_fi*log(d*T), T**(2/3)*log(d*T)**(1/3)))",
+    "expression_latex": "C_3 \\sum_{i\\in[d]}\\min\\Big\\{h_{f,i}\\log(dT),\\ T^{2/3}\\log(dT)^{1/3}\\Big\\}",
     "regime": null
    },
    "symbols": {
-    "h_i": "local DG-hardness h_{f,i} of item i; sum is over the d items"
+    "h_fi": "local DG-hardness of item i",
+    "sum_items": "sum over the d items i in [d]"
    },
    "conditions": [
-    "d*(T*sqrt(log(dT)))^(2/3) <= T/2",
-    "holds with probability at least 1 - 10*delta/T"
+    "d(T sqrt(log(dT)))^{2/3} <= T/2",
+    "f submodular with values in [0,c]",
+    "approximation factor alpha_apx = 1/2"
    ],
    "tuning": [
-    "delta > 0 confidence input"
+    "confidence parameter delta > 0; bound holds with probability >= 1 - 10 delta/T"
    ],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Remark 4",
-    "quote": "we can keep the per-item granularity to get with probability at least $1-10\\delta/T$ \\begin{align*} R_T\\leq C_3 \\sum_{i\\in[d]}\\min\\Big\\{h_{f,i}\\log(dT),\\ T^{2/3}\\log(dT)^{1/3}\\Big\\}\\,, \\end{align*} where $C_3$ is a constant independent from $d$, $T$ and $\\delta$."
+    "quote": "We can get more fine-grained bounds by using the local DG-hardnesses instead of the global one. ... with probability at least $1-10\\delta/T$ $R_T\\leq C_3 \\sum_{i\\in[d]}\\min\\Big\\{h_{f,i}\\log(dT),\\ T^{2/3}\\log(dT)^{1/3}\\Big\\}$, where $C_3$ is a constant independent from $d$, $T$ and $\\delta$."
    },
    "confidence": "medium",
-   "notes": "Stated in a remark rather than a theorem; sum over items (d of them) written as sum_arms."
+   "notes": "Stated in a remark as a refinement of Theorem 2; conditions assumed same as Theorem 2."
   }
  ],
  "cited_results": [
@@ -275,14 +239,14 @@
    "algorithm_name": "Randomized Greedy Learning (RGL)",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic full-bandit non-monotone unconstrained submodular maximization, 1/2-approximate expected regret",
+   "setting_description": "Stochastic bandit unconstrained non-monotone submodular maximization, 1/2-approximate expected regret",
    "bound": {
     "notation": "O",
     "expression": "d*T**(2/3)*log(T)**(1/3)",
     "expression_latex": "O(dT^{2/3}\\log(T)^{1/3})",
     "regime": null
    },
-   "where": "Section 1.3 / Section 2.2"
+   "where": "Section 1.3 and Section 2.2"
   },
   {
    "cited_key": "roughgarden2018optimalalgorithmonlineunconstrained",
@@ -293,7 +257,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Online adversarial full-information unconstrained non-monotone submodular maximization, 1/2-approximate regret",
+   "setting_description": "Online adversarial full-information unconstrained non-monotone submodular maximization, 1/2-regret",
    "bound": {
     "notation": "O",
     "expression": "d*sqrt(T)",
@@ -311,7 +275,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Adversarial bandit unconstrained non-monotone submodular maximization, 1/2-approximate regret",
+   "setting_description": "Adversarial bandit unconstrained non-monotone submodular maximization, 1/2-regret",
    "bound": {
     "notation": "O",
     "expression": "d*T**(2/3)",
@@ -324,19 +288,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:05:42",
+  "date": "2026-10-21T15:14:54",
   "source_chars": 85185,
-  "input_tokens": 73521,
-  "output_tokens": 5550,
-  "cost_usd_equiv": 0.4815868,
+  "input_tokens": 80108,
+  "output_tokens": 4783,
+  "cost_usd_equiv": 0.46749399999999997,
   "status": "extracted"
  }
 }

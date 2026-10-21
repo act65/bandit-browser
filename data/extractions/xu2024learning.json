@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Learning to Schedule Online Tasks with Bandit Feedback",
   "arxiv_id": "2402.16463",
@@ -27,43 +27,72 @@
    "context": "stochastic_contexts",
    "noise": "subgaussian",
    "learner_knows": [
-    "T"
+    "T",
+    "loss_range"
    ],
-   "instance_assumptions": [
-    "means_in_known_interval"
-   ],
-   "extras": [
-    "time_varying_action_sets"
-   ],
+   "instance_assumptions": [],
+   "extras": [],
    "action_set": {
     "shape": "not_applicable",
     "time_varying": "not_applicable",
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Each action yields both a random reward and a random positive cost; objective is the ratio of cumulative expected reward to cumulative expected cost",
-    "Regret defined as T times |theta* - ratio achieved| (convergence gap), not a standard difference of rewards",
-    "Task types (contexts) drawn i.i.d. from an unknown distribution over S types, each with its own finite decision set A(S)",
-    "Learner knows c_min, and theta_min = r_min/c_max, theta_max = r_max/c_min (reward/cost mean ranges)"
+    "Each pull yields both a stochastic reward and a stochastic positive cost; objective is the ratio of cumulative expected reward to cumulative expected cost",
+    "Task types (contexts) drawn i.i.d. from an unknown finite distribution over S types, each with its own finite decision set A(S_t)",
+    "Learner knows bounds r_max, c_min, theta_min, theta_max on mean rewards/costs"
    ],
-   "definition_quote": "We assume $S$ types of incoming tasks in the system ... every task is randomly drawn from a stationary probability distribution ... For the $t$th task, the controller observes its type $S_t$ and chooses a decision $a_t \\in \\mathcal A(S_t)$ ... the controller observes the feedback of reward $R_{S_t,a_t}$ and cost $C_{S_t,a_t}$ ... The controller aims to maximize the cumulative reward-to-cost ratio"
+   "definition_quote": "We assume $S$ types of incoming tasks in the system ... every task is randomly drawn from a stationary probability distribution ... For the $t$th task, the controller observes its type $S_t \\in \\mathcal S$ and chooses a decision $a_t \\in \\mathcal A(S_t)$ ... the controller observes the feedback of reward $R_{S_t,a_t}$ and cost $C_{S_t,a_t}$ ... maximize the cumulative reward-to-cost ratio"
   }
  ],
  "algorithms": [
@@ -78,10 +107,7 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "c_min",
-    "theta_min",
-    "theta_max",
-    "r_max"
+    "loss_range"
    ]
   }
  ],
@@ -106,13 +132,13 @@
    },
    "symbols": {},
    "conditions": [
-    "Rewards sub-Gaussian with means in [r_min, r_max]",
-    "Costs positive sub-Gaussian with means in [c_min, c_max]",
-    "Rewards and costs independent for the same (S,a)"
+    "Rewards sub-Gaussian with means in [r_min, r_max] (Assumption 1)",
+    "Costs positive sub-Gaussian with means in [c_min, c_max] (Assumption 2)",
+    "All (task type, decision) pairs explored once before decision making (footnote in proof)"
    ],
    "tuning": [
     "eta = 1/(c_min*sqrt(T))",
-    "theta_1 = theta_min"
+    "theta_1 = theta_min, projection onto [theta_min, theta_max]"
    ],
    "is_new": true,
    "source": {
@@ -121,7 +147,7 @@
     "quote": "Suppose Assumption~\\ref{assumption:reward} and~\\ref{assumption:cost} hold, DOL-RM achieves the following regret: \\mathcal{R}(T) = O(T^{\\frac{3}{4}})."
    },
    "confidence": "medium",
-   "notes": "Regret is R(T) = T * Gap(T), where Gap(T) = |theta* - sum E[R]/sum E[C]| (ratio of expectations), so quantity recorded as 'other'. Equivalent to convergence gap O(T^{-1/4}). Appendix constant C_2 contains sqrt(log T), so the stated O(T^{3/4}) hides a log factor; also the proof assumes each (S,a) explored once beforehand."
+   "notes": "Regret defined as T * Gap(T), where Gap(T) = |theta* - sum E[R]/sum E[C]| is the gap between optimal and achieved reward-to-cost ratio; equivalently convergence gap O(T^{-1/4}). Not a standard regret, so quantity 'other'. Constants depend on r_max, c_min, theta range and sqrt(log T) (appendix C_2 contains sqrt(log T)), so the stated O hides a log factor."
   }
  ],
  "cited_results": [
@@ -131,35 +157,35 @@
    "cited_first_author": "Michael J Neely",
    "cited_year": 2021,
    "cited_arxiv_id": null,
-   "algorithm_name": "Robbins-Monro based oracle algorithm",
+   "algorithm_name": "Robbins-Monro based online task scheduling (oracle algorithm)",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Online task scheduling reward-to-cost ratio maximization with perfectly known rewards and costs (only task arrival distribution unknown)",
+   "setting_description": "Online task scheduling reward-to-cost ratio with perfect knowledge of rewards and costs, unknown task arrival distribution",
    "bound": {
     "notation": "O",
     "expression": "sqrt(T)",
     "expression_latex": "O(\\sqrt{T})",
     "regime": null
    },
-   "where": "Section 4 (discussion after Theorem 1)"
+   "where": "Section 4 (discussion after Theorem)"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:11:57",
+  "date": "2026-10-21T15:21:11",
   "source_chars": 102142,
-  "input_tokens": 83302,
-  "output_tokens": 2384,
-  "cost_usd_equiv": 0.4965148,
+  "input_tokens": 89889,
+  "output_tokens": 2699,
+  "cost_usd_equiv": 0.504062,
   "status": "extracted"
  }
 }

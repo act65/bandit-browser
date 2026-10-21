@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Online Learning for Function Placement in Serverless Computing",
   "arxiv_id": "2410.13696",
@@ -17,7 +17,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Virtual Function Placement (VFP) with stochastic costs and average resource constraints",
+   "name_in_paper": "Virtual function placement (VFP) with stochastic costs and resource constraints",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -27,39 +27,74 @@
    "context": "stochastic_contexts",
    "noise": "bounded_01",
    "learner_knows": [
-    "K"
+    "M_ctx"
    ],
    "instance_assumptions": [],
-   "extras": [],
+   "extras": [
+    "safety_constraints"
+   ],
    "action_set": {
     "shape": "not_applicable",
     "time_varying": "not_applicable",
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "per_round_high_prob",
+    "violation": "unspecified"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Arms are N computation nodes (canonical K); contexts are M i.i.d. function classes (M_ctx) with unknown arrival distribution lambda, including a null class",
-    "K_res resource types with known capacities beta_{i,k}; average resource constraints (sum_j lambda_j p_{i,j} a_{i,j,k}/beta_{i,k} <= 1) must hold with high probability",
-    "Resource requirements A_{i,j,k}(t) in [0,1] observed for all nodes after arrival (before placement); only the cost of the chosen node is observed",
-    "Comparator is the optimal static randomized placement policy solving a known-parameter LP; a fictitious reject node with infinite capacity and cost 1 ensures feasibility"
+    "Arms are N computation nodes; contexts are M i.i.d. function classes with unknown arrival distribution lambda",
+    "K resource types with known node capacities beta_{i,k}; random resource requirements A_{i,j,k} in [0,1] observed for all nodes before placement (full information on resource usage, bandit feedback on cost)",
+    "Learner chooses a randomized placement policy p (N x M stochastic matrix); constraint on expected resource load g_{i,k}(p, kappa) <= 1 must hold with high probability",
+    "A fictitious rejection node with infinite resources and cost 1 ensures feasibility"
    ],
-   "definition_quote": "We assume that placing a function of class~$j$ in node~$i$ has cost~$C_{i,j}$ ... for all $i,j$, $(C_{i,j}(t))_{t \\ge 0}$ is i.i.d. with mean $c_{i,j} \\in [0,1]$ ... $(A_{i,j,k}(t))_{t \\ge 0}$ is i.i.d. with mean $a_{i,j,k} \\in [0,1]$ ... $(j(t))_{t\\ge0}$ is i.i.d. with distribution $\\lambda$. R(T) = \\sum_{t=1}^T \\mathbb{E}(f({\\hat p}(t),c,\\lambda) - f(p^\\star,c,\\lambda))"
+   "definition_quote": "R(T) = \\sum_{t=1}^T  \\mathbb{E}(f({\\hat p}(t),c,\\lambda) - f(p^\\star,c,\\lambda)) while respecting the constraints with high probability, that is \\mathbb{P}( \\max_{i,k} g_{i,k}({\\hat p}(t),\\kappa) \\le 1) = 1 - o(1) when T \\to \\infty"
   }
  ],
  "algorithms": [
@@ -72,19 +107,19 @@
     "optimism"
    ],
    "requires_knowledge_of": [
-    "K"
+    "M_ctx"
    ]
   },
   {
    "id": "a2",
-   "name": "Fast algorithm (base algorithm with geometric update times rho^k)",
+   "name": "Fast algorithm (geometric update times rho^k)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
     "optimism"
    ],
    "requires_knowledge_of": [
-    "K"
+    "M_ctx"
    ]
   }
  ],
@@ -97,34 +132,38 @@
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "worst_case",
-   "comparator": "best_policy",
+   "comparator": "best_feasible_policy",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "K*M_ctx*(2*(sqrt(2) + 1)*sqrt(T*log(T)) + 6*K_res*(1 + log(T)))",
-    "expression_latex": "N M [ 2( \\sqrt{2} + 1) \\sqrt{T \\ln T} + 6 K (1 + \\ln T) ]",
+    "expression": "N_nodes*M_ctx*(2*(sqrt(2) + 1)*sqrt(T*log(T)) + 6*K_res*(1 + log(T)))",
+    "expression_latex": "{R(T) \\over T} \\le {N M \\over T} [ 2( \\sqrt{2} + 1) \\sqrt{T \\ln T} +  6 K (1 + \\ln T) ]",
     "regime": null
    },
    "symbols": {
-    "M_ctx": "number of function classes M (contexts, including null class)",
-    "K_res": "number of resource types (paper's K)"
+    "N_nodes": "number of computation nodes (arms), including fictitious rejection node",
+    "K_res": "number of resource types",
+    "M_ctx": "number of function classes (contexts), paper's M"
    },
    "conditions": [
-    "costs and resource requirements in [0,1]",
-    "known resource capacities beta_{i,k}",
-    "a fictitious reject node with infinite capacity and cost 1 is included"
+    "costs C_{i,j}(t) in [0,1] i.i.d.",
+    "resource requirements A_{i,j,k}(t) in [0,1] i.i.d.",
+    "function classes i.i.d.",
+    "node capacities beta_{i,k} known"
    ],
-   "tuning": [],
+   "tuning": [
+    "confidence level log t in KL confidence bounds"
+   ],
    "is_new": true,
    "source": {
     "label": "th:regret",
     "number": "Theorem 1",
-    "quote": "Under the proposed algorithm the constraints are satisfied with high probability and the regret per unit of time vanishes at the rate: {R(T) \\over T} \\le {N M \\over T} [ 2( \\sqrt{2} + 1) \\sqrt{T \\ln T} + 6 K (1 + \\ln T) ] \\underset{T \\to \\infty}{\\sim} O( N M \\sqrt{\\ln T \\over T } )"
+    "quote": "Under the proposed algorithm the constraints are satisfied with high probability and the regret per unit of time vanishes at the rate: {R(T) \\over T} \\le {N M \\over T} [ 2( \\sqrt{2} + 1) \\sqrt{T \\ln T} +  6 K (1 + \\ln T) ] \\underset{T \\to \\infty}{\\sim} O( N M \\sqrt{\\ln T \\over T } ) \\mathbb{P} (\\max_{i,k} g_{i,k}({\\hat p}(t)) \\le 1) \\ge 1 - 6 N M K {\\ln T \\over T}"
    },
    "confidence": "medium",
-   "notes": "Stated as per-round regret R(T)/T; multiplied by T. Paper's N (nodes) mapped to canonical K (arms); paper's K renamed K_res. Regret defined via expected mean costs of the policy, so pseudo-regret against best static policy. Algorithm uses ln t, so anytime."
+   "notes": "Paper states bound on R(T)/T; multiplied by T. Regret defined via expected cost function f of the policy (pseudo-regret) against the optimal static feasible policy. Paper's K is resource types, N nodes, M classes; renamed. Holds for the base algorithm; the fast variant has no stated guarantee."
   },
   {
    "id": "r2",
@@ -140,17 +179,18 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "6*K*M_ctx*K_res*log(T)/T",
+    "expression": "6*N_nodes*M_ctx*K_res*log(T)/T",
     "expression_latex": "\\mathbb{P} (\\max_{i,k} g_{i,k}({\\hat p}(t)) \\le 1) \\ge 1 - 6 N M K {\\ln T \\over T}",
     "regime": null
    },
    "symbols": {
-    "M_ctx": "number of function classes M",
-    "K_res": "number of resource types (paper's K)"
+    "N_nodes": "number of computation nodes",
+    "K_res": "number of resource types",
+    "M_ctx": "number of function classes"
    },
    "conditions": [
-    "costs and resource requirements in [0,1]",
-    "known resource capacities beta_{i,k}"
+    "costs and resource requirements in [0,1] i.i.d.",
+    "node capacities known"
    ],
    "tuning": [],
    "is_new": true,
@@ -159,27 +199,27 @@
     "number": "Theorem 1",
     "quote": "\\mathbb{P} (\\max_{i,k} g_{i,k}({\\hat p}(t)) \\le 1) \\ge 1 - 6 N M K {\\ln T \\over T}\\underset{T \\to \\infty}{\\to} 1"
    },
-   "confidence": "medium",
-   "notes": "Bound on probability that the selected policy violates the average resource constraints. Statement mixes t and T; the proof gives 6NMK/t per round. Recorded as violation probability."
+   "confidence": "low",
+   "notes": "Bound on the probability of constraint violation by the chosen policy at time t (expression is the violation probability). The statement is ambiguous about t vs T; proof gives 6NMK/t per round."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:12:00",
+  "date": "2026-10-21T15:20:55",
   "source_chars": 50977,
-  "input_tokens": 52429,
-  "output_tokens": 3226,
-  "cost_usd_equiv": 0.2663708,
+  "input_tokens": 59016,
+  "output_tokens": 3567,
+  "cost_usd_equiv": 0.274438,
   "status": "extracted"
  }
 }

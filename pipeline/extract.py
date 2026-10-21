@@ -57,7 +57,10 @@ def render_ontology(ont: dict) -> str:
     for name, spec in ont["dimensions"].items():
         kind = "multi-select list" if spec.get("multi") else "exactly one value"
         lines.append(f"\n### {name} ({kind})")
-        for v, desc in spec["values"].items():
+        if spec.get("values_from_variables"):
+            lines.append("- any symbol of kind " + " or ".join(spec["values_from_variables"])
+                         + " from the variable registry below (the learner knows its value or an upper bound on it), and:")
+        for v, desc in (spec.get("named_values") or spec["values"]).items():
             lines.append(f"- `{v}`" + (f": {desc}" if desc else ""))
         if spec.get("order"):
             lines.append("order: " + ", ".join(f"{a} ⊑ {b}" for a, b in spec["order"]))
@@ -79,6 +82,8 @@ def render_ontology(ont: dict) -> str:
             if fs.get("note"):
                 line += f" ({fs['note']})"
             lines.append(line)
+    if (ont.get("scope") or {}).get("extractor_out_of_scope"):
+        lines.append("\n### Scope\n" + " ".join(ont["scope"]["extractor_out_of_scope"].split()))
     if ont.get("guidance"):
         lines.append("\n### Mapping guidance\n" + "\n".join(f"- {g}" for g in ont["guidance"]))
     for name, values in ont["vocabularies"].items():

@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Nonparametric Pricing Analytics with Customer Covariates",
   "arxiv_id": "1805.01136",
@@ -20,7 +20,8 @@
    "environment": "stochastic_iid",
    "action_space": "continuum_other",
    "function_class": [
-    "lipschitz"
+    "lipschitz",
+    "bounded"
    ],
    "domain": "constrained",
    "context": "stochastic_contexts",
@@ -37,28 +38,60 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "unspecified"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Action is a price p in [0,1]; reward Z_t = p_t * Bernoulli(d(X_t,p_t)), expected revenue f(x,p)=p d(x,p)",
-    "Covariates X_t i.i.d. in [0,1)^d with arbitrary distribution; f is nonparametric in x",
-    "f Lipschitz in x and p with constant M_1 (Assumption 2)",
-    "For every hyper-rectangle B, f_B(p)=E[f(X,p)|X in B] has a unique maximizer with quadratic growth M_2 (p*-p)^2 <= f_B(p*)-f_B(p) <= M_3 (p*-p)^2; p*(B) lies in the range of p*(x) over B; the range of p*(x) over B is at most M_4 diam(B) (Assumption 3)",
-    "Learner knows constants M_1..M_4 (only M_2 actually used)"
+    "Price p in [0,1], covariate x in [0,1)^d; revenue Z_t = p_t * Bernoulli(d(X_t,p_t)), expected revenue f(x,p) = p d(x,p)",
+    "f Lipschitz in x and in p with constant M_1 (Assumption 2)",
+    "Assumption 3: for every hyper-rectangle B, f_B(p)=E[f(X,p)|X in B] has a unique maximizer with quadratic growth M_2 (p*-p)^2 <= f_B(p*)-f_B(p) <= M_3 (p*-p)^2; p*(B) lies in the range of p*(x), x in B; the range of p*(x) over B is at most M_4 * diam(B)",
+    "Learner knows constant M_2 (local concavity constant)"
    ],
    "definition_quote": "In period $t\\in\\left\\{1,2,\\dots,T\\right\\}$, a customer arrives with covariate $\\bm X_t$. Upon observing $\\bm X_t$, the firm sets a price $p_t$. The revenue earned in period $t$ is denoted by $Z_t$ where $Z_t/p_t$ is a Bernoulli random variable with mean $d(\\bm X_t,p_t)$, independent of everything else. ... $R_{\\pi}(T) = \\sum_{t=1}^T \\E\\left[(f^{\\ast}(\\bm X_t)-f(\\bm X_t,p_t))\\right]$."
   }
@@ -97,28 +130,30 @@
    "bound": {
     "notation": "O",
     "expression": "T**((2+d)/(4+d))*log(T)**2",
-    "expression_latex": "C T^{ \\frac{2+d}{4+d}}\\log(T)^2",
+    "expression_latex": "C T^{\\frac{2+d}{4+d}}\\log(T)^2",
     "regime": null
    },
-   "symbols": {},
+   "symbols": {
+    "M_2": "local concavity constant of Assumption 3"
+   },
    "conditions": [
-    "f satisfies Assumption 2 (Lipschitz with M_1) and Assumption 3 (unique maximizer with quadratic growth M_2, M_3; maximizer containment; M_4 continuity of optimal price)",
+    "f satisfies Assumption 2 (Lipschitz with M_1) and Assumption 3 (unique maximizer with quadratic growth, maximizer containment, Lipschitz optimal price)",
     "covariates i.i.d. (Assumption 1)"
    ],
    "tuning": [
-    "K = floor(log(T)/((d+4) log 2))",
+    "K = floor(log(T)/((d+4)log 2))",
     "Delta_k = 2^{-k} log(T)",
     "N_k = ceil(log(T))",
-    "n_k = max{0, ceil(2^{4k+15}/(M_2^2 log^3 T) (log T + log log T - (d+2) k log 2))}"
+    "n_k = max{0, ceil(2^{4k+15}/(M_2^2 log^3 T) (log T + log log T - (d+2)k log 2))}"
    ],
    "is_new": true,
    "source": {
     "label": "thm:upper-bound",
     "number": "Theorem 1",
-    "quote": "For any function $f$ satisfying Assumption~\\ref{asp:lipschitz} and~\\ref{asp:maximizer}, the regret incurred by the ABE algorithm is bounded by \\begin{equation*} R_{\\pi_{ABE}}(T)\\le C T^{ \\frac{2+d}{4+d}}\\log(T)^2 \\end{equation*} for a constant $C>0$ that is independent of $T$."
+    "quote": "For any function $f$ satisfying Assumption~\\ref{asp:lipschitz} and~\\ref{asp:maximizer}, the regret incurred by the ABE algorithm is bounded by $R_{\\pi_{ABE}}(T)\\le C T^{ \\frac{2+d}{4+d}}\\log(T)^2$ for a constant $C>0$ that is independent of $T$."
    },
    "confidence": "high",
-   "notes": "Constant C depends on d and M_1..M_4. Regret defined via expected revenue gap f*(X_t)-f(X_t,p_t), so pseudo-regret against per-context optimal price. Proof uses T >= max{exp(8 M_4 sqrt(d)), exp(4 sqrt(2M_3/M_2))}."
+   "notes": "Constant C depends on d and M_1..M_4. Regret defined via expected revenues f, so pseudo-regret against per-covariate optimal price."
   },
   {
    "id": "r2",
@@ -135,23 +170,23 @@
    "bound": {
     "notation": "Omega",
     "expression": "T**((2+d)/(4+d))",
-    "expression_latex": "\\sup_{f\\in \\mathcal C}R_\\pi(T)\\ge c T^{\\frac{2+d}{4+d}}",
+    "expression_latex": "c T^{\\frac{2+d}{4+d}}",
     "regime": null
    },
    "symbols": {},
    "conditions": [
-    "covariates uniformly distributed on [0,1)^d",
-    "constructed class C of f_w indexed by w in {0,1}^{M^d} with M = ceil(T^{1/(d+4)}), satisfying Assumptions 2 and 3 with M_1=4, M_2=1, M_3=2, M_4=1"
+    "Constructed family C of 2^{M^d} piecewise demand functions satisfying Assumptions 2 and 3 with M_1=4, M_2=1, M_3=2, M_4=1",
+    "covariates uniform on [0,1)^d"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:lower-bound",
     "number": "Theorem 2",
-    "quote": "For the constructed $\\mathcal C$, any non-anticipating policy $\\pi$ has regret \\begin{equation*} \\sup_{f\\in \\mathcal C}R_\\pi(T)\\ge c T^{\\frac{2+d}{4+d}} \\end{equation*} for a constant $c>0$."
+    "quote": "For the constructed $\\mathcal C$, any non-anticipating policy $\\pi$ has regret $\\sup_{f\\in \\mathcal C}R_\\pi(T)\\ge c T^{\\frac{2+d}{4+d}}$ for a constant $c>0$."
    },
    "confidence": "high",
-   "notes": "Minimax lower bound via KL / Tsybakov-style construction (similar to Rigollet & Zeevi). Lemmas 3 and 4 are intermediate steps."
+   "notes": "Minimax lower bound over the constructed class; matches upper bound up to log^2 T."
   }
  ],
  "cited_results": [
@@ -161,10 +196,10 @@
    "cited_first_author": "Slivkins",
    "cited_year": 2014,
    "cited_arxiv_id": null,
-   "algorithm_name": "Contextual zooming algorithm",
+   "algorithm_name": "Contextual zooming",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Contextual bandits with Lipschitz expected reward f(x,p) on Euclidean covariate space of dimension d_x=d and decision dimension d_p=1 (no smoothness/local concavity)",
+   "setting_description": "Contextual bandit with Lipschitz expected reward f(x,p), covariate dimension d, one-dimensional price decision",
    "bound": {
     "notation": "O",
     "expression": "T**((2+d)/(3+d))",
@@ -172,24 +207,78 @@
     "regime": null
    },
    "where": "Introduction / Section 1.1"
+  },
+  {
+   "cited_key": "cohen2016feature",
+   "cited_title": "Feature-based dynamic pricing",
+   "cited_first_author": "Cohen",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": "multi-dimensional binary search",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Parametric feature-based dynamic pricing",
+   "bound": {
+    "notation": "O",
+    "expression": "d**2*log(T/d)",
+    "expression_latex": "O(d^2\\log(T/d))",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "ban2017personalized",
+   "cited_title": "Personalized dynamic pricing with machine learning",
+   "cited_first_author": "Ban",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Parametric (linear) personalized dynamic pricing with s-sparse features",
+   "bound": {
+    "notation": "O",
+    "expression": "s_sparse*sqrt(T)",
+    "expression_latex": "O(s\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "besbes2012blind",
+   "cited_title": "Blind network revenue management",
+   "cited_first_author": "Besbes",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Nonparametric network revenue management with d-dimensional decision space",
+   "bound": {
+    "notation": "O",
+    "expression": "T**((2+d)/(3+d))",
+    "expression_latex": "O(T^{(2+d)/(3+d)})",
+    "regime": null
+   },
+   "where": "Section 1.1"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:18:53",
+  "date": "2026-10-21T15:28:37",
   "source_chars": 112369,
-  "input_tokens": 86376,
-  "output_tokens": 3339,
-  "cost_usd_equiv": 0.5402068,
+  "input_tokens": 92963,
+  "output_tokens": 4174,
+  "cost_usd_equiv": 0.558154,
   "status": "extracted"
  }
 }

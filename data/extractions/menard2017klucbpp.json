@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "A minimax and asymptotically optimal algorithm for stochastic bandits",
   "arxiv_id": "1702.07211",
@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Stochastic K-armed bandit with one-dimensional canonical exponential family arms, bounded means and bounded variance (family F)",
+   "name_in_paper": "Stochastic bandit with one-dimensional canonical exponential family arms with bounded variance and bounded means (family F)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -29,7 +29,6 @@
     "reward_family"
    ],
    "instance_assumptions": [
-    "means_in_known_interval",
     "bounded_variance"
    ],
    "extras": [],
@@ -39,27 +38,59 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Variance of the exponential family bounded uniformly by V on I (Pinsker-like inequality kl >= (mu-mu')^2/(2V))",
-    "Means restricted to [mu^-, mu^+] strictly inside the family's mean range"
+    "means restricted to a fixed bounded interval [mu^-, mu^+] inside the family's mean interval"
    ],
-   "definition_quote": "Each arm is assumed to be a probability distribution of some canonical one-dimensional exponential family $\\nu_{\\theta}$ indexed by $\\theta\\in\\Theta$. ... we suppose that each arm $\\nu_\\theta$ satisfies $\\mu=b'(\\theta)\\in [\\mu-,\\mu+]\\subset I$ ... there exists $V>0$ such that $\\sup_{\\mu\\in I} b''( {b'}^{-1}(\\mu))\\leq V<+\\infty$."
+   "definition_quote": "Each arm is assumed to be a probability distribution of some canonical one-dimensional exponential family $\\nu_{\\theta}$ ... we suppose that each arm $\\nu_\\theta$ satisfies $\\mu=b'(\\theta)\\in [\\mu-,\\mu+]\\subset I$ ... there exists $V>0$ such that $\\sup_{\\mu\\in I} b''( {b'}^{-1}(\\mu))\\leq V<+\\infty$."
   }
  ],
  "algorithms": [
@@ -93,29 +124,30 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "76*sqrt(V*K*T) + (mu_plus - mu_minus)*K",
+    "expression": "76*sqrt(v_mom*K*T) + (mu_plus - mu_minus)*K",
     "expression_latex": "R_T\\leq 76 \\sqrt{ V K T}+(\\mu^+-\\mu^-)K",
     "regime": null
    },
    "symbols": {
-    "V": "uniform upper bound on the variance of the exponential family",
     "mu_plus": "upper end of the interval containing all arm means",
     "mu_minus": "lower end of the interval containing all arm means"
    },
    "conditions": [
+    "arm means in [mu^-, mu^+]",
+    "variance of the exponential family bounded by V (v_mom)",
     "K >= 2"
    ],
    "tuning": [
-    "g(n) = log_+((T/(K n))(log_+^2(T/(K n)) + 1))"
+    "g(n) = log_+((T/(Kn))(log_+^2(T/(Kn))+1))"
    ],
    "is_new": true,
    "source": {
     "label": "th:minimax_bound",
     "number": "Theorem 1",
-    "quote": "For any family $\\mathcal{F}$ satisfying the assumptions detailed in Section~\\ref{sec:settings}, and for any bandit model $\\nu\\in\\mathcal{F}$, the expected regret of the kl-UC$\\Bpp$ algorithm is upper-bounded as R_T\\leq 76 \\sqrt{ V K T}+(\\mu^+-\\mu^-)K\\,."
+    "quote": "For any family $\\mathcal{F}$ satisfying the assumptions detailed in Section~\\ref{sec:settings}, and for any bandit model $\\nu\\in\\mathcal{F}$, the expected regret of the kl-UC$\\Bpp$ algorithm is upper-bounded as R_T\\leq 76 \\sqrt{ V K T}+(\\mu^+-\\mu^-)K."
    },
    "confidence": "high",
-   "notes": "Regret defined as E[sum (mu* - mu_{A_t})], i.e. pseudo-regret. Paper notes the bound also applies to [0,1]-valued bandits with V=1/4."
+   "notes": "Regret defined via means, so pseudo-regret. Paper notes it also applies to [0,1]-valued arms with V=1/4."
   },
   {
    "id": "r2",
@@ -131,26 +163,27 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "log(T)/kl(mu_i + delta_a, mu_star - delta_a) + log(log(T))/delta_a**2",
+    "expression": "log(T)/kl(mu_i + delta_alg, mu_star - delta_alg) + log(log(T))/delta_alg**2",
     "expression_latex": "\\E[N_a(T)]\\leq \\frac{\\log(T)}{\\kl(\\mu_a+\\delta,\\mu^\\star-\\delta)}+O\\left(\\frac{\\loglog(T)}{\\delta^2}\\right)",
-    "regime": "sqrt(22*V*K/T) <= delta_a <= Delta_i/3"
+    "regime": "sqrt(22*V*K/T) <= delta_alg <= Delta_i/3"
    },
    "symbols": {
-    "delta_a": "free analysis parameter delta in the theorem",
-    "V": "uniform upper bound on the variance of the exponential family"
+    "delta_alg": "free analysis parameter delta",
+    "N_a": "number of pulls of suboptimal arm a"
    },
    "conditions": [
-    "arm a (index i) is suboptimal"
+    "arm a suboptimal",
+    "kl is the KL divergence of the exponential family parametrised by means"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:asymptotic_bound",
     "number": "Theorem 2",
-    "quote": "For any bandit model $\\nu\\in\\mathcal{F}$, for any suboptimal arm $a$ and any $\\delta$ such that $\\sqrt{22 V K / T}\\leq \\delta\\leq(\\mustar-\\mu_a)/3$, \\E[N_a(T)]\\leq \\frac{\\log(T)}{\\kl(\\mu_a+\\delta,\\mu^\\star-\\delta)}+O\\left(\\frac{\\loglog(T)}{\\delta^2}\\right)"
+    "quote": "For any bandit model $\\nu\\in\\mathcal{F}$, for any suboptimal arm $a$ and any $\\delta$ such that $\\sqrt{22 V K / T}\\leq \\delta\\leq(\\mustar-\\mu_a)/3$, \\E[N_a(T)]\\leq \\frac{\\log(T)}{\\kl(\\mu_a+\\delta,\\mu^\\star-\\delta)}+O(\\frac{\\loglog(T)}{\\delta^2})"
    },
    "confidence": "medium",
-   "notes": "Bound on expected number of pulls of a suboptimal arm; leading term has constant 1, only the second-order term is O(.). Explicit bound in proof: log(T)/kl + log((1/K)(1+log^2(T/K)))/kl + (16e^2+2)*2VK/delta^2 + 1."
+   "notes": "Bound on expected pull count; leading term has constant 1 exactly, only second term is O(.). Explicit bound in proof: log(T)/kl + log((1+log^2(T/K))/K)/kl + (16e^2+2)2VK/delta^2 + 1."
   },
   {
    "id": "r3",
@@ -166,8 +199,8 @@
    "compute": "polynomial",
    "bound": {
     "notation": "limsup",
-    "expression": "sum_subopt(Delta_i/kl(mu_i, mu_star))*log(T)",
-    "expression_latex": "\\limsup R_T/\\log T \\le \\sum_a (\\mu^\\star-\\mu_a)/\\kl(\\mu_a,\\mu^\\star)",
+    "expression": "sum_subopt(Delta_i/KL_i)*log(T)",
+    "expression_latex": "R_T \\le C(\\mu)\\log(T)(1+o(1))",
     "regime": "T -> infinity"
    },
    "symbols": {},
@@ -182,7 +215,7 @@
     "quote": "which implies the asymptotic optimality (see the end of the proof in Section~\\ref{sec:proof:asymptotic} for an explicit bound)."
    },
    "confidence": "medium",
-   "notes": "Asymptotic optimality (matching Lai-Robbins) is claimed as an implication of Theorem 2 by choosing delta ~ 1/sqrt(loglog T); written here as limsup form. kl is the family's divergence (Bernoulli kl for Bernoulli arms)."
+   "notes": "Asymptotic optimality claimed as implication of Theorem 2 (matching Lai-Robbins constant); expression reconstructed from regret decomposition."
   }
  ],
  "cited_results": [
@@ -195,10 +228,10 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic K-armed bandit, exponential family arms, uniformly efficient strategies; lower bound on expected pulls of suboptimal arm",
+   "setting_description": "Stochastic K-armed bandit, exponential family, uniformly efficient strategies; bound on expected pulls of suboptimal arm",
    "bound": {
     "notation": "liminf",
-    "expression": "log(T)/kl(mu_i, mu_star)",
+    "expression": "log(T)/KL_i",
     "expression_latex": "\\E[N_a(T)] \\geq \\frac{\\log(T)}{\\kl(\\mu_a,\\mustar)}(1-o(1))",
     "regime": "T -> infinity"
    },
@@ -213,7 +246,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Minimax lower bound over family F of exponential-family bandit problems (adaptation of Theorem A.2)",
+   "setting_description": "Minimax lower bound over family F of exponential-family bandits (adaptation of Theorem A.2)",
    "bound": {
     "notation": "Omega",
     "expression": "Min(sqrt(K*T), T)",
@@ -226,19 +259,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "225d94076f15",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T09:03:59",
+  "date": "2026-10-21T14:53:02",
   "source_chars": 47839,
-  "input_tokens": 55176,
-  "output_tokens": 4231,
-  "cost_usd_equiv": 0.3088368,
+  "input_tokens": 61813,
+  "output_tokens": 4588,
+  "cost_usd_equiv": 0.317234,
   "status": "extracted"
  }
 }

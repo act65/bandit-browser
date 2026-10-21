@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Dynamic Assortment Optimization with Changing Contextual Information",
   "arxiv_id": "1810.13069",
@@ -23,10 +23,12 @@
    "function_class": [],
    "domain": "not_applicable",
    "context": "adversarial_contexts",
-   "noise": "general_model_class",
+   "noise": "bounded_01",
    "learner_knows": [
     "T",
-    "L_feat"
+    "d",
+    "m",
+    "K"
    ],
    "instance_assumptions": [],
    "extras": [
@@ -37,48 +39,81 @@
     "time_varying": "adaptive_sequence",
     "access": "explicit",
     "norm_bound": "bounded_L",
-    "parameter_set": "unbounded",
-    "loss_set": "not_applicable"
+    "parameter_set": "unspecified",
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "at_most_m",
+    "reward": "unspecified",
+    "loss_scale": "per_action"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Actions are assortments S of at most m (paper's K) items out of K (paper's N) items; customer choice follows a multinomial logit model with utilities v_tj^T theta_0; learner observes the purchased item (or no purchase) and earns its revenue r_tj in [0,1]",
-    "Revenues r_tj and features v_tj change over time; features i.i.d. from a distribution with lambda_min(E vv^T) >= lambda_0 during the first T0 exploration rounds (A1), adversarial afterwards",
-    "Assumption (A2): ratio of choice probabilities of any two options in any assortment bounded by rho",
-    "Algorithm tuning uses lambda_0, rho, nu (feature norm bound) and cardinality K"
+    "Multinomial logit (MNL) choice feedback: the customer purchases one item from the offered assortment (or nothing) with probability exp(v_tj^T theta_0)/(1+sum_k exp(v_tk^T theta_0)); only the purchased item is observed",
+    "Expected revenue of an assortment is a nonlinear (MNL) function of item utilities; revenues r_tj in [0,1] revealed each round",
+    "Features v_tj i.i.d. from a nondegenerate distribution (lambda_min(E vv^T) >= lambda_0) during the pure-exploration phase, adversarial afterwards",
+    "Assumption (A2): ratio of choice probabilities bounded by rho; ||v_tj|| <= nu; learner's tuning uses rho, nu, lambda_0",
+    "Paper's N (number of items) is mapped to K; paper's cardinality constraint K is mapped to m"
    ],
-   "definition_quote": "p_{\\theta_0,t}(j|S) = \\frac{\\exp\\{v_{tj}^\\top\\theta_0\\}}{1+\\sum_{k\\in S} \\exp\\{v_{tk}^\\top\\theta_0\\}} ... \\mathrm{Regret}(\\{S_t\\}_{t=1}^T) =\\mathbb E^\\pi\\sum_{t=1}^T R_t(S_t^*) - R_t(S_t) where S_t^*=\\arg\\max_{S\\subseteq[N], |S|\\leq K} R_t(S)"
+   "definition_quote": "At each time $t$, a set of time-sensitive ``feature vectors'' $v_{t1}, v_{t2}, \\cdots, v_{tN}\\in\\mathbb R^d$ and revenues $r_{t1},\\cdots,r_{tN}\\in[0,1]$ are observed... A retailer ... picks an assortment $S_t\\subseteq[N]$ under the cardinality constraint $|S_t|\\leq K$ ... then observes a purchasing action $i_t\\in S_t\\cup\\{0\\}$ and collects the associated revenue"
   },
   {
    "id": "s2",
-   "name_in_paper": "Dynamic assortment optimization under contextual MNL model (lower bound)",
+   "name_in_paper": "Dynamic assortment optimization under changing contextual MNL model (lower bound)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
    "action_space": "combinatorial",
    "function_class": [],
    "domain": "not_applicable",
-   "context": "none",
-   "noise": "general_model_class",
+   "context": "adversarial_contexts",
+   "noise": "bounded_01",
    "learner_knows": [
     "T",
-    "K",
     "d",
-    "L_feat",
-    "S"
+    "m",
+    "K"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -88,26 +123,61 @@
     "access": "explicit",
     "norm_bound": "unit_l2",
     "parameter_set": "l2_ball",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "at_most_m",
+    "reward": "unspecified",
+    "loss_scale": "per_action"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Assortments of at most m (paper's K) items with MNL choice feedback; hard instance uses time-invariant features and revenues r_ti = 1"
+    "Multinomial logit (MNL) choice feedback: only the purchased item (or no purchase) is observed",
+    "Expected revenue is a nonlinear MNL function of item utilities",
+    "Paper's N (number of items) is mapped to K; paper's cardinality constraint K is mapped to m"
    ],
-   "definition_quote": "there is a worst-case problem instance with $N\\asymp K\\cdot 2^d$ items and uniformly bounded feature and coefficient vector (i.e., $\\|v_{ti}\\|_2\\leq 1$ and $\\|\\theta_0\\|_2\\leq 1$ for all $i\\in[N]$, $t\\in[T]$)"
+   "definition_quote": "Our lower bound is information theoretical, and therefore applies to \\emph{any} policy for dynamic assortment optimization with changing contextual features."
   }
  ],
  "algorithms": [
@@ -122,15 +192,17 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "L_feat",
+    "d",
+    "m",
+    "K",
     "rho",
-    "lambda_0",
-    "m"
+    "nu",
+    "lambda_0"
    ]
   },
   {
    "id": "a2",
-   "name": "MLE-UCB with an (alpha, eps, delta)-approximation oracle for the assortment step",
+   "name": "MLE-UCB with an (alpha, epsilon, delta)-approximation oracle for the combinatorial step",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -139,10 +211,12 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "L_feat",
+    "d",
+    "m",
+    "K",
     "rho",
-    "lambda_0",
-    "m"
+    "nu",
+    "lambda_0"
    ]
   }
  ],
@@ -161,34 +235,34 @@
    "compute": "exponential",
    "bound": {
     "notation": "O",
-    "expression": "d*sqrt(T)*log(rho*L_feat*T*m/lambda_0) + d**2*rho**4*L_feat**2*m**2*log(T)/lambda_0**2",
+    "expression": "d*sqrt(T)*log(rho*nu*T*m/lambda_0) + d**2*rho**4*nu**2*m**2*log(T)/lambda_0**2",
     "expression_latex": "C_1\\left[ d\\sqrt{T}\\cdot \\log(\\lambda_0^{-1}\\rho\\nu TK)+ {d^2\\lambda_0^{-2}\\rho^4\\nu^2 K^2\\log T}\\right] + C_2",
     "regime": null
    },
    "symbols": {
-    "m": "cardinality constraint on assortments (paper's K)",
-    "rho": "bound on ratio of choice probabilities (Assumption A2)",
-    "lambda_0": "lower bound on min eigenvalue of feature covariance during exploration (A1)",
-    "L_feat": "paper's nu, bound on ||v_tj||_2"
+    "rho": "bound on ratio of MNL choice probabilities (Assumption A2)",
+    "nu": "bound on feature norms ||v_tj||_2 <= nu",
+    "lambda_0": "lower bound on lambda_min(E v v^T) of the exploration-phase feature distribution",
+    "m": "cardinality constraint on assortments (paper's K)"
    },
    "conditions": [
-    "(A1) ||v_tj||_2 <= nu; for t <= T0 features i.i.d. with lambda_min(E vv^T) >= lambda_0",
-    "(A2) p(j|S)/p(j'|S) <= rho for all assortments |S| <= K",
+    "(A1): ||v_tj||_2 <= nu for all t,j; for t <= T_0 features i.i.d. from a distribution with lambda_min(E vv^T) >= lambda_0",
+    "(A2): p_{theta_0,t}(j|S)/p_{theta_0,t}(j'|S) <= rho for all |S| <= m",
     "revenues r_tj in [0,1]"
    ],
    "tuning": [
-    "T0 ≍ max{nu^2 d log T/lambda_0^2, rho^2 (d+log T)/(tau^2 lambda_0)}",
-    "tau ≍ 1/sqrt(rho^2 nu^2 K^2)",
-    "omega ≍ sqrt(d log(rho nu T K))"
+    "T_0 ~ max{nu^2 d log T/lambda_0^2, rho^2 (d+log T)/(tau^2 lambda_0)}",
+    "tau ~ 1/sqrt(rho^2 nu^2 m^2)",
+    "omega ~ sqrt(d log(rho nu T m))"
    ],
    "is_new": true,
    "source": {
     "label": "thm:mle-ucb",
     "number": "Theorem 1",
-    "quote": "Suppose that $T_0\\asymp \\max\\{\\nu^2d\\log T/\\lambda_0^2, \\rho^2(d+\\log T)/(\\tau^2\\lambda_0)\\}$ and $\\tau\\asymp 1/\\sqrt{\\rho^2\\nu^2K^2}$ in Algorithm \\ref{alg:mle-ucb}, then the regret of the MLE-UCB policy is upper bounded by C_1[ d\\sqrt{T}\\cdot \\log(\\lambda_0^{-1}\\rho\\nu TK)+ d^2\\lambda_0^{-2}\\rho^4\\nu^2 K^2\\log T] + C_2, where $C_1, C_2>0$ are universal constants."
+    "quote": "Suppose that $T_0\\asymp \\max\\{\\nu^2d\\log T/\\lambda_0^2, \\rho^2(d+\\log T)/(\\tau^2\\lambda_0)\\}$ and $\\tau\\asymp 1/\\sqrt{\\rho^2\\nu^2K^2}$ in Algorithm \\ref{alg:mle-ucb}, then the regret of the MLE-UCB policy is upper bounded by C_1[ d\\sqrt{T}\\log(\\lambda_0^{-1}\\rho\\nu TK)+ d^2\\lambda_0^{-2}\\rho^4\\nu^2 K^2\\log T] + C_2, where $C_1, C_2>0$ are universal constants."
    },
    "confidence": "medium",
-   "notes": "Universal constants C1, C2 unspecified, recorded as O. Bound independent of the number of items N. Exact combinatorial step requires enumerating all subsets (exponential); polynomial approximations given separately. Regret defined via expected revenues, so pseudo-regret."
+   "notes": "Regret defined via expected revenues R_t(S), i.e. pseudo-regret against the per-round optimal assortment. Universal constants recorded via O notation. Exact step-7 optimization enumerates all subsets (not polynomial); paper's K renamed m. No dependence on number of items N."
   },
   {
    "id": "r2",
@@ -213,19 +287,19 @@
    },
    "conditions": [
     "d divisible by 4",
-    "instance has N ≍ K 2^d items",
+    "number of items N ~ m*2^d",
     "||v_ti||_2 <= 1 and ||theta_0||_2 <= 1",
-    "time-invariant features, revenues r_ti = 1"
+    "features invariant over time; revenues r_ti = 1"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:lower",
     "number": "Theorem 2",
-    "quote": "Suppose $d$ is divisible by 4. There exists a universal constant $C_0>0$ such that for any sufficiently large $T$ and policy $\\pi$, there is a worst-case problem instance with $N\\asymp K\\cdot 2^d$ items and uniformly bounded feature and coefficient vector (i.e., $\\|v_{ti}\\|_2\\leq 1$ and $\\|\\theta_0\\|_2\\leq 1$ for all $i\\in[N]$, $t\\in[T]$) such that the regret of $\\pi$ is lower bounded by $C_2\\cdot d\\sqrt{T}/K$."
+    "quote": "Suppose $d$ is divisible by 4. There exists a universal constant $C_0>0$ such that for any sufficiently large $T$ and policy $\\pi$, there is a worst-case problem instance with $N\\asymp K\\cdot 2^d$ items and uniformly bounded feature and coefficient vector (i.e., $\\|v_{ti}\\|_2\\leq 1$ and $\\|\\theta_0\\|_2\\leq 1$ ...) such that the regret of $\\pi$ is lower bounded by $C_2\\cdot d\\sqrt{T}/K$."
    },
    "confidence": "high",
-   "notes": "Minimax construction via subsets W of size d/4 with Pinsker inequality."
+   "notes": "Paper's K renamed m. Features are fixed across time in the construction."
   },
   {
    "id": "r3",
@@ -241,45 +315,44 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "alpha_apx*Regret_star + eps_apx*T + delta_apx*T**2 + O_1",
+    "expression": "alpha_approx*Regret_star + eps_approx*T + delta_approx*T**2 + O1",
     "expression_latex": "\\alpha\\cdot \\mathrm{Regret}^* + \\varepsilon T + \\delta T^2 + O(1)",
     "regime": null
    },
    "symbols": {
-    "alpha_apx": "multiplicative approximation factor of the oracle",
-    "eps_apx": "additive approximation error of the oracle",
-    "delta_apx": "failure probability of the oracle per round",
+    "alpha_approx": "multiplicative approximation factor of the combinatorial oracle",
+    "eps_approx": "additive approximation error of the oracle",
+    "delta_approx": "failure probability of the oracle per round",
     "Regret_star": "regret upper bound of Theorem 1",
-    "O_1": "a constant term O(1)"
+    "O1": "a constant term O(1)"
    },
    "conditions": [
-    "same assumptions as Theorem 1"
+    "same assumptions (A1),(A2) as Theorem 1"
    ],
    "tuning": [
-    "same tuning as Theorem 1",
-    "(alpha, eps, delta)-approximation algorithm used for the combinatorial step"
+    "same T_0, tau, omega as Theorem 1"
    ],
    "is_new": true,
    "source": {
     "label": "lem:approx",
     "number": "Lemma 7",
-    "quote": "Suppose an $(\\alpha,\\varepsilon,\\delta)$-approximation algorithm is used instead of exact optimization in the MLE-UCB policy at each time period $t$. Then its regret can be upper bounded by \\alpha\\cdot \\mathrm{Regret}^* + \\varepsilon T + \\delta T^2 + O(1)"
+    "quote": "Suppose an $(\\alpha,\\varepsilon,\\delta)$-approximation algorithm is used instead of exact optimization in the MLE-UCB policy at each time period $t$. Then its regret can be upper bounded by $\\alpha\\cdot \\mathrm{Regret}^* + \\varepsilon T + \\delta T^2 + O(1)$"
    },
    "confidence": "low",
-   "notes": "Reduction lemma expressed relative to Theorem 1's bound; compute polynomial for the DP-based oracles (d=1 exact DP; multivariate randomized)."
+   "notes": "Reduction lemma; Appendix uses it with a randomized DP approximation (alpha = sqrt(d), eps = T^{-1/2}, delta = T^{-2}) running in polynomial time per round, giving O(sqrt(d))·Regret*. Compute 'polynomial' refers to that instantiation."
   }
  ],
  "cited_results": [
   {
    "cited_key": "Agrawal16MNLBandit",
    "cited_title": "MNL-bandit: A dynamic learning approach to assortment selection",
-   "cited_first_author": "Agrawal",
+   "cited_first_author": "Agrawal, S.",
    "cited_year": 2017,
    "cited_arxiv_id": "1706.03880",
    "algorithm_name": "MNL-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Capacitated MNL-bandit assortment selection without features, N items",
+   "setting_description": "Capacitated MNL-bandit dynamic assortment without features, K = number of products (paper's N), when T >> N^2",
    "bound": {
     "notation": "O_tilde",
     "expression": "sqrt(K*T)",
@@ -291,13 +364,13 @@
   {
    "cited_key": "Agrawal17Thompson",
    "cited_title": "Thompson sampling for MNL-bandit",
-   "cited_first_author": "Agrawal",
+   "cited_first_author": "Agrawal, S.",
    "cited_year": 2017,
    "cited_arxiv_id": null,
    "algorithm_name": "Thompson sampling for MNL-bandit",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Capacitated MNL-bandit assortment selection without features, N items",
+   "setting_description": "Capacitated MNL-bandit dynamic assortment without features, K = number of products (paper's N)",
    "bound": {
     "notation": "O_tilde",
     "expression": "sqrt(K*T)",
@@ -309,13 +382,13 @@
   {
    "cited_key": "Chen:18tight",
    "cited_title": "A note on tight lower bound for mnl-bandit assortment selection models",
-   "cited_first_author": "Chen",
+   "cited_first_author": "Chen, X.",
    "cited_year": 2018,
    "cited_arxiv_id": null,
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "MNL-bandit assortment selection, N items",
+   "setting_description": "Capacitated MNL-bandit dynamic assortment, K = number of products (paper's N)",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(K*T)",
@@ -327,13 +400,13 @@
   {
    "cited_key": "Wang:17:person",
    "cited_title": "Thompson sampling for online personalized assortment optimization problems with multinomial logit choice models",
-   "cited_first_author": "Cheung",
+   "cited_first_author": "Cheung, W. C.",
    "cited_year": 2017,
    "cited_arxiv_id": null,
-   "algorithm_name": "Thompson sampling (personalized MNL)",
+   "algorithm_name": "Thompson sampling for personalized MNL",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Personalized MNL dynamic assortment, Bayesian regret, D-dim customer features, N products, cardinality K",
+   "setting_description": "Personalized MNL assortment, Bayesian regret; D = customer feature dimension, K = number of products (paper's N), m = cardinality (paper's K)",
    "bound": {
     "notation": "O_tilde",
     "expression": "D*K*sqrt(m*T)",
@@ -345,13 +418,13 @@
   {
    "cited_key": "Dani08stochastic",
    "cited_title": "Stochastic Linear Optimization under Bandit Feedback",
-   "cited_first_author": "Dani",
+   "cited_first_author": "Dani, V.",
    "cited_year": 2008,
    "cited_arxiv_id": null,
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Contextual / stochastic linear bandits",
+   "setting_description": "Contextual / stochastic linear bandit",
    "bound": {
     "notation": "Omega",
     "expression": "d*sqrt(T)",
@@ -364,19 +437,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:19:45",
+  "date": "2026-10-21T15:29:33",
   "source_chars": 154294,
-  "input_tokens": 112290,
-  "output_tokens": 6459,
-  "cost_usd_equiv": 0.8099187999999999,
+  "input_tokens": 118877,
+  "output_tokens": 7275,
+  "cost_usd_equiv": 0.827486,
   "status": "extracted"
  }
 }

@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Taming the Monster: A Fast and Simple Algorithm for Contextual Bandits",
   "arxiv_id": "1402.0555",
@@ -18,7 +18,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "i.i.d. contextual bandit setting with a finite policy class (argmax-oracle access)",
+   "name_in_paper": "i.i.d. contextual bandit setting with a finite policy class",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -29,39 +29,72 @@
    "noise": "bounded_01",
    "learner_knows": [
     "K",
-    "N_exp"
+    "N_exp",
+    "function_class"
    ],
    "instance_assumptions": [],
+   "extras": [
+    "expert_advice"
+   ],
    "action_set": {
     "shape": "not_applicable",
     "time_varying": "not_applicable",
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
-   "extras": [
-    "expert_advice"
-   ],
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "agnostic_policy_class"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Policy class Pi is accessed only via a cost-sensitive classification (argmax) oracle AMO",
-    "Context/reward-vector pairs drawn i.i.d. from a joint distribution D over X x [0,1]^A"
+    "policy class accessed only through a cost-sensitive classification (argmax) oracle"
    ],
-   "definition_quote": "In the i.i.d.~contextual bandit setting, the context/reward vector pairs $(x_t,r_t) \\in X \\times [0,1]^A$ over all rounds $t = 1, 2, \\dotsc$ are randomly drawn independently from $\\D$. ... the (empirical cumulative) regret of the agent after $T$ rounds is defined as $\\sum_{t=1}^T \\bigl( r_t(\\piopt(x_t)) - r_t(a_t) \\bigr)$."
+   "definition_quote": "In the i.i.d.~contextual bandit setting, the context/reward vector pairs $(x_t,r_t) \\in X \\times [0,1]^A$ over all rounds $t = 1, 2, \\dotsc$ are randomly drawn independently from $\\D$. In round $t$, the agent first observes the context $x_t$, then (randomly) chooses an action $a_t \\in A$, and finally receives the reward $r_t(a_t) \\in [0,1]$ for the chosen action."
   }
  ],
  "algorithms": [
@@ -75,19 +108,8 @@
    ],
    "requires_knowledge_of": [
     "K",
-    "N_exp"
-   ]
-  },
-  {
-   "id": "a2",
-   "name": "Coordinate Descent Algorithm for (OP)",
-   "registry_id": null,
-   "is_new": true,
-   "techniques": [
-    "other"
-   ],
-   "requires_knowledge_of": [
-    "K"
+    "N_exp",
+    "function_class"
    ]
   }
  ],
@@ -113,12 +135,13 @@
    "symbols": {},
    "conditions": [
     "finite policy class Pi with |Pi| = N_exp",
-    "epoch schedule with tau_{m+1} <= 2 tau_m"
+    "assumes (OP) can be solved whenever required"
    ],
    "tuning": [
+    "failure probability delta given as input",
+    "epoch schedule with tau_{m+1} <= 2 tau_m, tau_1 = O(1)",
     "mu_m = min{1/(2K), sqrt(ln(16 tau_m^2 |Pi|/delta)/(K tau_m))}",
-    "psi = 100",
-    "delta given as input"
+    "psi = 100"
    ],
    "is_new": true,
    "source": {
@@ -127,7 +150,7 @@
     "quote": "Assume the optimization problem (\\optprob) can be solved whenever required in Algorithm~\\ref{alg:erucb}. With probability at least $1-\\delta$, the regret of Algorithm~\\ref{alg:erucb} (\\ERUCB) after $T$ rounds is $O\\left( \\sqrt{KT\\ln(T|\\Pi|/\\delta)} + K\\ln(T|\\Pi|/\\delta) \\right)$."
    },
    "confidence": "high",
-   "notes": "Regret is empirical cumulative regret against the optimal policy pi_star (realized rewards), bounded w.p. 1-delta. Feasibility of (OP) is guaranteed by Theorem 3. Polynomial time given oracle access (oracle-efficient)."
+   "notes": "Regret is realized cumulative regret vs the optimal policy pi*, holding w.p. 1-delta. Algorithm uses an AMO oracle; with coordinate descent it needs O~(sqrt(KT/ln(|Pi|/delta))) oracle calls (Theorem 1/Lemmas 2-3). Horizon not needed by the algorithm."
   },
   {
    "id": "r2",
@@ -144,19 +167,21 @@
    "bound": {
     "notation": "exact",
     "expression": "C_0*(4*K*d_m0 + sqrt(8*K*d_mT*tau_mT)) + sqrt(8*T*log(2/delta))",
-    "expression_latex": "\\biggerc \\biggl( 4Kd_{\\tau_{m_0-1}} + \\sqrt{8Kd_{\\tau_{m(T)}} \\tau_{m(T)}} \\biggr) + \\sqrt{8T\\log(2/\\delta)}",
+    "expression_latex": "C_0 \\biggl( 4Kd_{\\tau_{m_0-1}} + \\sqrt{8Kd_{\\tau_{m(T)}} \\tau_{m(T)}} \\biggr) + \\sqrt{8T\\log(2/\\delta)}",
     "regime": null
    },
    "symbols": {
-    "C_0": "constant 4*psi + c_0 with psi=100, c_0 = 4*rho*(1+theta_1), theta_1=94.1, rho<=sqrt(2)",
+    "C_0": "constant 4*psi + c_0 with psi = 100, c_0 = 4*rho*(1+94.1), rho <= sqrt(2)",
     "d_m0": "d_{tau_{m_0-1}} = ln(16 tau_{m_0-1}^2 |Pi|/delta)",
     "d_mT": "d_{tau_{m(T)}} = ln(16 tau_{m(T)}^2 |Pi|/delta)",
-    "tau_mT": "end round tau_{m(T)} of the epoch containing T"
+    "tau_mT": "end round of the epoch containing T"
    },
    "conditions": [
-    "epoch schedule with tau_{m+1} <= 2 tau_m"
+    "finite policy class",
+    "(OP) solved in every epoch"
    ],
    "tuning": [
+    "epoch schedule with tau_{m+1} <= 2 tau_m",
     "psi = 100",
     "mu_m as in Algorithm 1"
    ],
@@ -164,142 +189,10 @@
    "source": {
     "label": "lem:regret",
     "number": "Lemma 17",
-    "quote": "For any $T \\in \\N$, with probability at least $1-\\delta$, the regret after $T$ rounds is at most $\\biggerc \\biggl( 4Kd_{\\tau_{m_0-1}} + \\sqrt{8Kd_{\\tau_{m(T)}} \\tau_{m(T)}} \\biggr) + \\sqrt{8T\\log(2/\\delta)}$ where $\\biggerc := (4\\vlc + \\bigc)$ and $\\bigc$ is defined in \\lemref{inductive}."
+    "quote": "For any $T \\in \\N$, with probability at least $1-\\delta$, the regret after $T$ rounds is at most $\\biggerc \\biggl( 4Kd_{\\tau_{m_0-1}} + \\sqrt{8Kd_{\\tau_{m(T)}} \\tau_{m(T)}} \\biggr) + \\sqrt{8T\\log(2/\\delta)}$ where $\\biggerc := (4\\vlc + \\bigc)$"
    },
    "confidence": "medium",
-   "notes": "Explicit-constant version underlying Theorem 2; involves epoch-dependent quantities declared as symbols. Assumes (OP) solved each epoch."
-  },
-  {
-   "id": "r3",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "other",
-   "dependence": "worst_case",
-   "comparator": "not_applicable",
-   "probability": "high_probability",
-   "horizon": "anytime",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "O_tilde",
-    "expression": "sqrt(K*T/log(N_exp/delta))",
-    "expression_latex": "\\tilde{O}\\left(\\sqrt{\\frac{KT}{\\ln(|\\Pi|/\\delta)}}\\right)",
-    "regime": null
-   },
-   "symbols": {},
-   "conditions": [],
-   "tuning": [
-    "doubling epoch schedule tau_m = 2^{m-1} or warm-start schedule"
-   ],
-   "is_new": true,
-   "source": {
-    "label": null,
-    "number": "Theorem 1",
-    "quote": "There is an algorithm for the i.i.d.~contextual bandit problem with an optimal regret bound requiring $\\tilde{O}\\left(\\sqrt{\\frac{KT}{\\ln(|\\Pi|/\\delta)}}\\right)$ calls to the optimization oracle over $T$ rounds, with probability at least $1 - \\delta$."
-   },
-   "confidence": "medium",
-   "notes": "Quantity is the total number of oracle (AMO) calls over T rounds, not regret; the accompanying regret is that of Theorem 2."
-  },
-  {
-   "id": "r4",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "other",
-   "dependence": "worst_case",
-   "comparator": "not_applicable",
-   "probability": "expectation",
-   "horizon": "anytime",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "O_tilde",
-    "expression": "sqrt(K*T/log(N_exp/delta))",
-    "expression_latex": "\\tilde{O}(\\sqrt{KT/\\logpd})",
-    "regime": null
-   },
-   "symbols": {},
-   "conditions": [],
-   "tuning": [
-    "epoch schedule tau_m = 2^{m-1}",
-    "Q_init = 0 (cold start)"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "lem:doubling",
-    "number": "Lemma 2",
-    "quote": "For the epoch schedule $\\tau_m := 2^{m-1}$, the total number of calls to $\\AMO$ is $\\tilde{O}(\\sqrt{KT/\\logpd})$."
-   },
-   "confidence": "medium",
-   "notes": "Total number of AMO calls (computational guarantee); deterministic statement, 'expectation' chosen only as placeholder since no probability is stated."
-  },
-  {
-   "id": "r5",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "other",
-   "dependence": "worst_case",
-   "comparator": "not_applicable",
-   "probability": "high_probability",
-   "horizon": "anytime",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "O_tilde",
-    "expression": "sqrt(K*T/log(N_exp/delta))",
-    "expression_latex": "\\tilde{O}(\\sqrt{KT/\\logpd})",
-    "regime": null
-   },
-   "symbols": {},
-   "conditions": [],
-   "tuning": [
-    "epoch schedule (tau_1,tau_2)=(3,5), tau_m = m^2 for m>=3",
-    "warm start Q_init = Q_{m-1}"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "lem:warm-start",
-    "number": "Lemma 3",
-    "quote": "Define the epoch schedule $(\\tau_1,\\tau_2) := (3,5)$ and $\\tau_m := m^2$ for $m \\geq 3$ (this satisfies $\\tau_{m+1} \\leq 2\\tau_m$). With high probability, the warm-start variant of \\algref{erucb} makes $\\tilde{O}(\\sqrt{KT/\\logpd})$ calls to $\\AMO$ over $T$ rounds and $O(\\sqrt{T})$ calls to \\algref{coord}."
-   },
-   "confidence": "medium",
-   "notes": "Total oracle calls; also O(sqrt(T)) calls to the coordinate descent routine."
-  },
-  {
-   "id": "r6",
-   "setting": "s1",
-   "side": "lower",
-   "algorithm": null,
-   "algorithm_class": "other",
-   "quantity": "other",
-   "dependence": "worst_case",
-   "comparator": "not_applicable",
-   "probability": "high_probability",
-   "horizon": "not_applicable",
-   "compute": "not_stated",
-   "bound": {
-    "notation": "Omega",
-    "expression": "sqrt(K*tau_M/log(N_exp*tau_M/delta))",
-    "expression_latex": "\\Omega\\paren{ \\sqrt{\\frac{K\\tau_M}{\\ln(|\\Pi|\\tau_M/\\delta)}} }",
-    "regime": "M sufficiently large"
-   },
-   "symbols": {
-    "tau_M": "round at end of epoch M in the epoch schedule"
-   },
-   "conditions": [
-    "exists a distribution D and policy class Pi (constructed instance)"
-   ],
-   "tuning": [],
-   "is_new": true,
-   "source": {
-    "label": "thm:lb",
-    "number": "Theorem 4",
-    "quote": "For any epoch schedule $0 = \\tau_0 < \\tau_1 < \\tau_2 < \\dotsb$ and any $M \\in \\N$ sufficiently large, there exists a distribution $\\D$ over $X\\times [0,1]^A$ and a policy class $\\Pi$ such that, with probability at least $1 - \\delta$, $\\inf_{m : \\tau_m \\geq \\tau_M/2} \\inf_{Q \\in \\lowvar{m}} |\\supp(Q)| = \\Omega\\paren{ \\sqrt{\\frac{K\\tau_M}{\\ln(|\\Pi|\\tau_M/\\delta)}} }$."
-   },
-   "confidence": "medium",
-   "notes": "Lower bound on support size of any distribution satisfying the low-variance constraint of (OP), hence on oracle calls for this class of optimization-based algorithms; not a regret bound."
+   "notes": "Explicit-constant version underlying Theorem 2."
   }
  ],
  "cited_results": [
@@ -309,14 +202,14 @@
    "cited_first_author": "Alina Beygelzimer",
    "cited_year": 2011,
    "cited_arxiv_id": null,
-   "algorithm_name": "EXP4-family (Exp4.P)",
+   "algorithm_name": "Exp4.P (EXP4 family)",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Contextual bandits with finite policy class Pi, K actions, regret vs best policy with probability 1-delta",
+   "setting_description": "contextual bandits with finite policy class Pi, K actions, regret vs best policy, w.p. 1-delta",
    "bound": {
     "notation": "O",
     "expression": "sqrt(K*T*log(N_exp/delta))",
-    "expression_latex": "O\\left( \\sqrt{KT\\log(|\\Pi|/\\delta)} \\right)",
+    "expression_latex": "O\\left(\\sqrt{KT\\log(|\\Pi|/\\delta)} \\right)",
     "regime": null
    },
    "where": "Section 1 (Introduction)"
@@ -330,7 +223,7 @@
    "algorithm_name": "Epoch-greedy / epsilon-greedy",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "i.i.d. contextual bandits with finite policy class, oracle-based",
+   "setting_description": "i.i.d. contextual bandits with finite policy class via optimization oracle",
    "bound": {
     "notation": "O",
     "expression": "(K*log(N_exp))**(1/3)*T**(2/3)",
@@ -343,19 +236,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:20:38",
+  "date": "2026-10-21T15:30:07",
   "source_chars": 106910,
-  "input_tokens": 85850,
-  "output_tokens": 6339,
-  "cost_usd_equiv": 0.5959988,
+  "input_tokens": 92437,
+  "output_tokens": 4192,
+  "cost_usd_equiv": 0.5543060000000001,
   "status": "extracted"
  }
 }

@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Learning Strategy-Aware Linear Classifiers",
   "arxiv_id": "1911.04004",
@@ -15,10 +15,10 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Repeated strategic classification against delta-BMR agents (Stackelberg regret)",
+   "name_in_paper": "Online strategic classification against delta-bounded myopically rational (delta-BMR) agents, Stackelberg regret",
    "objective": "cumulative_regret",
    "feedback": "graph_feedback",
-   "environment": "adversarial_unspecified",
+   "environment": "adversarial_adaptive",
    "action_space": "continuum_other",
    "function_class": [
     "bounded"
@@ -37,82 +37,66 @@
    "action_set": {
     "shape": "hypercube",
     "time_varying": "fixed",
-    "access": "not_applicable",
+    "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
-    "observability": "unspecified",
+    "observability": "strongly_observable",
     "time_varying": "adaptive_sequence",
-    "knowledge": "revealed_after_action"
+    "knowledge": "revealed_after_action",
+    "self_loops": "all",
+    "directedness": "directed",
+    "generation": "arbitrary"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Actions are linear classifiers (hyperplane normals) in A subset of [-1,1]^{d+1}; loss is binary 0-1 loss on the agent's reported feature vector",
-    "Agents are delta-bounded myopically rational: they best-respond to the committed classifier by misreporting within a delta-ball of their true feature vector; true feature vector never observed",
-    "Regret is Stackelberg regret: comparator evaluated against agent best responses to the comparator action",
-    "Learner knows delta; feedback is the reported vector and label, which reveals the loss of all actions outside a 4 sqrt(d) delta band",
-    "Algorithm requires access to an in-probability oracle and polytope volume computation"
+    "Learner's actions are linear classifiers (hyperplane normals) in A subset of [-1,1]^{d+1}; binary 0-1 loss on the agent's reported feature vector",
+    "Agents best-respond to the committed classifier by misreporting within a ball of radius delta around a hidden, adversarially chosen feature vector (delta-BMR); utility unknown to learner; delta known to learner",
+    "Feedback: the learner observes the reported vector r_t(alpha_t) and label y_t, from which she infers losses of all actions whose hyperplane is far (>2 delta) from r_t (induced feedback graph)",
+    "Regret is Stackelberg regret: comparator evaluated on agents' best responses to the comparator",
+    "Algorithm requires an in-probability oracle and polytope volume computations"
    ],
    "definition_quote": "$\\calR(T) = \\sum_{t \\in [T]} \\ell(\\alpha_t, \\vr_t(\\alpha_t),y_t) - \\min_{\\alphast \\in \\calA}\\sum_{t \\in [T]} \\ell(\\alphast, \\vr_t(\\alphast), y_t)$."
-  },
-  {
-   "id": "s2",
-   "name_in_paper": "Repeated strategic classification against delta-BMR agents (Stackelberg regret) (lower bound)",
-   "objective": "cumulative_regret",
-   "feedback": "graph_feedback",
-   "environment": "adversarial_unspecified",
-   "action_space": "continuum_other",
-   "function_class": [
-    "bounded"
-   ],
-   "domain": "constrained",
-   "context": "none",
-   "noise": "bounded_01",
-   "learner_knows": [
-    "T",
-    "d"
-   ],
-   "instance_assumptions": [],
-   "extras": [
-    "strategic_arms"
-   ],
-   "action_set": {
-    "shape": "hypercube",
-    "time_varying": "fixed",
-    "access": "not_applicable",
-    "norm_bound": "not_applicable",
-    "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
-   },
-   "corruption": {
-    "adversary": "not_applicable",
-    "budget_measure": "not_applicable",
-    "structure": "not_applicable",
-    "regret_reference": "not_applicable"
-   },
-   "feedback_graph": {
-    "observability": "unspecified",
-    "time_varying": "adaptive_sequence",
-    "knowledge": "revealed_after_action"
-   },
-   "parameters": {},
-   "in_scope": true,
-   "out_of_scope_reason": null,
-   "unmapped": [
-    "Linear classifiers with binary loss against delta-BMR strategic agents; Stackelberg regret",
-    "Hard instance uses truthful agents and labels drawn i.i.d. Bernoulli per phase"
-   ],
-   "definition_quote": "For any strategy and any $\\delta$, there exists a sequence of $\\{\\sigma_t\\}_{t = 1}^T$ such that ..."
   }
  ],
  "algorithms": [
@@ -127,10 +111,7 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "d",
-    "delta (manipulation radius)",
-    "lambda(p_delta) (smallest polytope measure) for tuning",
-    "in-probability oracle"
+    "d"
    ]
   }
  ],
@@ -146,30 +127,31 @@
    "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "known",
-   "compute": "not_stated",
+   "compute": "exponential",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(T*log(T*Lambda_A)*log(Lambda_A))",
+    "expression": "sqrt(T*log(T*rho)*log(rho))",
     "expression_latex": "\\calO \\left( \\sqrt{T \\cdot \\log \\left(T\\cdot\\frac{\\lambda\\left( \\calA \\right)}{\\lambda\\left(\\up\\right)}\\right) \\cdot \\log \\left(\\frac{\\lambda\\left( \\calA \\right)}{\\lambda\\left(\\up\\right)}\\right)}\\right)",
     "regime": null
    },
    "symbols": {
-    "Lambda_A": "lambda(A)/lambda(p_delta): ratio of the Lebesgue measure of the action space to that of the smallest polytope induced by Grinder after T rounds"
+    "rho": "lambda(A)/lambda(underline p_delta): ratio of the Lebesgue measure of the action space to that of the smallest polytope induced by Grinder after T rounds"
    },
    "conditions": [
-    "access to an accurate in-probability oracle"
+    "accurate in-probability oracle available",
+    "delta-BMR agents with known delta"
    ],
    "tuning": [
-    "eta = gamma <= 1/2 tuned as in the analysis (depends on T and lambda(p_delta))"
+    "eta = gamma <= 1/2, tuned as in the analysis (depends on T and lambda(underline p))"
    ],
    "is_new": true,
    "source": {
     "label": "thm:regr-grind",
     "number": "Theorem 4.1",
-    "quote": "Given a finite horizon $T$ the Stackelberg regret incurred by $\\grinder$ (Algo.~\\ref{algo:grinding}) is: \\calR(T) \\leq \\calO \\left( \\sqrt{T \\cdot \\log \\left(T\\cdot\\frac{\\lambda\\left( \\calA \\right)}{\\lambda\\left(\\up\\right)}\\right) \\cdot \\log \\left(\\frac{\\lambda\\left( \\calA \\right)}{\\lambda\\left(\\up\\right)}\\right)}\\right) where by $\\lambda(A)$ we denote the Lebesgue measure ..."
+    "quote": "Given a finite horizon $T$ the Stackelberg regret incurred by $\\grinder$ (Algo.~\\ref{algo:grinding}) is: \\calR(T) \\leq \\calO ( \\sqrt{T \\cdot \\log (T\\cdot\\frac{\\lambda( \\calA )}{\\lambda(\\up)}) \\cdot \\log (\\frac{\\lambda( \\calA )}{\\lambda(\\up)})}) where by $\\lambda(A)$ we denote the Lebesgue measure ... and by $\\up$ we denote the polytope with the smallest Lebesgue measure that is induced by $\\grinder$ after $T$ rounds' partition."
    },
    "confidence": "medium",
-   "notes": "Data-dependent bound (depends on algorithm-induced partition). Proof takes expectations over the algorithm's randomness; regret type not explicitly stated. Paper notes polytope volume computation is #P-hard (information-theoretic result); with volume oracle runtime O(T^d) (Lemma B.8). Doubling trick removes knowledge of T and lambda(p_delta)."
+   "notes": "Proof takes expectations over the algorithm's sampling, so regret is effectively in expectation, but the theorem states R(T) without stating the type. Paper says Grinder is information-theoretic (polytope volume #P-hard); with a volume oracle runtime O(T^d). Data-dependent bound."
   },
   {
    "id": "r2",
@@ -182,20 +164,20 @@
    "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "known",
-   "compute": "not_stated",
+   "compute": "exponential",
    "bound": {
     "notation": "exact",
-    "expression": "C_O*sqrt(T*log(T*Lambda_A)*log(Lambda_A)) + 2*eps_or*T",
+    "expression": "C_0*sqrt(T*log(T*rho)*log(rho)) + 2*eps_alg*T",
     "expression_latex": "\\calO(\\sqrt{ T \\log (T \\lambda(\\calA)/\\lambda(\\up))\\cdot \\log (\\lambda(\\calA)/\\lambda(\\up))}) + 2 \\eps T",
     "regime": null
    },
    "symbols": {
-    "Lambda_A": "lambda(A)/lambda(p_delta)",
-    "eps_or": "approximation accuracy of the in-probability oracle (multiplicative)",
-    "C_O": "unspecified constant hidden in the O(.) of the first term"
+    "rho": "lambda(A)/lambda(underline p_delta)",
+    "C_0": "unspecified constant hidden in the O(.) of the first term",
+    "eps_alg": "multiplicative approximation accuracy of the in-probability oracle"
    },
    "conditions": [
-    "access to an eps-approximate in-probability oracle with eps <= 1/2"
+    "eps-approximate in-probability oracle with eps <= 1/2: |P~[alpha] - P^in[alpha]| <= eps P^in[alpha]"
    ],
    "tuning": [
     "eta = gamma tuned as in Theorem 4.1"
@@ -204,14 +186,14 @@
    "source": {
     "label": "lem:apx-oracle",
     "number": "Lemma B.7",
-    "quote": "For $\\eps \\leq 1/2$, we call {\\upshape $\\tPr_t[\\alpha_t]$} an $\\eps$-approximation oracle to $\\Prin[\\alpha_t]$, if $|\\tPr_t [\\alpha_t] - \\Prin[\\alpha_t] | \\leq \\eps \\Prin[\\alpha_t]$. Then, $\\grinder$ run with oracle $\\tPr_t[\\cdot]$ instead of $\\Prin[\\alpha_t]$ achieves Stackelberg regret $\\calR(T) \\leq \\calO(\\sqrt{ T \\log (T \\lambda(\\calA)/\\lambda(\\up))\\cdot \\log (\\lambda(\\calA)/\\lambda(\\up))}) + 2 \\eps T$."
+    "quote": "For $\\eps \\leq 1/2$, we call $\\tPr_t[\\alpha_t]$ an $\\eps$-approximation oracle to $\\Prin[\\alpha_t]$, if $|\\tPr_t [\\alpha_t] - \\Prin[\\alpha_t] | \\leq \\eps \\Prin[\\alpha_t]$. Then, $\\grinder$ run with oracle $\\tPr_t[\\cdot]$ instead of $\\Prin[\\alpha_t]$ achieves Stackelberg regret $\\calR(T) \\leq \\calO(\\sqrt{ T \\log (T \\lambda(\\calA)/\\lambda(\\up))\\cdot \\log (\\lambda(\\calA)/\\lambda(\\up))}) + 2 \\eps T$."
    },
    "confidence": "medium",
-   "notes": "Mixed O-term plus explicit 2 eps T; recorded with explicit constant C_O. Main text says rate preserved when eps <= 1/sqrt(T)."
+   "notes": "Mixed O-term plus explicit 2 eps T; encoded with constant C_0. Paper notes the rate is preserved for eps <= 1/sqrt(T)."
   },
   {
    "id": "r3",
-   "setting": "s2",
+   "setting": "s1",
    "side": "lower",
    "algorithm": null,
    "algorithm_class": "all",
@@ -223,29 +205,30 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "sqrt(T*log(Lambda_tilde))/(9*sqrt(2))",
+    "expression": "sqrt(T*log(rho_tilde))/(9*sqrt(2))",
     "expression_latex": "\\frac{1}{9\\sqrt{2}} \\sqrt{T \\log \\left( \\frac{\\lambda(\\calA)}{\\lambda(\\tp)}\\right)}",
     "regime": null
    },
    "symbols": {
-    "Lambda_tilde": "lambda(A)/lambda(p_tilde_delta), where p_tilde_delta is the smallest sigma_t-induced polytope from the sequence of datapoints"
+    "rho_tilde": "lambda(A)/lambda(tilde p_delta), where tilde p_delta is the smallest sigma_t-induced polytope from the sequence of datapoints"
    },
    "conditions": [
-    "holds for any delta; there exists a sequence of datapoints (truthful agents, Bernoulli labels) achieving it"
+    "hard instance uses truthful agents (a special case of delta-BMR) with labels drawn from Bernoulli environments",
+    "holds for any delta"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:lb",
     "number": "Theorem 5.1",
-    "quote": "For any strategy and any $\\delta$, there exists a sequence of $\\{\\sigma_t\\}_{t = 1}^T$ such that: \\E \\left[ \\sum_{t \\in [T]} \\ell(\\alpha_t, \\vr_t(\\alpha_t),y_t) \\right] - \\min_{\\alphast \\in \\calA} \\E \\left[ \\sum_{t \\in [T]} \\ell(\\alphast, \\vr_t(\\alphast),y_t)\\right] \\geq \\frac{1}{9\\sqrt{2}} \\sqrt{T \\log \\left( \\frac{\\lambda(\\calA)}{\\lambda(\\tp)}\\right)} where $\\tp$ is the smallest $\\sigma_t$-induced polytope ..."
+    "quote": "For any strategy and any $\\delta$, there exists a sequence of $\\{\\sigma_t\\}_{t = 1}^T$ such that: \\E [ \\sum_{t \\in [T]} \\ell(\\alpha_t, \\vr_t(\\alpha_t),y_t) ] - \\min_{\\alphast \\in \\calA} \\E [ \\sum_{t \\in [T]} \\ell(\\alphast, \\vr_t(\\alphast),y_t)] \\geq \\frac{1}{9\\sqrt{2}} \\sqrt{T \\log ( \\frac{\\lambda(\\calA)}{\\lambda(\\tp)})} where $\\tp$ is the smallest $\\sigma_t$-induced polytope from the sequence of $\\{\\sigma_t\\}_{t=1}^T$."
    },
    "confidence": "medium",
-   "notes": "Regret with min outside expectation, i.e. pseudo-regret style Stackelberg regret. Log base not specified (phases Phi = log ratio with 2^kappa normalization)."
+   "notes": "Min taken outside expectation, so pseudo-regret style. Nearly matches Theorem 4.1 up to a sqrt(log) factor."
   },
   {
    "id": "r4",
-   "setting": "s2",
+   "setting": "s1",
    "side": "lower",
    "algorithm": null,
    "algorithm_class": "all",
@@ -263,36 +246,36 @@
    },
    "symbols": {},
    "conditions": [
-    "fixed feature vector x=(u)^d with u in [1/4,3/4], truthful agents, labels i.i.d. Bernoulli(1/2 +/- eps) under one of two environments U, L"
+    "fixed truthful agents with feature vector x=(u)^d, u in [1/4,3/4]; labels i.i.d. Bernoulli under one of two environments U, L"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "lem:sqrt",
     "number": "Lemma C.1",
-    "quote": "Fix a $\\vr = \\vx = (u)^d$ ... There exists a utility model for the agents, and a pair of adversarial environments $U$ and $L$ such that ... \\max_{\\nu \\in \\{U,L\\}} \\min_{\\alphast \\in \\calA} \\E_{\\nu} \\left[\\sum_{t \\in [T]} \\ell(\\alpha_t, \\vr_t(\\alpha_t),y_t) - \\sum_{t \\in [T]} \\ell(\\alphast,\\vr_t(\\alphast),y_t) \\right] \\geq \\frac{1}{9\\sqrt{2}}\\sqrt{T}"
+    "quote": "Fix a $\\vr = \\vx = (u)^d$ ... There exists a utility model for the agents, and a pair of adversarial environments $U$ and $L$ such that $\\vr_t(\\alpha) = \\vx_t = \\vx$ ... such that: \\max_{\\nu \\in \\{U,L\\}} \\min_{\\alphast \\in \\calA} \\E_{\\nu} [\\sum_{t} \\ell(\\alpha_t, \\vr_t(\\alpha_t),y_t) - \\sum_{t} \\ell(\\alphast,\\vr_t(\\alphast),y_t) ] \\geq \\frac{1}{9\\sqrt{2}}\\sqrt{T}"
    },
    "confidence": "medium",
-   "notes": "Building block for Theorem 5.1."
+   "notes": "Building block of Theorem 5.1. Theorem 3.3 (incompatibility of external and Stackelberg regret: linear regret in one notion) not recorded as it gives no explicit bound expression."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T13:55:55",
+  "date": "2026-10-21T15:04:24",
   "source_chars": 130692,
-  "input_tokens": 93998,
-  "output_tokens": 5956,
-  "cost_usd_equiv": 0.6535228,
+  "input_tokens": 100585,
+  "output_tokens": 5531,
+  "cost_usd_equiv": 0.64627,
   "status": "extracted"
  }
 }

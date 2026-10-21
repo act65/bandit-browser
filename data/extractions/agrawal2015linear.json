@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Linear Contextual Bandits with Knapsacks",
   "arxiv_id": "1507.06738",
@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "linCBwK (linear contextual bandits with knapsacks)",
+   "name_in_paper": "linCBwK (linear contextual bandit with knapsacks)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -24,7 +24,9 @@
    "context": "stochastic_contexts",
    "noise": "bounded_01",
    "learner_knows": [
-    "T"
+    "T",
+    "B",
+    "d"
    ],
    "instance_assumptions": [],
    "extras": [
@@ -32,40 +34,73 @@
     "time_varying_action_sets"
    ],
    "action_set": {
-    "shape": "hypercube",
+    "shape": "finite",
     "time_varying": "oblivious_sequence",
     "access": "explicit",
-    "norm_bound": "unspecified",
+    "norm_bound": "bounded_L",
     "parameter_set": "arbitrary_bounded",
-    "loss_set": "bounded_mean_reward"
+    "loss_set": "unspecified",
+    "parameter_structure": "dense"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "hard_budget",
+    "violation": "never"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "K arms, each with a context x_t(a) in [0,1]^m drawn i.i.d. per round (tuple of contexts, rewards and consumption vectors i.i.d. from unknown D)",
-    "Reward r_t(a) in [0,1] and consumption vector v_t(a) in [0,1]^{d_res}; E[r|x]=mu_*^T x, E[v|x]=W_*^T x with mu_* in [0,1]^m, W_* in [0,1]^{m x d_res}",
-    "Budget B for each of d_res resources, given to the algorithm as input; no-op arm available; algorithm stops when budget exhausted",
-    "Regret measured against OPT, the value of the optimal static context-dependent policy satisfying constraints in expectation (upper bounds optimal adaptive policy)"
+    "d_res-dimensional resource consumption vectors in [0,1]^{d_res} with mean linear in the context (W_*^T x), budget B per resource, no-op arm available",
+    "contexts x_t(a) in [0,1]^d for each of K arms drawn i.i.d. jointly with rewards/consumptions from an unknown distribution",
+    "mu_* in [0,1]^d and W_* in [0,1]^{d x d_res}",
+    "regret measured against OPT, the value of the optimal static context-dependent policy satisfying constraints in expectation"
    ],
-   "definition_quote": "There are $K$ ``arms\"... The algorithm is initially given as input a budget $B \\in \\mathbb{R}_+$. In every round $t$, the algorithm first observes context ${\\cxL}_t(a) \\in [0,1]^{m}$ for every arm $a$, and then chooses an arm $a_t \\in [K]$, and finally observes a reward $r_t(a_t) \\in [0,1]$ and a $d$-dimensional consumption vector $\\cv_t(a_t) \\in [0,1]^d$... $\\Ex[r_t(a)|x_t(a), H_{t-1}] = \\mu_*^\\top x_t(a), \\Ex[\\cv_t(a)|x_t(a), H_{t-1}] = W_*^\\top x_t(a)$."
+   "definition_quote": "There are $K$ ``arms''... In every round $t$, the algorithm first observes context ${\\cxL}_t(a) \\in \\domain^{m}$ for every arm $a$, and then chooses an arm $a_t \\in [K]$, and finally observes a reward $r_t(a_t) \\in [0,1]$ and a $d$-dimensional consumption vector $\\cv_t(a_t) \\in [0,1]^d$... ensuring that the total consumption does not exceed budget, i.e., $\\sum_t \\cv_t(a_t) \\le B\\ones$."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Algorithm 1: linCBwK with given Z (optimistic ellipsoid estimates + OMD dual multipliers)",
+   "name": "Algorithm 1: Algorithm for linCBwK with given Z (optimistic confidence ellipsoids + OMD dual multipliers)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -74,12 +109,13 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "Z (approximation of OPT/B)"
+    "B",
+    "Z (OPT/B <= Z <= O(OPT/B+1))"
    ]
   },
   {
    "id": "a2",
-   "name": "Algorithm 2: linCBwK with Z computation (exploration phase of T_0 rounds then Algorithm 1)",
+   "name": "Algorithm 2: Algorithm for linCBwK with Z computation",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -88,7 +124,8 @@
     "explore_then_commit"
    ],
    "requires_knowledge_of": [
-    "T"
+    "T",
+    "B"
    ]
   }
  ],
@@ -100,27 +137,27 @@
    "algorithm": "a2",
    "algorithm_class": null,
    "quantity": "high_probability_regret",
-   "dependence": "instance_dependent",
-   "comparator": "best_policy",
+   "dependence": "worst_case",
+   "comparator": "best_feasible_policy",
    "probability": "high_probability",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
     "expression": "(OPT/B + 1)*d*sqrt(log(d_res*T/delta)*log(T)*T)",
-    "expression_latex": "(\\tfrac \\OPT B + 1){m} \\sqrt{{\\ln(\\di T/\\delta) \\ln(T)}{T}}",
-    "regime": "B > d*T**(3/4)"
+    "expression_latex": "O\\left( (\\tfrac \\OPT B + 1){m} \\sqrt{{\\ln(\\di T/\\delta) \\ln(T)}{T}} \\right)",
+    "regime": "B > d*T^(3/4)"
    },
    "symbols": {
-    "OPT": "value of optimal static policy (benchmark)",
-    "B": "budget per resource",
-    "d_res": "number of resources (paper's d)",
-    "d": "context dimension (paper's m)"
+    "OPT": "value of the optimal static policy (benchmark)",
+    "d_res": "number of resources (paper's d)"
    },
    "conditions": [
-    "B > m T^{3/4}"
+    "B > m T^{3/4} (paper's m = context dimension d)"
    ],
-   "tuning": [],
+   "tuning": [
+    "T_0 = sqrt(T) exploration rounds"
+   ],
    "is_new": true,
    "source": {
     "label": "th:general",
@@ -128,7 +165,7 @@
     "quote": "There is an algorithm for \\linCBwK such that if $B>m T^{3/4}$, then with probability at least $1-\\delta,$ \\[ \\regret(T) = O\\left( (\\tfrac \\OPT B + 1){m} \\sqrt{{\\ln(\\di T/\\delta) \\ln(T)}{T}} \\right).\\]"
    },
    "confidence": "medium",
-   "notes": "Paper's m (context dimension) mapped to canonical d; paper's d (number of resources) renamed d_res. Regret is OPT minus realized reward. Compute: paper argues algorithm avoids NP-hard oracle; polynomial implied."
+   "notes": "Paper's m (context dimension) mapped to d; paper's d (number of resources) declared d_res. Algorithm assumed to be Algorithm 2 (with Z computation), per Theorem 4."
   },
   {
    "id": "r2",
@@ -137,29 +174,25 @@
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "high_probability_regret",
-   "dependence": "instance_dependent",
-   "comparator": "best_policy",
+   "dependence": "worst_case",
+   "comparator": "best_feasible_policy",
    "probability": "high_probability",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
     "expression": "(OPT/B + 1)*d*sqrt(T*log(d_res*T/delta)*log(T))",
-    "expression_latex": "(\\tfrac \\OPT B + 1) m \\sqrt{T \\ln(\\di T/\\delta) \\ln(T)}",
+    "expression_latex": "O\\left( (\\tfrac \\OPT B + 1) m \\sqrt{T \\ln(\\di T/\\delta) \\ln(T)} \\right)",
     "regime": null
    },
    "symbols": {
-    "OPT": "value of optimal static policy",
-    "B": "budget per resource",
-    "d_res": "number of resources (paper's d)",
-    "d": "context dimension (paper's m)"
+    "OPT": "value of the optimal static policy (benchmark)",
+    "d_res": "number of resources (paper's d)"
    },
    "conditions": [
-    "Algorithm is given Z with OPT/B <= Z <= O(OPT/B + 1) (Assumption 1)"
+    "A parameter Z with OPT/B <= Z <= O(OPT/B + 1) is given to the algorithm (Assumption 1)"
    ],
-   "tuning": [
-    "OMD over {theta >= 0, ||theta||_1 <= 1}"
-   ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "th:coreAlgo",
@@ -167,7 +200,7 @@
     "quote": "Given a $Z$ as per Assumption \\ref{assum:Z}, Algorithm \\ref{algo:coreAlgo} achieves the following bounds, given that $\\regOCO(T)$ is the regret of the \\OCO algorithm, with probability $1-\\delta$: $$ \\regret(T) \\le O\\left( (\\tfrac \\OPT B + 1) m \\sqrt{T \\ln(\\di T/\\delta) \\ln(T)} \\right).$$"
    },
    "confidence": "medium",
-   "notes": "Requires knowledge of Z (approximately OPT/B), not in vocabulary; recorded as condition."
+   "notes": "Requires knowledge of Z (a function of OPT), recorded as condition."
   },
   {
    "id": "r3",
@@ -176,8 +209,8 @@
    "algorithm": "a2",
    "algorithm_class": null,
    "quantity": "high_probability_regret",
-   "dependence": "instance_dependent",
-   "comparator": "best_policy",
+   "dependence": "worst_case",
+   "comparator": "best_feasible_policy",
    "probability": "high_probability",
    "horizon": "known",
    "compute": "polynomial",
@@ -185,16 +218,14 @@
     "notation": "O_tilde",
     "expression": "(OPT/B + 1)*(T_0 + d*sqrt(T))",
     "expression_latex": "\\tilde{O}\\left(\\left(\\frac{\\OPT}{B} +1\\right) \\left({T_0} + {m}{\\sqrt{T}}\\right)\\right)",
-    "regime": "B > Max(2*T_0, d*T/sqrt(T_0))"
+    "regime": "B > max(2*T_0, d*T/sqrt(T_0))"
    },
    "symbols": {
-    "OPT": "value of optimal static policy",
-    "B": "budget per resource",
-    "T_0": "length of initial exploration phase",
-    "d": "context dimension (paper's m)"
+    "OPT": "value of the optimal static policy (benchmark)",
+    "T_0": "number of initial exploration rounds used to estimate Z"
    },
    "conditions": [
-    "B > max{2T_0, mT/sqrt(T_0)}"
+    "B > max{2 T_0, m T / sqrt(T_0)}"
    ],
    "tuning": [
     "twice the Z given by Corollary 4"
@@ -203,10 +234,10 @@
    "source": {
     "label": "th:largeK",
     "number": "Theorem 4",
-    "quote": "Using Algorithm \\ref{algo:linearZ} with $T_0$ such that $B> \\max\\{2T_0, mT/\\sqrt{T_0}\\}$, and twice the $Z$ given by Corollary \\ref{cor:packingZest}, we get a high probability regret bound of \\[\\tilde{O}\\left(\\left(\\frac{\\OPT}{B} +1\\right) \\left({T_0} + {m}{\\sqrt{T}}\\right)\\right).\\]"
+    "quote": "Using Algorithm \\ref{algo:linearZ} with $T_0$ such that $B> \\max\\{2T_0, mT/\\sqrt{T_0}\\}$, and twice the $Z$ given by Corollary \\ref{cor:packingZest}, we get a high probability regret bound of \\[\\textstyle \\tilde{O}\\left(\\left(\\frac{\\OPT}{B} +1\\right) \\left({T_0} + {m}{\\sqrt{T}}\\right)\\right).\\]"
    },
-   "confidence": "medium",
-   "notes": "T_0 is an algorithm parameter appearing in the bound."
+   "confidence": "high",
+   "notes": "Paper's m mapped to d."
   },
   {
    "id": "r4",
@@ -215,8 +246,8 @@
    "algorithm": "a2",
    "algorithm_class": null,
    "quantity": "high_probability_regret",
-   "dependence": "instance_dependent",
-   "comparator": "best_policy",
+   "dependence": "worst_case",
+   "comparator": "best_feasible_policy",
    "probability": "high_probability",
    "horizon": "known",
    "compute": "polynomial",
@@ -224,12 +255,10 @@
     "notation": "O_tilde",
     "expression": "(OPT/B + 1)*d*sqrt(T)",
     "expression_latex": "\\tilde{O}\\left(\\left(\\frac{\\OPT}{B} +1\\right) {m}{\\sqrt{T}}\\right)",
-    "regime": "B > d*T**(3/4)"
+    "regime": "B > d*T^(3/4)"
    },
    "symbols": {
-    "OPT": "value of optimal static policy",
-    "B": "budget per resource",
-    "d": "context dimension (paper's m)"
+    "OPT": "value of the optimal static policy (benchmark)"
    },
    "conditions": [
     "B > m T^{3/4}"
@@ -242,10 +271,10 @@
    "source": {
     "label": "th:largeK",
     "number": "Theorem 4",
-    "quote": "In particular, using $T_0= \\sqrt{T}$, and assuming $B>m T^{3/4}$ gives a regret bound of \\[\\tilde{O}\\left(\\left(\\frac{\\OPT}{B} +1\\right) {m}{\\sqrt{T}}\\right).\\]"
+    "quote": "In particular, using $T_0= \\sqrt{T}$, and assuming $B>m T^{3/4}$ gives a regret bound of \\[\\textstyle \\tilde{O}\\left(\\left(\\frac{\\OPT}{B} +1\\right) {m}{\\sqrt{T}}\\right).\\]"
    },
    "confidence": "high",
-   "notes": "Second part of Theorem 4; Õ version of Theorem 1."
+   "notes": "Second part of Theorem 4; consistent with Theorem 1."
   }
  ],
  "cited_results": [
@@ -258,14 +287,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Linear (contextual) bandits with static contexts in dimension m; special case of linCBwK with one resource",
+   "setting_description": "Linear (contextual) bandits with static contexts in dimension m (special case of linCBwK with one resource)",
    "bound": {
     "notation": "Omega",
     "expression": "d*sqrt(T)",
     "expression_latex": "\\Omega(m\\sqrt{T})",
     "regime": null
    },
-   "where": "Section 1.1 (Near-optimality of regret bounds)"
+   "where": "Section 1.1, Near-optimality of regret bounds"
   },
   {
    "cited_key": "ADL16",
@@ -279,11 +308,11 @@
    "setting_description": "General contextual bandits with knapsacks competing with a policy class Pi via an optimization oracle",
    "bound": {
     "notation": "O",
-    "expression": "(OPT/B + 1)*sqrt(K*T*log(d_res*T*Pi_size/delta))",
+    "expression": "(OPT/B + 1)*sqrt(K*T*log(d_res*T*N_exp/delta))",
     "expression_latex": "O\\left( (\\tfrac \\OPT B + 1)\\sqrt{KT\\log(dT|\\Pi|/\\delta)}\\right)",
     "regime": null
    },
-   "where": "Section 1.1 (Relation to general contextual bandits)"
+   "where": "Section 1.1, Relation to general contextual bandits"
   },
   {
    "cited_key": "Badanidiyuru14Resourceful",
@@ -294,14 +323,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "General contextual bandits with resource constraints competing with policy class Pi",
+   "setting_description": "General contextual bandits with resource constraints competing with a policy class Pi",
    "bound": {
     "notation": "O",
-    "expression": "(OPT/B + 1)*sqrt(K*T*log(d_res*T*Pi_size/delta))",
+    "expression": "(OPT/B + 1)*sqrt(K*T*log(d_res*T*N_exp/delta))",
     "expression_latex": "O\\left( (\\tfrac \\OPT B + 1)\\sqrt{KT\\log(dT|\\Pi|/\\delta)}\\right)",
     "regime": null
    },
-   "where": "Section 1.1 (Relation to general contextual bandits)"
+   "where": "Section 1.1, Relation to general contextual bandits"
   },
   {
    "cited_key": "WuSLJ15",
@@ -312,32 +341,32 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Linear contextual bandits with a single budget constraint, costs depending only on contexts",
+   "setting_description": "Linear contextual bandits with a single budget constraint where costs depend only on contexts",
    "bound": {
     "notation": "O",
     "expression": "sqrt(T)",
     "expression_latex": "O(\\sqrt{T})",
     "regime": null
    },
-   "where": "Section 1 (Other related work)"
+   "where": "Section 1, Other related work"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:13:53",
+  "date": "2026-10-21T15:23:12",
   "source_chars": 97715,
-  "input_tokens": 80756,
-  "output_tokens": 6081,
-  "cost_usd_equiv": 0.5500868,
+  "input_tokens": 87343,
+  "output_tokens": 5940,
+  "cost_usd_equiv": 0.548514,
   "status": "extracted"
  }
 }

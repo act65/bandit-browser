@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Online Influence Maximization under Independent Cascade Model with Semi-Bandit Feedback",
   "arxiv_id": "1605.06593",
@@ -16,9 +16,9 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Independent cascade semi-bandit (ICSB) with linear generalization",
+   "name_in_paper": "independent cascade semi-bandit (ICSB) with linear generalization",
    "objective": "cumulative_regret",
-   "feedback": "semi_bandit",
+   "feedback": "triggered_semi_bandit",
    "environment": "stochastic_iid",
    "action_space": "combinatorial",
    "function_class": [],
@@ -27,9 +27,9 @@
    "noise": "bernoulli",
    "learner_knows": [
     "T",
-    "S",
     "d",
-    "K"
+    "m",
+    "S"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -39,36 +39,69 @@
     "access": "explicit",
     "norm_bound": "unit_l2",
     "parameter_set": "l2_ball",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "unspecified"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "m_set",
+    "reward": "unspecified",
+    "loss_scale": "unspecified"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Actions are seed sets of K nodes in a known directed graph with L nodes and |E| edges; reward is the number of nodes influenced under the independent cascade model (submodular, nonlinear reward in edge weights)",
-    "Edge-level semi-bandit feedback: edge activations observed only for edges whose start node is influenced (probabilistically triggered arms)",
-    "Edge activation probabilities are linear in known edge features: w(e) = x_e^T theta*, ||x_e||_2 <= 1",
-    "Offline maximization via an (alpha, gamma)-approximation oracle; regret is scaled by alpha*gamma",
-    "The paper's K (seed set cardinality) is the combinatorial action size, not number of arms"
+    "Influence maximization under the independent cascade model on a known directed graph with L nodes and |E| edges; action is a seed set of K nodes (paper's K = canonical m)",
+    "Reward is the number of influenced nodes (in [K, L]), a nonlinear monotone function of edge activation probabilities",
+    "Edge-level semi-bandit feedback: an edge's Bernoulli realization is observed iff its start node is influenced",
+    "Activation probabilities linear in known edge features: w(e) = x_e^T theta*",
+    "Learner uses an (alpha,gamma)-approximation offline oracle; regret is scaled by alpha*gamma"
    ],
-   "definition_quote": "The independent cascade semi-bandit (ICSB) problem is also characterized by a triple (G, K, w-bar), but w-bar is unknown to the agent. ... for any edge e=(u_1,u_2), the agent observes the realization of w_t(e) if and only if the start node u_1 of the directed edge e is influenced in the realization w_t."
+   "definition_quote": "At round t, the agent receives the reward f(S_t, w_t), that is equal to the number of nodes influenced at that round. The agent also receives edge semi-bandit feedback from the diffusion process. Specifically, for any edge e =(u_1, u_2) \\in E, the agent observes the realization of w_t(e) if and only if the start node u_1 of the directed edge e is influenced in the realization w_t."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "IMLinUCB (Influence Maximization Linear UCB)",
+   "name": "IMLinUCB",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -76,9 +109,9 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "S",
     "d",
-    "K"
+    "m",
+    "S"
    ]
   }
  ],
@@ -89,7 +122,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "other",
+   "quantity": "alpha_regret",
    "dependence": "instance_dependent",
    "comparator": "best_fixed_action",
    "probability": "expectation",
@@ -97,26 +130,26 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "2*c_conf*C_star/(alpha_orc*gamma_orc)*sqrt(d*T*E_edges*log(1 + T*E_edges/d)/log(2)) + 1",
-    "expression_latex": "\\frac{2c C_*}{\\alpha \\gamma} \\sqrt{ d n |\\cE| \\log_2 ( 1+ \\frac{n |\\cE|}{d})} + 1 = \\tilde{O}( d C_* \\sqrt{|\\cE| n} /(\\alpha \\gamma))",
+    "expression": "2*c_alg*C_star/(alpha_or*gamma_or)*sqrt(d*T*E_edges*log(1 + T*E_edges/d)/log(2)) + 1",
+    "expression_latex": "\\frac{2c C_*}{\\alpha \\gamma} \\sqrt{ d n |\\cE| \\log_2 ( 1+ \\frac{n |\\cE|}{d})} + 1",
     "regime": null
    },
    "symbols": {
-    "c_conf": "confidence radius c = sqrt(d log(1+n|E|/d) + 2 log(n(L+1-K))) + D",
     "C_star": "maximum observed relevance max_S sqrt(sum_e N_{S,e}^2 P_{S,e})",
     "E_edges": "number of edges |E|",
-    "alpha_orc": "oracle success probability alpha",
-    "gamma_orc": "oracle approximation factor gamma"
+    "alpha_or": "success probability of the (alpha,gamma)-approximation oracle",
+    "gamma_or": "approximation ratio of the oracle"
    },
    "conditions": [
-    "perfect linear generalization w(e) = x_e^T theta* for all edges",
+    "perfect linear generalization w(e) = x_e^T theta*",
     "||x_e||_2 <= 1",
-    "||theta*||_2 <= D known (D plays role of S)",
-    "ORACLE is an (alpha,gamma)-approximation oracle"
+    "||theta*||_2 <= D (S) known",
+    "oracle is an (alpha,gamma)-approximation algorithm",
+    "regret scaled by eta = alpha*gamma"
    ],
    "tuning": [
     "sigma = 1",
-    "c = sqrt(d log(1+n|E|/d) + 2 log(n(L+1-K))) + D"
+    "c = sqrt(d log(1 + n|E|/d) + 2 log(n(L+1-K))) + D"
    ],
    "is_new": true,
    "source": {
@@ -125,7 +158,7 @@
     "quote": "Assume that (1) w(e) = x_e^T theta^* for all e and (2) ORACLE is an (alpha, gamma)-approximation algorithm. Let D be a known upper bound on ||theta^*||_2, if we apply IMLinUCB with sigma=1 and c = ... then we have R^{alpha gamma}(n) <= 2c C_*/(alpha gamma) sqrt(d n |E| log_2(1+ n|E|/d)) + 1 = O~(d C_* sqrt(|E| n)/(alpha gamma))"
    },
    "confidence": "medium",
-   "notes": "Quantity is the alpha*gamma-scaled cumulative regret R^{alpha gamma}(n) = sum_t E[f(S_opt,w_t) - f(S_t,w_t)/(alpha gamma)]; reduces to expected regret for an exact oracle. Recorded as 'other'."
+   "notes": "Scaled cumulative regret R^{alpha gamma}(n); mapped to alpha_regret. Theorem 2 (appendix) strengthens |E| to E_* (edges in largest min(m,K) components); Table 1 gives topology-specific corollaries not recorded separately."
   },
   {
    "id": "r2",
@@ -133,7 +166,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "other",
+   "quantity": "alpha_regret",
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
@@ -141,15 +174,15 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O_tilde",
-    "expression": "d*(L_nodes - m)*E_edges*sqrt(T)/(alpha_orc*gamma_orc)",
-    "expression_latex": "\\tilde{O}( d (L-K) |\\cE| \\sqrt{n} /(\\alpha \\gamma))",
+    "expression": "d*(L_nodes - m)*E_edges*sqrt(T)/(alpha_or*gamma_or)",
+    "expression_latex": "\\tilde{O}( d (L-K) |\\cE| \\sqrt{n} /(\\alpha \\gamma) )",
     "regime": null
    },
    "symbols": {
     "L_nodes": "number of nodes L",
     "E_edges": "number of edges |E|",
-    "alpha_orc": "oracle success probability",
-    "gamma_orc": "oracle approximation factor"
+    "alpha_or": "oracle success probability",
+    "gamma_or": "oracle approximation ratio"
    },
    "conditions": [
     "perfect linear generalization",
@@ -159,16 +192,16 @@
    ],
    "tuning": [
     "sigma = 1",
-    "c as in Eq. (c_lower)"
+    "c = sqrt(d log(1 + n|E|/d) + 2 log(n(L+1-K))) + D"
    ],
    "is_new": true,
    "source": {
     "label": "thm:main",
     "number": "Theorem 1",
-    "quote": "\\leq \\tilde{O}( d (L-K) |E| \\sqrt{n} /(\\alpha \\gamma))"
+    "quote": "\\leq \\tilde{\\cO} ( d (L-K) |\\cE| \\sqrt{n} /(\\alpha \\gamma) )"
    },
-   "confidence": "medium",
-   "notes": "Uses C_* <= (L-K) sqrt(|E|). m denotes the paper's K (seed set size). Scaled regret."
+   "confidence": "high",
+   "notes": "Uses C_* <= (L-K) sqrt(|E|)."
   },
   {
    "id": "r3",
@@ -176,7 +209,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "other",
+   "quantity": "alpha_regret",
    "dependence": "instance_dependent",
    "comparator": "best_fixed_action",
    "probability": "expectation",
@@ -184,25 +217,23 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "2*c_conf*C_star/(alpha_orc*gamma_orc)*sqrt(T*E_edges*log(1 + T)/log(2)) + 1",
-    "expression_latex": "\\frac{2c C_*}{\\alpha \\gamma} \\sqrt{ n |\\cE| \\log_2 ( 1+ n)} + 1 = \\tilde{O}( |\\cE| C_* \\sqrt{n} /(\\alpha \\gamma))",
+    "expression": "2*c_alg*C_star/(alpha_or*gamma_or)*sqrt(T*E_edges*log(1 + T)/log(2)) + 1",
+    "expression_latex": "\\frac{2c C_*}{\\alpha \\gamma} \\sqrt{ n |\\cE| \\log_2 ( 1+ n)} + 1",
     "regime": null
    },
    "symbols": {
-    "c_conf": "confidence radius c as in Eq. (c_lower) with d=|E|",
     "C_star": "maximum observed relevance",
     "E_edges": "number of edges |E|",
-    "alpha_orc": "oracle success probability",
-    "gamma_orc": "oracle approximation factor"
+    "alpha_or": "oracle success probability",
+    "gamma_or": "oracle approximation ratio"
    },
    "conditions": [
     "tabular case X = I (d = |E|)",
-    "||theta*||_2 <= D known",
     "(alpha,gamma)-approximation oracle"
    ],
    "tuning": [
     "sigma = 1",
-    "c as in Eq. (c_lower)"
+    "c = sqrt(d log(1 + n|E|/d) + 2 log(n(L+1-K))) + D"
    ],
    "is_new": true,
    "source": {
@@ -211,7 +242,7 @@
     "quote": "Moreover, if the feature matrix X=I (i.e., the tabular case), we have R^{alpha gamma}(n) <= 2c C_*/(alpha gamma) sqrt(n |E| log_2(1+n)) + 1 = O~(|E| C_* sqrt(n)/(alpha gamma))"
    },
    "confidence": "medium",
-   "notes": "Theorem 2 (appendix) restates the same tabular bound. Scaled regret."
+   "notes": "Same bound restated in Theorem 2 tabular part."
   },
   {
    "id": "r4",
@@ -219,7 +250,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "other",
+   "quantity": "alpha_regret",
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
@@ -227,32 +258,31 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O_tilde",
-    "expression": "(L_nodes - m)*E_edges**(3/2)*sqrt(T)/(alpha_orc*gamma_orc)",
-    "expression_latex": "\\tilde{O}( (L-K) |\\cE|^{3/2} \\sqrt{n} /(\\alpha \\gamma))",
+    "expression": "(L_nodes - m)*E_edges**(3/2)*sqrt(T)/(alpha_or*gamma_or)",
+    "expression_latex": "\\tilde{O}( (L-K) |\\cE|^{3/2} \\sqrt{n} /(\\alpha \\gamma) )",
     "regime": null
    },
    "symbols": {
     "L_nodes": "number of nodes L",
     "E_edges": "number of edges |E|",
-    "alpha_orc": "oracle success probability",
-    "gamma_orc": "oracle approximation factor"
+    "alpha_or": "oracle success probability",
+    "gamma_or": "oracle approximation ratio"
    },
    "conditions": [
     "tabular case X = I",
     "(alpha,gamma)-approximation oracle"
    ],
    "tuning": [
-    "sigma = 1",
-    "c as in Eq. (c_lower)"
+    "sigma = 1"
    ],
    "is_new": true,
    "source": {
     "label": "thm:main",
     "number": "Theorem 1",
-    "quote": "\\leq \\tilde{O}( (L-K) |E|^{3/2} \\sqrt{n} /(\\alpha \\gamma))"
+    "quote": "\\leq \\tilde{\\cO} ( (L-K) |\\cE|^{3/2} \\sqrt{n} /(\\alpha \\gamma) )"
    },
-   "confidence": "medium",
-   "notes": "m denotes the paper's K. Scaled regret. Topology-specific bounds in Table 1 are derived from this theorem and not recorded separately."
+   "confidence": "high",
+   "notes": ""
   },
   {
    "id": "r5",
@@ -260,7 +290,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "other",
+   "quantity": "alpha_regret",
    "dependence": "instance_dependent",
    "comparator": "best_fixed_action",
    "probability": "expectation",
@@ -268,16 +298,15 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "2*c_conf*C_star/(alpha_orc*gamma_orc)*sqrt(d*T*E_star*log(1 + T*E_star/d)/log(2)) + 1",
-    "expression_latex": "\\frac{2c C_*}{\\alpha \\gamma} \\sqrt{ d n E_* \\log_2 ( 1+ \\frac{n E_*}{d})} + 1 = \\tilde{O}( d C_* \\sqrt{E_* n}/(\\alpha \\gamma))",
+    "expression": "2*c_alg*C_star/(alpha_or*gamma_or)*sqrt(d*T*E_star*log(1 + T*E_star/d)/log(2)) + 1",
+    "expression_latex": "\\frac{2c C_*}{\\alpha \\gamma} \\sqrt{ d n E_* \\log_2 ( 1+ \\frac{n E_*}{d})} + 1",
     "regime": null
    },
    "symbols": {
-    "c_conf": "confidence radius, c >= sqrt(d log(1+n E_*/d) + 2 log(n(L+1-K))) + D",
     "C_star": "maximum observed relevance",
-    "E_star": "number of edges in the min(m_sub,K) largest disconnected subgraphs of G",
-    "alpha_orc": "oracle success probability",
-    "gamma_orc": "oracle approximation factor"
+    "E_star": "number of edges in the min(m_components, K) largest disconnected subgraphs",
+    "alpha_or": "oracle success probability",
+    "gamma_or": "oracle approximation ratio"
    },
    "conditions": [
     "perfect linear generalization",
@@ -287,7 +316,7 @@
    ],
    "tuning": [
     "sigma = 1",
-    "c >= sqrt(d log(1+n E_*/d) + 2 log(n(L+1-K))) + D"
+    "c >= sqrt(d log(1 + n E_*/d) + 2 log(n(L+1-K))) + D"
    ],
    "is_new": true,
    "source": {
@@ -296,7 +325,7 @@
     "quote": "If we apply IMLinUCB with sigma=1 and c >= sqrt(d log(1+ n E_*/d) + 2 log(n(L+1-K))) + D, then we have R^{alpha gamma}(n) <= 2c C_*/(alpha gamma) sqrt(d n E_* log_2(1+ n E_*/d)) + 1 = O~(d C_* sqrt(E_* n)/(alpha gamma))."
    },
    "confidence": "medium",
-   "notes": "Strengthening of Theorem 1 for disconnected graphs (E_* <= |E|). Tabular part identical to Theorem 1's tabular bound. Scaled regret."
+   "notes": "Tabular part of Theorem 2 identical to r3."
   }
  ],
  "cited_results": [
@@ -306,7 +335,7 @@
    "cited_first_author": "Qinshi Wang",
    "cited_year": 2017,
    "cited_arxiv_id": null,
-   "algorithm_name": null,
+   "algorithm_name": "CUCB",
    "algorithm_registry_id": null,
    "side": "upper",
    "setting_description": "Tabular online influence maximization under IC model with edge semi-bandit feedback (CMAB with probabilistically triggered arms)",
@@ -322,19 +351,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:09:09",
+  "date": "2026-10-21T15:18:11",
   "source_chars": 116014,
-  "input_tokens": 91507,
-  "output_tokens": 5797,
-  "cost_usd_equiv": 0.6304148,
+  "input_tokens": 98094,
+  "output_tokens": 5780,
+  "cost_usd_equiv": 0.631322,
   "status": "extracted"
  }
 }

@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Active Preference Optimization for Sample Efficient RLHF",
   "arxiv_id": "2402.10500",
@@ -16,7 +16,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Contextual preference (dueling) bandit under BTL model with linear rewards, active context selection",
+   "name_in_paper": "Contextual preference (dueling) bandit with BTL model and linear latent reward, active context selection",
    "objective": "simple_regret",
    "feedback": "dueling",
    "environment": "stochastic_iid",
@@ -26,8 +26,9 @@
    "context": "none",
    "noise": "bernoulli",
    "learner_knows": [
-    "S",
-    "d"
+    "T",
+    "d",
+    "S"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -37,33 +38,65 @@
     "access": "explicit",
     "norm_bound": "unit_l2",
     "parameter_set": "l2_ball",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "utility_link",
+    "winner": "condorcet",
+    "comparison": "pair"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Learner chooses the context x from a given set X as well as the pair of actions (a,a') each round",
-    "Sub-optimality gap is the max over contexts of the reward gap of the learned policy against the Condorcet winner",
-    "Parameter set additionally constrained by <1,theta>=0",
-    "Preference y ~ Ber(sigma((phi(x,a)-phi(x,a'))^T theta*)) with logistic link"
+    "Learner actively chooses the context x_t from a finite/given context set at each round (not presented by environment)",
+    "Objective is the worst-case over contexts of the reward gap of the final policy (max over x of sub-optimality)",
+    "Parameter set additionally constrained by <1, theta> = 0"
    ],
-   "definition_quote": "R(T) = max_{x in X} max_{a in A} { r*(x,a) - r*(x,pi_T(x)) } ... (a) theta* lies in the set Theta = {theta in R^d | <1,theta> = 0, ||theta|| <= S}. (b) Features are bounded, i.e., ||phi(x,a)|| <= 1"
+   "definition_quote": "the agent selects $x \\in \\cX$ and $a,a' \\in \\cA$ to present to a human labeller, who then reveals a binary preference $y$ ... sampled from the Bradley-Terry-Luce (BTL) preference model ... $R(T) = \\max_{x} \\max_{a} \\{ r^*(x,a) - r^*(x,\\pi_T(x))\\}$"
   },
   {
    "id": "s2",
-   "name_in_paper": "Contextual preference bandit under BTL (lower bound, hypercube actions)",
+   "name_in_paper": "Contextual preference bandit with BTL model, hypercube actions (lower bound)",
    "objective": "simple_regret",
    "feedback": "dueling",
    "environment": "stochastic_iid",
@@ -74,53 +107,8 @@
    "noise": "bernoulli",
    "learner_knows": [
     "T",
-    "d"
-   ],
-   "instance_assumptions": [],
-   "extras": [],
-   "action_set": {
-    "shape": "hypercube",
-    "time_varying": "fixed",
-    "access": "explicit",
-    "norm_bound": "unspecified",
-    "parameter_set": "arbitrary_bounded",
-    "loss_set": "not_applicable"
-   },
-   "corruption": {
-    "adversary": "not_applicable",
-    "budget_measure": "not_applicable",
-    "structure": "not_applicable",
-    "regret_reference": "not_applicable"
-   },
-   "feedback_graph": {
-    "observability": "not_applicable",
-    "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
-   },
-   "parameters": {},
-   "in_scope": true,
-   "out_of_scope_reason": null,
-   "unmapped": [
-    "Learner chooses context and action pair; sub-optimality is max over contexts",
-    "Hard instance: A = {-1/2,1/2}^d, Theta = {-1/sqrt(T), 1/sqrt(T)}^d"
-   ],
-   "definition_quote": "Let X be a finite set of contexts, Theta = {-1/sqrt(T),1/sqrt(T)}^d, A = {-1/2, 1/2}^d."
-  },
-  {
-   "id": "s3",
-   "name_in_paper": "Contextual preference bandit, uniform context sampling (lower bound)",
-   "objective": "simple_regret",
-   "feedback": "dueling",
-   "environment": "stochastic_iid",
-   "action_space": "generalized_linear",
-   "function_class": [],
-   "domain": "not_applicable",
-   "context": "stochastic_contexts",
-   "noise": "bernoulli",
-   "learner_knows": [
-    "T",
-    "S",
-    "d"
+    "d",
+    "S"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -128,20 +116,132 @@
     "shape": "finite",
     "time_varying": "fixed",
     "access": "explicit",
-    "norm_bound": "unspecified",
-    "parameter_set": "l2_ball",
-    "loss_set": "not_applicable"
+    "norm_bound": "bounded_L",
+    "parameter_set": "arbitrary_bounded",
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "utility_link",
+    "winner": "condorcet",
+    "comparison": "pair"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Learner actively chooses the context x_t",
+    "Objective is worst-case over contexts of the final policy's reward gap"
+   ],
+   "definition_quote": "Let $\\cX$ be a finite set of contexts, $\\Theta = \\{-\\frac{1}{\\sqrt{T}},\\frac{1}{\\sqrt{T}}\\}^d $, $\\cA = \\{-\\frac{1}{2}, \\frac{1}{2}\\}^d$."
+  },
+  {
+   "id": "s3",
+   "name_in_paper": "Contextual preference bandit with BTL model, uniform context sampling (lower bound for Uniform Learner)",
+   "objective": "simple_regret",
+   "feedback": "dueling",
+   "environment": "stochastic_iid",
+   "action_space": "generalized_linear",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "d",
+    "S"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "utility_link",
+    "winner": "condorcet",
+    "comparison": "pair"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {
     "d": "2"
@@ -149,10 +249,10 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Contexts sampled uniformly at random from a finite set X by the learner (uniform learner)",
-    "Sub-optimality is max over contexts"
+    "Contexts are sampled uniformly at random from a finite context set by the learner",
+    "Objective is worst-case over contexts of the final policy's reward gap"
    ],
-   "definition_quote": "Say an algorithm Alg samples T contexts uniformly at random from a set X and for each context x_t, picks two actions a_t,a'_t from a set A. ... Alg then solves an MLE on this data to obtain theta-hat, and learns a greedy policy with respect to theta-hat."
+   "definition_quote": "Say an algorithm \\texttt{Alg} samples $T$ contexts uniformly at random from a set $\\cX$ and for each context $x_t$, picks two actions $a_t,a'_t$ ... solves an MLE on this data to obtain $\\widehat{\\theta}$, and learns a greedy policy with respect to $\\widehat{\\theta}$."
   },
   {
    "id": "s4",
@@ -166,7 +266,9 @@
    "context": "none",
    "noise": "bernoulli",
    "learner_knows": [
-    "K"
+    "T",
+    "K",
+    "function_class"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -176,28 +278,61 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "realizable_general_class"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "general",
+    "winner": "condorcet",
+    "comparison": "pair"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Preference function f* in known class F of functions X x A x A -> [0,1] with f(x,a,a')+f(x,a',a)=1 (realizable)",
-    "Condorcet winner exists at each context",
-    "Learner chooses context and action pair; R(T) = max_x f*(x,a*(x),pi_T(x)) - 1/2"
+    "Learner actively chooses the context x_t",
+    "Sub-optimality defined as max over contexts of f*(x,a*(x),pi_T(x)) - 1/2",
+    "Condorcet winner assumed to exist at each context"
    ],
-   "definition_quote": "F = {f: X x A x A -> [0,1]: f(x,a,a') + f(x,a',a) = 1} ... R(T) = max_{x in X} f*(x, a*(x), pi_T(x)) - 1/2."
+   "definition_quote": "$\\cF = \\{f:\\cX \\times \\cA \\times \\cA\\rightarrow [0,1]: f(x,a,a') + f(x,a',a) = 1\\}$ ... we assume that there is a realizable $f^* \\in \\cF$ ... $y_t \\sim \\texttt{Ber}(f^*(x_t,a_t,a'_t))$ ... $R(T) = \\max_{x} f^*(x, a^*(x), \\pi_T(x)) - 1/2$."
   }
  ],
  "algorithms": [
@@ -207,9 +342,11 @@
    "registry_id": null,
    "is_new": true,
    "techniques": [
+    "optimism",
     "other"
    ],
    "requires_knowledge_of": [
+    "T",
     "S",
     "d"
    ]
@@ -224,7 +361,8 @@
     "other"
    ],
    "requires_knowledge_of": [
-    "K"
+    "T",
+    "function_class"
    ]
   }
  ],
@@ -237,7 +375,7 @@
    "algorithm_class": "other",
    "quantity": "simple_regret",
    "dependence": "worst_case",
-   "comparator": "best_action_per_round",
+   "comparator": "not_applicable",
    "probability": "high_probability",
    "horizon": "known",
    "compute": "not_stated",
@@ -249,8 +387,10 @@
    },
    "symbols": {},
    "conditions": [
-    "algorithm is a Uniform Learner (uniform context sampling, MLE, greedy policy)",
-    "sample budget T much smaller than the number of contexts |X|"
+    "Learner is a Uniform Learner: uniform context sampling, MLE, greedy policy",
+    "sample budget T much smaller than number of contexts",
+    "d = 2, two actions per context, ||theta*|| = 2 log(N-1)",
+    "probability at least 1 - 2T/|X|"
    ],
    "tuning": [],
    "is_new": true,
@@ -260,7 +400,7 @@
     "quote": "There exists a problem instance $(\\cX, \\cA, \\theta^*)$ for which the policy learnt by a Uniform Learner \\texttt{Alg} under the budget $T \\ll \\lvert \\cX \\rvert$ suffers $\\Omega(1)$ sub-optimality gap with high probability."
    },
    "confidence": "medium",
-   "notes": "Restated as Theorem 10 in appendix. Probability at least 1-2T/N. Instance has theta norm 2 log(N-1). Comparator is per-context best action (max over contexts)."
+   "notes": "Restated as Theorem 10 in appendix. Instance has theta* norm growing with log N, so the constant gap alpha/2 = log(N-1)."
   },
   {
    "id": "r2",
@@ -270,7 +410,7 @@
    "algorithm_class": "all",
    "quantity": "simple_regret",
    "dependence": "worst_case",
-   "comparator": "best_action_per_round",
+   "comparator": "not_applicable",
    "probability": "expectation",
    "horizon": "known",
    "compute": "not_stated",
@@ -282,9 +422,9 @@
    },
    "symbols": {},
    "conditions": [
-    "A = {-1/2,1/2}^d",
-    "Theta = {-1/sqrt(T),1/sqrt(T)}^d",
-    "X finite"
+    "Theta = {-1/sqrt(T), 1/sqrt(T)}^d",
+    "A = {-1/2, 1/2}^d",
+    "finite context set"
    ],
    "tuning": [],
    "is_new": true,
@@ -294,7 +434,7 @@
     "quote": "Let $\\cX$ be a finite set of contexts, $\\Theta = \\{-\\frac{1}{\\sqrt{T}},\\frac{1}{\\sqrt{T}}\\}^d $, $\\cA = \\{-\\frac{1}{2}, \\frac{1}{2}\\}^d$. Then, for any algorithm, there exists a parameter $\\theta^* \\in \\Theta$ such that sub-optimality gap of a policy learnt by the algorithm after collecting $T$ samples satisfies $\\mathbb{E}_{\\theta^*}[R(T)] \\ge \\Omega(d/\\sqrt{T})$."
    },
    "confidence": "high",
-   "notes": "Proof gives explicit constant d exp(-1/2)/(4 sqrt(T)) (appendix Theorem 11; sketch says /2). Restated as Theorem 11."
+   "notes": "Appendix proof (Theorem 11) gives explicit constant d*exp(-1/2)/(4*sqrt(T)); sketch says /(2 sqrt T)."
   },
   {
    "id": "r3",
@@ -304,35 +444,35 @@
    "algorithm_class": null,
    "quantity": "simple_regret",
    "dependence": "instance_dependent",
-   "comparator": "best_action_per_round",
+   "comparator": "not_applicable",
    "probability": "high_probability",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
     "expression": "S**(3/2)*sqrt((d*log(S*T/d) + log(T/delta))*log(1 + T/(lam*kappa*d))*kappa*d/T)",
-    "expression_latex": "O\\left( \\gamma \\sqrt{S \\log(1+T/\\lambda \\kappa d)\\kappa d/T}\\right),\\ \\gamma = O(S\\sqrt{d\\log(ST/d) + \\log(T/\\delta)})",
+    "expression_latex": "R(T) \\leq O ( \\gamma \\sqrt{S \\log(1+(T/\\lambda \\kappa d)) \\kappa d/T}), \\gamma = O(S\\sqrt{d\\log(ST/d) + \\log(T/\\delta)})",
     "regime": null
    },
    "symbols": {
-    "kappa": "max over contexts, action pairs and theta in Theta of 1/sigma_dot((phi(x,a)-phi(x,a'))^T theta)"
+    "kappa": "max over contexts, action pairs and theta in Theta of 1/sigma_dot(<phi(x,a)-phi(x,a'), theta>) (non-linearity constant)"
    },
    "conditions": [
-    "theta* in {theta: <1,theta>=0, ||theta|| <= S}",
+    "Assumption 1: theta* in {theta: <1,theta>=0, ||theta|| <= S}",
     "||phi(x,a)|| <= 1"
    ],
    "tuning": [
     "lambda = 1/(4 S^2 (2+2S)^2)",
-    "confidence delta in (0,1]"
+    "confidence delta given to algorithm"
    ],
    "is_new": true,
    "source": {
     "label": "theorem:logistic-case-regret-bound",
     "number": "Theorem 5",
-    "quote": "Let $\\delta \\in (0,1]$. Under Assumption~\\ref{ass:bound}, setting $\\lambda = \\frac{1}{4S^2(2+2S)^2}$ and $\\gamma = O(S\\sqrt{d\\log(ST/d) + \\log(T/\\delta)})$, the policy $\\pi_T$ returned by \\texttt{APO}, with probability at least $1 - \\delta$, enjoys the suboptimality gap $R(T) \\leq O( \\gamma \\sqrt{S \\log(1+(T/\\lambda \\kappa d)){\\kappa d}/{T}})$."
+    "quote": "Let $\\delta \\in (0,1]$. Under Assumption~\\ref{ass:bound}, setting $\\lambda = \\frac{1}{4S^2(2+2S)^2}$ and $\\gamma = O(S\\sqrt{d\\log(S T/d) + \\log(T/\\delta)})$, the policy $\\pi_T$ returned by \\texttt{APO}, with probability at least $1 - \\delta$, enjoys the suboptimality gap $R(T) \\leq O ( \\gamma \\sqrt{S \\log(1+(T/\\lambda \\kappa d)){\\kappa d}/{T}})$."
    },
    "confidence": "high",
-   "notes": "Gamma substituted; matches appendix Theorem 17 which states C S^{3/2} sqrt(...) with universal constant C. Implies O_tilde(d sqrt(kappa/T)). Knowledge of kappa not needed."
+   "notes": "Gamma substituted; matches restated Theorem 17 (C S^{3/2} sqrt(...)). Implies O_tilde(d sqrt(kappa/T)). kappa need not be known."
   },
   {
    "id": "r4",
@@ -342,35 +482,35 @@
    "algorithm_class": null,
    "quantity": "simple_regret",
    "dependence": "worst_case",
-   "comparator": "best_action_per_round",
+   "comparator": "not_applicable",
    "probability": "high_probability",
    "horizon": "known",
    "compute": "not_stated",
    "bound": {
     "notation": "O_tilde",
-    "expression": "sqrt(log(N_F*T/delta)*d_E/T)",
-    "expression_latex": "\\widetilde{O}\\bigg(\\sqrt{{\\log(\\cN(\\cF)T/\\delta) d_\\cE(\\cF)}/{T}}\\bigg)",
+    "expression": "sqrt(log(N_cov*T/delta)*d_E/T)",
+    "expression_latex": "R(T) \\leq \\widetilde{O}(\\sqrt{\\log(\\cN(\\cF)T/\\delta) d_\\cE(\\cF)/T})",
     "regime": null
    },
    "symbols": {
-    "N_F": "(1/t, sup-norm) covering number of the preference function class F",
-    "d_E": "(1/T)-Eluder dimension of F"
+    "N_cov": "(1/T, sup-norm) covering number of the preference function class F"
    },
    "conditions": [
-    "realizability: f* in F",
-    "Condorcet winner exists for every context (Assumption 2)"
+    "realizability f* in F",
+    "Assumption 2: Condorcet winner exists at each context",
+    "d_E is the (1/T)-eluder dimension of F"
    ],
    "tuning": [
-    "confidence delta in (0,1)"
+    "confidence delta given to algorithm"
    ],
    "is_new": true,
    "source": {
     "label": "thm:gen",
     "number": "Theorem 9",
-    "quote": "Let $\\delta \\in (0,1)$, and $\\cN(\\cF)$ and $d_\\cE(\\cF)$ be the covering number and Eluder dimension of $\\cF$ respectively. Then, with probability $ \\geq 1-\\delta$, the policy returned by \\texttt{APO-Gen} enjoys sub-optimality gap $R(T) \\leq \\widetilde{O}(\\sqrt{{\\log(\\cN(\\cF)T/\\delta) d_\\cE(\\cF)}/{T}})$"
+    "quote": "Let $\\delta \\in (0,1)$, and $\\cN(\\cF)$ and $d_\\cE(\\cF)$ be the covering number and Eluder dimension of $\\cF$ respectively. Then, with probability $ \\geq 1-\\delta$, the policy returned by \\texttt{APO-Gen} enjoys sub-optimality gap $R(T) \\leq \\widetilde{O}(\\sqrt{\\log(\\cN(\\cF)T/\\delta) d_\\cE(\\cF)/T})$"
    },
-   "confidence": "medium",
-   "notes": "Restated as Theorem 19. For BTL, yields O_tilde(kappa d / sqrt(T)). Sub-optimality measured in preference probability."
+   "confidence": "high",
+   "notes": "Restated as Theorem 19. For BTL this specializes to O_tilde(kappa d/sqrt(T)). Algorithm uses confidence sets over F (oracle computations)."
   }
  ],
  "cited_results": [
@@ -383,32 +523,32 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Preference-based RL pure exploration: find epsilon-optimal policy; number of queries to human labeler",
+   "setting_description": "Preference-based RL pure exploration: find epsilon-optimal policy with queries to human labeler",
    "bound": {
     "notation": "O",
     "expression": "kappa**2*d**2/epsilon**2",
     "expression_latex": "O(\\kappa^2 d^2/\\varepsilon^2)",
     "regime": null
    },
-   "where": "Section 1.2"
+   "where": "Section 1.2 (Comparison with Prior Work)"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:32:56",
+  "date": "2026-10-21T15:44:50",
   "source_chars": 106388,
-  "input_tokens": 81289,
-  "output_tokens": 6612,
-  "cost_usd_equiv": 0.5649708,
+  "input_tokens": 87876,
+  "output_tokens": 7954,
+  "cost_usd_equiv": 0.593058,
   "status": "extracted"
  }
 }

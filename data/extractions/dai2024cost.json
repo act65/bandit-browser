@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Cost-Effective Online Multi-LLM Selection with Versatile Reward Models",
   "arxiv_id": "2405.16587",
@@ -17,9 +17,9 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "C2MAB-V: cost-effective combinatorial multi-armed bandit with versatile reward models (AWC/SUC/AIC) and long-term cost constraint",
+   "name_in_paper": "C2MAB-V: cost-effective combinatorial multi-armed bandit with versatile reward models (AWC / SUC / AIC) under long-term budget constraint",
    "objective": "cumulative_regret",
-   "feedback": "semi_bandit",
+   "feedback": "triggered_semi_bandit",
    "environment": "stochastic_iid",
    "action_space": "combinatorial",
    "function_class": [],
@@ -28,42 +28,77 @@
    "noise": "bounded_01",
    "learner_knows": [
     "T",
-    "K"
+    "K",
+    "m",
+    "B"
    ],
    "instance_assumptions": [],
+   "extras": [
+    "knapsack_constraints"
+   ],
    "action_set": {
-    "shape": "unspecified",
+    "shape": "finite",
     "time_varying": "fixed",
     "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
-   "extras": [
-    "knapsack_constraints"
-   ],
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "matroid",
+    "reward": "nonlinear_monotone_lipschitz",
+    "loss_scale": "per_base_arm"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "long_term_average",
+    "violation": "bounded_cumulative"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Long-term average budget constraint with unknown stochastic costs; performance also measured by constraint violation V(T) = [ (1/T) sum_t sum_{k in F_t} y_{t,k} - rho ]^+",
-    "Partial (probabilistically triggered) feedback: only a subset F_t of selected arms observed, with minimum full-observation probability o*",
-    "Non-linear reward functions (AWC: 1-prod(1-mu_k), SUC: sum mu_k, AIC: prod mu_k), L-Lipschitz and monotone",
-    "alpha-approximate regret with an alpha-approximation oracle (alpha = 1-1/e for AWC, 1 for SUC/AIC)",
-    "Feasible actions: matroid / cardinality-constrained subsets of size at most (or exactly) N; learner knows budget rho"
+    "Reward functions: Any Win (1-prod(1-mu_k)), Sum Up (sum mu_k), All In (prod mu_k); L-Lipschitz and monotone",
+    "Partial feedback: only a subset F_t of the selected arms is observed; o* is the minimum probability that all selected arms are observed",
+    "Each arm has an unknown stochastic cost; long-term average cost must stay below threshold rho; violation V(T) measured",
+    "Feasible sets: |S|<=N (AWC) or |S|=N (SUC/AIC); N plays the role of m",
+    "Regret is alpha-approximate with an alpha-approximation oracle (alpha=1-1/e for AWC, 1 for SUC/AIC)"
    ],
-   "definition_quote": "R(T) = \\E\\left[\\sum_{t=1}^T \\left(\\alpha \\cdot r(S^*_t;\\boldsymbol{\\mu}) - r(S_t;\\boldsymbol{\\mu})\\right)\\right] ... V(T)=\\left[ \\frac{1}{T}\\sum_{t=1}^T\\sum_{k \\in \\mathcal{F}_t} y_{t,k} -\\rho \\right]^{+}"
+   "definition_quote": "During each round $t \\in \\mathcal{T}$, the cloud coordinates and selects a subset $S_t$ of available LLMs from $\\mathcal{K}$... Formally, the local server observes feedback from the LLM subset $\\mathcal{F}_t$ in action $S_t$... there is a predetermined budget guarantee threshold $\\rho > 0$ ... $V(T)=\\left[ \\frac{1}{T}\\sum_{t=1}^T\\sum_{k \\in \\mathcal{F}_t} y_{t,k} -\\rho \\right]^{+}$ ... $R(T) = \\E\\left[\\sum_{t=1}^T \\left(\\alpha \\cdot r(S^*_t;\\boldsymbol{\\mu}) - r(S_t;\\boldsymbol{\\mu})\\right)\\right]$"
   }
  ],
  "algorithms": [
@@ -78,7 +113,9 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "K"
+    "K",
+    "m",
+    "B"
    ]
   }
  ],
@@ -89,7 +126,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "pseudo_regret",
+   "quantity": "alpha_regret",
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "high_probability",
@@ -97,30 +134,30 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "2*L_lip/o_star*sqrt(2*m*K*T*log(2*pi**2*K*T/3)) + (K + 1)*r_star",
-    "expression_latex": "R(T) \\leq  \\frac{2 L}{o^*} \\sqrt{2 N K T \\ln \\left(\\frac{2 \\pi^2 K T}{3 }\\right)}+\\left(K+1\\right)r^*",
+    "expression": "2*L_lip/o_star*sqrt(2*m*K*T*log(2*pi**2*K*T/3)) + (K+1)*r_star",
+    "expression_latex": "\\frac{2 L}{o^*} \\sqrt{2 N K T \\ln \\left(\\frac{2 \\pi^2 K T}{3 }\\right)}+\\left(K+1\\right)r^*",
     "regime": null
    },
    "symbols": {
-    "o_star": "minimum probability that all selected LLMs in an action are observed",
-    "r_star": "maximum reward max_S r(S; mu)",
-    "m": "N in the paper: maximum number of LLMs selected per action"
+    "o_star": "minimum probability over rounds and actions that all selected arms are observed",
+    "r_star": "maximum expected reward max_S r(S;mu) (<= N L)",
+    "m": "N, maximum number of LLMs selected per action"
    },
    "conditions": [
-    "reward function is monotone and L-Lipschitz (AWC, SUC or AIC)",
-    "rewards in [0,1]"
+    "reward function r(S;mu) is monotone and L-Lipschitz",
+    "alpha-approximation oracle (alpha=1-1/e for AWC, 1 for SUC/AIC)"
    ],
    "tuning": [
-    "delta = 1/T in confidence radius"
+    "delta = 1/T in the confidence radius"
    ],
    "is_new": true,
    "source": {
     "label": "thm:regret",
     "number": "Theorem 1",
-    "quote": "With $\\delta=1/T$ in the confidence radius, the $\\alpha$-approximate regret for the multi-LLM selection problem is bounded as follows, with probability at least $1-1/T$: R(T) \\leq  \\frac{2 L}{o^*} \\sqrt{2 N K T \\ln \\left(\\frac{2 \\pi^2 K T}{3 }\\right)}+\\left(K+1\\right)r^*."
+    "quote": "With $\\delta=1/T$ in the confidence radius, the $\\alpha$-approximate regret for the multi-LLM selection problem is bounded as follows, with probability at least $1-1/T$: R(T) \\leq \\frac{2 L}{o^*} \\sqrt{2 N K T \\ln \\left(\\frac{2 \\pi^2 K T}{3 }\\right)}+\\left(K+1\\right)r^*."
    },
    "confidence": "medium",
-   "notes": "Regret is alpha-approximate (alpha = 1-1/e for AWC, 1 for SUC/AIC) and defined as an expectation, yet stated 'with probability at least 1-1/T'; recorded as high-probability as stated. L_lip is the paper's L (Lipschitz constant of the reward)."
+   "notes": "R(T) is defined as an expectation but the theorem states it holds w.p. at least 1-1/T; recorded as high probability as stated. Feedback mapped to triggered_semi_bandit (partial observation of selected arms with probability o*)."
   },
   {
    "id": "r2",
@@ -137,17 +174,18 @@
    "bound": {
     "notation": "exact",
     "expression": "sqrt(m*K/T)*(2*sqrt(2*log(2*pi**2*K*T/3)) + sqrt(m*K/T))",
-    "expression_latex": "V(T) \\leq \\sqrt{NK/T} \\left(2 \\sqrt{2\\ln \\left(\\frac{2 \\pi^2 K T}{3 }\\right)}+\\sqrt{NK/T}\\right)",
+    "expression_latex": "\\sqrt{NK/T} \\left(2 \\sqrt{2\\ln \\left(\\frac{2 \\pi^2 K T}{3 }\\right)}+\\sqrt{NK/T}\\right)",
     "regime": null
    },
    "symbols": {
-    "m": "N in the paper: maximum number of LLMs selected per action"
+    "m": "N, maximum number of LLMs selected per action"
    },
    "conditions": [
-    "worst case for AWC: all selected LLMs are used (S_t = F_t)"
+    "worst case S_t = F_t (all selected LLMs used)",
+    "costs y_{t,k} bounded (used in Azuma/Hoeffding)"
    ],
    "tuning": [
-    "delta = 1/T in confidence radius"
+    "delta = 1/T in the confidence radius"
    ],
    "is_new": true,
    "source": {
@@ -156,7 +194,7 @@
     "quote": "With $\\delta=1/T$ in the confidence radius, the constraint violation under the worst case is bounded as follows, with probability at least $1-1/T$: V(T) \\leq \\sqrt{NK/T} \\left(2 \\sqrt{2\\ln \\left(\\frac{2 \\pi^2 K T}{3 }\\right)}+\\sqrt{NK/T}\\right)."
    },
    "confidence": "medium",
-   "notes": "Bound on the average per-round budget constraint violation V(T) (not regret), recorded as stated (not multiplied by T); paper notes total violation is O~(sqrt(KT))."
+   "notes": "Bound on average per-round budget violation V(T) = [ (1/T) sum costs - rho ]^+, not a regret; recorded as stated (not multiplied by T). Proof sketch's terms don't obviously match the final expression."
   }
  ],
  "cited_results": [
@@ -169,7 +207,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic combinatorial semi-bandit with linear reward, full semi-bandit feedback, K base arms, actions of size N",
+   "setting_description": "Stochastic combinatorial semi-bandit with linear reward, full semi-bandit feedback, at most N base arms per action",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(m*K*T)",
@@ -182,19 +220,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:05:29",
+  "date": "2026-10-21T15:14:21",
   "source_chars": 151729,
-  "input_tokens": 102210,
-  "output_tokens": 3637,
-  "cost_usd_equiv": 0.6728388000000001,
+  "input_tokens": 108797,
+  "output_tokens": 4074,
+  "cost_usd_equiv": 0.6828259999999999,
   "status": "extracted"
  }
 }

@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Fully sequential Gaussian process regression for preference learning",
   "arxiv_id": "2610.19391",
@@ -13,17 +13,20 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Global optimization with noisy pairwise comparisons (preference learning) with GP moment-matching updates",
+   "name_in_paper": "Global optimization with noisy pairwise comparisons (preference learning) using fully sequential moment-matching GP regression",
    "objective": "simple_regret",
    "feedback": "dueling",
    "environment": "stochastic_iid",
    "action_space": "kernel_rkhs",
-   "function_class": [],
+   "function_class": [
+    "bounded"
+   ],
    "domain": "constrained",
    "context": "none",
    "noise": "gaussian_known_variance",
    "learner_knows": [
-    "sigma"
+    "sigma",
+    "kernel"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -31,31 +34,64 @@
     "shape": "convex_body",
     "time_varying": "fixed",
     "access": "explicit",
-    "norm_bound": "unspecified",
-    "parameter_set": "unspecified",
-    "loss_set": "not_applicable"
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "utility_link",
+    "winner": "utility_best",
+    "comparison": "pair"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Feedback is the sign of f(z1)-f(z2)+xi with Gaussian noise xi ~ N(0, sigma^2) (probit preference model)",
-    "f - mu^0 - c_* lies in the RKHS of prior kernel Sigma^0 for some constant c_* (Assumption 5.1)",
-    "Approximation width W_r^2 = O(r^{-a}) for some a > 1 (Assumption 5.2)",
-    "Design space compact convex subset of R^d; f deterministic and continuous"
+    "Observation is s = sgn(f(z1) - f(z2) + xi) with xi ~ N(0, sigma^2) (probit comparison of a deterministic unknown function)",
+    "f is continuous and f - mu^0 - c_* lies in the RKHS of the prior kernel Sigma^0 for some unknown constant c_*",
+    "Kernel approximation width W_r^2 = O(r^{-a}) for some a > 1 (e.g. Matern with nu > d/2)",
+    "Design space X is a compact convex subset of R^d"
    ],
-   "definition_quote": "we may choose two design points $x,x'\\in\\mathcal{X}$ and make a noisy observation of only the \\textit{sign} of $f\\left(x\\right) - f\\left(x'\\right)$... $s^{n+1} = \\sgn\\left(f\\left(z^n_1\\right)-f\\left(z^n_2\\right)+\\xi^{n+1}\\right)$ ... where $\\xi^{n+1}\\sim\\mathcal{N}\\left(0,\\sigma^2\\right)$"
+   "definition_quote": "we may choose two design points $x,x'\\in\\mathcal{X}$ and make a noisy observation of only the \\textit{sign} of $f\\left(x\\right) - f\\left(x'\\right)$ ... $s^{n+1} = \\sgn\\left(f\\left(z^n_1\\right)-f\\left(z^n_2\\right)+\\xi^{n+1}\\right)$ ... $\\xi^{n+1}\\sim\\mathcal{N}\\left(0,\\sigma^2\\right)$"
   }
  ],
  "algorithms": [
@@ -65,11 +101,11 @@
    "registry_id": null,
    "is_new": true,
    "techniques": [
-    "information_directed_sampling",
     "other"
    ],
    "requires_knowledge_of": [
-    "sigma"
+    "sigma",
+    "kernel"
    ]
   }
  ],
@@ -81,28 +117,30 @@
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "simple_regret",
-   "dependence": "worst_case",
-   "comparator": "best_fixed_action",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "not_stated",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(log(T))*T**(-(a - 1)/(2*(a + 1)))",
+    "expression": "sqrt(log(T))*T**(-(a_w - 1)/(2*(a_w + 1)))",
     "expression_latex": "O\\left(\\sqrt{\\log n}\\cdot n^{-\\frac{a-1}{2\\left(a+1\\right)}}\\right)",
     "regime": "n >= N_1 (deterministic threshold)"
    },
    "symbols": {
-    "a": "exponent of the kernel approximation width, W_r^2 = O(r^{-a}), a > 1"
+    "a_w": "exponent of the kernel approximation width, W_r^2 = O(r^{-a}), a > 1"
    },
    "conditions": [
-    "Assumption 3.1: compact convex design space in R^d, f continuous, Sigma^0 continuous PSD with strict Cauchy-Schwarz",
-    "Assumption 5.1: f - mu^0 - c_* in RKHS of Sigma^0",
-    "Assumption 5.2: W_r^2 = O(r^{-a}) with a > 1"
+    "Assumption 3.1: X compact convex in R^d; f deterministic continuous; mu^0 continuous; Sigma^0 continuous PSD with strict Cauchy-Schwarz for distinct points",
+    "Assumption 5.1: f - mu^0 - c_* in RKHS of Sigma^0 for some constant c_*",
+    "Assumption 5.2: W_r^2 = O(r^{-a}) with a > 1",
+    "sigma > 0"
    ],
    "tuning": [
-    "proposal satisfies B^n >= chi * sup B^n for fixed chi in (0,1)",
-    "randomized bridge with rho^n = diam/sqrt(log(n+e)), Lambda^n = log log(n+e^e)"
+    "proposal satisfies B^n(z1,z2) >= chi * sup B^n for fixed chi in (0,1)",
+    "randomized bridge with rho^n = diam(X)/sqrt(log(n+e)), Lambda^n = log log(n+e^e)",
+    "recommendation x_hat^n in argmax mu^n"
    ],
    "is_new": true,
    "source": {
@@ -111,7 +149,7 @@
     "quote": "Suppose that we are in the situation of Theorem \\ref{thm:consistency}. Let $\\hat{x}^n$ be an $\\mathcal{F}^n$-measurable element of $\\arg\\max_{x\\in\\mathcal{X}} \\mu^n\\left(x\\right)$. Then, there exists a deterministic $N_1$ such that $\\mathbb{E}\\left(\\max_{x\\in\\mathcal{X}}f\\left(x\\right) - f\\left(\\hat{x}^n\\right)\\right) = O\\left(\\sqrt{\\log n}\\cdot n^{-\\frac{a-1}{2\\left(a+1\\right)}}\\right)$ for $n \\geq N_1$."
    },
    "confidence": "medium",
-   "notes": "Expected simple regret of recommendation argmax mu^n after n comparisons (T = n). Constants depend on f, Sigma^0, sigma. For Matern kernel with nu > d/2, a = 2nu/d giving O(n^{-(nu-d/2)/(2nu+d)} (log n)^{1/2}). Frequentist analysis with f deterministic."
+   "notes": "n = number of pairwise comparisons (T). Constants depend on f, sigma, Sigma^0, hence marked instance_dependent. For Matern kernels (a = 2nu/d, nu > d/2) the paper notes the rate becomes O(n^{-(nu-d/2)/(2nu+d)} sqrt(log n)). Policy does not need the horizon."
   },
   {
    "id": "r2",
@@ -120,35 +158,37 @@
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "other",
-   "dependence": "worst_case",
+   "dependence": "instance_dependent",
    "comparator": "not_applicable",
    "probability": "almost_sure",
    "horizon": "anytime",
    "compute": "not_stated",
    "bound": {
     "notation": "O",
-    "expression": "log(T)**(2 + eps_alg)*T**(-(a - 1)/(a + 1))",
+    "expression": "log(T)**(2 + eps_alg)*T**(-(a_w - 1)/(a_w + 1))",
     "expression_latex": "o\\left(\\left(\\log n\\right)^{2+\\varepsilon} n^{-\\frac{a-1}{a+1}}\\right)",
-    "regime": "for every eps > 0, as n -> infinity"
+    "regime": "for every eps > 0, almost surely"
    },
    "symbols": {
-    "a": "exponent of the kernel approximation width, W_r^2 = O(r^{-a}), a > 1"
+    "a_w": "exponent of the kernel approximation width, W_r^2 = O(r^{-a}), a > 1"
    },
    "conditions": [
-    "Assumptions 3.1, 5.1, 5.2 (a > 1)"
+    "Assumption 3.1",
+    "Assumption 5.1: f - mu^0 - c_* in RKHS of Sigma^0",
+    "Assumption 5.2: W_r^2 = O(r^{-a}) with a > 1"
    ],
    "tuning": [
-    "proposal satisfies B^n >= chi * sup B^n for fixed chi in (0,1)",
-    "randomized bridge"
+    "proposal satisfies B^n(z1,z2) >= chi * sup B^n for fixed chi in (0,1)",
+    "randomized bridge (eq. randombridge)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:consistency",
     "number": "Theorem 5.1",
-    "quote": "Let Assumptions \\ref{a1}, \\ref{a3} and \\ref{a4} hold, and suppose that $\\left(z^n_1,z^n_2\\right)$ is determined using the DOVE policy... Then, for every $\\varepsilon > 0$, $\\sup_{x,x'\\in\\mathcal{X}}\\left|\\ell_{x,x'}\\Delta^n\\right|^2 = o\\left(\\left(\\log n\\right)^{2+\\varepsilon} n^{-\\frac{a-1}{a+1}}\\right)$ almost surely."
+    "quote": "Let Assumptions \\ref{a1}, \\ref{a3} and \\ref{a4} hold, and suppose that $\\left(z^n_1,z^n_2\\right)$ is determined using the DOVE policy ... Then, for every $\\varepsilon > 0$, $\\sup_{x,x'\\in\\mathcal{X}}\\left|\\ell_{x,x'}\\Delta^n\\right|^2 = o\\left(\\left(\\log n\\right)^{2+\\varepsilon} n^{-\\frac{a-1}{a+1}}\\right)$ almost surely."
    },
    "confidence": "medium",
-   "notes": "Quantity is the squared uniform error of estimated pairwise differences sup |mu^n(x)-mu^n(x') - (f(x)-f(x'))|^2. Paper states little-o; recorded with notation O."
+   "notes": "Bound on the squared uniform estimation error of pairwise differences, sup |mu^n(x)-mu^n(x') - (f(x)-f(x'))|^2. Paper states little-o; recorded with notation O since o is not available. Sample-path-dependent constants."
   }
  ],
  "cited_results": [
@@ -161,32 +201,32 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Classical GP regression / Bayesian optimization with direct (Gaussian) function evaluations, Matern kernel with smoothness nu, dimension d; simple regret",
+   "setting_description": "Classical GP regression / GP bandit with direct Gaussian noisy function evaluations, Matern kernel with smoothness nu, simple regret (optimal up to logs)",
    "bound": {
     "notation": "O",
-    "expression": "T**(-nu/(2*nu + d))*log(T)**(1/2 + nu/(2*nu + d))",
+    "expression": "T**(-nu_matern/(2*nu_matern + d))*log(T)**(1/2 + nu_matern/(2*nu_matern + d))",
     "expression_latex": "O\\left(n^{-\\frac{\\nu}{2\\nu+d}}\\left(\\log n\\right)^{\\frac{1}{2}+\\frac{\\nu}{2\\nu+d}}\\right)",
-    "regime": "Matern kernel smoothness nu"
+    "regime": null
    },
-   "where": "Introduction and Section 5.3"
+   "where": "Section 1 and discussion after Theorem 5.2"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:32:05",
+  "date": "2026-10-21T15:43:36",
   "source_chars": 172811,
-  "input_tokens": 120464,
-  "output_tokens": 3758,
-  "cost_usd_equiv": 0.8212908,
+  "input_tokens": 127051,
+  "output_tokens": 4440,
+  "cost_usd_equiv": 0.836178,
   "status": "extracted"
  }
 }

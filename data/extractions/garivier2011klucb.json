@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "The KL-UCB Algorithm for Bounded Stochastic Bandits and Beyond",
   "arxiv_id": "1102.2490",
@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "stochastic bandit with rewards bounded in [0,1]",
+   "name_in_paper": "Stochastic bandit with K arms and independent rewards bounded in [0,1]",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -34,24 +34,57 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [],
-   "definition_quote": "For each $a\\in\\{1,\\dots,K\\}$, the rewards $(X_{a,t})_{t\\geq 1}$ are independent and bounded in $\\Theta = [0,1]$ with common expectation $\\mu_a$. The sequences $(X_{a,\\cdot})_a$ are independent."
+   "definition_quote": "the set of actions is $\\{1,\\dots,K\\}$ ... For each $a\\in\\{1,\\dots,K\\}$, the rewards $(X_{a,t})_{t\\geq 1}$ are independent and bounded in $\\Theta = [0,1]$ with common expectation $\\mu_a$. The sequences $(X_{a,\\cdot})_a$ are independent."
   }
  ],
  "algorithms": [
@@ -59,7 +92,7 @@
    "id": "a1",
    "name": "KL-UCB",
    "registry_id": "kl_ucb",
-   "is_new": false,
+   "is_new": true,
    "techniques": [
     "optimism"
    ],
@@ -69,7 +102,7 @@
   },
   {
    "id": "a2",
-   "name": "UCB (tuned, exploration log(t)+c log log(t))",
+   "name": "UCB tuned with exploration log(t)+c log log(t)",
    "registry_id": "ucb_loglog",
    "is_new": false,
    "techniques": [
@@ -102,7 +135,7 @@
    "symbols": {},
    "conditions": [],
    "tuning": [
-    "c = 3"
+    "c = 3 (exploration function log(t) + 3 log(log(t)))"
    ],
    "is_new": true,
    "source": {
@@ -111,7 +144,7 @@
     "quote": "Consider a bandit problem with $K$ arms and independent rewards bounded in $[0,1]$, and denote by $a^*$ an optimal arm. Choosing $c=3$, the regret of the KL-UCB algorithm satisfies: \\[\\limsup_{n\\to\\infty} \\frac{\\E[R_n]}{\\log(n)} \\leq \\sum_{a:\\mu_a<\\mu_{a^*}} \\frac{\\mu_{a^*}-\\mu_a}{d(\\mu_a, \\mu_{a^*})}\\;.\\]"
    },
    "confidence": "high",
-   "notes": "d is Bernoulli KL between means (kl_i) even though rewards are general [0,1]. Corollary 3 notes this matches the Lai-Robbins lower bound for Bernoulli rewards. Section 4 informally claims the same bound for canonical exponential families with the adapted divergence (no formal statement)."
+   "notes": "d is the Bernoulli KL, so d(mu_a, mu_star) = kl_i. Regret defined vs best expected arm, recorded as pseudo-regret. Corollary 3 (Bernoulli rewards: matches Lai-Robbins lower bound) is a special case, not recorded separately. The paper also claims (in prose, Section 4) the same limsup bound for exponential-family variants of KL-UCB with d = KL of the family; not a formal statement."
   },
   {
    "id": "r2",
@@ -127,17 +160,17 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "(1 + eps_alg)*log(T)/kl_i + C_1*log(log(T)) + C_2/T**beta_eps",
+    "expression": "log(T)*(1 + eps_alg)/kl_i + C_1*log(log(T)) + C_2/T**beta_eps",
     "expression_latex": "\\E[N_n(a)] \\leq \\frac{\\log(n)}{d(\\mu_a, \\mu_{a^*})}(1+\\epsilon) + C_1 \\log(\\log(n)) + \\frac{C_2(\\epsilon)}{n^{\\beta(\\epsilon)}}",
     "regime": null
    },
    "symbols": {
-    "C_1": "positive constant (C'_1 <= 7 suffices for the first-summand part)",
-    "C_2": "positive function C_2(epsilon) of epsilon, O(epsilon^-2)",
-    "beta_eps": "positive function beta(epsilon) of epsilon, O(epsilon^2)"
+    "C_1": "positive constant (from proof, C'_1 <= 7 for the first summand)",
+    "C_2": "C_2(epsilon) > 0, a function of epsilon (O(epsilon^-2)), also depending on the instance",
+    "beta_eps": "beta(epsilon) > 0, function of epsilon (O(epsilon^2))"
    },
    "conditions": [
-    "arm a suboptimal: mu_a < mu_star"
+    "mu_a < mu_star for the bounded arm a"
    ],
    "tuning": [
     "c = 3"
@@ -149,7 +182,7 @@
     "quote": "Let $\\epsilon>0$, and take $c=3$ in Algorithm~\\ref{alg:klUCB}. ... For any positive integer $n$, the number of times algorithm KL-UCB chooses arm $a$ is upper-bounded by \\[\\E[N_n(a)] \\leq \\frac{\\log(n)}{d(\\mu_a, \\mu_{a^*})}(1+\\epsilon) + C_1 \\log(\\log(n)) + \\frac{C_2(\\epsilon)}{n^{\\beta(\\epsilon)}}\\;,\\]"
    },
    "confidence": "high",
-   "notes": "Bound on expected number of pulls of a suboptimal arm."
+   "notes": "Bound on expected number of pulls of a suboptimal arm, hence quantity 'other'. Holds for any epsilon > 0."
   },
   {
    "id": "r3",
@@ -171,7 +204,7 @@
    },
    "symbols": {},
    "conditions": [
-    "arm a suboptimal: mu_a < mu_star"
+    "mu_a < mu_star for the bounded arm a"
    ],
    "tuning": [
     "c = 3"
@@ -183,7 +216,7 @@
     "quote": "Hence, \\[\\limsup_{n\\to\\infty} \\frac{\\E[N_n(a)]}{\\log(n)} \\leq \\frac{1}{d(\\mu_a, \\mu_{a^*})}\\;.\\]"
    },
    "confidence": "high",
-   "notes": "Asymptotic pull-count consequence of the finite-time bound."
+   "notes": "Asymptotic pull-count bound for a suboptimal arm."
   },
   {
    "id": "r4",
@@ -199,21 +232,21 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "(1 + eps_alg)*log(T)/(2*Delta_i**2) + C_1*log(log(T)) + C_2/T**beta_eps",
+    "expression": "log(T)*(1 + eps_alg)/(2*Delta_i**2) + C_1*log(log(T)) + C_2/T**beta_eps",
     "expression_latex": "\\E[N_n(a)] \\leq \\frac{\\log(n)}{2(\\mu_a-\\mu_{a^*})^2}(1+\\epsilon) + C_1 \\log(\\log(n)) + \\frac{C_2(\\epsilon)}{n^{\\beta(\\epsilon)}}",
     "regime": null
    },
    "symbols": {
     "C_1": "positive constant",
-    "C_2": "positive function C_2(epsilon) of epsilon",
-    "beta_eps": "positive function beta(epsilon) of epsilon"
+    "C_2": "C_2(epsilon) > 0, function of epsilon",
+    "beta_eps": "beta(epsilon) > 0, function of epsilon"
    },
    "conditions": [
-    "arm a suboptimal: mu_a < mu_star"
+    "mu_a < mu_star for the bounded arm a"
    ],
    "tuning": [
-    "c = 3",
-    "index S[a]/N[a] + sqrt((log(t)+c log log(t))/(2N[a]))"
+    "index S[a]/N[a] + sqrt((log(t)+c log log(t))/(2 N[a]))",
+    "c = 3"
    ],
    "is_new": true,
    "source": {
@@ -222,46 +255,10 @@
     "quote": "Consider the UCB algorithm tuned as follows: at step $t>K$, the arm that maximizes the upper-bound $S[a]/N[a] + \\sqrt{(\\log(t)+c\\log\\log(t))/(2 N[a])}$ is chosen. Then, for the choice $c=3$, the number of draws of a sub-optimal arm $a$ is upper-bounded as: \\E[N_n(a)] \\leq \\frac{\\log(n)}{2(\\mu_a-\\mu_{a^*})^2}(1+\\epsilon) + C_1 \\log(\\log(n)) + \\frac{C_2(\\epsilon)}{n^{\\beta(\\epsilon)}}"
    },
    "confidence": "medium",
-   "notes": "Proof omitted in paper (mimics KL-UCB proof with quadratic divergence). Epsilon is implicit (any epsilon>0)."
+   "notes": "Proof omitted in paper (mimics KL-UCB proof with quadratic divergence). Epsilon not explicitly quantified in statement; presumably any epsilon > 0."
   }
  ],
  "cited_results": [
-  {
-   "cited_key": "BurnetasKatehakis97bandits",
-   "cited_title": "Optimal adaptive policies for Markov decision processes",
-   "cited_first_author": "A.N. Burnetas",
-   "cited_year": 1997,
-   "cited_arxiv_id": null,
-   "algorithm_name": null,
-   "algorithm_registry_id": null,
-   "side": "lower",
-   "setting_description": "Stochastic K-armed bandit, parametric families per arm; consistent policies",
-   "bound": {
-    "notation": "liminf",
-    "expression": "sum_subopt(Delta_i/Kinf_i)*log(T)",
-    "expression_latex": "\\liminf_{n\\to\\infty} \\frac{\\E[R_n]}{\\log(n)} \\geq \\sum_{a:\\mu_a<\\mu_{a^*}} \\frac{\\mu_{a^*}-\\mu_a}{\\inf_{\\theta \\in \\Theta_a : E[p_\\theta]>\\mu_{a^*} }KL\\left( p_{\\theta_a}, p_{\\theta}\\right)}",
-    "regime": null
-   },
-   "where": "Section 1, eq. (binfRegret)"
-  },
-  {
-   "cited_key": "LaiRobbins85bandits",
-   "cited_title": "Asymptotically efficient adaptive allocation rules",
-   "cited_first_author": "T.L. Lai",
-   "cited_year": 1985,
-   "cited_arxiv_id": null,
-   "algorithm_name": null,
-   "algorithm_registry_id": null,
-   "side": "lower",
-   "setting_description": "Stochastic K-armed Bernoulli bandit; consistent policies; number of draws of suboptimal arm",
-   "bound": {
-    "notation": "Omega",
-    "expression": "log(T)/kl_i",
-    "expression_latex": "N_n(a) \\geq \\left( \\frac{1}{d(\\mu_a, \\mu_{a^*})} + o(1) \\right)\\log(n)",
-    "regime": "with probability tending to 1"
-   },
-   "where": "Corollary 3"
-  },
   {
    "cited_key": "AuerEtAl02FiniteTime",
    "cited_title": "Finite-time analysis of the multiarmed bandit problem",
@@ -271,14 +268,14 @@
    "algorithm_name": "UCB1",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic K-armed bandit, rewards in [0,1]",
+   "setting_description": "Stochastic K-armed bandit, rewards bounded in [0,1]",
    "bound": {
     "notation": "exact",
-    "expression": "sum_subopt(8*log(T)/Delta_i) + C_const",
+    "expression": "sum_subopt(8*log(T)/Delta_i) + C",
     "expression_latex": "\\E[R_n] \\leq \\sum_{a:\\mu_a<\\mu_{a^*}} \\frac{8\\log(n)}{\\left( \\mu_{a^*}-\\mu_{a} \\right)} + C",
-    "regime": null
+    "regime": "C is an unspecified constant (not a corruption budget)"
    },
-   "where": "Section 1, eq. (UCBAuer)"
+   "where": "Section 1, Eq. (UCBAuer)"
   },
   {
    "cited_key": "AuerEtAl02FiniteTime",
@@ -289,32 +286,50 @@
    "algorithm_name": "UCB2",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic K-armed bandit, rewards in [0,1]; parameter alpha",
+   "setting_description": "Stochastic K-armed bandit, rewards bounded in [0,1]; parameter alpha tuned depending on horizon",
    "bound": {
     "notation": "exact",
-    "expression": "sum_subopt((1 + eps_alpha)*log(T)/(2*Delta_i)) + C_alpha",
+    "expression": "sum_subopt((1 + eps_alg)*log(T)/(2*Delta_i)) + C",
     "expression_latex": "\\E[R_n] \\leq \\sum_{a:\\mu_a<\\mu_{a^*}} \\frac{(1+\\epsilon(\\alpha))\\log(n)}{2\\left(\\mu_{a^*}-\\mu_{a} \\right)} + C(\\alpha)",
-    "regime": null
+    "regime": "eps_alg = epsilon(alpha), C = C(alpha) constant"
    },
    "where": "Section 1"
+  },
+  {
+   "cited_key": "BurnetasKatehakis97bandits",
+   "cited_title": "Optimal adaptive policies for Markov decision processes",
+   "cited_first_author": "A.N. Burnetas",
+   "cited_year": 1997,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Stochastic K-armed bandit with parametric families per arm; consistent policies",
+   "bound": {
+    "notation": "liminf",
+    "expression": "sum_subopt(Delta_i/Kinf_i)*log(T)",
+    "expression_latex": "\\liminf_{n\\to\\infty} \\frac{\\E[R_n]}{\\log(n)} \\geq \\sum_{a:\\mu_a<\\mu_{a^*}} \\frac{\\mu_{a^*}-\\mu_a}{\\inf_{\\theta \\in \\Theta_a : E[p_\\theta]>\\mu_{a^*} }KL\\left( p_{\\theta_a}, p_{\\theta}\\right)}",
+    "regime": null
+   },
+   "where": "Section 1, Eq. (binfRegret)"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "225d94076f15",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T09:01:54",
+  "date": "2026-10-21T14:51:11",
   "source_chars": 55133,
-  "input_tokens": 56298,
-  "output_tokens": 5939,
-  "cost_usd_equiv": 0.569156,
+  "input_tokens": 62935,
+  "output_tokens": 5904,
+  "cost_usd_equiv": 0.547218,
   "status": "extracted"
  }
 }

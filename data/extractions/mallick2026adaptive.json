@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Adaptive Incentive Design in Dynamic Principal-Agent Problem via Kernelized Bandits",
   "arxiv_id": "2608.17614",
@@ -16,16 +16,20 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Dynamic principal-agent problem with stochastic agent utility (kernelized bandit over contract space [0,1]^m with heteroscedastic noise)",
+   "name_in_paper": "Dynamic principal-agent contract design with stochastic agent utility (kernelized bandit with heteroscedastic noise)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
    "action_space": "kernel_rkhs",
    "function_class": [],
-   "domain": "not_applicable",
+   "domain": "constrained",
    "context": "none",
    "noise": "bounded_pm1",
-   "learner_knows": [],
+   "learner_knows": [
+    "S",
+    "kernel",
+    "loss_range"
+   ],
    "instance_assumptions": [],
    "extras": [],
    "action_set": {
@@ -34,47 +38,80 @@
     "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_unknown"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Contract space X=[0,1]^m (paper's m = dimension = number of outcomes)",
-    "Reward function lies in RKHS of the arcsin (neural network) kernel with known RKHS norm bound B",
-    "Heteroscedastic noise whose variance lies in an RKHS (Gaussian kernel) with known norm bound B_v; noise bounded by sqrt(chi_u)",
-    "Sample-variance noise eta is rho_eta(x)-sub-Gaussian with known rho_eta",
-    "Learner takes ell>1 repeated samples per chosen contract",
-    "Agent has finite action set, hidden actions; agent utility has stochastic perturbation <w, delta(a)> with absolutely continuous w"
+    "Contract space X=[0,1]^m; reward is principal's utility (v-x)_i with outcome i drawn from production function under the agent's hidden stochastic best response",
+    "Each round the chosen contract is sampled ell>1 times to estimate the mean and the heteroscedastic variance",
+    "Noise variance function lies in an RKHS of a kernel kappa^v with norm bounded by B_v (known); variance-estimate noise is sub-Gaussian with known proxy",
+    "Arcsin (neural network) kernel"
    ],
-   "definition_quote": "\\Tilde{R}_T= T\\Tilde{U}^{\\mathrm{P}*} - \\sum_{t=1}^T \\Tilde{U}^{\\mathrm{PA}}(x_t), where \\Tilde{U}^{\\mathrm{P}*}= \\max_{x \\in \\mathcal{X}} \\:\\: \\Tilde{U}^{\\mathrm{PA}}(x). ... \\tilde{y}_t= \\tilde{U}^{\\mathrm{PA}}(x_t) + \\tilde{\\varepsilon}(x_t), where \\tilde{\\varepsilon}(x_t) is assumed to be a zero-mean heteroscedastic noise"
+   "definition_quote": "Formally, in each round $t$, the principal posts a contract $x_t \\in \\mathcal{X}:= [0,1]^m$ ... $\\tilde{y}_t= \\tilde{U}^{\\mathrm{PA}}(x_t) + \\tilde{\\varepsilon}(x_t)$, where $\\tilde{\\varepsilon}(x_t)$ is assumed to be a zero-mean \\textit{heteroscedastic} noise ... $\\Tilde{R}_T= T\\Tilde{U}^{\\mathrm{P}*} - \\sum_{t=1}^T \\Tilde{U}^{\\mathrm{PA}}(x_t)$"
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Heteroscedastic GP-UCB (with Neural Network / arcsin kernel)",
+   "name": "Heteroscedastic GP-UCB (with Neural Network / Arcsin kernel)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
     "optimism"
    ],
    "requires_knowledge_of": [
-    "B (RKHS norm bound of utility)",
-    "B_v (RKHS norm bound of noise variance)",
-    "rho_eta (sub-Gaussian parameter of variance-estimate noise)",
-    "chi_u (noise variance bound)",
+    "S",
+    "kernel",
+    "loss_range",
+    "B_v",
+    "rho_eta",
+    "chi_u",
     "delta"
    ]
   }
@@ -94,17 +131,17 @@
    "compute": "not_stated",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(T)*log(T)**(d+1)",
+    "expression": "sqrt(T)*log(T)**(d + 1)",
     "expression_latex": "\\mathcal{O}\\left(\\sqrt{T}(\\log T)^{m+1}\\right)",
-    "regime": null
+    "regime": "T large (asymptotic simplification in proof)"
    },
    "symbols": {},
    "conditions": [
-    "\\tilde U^{PA} in RKHS H_k of the arcsin kernel with ||.||_{H_k} <= B",
-    "Assumption 4.2: noise variance in RKHS of kernel kappa^v with norm <= B_v",
-    "Assumption 4.3: variance-estimate noise eta is rho_eta-sub-Gaussian with known rho_eta, independent in time",
-    "Agent has finite action set (Assumption 4.1)",
-    "contract space [0,1]^m; d here denotes the paper's m"
+    "tilde U^PA in RKHS H_k of the arcsin kernel with norm <= B (S)",
+    "noise variance in RKHS of kappa^v with norm <= B_v (Assumption 4.2)",
+    "variance-estimate noise eta(x_t) is rho_eta(x_t)-sub-Gaussian with known proxy, independent in time (Assumption 4.3)",
+    "contract space [0,1]^d (paper's m is the dimension)",
+    "noise bounded |eps| < sqrt(chi_u)"
    ],
    "tuning": [
     "lambda = 1",
@@ -115,10 +152,10 @@
    "source": {
     "label": "main_theorem",
     "number": "Theorem 4.5",
-    "quote": "Consider $\\tilde{U}^{\\mathrm{PA}} \\in \\mathcal{H}_k$ with bounded RKHS-norm (i.e., $\\|\\tilde{U}^{\\mathrm{PA}}\\|_{\\mathcal{H}_k} \\le B$) and sampling model in \\eqref{feedback_eq} with unknown variance ... that satisfies Assumptions~\\ref{var_proxy_assumption} and~\\ref{noise_assumption}. Let $\\{x_t\\}_{t=1}^{T}$ denote the set of actions chosen by Algorithm~\\ref{algo}. Setting $\\lambda=1$ in \\eqref{beta_t}, the cumulative regret $\\Tilde{R}_T$ ... is bounded as $\\mathbb{P}\\left[\\Tilde{R}_T \\leq \\mathcal{O}\\left(\\sqrt{T}(\\log T)^{m+1}\\right)\\right] \\geq 1 - \\delta$"
+    "quote": "Consider $\\tilde{U}^{\\mathrm{PA}} \\in \\mathcal{H}_k$ with bounded RKHS-norm (i.e., $\\|\\tilde{U}^{\\mathrm{PA}}\\|_{\\mathcal{H}_k} \\le B$) and sampling model in \\eqref{feedback_eq} with unknown variance ... satisfies Assumptions~\\ref{var_proxy_assumption} and~\\ref{noise_assumption}. ... Setting $\\lambda=1$ in \\eqref{beta_t}, the cumulative regret $\\Tilde{R}_T$ ... is bounded as $\\mathbb{P}\\left[\\Tilde{R}_T \\leq \\mathcal{O}\\left(\\sqrt{T}(\\log T)^{m+1}\\right)\\right] \\geq 1 - \\delta$"
    },
    "confidence": "medium",
-   "notes": "Paper's m is the dimension of the contract space, mapped to d. Regret defined via expected utility but stated with probability 1-delta. Proof is asymptotic (T -> infinity) and hides delta, ell, chi_u, B. Horizon labelled anytime since algorithm loop does not use T, but this is not explicitly stated."
+   "notes": "Paper's m (contract dimension) mapped to canonical d. Constants (log(1/delta), B, ell, chi_u) hidden in O. Proof derives gamma_T = O((log T)^{m+1}) via Proposition 4.4 eigenvalue tail bound and plugs into Makarova et al. Theorem 1. Regret counts per-round utility although ell samples are drawn per round."
   }
  ],
  "cited_results": [
@@ -131,10 +168,10 @@
    "algorithm_name": "Agnostic Zooming",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Repeated principal-agent, monotone contracts in [0,1]^m, first-order stochastic dominance",
+   "setting_description": "Repeated principal-agent contract design over monotone contracts in [0,1]^m, assuming first-order stochastic dominance",
    "bound": {
     "notation": "O",
-    "expression": "alpha_z*log(T)*T**((m_out+1)/(m_out+2))",
+    "expression": "alpha_zoom*log(T)*T**((d + 1)/(d + 2))",
     "expression_latex": "\\mathcal{O}(\\alpha \\log T)T^{\\frac{m+1}{m+2}}",
     "regime": null
    },
@@ -149,10 +186,10 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Repeated principal-agent with general utilities, m outcomes, regret in expectation",
+   "setting_description": "Online contract design with m outcomes, general utilities, expected regret",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(m_out)*log(T)*T**(2*m_out/(2*m_out+1))",
+    "expression": "sqrt(d)*log(T)*T**(2*d/(2*d + 1))",
     "expression_latex": "\\mathcal{O}(\\sqrt{m}\\log(T) T^{\\frac{2m}{2m+1}})",
     "regime": null
    },
@@ -167,10 +204,10 @@
    "algorithm_name": "Discover and Cover",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Repeated principal-agent with finite agent actions n, m outcomes, high-probability regret",
+   "setting_description": "Online contract design with m outcomes and n (finite) agent actions, high-probability regret",
    "bound": {
     "notation": "O",
-    "expression": "m_out**n_A*I_c*log(T)*T**(4/5)",
+    "expression": "d**n_agent*I_poly*log(T)*T**(4/5)",
     "expression_latex": "\\mathcal{O}(m^n \\mathcal{I}\\log (T)T^{4/5})",
     "regime": null
    },
@@ -185,10 +222,10 @@
    "algorithm_name": "RAHBO (risk coefficient alpha=0)",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Kernelized bandit with heteroscedastic noise, repeated sampling ell per round, high probability",
+   "setting_description": "Kernelized bandit with heteroscedastic noise and repeated sampling ell per query, high-probability regret",
    "bound": {
     "notation": "exact",
-    "expression": "beta_T*ell*sqrt(2*gamma_T*T/log(1+ell/chi_u**2))",
+    "expression": "beta_T*ell*sqrt(2*gamma_T*T/log(1 + ell/chi_u**2))",
     "expression_latex": "\\beta_T \\ell \\sqrt{\\frac{2 \\hat{\\gamma}_T T}{\\log(1+\\frac{\\ell}{\\chi_u^2})}}",
     "regime": null
    },
@@ -198,19 +235,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T13:58:31",
+  "date": "2026-10-21T15:07:19",
   "source_chars": 95853,
-  "input_tokens": 73980,
-  "output_tokens": 4406,
-  "cost_usd_equiv": 0.4623788,
+  "input_tokens": 80567,
+  "output_tokens": 4429,
+  "cost_usd_equiv": 0.464086,
   "status": "extracted"
  }
 }

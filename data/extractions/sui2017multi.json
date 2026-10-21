@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Multi-dueling Bandits with Dependent Arms",
   "arxiv_id": "1705.00253",
@@ -16,7 +16,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Multi-dueling bandits (independent arms)",
+   "name_in_paper": "Multi-dueling bandits (independent arms) under Approximate Linearity",
    "objective": "cumulative_regret",
    "feedback": "dueling",
    "environment": "stochastic_iid",
@@ -25,7 +25,10 @@
    "domain": "not_applicable",
    "context": "none",
    "noise": "bernoulli",
-   "learner_knows": [],
+   "learner_knows": [
+    "K",
+    "m"
+   ],
    "instance_assumptions": [],
    "extras": [],
    "action_set": {
@@ -34,27 +37,59 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "strong_stochastic_transitivity",
+    "winner": "condorcet",
+    "comparison": "subset"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Multi-dueling: a multiset S_t of m arms is selected each round and pairwise duel outcomes among some pairs in S_t are observed",
-    "Total ordering of arms assumed",
-    "Approximate Linearity: phi(b_i,b_k) - phi(b_j,b_k) >= gamma*phi(b_i,b_j) for b_i > b_j > b_k",
-    "Regret R_T = sum_t sum_{b in S_t} phi(b_1, b)"
+    "Approximate Linearity: phi(b_i,b_k) - phi(b_j,b_k) >= gamma*phi(b_i,b_j) for all b_i > b_j > b_k (stricter than strong stochastic transitivity)",
+    "Total ordering of arms",
+    "m arms (multiset) selected each round, feedback on some pairs among them; regret sums phi(b_1,b) over all m selected arms"
    ],
    "definition_quote": "the algorithm now selects a (multi-)set $S_t$ of arms at each iteration $t$, and observes outcomes of duels between some pairs of arms in $S_t$. ... $R_T = \\sum_{t=1}^T \\sum_{b\\in S_t} \\phi(b_1,b)$."
   }
@@ -62,23 +97,41 @@
  "algorithms": [
   {
    "id": "a1",
+   "name": "SelfSparring",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "m"
+   ]
+  },
+  {
+   "id": "a2",
    "name": "IndSelfSparring",
    "registry_id": null,
    "is_new": true,
    "techniques": [
     "thompson_sampling"
    ],
-   "requires_knowledge_of": []
+   "requires_knowledge_of": [
+    "K",
+    "m"
+   ]
   },
   {
-   "id": "a2",
+   "id": "a3",
    "name": "KernelSelfSparring",
    "registry_id": null,
    "is_new": true,
    "techniques": [
     "thompson_sampling"
    ],
-   "requires_knowledge_of": []
+   "requires_knowledge_of": [
+    "m",
+    "kernel"
+   ]
   }
  ],
  "results": [
@@ -86,7 +139,39 @@
    "id": "r1",
    "setting": "s1",
    "side": "upper",
-   "algorithm": "a1",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "asymptotic",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "1",
+    "expression_latex": "\\lim_{t\\rightarrow \\infty} \\mathbb{P}(b_t = b_1) = 1",
+    "regime": "t -> infinity"
+   },
+   "symbols": {},
+   "conditions": [
+    "Approximate Linearity with some gamma > 0"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:conv",
+    "number": "Theorem 1",
+    "quote": "Under Approximate Linearity, \\multisparring converges to the optimal arm $b_1$ as running time $t\\rightarrow \\infty$: $\\lim_{t\\rightarrow \\infty} \\mathbb{P}(b_t = b_1) = 1$."
+   },
+   "confidence": "medium",
+   "notes": "Consistency (convergence) result, not a regret bound; recorded as quantity 'other' with value of the limiting probability. Proof is only a sketch."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
    "algorithm_class": null,
    "quantity": "regret_unspecified",
    "dependence": "instance_dependent",
@@ -96,14 +181,15 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "K*log(T)/Delta_min",
+    "expression": "K*log(T)/Delta",
     "expression_latex": "\\mathcal{O}(K\\ln(T)/\\Delta)",
-    "regime": "T sufficiently large (t > C for a problem-dependent constant C)"
+    "regime": "asymptotic: T larger than a problem-dependent constant C"
    },
-   "symbols": {},
+   "symbols": {
+    "Delta": "difference between the rewards of the best two arms (preference gap between best two arms)"
+   },
    "conditions": [
-    "Approximate Linearity holds with some gamma > 0",
-    "total ordering of arms"
+    "Approximate Linearity with some gamma > 0"
    ],
    "tuning": [],
    "is_new": true,
@@ -113,63 +199,45 @@
     "quote": "Under Approximate Linearity, \\multisparring converges to the optimal arm with asymptotically optimal no-regret rate of $\\mathcal{O}(K\\ln(T)/\\Delta)$."
    },
    "confidence": "low",
-   "notes": "Delta is 'the difference between the rewards of the best two arms', mapped to Delta_min. Statement is informal and asymptotic (only holds after a problem-dependent time); proof is a sketch. Regret type (expectation vs realized) not stated. Theorem 1 (convergence lim P(b_t=b_1)=1) not recorded as a regret bound."
+   "notes": "Asymptotic, informal statement; proof is a sketch. Paper says it holds once t > C for some problem-dependent constant C; finite-time guarantee left open. Regret type (expectation) not explicitly stated. Dependence on m and gamma not shown."
   }
  ],
  "cited_results": [
   {
    "cited_key": "agrawal2012",
    "cited_title": "Analysis of thompson sampling for the multi-armed bandit problem",
-   "cited_first_author": "Shipra Agrawal",
+   "cited_first_author": "Agrawal",
    "cited_year": 2012,
    "cited_arxiv_id": null,
    "algorithm_name": "Thompson Sampling (Beta-Bernoulli)",
    "algorithm_registry_id": "thompson_sampling_beta",
    "side": "upper",
-   "setting_description": "K-armed stochastic MAB, rewards in [0,1]; Delta is the gap between the best two arms",
+   "setting_description": "K-armed stochastic MAB with rewards in [0,1]; Delta = gap between best two arms",
    "bound": {
     "notation": "O",
-    "expression": "K*log(T)/Delta_min",
+    "expression": "K*log(T)/Delta",
     "expression_latex": "\\mathcal{O}\\left(\\frac{K}{\\Delta}\\ln T \\right)",
     "regime": null
    },
-   "where": "Lemma 1"
-  },
-  {
-   "cited_key": "kaufmann2012",
-   "cited_title": "Thompson sampling: An asymptotically optimal finite-time analysis",
-   "cited_first_author": "Emilie Kaufmann",
-   "cited_year": 2012,
-   "cited_arxiv_id": null,
-   "algorithm_name": "Thompson Sampling (Beta-Bernoulli)",
-   "algorithm_registry_id": "thompson_sampling_beta",
-   "side": "upper",
-   "setting_description": "K-armed stochastic MAB, rewards in [0,1]; Delta is the gap between the best two arms",
-   "bound": {
-    "notation": "O",
-    "expression": "K*log(T)/Delta_min",
-    "expression_latex": "\\mathcal{O}\\left(\\frac{K}{\\Delta}\\ln T \\right)",
-    "regime": null
-   },
-   "where": "Lemma 1"
+   "where": "Lemma 1 (also attributed to kaufmann2012)"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:33:19",
+  "date": "2026-10-21T15:45:08",
   "source_chars": 61671,
-  "input_tokens": 56832,
-  "output_tokens": 2774,
-  "cost_usd_equiv": 0.2925548,
+  "input_tokens": 63419,
+  "output_tokens": 3449,
+  "cost_usd_equiv": 0.307302,
   "status": "extracted"
  }
 }

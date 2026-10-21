@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Tight Lower Bounds for Combinatorial Multi-Armed Bandits",
   "arxiv_id": "2002.05392",
@@ -25,7 +25,8 @@
    "noise": "bounded_01",
    "learner_knows": [
     "T",
-    "K"
+    "m",
+    "reward_family"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -35,29 +36,61 @@
     "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "unspecified",
+    "reward": "unspecified",
+    "loss_scale": "unspecified"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Reward is a known general (possibly nonlinear, non-monotone) differentiable 'smooth index invariant' function r(S;mu) of the means of the selected base arms",
-    "Base-arm observations in [0,1] may be correlated within a round",
-    "Hard instances are I-disjoint: a common subset I of arms in every action, other arms in exactly one action",
-    "Canonical K = number of base arms (paper's m); canonical m = action size (paper's K); learner knows the action size and reward function"
+    "Known general (possibly non-monotone) differentiable reward function r(S; mu) of the means of the selected base arms, assumed smooth index invariant",
+    "Base-arm observations in [0,1], possibly correlated across arms",
+    "Hard instances are I-disjoint action sets (a common subset I in all actions, other arms in exactly one action)"
    ],
-   "definition_quote": "Denote the number of arms (`base arms') by $\\Narms$, and let $\\actionset\\subset 2^{\\brs*{\\Narms}}$ be the set of possible actions ... The number of base arms in each action ... is bounded by $\\abs{\\action}\\le\\Nbatch$ ... the arms generate an observation vector $\\obs{t}\\in\\brs*{0,1}^\\Narms$, sampled from a fixed distribution independently of other rounds. ... the agent aims to minimize its regret $R(T) = \\sum_{t=1}^T\\br*{\\reward{\\action^*}{\\meanvec}-\\reward{\\action_t}{\\meanvec}}$"
+   "definition_quote": "Denote the number of arms (`base arms') by $m$, and let $\\mathcal{S}\\subset 2^{[m]}$ be the set of possible actions ... The number of base arms in each action is bounded by $|S|\\le K$ ... the arms generate an observation vector $X^{(t)}\\in[0,1]^m$ ... The goal of the agent is to maximize a known reward function $r(S;\\mu)$"
   }
  ],
  "algorithms": [],
@@ -76,26 +109,28 @@
    "compute": "not_stated",
    "bound": {
     "notation": "liminf",
-    "expression": "sum_S_KL*log(T)",
-    "expression_latex": "\\liminf_{T\\to\\infty}\\frac{\\E_\\unu\\brs*{R(T)}}{\\ln T} \\ge \\sum_{\\action:\\dr{\\action}>0}\\frac{\\dr{\\action}}{\\kl(\\nu_\\action,\\nu_{\\action^*})}",
+    "expression": "sum_subopt(Delta_i/KL_i)*log(T)",
+    "expression_latex": "\\liminf_{T\\to\\infty}\\frac{\\E_\\unu[R(T)]}{\\ln T} \\ge \\sum_{S:\\Delta_S>0}\\frac{\\Delta_S}{D_{KL}(\\nu_S,\\nu_{S^*})}",
     "regime": null
    },
    "symbols": {
-    "sum_S_KL": "sum over suboptimal actions S of Delta_S / KL(nu_S, nu_{S*}), where nu_S is the joint distribution of the arms in action S"
+    "Delta_i": "gap of suboptimal action (super arm) S",
+    "KL_i": "KL divergence between the joint observation distributions of action S and of the optimal action"
    },
    "conditions": [
-    "I-disjoint CMAB problem with |S| = m for all actions",
-    "there exists an arm i not in I in S* with nondegenerate distribution and nonzero gradient of r at S*"
+    "reward function smooth index invariant, |S| = K for all actions",
+    "I-disjoint CMAB instance",
+    "there is an arm i not in I in S* with non-deterministic observation and nonzero gradient of reward"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "lemma:generalDependentBound",
     "number": "Lemma (lemma:generalDependentBound)",
-    "quote": "Let $\\rewardNoArgs$ be a smooth index invariant reward function with $\\abs*{\\action}=\\Nbatch$ for all $\\action\\in\\actionset$. Also, let $\\unu$ be the action distribution of an $I$-disjoint CMAB problem ... Then, for all consistent strategies $\\psi$ and all suboptimal actions $S$, liminf E[N_S(T)]/ln T >= 1/KL(nu_S,nu_{S*}). Specifically, ... liminf E[R(T)]/ln T >= sum_{S:Delta_S>0} Delta_S/KL(nu_S,nu_{S*})"
+    "quote": "Then, for all consistent strategies $\\psi$ and all suboptimal actions $S$, $\\liminf_{T\\to\\infty}\\frac{\\E_\\unu[N_{\\psi,S}(T)]}{\\ln T} \\ge \\frac{1}{\\kl(\\nu_S,\\nu_{S^*})}$. Specifically, it holds that $\\liminf_{T\\to\\infty}\\frac{\\E_\\unu[R(T)]}{\\ln T} \\ge \\sum_{S:\\Delta_S>0}\\frac{\\Delta_S}{\\kl(\\nu_S,\\nu_{S^*})}$."
    },
    "confidence": "medium",
-   "notes": "Lai-Robbins type bound adapted to I-disjoint CMAB; also gives pull-count bound per action."
+   "notes": "Sum is over suboptimal super arms (actions), not base arms; holds for every I-disjoint instance satisfying the conditions."
   },
   {
    "id": "r2",
@@ -111,26 +146,29 @@
    "compute": "not_stated",
    "bound": {
     "notation": "liminf",
-    "expression": "(K - 2*m)*G_dep/(8*Delta_min)*log(T)",
-    "expression_latex": "\\liminf_{T\\to\\infty} \\frac{\\E_\\unu\\brs*{R(t)}}{\\ln T} \\ge \\max_\\commset \\frac{(\\Narms-2\\Nbatch)\\tilde{\\gamma}_g^2(\\meanvec;\\commset)}{8\\Ndis\\dr{}}",
-    "regime": "Delta_min small enough"
+    "expression": "(m_base - 2*m)*gamma_tilde_sq/(8*K_I*Delta_min)*log(T)",
+    "expression_latex": "\\liminf_{T\\to\\infty} \\frac{\\E[R(t)]}{\\ln T} \\ge \\max_I \\frac{(m-2K)\\tilde{\\gamma}_g^2(\\mu;I)}{8K_I\\Delta}",
+    "regime": "Delta small enough"
    },
    "symbols": {
-    "G_dep": "max over subsets I of tilde_gamma_g^2(mu;I)/K_I, with tilde_gamma_g the modified Gini-weighted smoothness and K_I = m - |I|"
+    "m_base": "number of base arms (paper's m)",
+    "m": "action size (paper's K)",
+    "K_I": "K - |I|, effective action size for common set I",
+    "gamma_tilde_sq": "modified Gini-weighted smoothness tilde gamma_g^2(mu; I), maximized jointly with K_I over I"
    },
    "conditions": [
-    "reward function is smooth index invariant",
-    "for any mu in [0,1]^m there exists an I-disjoint instance with E[nu_{S*}] = mu and minimal gap Delta_min (existential instance)"
+    "reward function smooth index invariant",
+    "exists an I-disjoint instance with minimal gap Delta and optimal-action means mu (any mu in [0,1]^K)"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "theorem:dependent_lower_bound",
     "number": "Theorem 1",
-    "quote": "Let $\\rewardNoArgs$ be a smooth index invariant reward function. For any $\\meanvec\\in\\brs*{0,1}^\\Nbatch$ and any small enough $\\dr{}>0$, there exists an instance of an $\\commset$-disjoint bandit problem $\\unu$ with minimal gap $\\dr{}$ and $\\E\\brs*{\\nu_{\\action^*}}=\\meanvec$, such that the expected regret of any consistent algorithm is bounded by liminf E[R(t)]/ln T >= max_I (m-2K) tilde_gamma_g^2(mu;I)/(8 K_I Delta) = DB^*_r(Delta;mu)."
+    "quote": "For any $\\mu\\in[0,1]^K$ and any small enough $\\Delta>0$, there exists an instance of an $I$-disjoint bandit problem with minimal gap $\\Delta$ and $\\E[\\nu_{S^*}]=\\mu$, such that the expected regret of any consistent algorithm is bounded by $\\liminf_{T\\to\\infty} \\frac{\\E[R(t)]}{\\ln T} \\ge \\max_I \\frac{(m-2K)\\tilde{\\gamma}_g^2(\\mu;I)}{8K_I\\Delta} \\triangleq DB^*_r(\\Delta;\\mu)$."
    },
    "confidence": "high",
-   "notes": "Paper's m (base arms) mapped to canonical K, paper's K (action size) to canonical m. Combined with Prop. relations, monotone rewards give tilde-Omega(gamma_g^2 m ln T / Delta) (informal); linear and PMC special cases reproduce known bounds."
+   "notes": "Max over I omitted from expression; gamma_tilde_sq/K_I denote the maximizing pair. Paper notes this reproduces linear (Omega(mK log T/Delta)) and PMC bounds."
   },
   {
    "id": "r3",
@@ -146,27 +184,29 @@
    "compute": "not_stated",
    "bound": {
     "notation": "liminf",
-    "expression": "M_items**2*(K - 2*m)*G_dep/(8*Delta_min)*log(T)",
-    "expression_latex": "\\liminf_{T\\to\\infty} \\frac{\\E_\\unu\\brs*{R(t)}}{\\ln T} \\ge \\Nitems^2\\cdot DB^*_r(\\dr{};\\meanvec)",
-    "regime": "Delta_min small enough"
+    "expression": "M_items**2*(m_base - 2*m)*gamma_tilde_sq/(8*K_I*Delta_min)*log(T)",
+    "expression_latex": "\\liminf_{T\\to\\infty} \\frac{\\E[R(t)]}{\\ln T} \\ge M^2\\cdot DB^*_r(\\Delta;\\mu)",
+    "regime": "Delta small enough"
    },
    "symbols": {
-    "M_items": "number of summands of the reward tilde r = sum_{i=1}^M r(mu_i)",
-    "G_dep": "max over I of tilde_gamma_g^2(mu;I)/K_I"
+    "M_items": "number of summands M in the sum reward tilde r = sum_i r(mu_i)",
+    "m_base": "number of base arms per summand (paper's m)",
+    "m": "action size per summand (paper's K)",
+    "K_I": "K - |I|",
+    "gamma_tilde_sq": "modified Gini-weighted smoothness, maximized over I"
    },
    "conditions": [
-    "reward is a sum of M smooth index-invariant functions over M independent blocks",
-    "existential instance with optimal action means mu_i = mu for all blocks"
+    "reward is a sum of M copies of a smooth index invariant reward function"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "corollary: sum index invariant dependent",
     "number": "Corollary 7",
-    "quote": "Let $\\rewardNoArgs$ be a smooth index invariant reward function and let $\\tilde\\meanvec=\\brs*{\\meanvec_1,\\dots,\\meanvec_\\Nitems}$ ... define $\\tilde{\\rewardNoArgs}\\br*{\\tilde\\meanvec} = \\sum_{i=1}^\\Nitems \\rewardvec{\\meanvec_i}$. Then ... the expected regret of any consistent algorithm is bounded by liminf E[R(t)]/ln T >= M^2 DB^*_r(Delta;mu)."
+    "quote": "Then, for any $\\mu\\in[0,1]^K$, there exists a CMAB instance that aims to maximize $\\tilde{r}$ and has a minimal gap $\\Delta$, such that the optimal action has means $\\mu_i=\\mu$ for all $i\\in[M]$ and the expected regret of any consistent algorithm is bounded by $\\liminf_{T\\to\\infty} \\frac{\\E[R(t)]}{\\ln T} \\ge M^2\\cdot DB^*_r(\\Delta;\\mu)$."
    },
    "confidence": "medium",
-   "notes": "K and m here refer to the per-summand base-arm count and action size."
+   "notes": "Sum-reward extension used to recover PMC lower bounds."
   },
   {
    "id": "r4",
@@ -175,36 +215,37 @@
    "algorithm": null,
    "algorithm_class": "all",
    "quantity": "pseudo_regret",
-   "dependence": "worst_case",
+   "dependence": "instance_dependent",
    "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "known",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "T*Delta*(1 - m_I/(K - m) - sqrt(T*m_I*KL_nu/(2*(K - m))))",
-    "expression_latex": "T\\dr{}\\br*{\\!1-\\frac{\\Ndis}{\\Narms-\\Nbatch} -\\sqrt{\\frac{1}{2}\\frac{T\\Ndis}{\\Narms-\\Nbatch}\\kl(\\nu,\\nu^*)}}",
+    "expression": "T*Delta*(1 - K_I/(m_base - m) - sqrt(T*K_I*KL_nu/(2*(m_base - m))))",
+    "expression_latex": "T\\Delta\\left(1-\\frac{K_I}{m-K} -\\sqrt{\\frac{1}{2}\\frac{TK_I}{m-K}D_{KL}(\\nu,\\nu^*)}\\right)",
     "regime": null
    },
    "symbols": {
-    "m_I": "K_I = m - |I|, effective action size",
-    "KL_nu": "KL(nu, nu*) between the suboptimal and optimal action distributions"
+    "m_base": "number of base arms (paper's m)",
+    "m": "action size (paper's K)",
+    "K_I": "K - |I|",
+    "KL_nu": "KL divergence between the suboptimal and optimal action distributions nu, nu*"
    },
    "conditions": [
-    "K > m, |I| <= m",
-    "nu, nu* agree on arms in I, which are independent of other arms",
-    "Delta = r(mu*) - r(mu) > 0",
-    "instance chosen depending on the strategy and T"
+    "smooth index invariant reward",
+    "|I| <= K and m_base > K",
+    "instance constructed for the given strategy and horizon"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "lemma:generalIndependentBound",
     "number": "Lemma (lemma:generalIndependentBound)",
-    "quote": "... Then, for any horizon $T$ and any strategy $\\psi$, there exists an $\\commset$-disjoint CMAB problem with arm distribution $\\unu'$ such that $\\nu_{\\action^*}=\\meanvec^*$ and its regret under strategy $\\psi$ is bounded by E[R(T)] >= T Delta (1 - K_I/(m-K) - sqrt(1/2 T K_I/(m-K) KL(nu,nu*)))."
+    "quote": "Then, for any horizon $T$ and any strategy $\\psi$, there exists an $I$-disjoint CMAB problem with arm distribution $\\unu'$ such that $\\nu_{S^*}=\\mu^*$ and its regret under strategy $\\psi$ is bounded by $\\E_{\\unu'}[R(T)] \\ge T\\Delta(1-\\frac{K_I}{m-K} -\\sqrt{\\frac{1}{2}\\frac{TK_I}{m-K}\\kl(\\nu,\\nu^*)})$."
    },
    "confidence": "medium",
-   "notes": "General minimax-style lemma; paper's m/K mapped to canonical K/m."
+   "notes": "General technical lower bound; Delta is the gap between nu* and nu (all suboptimal actions share the gap)."
   },
   {
    "id": "r5",
@@ -220,28 +261,31 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "G_ind/32*sqrt(T*(K - m))",
-    "expression_latex": "\\E_{\\unu'}\\brs*{R(T)} \\ge \\max_{\\commset}\\frac{\\tilde{\\gamma}_g(\\meanvec;\\commset)}{32}\\sqrt{\\frac{T(\\Narms-\\Nbatch)}{\\Ndis}}",
+    "expression": "gamma_tilde/32*sqrt(T*(m_base - m)/K_I)",
+    "expression_latex": "\\max_{I}\\frac{\\tilde{\\gamma}_g(\\mu;I)}{32}\\sqrt{\\frac{T(m-K)}{K_I}}",
     "regime": "T >= T_0"
    },
    "symbols": {
-    "G_ind": "max over subsets I of tilde_gamma_g(mu;I)/sqrt(K_I), K_I = m - |I|",
-    "T_0": "unspecified horizon threshold"
+    "m_base": "number of base arms (paper's m)",
+    "m": "action size (paper's K)",
+    "K_I": "K - |I|",
+    "gamma_tilde": "modified Gini-weighted smoothness tilde gamma_g(mu; I), maximized over I",
+    "T_0": "sufficiently large horizon threshold"
    },
    "conditions": [
-    "reward function is smooth index invariant",
-    "K >= 3m (paper: number of base arms >= 3 x action size)",
-    "for any mu in [0,1]^m, instance chosen depending on the strategy and T, with E[nu'_{S*}] = mu"
+    "smooth index invariant reward",
+    "m_base >= 3K",
+    "any mu in [0,1]^K: instance has E[nu'_{S*}] = mu"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "theorem:independent_lower_bound",
     "number": "Theorem (theorem:independent_lower_bound)",
-    "quote": "Let $\\rewardNoArgs$ be a smooth index invariant reward function and assume that $\\Narms\\ge3\\Nbatch$. Then, for any $\\meanvec\\in\\brs*{0,1}^\\Nbatch$, any $T\\ge T_0$ and for any strategy $\\psi$, there exists an $\\commset$-disjoint CMAB problem $\\unu'$ with $\\E\\brs*{\\nu'_{\\action^*}}=\\meanvec$ such that its regret under strategy $\\psi$ is bounded by E[R(T)] >= max_I tilde_gamma_g(mu;I)/32 sqrt(T(m-K)/K_I) = IB^*_r(mu)."
+    "quote": "Let $r$ be a smooth index invariant reward function and assume that $m\\ge3K$. Then, for any $\\mu\\in[0,1]^K$, any $T\\ge T_0$ and for any strategy $\\psi$, there exists an $I$-disjoint CMAB problem $\\unu'$ with $\\E[\\nu'_{S^*}]=\\mu$ such that its regret under strategy $\\psi$ is bounded by $\\E_{\\unu'}[R(T)] \\ge \\max_{I}\\frac{\\tilde{\\gamma}_g(\\mu;I)}{32}\\sqrt{\\frac{T(m-K)}{K_I}} \\triangleq IB^*_r(\\mu)$."
    },
    "confidence": "high",
-   "notes": "Printed theorem number not visible. Monotone case gives tilde-Omega(gamma_g sqrt(KT)) via propositions (informal)."
+   "notes": "Theorem number not printed (restatable environment). Combined with Proposition (smoothness relation), paper states Omega-tilde(gamma_g sqrt(m T)) for monotone rewards informally."
   },
   {
    "id": "r6",
@@ -257,25 +301,28 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "M_items*G_ind/32*sqrt(T*(K - m))",
-    "expression_latex": "\\E_{\\unu'}\\brs*{R(T)} \\ge \\Nitems\\cdot IB^*_r(\\meanvec)",
+    "expression": "M_items*gamma_tilde/32*sqrt(T*(m_base - m)/K_I)",
+    "expression_latex": "\\E_{\\unu'}[R(T)] \\ge M\\cdot IB^*_r(\\mu)",
     "regime": "T >= T_0"
    },
    "symbols": {
-    "M_items": "number of summands of the reward",
-    "G_ind": "max over I of tilde_gamma_g(mu;I)/sqrt(K_I)",
-    "T_0": "unspecified horizon threshold"
+    "M_items": "number of summands M in sum reward",
+    "m_base": "number of base arms per summand",
+    "m": "action size per summand (paper's K)",
+    "K_I": "K - |I|",
+    "gamma_tilde": "modified Gini-weighted smoothness, maximized over I",
+    "T_0": "sufficiently large horizon threshold"
    },
    "conditions": [
-    "reward is a sum of M smooth index-invariant functions over independent blocks",
-    "K >= 3m"
+    "reward is a sum of M copies of a smooth index invariant reward",
+    "m_base >= 3K"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "corollary: sum index invariant independent",
     "number": "Corollary 8",
-    "quote": "Under the notations of Corollary 7, if $\\Narms\\ge3\\Nbatch$, then for any $\\meanvec\\in\\brs*{0,1}^\\Nbatch$, any $T\\ge T_0$ and for any strategy $\\psi$, there exists CMAB problem $\\unu'$ ... whose regret under strategy $\\psi$ is bounded by E[R(T)] >= M IB^*_r(mu)."
+    "quote": "Under the notations of Corollary 7, if $m\\ge3K$, then for any $\\mu\\in[0,1]^K$, any $T\\ge T_0$ and for any strategy $\\psi$, there exists CMAB problem $\\unu'$ such that the optimal action has means $\\mu_i=\\mu$ for all $i\\in[M]$ whose regret under strategy $\\psi$ is bounded by $\\E_{\\unu'}[R(T)] \\ge M\\cdot IB^*_r(\\mu)$."
    },
    "confidence": "medium",
    "notes": ""
@@ -283,19 +330,91 @@
  ],
  "cited_results": [
   {
+   "cited_key": "kveton2015tight",
+   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
+   "cited_first_author": "Branislav Kveton",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Combinatorial semi-bandit, linear reward, problem-dependent; m base arms (m_base), action size K (m)",
+   "bound": {
+    "notation": "O",
+    "expression": "m_base*m*log(T)/Delta_min",
+    "expression_latex": "O(\\frac{mK\\ln T}{\\Delta_{\\min}})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "kveton2015tight",
+   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
+   "cited_first_author": "Branislav Kveton",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Combinatorial semi-bandit, linear reward, problem-dependent",
+   "bound": {
+    "notation": "Omega",
+    "expression": "m_base*m*log(T)/Delta_min",
+    "expression_latex": "\\Omega(\\frac{mK\\ln T}{\\Delta_{\\min}})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "kveton2015tight",
+   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
+   "cited_first_author": "Branislav Kveton",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Combinatorial semi-bandit, linear reward, problem-independent",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(m_base*m*T)",
+    "expression_latex": "O(\\sqrt{mKT})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "kveton2015tight",
+   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
+   "cited_first_author": "Branislav Kveton",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Combinatorial semi-bandit, linear reward, problem-independent",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(m_base*m*T)",
+    "expression_latex": "\\Omega(\\sqrt{mKT})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
    "cited_key": "wang2018thompson",
    "cited_title": "Thompson sampling for combinatorial semi-bandits",
    "cited_first_author": "Siwei Wang",
    "cited_year": 2018,
    "cited_arxiv_id": null,
-   "algorithm_name": "CTS (Thompson sampling)",
+   "algorithm_name": "Thompson sampling for combinatorial semi-bandits",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "CMAB semi-bandit, general reward with global Lipschitz constant gamma_inf, independent arms; K base arms, action size m",
+   "setting_description": "Combinatorial semi-bandit, general Lipschitz reward (global Lipschitz constant gamma_inf), independent arms, problem-dependent",
    "bound": {
     "notation": "O",
-    "expression": "gamma_inf**2*K*m*log(T)/Delta_min",
-    "expression_latex": "\\Ocal\\br*{\\frac{\\gamma_\\infty^2\\Narms\\Nbatch\\ln T}{\\dr{\\min}}}",
+    "expression": "gamma_inf**2*m_base*m*log(T)/Delta_min",
+    "expression_latex": "O(\\frac{\\gamma_\\infty^2 mK\\ln T}{\\Delta_{\\min}})",
     "regime": null
    },
    "where": "Table 1"
@@ -309,11 +428,11 @@
    "algorithm_name": "BC-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "CMAB semi-bandit, monotone reward with Gini-smoothness gamma_g",
+   "setting_description": "Combinatorial semi-bandit, monotone reward with Gini-smoothness gamma_g, problem-dependent",
    "bound": {
     "notation": "O",
-    "expression": "gamma_g**2*K*log(m)**2*log(T)/Delta_min",
-    "expression_latex": "\\Ocal\\br*{\\frac{\\gamma_g^2\\Narms\\ln^2\\Nbatch\\ln T}{\\dr{\\min}}}",
+    "expression": "gamma_g**2*m_base*log(m)**2*log(T)/Delta_min",
+    "expression_latex": "O(\\frac{\\gamma_g^2 m\\ln^2K\\ln T}{\\Delta_{\\min}})",
     "regime": null
    },
    "where": "Table 1"
@@ -327,101 +446,11 @@
    "algorithm_name": "BC-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "CMAB semi-bandit, monotone reward with Gini-smoothness gamma_g, problem-independent",
+   "setting_description": "Combinatorial semi-bandit, monotone reward with Gini-smoothness gamma_g, problem-independent",
    "bound": {
     "notation": "O",
-    "expression": "gamma_g*log(m)*sqrt(K*T)",
-    "expression_latex": "\\Ocal\\br*{\\gamma_g\\ln\\Nbatch\\sqrt{\\Narms T}}",
-    "regime": null
-   },
-   "where": "Table 1"
-  },
-  {
-   "cited_key": "kveton2015tight",
-   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
-   "cited_first_author": "Branislav Kveton",
-   "cited_year": 2015,
-   "cited_arxiv_id": null,
-   "algorithm_name": "CombUCB1",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Linear combinatorial semi-bandit, K base arms, action size m",
-   "bound": {
-    "notation": "O",
-    "expression": "K*m*log(T)/Delta_min",
-    "expression_latex": "\\Ocal\\br*{\\frac{\\Narms\\Nbatch\\ln T}{\\dr{\\min}}}",
-    "regime": null
-   },
-   "where": "Table 1"
-  },
-  {
-   "cited_key": "kveton2015tight",
-   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
-   "cited_first_author": "Branislav Kveton",
-   "cited_year": 2015,
-   "cited_arxiv_id": null,
-   "algorithm_name": null,
-   "algorithm_registry_id": null,
-   "side": "lower",
-   "setting_description": "Linear combinatorial semi-bandit, problem-dependent",
-   "bound": {
-    "notation": "Omega",
-    "expression": "K*m*log(T)/Delta_min",
-    "expression_latex": "\\Omega\\br*{\\frac{\\Narms\\Nbatch\\ln T}{\\dr{\\min}}}",
-    "regime": null
-   },
-   "where": "Table 1"
-  },
-  {
-   "cited_key": "kveton2015tight",
-   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
-   "cited_first_author": "Branislav Kveton",
-   "cited_year": 2015,
-   "cited_arxiv_id": null,
-   "algorithm_name": "CombUCB1",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Linear combinatorial semi-bandit, problem-independent",
-   "bound": {
-    "notation": "O",
-    "expression": "sqrt(K*m*T)",
-    "expression_latex": "\\Ocal\\br*{\\sqrt{\\Narms\\Nbatch T}}",
-    "regime": null
-   },
-   "where": "Table 1"
-  },
-  {
-   "cited_key": "kveton2015tight",
-   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
-   "cited_first_author": "Branislav Kveton",
-   "cited_year": 2015,
-   "cited_arxiv_id": null,
-   "algorithm_name": null,
-   "algorithm_registry_id": null,
-   "side": "lower",
-   "setting_description": "Linear combinatorial semi-bandit, problem-independent",
-   "bound": {
-    "notation": "Omega",
-    "expression": "sqrt(K*m*T)",
-    "expression_latex": "\\Omega\\br*{\\sqrt{\\Narms\\Nbatch T}}",
-    "regime": null
-   },
-   "where": "Table 1"
-  },
-  {
-   "cited_key": "merlisM19",
-   "cited_title": "Batch-size independent regret bounds for the combinatorial multi-armed bandit problem",
-   "cited_first_author": "Nadav Merlis",
-   "cited_year": 2019,
-   "cited_arxiv_id": null,
-   "algorithm_name": "BC-UCB",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Probabilistic Maximum Coverage with M items, problem-dependent",
-   "bound": {
-    "notation": "O",
-    "expression": "K*M_items**2*log(m)**2*log(T)/Delta_min",
-    "expression_latex": "\\Ocal\\br*{\\frac{\\Narms\\Nitems^2\\ln^2\\Nbatch\\ln T}{\\dr{\\min}}}",
+    "expression": "gamma_g*log(m)*sqrt(m_base*T)",
+    "expression_latex": "O(\\gamma_g\\ln K\\sqrt{mT})",
     "regime": null
    },
    "where": "Table 1"
@@ -435,29 +464,11 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Probabilistic Maximum Coverage with M items, problem-dependent",
+   "setting_description": "Probabilistic maximum coverage (PMC) semi-bandit with M items, problem-dependent",
    "bound": {
     "notation": "Omega",
-    "expression": "K*M_items**2*log(T)/Delta_min",
-    "expression_latex": "\\Omega\\br*{\\frac{\\Narms\\Nitems^2\\ln T}{\\dr{\\min}}}",
-    "regime": null
-   },
-   "where": "Table 1"
-  },
-  {
-   "cited_key": "merlisM19",
-   "cited_title": "Batch-size independent regret bounds for the combinatorial multi-armed bandit problem",
-   "cited_first_author": "Nadav Merlis",
-   "cited_year": 2019,
-   "cited_arxiv_id": null,
-   "algorithm_name": "BC-UCB",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Probabilistic Maximum Coverage with M items, problem-independent",
-   "bound": {
-    "notation": "O",
-    "expression": "M_items*log(m)*sqrt(K*T)",
-    "expression_latex": "\\Ocal\\br*{\\Nitems\\ln\\Nbatch\\sqrt{\\Narms T}}",
+    "expression": "m_base*M_items**2*log(T)/Delta_min",
+    "expression_latex": "\\Omega(\\frac{mM^2\\ln T}{\\Delta_{\\min}})",
     "regime": null
    },
    "where": "Table 1"
@@ -471,50 +482,32 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Probabilistic Maximum Coverage with M items, problem-independent",
+   "setting_description": "Probabilistic maximum coverage (PMC) semi-bandit with M items, problem-independent",
    "bound": {
     "notation": "Omega",
-    "expression": "M_items*sqrt(K*T)",
-    "expression_latex": "\\Omega\\br*{\\Nitems\\sqrt{\\Narms T}}",
+    "expression": "M_items*sqrt(m_base*T)",
+    "expression_latex": "\\Omega(M\\sqrt{mT})",
     "regime": null
    },
    "where": "Table 1"
-  },
-  {
-   "cited_key": "auer2002nonstochastic",
-   "cited_title": "The nonstochastic multiarmed bandit problem",
-   "cited_first_author": "Peter Auer",
-   "cited_year": 2002,
-   "cited_arxiv_id": null,
-   "algorithm_name": null,
-   "algorithm_registry_id": null,
-   "side": "lower",
-   "setting_description": "K-armed bandit, problem-independent",
-   "bound": {
-    "notation": "Omega",
-    "expression": "sqrt(K*T)",
-    "expression_latex": "\\Omega(\\sqrt{KT})",
-    "regime": null
-   },
-   "where": "Section 2"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:08:47",
+  "date": "2026-10-21T15:16:51",
   "source_chars": 101030,
-  "input_tokens": 173396,
-  "output_tokens": 18912,
-  "cost_usd_equiv": 0.9120876,
+  "input_tokens": 88093,
+  "output_tokens": 8764,
+  "cost_usd_equiv": 0.610994,
   "status": "extracted"
  }
 }

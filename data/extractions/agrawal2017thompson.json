@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Thompson Sampling for the MNL-Bandit",
   "arxiv_id": "1706.00977",
@@ -26,7 +26,8 @@
    "context": "none",
    "noise": "general_model_class",
    "learner_knows": [
-    "T"
+    "T",
+    "m"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -36,28 +37,60 @@
     "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "at_most_m",
+    "reward": "unspecified",
+    "loss_scale": "per_action"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Actions are assortments S of at most K of N items; feedback is the index of a single chosen item (or the outside option 0) drawn from an MNL choice model p_i(S)=v_i/(1+sum_{j in S} v_j)",
-    "Expected reward of assortment is nonlinear: R(S,v)=sum r_i v_i/(1+sum v_j); revenues r_i in [0,1] known to learner",
-    "Learner knows the cardinality bound K (here mapped to m)"
+    "Feedback is a single choice (index of the chosen item or the no-purchase option) drawn from a Multinomial Logit choice model over the offered subset",
+    "Expected reward of a subset is the MNL revenue sum_i r_i v_i/(1+sum_j v_j), nonlinear in the unknown parameters v_i; item revenues r_i are known"
    ],
-   "definition_quote": "consider an option space containing $N$ distinct elements ... this selection is given by a Multinomial Logit (MNL) choice model ... minimize the {\\it regret} defined as \\Reg(T,\\mb{v}) = \\Ex\\left[\\sum_{t=1}^T R(S^*,\\mb{v}) - R(S_t,\\mb{v})\\right]"
+   "definition_quote": "at each time step, the decision maker selects a subset of cardinality $K$ from $N$ possible items (arms), and observes a (bandit) feedback in the form of the index of one of the items in said subset, or none. ... the feedback is governed by a Multinomial Logit (MNL) choice model whose parameters are a priori unknown."
   }
  ],
  "algorithms": [
@@ -70,7 +103,7 @@
     "thompson_sampling"
    ],
    "requires_knowledge_of": [
-    "K"
+    "m"
    ]
   },
   {
@@ -83,7 +116,7 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "K"
+    "m"
    ]
   }
  ],
@@ -107,15 +140,15 @@
     "regime": null
    },
    "symbols": {
-    "N_items": "number of items N (base arms)",
-    "m": "maximum assortment size (paper's K)"
+    "N_items": "number of items (base arms), paper's N"
    },
    "conditions": [
-    "v_i <= v_0 = 1 for all items (Assumption 1)",
-    "r_i in [0,1]"
+    "v_i <= v_0 = 1 for all items (Assumption 1: outside option at least as preferred as any item)",
+    "item revenues r_i in [0,1]",
+    "T >= N (used in the proof)"
    ],
    "tuning": [
-    "sigma_hat_i = sqrt(50 v_hat(v_hat+1)/n_i) + 75 sqrt(log TK)/n_i",
+    "sigma_hat_i = sqrt(50 v_hat_i (v_hat_i+1)/n_i) + 75 sqrt(log TK)/n_i",
     "K correlated Gaussian samples per epoch"
    ],
    "is_new": true,
@@ -125,7 +158,7 @@
     "quote": "For any instance $\\mb{v} = (v_0, \\cdots, v_N)$ of the \\banditMNL~problem with $N$ products, $r_i\\in [0,1]$, and satisfying Assumption \\ref{assumption1}, the regret of Algorithm~\\ref{learn_algo_normal} in time $T$ is bounded as, \\reg(T,\\mb{v}) \\leq C_1\\sqrt{NT}\\log{TK} + C_2N\\log^2{TK}, where $C_1$ and $C_2$ are absolute constants (independent of problem parameters)."
    },
    "confidence": "high",
-   "notes": "C_1, C_2 unspecified absolute constants, so recorded as O. Regret defined via expected revenues, hence pseudo-regret. Paper's K (assortment size) mapped to m; paper's N to N_items. Proof uses T >= N in a step."
+   "notes": "Paper's K (max subset size) mapped to m; paper's N to N_items. Regret defined via expected revenues R(S,v), i.e. pseudo-regret. Absolute constants unspecified so recorded with O notation."
   }
  ],
  "cited_results": [
@@ -138,7 +171,7 @@
    "algorithm_name": "UCB-based MNL-Bandit algorithm",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "MNL-Bandit, N items, assortments of size at most K, worst-case regret",
+   "setting_description": "MNL-Bandit, worst-case regret",
    "bound": {
     "notation": "O",
     "expression": "sqrt(N_items*T*log(T))",
@@ -156,7 +189,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "MNL-Bandit, N items, assortments of size at most K (m)",
+   "setting_description": "MNL-Bandit, minimax lower bound",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(N_items*T/m)",
@@ -174,7 +207,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "MNL-Bandit, N items, under assumption v_0 >= v_i",
+   "setting_description": "MNL-Bandit under assumption v_0 >= v_i, minimax lower bound",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(N_items*T)",
@@ -189,33 +222,33 @@
    "cited_first_author": "Rusmevichientong",
    "cited_year": 2010,
    "cited_arxiv_id": null,
-   "algorithm_name": "explore-first-exploit-later",
+   "algorithm_name": "explore-first-exploit-later (requires knowledge of gap)",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "MNL-Bandit with known gap between optimal and next-best assortment; asymptotic",
+   "setting_description": "MNL-Bandit with known gap between optimal and next-best assortment, asymptotic",
    "bound": {
     "notation": "O",
     "expression": "N_items*log(T)",
     "expression_latex": "O(N\\log{T})",
-    "regime": "asymptotic, gap known"
+    "regime": "asymptotic"
    },
    "where": "Section 3 (Related Work)"
   },
   {
    "cited_key": "saure",
    "cited_title": "Optimal dynamic assortment planning with demand learning",
-   "cited_first_author": "Sauré",
+   "cited_first_author": "Saur\\'e",
    "cited_year": 2013,
    "cited_arxiv_id": null,
-   "algorithm_name": "explore-first-exploit-later",
+   "algorithm_name": "explore-first-exploit-later (requires knowledge of gap)",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "MNL-Bandit with known gap between optimal and next-best assortment; asymptotic",
+   "setting_description": "MNL-Bandit with known gap between optimal and next-best assortment, asymptotic",
    "bound": {
     "notation": "O",
     "expression": "N_items*log(T)",
     "expression_latex": "O(N\\log{T})",
-    "regime": "asymptotic, gap known"
+    "regime": "asymptotic"
    },
    "where": "Section 3 (Related Work)"
   }
@@ -223,19 +256,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:07:52",
+  "date": "2026-10-21T15:17:25",
   "source_chars": 116467,
-  "input_tokens": 89298,
-  "output_tokens": 3662,
-  "cost_usd_equiv": 0.5700428,
+  "input_tokens": 95885,
+  "output_tokens": 4018,
+  "cost_usd_equiv": 0.57841,
   "status": "extracted"
  }
 }

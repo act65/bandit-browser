@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Sum-max Submodular Bandits",
   "arxiv_id": "2311.05975",
@@ -16,7 +16,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Coverage-indicator subset selection with bandit feedback",
+   "name_in_paper": "Online selection of at most M items with reward = indicator that the chosen set hits the adversary's set (bandit feedback)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "adversarial_oblivious",
@@ -27,45 +27,76 @@
    "noise": "bounded_01",
    "learner_knows": [
     "T",
-    "K"
+    "d",
+    "m"
    ],
    "instance_assumptions": [],
    "extras": [],
    "action_set": {
-    "shape": "unspecified",
+    "shape": "finite",
     "time_varying": "fixed",
     "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "at_most_m",
+    "reward": "submodular",
+    "loss_scale": "per_action"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Reward on round t is the indicator that the chosen set (|C_t| <= m) intersects an adversarially chosen set A_t (max-of-coverage / sum-max submodular reward)",
-    "Only the scalar reward r_t(C_t) is observed",
-    "Guarantee is an approximation-ratio (alpha-)regret with ratio 1-((|S|-1)/|S|)^m against any comparator set S of arbitrary size",
-    "Learner knows the action size m"
+    "Reward r_t(S) = 1[A_t ∩ S ≠ ∅] (coverage/indicator reward); only the scalar reward of the chosen set is observed"
    ],
-   "definition_quote": "A-priori Nature chooses a sequence $\\{\\aws{t}~|~t\\in[\\ntr]\\}$ of subsets of $[\\nid]$ without revealing them to Learner. ... $\\ret{t}(\\ars):= \\indi{\\aws{t}\\cap\\ars\\neq\\emptyset}$ ... Learner chooses some $\\cho{t}\\subseteq[\\nid]$ with $|\\cho{t}|\\leq\\siz$. $\\ret{t}(\\cho{t})$ is revealed to Learner."
+   "definition_quote": "A-priori Nature chooses a sequence $\\{\\aws{t}~|~t\\in[\\ntr]\\}$ of subsets of $[\\nid]$ without revealing them to Learner. Given a trial $t$ and a set $\\ars\\subseteq[\\nid]$ we define: \\ret{t}(\\ars):= \\indi{\\aws{t}\\cap\\ars\\neq\\emptyset}. On trial $t$: Learner chooses some $\\cho{t}\\subseteq[\\nid]$ with $|\\cho{t}|\\leq\\siz$. $\\ret{t}(\\cho{t})$ is revealed to Learner."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Hedge/Exp3-style algorithm with m i.i.d. draws from a distribution over items",
+   "name": "Hedge over items with M i.i.d. draws and importance-weighted gradient estimates",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -73,7 +104,7 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "K",
+    "d",
     "m"
    ]
   }
@@ -85,7 +116,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "other",
+   "quantity": "alpha_regret",
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
@@ -93,17 +124,17 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "sqrt(2*log(K)*m*(K + m - 1)*T)",
+    "expression": "sqrt(2*log(d)*m*(d + m - 1)*T)",
     "expression_latex": "\\bexpt{\\sum_{t}\\ret{t}(\\cho{t})}\\geq\\left(1-\\left(\\frac{|\\ars|-1}{|\\ars|}\\right)^\\siz\\right)\\sum_{t}\\ret{t}(\\ars)-\\sqrt{2\\ln(\\nid)\\siz(\\nid+\\siz-1)\\ntr}",
     "regime": null
    },
    "symbols": {},
    "conditions": [
-    "comparator S is any subset of [K] (any size)",
-    "approximation factor (1-((|S|-1)/|S|)^m) applied to comparator reward"
+    "comparator is any set S ⊆ [d] (any size); approximation factor is 1-((|S|-1)/|S|)^m, depending on |S|"
    ],
    "tuning": [
-    "eta = sqrt(2 ln(K) / (m (K+m-1) T))"
+    "eta = sqrt(2 ln(d) / (m (d+m-1) T))",
+    "uniform initial distribution"
    ],
    "is_new": true,
    "source": {
@@ -112,26 +143,26 @@
     "quote": "We have: \\bexpt{\\sum_{t\\in[\\ntr]}\\ret{t}(\\cho{t})}\\geq\\left(1-\\left(\\frac{|\\ars|-1}{|\\ars|}\\right)^\\siz\\right)\\sum_{t\\in[\\ntr]}\\ret{t}(\\ars)-\\sqrt{2\\ln(\\nid)\\siz(\\nid+\\siz-1)\\ntr}"
    },
    "confidence": "medium",
-   "notes": "Bound is on alpha-regret: (1-((|S|-1)/|S|)^m) * sum_t r_t(S) - E[sum_t r_t(C_t)] <= sqrt(2 ln K m (K+m-1) T). K = number of items (paper's nid), m = max set size. Quantity set to 'other' since it is approximation regret. Draft paper; Theorem 5.1 (conditional hardness of improving the approximation factor, via set cover reduction) and Theorem 9.4 (generalisation to pseudo-concave partial-submodular rewards, stated with an apparent typo '≤' and without proof) not recorded."
+   "notes": "Paper's number of items (\\nid) mapped to d (base arms), size limit (\\siz) to m, horizon to T. Expression is the additive alpha-regret term with alpha = 1-((|S|-1)/|S|)^m. Same bound stated in Section 1. Source is a draft; Theorem 5.1 (computational hardness of improving approximation factor via set-cover reduction) and Theorem 9.4 (unproved, inequality apparently mistyped) not recorded."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:05:49",
+  "date": "2026-10-21T15:14:48",
   "source_chars": 47202,
-  "input_tokens": 59351,
-  "output_tokens": 2618,
-  "cost_usd_equiv": 0.3095868,
+  "input_tokens": 65938,
+  "output_tokens": 2877,
+  "cost_usd_equiv": 0.316014,
   "status": "extracted"
  }
 }

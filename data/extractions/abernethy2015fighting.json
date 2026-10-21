@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Fighting Bandits with a New Kind of Smoothness",
   "arxiv_id": "1512.04152",
@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "adversarial multi-armed bandit",
+   "name_in_paper": "adversarial multi-armed bandit problem",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "adversarial_unspecified",
@@ -36,25 +36,56 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
-   "unmapped": [
-    "Losses are g_t in [-1,0]^N (negative gains, i.e. gains in [0,1]); the 'loss-only' non-positivity is used in the analysis"
-   ],
+   "unmapped": [],
    "definition_quote": "On each round $t = 1,\\ldots, T$, a learner must choose a distribution $p_t \\in \\D_N$ over the set of $N$ available actions. The adversary (Nature) chooses a loss vector $\\xx_t \\in [-1,0]^N$. The learner plays action $i_t$ sampled according to $p_t$ and suffers the loss $\\xx_{t,{i_t}}$. The learner observes only a single coordinate"
   }
  ],
@@ -74,24 +105,11 @@
   },
   {
    "id": "a2",
-   "name": "GBPA with stochastic smoothing (perturbation potential)",
+   "name": "GBPA with stochastic smoothing / FTPL with Geometric Resampling",
    "registry_id": "bandit_ftpl_gr",
    "is_new": true,
    "techniques": [
     "ftrl_or_mirror_descent",
-    "other"
-   ],
-   "requires_knowledge_of": [
-    "K",
-    "T"
-   ]
-  },
-  {
-   "id": "a3",
-   "name": "Follow the Perturbed Leader with Geometric Resampling",
-   "registry_id": "bandit_ftpl_gr",
-   "is_new": false,
-   "techniques": [
     "other"
    ],
    "requires_knowledge_of": [
@@ -121,11 +139,11 @@
    },
    "symbols": {},
    "conditions": [
-    "losses in [-1,0]^N"
+    "loss vectors in [-1,0]^N"
    ],
    "tuning": [
-    "Tsallis power alpha_ts in (0,1)",
-    "learning rate eta > 0 arbitrary"
+    "Tsallis power alpha in (0,1)",
+    "learning-rate/scale eta > 0"
    ],
    "is_new": true,
    "source": {
@@ -134,7 +152,7 @@
     "quote": "Let $\\tf(\\XX) = \\max_{p \\in \\D_N}\\{\\langle p, \\XX \\rangle - \\eta S_\\alpha(p) \\}$. Then the GBPA$(\\tf)$ has regret at most \\EE\\Regret \\leq \\eta \\frac{N^{1 - \\alpha} - 1}{1-\\alpha} + \\frac{N^\\alpha T}{2 \\eta \\alpha}."
    },
    "confidence": "medium",
-   "notes": "Paper's N is K. Bound holds for any fixed eta (no T needed unless tuned). Regret is expectation over learner randomization against best fixed arm with fixed loss sequence. As alpha->1 recovers EXP3 bound 2sqrt(TN log N) with eta=sqrt(N log N / T)."
+   "notes": "Paper's N = K, paper's alpha = alpha_ts. Bound holds for any fixed eta (T not needed by the algorithm). As alpha->1 the paper remarks it recovers EXP3's 2 sqrt(TN log N). Losses in [-1,0] are mapped to bounded_01 (sign convention)."
   },
   {
    "id": "r2",
@@ -156,20 +174,20 @@
    },
    "symbols": {},
    "conditions": [
-    "losses in [-1,0]^N"
+    "loss vectors in [-1,0]^N"
    ],
    "tuning": [
-    "alpha_ts in (0,1)",
-    "eta = sqrt(T(1-alpha_ts)/(2 alpha_ts)) * N^(alpha_ts - 1/2)"
+    "alpha in (0,1)",
+    "eta = sqrt(T(1-alpha)/(2 alpha)) N^(alpha - 1/2)"
    ],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Corollary 3.2",
-    "quote": "For any $\\alpha \\in (0,1)$, if we choose $\\eta = \\sqrt{\\frac{T(1-\\alpha)}{2\\alpha}} N^{\\alpha-\\frac{1}{2}}$ then we have \\EE\\Regret \\leq \\sqrt{\\frac{2 T N}{\\alpha(1-\\alpha) }}. In particular, the choice of $\\alpha = \\frac 1 2$ gives a regret of no more than $2\\sqrt{2 T N}$"
+    "quote": "For any $\\alpha \\in (0,1)$, if we choose $\\eta = \\sqrt{\\frac{T(1-\\alpha)}{2\\alpha}} N^{\\alpha-\\frac{1}{2}}$ then we have \\EE\\Regret \\leq \\sqrt{\\frac{2 T N}{\\alpha(1-\\alpha) }}."
    },
    "confidence": "high",
-   "notes": "Requires T for tuning eta."
+   "notes": "Eta depends on T, so horizon known."
   },
   {
    "id": "r3",
@@ -191,10 +209,10 @@
    },
    "symbols": {},
    "conditions": [
-    "losses in [-1,0]^N"
+    "loss vectors in [-1,0]^N"
    ],
    "tuning": [
-    "alpha_ts = 1/2",
+    "alpha = 1/2",
     "eta = sqrt(T/2)"
    ],
    "is_new": true,
@@ -204,7 +222,7 @@
     "quote": "In particular, the choice of $\\alpha = \\frac 1 2$ gives a regret of no more than $2\\sqrt{2 T N}$, recovering \\citep[Theorem~5.7]{bubeck2012regret}."
    },
    "confidence": "high",
-   "notes": "Special case alpha=1/2 of the corollary; paper notes it recovers Bubeck & Cesa-Bianchi Thm 5.7."
+   "notes": "Special case alpha=1/2 of Corollary 3.2; recovers known INF bound."
   },
   {
    "id": "r4",
@@ -220,35 +238,35 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "eta*E_maxZ + K*h_sup*T/eta",
+    "expression": "eta*EmaxZ + K*h_sup*T/eta",
     "expression_latex": "\\eta \\EE_{Z_1, \\ldots, Z_n \\sim D} \\left[\\max_{i} Z_{i}\\right] + \\frac{N(\\sup h_\\mathcal{D})}{\\eta}T",
     "regime": null
    },
    "symbols": {
-    "E_maxZ": "expected maximum of N i.i.d. draws from perturbation distribution D",
-    "h_sup": "supremum of the hazard rate f/(1-F) of D"
+    "EmaxZ": "expected maximum of N iid draws from the perturbation distribution D",
+    "h_sup": "supremum of the hazard rate of the perturbation distribution D"
    },
    "conditions": [
-    "losses in [-1,0]^N"
+    "loss vectors in [-1,0]^N"
    ],
    "tuning": [
-    "perturbation distribution D continuous, unbounded towards +infinity",
-    "scale eta > 0"
+    "perturbation distribution D continuous, unbounded towards +infinity, with bounded hazard rate",
+    "perturbation scale eta > 0"
    ],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Theorem 4.2",
-    "quote": "The regret of the GBPA with $\\tf(\\XX) = \\EE_{Z_1, \\ldots, Z_n \\sim D} \\max_{i} \\{\\XX_{i} +  \\eta Z_{i}\\}$ is at most: \\eta \\EE_{Z_1, \\ldots, Z_n \\sim D} \\left[\\max_{i} Z_{i}\\right] + \\frac{N(\\sup h_\\mathcal{D})}{\\eta}T"
+    "quote": "The regret of the GBPA with $\\tf(\\XX) = \\EE_{Z_1, \\ldots, Z_n \\sim D} \\max_{i} \\{\\XX_{i} +  \\eta Z_{i}\\}$ is at most: \\eta \\EE[\\max_{i} Z_{i}] + \\frac{N(\\sup h_\\mathcal{D})}{\\eta}T"
    },
    "confidence": "medium",
-   "notes": "Uses exact gradient of the smoothed potential (FTPL with exact probabilities). Distribution-specific instantiations given in Table 1 and appendix (e.g., Frechet with alpha=log N gives O(sqrt(TN log N)))."
+   "notes": "GBPA with exact gradient of stochastically smoothed max (exact sampling probabilities); computation of probabilities not addressed, hence compute not_stated. Appendix computes instances: Pareto, Frechet, Weibull, Gamma, Gumbel."
   },
   {
    "id": "r5",
    "setting": "s1",
    "side": "upper",
-   "algorithm": "a3",
+   "algorithm": "a2",
    "algorithm_class": null,
    "quantity": "expected_regret",
    "dependence": "worst_case",
@@ -264,10 +282,10 @@
    },
    "symbols": {},
    "conditions": [
-    "losses in [-1,0]^N"
+    "loss vectors in [-1,0]^N"
    ],
    "tuning": [
-    "perturbation from Table 1 (Gumbel, Frechet alpha=log N, modified Weibull k=1, modified Pareto alpha=log N, Gamma alpha=beta=1)",
+    "perturbation from Table 1 (Gumbel, Frechet alpha=log N, Weibull k=1, Pareto alpha=log N, Gamma alpha=beta=1) with restricted parameters",
     "Geometric Resampling with M = sqrt(NT)",
     "eta tuned with T"
    ],
@@ -277,8 +295,8 @@
     "number": "Corollary 4.4",
     "quote": "Follow the Perturbed Leader Algorithm with distributions in Table \\ref{tab:distributions} (restricted to a certain range of parameters),  combined with Geometric Resampling (Section \\ref{sec:ftpl:ftpl}) with $M = \\sqrt{NT}$,\t has an expected regret of order $O(\\sqrt{TN \\log N})$."
    },
-   "confidence": "low",
-   "notes": "Text earlier says the GR bias term NT/(eM) is negligible for M = NT, while the corollary states M = sqrt(NT) (which would give an O(sqrt(NT)) extra term, still consistent). Proof not given formally."
+   "confidence": "medium",
+   "notes": "Text in Section 4.1 says M = NT suffices while corollary states M = sqrt(NT); recorded as stated. Tuning of eta implicitly uses T."
   }
  ],
  "cited_results": [
@@ -324,7 +342,7 @@
    "cited_first_author": "Sébastien Bubeck",
    "cited_year": 2012,
    "cited_arxiv_id": "1204.5721",
-   "algorithm_name": "INF with potential psi(x)=(-eta x)^{-q}",
+   "algorithm_name": "INF with potential psi(x) = (-eta x)^{-q}",
    "algorithm_registry_id": "inf",
    "side": "upper",
    "setting_description": "adversarial multi-armed bandit",
@@ -340,19 +358,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "225d94076f15",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T09:07:30",
+  "date": "2026-10-21T14:55:50",
   "source_chars": 54563,
-  "input_tokens": 57095,
-  "output_tokens": 6087,
-  "cost_usd_equiv": 0.3613088,
+  "input_tokens": 63732,
+  "output_tokens": 5917,
+  "cost_usd_equiv": 0.359166,
   "status": "extracted"
  }
 }

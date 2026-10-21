@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Meta-Learning Hypothesis Spaces for Sequential Decision-making",
   "arxiv_id": "2202.00602",
@@ -15,16 +15,17 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Bayesian optimization / kernelized bandit with unknown kernel meta-learned from offline data",
+   "name_in_paper": "Bayesian optimization / kernelized bandit with unknown kernel and offline meta-data",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
    "action_space": "kernel_rkhs",
    "function_class": [],
-   "domain": "not_applicable",
+   "domain": "constrained",
    "context": "none",
    "noise": "subgaussian",
    "learner_knows": [
+    "S",
     "sigma"
    ],
    "instance_assumptions": [],
@@ -32,33 +33,64 @@
    "action_set": {
     "shape": "arbitrary_compact",
     "time_varying": "fixed",
-    "access": "not_applicable",
+    "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "sparse"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "True kernel k* is unknown; it is a sparse nonnegative combination of p known finite-dimensional base kernels",
-    "Learner has offline meta-data from m tasks with n samples each, from the same RKHS",
-    "Learner knows a bound B on the RKHS norm of f under the true kernel",
-    "Group beta-min condition (Assumption 3.1) and restricted eigenvalue condition (Assumption 4.2) on the meta-data",
-    "Domain X is a compact subset of R^{d_0}"
+    "The true kernel is unknown; it is a sparse nonnegative combination of p known finite-dimensional base kernels",
+    "Learner has offline meta-data from m related tasks with n samples each, all functions in the same RKHS with norm <= B",
+    "Kernel is meta-learned via group Lasso (Meta-KeL) before the bandit interaction"
    ],
-   "definition_quote": "Consider a sequential decision-making problem, where the agent repeatedly interacts with an environment and makes observations y_t = f(x_t) + \\varepsilon_t of an unknown function f residing in an RKHS H_{k^*} that corresponds to an unknown kernel function k^*. We further assume that the function has a bounded kernel norm \\norm{f}_{k^*} \\leq B and that the domain X is compact. The observation noise are i.i.d. samples from a zero-mean sub-Gaussian distribution with variance proxy \\sigma^2."
+   "definition_quote": "Consider a sequential decision-making problem, where the agent repeatedly interacts with an environment and makes observations y_t = f(x_t) + \\varepsilon_t of an unknown function f: X -> R residing in an RKHS H_{k^*} that corresponds to an unknown kernel function k^*. We further assume that the function has a bounded kernel norm ||f||_{k^*} <= B and that the domain X subset R^{d_0} is compact."
   }
  ],
  "algorithms": [
@@ -71,11 +103,11 @@
     "optimism"
    ],
    "requires_knowledge_of": [
+    "S",
     "sigma",
-    "B (RKHS norm bound)",
     "c_1",
-    "offline meta-data",
-    "delta"
+    "eps_nm",
+    "offline meta-data"
    ]
   }
  ],
@@ -94,34 +126,35 @@
    "compute": "not_stated",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(d_hat*T*log(T))*(B_rkhs*(1 + eps_nm) + sqrt(d_hat*log(T) + log(1/delta)))",
-    "expression_latex": "R_T= \\gO\\Bigg( \\sqrt{\\hat d T\\log T}  \\Big( B\\big(1 + \\epsilon(n,m)\\big) + \\sqrt{\\hat d \\log T+ \\log1/\\delta}\\Big)\\Bigg)",
-    "regime": null
+    "expression": "sqrt(d_hat*T*log(T))*(S*(1 + eps_nm) + sqrt(d_hat*log(T) + log(1/delta)))",
+    "expression_latex": "\\sqrt{\\hat d T\\log T}\\Big( B\\big(1 + \\epsilon(n,m)\\big) + \\sqrt{\\hat d \\log T+ \\log1/\\delta}\\Big)",
+    "regime": "n, m large enough that eps(n,m) <= c_1"
    },
    "symbols": {
     "d_hat": "sum of feature dimensions d_j of base kernels active in the meta-learned kernel",
-    "B_rkhs": "bound on the RKHS norm of f under the true kernel",
-    "eps_nm": "epsilon(n,m) = 32 sigma s/(kappa^2 sqrt(mn)) * sqrt(1 + (2/m)(log(2p/delta) + sqrt(m d_max log(2p/delta)))), meta-learning error"
+    "eps_nm": "meta-learning error epsilon(n,m) = 32 sigma s/(kappa^2 sqrt(mn)) * sqrt(1 + (2/m)(log(2p/delta) + sqrt(m d_max log(2p/delta))))",
+    "c_1": "group beta-min constant (Assumption 3.1)"
    },
    "conditions": [
-    "f in RKHS of unknown k* with ||f||_{k*} <= B",
-    "k* is a sparse combination of p known finite-dimensional base kernels with |J_k*| <= s",
-    "Assumption 3.1 (group beta-min with c_1) and Assumption 4.2 (restricted eigenvalue kappa(s)) hold",
-    "n, m large enough that epsilon(n,m) <= c_1"
+    "f in RKHS of unknown k^* with ||f||_{k^*} <= B (S = B)",
+    "k^* is a nonnegative combination of p known normalized finite-dimensional base kernels with ||eta*||_1 <= 1",
+    "Group beta-min condition (Assumption 3.1)",
+    "Restricted eigenvalue condition on meta-data (Assumption 4.2) with kappa(s), |J_{k*}| <= s",
+    "zero-mean sub-Gaussian noise with variance proxy sigma^2"
    ],
    "tuning": [
-    "nu_t = B(1 + eps(n,m)/(2c_1)) + sigma*sqrt(d_hat*log(1 + bar_sigma^{-2} t/c_1) + 2 + 2 log(1/delta))",
-    "lambda chosen as in Theorem 4.3",
+    "lambda >= 4 sigma/sqrt(mn) sqrt(1 + (2/m)(log(2p/delta) + sqrt(m d_max log(2p/delta))))",
+    "nu_t = B(1+eps(n,m)/2c_1) + sigma sqrt(d_hat log(1 + t/(c_1 bar_sigma^2)) + 2 + 2 log(1/delta))",
     "bar_sigma^2 = 1 + 2/t"
    ],
    "is_new": true,
    "source": {
     "label": "cor:regret_bound",
     "number": "Corollary 5.2",
-    "quote": "Let $\\delta \\in (0,1)$. Suppose $f\\in \\tH$ with $\\norm{f}_\\tk \\leq B$ and that values of $f$ are observed with zero-mean sub-Gaussian noise of variance proxy $\\sigma^2$. Then, with probability greater than $1-\\delta$, \\textsc{GP-UCB} used together with $\\khat$ satisfies R_T= O( \\sqrt{\\hat d T\\log T} ( B(1 + \\epsilon(n,m)) + \\sqrt{\\hat d \\log T+ \\log1/\\delta})) provided that the exploration coefficient is set to ..."
+    "quote": "Let $\\delta \\in (0,1)$. Suppose $f\\in \\tH$ with $\\norm{f}_\\tk \\leq B$ and that values of $f$ are observed with zero-mean sub-Gaussian noise of variance proxy $\\sigma^2$. Then, with probability greater than $1-\\delta$, \\textsc{GP-UCB} used together with $\\khat$ satisfies $R_T= \\gO( \\sqrt{\\hat d T\\log T} ( B(1 + \\epsilon(n,m)) + \\sqrt{\\hat d \\log T+ \\log1/\\delta}))$ provided that the exploration coefficient is set to ..."
    },
    "confidence": "medium",
-   "notes": "Regret defined as sum f(x*) - f(x_t), bounded with high probability. Probability covers both meta-learning recovery and online confidence. Horizon: nu_t does not depend on T, so treated as anytime. Theorem 4.3, Prop 4.4 and Theorem 5.1 (hypothesis recovery, sparsity, confidence bounds) are not regret guarantees and were not recorded."
+   "notes": "Regret R_T = sum f(x*) - f(x_t), realized regret bounded w.h.p. Assumptions of Theorem 4.3 (meta-data conditions) are implicitly required. Horizon: nu_t does not depend on T, so treated as anytime. Theorems 4.3, 5.1 (kernel recovery / confidence bounds) and Prop 4.4 (sparsity) are not regret guarantees and were not recorded."
   }
  ],
  "cited_results": [
@@ -134,11 +167,11 @@
    "algorithm_name": "GP-UCB (IGP-UCB)",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Kernelized bandit with known kernel, f in RKHS with norm bound B, sub-Gaussian noise; high-probability regret",
+   "setting_description": "Kernelized bandit with known kernel, f in RKHS with norm <= B, sub-Gaussian noise; high-probability regret",
    "bound": {
     "notation": "O",
-    "expression": "B_rkhs*sqrt(T*gamma_T) + sqrt(T*gamma_T*(gamma_T + log(1/delta)))",
-    "expression_latex": "\\gO\\left(\\hat B \\sqrt{T\\hat\\gamma_T} + \\sqrt{T\\hat\\gamma_T (\\hat\\gamma_T + \\log1/\\delta)}\\right)",
+    "expression": "S*sqrt(T*gamma_T) + sqrt(T*gamma_T*(gamma_T + log(1/delta)))",
+    "expression_latex": "\\hat B \\sqrt{T\\hat\\gamma_T} + \\sqrt{T\\hat\\gamma_T (\\hat\\gamma_T + \\log1/\\delta)}",
     "regime": null
    },
    "where": "Lemma C.3"
@@ -149,53 +182,35 @@
    "cited_first_author": "Chowdhury",
    "cited_year": 2017,
    "cited_arxiv_id": null,
-   "algorithm_name": "GP-UCB with true kernel (oracle)",
+   "algorithm_name": "GP-UCB with full kernel k_full",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Kernelized bandit with known true kernel k* of feature dimension d*",
+   "setting_description": "Kernelized bandit using conservative kernel combining all p base kernels of total dimension d",
    "bound": {
     "notation": "O",
-    "expression": "d_star*B_rkhs*log(T)*sqrt(T)",
-    "expression_latex": "\\gO(d^*B\\log T\\sqrt{T})",
-    "regime": null
-   },
-   "where": "Section 5, discussion after Corollary 5.2"
-  },
-  {
-   "cited_key": "chowdhury2017kernelized",
-   "cited_title": "On kernelized multi-armed bandits",
-   "cited_first_author": "Chowdhury",
-   "cited_year": 2017,
-   "cited_arxiv_id": null,
-   "algorithm_name": "GP-UCB with k_full",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Kernelized bandit using conservative full kernel averaging all p base kernels (total dimension d)",
-   "bound": {
-    "notation": "O",
-    "expression": "d*p_kern*B_rkhs*log(T)*sqrt(T)",
+    "expression": "d*p*S*log(T)*sqrt(T)",
     "expression_latex": "\\gO(dpB\\log T\\sqrt{T})",
     "regime": null
    },
-   "where": "Section 5, discussion after Corollary 5.2"
+   "where": "Section 5, Case Study"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T13:59:09",
+  "date": "2026-10-21T15:07:59",
   "source_chars": 110507,
-  "input_tokens": 84974,
-  "output_tokens": 4002,
-  "cost_usd_equiv": 0.5422507999999999,
+  "input_tokens": 91561,
+  "output_tokens": 3735,
+  "cost_usd_equiv": 0.538158,
   "status": "extracted"
  }
 }

@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "No-regret learning for repeated non-cooperative games with lossy bandits",
   "arxiv_id": "2205.06968",
@@ -16,70 +16,20 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Repeated concave N-player game with lossy bandit feedback (per-player regret)",
+   "name_in_paper": "Repeated concave N-player game with lossy bandit feedback (regret)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "adversarial_adaptive",
    "action_space": "convex_body",
    "function_class": [
+    "convex",
     "smooth"
    ],
    "domain": "constrained",
    "context": "none",
    "noise": "noise_free",
    "learner_knows": [
-    "r_K"
-   ],
-   "instance_assumptions": [],
-   "extras": [
-    "multi_agent_cooperative"
-   ],
-   "action_set": {
-    "shape": "convex_body",
-    "time_varying": "fixed",
-    "access": "explicit",
-    "norm_bound": "not_applicable",
-    "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
-   },
-   "corruption": {
-    "adversary": "not_applicable",
-    "budget_measure": "not_applicable",
-    "structure": "not_applicable",
-    "regret_reference": "not_applicable"
-   },
-   "feedback_graph": {
-    "observability": "not_applicable",
-    "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
-   },
-   "parameters": {},
-   "in_scope": true,
-   "out_of_scope_reason": null,
-   "unmapped": [
-    "Non-cooperative N-player game: player i's utility u_i(a_i, a_{-i}) is concave in own action with L_i-Lipschitz partial gradient; other players also run the same algorithm (extras multi_agent_cooperative is only an approximation: players are non-cooperative)",
-    "Lossy bandit feedback: each round player i receives its utility value only with probability p_i (i.i.d. Bernoulli), otherwise keeps action unchanged",
-    "Step-size uses known reception probability p_i",
-    "Utility maximization, utilities bounded by compactness (not normalised to [0,1])",
-    "Learner needs a safety ball B_{r_i}(c_i) inside its action set"
-   ],
-   "definition_quote": "Reg^{(i)}(K)=max_{a_i' in A_i} { sum_{k=1}^K u_i(a_i', a_{-i,k}) - sum_{k=1}^K u_i(a_{i,k}, a_{-i,k}) }. Let p_i denote the probability that player i will receive its utility value, then the probability of information loss is 1-p_i."
-  },
-  {
-   "id": "s2",
-   "name_in_paper": "Beta-strongly monotone game with lossy bandits (Nash equilibrium convergence)",
-   "objective": "other_pure_exploration",
-   "feedback": "bandit",
-   "environment": "adversarial_adaptive",
-   "action_space": "convex_body",
-   "function_class": [
-    "smooth"
-   ],
-   "domain": "constrained",
-   "context": "none",
-   "noise": "noise_free",
-   "learner_knows": [
-    "r_K"
+    "d"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -89,28 +39,143 @@
     "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": false,
-   "out_of_scope_reason": "Game-theoretic equilibrium convergence result (mean-square distance to Nash equilibrium), not a regret guarantee",
+   "out_of_scope_reason": "Learning in non-cooperative continuous games: all N players run the algorithm (regret not shown against arbitrary opponents).",
    "unmapped": [
-    "Objective: mean-square convergence of action profile to Nash equilibrium",
-    "Game is beta-strongly monotone",
-    "Lossy bandit feedback with known probability p_i"
+    "N-player concave game: each player's utility is concave in its own action and depends on the others' actions",
+    "lossy bandit feedback: the utility value is received with probability p_i (i.i.d. Bernoulli), otherwise the action is not updated",
+    "learner knows the reception probability p_i (used in the step size)",
+    "learner knows a ball B_{r_i}(c_i) inside its action set"
    ],
-   "definition_quote": "Suppose that G is a beta-strongly monotone game on action space A, i.e., <g(a)-g(a'), a-a'> <= -beta ||a-a'||^2"
+   "definition_quote": "Let $p_{i}$ denote the probability that  player $i$  will receive its utility value,  then  the probability of  information loss is $1-p_{i}$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Repeated beta-strongly monotone game with lossy bandit feedback (convergence to Nash equilibrium)",
+   "objective": "other_pure_exploration",
+   "feedback": "bandit",
+   "environment": "adversarial_adaptive",
+   "action_space": "convex_body",
+   "function_class": [
+    "convex",
+    "smooth"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "noise_free",
+   "learner_knows": [
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Learning in games with an equilibrium (Nash) convergence objective.",
+   "unmapped": [
+    "objective: mean-square convergence of the joint action profile to the Nash equilibrium",
+    "the game is beta-strongly monotone",
+    "lossy bandit feedback with known reception probability p_i"
+   ],
+   "definition_quote": "Suppose that  $\\mathcal{G}$ is a $\\beta-$strongly monotone game on action space $\\mathcal{A}$"
   }
  ],
  "algorithms": [
@@ -120,10 +185,13 @@
    "registry_id": null,
    "is_new": true,
    "techniques": [
-    "ftrl_or_mirror_descent"
+    "ftrl_or_mirror_descent",
+    "other"
    ],
    "requires_knowledge_of": [
-    "r_K"
+    "d",
+    "p_i (feedback reception probability; not needed in the unknown-p variant)",
+    "ball B_{r_i}(c_i) inside the action set"
    ]
   }
  ],
@@ -142,29 +210,29 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "p_i**(w-1)*B_i**2/(2*gamma(T)) + Sum(B_i*L_i*sqrt(N)*delta(k), (k, 1, T)) + Sum(p_i**(w-1)*G_i**2*gamma(k)*p_i**(-2*w)/(2*delta(k)**2), (k, 1, T))",
-    "expression_latex": "\\frac{p_{i}^{w-1}B_{i}^{2}}{2\\gamma_{K}} +\\sum_{k=1}^{K}B_{i}L_{i}\\sqrt{N}\\delta_{k} +\\sum_{k=1}^{K}\\frac{p_{i}^{w-1}}{2\\gamma_{k}}\\frac{G_{i}^{2}}{\\delta_{k}^{2}} \\mathbb{E}\\left[\\gamma_{i,k}^{2} \\right]",
+    "expression": "p_i**(w-1)*B_i**2/(2*gamma_K) + Sum(B_i*L_i*sqrt(N)*delta_k, (k, 1, T)) + Sum(p_i**(w-1)*G_i**2*Egam2_k/(2*gamma_k*delta_k**2), (k, 1, T))",
+    "expression_latex": "\\frac{p_{i}^{w-1}B_{i}^{2}}{2\\gamma_{K}}+\\sum_{k=1}^{K}B_{i}L_{i}\\sqrt{N}\\delta_{k}+\\sum_{k=1}^{K}\\frac{p_{i}^{w-1}}{2\\gamma_{k}}\\frac{G_{i}^{2}}{\\delta_{k}^{2}}\\mathbb{E}\\left[\\gamma_{i,k}^{2} \\right]",
     "regime": null
    },
    "symbols": {
-    "p_i": "probability player i receives its bandit feedback",
-    "w": "exponent in step size gamma_{i,k}=gamma_k p_i^{-w}",
+    "p_i": "probability that player i receives its bandit feedback",
+    "w": "positive constant in the step size gamma_{i,k} = gamma_k p_i^{-w}",
     "B_i": "Euclidean diameter of player i's action set",
     "L_i": "Lipschitz constant of player i's partial gradient",
-    "N": "number of players",
-    "G_i": "d_i * max_a |u_i(a)|",
-    "gamma": "base step-size sequence gamma_k (non-increasing)",
-    "delta": "query radius sequence delta_k (non-increasing)",
-    "k": "round index"
+    "G_i": "d_i * max |u_i| over the joint action set",
+    "gamma_k": "base step size at iteration k (non-increasing)",
+    "gamma_K": "base step size at the final iteration",
+    "delta_k": "query radius at iteration k (non-increasing)",
+    "Egam2_k": "E[gamma_{i,k}^2]",
+    "k": "iteration index"
    },
    "conditions": [
-    "u_i concave and C^1 in a_i, partial gradient L_i-Lipschitz in a",
-    "action sets closed convex compact with nonempty interior",
-    "perturbations and loss indicators independent, indicators i.i.d. over time",
+    "Assumption 1: compact convex action sets with nonempty interior, utilities concave in own action, partial gradients L_i-Lipschitz",
+    "Assumption 2: perturbations and loss indicators independent; indicators i.i.d. over time",
     "all players follow Algorithm 1"
    ],
    "tuning": [
-    "gamma_{i,k} = gamma_k p_i^{-w}, w>0",
+    "gamma_{i,k} = gamma_k p_i^{-w}, w > 0",
     "gamma_k, delta_k non-increasing",
     "delta_1 < min_i r_i"
    ],
@@ -172,10 +240,10 @@
    "source": {
     "label": "regret",
     "number": "Theorem 1",
-    "quote": "Let Assumptions 1-2 hold. Consider the players follow Algorithm 1 with step-size $\\gamma_{i,k}=\\gamma_{k}p_{i}^{-w}$ and constant $w>0$. Suppose that $\\{\\gamma_{k}\\}$ and $\\{\\delta_{k}\\}$ are non-increasing sequences with $\\delta_{1}<\\min_{i} r_{i}$. Then for each $i$, E[Reg^{(i)}(K)] <= p_i^{w-1}B_i^2/(2\\gamma_K) + \\sum_k B_iL_i\\sqrt{N}\\delta_k + \\sum_k p_i^{w-1}/(2\\gamma_k) G_i^2/\\delta_k^2 E[\\gamma_{i,k}^2]"
+    "quote": "Let Assumptions 1-2 hold. Consider the players follow Algorithm 1 with step-size $\\gamma_{i,k}=\\gamma_{k}p_{i}^{-w}$ and constant $w>0$. Suppose that $\\{\\gamma_{k}\\}$ and $\\{\\delta_{k}\\}$ are non-increasing sequences with $\\delta_{1}<\\min_{i} r_{i}$. Then for each $i\\in \\mathcal{N}$, $\\mathbb{E}[\\mathcal{R}eg^{(i)}(K)] \\leq \\frac{p_{i}^{w-1}B_{i}^{2}}{2\\gamma_{K}}+\\sum_{k=1}^{K}B_{i}L_{i}\\sqrt{N}\\delta_{k}+\\sum_{k=1}^{K}\\frac{p_{i}^{w-1}}{2\\gamma_{k}}\\frac{G_{i}^{2}}{\\delta_{k}^{2}}\\mathbb{E}[\\gamma_{i,k}^{2}]"
    },
    "confidence": "medium",
-   "notes": "Since gamma_{i,k} is deterministic, E[gamma_{i,k}^2]=gamma_k^2 p_i^{-2w} was substituted. Regret is measured at intended actions a_{i,k}, not applied (perturbed) actions. K in paper is horizon T. The ontology mapping (convex body, adaptive adversary) is approximate: opponents run the same algorithm."
+   "notes": "Regret is per player in the game, measured against the best fixed own action given the others' realized actions. The paper's K (iterations) is mapped to T. The expectation is outside the max, so this is expected regret."
   },
   {
    "id": "r2",
@@ -191,38 +259,36 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "B_i**2/2*T**b + B_i*L_i*sqrt(N)*delta_1/(1-c_alg)*T**(1-c_alg) + G_i**2/(2*p_i**2*delta_1**2*(1-b+2*c_alg))*T**(1-b+2*c_alg) + B_i*L_i*sqrt(N)*delta_1 + G_i**2/(2*p_i**2*delta_1**2)",
-    "expression_latex": "\\frac{B_{i}^{2}}{2}k^{b} + \\frac{B_{i}L_{i}\\sqrt{N}{\\delta_{1}}}{1-c}K^{1-c} +\\frac{G_{i}^{2}}{2p_{i}^{2}{\\delta_{1}^{2}}(1-b+2c)}K^{1-b+2c} +B_{i}L_{i}\\sqrt{N}{\\delta_{1}} +\\frac{G_{i}^{2}}{2p_{i}^{2}{\\delta_{1}^{2}}}",
+    "expression": "B_i**2/2*T**b + B_i*L_i*sqrt(N)*delta_1/(1-c)*T**(1-c) + G_i**2/(2*p_i**2*delta_1**2*(1-b+2*c))*T**(1-b+2*c) + B_i*L_i*sqrt(N)*delta_1 + G_i**2/(2*p_i**2*delta_1**2)",
+    "expression_latex": "\\frac{B_{i}^{2}}{2}k^{b}+ \\frac{B_{i}L_{i}\\sqrt{N}{\\delta_{1}}}{1-c}K^{1-c}+\\frac{G_{i}^{2}}{2p_{i}^{2}{\\delta_{1}^{2}}(1-b+2c)}K^{1-b+2c}+B_{i}L_{i}\\sqrt{N}{\\delta_{1}}+\\frac{G_{i}^{2}}{2p_{i}^{2}{\\delta_{1}^{2}}}",
     "regime": null
    },
    "symbols": {
-    "p_i": "probability player i receives its bandit feedback",
+    "p_i": "probability that player i receives its bandit feedback",
     "B_i": "Euclidean diameter of player i's action set",
     "L_i": "Lipschitz constant of player i's partial gradient",
-    "N": "number of players",
-    "G_i": "d_i * max_a |u_i(a)|",
-    "b": "step-size exponent, gamma_{i,k}=1/(k^b p_i)",
-    "delta_1": "initial query radius"
+    "G_i": "d_i * max |u_i| over the joint action set",
+    "delta_1": "initial query radius",
+    "b": "step-size exponent, gamma_{i,k} = 1/(k^b p_i)",
+    "c": "query-radius exponent, delta_k = delta_1 k^{-c}"
    },
    "conditions": [
-    "u_i concave and C^1 in a_i, partial gradient L_i-Lipschitz in a",
-    "action sets closed convex compact with nonempty interior",
-    "perturbations and loss indicators independent, indicators i.i.d. over time",
+    "Assumptions 1-2",
     "all players follow Algorithm 1"
    ],
    "tuning": [
-    "gamma_{i,k} = 1/(k^b p_i), 0<b<1",
-    "delta_k = delta_1 k^{-c}, 0<c<b/2",
+    "gamma_{i,k} = 1/(k^b p_i), 0 < b < 1",
+    "delta_k = delta_1 k^{-c}, 0 < c < b/2",
     "delta_1 < min_i r_i"
    ],
    "is_new": true,
    "source": {
     "label": "no-regret",
     "number": "Corollary 1",
-    "quote": "Suppose Assumptions 1-2 hold. Consider the players follow Algorithm 1 with $\\gamma_{i,k}=1/(k^{b}p_{i})$ and $\\delta_{k}={\\delta_{1}}k^{-c}$ with $0<b<1$, $0<c<b/2$ and $\\delta_{1}<\\min_{i} r_{i}$. Then for each $i$, E[Reg^{(i)}(K)] <= \\frac{B_{i}^{2}}{2}k^{b} + ..."
+    "quote": "Consider the players follow Algorithm 1 with $\\gamma_{i,k}=1/(k^{b}p_{i})$ and $\\delta_{k}={\\delta_{1}}k^{-c}$ with $0<b<1$, $0<c<b/2$ and $\\delta_{1}<\\min_{i} r_{i}$. Then for each $i\\in \\mathcal{N}$, $\\mathbb{E}[\\mathcal{R}eg^{(i)} (K)] \\leq \\frac{B_{i}^{2}}{2}k^{b}+ \\frac{B_{i}L_{i}\\sqrt{N}{\\delta_{1}}}{1-c}K^{1-c}+\\frac{G_{i}^{2}}{2p_{i}^{2}{\\delta_{1}^{2}}(1-b+2c)}K^{1-b+2c}+B_{i}L_{i}\\sqrt{N}{\\delta_{1}}+\\frac{G_{i}^{2}}{2p_{i}^{2}{\\delta_{1}^{2}}}."
    },
    "confidence": "medium",
-   "notes": "Paper writes k^b in the first term, clearly meaning K^b (horizon). c is mapped to c_alg. Remark following gives O(K^{max{b,1-c,1-b+2c}}), e.g. K^{3/4} for b=3/4, c=1/4."
+   "notes": "The paper prints the first term as k^b. This is evidently a typo for K^b, since the proof gives 1/(2 gamma_K) = K^b/2. The remark notes O(K^{max{b,1-c,1-b+2c}}); with b=3/4 and c=1/4 this gives K^{3/4}."
   },
   {
    "id": "r3",
@@ -238,17 +304,17 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "T**(-2*Min(beta_mon, Rational(1, 6)))",
+    "expression": "T**(-2*Min(beta_mon, 1/6))",
     "expression_latex": "\\mathcal{O}\\left(k^{-2\\min\\{\\beta, 1/6\\}}\\right)",
     "regime": null
    },
    "symbols": {
-    "beta_mon": "strong monotonicity parameter of the game"
+    "beta_mon": "strong monotonicity modulus of the game's pseudo-gradient"
    },
    "conditions": [
-    "game is beta-strongly monotone",
-    "u_i concave and C^1 in a_i, partial gradient Lipschitz",
-    "indicators i.i.d., independent of perturbations"
+    "Assumptions 1, 2 and 4 (beta-strongly monotone game)",
+    "all players follow Algorithm 1",
+    "quantity is E||hat a_k - a*||^2 at iteration k (mapped to T)"
    ],
    "tuning": [
     "gamma_{i,k} = 1/(k p_i)",
@@ -259,48 +325,29 @@
    "source": {
     "label": "the2",
     "number": "Theorem 3",
-    "quote": "Suppose Assumptions 1, 2, and 5 hold. Consider the players follow Algorithm 1 with $\\gamma_{i,k}={1}/({k p_{i}})$ and $\\delta_{k}={\\delta_{1}}k^{-1/3}$ with $\\delta_{1}<\\min_{i} r_{i}$. Then $$\\mathbb{E}\\left[\\|\\hat{a}_{k}-a^{*}\\|^{2} \\right] =\\mathcal{O}\\left(k^{-2\\min\\{\\beta, 1/6\\}}\\right).$$"
+    "quote": "Suppose Assumptions 1, 2, and 4 hold. Consider the players follow Algorithm 1 with $\\gamma_{i,k}={1}/({k p_{i}})$ and $\\delta_{k}={\\delta_{1}}k^{-1/3}$ with $\\delta_{1}<\\min_{i} r_{i}$. Then $\\mathbb{E}[\\|\\hat{a}_{k}-a^{*}\\|^{2}]=\\mathcal{O}(k^{-2\\min\\{\\beta, 1/6\\}})$."
    },
    "confidence": "medium",
-   "notes": "Bound on mean-square distance of the applied action profile at iteration k (here T) to the Nash equilibrium, not a regret. Theorems 2 and 4 (almost-sure convergence to Nash, known/unknown p_i) are qualitative and not recorded."
+   "notes": "This is a mean-square distance to the Nash equilibrium, not regret. The almost-sure convergence results (Theorems 2 and 4) are qualitative and were not recorded."
   }
  ],
- "cited_results": [
-  {
-   "cited_key": "10.5555/1070432.1070486",
-   "cited_title": "Online convex optimization in the bandit setting: Gradient descent without a gradient",
-   "cited_first_author": "Abraham D. Flaxman",
-   "cited_year": 2005,
-   "cited_arxiv_id": null,
-   "algorithm_name": "Bandit gradient descent (one-point estimate)",
-   "algorithm_registry_id": "osgd_one_point",
-   "side": "upper",
-   "setting_description": "Bandit convex optimization with one-point feedback",
-   "bound": {
-    "notation": "O",
-    "expression": "T**(3/4)",
-    "expression_latex": "K^{3/4}",
-    "regime": null
-   },
-   "where": "Remark after Corollary 1"
-  }
- ],
+ "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:25:25",
+  "date": "2026-10-21T15:35:45",
   "source_chars": 90032,
-  "input_tokens": 77935,
-  "output_tokens": 6521,
-  "cost_usd_equiv": 0.5363188,
+  "input_tokens": 84522,
+  "output_tokens": 7296,
+  "cost_usd_equiv": 0.553066,
   "status": "extracted"
  }
 }

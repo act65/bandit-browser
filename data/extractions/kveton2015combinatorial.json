@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Combinatorial Cascading Bandits",
   "arxiv_id": "1507.04208",
@@ -16,9 +16,9 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "combinatorial cascading bandit",
+   "name_in_paper": "Combinatorial cascading bandit (conjunctive objective)",
    "objective": "cumulative_regret",
-   "feedback": "partial_monitoring",
+   "feedback": "cascade",
    "environment": "stochastic_iid",
    "action_space": "combinatorial",
    "function_class": [],
@@ -36,29 +36,61 @@
     "access": "linear_optimization_oracle",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "arbitrary_subset",
+    "reward": "unspecified",
+    "loss_scale": "per_action"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Cascade feedback: learner observes only the index of the first chosen item whose weight is zero (items before it are observed)",
-    "Non-linear (conjunctive, product) reward: reward is 1 iff all chosen items have weight 1",
-    "Item weights are independent Bernoulli (factored distribution P)",
-    "Actions are ordered tuples of distinct ground items from an arbitrary feasible set Theta"
+    "Reward is the product (AND) of independent Bernoulli item weights over the chosen ordered tuple (conjunctive, non-linear reward); a disjunctive (OR) variant is also covered",
+    "Feedback is the index of the first chosen item with weight zero (cascade feedback over arbitrary feasible tuples)",
+    "Item weights are independent across items (factored distribution)"
    ],
-   "definition_quote": "A combinatorial cascading bandit is a tuple $B = (E, P, \\Theta)$ ... receives a binary reward $\\rnd{r}_t = \\min_{e \\in \\rnd{A}_t} \\rnd{w}_t(e)$ ... At the end of time $t$, the agent observes the index of the first item in $\\rnd{A}_t$ whose weight is zero ... $P(w) = \\prod_{e \\in E} P_e(w(e))$, where $P_e$ is a Bernoulli distribution with mean $\\bar{w}(e)$."
+   "definition_quote": "A combinatorial cascading bandit is a tuple $B = (E, P, \\Theta)$ ... receives a binary reward $\\rnd{r}_t = \\min_{e \\in \\rnd{A}_t} \\rnd{w}_t(e)$ ... the agent observes the index of the first item in $\\rnd{A}_t$ whose weight is zero ... the distribution $P$ is factored ... $P_e$ is a Bernoulli distribution with mean $\\bar{w}(e)$."
   }
  ],
  "algorithms": [
@@ -88,15 +120,16 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "(m/f_star)*sum_subopt(4272/Delta_e_min)*log(T) + pi**2/3*L_items",
+    "expression": "(m/f_star)*sum_subopt(4272*log(T)/Delta_e_min) + pi**2/3*L_items",
     "expression_latex": "\\frac{K}{f^\\ast} \\sum_{e \\in \\tilde{E}} \\frac{4272}{\\Delta_{e, \\min}} \\log n + \\frac{\\pi^2}{3} L",
     "regime": null
    },
    "symbols": {
-    "f_star": "expected reward of the optimal solution, f(A*, w_bar) = prod_{e in A*} w_bar(e)",
-    "Delta_e_min": "minimum gap of suboptimal solutions containing suboptimal item e",
+    "m": "paper's K: maximum number of items in any feasible solution",
+    "f_star": "expected reward of the optimal solution, f(A*, w_bar) > 0",
+    "Delta_e_min": "minimum gap of suboptimal item e: f* minus max reward of suboptimal solutions containing e",
     "L_items": "number of ground items L",
-    "m": "paper's K: maximum number of items in any feasible solution"
+    "sum_subopt": "here: sum over suboptimal items e not in A*"
    },
    "conditions": [
     "f* > 0",
@@ -105,7 +138,7 @@
     "algorithm initialized with one sample w_0 ~ P"
    ],
    "tuning": [
-    "confidence radius c_{t,s} = sqrt(1.5 log t / s)"
+    "c_{t,s} = sqrt(1.5 log t / s)"
    ],
    "is_new": true,
    "source": {
@@ -114,7 +147,7 @@
     "quote": "The regret of $\\combcascade$ is bounded as $\\displaystyle R(n) \\leq \\frac{K}{f^\\ast} \\sum_{e \\in \\tilde{E}} \\frac{4272}{\\Delta_{e, \\min}} \\log n + \\frac{\\pi^2}{3} L$."
    },
    "confidence": "high",
-   "notes": "sum_subopt here sums over suboptimal ground items (E minus A*), not arms. Regret E[sum f(A*,w_t)-f(A_t,w_t)] equals pseudo-regret. Also applies to disjunctive variant with redefined gaps and f*."
+   "notes": "Regret R(n)=E[sum f(A*,w_t)-f(A_t,w_t)] equals expected gap sum, hence pseudo-regret. Same bound holds for the disjunctive variant with Delta_e_min and f* redefined via 1-w_bar. Computationally efficient given a linear optimization oracle on Theta."
   },
   {
    "id": "r2",
@@ -135,9 +168,9 @@
     "regime": null
    },
    "symbols": {
-    "f_star": "expected reward of the optimal solution",
-    "L_items": "number of ground items L",
-    "m": "paper's K: maximum number of items in any feasible solution"
+    "m": "paper's K: maximum number of items in any feasible solution",
+    "f_star": "expected reward of the optimal solution, f(A*, w_bar) > 0",
+    "L_items": "number of ground items L"
    },
    "conditions": [
     "f* > 0",
@@ -146,7 +179,7 @@
     "algorithm initialized with one sample w_0 ~ P"
    ],
    "tuning": [
-    "confidence radius c_{t,s} = sqrt(1.5 log t / s)"
+    "c_{t,s} = sqrt(1.5 log t / s)"
    ],
    "is_new": true,
    "source": {
@@ -155,26 +188,26 @@
     "quote": "The regret of $\\combcascade$ is bounded as $\\displaystyle R(n) \\leq 131 \\sqrt{\\frac{K L n \\log n}{f^\\ast}} + \\frac{\\pi^2}{3} L$."
    },
    "confidence": "high",
-   "notes": "Bound still depends on instance through f*; the epsilon in the proof is analysis-only so algorithm does not need n."
+   "notes": "epsilon is chosen only in the analysis, the algorithm does not need n. Depends on f*, so not purely worst case. Also applies to the disjunctive variant."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:09:45",
+  "date": "2026-10-21T15:19:07",
   "source_chars": 65299,
-  "input_tokens": 62591,
-  "output_tokens": 2866,
-  "cost_usd_equiv": 0.34046679999999996,
+  "input_tokens": 69178,
+  "output_tokens": 3412,
+  "cost_usd_equiv": 0.352634,
   "status": "extracted"
  }
 }

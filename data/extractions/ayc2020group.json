@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Group-Fair Online Allocation in Continuous Time",
   "arxiv_id": "2006.06852",
@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Continuous-time online learning for group-fair utility maximization with deadlines (delayed full-information feedback)",
+   "name_in_paper": "Continuous-time online learning for group-fair utility maximization under time budget B (delayed full-information feedback)",
    "objective": "cumulative_regret",
    "feedback": "full_information",
    "environment": "stochastic_iid",
@@ -23,9 +23,11 @@
    "function_class": [],
    "domain": "not_applicable",
    "context": "none",
-   "noise": "general_model_class",
+   "noise": "bounded_01",
    "learner_knows": [
-    "K"
+    "K",
+    "B",
+    "D"
    ],
    "instance_assumptions": [],
    "extras": [
@@ -39,30 +41,61 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "hard_budget",
+    "violation": "never"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "fixed"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Actions are (group, deadline) pairs from [K] x finite deadline set {t_1..t_L}",
-    "Each task consumes random completion time min{X, deadline} from a total time budget B; process stops when budget exceeded",
-    "Objective is sum of concave utilities U_k of per-group reward rates (fairness), not total reward",
-    "Rewards R_{k,n}(t) in [0, R_max(t)], positive completion times",
-    "Full-information feedback revealed with constant delay tau"
+    "Each decision is a (group, deadline) pair from [K] x a finite deadline set of size L; task occupies random completion time min{X, t} of a continuous time budget B",
+    "Objective is sum of concave utilities U_k of per-group reward rates (alpha-fair utilities), not total reward",
+    "Reward collected only if random completion time is below chosen deadline; completion time and reward may be correlated"
    ],
-   "definition_quote": "If an individual from group $k\\in[K]$ is chosen for the $n$-th task, he/she takes $X_{k,n}$ units of completion time ... reward of $R_{k,n}(t)=\\overline{R}_{k,n}\\mathbb{I}\\{X_{k,n}\\leq t\\}$ ... We assume a delayed full-information feedback model where the completion time and reward of all groups for task $n$ are revealed to the controller at stage $n+\\tau$"
+   "definition_quote": "the total utility under a policy $\\pi$ is defined as: $$U^\\pi(B) = \\sum_{k=1}^KU_k\\big(\\overline{r}^\\pi_k(B)\\big)$$ ... {\\tt REG}_\\Pi^\\pi(B)={\\tt OPT}_\\Pi(B)-U^\\pi(B) ... We assume a delayed full-information feedback model where the completion time and reward of all groups for task $n$ are revealed to the controller at stage $n+\\tau$ for some delay $\\tau \\geq 1$."
   }
  ],
  "algorithms": [
@@ -74,7 +107,11 @@
    "techniques": [
     "other"
    ],
-   "requires_knowledge_of": []
+   "requires_knowledge_of": [
+    "B",
+    "D",
+    "utility functions U_k"
+   ]
   }
  ],
  "results": [
@@ -85,25 +122,25 @@
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "other",
-   "dependence": "instance_dependent",
+   "dependence": "worst_case",
    "comparator": "best_policy",
    "probability": "expectation",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(log(B)/B) + V_olum/B + 1/V_olum",
+    "expression": "sqrt(log(B)/B) + V_alg/B + 1/V_alg",
     "expression_latex": "O\\Big(\\sqrt{\\frac{\\log(B)}{B}} + \\frac{V}{B}+\\frac{1}{V}\\Big)",
     "regime": null
    },
    "symbols": {
-    "B": "total time budget",
-    "V_olum": "OLUM design parameter V > 0"
+    "V_alg": "OLUM design parameter V > 0 (drift-plus-penalty weight)"
    },
    "conditions": [
-    "constant delay tau",
-    "comparator is the best stationary randomized policy (Pi_S)",
-    "utilities continuously differentiable, concave, increasing"
+    "constant feedback delay tau = D >= 1",
+    "utility functions U_k continuously differentiable, concave, increasing",
+    "finite deadline set; completion times positive; rewards bounded",
+    "regret measured against best stationary randomized policy class Pi_S"
    ],
    "tuning": [
     "any V > 0"
@@ -115,7 +152,7 @@
     "quote": "For any $V>0$ and constant delay $\\tau$, the regret under $\\pi^{\\tt OLUM}$ is bounded as ${\\tt REG}_{\\Pi_S}{^{\\pi^{\\tt OLUM}}}(B) = O\\Big(\\sqrt{\\frac{\\log(B)}{B}} + \\frac{V}{B}+\\frac{1}{V}\\Big).$"
    },
    "confidence": "medium",
-   "notes": "Regret is the utility gap OPT - U^pi of time-averaged reward rates (not a cumulative regret), so it was not multiplied by B: utility is nonlinear. Instance-dependent constants are hidden in O."
+   "notes": "Regret is the difference in utility of reward rates (per unit time), not cumulative reward; kept as stated (not multiplied by B) since utilities are nonlinear. Quantity set to 'other'. Delay tau mapped to D."
   },
   {
    "id": "r2",
@@ -124,7 +161,7 @@
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "other",
-   "dependence": "instance_dependent",
+   "dependence": "worst_case",
    "comparator": "best_policy",
    "probability": "expectation",
    "horizon": "known",
@@ -135,12 +172,11 @@
     "expression_latex": "O(\\sqrt{\\log(B)/B})=\\tilde{O}(1/\\sqrt{B})",
     "regime": null
    },
-   "symbols": {
-    "B": "total time budget"
-   },
+   "symbols": {},
    "conditions": [
-    "constant delay tau",
-    "comparator is the best stationary randomized policy (Pi_S)"
+    "constant feedback delay tau = D >= 1",
+    "utility functions U_k continuously differentiable, concave, increasing",
+    "regret measured against best stationary randomized policy class Pi_S"
    ],
    "tuning": [
     "V = Theta(sqrt(B/log(B)))"
@@ -152,26 +188,26 @@
     "quote": "By choosing $V = \\Theta(\\sqrt{B/\\log(B)})$, we obtain ${\\tt REG}_{\\Pi_S}{^{\\pi^{\\tt OLUM}}}(B) = O(\\sqrt{\\log(B)/B})=\\tilde{O}(1/\\sqrt{B})$."
    },
    "confidence": "medium",
-   "notes": "Tuning V needs B, so the horizon (budget) is treated as known. Regret is on time-averaged utility and was not rescaled."
+   "notes": "Tuned version; requires knowing B. Regret is in utility-of-rate units (vanishing with B)."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:12:47",
+  "date": "2026-10-21T15:21:50",
   "source_chars": 83865,
-  "input_tokens": 68008,
-  "output_tokens": 3114,
-  "cost_usd_equiv": 0.3887628,
+  "input_tokens": 74595,
+  "output_tokens": 3067,
+  "cost_usd_equiv": 0.38907,
   "status": "extracted"
  }
 }

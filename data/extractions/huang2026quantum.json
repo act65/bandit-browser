@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Quantum-Enhanced Neural Contextual Bandit Algorithms",
   "arxiv_id": "2601.02870",
@@ -8,18 +8,18 @@
   "year": 2026,
   "authors": [
    "Yuqi Huang",
-   "Vincent Y. F Tan",
+   "Vincent Y. F. Tan",
    "Sharu Theresa Jose"
   ]
  },
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Stochastic K-armed contextual bandit with QNTK-realizable reward",
+   "name_in_paper": "Stochastic K-armed contextual bandit with QNN/QNTK reward model",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
-   "action_space": "kernel_rkhs",
+   "action_space": "finite_K",
    "function_class": [],
    "domain": "not_applicable",
    "context": "adversarial_contexts",
@@ -27,43 +27,70 @@
    "learner_knows": [
     "T",
     "sigma",
-    "S",
-    "K"
+    "S"
    ],
    "instance_assumptions": [],
-   "extras": [
-    "time_varying_action_sets"
-   ],
+   "extras": [],
    "action_set": {
-    "shape": "finite",
-    "time_varying": "oblivious_sequence",
-    "access": "explicit",
-    "norm_bound": "unit_l2",
-    "parameter_set": "arbitrary_bounded",
-    "loss_set": "not_applicable"
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "neural_ntk"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Unknown mean reward h: R^d -> [0,1], modelled through the quantum neural tangent kernel (QNTK) of a randomly initialised quantum neural network with m qubits; the kernel is the empirical QNTK, and its limiting Gram matrix on all TK contexts must be positive definite (min eigenvalue lambda_0 > 0)",
-    "The context set X_{1:TK} over the whole horizon is treated as a fixed dataset; whether contexts are adversarial or stochastic is not stated",
-    "Noise is nu-sub-Gaussian conditionally on the history",
-    "Context vectors have unit l2 norm",
-    "QNN architecture assumptions (Assumptions 1-3, from Girardi & De Palma)"
+    "Mean reward h: R^d -> [0,1] unknown, modeled via quantum neural tangent kernel of a randomly initialized QNN with m qubits; contexts x_{t,a} in R^d with ||x||_2=1",
+    "Limiting QNTK Gram matrix over all TK contexts is positive definite (min eigenvalue lambda_0 > 0)"
    ],
-   "definition_quote": "At each round $t \\in [T]$, the agent observes a set of {\\em context vectors} $\\mathcal{X}_t = \\{\\xbf_{t,a}: a \\in [K]\\}$ ... $r_{t,a_t}=h(\\xbf_{t,a_t})+ \\xi_t$, where $h: \\mathbb{R}^d \\to [0, 1]$ is an unknown, $[0,1]$-bounded, mean reward function and $\\xi_t$ is $\\nu$-sub-Gaussian noise conditioned on the history"
+   "definition_quote": "At each round $t$, the agent observes a set of context vectors $\\mathcal{X}_t = \\{\\xbf_{t,a}: a \\in [K]\\}$ ... $r_{t,a_t}=h(\\xbf_{t,a_t})+ \\xi_t$, where $h: \\mathbb{R}^d \\to [0, 1]$ is an unknown, $[0,1]$-bounded, mean reward function and $\\xi_t$ is $\\nu$-sub-Gaussian noise conditioned on the history"
   }
  ],
  "algorithms": [
@@ -78,8 +105,7 @@
    "requires_knowledge_of": [
     "T",
     "sigma",
-    "S",
-    "delta"
+    "S"
    ]
   }
  ],
@@ -95,37 +121,36 @@
    "comparator": "best_action_per_round",
    "probability": "high_probability",
    "horizon": "known",
-   "compute": "polynomial",
+   "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "3*sqrt(T)*sqrt(d_q*log(1 + T*K/lam) + 1)*(sigma*sqrt(d_q*log(1 + T*K/lam) + 1 + 2*log(1/delta)) + sqrt(lam)*S)",
+    "expression": "3*sqrt(T)*sqrt(d_eff*log(1 + T*K/lam) + 1)*(sigma*sqrt(d_eff*log(1 + T*K/lam) + 1 + 2*log(1/delta)) + sqrt(lam)*S)",
     "expression_latex": "3\\sqrt{T}\\sqrt{\\widetilde{d}_{\\mathrm{q}}\\log (1+\\frac{TK}{\\lambda})+1}\\Big(\\nu\\sqrt{\\widetilde{d}_{\\mathrm{q}}\\log(1+\\frac{TK}{\\lambda})+ 1 +2\\log(\\frac{1}{\\delta})}+\\sqrt{\\lambda}S\\Big)",
     "regime": null
    },
    "symbols": {
-    "d_q": "quantum effective dimension log det(I + Kbar/lambda)/log(1+TK/lambda) of the limiting QNTK Gram matrix on all TK contexts",
-    "m_qubits": "number of qubits of the QNN"
+    "d_eff": "quantum effective dimension log det(I + Kbar/lam)/log(1+TK/lam) of the limiting QNTK on all TK contexts"
    },
    "conditions": [
-    "number of qubits m = Omega((TK)^3/lambda^2 * log((TK)^2/delta))",
-    "S >= sqrt(2 h^T Kbar^{-1} h), with h the vector of mean rewards over all TK contexts",
+    "number of qubits m = Omega((TK)^3/lam^2 * log((TK)^2/delta)) with a QNN architecture satisfying Assumptions 1-3 (e.g. N(m)=sqrt(m), L=O(log m))",
     "limiting QNTK Gram matrix positive definite with min eigenvalue lambda_0 > 0",
-    "contexts have unit l2 norm",
-    "QNN architecture satisfies Assumptions 1-3 (Gaussian process limit, convergence of analytic QNTK, light-cone scaling condition)",
-    "mean rewards in [0,1]"
+    "||x_{t,a}||_2 = 1",
+    "S >= sqrt(2 h^T Kbar^{-1} h)",
+    "QNN centered at initialization (f(x;theta_0)=0)",
+    "noise nu-sub-Gaussian conditionally on history"
    ],
    "tuning": [
     "lambda >= max{1, S^{-2}}",
-    "beta_{t-1} = nu*sqrt(log det(Z_{t-1})/det(lambda I) + 2 log(1/delta)) + sqrt(lambda)*S"
+    "beta_{t-1} = nu*sqrt(log det(Z_{t-1})/det(lam I) + 2 log(1/delta)) + sqrt(lam) S"
    ],
    "is_new": true,
    "source": {
     "label": "thm:regret",
     "number": "Theorem (thm:regret)",
-    "quote": "Fix any $\\delta\\in(0,1)$. Let $m = \\bigOmega\\left( \\frac{(TK)^3}{\\lambda^2}\\log\\left(\\frac{(TK)^2}{\\delta}\\right) \\right)$. Then, with probability at least $1-\\delta$, the cumulative regret of QNTK-UCB (Algorithm \\ref{alg:qntk-ucb}) satisfies R_T \\le 3\\sqrt{T}\\sqrt{\\widetilde{d}_{\\mathrm{q}}\\log (1+\\frac{TK}{\\lambda})+1}(\\nu\\sqrt{...+2\\log(1/\\delta)}+\\sqrt{\\lambda}S), where $S \\geq \\sqrt{2\\hbf^\\top \\bar{\\Kbf}^{-1} \\hbf}$ ... and $\\lambda \\geq \\max\\{1,S^{-2}\\}$."
+    "quote": "Fix any $\\delta\\in(0,1)$. Let $m = \\bigOmega\\left( \\frac{(TK)^3}{\\lambda^2}\\log\\left(\\frac{(TK)^2}{\\delta}\\right) \\right)$. Then, with probability at least $1-\\delta$, the cumulative regret of QNTK-UCB (Algorithm 1) satisfies R_T \\le 3\\sqrt{T}\\sqrt{\\widetilde{d}_{\\mathrm{q}}\\log (1+\\frac{TK}{\\lambda})+1}(\\nu\\sqrt{...+2\\log(1/\\delta)}+\\sqrt{\\lambda}S), where $S \\geq \\sqrt{2\\hbf^\\top \\bar{\\Kbf}^{-1} \\hbf}$ ... and $\\lambda \\geq \\max\\{1,S^{-2}\\}$."
    },
    "confidence": "medium",
-   "notes": "Regret R_T is the realized sum of mean-reward gaps (no noise), bounded w.p. 1-delta (over noise and random initialisation). nu (sub-Gaussian parameter) mapped to sigma. Mapping to kernel_rkhs is approximate."
+   "notes": "Probability over both QNN initialization and noise. nu mapped to sigma. Regret defined via mean rewards h (realized pseudo-regret on the event). Effective dimension mapped to d_eff (log-det normalized version, as in NeuralUCB)."
   },
   {
    "id": "r2",
@@ -138,22 +163,18 @@
    "comparator": "best_action_per_round",
    "probability": "high_probability",
    "horizon": "known",
-   "compute": "polynomial",
+   "compute": "not_stated",
    "bound": {
     "notation": "O_tilde",
-    "expression": "d_q*sqrt(T)",
-    "expression_latex": "R_T = \\tilde{\\mathcal{O}}\\left(\\widetilde{d}_{\\mathrm{q}} \\sqrt{T} \\right)",
+    "expression": "d_eff*sqrt(T)",
+    "expression_latex": "\\tilde{\\mathcal{O}}(\\widetilde{d}_{\\mathrm{q}} \\sqrt{T})",
     "regime": null
    },
    "symbols": {
-    "d_q": "quantum effective dimension of the limiting QNTK Gram matrix"
+    "d_eff": "quantum effective dimension of the limiting QNTK"
    },
    "conditions": [
-    "number of qubits m = Omega((TK)^3/lambda^2 * log((TK)^2/delta))",
-    "S >= sqrt(2 h^T Kbar^{-1} h)",
-    "limiting QNTK Gram matrix positive definite",
-    "contexts have unit l2 norm",
-    "QNN architecture satisfies Assumptions 1-3"
+    "same as Theorem: m = Omega((TK)^3/lam^2 log((TK)^2/delta)), Kbar positive definite, ||x||=1, S >= sqrt(2 h^T Kbar^{-1} h)"
    ],
    "tuning": [
     "lambda >= max{1, S^{-2}}"
@@ -162,10 +183,10 @@
    "source": {
     "label": "thm:regret",
     "number": "Theorem (thm:regret)",
-    "quote": "Ignoring logarithmic terms and constants, this bound simplifies to $$ R_T = \\tilde{\\mathcal{O}}\\left(\\widetilde{d}_{\\mathrm{q}} \\sqrt{T} \\right)$$"
+    "quote": "Ignoring logarithmic terms and constants, this bound simplifies to $R_T = \\tilde{\\mathcal{O}}\\left(\\widetilde{d}_{\\mathrm{q}} \\sqrt{T} \\right)$"
    },
    "confidence": "medium",
-   "notes": "Simplified form of r1; hides S, lambda, nu dependence."
+   "notes": "Simplified form; hides S, nu, lambda dependence."
   },
   {
    "id": "r3",
@@ -178,21 +199,18 @@
    "comparator": "best_action_per_round",
    "probability": "expectation",
    "horizon": "known",
-   "compute": "polynomial",
+   "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "3*sqrt(T)*sqrt(d_q*log(1 + T*K/lam) + 1)*(sigma*sqrt(d_q*log(1 + T*K/lam) + 1 + 2*log(T)) + sqrt(lam)*S) + 1",
+    "expression": "3*sqrt(T)*sqrt(d_eff*log(1 + T*K/lam) + 1)*(sigma*sqrt(d_eff*log(1 + T*K/lam) + 1 + 2*log(T)) + sqrt(lam)*S) + 1",
     "expression_latex": "3\\sqrt{T}\\sqrt{\\widetilde{d}_{\\mathrm{q}}\\log (1+\\frac{TK}{\\lambda})+1}\\Big(\\nu\\sqrt{\\widetilde{d}_{\\mathrm{q}}\\log(1+\\frac{TK}{\\lambda})+ 1 +2\\log T}+\\sqrt{\\lambda}S\\Big) +1",
     "regime": null
    },
    "symbols": {
-    "d_q": "quantum effective dimension of the limiting QNTK Gram matrix"
+    "d_eff": "quantum effective dimension of the limiting QNTK"
    },
    "conditions": [
-    "same conditions as Theorem (thm:regret), with delta = 1/T in the qubit-count requirement",
-    "S >= sqrt(2 h^T Kbar^{-1} h)",
-    "limiting QNTK Gram matrix positive definite",
-    "contexts have unit l2 norm"
+    "same conditions as Theorem (thm:regret) with delta = 1/T"
    ],
    "tuning": [
     "delta = 1/T",
@@ -202,29 +220,29 @@
    "source": {
     "label": null,
     "number": "Corollary 2",
-    "quote": "Under the same conditions as Theorem~\\ref{thm:regret}, the expected cumulative regret satisfies $$ \\bar{R}_T \\le 3\\sqrt{T}\\sqrt{...}\\Big(\\nu\\sqrt{...+2\\log T}+\\sqrt{\\lambda}S\\Big) +1 = \\tilde{\\mathcal{O}}\\left(\\widetilde{d}_{\\mathrm{q}} \\sqrt{T} \\right)$$"
+    "quote": "Under the same conditions as Theorem~\\ref{thm:regret}, the expected cumulative regret satisfies $\\bar{R}_T \\le 3\\sqrt{T}\\sqrt{...}\\Big(\\nu\\sqrt{...+2\\log T}+\\sqrt{\\lambda}S\\Big) +1 = \\tilde{\\mathcal{O}}(\\widetilde{d}_{\\mathrm{q}} \\sqrt{T})$"
    },
    "confidence": "medium",
-   "notes": "The expected regret is defined as the sum of expected mean-reward gaps, i.e. pseudo-regret. The corollary also states the O_tilde(d_q sqrt(T)) form."
+   "notes": "Expected regret defined via mean rewards h, so pseudo-regret. Also stated as O_tilde(d_q sqrt(T))."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:14:38",
+  "date": "2026-10-21T15:23:52",
   "source_chars": 85636,
-  "input_tokens": 70287,
-  "output_tokens": 4878,
-  "cost_usd_equiv": 0.44227479999999997,
+  "input_tokens": 76874,
+  "output_tokens": 4718,
+  "cost_usd_equiv": 0.440322,
   "status": "extracted"
  }
 }

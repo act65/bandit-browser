@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Quantum Entanglement Path Selection and Qubit Allocation via Adversarial Group Neural Bandits",
   "arxiv_id": "2411.00316",
@@ -35,31 +35,63 @@
     "shape": "finite",
     "time_varying": "oblivious_sequence",
     "access": "explicit",
-    "norm_bound": "not_applicable",
+    "norm_bound": "unspecified",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "neural_ntk"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "R groups of arms (paths); within each group a finite set of arms in R^{D_r} with unknown nonlinear reward h_r in [0,1], learned via overparameterized neural network (NTK regime, effective dimension d_tilde)",
-    "Adversary chooses binary attack vector a^t over groups each round; realized success rate s^t = a^t(r) h_r(x)",
-    "Observation is Bernoulli Y^t with mean s^t; attacks are detectable",
-    "Comparator: best fixed group in hindsight, with per-round optimal arm within that group (group-static strategy)"
+    "Arms are partitioned into R groups (paths); each group r has an unknown nonlinear reward function h_r in [0,1] on D_r-dimensional arms, learned via overparameterized neural networks (NTK)",
+    "Adversary chooses a binary attack vector a^t over groups each round; reward success rate s^t = a^t(r) h_r(x), observed outcome Y^t ~ Bernoulli(s^t); attacks are distinguishable from failures",
+    "Comparator: best fixed group in hindsight, playing the per-round optimal arm within that group (group-static strategies)"
    ],
-   "definition_quote": "We define $R$ groups of arms ... Within each group $r \\in \\mathcal{R}$, the arms represent various qubit allocation strategies ... the adversary simultaneously chooses a binary attack vector $a^t$ ... $\\reg(T) = \\sum_{t=1}^T s^t(\\gamma, \\xi_\\gamma^t) - \\mathbb{E}[\\sum_{t=1}^T s^t(r^t, x^t)]$"
+   "definition_quote": "the adversary simultaneously chooses a binary attack vector $a^t = (a^t(r), \\forall r\\in \\mathcal{R})$, where $a^t (r) = 0$ if the adversary performs an attack on the path $r$ and $a^t(r)=1$ otherwise. ... $\\reg(T) = \\sum_{t=1}^T s^t(\\gamma, \\xi_\\gamma^t) - \\mathbb{E}[\\sum_{t=1}^T s^t(r^t, x^t)]$"
   }
  ],
  "algorithms": [
@@ -84,7 +116,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "high_probability_regret",
+   "quantity": "pseudo_regret",
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "high_probability",
@@ -98,13 +130,13 @@
    },
    "symbols": {},
    "conditions": [
-    "network width m >= poly(T, L, sup D, 1/lambda, log(1/delta)) (sufficiently large)",
-    "lambda >= max{1, (2 h^T H^{-1} h)^{-1}}",
-    "NTK-based approximation assumptions from Zhou et al. 2020"
+    "0 <= h_r(x) <= 1 for all groups r and arms x",
+    "network width m >= poly(T, L, max_r D_r, 1/lambda, log(1/delta)) (sufficiently large)"
    ],
    "tuning": [
     "beta = T^{-1/4} sqrt(log T)",
     "eta = T^{-1/2}",
+    "lambda >= max{1, (2 h^T H^{-1} h)^{-1}}",
     "zeta = O((mTL + m lambda)^{-1})"
    ],
    "is_new": true,
@@ -114,63 +146,26 @@
     "quote": "For any $\\delta \\in (0, 1)$, by choosing $\\beta = T^{-1/4}\\sqrt{\\log(T)}$ and $\\eta = T^{-1/2}$, such that for any $\\delta \\in (0,1)$, if $m, \\lambda, \\zeta$ satisfy the same condition as Lemma 2, then with probability at least $1-\\delta$, EXPNeuralUCB yields the following expected regret bound $\\reg(T) = O(T^{3/4}\\sqrt{\\log(T)})$."
    },
    "confidence": "medium",
-   "notes": "Regret is expectation over algorithm randomization, bound holds w.p. 1-delta (over NN init/noise); recorded as high_probability_regret. Hidden dependence on effective dimension d_tilde, R and log(1/delta) is suppressed. Comparator is best fixed group with per-round best arm. Adversary type not specified in theory."
+   "notes": "Regret is defined via success rates (means) against the best fixed group with per-round optimal arm; expectation over algorithm randomness, probability 1-delta over NN init/noise. Hidden dependence on effective dimension d_tilde, number of groups R and m^{-1/6} terms suppressed in the O. Comparator mapped to best_fixed_action (best fixed group). Adversary type (oblivious/adaptive) not specified in the theorem."
   }
  ],
- "cited_results": [
-  {
-   "cited_key": "auer2002nonstochastic",
-   "cited_title": "The nonstochastic multiarmed bandit problem",
-   "cited_first_author": "P. Auer",
-   "cited_year": 2002,
-   "cited_arxiv_id": null,
-   "algorithm_name": "EXP3",
-   "algorithm_registry_id": "exp3",
-   "side": "upper",
-   "setting_description": "Pure-adversarial version of the group problem where the optimal arm in each group is known (adversarial multi-armed bandit over groups)",
-   "bound": {
-    "notation": "O",
-    "expression": "sqrt(T)",
-    "expression_latex": "O(\\sqrt{T})",
-    "regime": null
-   },
-   "where": "Remark after Theorem 1"
-  },
-  {
-   "cited_key": "zhou2020neural",
-   "cited_title": "Neural contextual bandits with ucb-based exploration",
-   "cited_first_author": "D. Zhou",
-   "cited_year": 2020,
-   "cited_arxiv_id": null,
-   "algorithm_name": "NeuralUCB",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Pure-stochastic version (no attacks), group-disjoint parameter case, neural contextual bandits",
-   "bound": {
-    "notation": "exact",
-    "expression": "sqrt(T*log(T))",
-    "expression_latex": "\\sqrt{T\\log T}",
-    "regime": null
-   },
-   "where": "Remark after Theorem 1"
-  }
- ],
+ "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T13:54:27",
+  "date": "2026-10-21T15:03:12",
   "source_chars": 75912,
-  "input_tokens": 62660,
-  "output_tokens": 2848,
-  "cost_usd_equiv": 0.34065880000000004,
+  "input_tokens": 69247,
+  "output_tokens": 3078,
+  "cost_usd_equiv": 0.346506,
   "status": "extracted"
  }
 }

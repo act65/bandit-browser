@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Information-Directed Sampling for Causal Bandits",
   "arxiv_id": "2607.15577",
@@ -19,14 +19,16 @@
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
-   "action_space": "finite_K",
+   "action_space": "structured_general",
    "function_class": [],
    "domain": "not_applicable",
    "context": "stochastic_contexts",
    "noise": "bernoulli",
    "learner_knows": [
+    "K",
+    "T",
     "prior",
-    "K"
+    "reward_family"
    ],
    "instance_assumptions": [
     "bayesian_prior"
@@ -40,30 +42,63 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "realizable_general_class"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Known causal graph without latent confounders; arms are interventions from POMISs of the projected graph with non-manipulable variables",
-    "Learner observes reward and all non-intervened variables after each intervention (richer than bandit feedback)",
-    "Unknown parameter is the set of CPTs with independent Dirichlet priors (parameter independence)",
-    "Contexts are ancestrally closed, observed before action; need not be exogenous (may carry information about theta)",
-    "Regret is against the context-dependent oracle mapping Pi*(c)"
+    "Known causal graph (DAG) without latent confounders; actions are POMIS-induced interventions do(X=x) with some variables non-manipulable",
+    "Unknown parameter is the set of CPTs of the observational distribution with independent Dirichlet priors",
+    "Learner observes all non-intervened variables after each intervention (richer than reward-only feedback)",
+    "Contexts are ancestrally closed variables of the SCM observed before action; may be informative about theta",
+    "Regret against context-dependent oracle mapping Pi*(c)"
    ],
-   "definition_quote": "We study contextual causal bandits with non-manipulable variables, where context variables are observed before action selection and additional variables are observed after each intervention. Assuming a known causal graph without latent confounding, we adopt a Bayesian formulation in which the conditional probability tables of the observational distribution constitute the unknown parameter."
+   "definition_quote": "We study contextual causal bandits with non-manipulable variables under the assumption that the causal graph is known and contains no latent confounders. At each round, context variables are observed before the learner selects an intervention. The learner subsequently observes the reward and the remaining observed variables in the causal graph."
   }
  ],
  "algorithms": [
@@ -76,7 +111,8 @@
     "thompson_sampling"
    ],
    "requires_knowledge_of": [
-    "prior"
+    "prior",
+    "causal graph"
    ]
   },
   {
@@ -89,7 +125,9 @@
    ],
    "requires_knowledge_of": [
     "prior",
-    "T"
+    "causal graph",
+    "T",
+    "K"
    ]
   },
   {
@@ -101,7 +139,8 @@
     "information_directed_sampling"
    ],
    "requires_knowledge_of": [
-    "prior"
+    "prior",
+    "causal graph"
    ]
   }
  ],
@@ -113,8 +152,8 @@
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "bayesian_regret",
-   "dependence": "instance_dependent",
-   "comparator": "best_action_per_round",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "not_stated",
@@ -125,21 +164,23 @@
     "regime": null
    },
    "symbols": {
-    "Gamma": "uniform upper bound on the information-ratio coefficients Gamma_t",
-    "H_Pi": "prior entropy of the optimal-action mapping Pi*"
+    "Gamma": "uniform upper bound on the square root of the information ratio Gamma_t",
+    "H_Pi": "entropy of the optimal context-to-action mapping Pi* under the prior"
    },
    "conditions": [
-    "Gamma >= Gamma_t for all t"
+    "Gamma >= Gamma_t for all t",
+    "binary reward Y",
+    "no latent confounders, known causal graph"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm1",
     "number": "Theorem 1",
-    "quote": "The mean cumulative Bayesian regret of Algorithm~\\ref{alg: thom} is bounded for any $T \\in \\mathbb{N}$ as follows, where $\\Gamma \\geq \\Gamma_t$ for all $t \\in \\{1,\\ldots,T\\}$: \\mathbb{E}[\\sum_{t=1}^T (Y_{\\Pi^\\star(\\mathbf{C}_t),t} - Y_{A_t,t})] \\leq \\Gamma \\sqrt{H(\\Pi^\\star) \\, T}."
+    "quote": "The mean cumulative Bayesian regret of Algorithm~\\ref{alg: thom} is bounded for any $T \\in \\mathbb{N}$ as follows, where $\\Gamma \\geq \\Gamma_t$ for all $t \\in \\{1,\\ldots,T\\}$: ... \\leq \\Gamma \\sqrt{H(\\Pi^\\star) \\, T}."
    },
-   "confidence": "high",
-   "notes": "Prior-dependent (entropy) Bayesian regret bound; regret defined on realized rewards in expectation, which equals Bayesian regret."
+   "confidence": "medium",
+   "notes": "Comparator is the oracle context-to-action mapping Pi*; mapped to best_policy. Instance-free bound in terms of prior entropy."
   },
   {
    "id": "r2",
@@ -149,7 +190,7 @@
    "algorithm_class": null,
    "quantity": "bayesian_regret",
    "dependence": "worst_case",
-   "comparator": "best_action_per_round",
+   "comparator": "best_policy",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "not_stated",
@@ -161,8 +202,9 @@
    },
    "symbols": {},
    "conditions": [
-    "context space C is finite with |C| = M_ctx",
-    "K = |A| is the number of POMIS-induced interventions"
+    "context space finite with |C| = M_ctx",
+    "K = |A| number of POMIS-induced interventions",
+    "binary reward Y"
    ],
    "tuning": [],
    "is_new": true,
@@ -172,7 +214,7 @@
     "quote": "Suppose that the context space $\\mathcal{C}$ is finite. The mean cumulative Bayesian regret for Algorithm~\\ref{alg: thom} is bounded for any $T \\in \\mathbb{N}$ as follows: ... \\leq \\sqrt{\\frac{T|\\mathcal{A}| |\\mathcal{C}|\\log\\!|\\mathcal{A}|}{2}}."
    },
    "confidence": "high",
-   "notes": "Uses Gamma_t^2 <= |A|/2 and H(Pi*) <= |C| log|A|. Proof also gives intermediate sqrt(|A|/2 H(Pi*) T)."
+   "notes": "Uses Gamma_t^2 <= |A|/2 and H(Pi*) <= |C| log|A|. Intermediate bound sqrt(|A|/2 H(Pi*) T) also derived."
   },
   {
    "id": "r3",
@@ -181,35 +223,37 @@
    "algorithm": "a2",
    "algorithm_class": null,
    "quantity": "bayesian_regret",
-   "dependence": "instance_dependent",
-   "comparator": "best_action_per_round",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
    "probability": "expectation",
    "horizon": "known",
-   "compute": "polynomial",
+   "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "sqrt(H_Pi*(T*K/2 + 2*G_sum)) + delta_p",
-    "expression_latex": "\\sqrt{H(\\Pi^\\star)\\left(\\frac{T|\\mathcal{A}|}{2}+2\\sum_{t=1}^{T}\\mathbb{E}[\\gamma_t\\mathbbm{1}_{\\mathcal{E}_t}]\\right)}+\\delta'",
+    "expression": "sqrt(H_Pi*(T*K/2 + 2*Gamma_sum)) + delta",
+    "expression_latex": "\\sqrt{H(\\Pi^\\star)\\left(\\frac{T|\\mathcal{A}|}{2}+2\\sum_{t=1}^{T}\\mathbb{E}\\!\\left[\\gamma_t\\mathbbm{1}_{\\mathcal{E}_t}\\right]\\right)}+\\delta'",
     "regime": null
    },
    "symbols": {
-    "H_Pi": "prior entropy of the optimal-action mapping Pi*",
-    "G_sum": "sum_{t=1}^T E[gamma_t 1_{E_t}], where gamma_t is the sup deviation of the information ratio over Monte Carlo confidence sets",
-    "delta_p": "overall confidence level delta' of the Monte Carlo confidence bounds"
+    "H_Pi": "entropy of the optimal context-to-action mapping Pi* under the prior",
+    "Gamma_sum": "sum_t E[gamma_t 1_{E_t}], gamma_t the sup deviation of the information ratio over the Monte Carlo confidence sets"
    },
-   "conditions": [],
+   "conditions": [
+    "binary reward Y",
+    "no latent confounders, known causal graph"
+   ],
    "tuning": [
-    "per-action confidence delta = delta'/(2 T |A|)",
+    "per-round per-action confidence delta = delta'/(2T|A|)",
     "N posterior Monte Carlo samples per round"
    ],
    "is_new": true,
    "source": {
     "label": "thm2",
     "number": "Theorem 2",
-    "quote": "Fix $\\delta'\\in(0,1)$ and $T\\in\\mathbb{N}$. For each $t$, let $\\mathcal{E}_t$ denote the event that the confidence bounds in Lemmas~\\ref{lemm_2} and~\\ref{lemm_gt_conc} hold for all $a\\in\\mathcal{A}$ at round $t$, using $\\delta=\\delta'/(2T|\\mathcal{A}|)$. Then $\\mathbb{P}(\\cap_{t=1}^T\\mathcal{E}_t)\\geq1-\\delta'$, and \\mathbb{E}[\\sum_{t=1}^{T}(Y_{\\Pi^\\star(\\mathbf{C}_t),t}-Y_{A_t,t})]\\leq\\sqrt{H(\\Pi^\\star)(\\frac{T|\\mathcal{A}|}{2}+2\\sum_{t=1}^{T}\\mathbb{E}[\\gamma_t\\mathbbm{1}_{\\mathcal{E}_t}])}+\\delta'"
+    "quote": "Fix $\\delta'\\in(0,1)$ and $T\\in\\mathbb{N}$. ... Then $\\mathbb{P}(\\cap_{t=1}^T\\mathcal{E}_t)\\geq1-\\delta'$, and \\mathbb{E}[\\sum_{t=1}^{T}(Y_{\\Pi^\\star(\\mathbf{C}_t),t}-Y_{A_t,t})] \\leq \\sqrt{H(\\Pi^\\star)(\\frac{T|\\mathcal{A}|}{2}+2\\sum_{t=1}^{T}\\mathbb{E}[\\gamma_t\\mathbbm{1}_{\\mathcal{E}_t}])}+\\delta'"
    },
    "confidence": "medium",
-   "notes": "Bound may be vacuous if gamma_t = +infinity. Compute: paper states O(NK) Monte Carlo cost plus O(K^2) pair optimization per round ignoring model-dependent reward evaluation cost."
+   "notes": "delta here is the algorithm's overall confidence delta'. Bound may be vacuous if gamma_t = infinity. Regret is in expectation (not high-probability)."
   },
   {
    "id": "r4",
@@ -218,8 +262,8 @@
    "algorithm": "a3",
    "algorithm_class": null,
    "quantity": "bayesian_regret",
-   "dependence": "instance_dependent",
-   "comparator": "best_action_per_round",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "not_stated",
@@ -230,10 +274,11 @@
     "regime": null
    },
    "symbols": {
-    "H_Pi": "prior entropy of the optimal-action mapping Pi*"
+    "H_Pi": "entropy of the optimal context-to-action mapping Pi* under the prior"
    },
    "conditions": [
-    "Delta_t(a|c_t) and g_t(a|c_t) computed exactly and exact information ratio minimized"
+    "Delta_t(a|c_t) and g_t(a|c_t) computed exactly each round",
+    "binary reward Y"
    ],
    "tuning": [],
    "is_new": true,
@@ -243,7 +288,7 @@
     "quote": "Suppose that $\\Delta_t(a\\mid\\mathbf{c}_t)$ and $g_t(a\\mid\\mathbf{c}_t)$ can be computed exactly at every round and IDS minimizes the exact information ratio. Then, for any $T\\in\\mathbb{N}$, the mean cumulative regret satisfies ... \\leq \\sqrt{\\frac{|\\mathcal{A}|}{2}\\,T\\,H(\\Pi^\\star)}."
    },
    "confidence": "high",
-   "notes": "Oracle IDS; follows standard Russo & Van Roy IDS analysis."
+   "notes": "Oracle IDS; with finite contexts H(Pi*) <= |C| log |A|."
   }
  ],
  "cited_results": [
@@ -256,10 +301,10 @@
    "algorithm_name": "Causal Thompson Sampling",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Causal bandit where intervention-induced distribution P(Pa_Y | a) is known; Y has n parents with k values each; Bayesian regret",
+   "setting_description": "Causal bandits with known intervention-induced distribution P(Pa_Y | a); Y has n parents each with k values; Bayesian regret",
    "bound": {
     "notation": "O_tilde",
-    "expression": "sqrt(k_par**n_par*T)",
+    "expression": "sqrt(k**n*T)",
     "expression_latex": "\\widetilde{O}(\\sqrt{k^nT})",
     "regime": null
    },
@@ -269,19 +314,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T13:58:36",
+  "date": "2026-10-21T15:07:20",
   "source_chars": 131388,
-  "input_tokens": 101054,
-  "output_tokens": 5058,
-  "cost_usd_equiv": 0.6920108,
+  "input_tokens": 107641,
+  "output_tokens": 5273,
+  "cost_usd_equiv": 0.697558,
   "status": "extracted"
  }
 }

@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "LNUCB-TA: Linear-nonlinear Hybrid Bandit Learning with Temporal Attention",
   "arxiv_id": "2503.00387",
@@ -17,11 +17,11 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Hybrid contextual MAB problem (linear + k-NN reward in joint context/reward-history space)",
+   "name_in_paper": "Hybrid contextual MAB problem (linear + k-NN reward model)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
-   "action_space": "structured_general",
+   "action_space": "finite_K",
    "function_class": [],
    "domain": "not_applicable",
    "context": "stochastic_contexts",
@@ -29,7 +29,9 @@
    "learner_knows": [
     "T",
     "sigma",
-    "S"
+    "S",
+    "L_feat",
+    "d"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -37,30 +39,63 @@
     "shape": "not_applicable",
     "time_varying": "not_applicable",
     "access": "not_applicable",
-    "norm_bound": "bounded_L",
-    "parameter_set": "l2_ball",
-    "loss_set": "not_applicable"
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "unspecified"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "A finite arms with per-arm linear parameter plus a k-NN term computed from each arm's own reward history",
-    "Noise bounded in absolute value by sigma",
-    "Expected reward depends on past observed rewards (history-dependent), so not strictly i.i.d. rewards"
+    "Expected reward of each arm is a per-arm linear function of its context plus a k-NN average of past observed rewards (reward depends on reward history)",
+    "Per-arm (disjoint) parameter vectors mu^a in R^d",
+    "Noise bounded in absolute value by sigma"
    ],
-   "definition_quote": "We consider a hybrid contextual MAB problem within a metric space (X x Z, rho) ... The reward corresponding to each arm a for a given context x_t at time t is denoted as a random variable Y_t^a, constrained within the interval [-1,1] ... o^a_t(x_t^a, z_t^a) = E[Y_t^a | X_t = x_t, Z_t = z_t] = l^a_t(x_t^a) + f_{k,t}^a(x_t^a, z_t^a) ... The feature vector X_t is drawn i.i.d. from a fixed marginal distribution D over X."
+   "definition_quote": "We consider a hybrid contextual MAB problem within a metric space (X x Z, rho)... o^a_t(x_t^a, z_t^a) = E[Y_t^a | X_t = x_t, Z_t = z_t] = l^a_t(x_t^a) + f_{k,t}^a(x_t^a, z_t^a)... The feature vector X_t is drawn i.i.d. from a fixed marginal distribution D over X."
   }
  ],
  "algorithms": [
@@ -75,7 +110,9 @@
    "requires_knowledge_of": [
     "T",
     "sigma",
-    "S"
+    "S",
+    "L_feat",
+    "d"
    ]
   }
  ],
@@ -93,34 +130,33 @@
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
-    "notation": "exact",
-    "expression": "b*sigma*sqrt(T*(d*log(1 + T*L_feat**2*S**2/(d*sigma**2) + U_sum/(d*sigma**2)) + log(4/delta)))",
+    "notation": "O",
+    "expression": "sigma*sqrt(T*(d*log(1 + T*L_feat**2*S**2/(d*sigma**2) + U_knn/(d*sigma**2)) + log(4/delta)))",
     "expression_latex": "R_T \\leq b \\sigma \\sqrt{T \\left( d \\log \\left( 1 + \\frac{TB^2 W^2}{d \\sigma^2} + \\frac{\\sum_{a=1}^A T^a (u_{t,k}^a)^2}{d \\sigma^2} \\right) + \\log \\left( \\frac{4}{\\delta} \\right) \\right)}",
     "regime": null
    },
    "symbols": {
-    "b": "absolute constant",
-    "U_sum": "sum_a T^a (u_{t,k}^a)^2, sum of squared k-NN uncertainties weighted by pull counts",
-    "sigma": "bound on |xi_t^a| (paper also calls sigma^2 total variance of linear and k-NN components)"
+    "U_knn": "sum_a T^a (u_{t,k}^a)^2, sum of squared k-NN neighbourhood uncertainties weighted by pull counts",
+    "b": "absolute constant (absorbed into O)"
    },
    "conditions": [
     "|xi_t^a| <= sigma",
     "||(mu^a)^*|| <= W (S)",
-    "||x|| <= B (L_feat) for all x in D",
+    "||x|| <= B (L_feat)",
     "rewards in [-1,1]"
    ],
    "tuning": [
     "lambda = sigma^2/W^2",
-    "beta_t^a = sigma^2(2 + 4d log(1 + T B^2 W^2/d + sum_a T^a (u_{t,k}^a)^2/d) + 8 log(4/delta))"
+    "beta_t^a as in Theorem 1"
    ],
    "is_new": true,
    "source": {
     "label": "thm:regret",
     "number": "Theorem 1",
-    "quote": "Suppose the noise |\\xi_t^a| is bounded by \\sigma ..., the true parameter vector (\\mu^a)^* has a norm bounded by W ..., and the context vectors x are bounded such that \\|x\\| \\leq B ..., and let \\lambda = \\sigma^2/W^2. ... with probability greater than 1-\\delta, for all t \\geq 0, R_T \\leq b \\sigma \\sqrt{T ( d \\log ( 1 + \\frac{TB^2 W^2}{d \\sigma^2} + \\frac{\\sum_{a=1}^A T^a (u_{t,k}^a)^2}{d \\sigma^2} ) + \\log ( \\frac{4}{\\delta} ) )}"
+    "quote": "Suppose the noise |xi_t^a| is bounded by sigma ..., the true parameter vector (mu^a)^* has a norm bounded by W ..., and the context vectors x are bounded such that ||x|| <= B ..., and let lambda = sigma^2/W^2. ... with probability greater than 1-delta, for all t >= 0, R_T <= b sigma sqrt{T ( d log(1 + TB^2W^2/(d sigma^2) + sum_a T^a (u_{t,k}^a)^2/(d sigma^2)) + log(4/delta))}"
    },
    "confidence": "low",
-   "notes": "Regret defined via realized rewards Y against per-round oracle. Paper's B renamed L_feat, W renamed S. Proof is non-rigorous; the bound depends on data-dependent k-NN uncertainties. Setting mapping is approximate."
+   "notes": "Unspecified absolute constant b, so recorded as O. The proof is non-rigorous (e.g. assumes the true parameter lies in the confidence ball via Assumption 3); recorded as stated. Regret definition is through realized rewards Y but the analysis uses expected rewards."
   },
   {
    "id": "r2",
@@ -154,29 +190,29 @@
    "source": {
     "label": "thm:regret",
     "number": "Theorem 1",
-    "quote": "Given these conditions, the simplified regret bound for LNUCB-TA is R_T = \\mathcal{O}(\\sqrt{dT \\log T}), which, by absorbing logarithmic factors into \\tilde{\\mathcal{O}}, we can state: R_T = \\tilde{\\mathcal{O}}(\\sqrt{dT})."
+    "quote": "Given these conditions, the simplified regret bound for LNUCB-TA is R_T = O(sqrt{dT log T}), which, by absorbing logarithmic factors into O-tilde, we can state: R_T = O-tilde(sqrt{dT})."
    },
    "confidence": "low",
-   "notes": "Simplified form of r1; also stated as O~(sqrt(dT)). Suppresses sigma, B, W and k-NN uncertainty terms."
+   "notes": "Simplified form; the paper also writes O-tilde(sqrt(dT)). Dependence on delta, sigma and k-NN uncertainty terms dropped by the paper."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:15:14",
+  "date": "2026-10-21T15:24:35",
   "source_chars": 155096,
-  "input_tokens": 104408,
-  "output_tokens": 3290,
-  "cost_usd_equiv": 0.6834828,
+  "input_tokens": 110995,
+  "output_tokens": 3325,
+  "cost_usd_equiv": 0.68543,
   "status": "extracted"
  }
 }

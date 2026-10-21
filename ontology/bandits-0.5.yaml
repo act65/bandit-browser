@@ -1,0 +1,599 @@
+# Bandits ontology v0.5. See CHANGELOG at the bottom and ontology/review-v0.2.md, review-v0.3.md, review-v0.4.md.
+# Variables used in bound expressions live in ontology/variables.yaml.
+# The extractor prompt renders this file in place of {{ONTOLOGY}}; the JSON Schema
+# enums are generated from it, so this file is the single source of truth.
+#
+# Order semantics (desiderata D1): a pair [a, b] under `order` means a ⊑ b,
+# i.e. any algorithm for b can be run on a with at most the same guarantee.
+# Upper bounds flow from b to a; lower bounds flow from a to b.
+# Orders are a first pass: each needs a justification and validity scope
+# before the inference engine uses it.
+
+name: bandits
+version: "0.5"
+
+dimensions:
+  objective:
+    multi: false
+    values:
+      cumulative_regret: ""
+      simple_regret: ""
+      bai_fixed_confidence: "best-arm identification, fixed confidence (sample complexity)"
+      bai_fixed_budget: "best-arm identification, fixed budget (error probability)"
+      pac_epsilon_best: "find an epsilon-optimal arm with probability >= 1-delta"
+      top_m_identification: ""
+      thresholding: "classify every arm as above or below a threshold (incl. good-arm identification)"
+      general_identification: "other set-valued answers: Pareto set, ranking, mode, odd arm, transductive / structured answers"
+      mean_estimation: "estimate all means (active / adaptive estimation)"
+      other_pure_exploration: "pure exploration not covered above"
+      epsilon_optimal_point: "find x with f(x) <= inf f + epsilon w.p. >= 1-delta (continuous action sets)"
+      optimization_error: "expected error of a point returned after T queries (simple-regret analogue on continuous sets)"
+    order: []
+
+  feedback:
+    multi: false
+    order_notes:
+      - {pair: [full_information, graph_feedback], justification: "full information is the complete feedback graph"}
+      - {pair: [graph_feedback, bandit], justification: "a bandit algorithm can ignore side observations",
+         requires: {feedback_graph.self_loops: [all]},
+         caveat: "needs the played action's own loss to be observed (every action has a self-loop)"}
+      - {pair: [full_information, multi_point], justification: "k evaluations are a subset of the full loss function"}
+      - {pair: [multi_point, two_point], justification: "a two-point algorithm can ignore the other evaluations"}
+      - {pair: [two_point, bandit], justification: "a one-point algorithm can ignore the second evaluation"}
+      - {pair: [full_information, first_order], justification: "the full loss function determines the gradient at the played point (online convex optimisation only)"}
+      - {pair: [semi_bandit, triggered_semi_bandit], justification: "deterministic triggering of the selected base arms (probability 1) is a special case of probabilistic triggering"}
+      - {pair: [full_information, limited_advice], justification: "observing every expert's advice and loss includes observing M of them"}
+      - {pair: [semi_bandit, bandit], justification: "a bandit algorithm can ignore per-arm feedback"}
+      - {pair: [full_information, decoupled], justification: "full information reveals the exploration arm's loss too"}
+      - {pair: [bandit, partial_monitoring], justification: "bandit feedback is a partial-monitoring game whose feedback matrix reveals the loss of the chosen action"}
+    # value_maps_up: symbols instantiated when a LOWER bound is transferred INTO a setting with this
+    # value. Graph-feedback lower bounds are stated for every feedback graph G; bandit feedback is the
+    # graph with self-loops only, whose independence number is K.
+    value_maps_up:
+      bandit: {alpha_G: K}
+    values:
+      full_information: "experts setting: all losses observed"
+      two_point: "two function evaluations per round"
+      multi_point: "k > 2 function evaluations per round (k a variable)"
+      first_order: "the gradient (or a noisy gradient) at the played point"
+      semi_bandit: "observe the reward of each selected base arm"
+      triggered_semi_bandit: "observe the base arms triggered (probabilistically) by the selected action (CMAB-T)"
+      cascade: "observe a ranked list until the first click (cascading bandits)"
+      limited_advice: "experts setting where the learner observes the advice / losses of only M of the N experts"
+      bandit: "observe only the reward of the chosen action"
+      graph_feedback: "side observations given by a feedback graph"
+      partial_monitoring: "general feedback matrix"
+      dueling: "relative / preference feedback"
+      decoupled: "play one arm (suffer its loss) but observe the loss of a separately chosen arm"
+    order:
+      - [full_information, graph_feedback]
+      - [full_information, multi_point]
+      - [multi_point, two_point]
+      - [two_point, bandit]
+      - [full_information, first_order]
+      - [graph_feedback, bandit]
+      - [semi_bandit, bandit]
+      - [semi_bandit, triggered_semi_bandit]
+      - [full_information, limited_advice]
+      - [bandit, partial_monitoring]
+      - [full_information, decoupled]
+
+  environment:
+    multi: false
+    # A transfer along these edges keeps the quantity. Stochastic vs adversarial: with an oblivious
+    # adversary, stochastic pseudo-regret <= expected regret against the best fixed action in
+    # hindsight, so adversarial upper bounds hold in the stochastic setting; by Yao's principle
+    # stochastic (randomised-instance) lower bounds hold against oblivious adversaries.
+    order_notes:
+      - {pair: [stochastic_iid, adversarial_oblivious], justification: "i.i.d. losses are a randomised oblivious adversary: pseudo-regret <= expected regret vs the best fixed action in hindsight (upper bounds); Yao's principle (lower bounds)", valid_for_comparator: [best_fixed_action, not_applicable]}
+      - {pair: [stochastic_iid, stochastic_corrupted], justification: "no corruption is C = 0"}
+      - {pair: [stochastic_iid, nonstationary_switching], justification: "no switches", caveat: "check how the paper counts switches/segments before reading S_T at its no-switch value"}
+      - {pair: [nonstationary_switching, adversarial_oblivious], justification: "a switching stochastic environment is one oblivious adversary (randomised)", valid_for_comparator: [best_fixed_action, best_switching_sequence]}
+      - {pair: [adversarial_oblivious, adversarial_adaptive], justification: "an oblivious adversary is an adaptive one that ignores the history"}
+      - {pair: [stochastic_iid, adversarial_self_bounding], justification: "i.i.d. losses satisfy the self-bounding constraint with C = 0"}
+      - {pair: [stochastic_corrupted, adversarial_self_bounding], justification: "corrupted stochastic satisfies the self-bounding constraint with C_sb = 2C"}
+      - {pair: [adversarial_self_bounding, adversarial_oblivious], justification: "a constrained adversary"}
+      - {pair: [adversarial_restricted, adversarial_oblivious], justification: "a restricted loss sequence is a particular oblivious sequence"}
+      - {pair: [adversarial_oblivious, adversarial_unspecified], justification: "an unstated adversary is oblivious or adaptive, so at least as general as oblivious"}
+      - {pair: [adversarial_unspecified, adversarial_adaptive], justification: "an unstated adversary is oblivious or adaptive, so at most as general as adaptive"}
+      - {pair: [adversarial_oblivious, adversarial_bounded_memory], justification: "an oblivious adversary has memory m = 0"}
+      - {pair: [adversarial_bounded_memory, adversarial_adaptive], justification: "an m-memory adversary is a particular adaptive adversary"}
+      - {pair: [adversarial_smoothed, adversarial_adaptive], justification: "a smoothed adversary is an adaptive adversary restricted to sigma-smooth distributions"}
+    value_maps:
+      stochastic_iid: {C: 0, C_sb: 0}
+      stochastic_corrupted: {C_sb: 2*C}
+    values:
+      stochastic_iid: "rewards i.i.d. from fixed distributions"
+      stochastic_corrupted: "stochastic with adversarial corruption budget C"
+      adversarial_oblivious: "rewards fixed in advance by an adversary"
+      adversarial_adaptive: "rewards may depend on the learner's past actions"
+      adversarial_unspecified: "adversarial, paper does not say oblivious or adaptive"
+      adversarial_self_bounding: "stochastically constrained adversary / (Delta, C, T) self-bounding regime"
+      adversarial_restricted: "adversarial with restricted loss sequences (small loss, bounded variation, effective range); restriction in `parameters`"
+      nonstationary_switching: "piecewise stationary with S_T switches"
+      nonstationary_drifting: "variation budget V_T"
+      adversarial_bounded_memory: "losses depend on the last m actions (m-memory adversary; policy-regret papers)"
+      adversarial_smoothed: "each round's loss / context distribution is chosen adaptively but is sigma-smooth w.r.t. a base measure"
+      markovian: "rested or restless Markov arms (out of scope from v0.5: see `scope`)"
+    order:
+      - [stochastic_iid, stochastic_corrupted]
+      - [stochastic_iid, nonstationary_switching]
+      - [nonstationary_switching, adversarial_oblivious]
+      - [adversarial_oblivious, adversarial_adaptive]
+      - [stochastic_iid, adversarial_self_bounding]
+      - [stochastic_corrupted, adversarial_self_bounding]
+      - [adversarial_oblivious, adversarial_unspecified]
+      - [adversarial_unspecified, adversarial_adaptive]
+      - [adversarial_self_bounding, adversarial_oblivious]
+      - [adversarial_restricted, adversarial_oblivious]
+      - [adversarial_oblivious, adversarial_bounded_memory]
+      - [adversarial_bounded_memory, adversarial_adaptive]
+      - [adversarial_smoothed, adversarial_adaptive]
+    notes: >
+      'Best of both worlds' is NOT an environment: it is one algorithm with results
+      in several settings. Record one result per setting.
+
+  action_space:
+    multi: false
+    order_notes:
+      - {pair: [linear_finite, linear_infinite], justification: "a finite action set is a compact set", caveat: "a lower bound stated in the number of actions K holds for compact action sets of K points"}
+    values:
+      finite_K: "K arms, no structure"
+      linear_finite: "finite action set in R^d, linear reward"
+      linear_infinite: "compact / convex action set in R^d, linear reward"
+      generalized_linear: "reward = link(<theta, x>)"
+      combinatorial: "subsets of base arms, typically of size m"
+      convex_body: "actions in a convex body K in R^d; loss class given by function_class (bandit convex optimisation)"
+      lipschitz_metric: "arms in a metric space, Lipschitz reward"
+      kernel_rkhs: "reward in an RKHS / Gaussian-process bandit"
+      continuum_other: ""
+      structured_general: "known parametric structure mu(x, theta) (covers linear, Lipschitz, unimodal, ...)"
+    order:
+      - [linear_finite, linear_infinite]   # a finite set is a compact set: compact-set algorithms run on it
+    # linear rewards are a generalised linear model with the identity link (k_mu = c_mu = 1)
+    value_maps:
+      linear_finite: {k_mu: 1, c_mu: 1}
+      linear_infinite: {k_mu: 1, c_mu: 1}
+    reductions:
+      - {from: finite_K, to: linear_finite, map: {d: K}, note: "canonical basis actions",
+         implies: {instance_assumptions: [arms_span_Rd]}}   # the K basis vectors span R^K
+      - {from: linear_finite, to: generalized_linear, map: {}, note: "identity link"}
+      - {from: linear_infinite, to: generalized_linear, map: {}, note: "identity link"}
+      - {from: finite_K, to: structured_general, map: {}, note: "unstructured arms are trivially structured"}
+      - {from: linear_finite, to: structured_general, map: {}, note: "linear structure is a known parametric structure"}
+      # combinatorial -> linear_finite (d = K) removed in 0.4.1: combinatorial losses are bounded per base arm
+      # (total loss up to m), linear ones per inner product, so bounds moved across it were off by a factor m.
+      - {from: linear_infinite, to: kernel_rkhs, map: {}, note: "linear kernel"}
+    equivalences:
+      - {a: "action_space=linear_infinite", b: "action_space=convex_body + function_class={bounded, linear}", note: "BCO book F_{b,lin}"}
+
+  function_class:
+    multi: true
+    applies_to: "action_space in {convex_body, lipschitz_metric, continuum_other, kernel_rkhs, finite_K}; empty list otherwise (on finite_K only for shape constraints such as unimodal)"
+    values:
+      bounded: "f(x) in [0,1] on K"
+      convex: "f convex on K (BCO). Record it explicitly even when strongly_convex / linear also hold"
+      lipschitz: "f Lipschitz on K (constant L_lip)"
+      holder_smooth: "Hölder smoothness of order beta_holder (> 1 means derivatives up to floor(beta_holder) are Hölder)"
+      unimodal: "unimodal over a graph / line of arms or on K"
+      smooth: "f - (beta/2)||x||^2 concave (beta >= 0)"
+      strongly_convex: "f - (alpha/2)||x||^2 convex (alpha > 0)"
+      quadratic: "f = x^T A x + b^T x + c"
+      linear: "f = b^T x + c"
+      highly_smooth: "order-p smoothness, p >= 2"
+      submodular_lovasz: "Lovasz extension of a submodular function"
+      quasi_convex: ""
+      polyak_lojasiewicz: ""
+    order_rule: "a set of properties P is a special case of Q iff Q is a subset of P (more properties = smaller class)"
+    implications: ["linear => quadratic", "linear => smooth (beta = 0)", "quadratic => smooth (beta = 2||A||)",
+                   "linear => convex", "strongly_convex => convex"]
+
+  domain:
+    multi: false
+    order_notes:
+      - {pair: [improper, constrained], justification: "an improper learner may also play inside K", caveat: "in the improper setting boundedness/Lipschitzness hold only on K (BCO book Note 1.iii)"}
+      - {pair: [improper, unconstrained], justification: "as above, with K = R^d", caveat: "in the improper setting boundedness/Lipschitzness hold only on K"}
+    values:
+      not_applicable: "finite or unstructured action sets"
+      constrained: "learner queries and is compared within K"
+      improper: "learner may query anywhere in R^d, compared with the best point in K"
+      unconstrained: "K = R^d"
+    order:
+      - [improper, constrained]
+      - [improper, unconstrained]
+
+  context:
+    multi: false
+    order_notes:
+      - {pair: [none, stochastic_contexts], justification: "a single context (M = 1)"}
+      - {pair: [stochastic_contexts, adversarial_contexts], justification: "an adversary may draw contexts i.i.d."}
+    # value_maps: symbols that take fixed values in a setting with this value; applied
+    # when an upper bound is transferred INTO such a setting
+    value_maps:
+      none: {M_ctx: 1}
+    values:
+      none: ""
+      stochastic_contexts: ""
+      adversarial_contexts: ""
+    order:
+      - [none, stochastic_contexts]
+      - [stochastic_contexts, adversarial_contexts]
+
+
+  noise:
+    multi: false
+    order_notes:
+      - {pair: [bernoulli, bounded_01], justification: "Bernoulli rewards are in [0,1]"}
+      - {pair: [gaussian_known_variance, subgaussian], justification: "N(mu, sigma^2) is sigma-sub-Gaussian"}
+      - {pair: [bounded_01, subgaussian], justification: "rewards in [0,1] are 1/2-sub-Gaussian (Hoeffding)"}
+      - {pair: [subgaussian, heavy_tailed], justification: "sub-Gaussian rewards have variance <= sigma^2, so the (1+eps)-moment condition holds with eps = 1"}
+      - {pair: [subgaussian, conditionally_subgaussian], justification: "independent noise is a martingale difference"}
+      - {pair: [noise_free, conditionally_subgaussian], justification: "zero noise is 0-sub-Gaussian"}
+      - {pair: [bounded_01, bounded_pm1], justification: "[0,1] is a subset of [-1,1]; an algorithm for [-1,1] runs unchanged"}
+      - {pair: [bounded_pm1, subgaussian], justification: "rewards in [-1,1] are 1-sub-Gaussian (Hoeffding)"}
+      - {pair: [gaussian_known_variance, gaussian_unknown_variance], justification: "an algorithm for unknown variances runs when they are known"}
+    value_maps:
+      bounded_01: {sigma: 1/2}
+      bounded_pm1: {sigma: 1}
+      bernoulli: {sigma: 1/2}
+      gaussian_known_variance: {sigma: sigma_std}
+      subgaussian: {eps_m: 1, v_mom: sigma**2}
+    values:
+      bounded_01: "rewards in [0,1]; for adversarial settings: losses/rewards in [0,1]"
+      bounded_pm1: "rewards or losses in [-1,1] (or a symmetric bounded range)"
+      bernoulli: ""
+      subgaussian: ""
+      gaussian_known_variance: ""
+      gaussian_unknown_variance: "N(mu_i, sigma_i^2) with unknown, possibly arm-dependent variances"
+      conditionally_subgaussian: "martingale-difference noise, sub-Gaussian given the past (may depend on action/history)"
+      noise_free: "losses observed exactly"
+      exponential_family: ""
+      heavy_tailed: "bounded (1+eps)-th moment"
+      general_model_class: "rewards from an arbitrary model class specified by the paper (e.g. any family D, nonparametric classes); stochastic settings only"
+      not_applicable: "range not stated (e.g. adversarial losses with no stated range); not for stochastic settings: use general_model_class"
+    order:
+      - [bernoulli, bounded_01]
+      - [gaussian_known_variance, subgaussian]
+      - [bounded_01, subgaussian]
+      - [subgaussian, heavy_tailed]
+      - [subgaussian, conditionally_subgaussian]
+      - [noise_free, conditionally_subgaussian]
+      - [bounded_01, bounded_pm1]
+      - [gaussian_known_variance, gaussian_unknown_variance]
+      - [bounded_pm1, subgaussian]
+
+  learner_knows:
+    multi: true
+    order_rule: "knowing more is a special case: P special case of Q iff Q is a subset of P"
+    # Open vocabulary (v0.5): any problem_parameter or instance_quantity symbol of ontology/variables.yaml
+    # (the learner knows its value, or an upper bound on it), plus the named items below.
+    # schema.load_ontology expands this into `values`.
+    values_from_variables: [problem_parameter, instance_quantity]
+    values: {Delta_lower_bound: "a lower bound on the smallest gap",
+             moment_bound: "a bound on a moment / variance of the rewards", reward_family: "the parametric family of the reward distributions",
+             prior: "the prior over instances (used by a Bayesian algorithm)",
+             context_distribution: "the distribution of the contexts", kernel: "the kernel (GP / RKHS bandits)",
+             function_class: "the reward-model / regressor class (realizability)", loss_range: "the range of the losses / rewards"}
+
+  instance_assumptions:
+    multi: true
+    order_rule: "more assumptions is a special case: P special case of Q iff Q is a subset of P"
+    values:
+      unique_optimal_arm: ""
+      gap_bounded_below: "Delta_min >= some known or unknown positive constant"
+      means_in_known_interval: ""
+      bounded_variance: ""
+      arms_span_Rd: "action set spans R^d"
+      bayesian_prior: "the unknown parameter is drawn from a prior (Bayesian regret)"
+
+  extras:
+    multi: true
+    # values whose presence makes a setting MORE general (absence is a special case);
+    # all other extras must match exactly
+    generalizing_values: [time_varying_action_sets]
+    values:
+      delayed_feedback: ""
+      batched: ""
+      switching_cost: ""
+      differential_privacy: ""
+      knapsack_constraints: ""
+      safety_constraints: ""
+      multi_player_collision: ""
+      multi_agent_cooperative: ""
+      federated: ""
+      fairness: ""
+      sleeping_arms: ""
+      mortal_arms: ""
+      rotting_or_rising: ""
+      causal: ""
+      strategic_arms: ""
+      budgeted_exploration: ""
+      infinitely_many_arms: ""
+      restless: ""
+      expert_advice: "learner observes advice from N experts and competes with the best expert"
+      time_varying_action_sets: "the available action set changes over rounds"
+      streaming_bounded_memory: "arms arrive in a stream; the learner stores at most M_mem arms (passes as a variable)"
+      rare_policy_updates: "the learner may change its policy only a limited number of times (not a fixed batch grid)"
+
+# Scope (v0.5): problem families kept out of the atlas to stop it drifting into game theory,
+# multi-agent learning and RL. pipeline/resolve.py drops matching settings (as if in_scope were
+# false); the extractor still records them, so the cut can be undone without re-extraction.
+scope:
+  out_of_scope_when:
+    - {environment: [markovian], reason: "state-dependent reward dynamics (rested / restless Markov arms): close to RL"}
+    - {extras: [restless, rotting_or_rising, mortal_arms], reason: "state-dependent reward dynamics: close to RL"}
+    - {extras: [multi_player_collision, multi_agent_cooperative, federated], reason: "multi-agent / distributed learning: close to game theory and MARL"}
+  extractor_out_of_scope: >
+    Set in_scope = false (with out_of_scope_reason) for: MDP / episodic RL and Markov games; learning in games
+    with equilibrium objectives; multi-objective (vector-valued) rewards; quantum oracle access; guarantees for an
+    attacker rather than the learner; problems that are not interactive bandit problems (offline policy learning,
+    passive regression). Still extract a bandit-feedback regret result such a paper proves for a single learner
+    against an arbitrary opponent (adversarial_adaptive).
+
+# Node parameters: structured attributes of a setting. Unlike dimensions they are
+# objects; `order` is per field with the same semantics.
+node_parameters:
+  action_set:
+    applies_to: "action_space in {linear_finite, linear_infinite, generalized_linear, convex_body, combinatorial, kernel_rkhs}; else all fields not_applicable"
+    fields:
+      shape:
+        values: [not_applicable, unspecified, finite, arbitrary_compact, unit_ball, sphere, hypercube, simplex, l1_ball, lp_ball,
+                 ellipsoid, polytope, permutahedron, convex_body, strongly_convex, nonconvex]
+        # not_applicable ⊑ finite: K arms embed as the canonical basis (the finite_K -> linear_finite reduction)
+        # unspecified ⊑ arbitrary_compact: an unstated shape is some compact set
+        # v0.5: the specific convex shapes now also sit below convex_body (they are convex bodies)
+        order: [[strongly_convex, convex_body], [not_applicable, finite], [unspecified, arbitrary_compact],
+                [unit_ball, ellipsoid], [unit_ball, strongly_convex], [ellipsoid, strongly_convex],
+                [hypercube, polytope], [simplex, polytope], [l1_ball, polytope], [permutahedron, polytope],
+                [polytope, convex_body], [lp_ball, convex_body], [sphere, arbitrary_compact],
+                [finite, arbitrary_compact], [convex_body, arbitrary_compact], [nonconvex, arbitrary_compact]]
+        note: "lower bounds proved on a specific shape transfer only to more general shapes"
+      time_varying:
+        values: [not_applicable, fixed, oblivious_sequence, adaptive_sequence]
+        order: [[not_applicable, fixed], [fixed, oblivious_sequence], [oblivious_sequence, adaptive_sequence]]
+      access:
+        values: [not_applicable, explicit, linear_optimization_oracle, membership_oracle, separation_oracle,
+                 barycentric_spanner, self_concordant_barrier]
+        computational_only: true
+        note: "computational only: does not change statistical rates"
+      norm_bound:
+        values: [not_applicable, unspecified, unit_l2, bounded_L]   # bounded_L: ||x||_2 <= L_feat
+        order: [[unit_l2, bounded_L], [unspecified, bounded_L]]
+        value_maps: {unit_l2: {L_feat: 1, L_feat_sq: 1}}
+        note: "scale of the actions; bounds in L_feat are comparable only once this is known"
+      parameter_set:
+        values: [not_applicable, unspecified, l2_ball, l1_ball, polytope, arbitrary_bounded, unbounded]   # ||theta|| <= S
+        order: [[l2_ball, arbitrary_bounded], [l1_ball, arbitrary_bounded], [polytope, arbitrary_bounded],
+                [unspecified, arbitrary_bounded], [arbitrary_bounded, unbounded]]
+        note: "the scale S is a variable; learner_knows.S records whether it is known"
+      loss_set:
+        values: [not_applicable, unspecified, bounded_mean_reward, polar_of_action_set, l2_ball, l1_ball, linf_box, binary_vectors]
+        order: [[bounded_mean_reward, polar_of_action_set], [unspecified, polar_of_action_set]]
+        note: "bounded_mean_reward: |<theta,x>| <= 1 on A; polar_of_action_set: |<x,l>| <= 1 for x in A, l in Z. l2/l1/linf losses are polar only for the matching dual action set; not inferred"
+      parameter_structure:
+        values: [not_applicable, unspecified, dense, sparse, low_rank, clustered]
+        # an algorithm for an unstructured (dense) parameter runs on a sparse / low-rank / clustered one
+        order: [[sparse, dense], [low_rank, dense], [clustered, dense]]
+        note: "sparsity s_sparse, rank r_rank and the number of clusters are variables"
+  corruption:
+    applies_to: "environment in {stochastic_corrupted, adversarial_self_bounding}; else all fields not_applicable"
+    fields:
+      adversary:
+        values: [not_applicable, unspecified, oblivious, adaptive]
+        order: [[oblivious, unspecified], [unspecified, adaptive], [oblivious, adaptive]]
+      budget_measure:
+        values: [not_applicable, unspecified, per_path, in_expectation]
+        order: [[per_path, in_expectation]]
+        note: "a per-path budget C implies E[C] <= C"
+      structure:
+        values: [not_applicable, unspecified, linear_in_action, arbitrary]
+        order: [[linear_in_action, arbitrary]]
+      regret_reference:
+        values: [not_applicable, corrupted, uncorrupted]
+        note: "regret on corrupted vs uncorrupted rewards differs by up to C: must match, no order"
+      model:
+        values: [not_applicable, unspecified, budget, huber_probability]
+        note: "budget: total corruption C; huber_probability: each observation replaced w.p. eps (a different model, no order)"
+      target:
+        values: [not_applicable, unspecified, rewards, contexts, feedback_and_costs]
+        note: "what the adversary corrupts; must match"
+  feedback_graph:
+    applies_to: "feedback = graph_feedback; else all fields not_applicable"
+    fields:
+      observability:
+        values: [not_applicable, unspecified, strongly_observable, observable, any_graph]
+        order: [[strongly_observable, observable], [observable, any_graph]]
+        note: "observable = strongly or weakly observable; any_graph also allows non-observable graphs (linear regret)"
+      time_varying:
+        values: [not_applicable, fixed, oblivious_sequence, adaptive_sequence]
+        order: [[fixed, oblivious_sequence], [oblivious_sequence, adaptive_sequence]]
+      knowledge:
+        values: [not_applicable, known_in_advance, revealed_after_action, never_revealed]
+        order: [[known_in_advance, revealed_after_action], [revealed_after_action, never_revealed]]
+      self_loops:
+        values: [not_applicable, unspecified, all, optional]
+        order: [[all, optional]]
+        note: "all: every action observes its own loss (needed to run a bandit algorithm); optional: some may not"
+      directedness:
+        values: [not_applicable, unspecified, undirected, directed]
+        order: [[undirected, directed]]
+      generation:
+        values: [not_applicable, unspecified, arbitrary, random_erdos_renyi, correlated_with_losses]
+        order: [[random_erdos_renyi, arbitrary]]
+  noise_detail:
+    applies_to: "stochastic environments; else all fields not_applicable"
+    fields:
+      variance:
+        values: [not_applicable, unspecified, homoscedastic, heteroscedastic_revealed, heteroscedastic_unknown]
+        order: [[homoscedastic, heteroscedastic_revealed], [heteroscedastic_revealed, heteroscedastic_unknown]]
+        note: "heteroscedastic_revealed: the per-round variance sigma_t^2 is observed; variance-aware bounds use Lambda_T"
+  combinatorial:
+    applies_to: "action_space = combinatorial; else all fields not_applicable"
+    fields:
+      family:
+        values: [not_applicable, unspecified, m_set, at_most_m, matroid, paths, matchings, permutations, ordered_list, arbitrary_subset]
+        order: [[m_set, matroid], [at_most_m, matroid], [matroid, arbitrary_subset], [paths, arbitrary_subset],
+                [matchings, arbitrary_subset], [permutations, arbitrary_subset], [unspecified, arbitrary_subset]]
+        note: "m_set: exactly m of d base arms (uniform matroid); ordered_list: ranked slates"
+      reward:
+        values: [not_applicable, unspecified, linear, nonlinear_monotone_lipschitz, submodular, click_model]
+        order: [[linear, nonlinear_monotone_lipschitz]]
+        note: "linear: sum of base-arm rewards; submodular: alpha-regret results use quantity alpha_regret"
+      loss_scale:
+        values: [not_applicable, unspecified, per_base_arm, per_action]
+        note: "per_base_arm: each base-arm loss in [0,1] (total up to m); per_action: the action's total loss in [0,1] or |<x,l>| <= 1. Rates differ by powers of m: must match, no order"
+  reward_model:
+    applies_to: "action_space = structured_general, or contextual settings with a regressor / policy class; else all fields not_applicable"
+    fields:
+      kind:
+        values: [not_applicable, unspecified, realizable_finite_class, realizable_general_class, agnostic_policy_class, neural_ntk, misspecified]
+        order: [[realizable_finite_class, realizable_general_class], [realizable_general_class, misspecified]]
+        note: "complexity measures (|F| as N_exp, eluder dimension d_E, effective dimension d_eff) are variables"
+  constraints:
+    applies_to: "extras contains knapsack_constraints, safety_constraints or fairness; else all fields not_applicable"
+    fields:
+      kind:
+        values: [not_applicable, unspecified, hard_budget, long_term_average, per_round_high_prob, conservative_baseline, fairness]
+        note: "different guarantees: must match, no order"
+      violation:
+        values: [not_applicable, unspecified, never, bounded_cumulative]
+        order: [[never, bounded_cumulative]]
+        note: "never: constraints hold at every round (w.h.p.); bounded_cumulative: the bound also controls cumulative violation"
+  preference:
+    applies_to: "feedback = dueling; else all fields not_applicable"
+    fields:
+      model:
+        values: [not_applicable, unspecified, utility_link, strong_stochastic_transitivity, general]
+        order: [[utility_link, strong_stochastic_transitivity], [strong_stochastic_transitivity, general]]
+        note: "utility_link covers BTL / logistic / probit / Plackett-Luce"
+      winner:
+        values: [not_applicable, unspecified, condorcet, copeland, borda, von_neumann, utility_best]
+        note: "the regret is defined against this winner: must match, no order"
+      comparison:
+        values: [not_applicable, unspecified, pair, subset]
+  partial_monitoring:
+    applies_to: "feedback = partial_monitoring; else all fields not_applicable"
+    fields:
+      observability:
+        values: [not_applicable, unspecified, locally_observable, globally_observable, any_game]
+        order: [[locally_observable, globally_observable], [globally_observable, any_game]]
+        note: "locally observable games have Theta(sqrt T) regret, globally observable ones Theta(T^2/3)"
+      structure:
+        values: [not_applicable, unspecified, finite_outcomes, linear]
+  delay:
+    applies_to: "extras contains delayed_feedback; else all fields not_applicable"
+    fields:
+      generation:
+        values: [not_applicable, unspecified, fixed, stochastic_iid, adversarial]
+        order: [[fixed, adversarial], [stochastic_iid, adversarial]]
+        note: "the delay scale (D, or the total delay) is a variable"
+
+# Mapping guidance (ontology/review-v0.3.md: features that ARE expressible but were left
+# unmapped). Rendered into the extractor prompt.
+guidance:
+  - "A fixed numerical noise level (1-sub-Gaussian, standard Gaussian, R = 1) is noise = subgaussian / gaussian_known_variance; the value (sigma = 1) goes in the result's conditions, not the setting."
+  - "Known parametric structure (OSSB-type, known Theta and reward map, eluder-dimension classes) is action_space = structured_general; GLM link conditions are generalized_linear with k_mu, c_mu."
+  - "All distributions on [0,1] is noise = bounded_01; canonical exponential families are exponential_family; h-moment / psi-conditions / generic concentration classes are heavy_tailed or general_model_class with the condition in the result's conditions."
+  - "Finite i.i.d. contexts are context = stochastic_contexts with M_ctx; oblivious/adaptive context or action-set sequences are adversarial_contexts plus action_set.time_varying (if unspecified, use adaptive_sequence); regret against the per-round best arm uses comparator best_action_per_round."
+  - "Most action-set geometry is action_set.shape (arbitrary_compact, convex_body, nonconvex, finite, strongly_convex) plus norm_bound / parameter_set / loss_set; conditions like 'contains {-mu,mu}^d' go in the result's conditions."
+  - "Bayesian results: instance_assumptions.bayesian_prior and quantity bayesian_regret; if the algorithm uses the prior, add learner_knows.prior; prior conditions go in the result's conditions."
+  - "Self-bounding / stochastically constrained adversaries are environment = adversarial_self_bounding (omit unique_optimal_arm when several optimal arms are allowed)."
+  - "Expert / policy-class comparators: extras.expert_advice with comparator best_expert / best_policy; N_exp or a VC dimension as variables."
+  - "Sign conventions (losses vs gains) are not setting features: losses in [0,1] are bounded_01, costs in [-1,1] are bounded_pm1; an unstated adversary is adversarial_unspecified."
+  - "Corruption: environment = stochastic_corrupted (or adversarial_self_bounding with C_sb = 2C) plus node parameter corruption {adversary, budget_measure, structure, regret_reference}."
+  - "Feedback graphs: feedback = graph_feedback plus node parameter feedback_graph {observability, time_varying, knowledge}; weakly observable results go under observable; results that also cover non-observable graphs (e.g. Omega(T) lower bounds) use any_graph."
+  - "Lower-bound construction specifics (hard instance family, Delta range, algorithm classes such as 'algorithms with O(log^b T) stochastic regret' or 'LinTS without inflation') go in the result's conditions / algorithm_class, not the setting. A lower bound that holds even with full information should use feedback = full_information."
+  - "Side conditions on T, K, d (n >= K >= 2, T >= max{55, K}) are result conditions; the confidence delta given to the algorithm is tuning."
+  # v0.5 (ontology/review-v0.4.md)
+  - "`unmapped` is only for setting features the vocabulary cannot express. Do not list what a field already records (e.g. 'graph is weakly observable' when observability = observable), numerical values of scales (L_lip = 1, domain [0,1]: result conditions) or lower-bound construction details."
+  - "learner_knows takes any problem parameter or instance quantity of the variable registry (e.g. S for an RKHS norm bound, D for a delay, L_lip, beta_holder); declare a new symbol in `symbols` only if the registry has none."
+  - "Rescaled bounded ranges ([0,B], [-C,C]) are bounded_01 / bounded_pm1 with the scale in the result's conditions; norm restrictions on losses use action_set.loss_set; small-loss or variation restrictions are adversarial_restricted."
+  - "Combinatorial settings: record combinatorial.loss_scale (per base arm vs per action) whenever the paper states the loss range; it changes rates by powers of m."
+  - "GP / RKHS bandits: action_space = kernel_rkhs; a GP sample path adds instance_assumptions.bayesian_prior; the RKHS norm bound is S; the kernel family (SE, Matern-nu) and k(x,x) <= 1 go in conditions."
+  - "Win-only, sale-only or other one-bit / censored observations are feedback = partial_monitoring (or dueling for pairwise comparisons). Pricing, auctions and contracts: map to the underlying structure (posted prices are continuum_other or lipschitz_metric; strategic agents are extras.strategic_arms) with the application model in conditions."
+  - "Computational oracles (ERM, argmax, regression, projection, self-concordant barriers, approximate posteriors) are algorithm requirements: put them in the algorithm's conditions / tuning, never in the setting."
+  - "Risk-aware objectives (CVaR, mean-variance, quantiles) use quantity other with the functional in conditions; offline data or warm starts go in conditions and make the setting its own (add a parameter such as n_offline)."
+  - "An anytime or unknown horizon means T is absent from learner_knows; random horizons and stopping-time definitions are conditions."
+  - "Non-stationarity: the measure goes in the variable (S_T switches, V_T variation, path length as declared symbol); whether the learner knows it is learner_knows."
+
+vocabularies:
+  techniques: [optimism, thompson_sampling, elimination, explore_then_commit, epsilon_greedy,
+               exponential_weights, ftrl_or_mirror_descent, information_directed_sampling,
+               track_and_stop, gittins_or_bayes_optimal, doubling_trick, restarts_or_sliding_window,
+               lower_bound_change_of_measure, lower_bound_minimax_construction, other]
+  quantity:
+    pseudo_regret: "E[sum_t (mu_star - mu_{A_t})] (regret through means; also <theta, x* - x_t> in expectation), whatever the paper calls it"
+    expected_regret: "E[max_a sum_t X_{a,t} - sum_t X_{A_t,t}] (expectation of regret against the best action in hindsight)"
+    high_probability_regret: "a bound on regret holding with probability >= 1 - delta"
+    bayesian_regret: "regret averaged over a prior on the instance"
+    simple_regret: "gap of the action recommended at the end"
+    sample_complexity: "number of samples to reach a target accuracy / confidence"
+    error_probability: "probability of a wrong answer (pure exploration, fixed budget)"
+    dynamic_regret: "regret against the best action at each round (non-stationary)"
+    switching_regret: "regret against the best sequence of actions with a bounded number of switches"
+    regret_unspecified: "a regret bound whose expectation / probability type the paper does not state"
+    minimax_bayesian_regret: "worst-case over priors of the Bayesian regret"
+    realized_regret: "the random regret itself (bounds holding with constant or vanishing probability)"
+    policy_regret: "regret against the losses the learner would have suffered playing the comparator throughout (adaptive / bounded-memory adversaries)"
+    alpha_regret: "regret against alpha * OPT for an approximation factor alpha_apx (submodular, offline-oracle reductions)"
+    competitive_ratio: "a multiplicative guarantee ALG >= OPT / ratio"
+    other: "any other guarantee (pull counts, estimation error, ...)"
+  comparator: [best_fixed_action, best_action_per_round, best_switching_sequence, best_expert, best_policy,
+               best_feasible_policy, not_applicable]
+
+# CHANGELOG
+# 0.2 (2026-10-19): from the BCO ground truth (data/ground_truth/bco-ontology-notes.md)
+#   and the OFUL test extraction.
+#   + dimensions function_class (multi), domain
+#   + noise: conditionally_subgaussian, noise_free; feedback: two_point;
+#     environment: adversarial_unspecified; objective: epsilon_optimal_point;
+#     quantity: regret_unspecified, minimax_bayesian_regret; learner_knows: alpha, beta, L_lip, diam_K
+#   ~ action_space: convex -> convex_body
+#   deferred to Phase 3: constraint_set geometry, typed edge kinds (statistical_only,
+#     cross_problem, non_transfer), stochastic_fixed_function environment.
+# 0.3 (2026-10-19): from ontology/review-v0.2.md (142 unmapped items in the first pilot run).
+#   + node_parameters.action_set {shape, time_varying, access}
+#   + learner_knows: mu_star, Delta, Delta_lower_bound, moment_bound, reward_family
+#   + dimension instance_assumptions (multi)
+#   + noise: bounded_pm1 (noise also records adversarial loss ranges)
+#   + environment: adversarial_self_bounding, adversarial_restricted
+#   + action_space: structured_general; objective: optimization_error
+#   + extras: expert_advice, time_varying_action_sets; quantity: realized_regret
+#   + vocabulary comparator; setting-level in_scope flag (schema)
+#   variables moved to ontology/variables.yaml
+#   + orders/reductions found via the graph view: linear_finite ⊑ linear_infinite, bounded_01 ⊑ bounded_pm1,
+#     finite_K / linear_finite -> structured_general, combinatorial -> linear_finite (d = K),
+#     linear_infinite -> generalized_linear
+# 0.4 (2026-10-20): from ontology/review-v0.3.md (266 unmapped items, 24 themes).
+#   + action_set fields norm_bound (value map unit_l2 -> L_feat = 1), parameter_set, loss_set;
+#     shape strongly_convex ⊑ convex_body; access barycentric_spanner, self_concordant_barrier
+#   + node parameters corruption {adversary, budget_measure, structure, regret_reference} and
+#     feedback_graph {observability, time_varying, knowledge}
+#   + learner_knows L_feat, eps_m, N_exp, alpha_G, c_mu, L_star, r_K, prior
+#   + noise gaussian_unknown_variance; feedback decoupled
+#   + guidance (rendered into the prompt) for features that were expressible but left unmapped
+# 0.4.1 (2026-10-21): batch-1 conflicts. feedback_graph.observability: + any_graph (observable ⊑ any_graph);
+#   dropped unspecified ⊑ observable, which let lower bounds for non-observable graphs reach observable ones
+#   (unspecified is now compatible with a caveat, like every other node field). Prompt unchanged except the
+#   feedback-graph guidance line; no re-extraction needed.
+#   graph_feedback ⊑ bandit now requires feedback_graph.observability = strongly_observable (order_notes
+#   `requires`): a bandit algorithm needs its own loss, which weakly / non-observable graphs do not reveal.
+#   - reduction combinatorial -> linear_finite (loss scales differ by m; see the comment at the reduction).
+# 0.5 (2026-10-21): from ontology/review-v0.4.md (3,731 unmapped items after batch 1, 40 themes).
+#   Cut (user decision): multi-agent / federated / matching markets, state-dependent reward dynamics
+#   (Markov, restless, rotting/rising, mortal), multi-objective rewards, quantum oracles; also not expanded:
+#   privacy, causal structure, offline data, risk functionals (coarse extras / conditions only).
+#   + top-level `scope`: out_of_scope_when rules applied by resolve.py; extractor scope guidance
+#   + learner_knows is open over variables.yaml (values_from_variables) plus named items
+#   + objective thresholding, general_identification, mean_estimation
+#   + feedback multi_point, first_order, triggered_semi_bandit, cascade, limited_advice (with orders)
+#   + environment adversarial_bounded_memory, adversarial_smoothed; quantities policy_regret,
+#     alpha_regret, competitive_ratio; comparator best_feasible_policy
+#   + function_class convex, holder_smooth, unimodal (+ implications linear/strongly_convex => convex,
+#     now closed by resolve.py)
+#   + action_set.shape lp_ball, ellipsoid, permutahedron (shapes ordered under polytope / convex_body);
+#     action_set.parameter_structure; corruption.model, corruption.target; feedback_graph.self_loops,
+#     directedness, generation (graph_feedback ⊑ bandit now requires self_loops = all)
+#   + node parameters noise_detail, combinatorial (family, reward, loss_scale), reward_model, constraints,
+#     preference, partial_monitoring, delay
+#   + extras streaming_bounded_memory, rare_policy_updates; guidance lines for the expressible themes

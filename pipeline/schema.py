@@ -14,14 +14,26 @@ import yaml
 from pydantic import BaseModel, ConfigDict, create_model
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_ONTOLOGY = ROOT / "ontology" / "bandits-0.4.yaml"
+DEFAULT_ONTOLOGY = ROOT / "ontology" / "bandits-0.5.yaml"
 VARIABLES = ROOT / "ontology" / "variables.yaml"
 ALGORITHMS = ROOT / "data" / "algorithms.yaml"
-SCHEMA_VERSION = "0.4"
+SCHEMA_VERSION = "0.5"
 
 
 def load_ontology(path: Path = DEFAULT_ONTOLOGY) -> dict:
-    return yaml.safe_load(path.read_text())
+    """The ontology, with open vocabularies expanded: a dimension with `values_from_variables`
+    also takes every variables.yaml symbol of those kinds (e.g. learner_knows: any problem
+    parameter or instance quantity the learner may know)."""
+    ont = yaml.safe_load(path.read_text())
+    variables = None
+    for spec in ont["dimensions"].values():
+        kinds = spec.get("values_from_variables")
+        if kinds:
+            variables = variables or load_variables()["variables"]
+            named = dict(spec.get("values") or {})
+            spec["values"] = {**{k: v["definition"] for k, v in variables.items() if v["kind"] in kinds}, **named}
+            spec["named_values"] = named  # for the prompt, which lists the registry once
+    return ont
 
 
 def load_variables(path: Path = VARIABLES) -> dict:

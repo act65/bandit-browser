@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Provably Optimal Algorithms for Generalized Linear Contextual Bandits",
   "arxiv_id": "1703.00048",
@@ -26,10 +26,11 @@
    "noise": "conditionally_subgaussian",
    "learner_knows": [
     "T",
+    "K",
+    "d",
     "sigma",
     "c_mu",
-    "d",
-    "K"
+    "k_mu"
    ],
    "instance_assumptions": [],
    "extras": [
@@ -41,31 +42,61 @@
     "access": "explicit",
     "norm_bound": "unit_l2",
     "parameter_set": "unspecified",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "K feature vectors per round drawn i.i.d. from unknown distribution nu with lambda_min(E[(1/K) sum_a x x']) >= sigma_0^2",
-    "rewards y in [0,1]",
-    "Assumption 1: kappa = inf over ||x||<=1, ||theta-theta*||<=1 of mu'(x'theta) > 0 (local lower bound on link derivative)",
-    "Assumption 2: mu twice differentiable with mu' <= L_mu and mu'' <= M_mu",
-    "link function strictly increasing",
-    "UCB-GLM tuning of tau requires knowledge of sigma_0"
+    "K feature vectors per round drawn IID from unknown distribution nu with lambda_min(E[(1/K) sum_a x_{t,a} x_{t,a}']) >= sigma_0^2",
+    "rewards in [0,1] and link mu bounded in [0,1]; kappa = local inf of mu' over ||x||<=1, ||theta-theta*||<=1",
+    "mu twice differentiable with |mu''| <= M_mu"
    ],
-   "definition_quote": "At round $t$, the agent observes a context consisting of a set of $K$ feature vectors, $\\{x_{t,a} \\mid a\\in[K]\\} \\subset \\R^d$, which is drawn IID from an unknown distribution $\\nu$, with $\\norm{x_{t,a}} \\le 1$. Each feature vector $x_{t,a}$ is associated with an unknown stochastic reward $y_{t,a} \\in [0,1]$. ... $\\E[Y \\mid X] = \\mu(X'\\theta^*)$ ... the noise $\\epsilon_t$ is sub-Gaussian with parameter $\\sigma$"
+   "definition_quote": "At round $t$, the agent observes a context consisting of a set of $K$ feature vectors, $\\{x_{t,a} \\mid a\\in[K]\\} \\subset \\R^d$, which is drawn IID from an unknown distribution $\\nu$, with $\\norm{x_{t,a}} \\le 1$. Each feature vector $x_{t,a}$ is associated with an unknown stochastic reward $y_{t,a} \\in [0,1]$. ... $\\E[Y \\mid X] = \\mu(X'\\theta^*)$"
   }
  ],
  "algorithms": [
@@ -75,8 +106,7 @@
    "registry_id": null,
    "is_new": true,
    "techniques": [
-    "optimism",
-    "explore_then_commit"
+    "optimism"
    ],
    "requires_knowledge_of": [
     "T",
@@ -96,10 +126,10 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "sigma",
-    "c_mu",
+    "K",
     "d",
-    "K"
+    "sigma",
+    "c_mu"
    ]
   }
  ],
@@ -123,16 +153,19 @@
     "regime": null
    },
    "symbols": {
-    "C_univ": "universal constant in tau = C sigma_0^{-2}(d+log(1/delta))",
-    "sigma_0": "lower bound on sqrt of min eigenvalue of average context covariance"
+    "C_univ": "universal constant in tau",
+    "sigma_0": "sqrt of lower bound on min eigenvalue of average context covariance",
+    "k_mu": "paper's L_mu, bound on mu'",
+    "c_mu": "paper's kappa, local lower bound on mu' near theta*"
    },
    "conditions": [
     "Assumptions 1 and 2",
-    "lambda_min(E[(1/K) sum_a x_{t,a} x_{t,a}']) >= sigma_0^2"
+    "||x_{t,a}|| <= 1",
+    "contexts IID with min eigenvalue condition sigma_0^2"
    ],
    "tuning": [
-    "alpha = (sigma/kappa) sqrt((d/2) log(1+2T/d) + log(1/delta))",
-    "tau = C sigma_0^{-2}(d + log(1/delta))"
+    "alpha = sigma/kappa*sqrt(d/2*log(1+2T/d)+log(1/delta))",
+    "tau = C sigma_0^{-2}(d+log(1/delta))"
    ],
    "is_new": true,
    "source": {
@@ -141,7 +174,7 @@
     "quote": "Fix any $\\delta>0$. There exists a universal constant $C>0$, such that if we run UCB-GLM with $\\alpha=\\frac{\\sigma}{\\kappa} \\sqrt{\\frac{d}{2} \\log(1+2T/d) + \\log(1/\\delta)}$ and $\\tau=C\\sigma_0^{-2}(d+\\log(1/\\delta))$, then, with probability at least $1-2\\delta$, the regret of the algorithm is upper bounded by $R_T \\le \\tau + \\frac{2 L_{\\mu} \\sigma d}{\\kappa} \\log ( \\frac{T}{d\\delta}) \\sqrt{T}$."
    },
    "confidence": "high",
-   "notes": "Probability 1-2delta. kappa mapped to c_mu (local version), L_mu mapped to k_mu. tau substituted into the bound. Paper notes delta=1/T gives E[R_T]=O~(d sqrt T)."
+   "notes": "Holds w.p. 1-2delta. tau substituted. Regret defined via means on the realized trajectory."
   },
   {
    "id": "r2",
@@ -159,16 +192,19 @@
     "notation": "exact",
     "expression": "45*(sigma*k_mu/c_mu)*sqrt(log(T)*log(T*K/delta)*log(T/d))*sqrt(d*T)",
     "expression_latex": "R_T \\le 45 (\\sigma L_{\\mu}/\\kappa) \\sqrt{\\log T \\log(TK/\\delta)\\log(T/d)} \\sqrt{dT}",
-    "regime": "T >= T_0 = Omega((sigma^2/kappa^4) max{d^3, log(TK/delta)/d})"
+    "regime": "T >= T_0 = Omega(sigma^2/kappa^4 * max{d^3, log(TK/delta)/d})"
    },
-   "symbols": {},
+   "symbols": {
+    "k_mu": "paper's L_mu",
+    "c_mu": "paper's kappa"
+   },
    "conditions": [
     "Assumptions 1 and 2",
-    "T >= T_0 with T_0 = Omega(sigma^2/kappa^4 max{d^3, log(TK/delta)/d})"
+    "T >= T_0"
    ],
    "tuning": [
     "tau = sqrt(dT)",
-    "alpha = (3 sigma/kappa) sqrt(2 log(TK/delta))"
+    "alpha = 3 sigma/kappa sqrt(2 log(TK/delta))"
    ],
    "is_new": true,
    "source": {
@@ -177,7 +213,7 @@
     "quote": "For any $0 < \\delta < 1$, if we run the SupCB-GLM algorithm with $\\tau=\\sqrt{dT}$ and $\\alpha=\\frac{3\\sigma}{\\kappa} \\sqrt{2\\log(TK/\\delta)}$ for $T \\ge T_0$ rounds, ... the regret of the algorithm is bounded as $R_T \\le 45 (\\sigma L_{\\mu}/\\kappa) \\sqrt{\\log T \\log(TK/\\delta)\\log(T/d)} \\sqrt{dT}$, with probability at least $1-\\delta$."
    },
    "confidence": "high",
-   "notes": "Probability 1-delta."
+   "notes": "w.p. 1-delta."
   },
   {
    "id": "r3",
@@ -205,7 +241,7 @@
    "tuning": [
     "delta = 1/T",
     "tau = sqrt(dT)",
-    "alpha = (3 sigma/kappa) sqrt(2 log(TK/delta))"
+    "alpha = 3 sigma/kappa sqrt(2 log(TK/delta))"
    ],
    "is_new": true,
    "source": {
@@ -213,8 +249,8 @@
     "number": "Theorem 3",
     "quote": "With $\\delta = 1/T$, we obtain \\[ \\E[R_T] = O\\left ((\\log T)^{1.5} \\sqrt{dT \\log K} \\right). \\]"
    },
-   "confidence": "high",
-   "notes": "R_T defined via mean rewards mu(x'theta*), so expectation is pseudo-regret."
+   "confidence": "medium",
+   "notes": "Constants sigma, kappa, L_mu absorbed into O. Regret defined through means."
   },
   {
    "id": "r4",
@@ -229,30 +265,33 @@
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
-    "notation": "O",
-    "expression": "k_mu*sigma/c_mu*sqrt(d*T*log(T/delta))",
+    "notation": "exact",
+    "expression": "C_univ*k_mu*sigma/c_mu*sqrt(d*T*log(T/delta))",
     "expression_latex": "R_T \\le \\frac{C L_{\\mu} \\sigma}{\\kappa} \\sqrt{dT\\log(T/\\delta)}",
-    "regime": "T = Omega(sigma R d log^2 T/(kappa L_mu))"
+    "regime": "T = Omega(sigma R/(kappa L_mu) d log^2 T)"
    },
-   "symbols": {},
+   "symbols": {
+    "C_univ": "positive universal constant",
+    "k_mu": "paper's L_mu",
+    "c_mu": "paper's kappa"
+   },
    "conditions": [
-    "sum_{t=tau+1}^T lambda_min(V_t)^{-1/2} <= c sqrt(T) with probability at least 1-delta (condition on the algorithm's design matrices)",
-    "T = Omega((sigma R/(kappa L_mu)) d log^2 T)",
-    "delta in [1/T, 1)",
+    "sum_{t=tau+1}^T lambda_min(V_t)^{-1/2} <= c sqrt(T) with probability at least 1-delta (assumption on algorithm trajectory)",
+    "delta in [1/T,1)",
     "Assumptions 1 and 2"
    ],
    "tuning": [
-    "tau = (8 sigma^2/kappa^2) d log T",
+    "tau = 8 sigma^2/kappa^2 d log T",
     "alpha <= L_mu sigma/kappa"
    ],
    "is_new": true,
    "source": {
     "label": "thm:maindis",
     "number": "Theorem 4",
-    "quote": "We run algorithm UCB-GLM with $\\tau=\\frac{8\\sigma^2}{\\kappa^2}d\\log T$ and $\\alpha \\le L_{\\mu} \\sigma/\\kappa$. For any $\\delta \\in [1/T,1)$, suppose there is an universal constant $c$ such that $\\sum_{t=\\tau+1}^{T} \\lmin^{-1/2}(V_t) \\le c \\sqrt{T}$ holds with probability at least $1-\\delta$, and $T=\\Omega(\\frac{\\sigma R}{ \\kappa L_{\\mu} } d \\log^2 T)$. Then, the regret of the algorithm is bounded by $R_T \\le \\frac{C L_{\\mu} \\sigma}{\\kappa} \\sqrt{dT\\log(T/\\delta)}$ with probability at least $1-2\\delta$"
+    "quote": "We run algorithm UCB-GLM with $\\tau=\\frac{8\\sigma^2}{\\kappa^2}d\\log T$ and $\\alpha \\le L_{\\mu} \\sigma/\\kappa$. For any $\\delta \\in [1/T,1)$, suppose there is an universal constant $c$ such that $\\sum_{t=\\tau+1}^{T} \\lmin^{-1/2}(V_t) \\le c \\sqrt{T}$ holds with probability at least $1-\\delta$, and $T=\\Omega(...)$. Then, the regret of the algorithm is bounded by $R_T \\le \\frac{C L_{\\mu} \\sigma}{\\kappa} \\sqrt{dT\\log(T/\\delta)}$ with probability at least $1-2\\delta$"
    },
    "confidence": "medium",
-   "notes": "Universal constant C absorbed into O notation. Conditional result based on an unverifiable eigenvalue assumption; R in the condition is undefined in the paper. Probability 1-2delta."
+   "notes": "Conditional on an eigenvalue-growth assumption; R in condition undefined in paper."
   }
  ],
  "cited_results": [
@@ -283,7 +322,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "K-armed linear contextual bandits, minimax lower bound on expected regret",
+   "setting_description": "K-armed linear contextual bandits, expected regret minimax lower bound",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(d*T)",
@@ -301,14 +340,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "linear bandits with infinitely many actions, minimax lower bound",
+   "setting_description": "linear bandits with infinitely many actions",
    "bound": {
-    "notation": "Omega_tilde",
+    "notation": "Omega",
     "expression": "d*sqrt(T)",
     "expression_latex": "d\\sqrt{T}",
     "regime": null
    },
-   "where": "Discussion after Theorem 2"
+   "where": "Section 4.1 after Theorem 2"
   },
   {
    "cited_key": "agarwal2014taming",
@@ -332,19 +371,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:19:50",
+  "date": "2026-10-21T15:29:30",
   "source_chars": 73620,
-  "input_tokens": 67561,
-  "output_tokens": 6847,
-  "cost_usd_equiv": 0.4598468,
+  "input_tokens": 74148,
+  "output_tokens": 6219,
+  "cost_usd_equiv": 0.448534,
   "status": "extracted"
  }
 }

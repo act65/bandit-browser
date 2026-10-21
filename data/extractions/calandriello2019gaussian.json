@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Gaussian Process Optimization with Adaptive Sketching: Scalable and No Regret",
   "arxiv_id": "1903.05594",
@@ -17,7 +17,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Gaussian process optimization / kernelized bandit with finite arm set (frequentist, ||f||_H <= F)",
+   "name_in_paper": "Gaussian process optimization / kernelized bandit with finite arm set (frequentist, bounded RKHS norm)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -28,8 +28,9 @@
    "noise": "gaussian_known_variance",
    "learner_knows": [
     "T",
+    "S",
     "sigma",
-    "S"
+    "kernel"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -37,30 +38,61 @@
     "shape": "finite",
     "time_varying": "fixed",
     "access": "explicit",
-    "norm_bound": "unspecified",
-    "parameter_set": "arbitrary_bounded",
-    "loss_set": "not_applicable"
+    "norm_bound": "not_applicable",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "bounded kernel k(x,x) <= kappa^2",
-    "reward function in RKHS with ||f||_H <= F (F mapped to S)",
-    "noise N(0, xi^2); appendix notes extension to xi-sub-Gaussian noise"
+    "kernel bounded: k(x,x) <= kappa^2 on all arms"
    ],
-   "definition_quote": "we assume that $\\armset \\triangleq \\{\\bx_i\\}_{i=1}^{\\Narm}$ is a fixed finite set of $\\Narm$ vectors in $\\Real^d$. ... receives reward $y_t \\triangleq f(\\bx_t) + \\eta_t$ ... The goal of the learner is to minimize its cumulative regret $R_T \\triangleq \\sum_{t=1}^T f(\\bx_\\star) - f(\\bx_t)$"
+   "definition_quote": "we assume that $\\armset \\triangleq \\{\\bx_i\\}_{i=1}^{\\Narm}$ is a fixed finite set of $\\Narm$ vectors in $\\Real^d$. ... receives reward $y_t \\triangleq f(\\bx_t) + \\eta_t$, where $\\eta_t$ is a zero-mean noise ... $R_T \\triangleq \\sum_{t=1}^T f(\\bx_\\star) - f(\\bx_t)$ ... we additionally assume that the reward function $f$ has a bounded norm ... $\\normsmall{f}_{\\rkhs} \\leq F$"
   }
  ],
  "algorithms": [
@@ -74,8 +106,9 @@
    ],
    "requires_knowledge_of": [
     "T",
+    "S",
     "sigma",
-    "S"
+    "kernel"
    ]
   }
  ],
@@ -94,34 +127,35 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "2*(2*alpha_eps)**(3/2)*sqrt(T)*(sigma*d_eff*log(kappa**2*T) + sqrt(lam*S**2*d_eff*log(kappa**2*T)) + sigma*log(1/delta))",
-    "expression_latex": "2(2\\alpha)^{3/2}\\sqrt{T}\\left(\\xi\\deff(\\lambda,\\wt{\\bX}_T)\\log(\\kappa^2T) +\\sqrt{\\lambda \\fnorm^2 \\deff(\\lambda,\\wt{\\bX}_T)\\log(\\kappa^2T)}+ \\xi\\log(1/\\delta) \\right)",
+    "expression": "2*(2*alpha_acc)**(3/2)*sqrt(T)*(sigma*d_eff*log(kappa**2*T) + sqrt(lam*S**2*d_eff*log(kappa**2*T)) + sigma*log(1/delta))",
+    "expression_latex": "R_T \\leq 2(2\\alpha)^{3/2}\\sqrt{T}\\left(\\xi\\deff(\\lambda,\\wt{\\bX}_T)\\log(\\kappa^2T) +\\sqrt{\\lambda \\fnorm^2 \\deff(\\lambda,\\wt{\\bX}_T)\\log(\\kappa^2T)}+ \\xi\\log(1/\\delta) \\right)",
     "regime": null
    },
    "symbols": {
-    "alpha_eps": "(1+epsilon)/(1-epsilon), approximation accuracy factor with 0<epsilon<1",
-    "d_eff": "effective dimension d_eff(lambda, X_T) = Tr(K_T (K_T + lambda I)^{-1}) of the arms selected by BKB",
-    "kappa": "bound on kernel: k(x,x) <= kappa^2"
+    "alpha_acc": "(1+eps_alg)/(1-eps_alg), approximation accuracy factor with 0<eps_alg<1",
+    "kappa": "bound on kernel: k(x,x) <= kappa^2",
+    "d_eff": "effective dimension Tr(K_T(K_T+lam I)^{-1}) of the arms selected by BKB up to T"
    },
    "conditions": [
-    "||f||_H <= F < infinity (F denoted S)",
-    "k(x,x) <= kappa^2 for all arms",
-    "noise eta_t ~ N(0, xi^2) with xi denoted sigma"
+    "||f||_H <= F (F mapped to S)",
+    "k(x_i,x_i) <= kappa^2 for all arms",
+    "noise Gaussian with variance xi^2 (xi mapped to sigma), lambda = xi^2 in the GP posterior",
+    "finite arm set"
    ],
    "tuning": [
-    "0 < epsilon < 1, alpha = (1+epsilon)/(1-epsilon)",
-    "qbar >= 6 alpha log(4T/delta)/epsilon^2",
-    "beta_t = 2 xi sqrt(alpha log(kappa^2 t) sum_s sigma_tilde_t^2(x_s) + log(1/delta)) + (1 + 1/sqrt(1-epsilon)) sqrt(lambda) F",
+    "0 < eps < 1, alpha = (1+eps)/(1-eps)",
+    "qbar >= 6 alpha log(4T/delta)/eps^2",
+    "beta_t = 2 xi sqrt(alpha log(kappa^2 t) sum_s sigma_tilde_t^2(x_s) + log(1/delta)) + (1 + 1/sqrt(1-eps)) sqrt(lambda) F",
     "lambda > 0"
    ],
    "is_new": true,
    "source": {
     "label": "thm:main-regret",
     "number": "Theorem 2",
-    "quote": "Assume $\\normsmall{f}_{\\rkhs} \\leq F < \\infty$. For any desired $0 < \\varepsilon < 1$, $0 < \\delta < 1$, $0 < \\lambda$, let $\\alpha \\triangleq (1 + \\varepsilon)/(1 - \\varepsilon)$ and $\\qbar \\geq 6\\alpha\\log(4T/\\delta)/\\varepsilon^2$. If we run \\bkb with $\\wt{\\beta}_t \\triangleq ...$ then, with probability of at least $1-\\delta$, the regret $R_T$ of \\bkb is bounded as $R_T \\leq 2(2\\alpha)^{3/2}\\sqrt{T}(\\xi\\deff(\\lambda,\\wt{\\bX}_T)\\log(\\kappa^2T) +\\sqrt{\\lambda \\fnorm^2 \\deff(\\lambda,\\wt{\\bX}_T)\\log(\\kappa^2T)}+ \\xi\\log(1/\\delta) )$."
+    "quote": "Assume $\\normsmall{f}_{\\rkhs} \\leq F < \\infty$. For any desired $0 < \\varepsilon < 1$, $0 < \\delta < 1$, $0 < \\lambda$, let $\\alpha \\triangleq (1 + \\varepsilon)/(1 - \\varepsilon)$ and $\\qbar \\geq 6\\alpha\\log(4T/\\delta)/\\varepsilon^2$. If we run \\bkb with ... then, with probability of at least $1-\\delta$, the regret $R_T$ of \\bkb is bounded as R_T \\leq 2(2\\alpha)^{3/2}\\sqrt{T}(\\xi\\deff(\\lambda,\\wt{\\bX}_T)\\log(\\kappa^2T) +\\sqrt{\\lambda \\fnorm^2 \\deff(\\lambda,\\wt{\\bX}_T)\\log(\\kappa^2T)}+ \\xi\\log(1/\\delta))"
    },
    "confidence": "medium",
-   "notes": "Regret is realized sum f(x*)-f(x_t) bounded w.p. 1-delta. d_eff is data-dependent (depends on arms selected). Per-step time O(A d_eff^2) up to logs (Theorem 1, a dictionary-size/accuracy guarantee, not recorded as a regret result). Paper's lambda=xi^2 in GP view but theorem allows any lambda>0."
+   "notes": "d_eff is data-dependent (evaluated on the arms played). The paper's noise is Gaussian with std xi; it notes sub-Gaussian noise also works. Regret is realized regret in f-values, holding w.p. 1-delta. Theorem 1 (dictionary size / variance accuracy) is a computational guarantee and not recorded."
   }
  ],
  "cited_results": [
@@ -134,10 +168,10 @@
    "algorithm_name": "SOFUL-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic linear bandit in R^d with Frequent Directions sketch of fixed size m",
+   "setting_description": "Stochastic linear bandit in R^d with Frequent Directions sketch of size m; eps_m is the sum of the d-m smallest eigenvalues of A_T",
    "bound": {
     "notation": "O_tilde",
-    "expression": "(1 + eps_mm)**(3/2)*(d + m_sk)*sqrt(T)",
+    "expression": "(1 + eps_m_tail)**(3/2)*(d + m)*sqrt(T)",
     "expression_latex": "\\abigotime((1 + \\varepsilon_m)^{3/2}(d + m)\\sqrt{T})",
     "regime": null
    },
@@ -147,19 +181,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:25:57",
+  "date": "2026-10-21T15:36:23",
   "source_chars": 111871,
-  "input_tokens": 86646,
-  "output_tokens": 3556,
-  "cost_usd_equiv": 0.5467067999999999,
+  "input_tokens": 93233,
+  "output_tokens": 3768,
+  "cost_usd_equiv": 0.552194,
   "status": "extracted"
  }
 }

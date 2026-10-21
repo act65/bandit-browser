@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Thompson Sampling for Budgeted Multi-armed Bandits",
   "arxiv_id": "1505.00146",
@@ -17,7 +17,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Budgeted MAB (Bernoulli and general bandits, rewards and costs in [0,1])",
+   "name_in_paper": "Budgeted MAB (Bernoulli and general bandits)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -27,9 +27,7 @@
    "context": "none",
    "noise": "bounded_01",
    "learner_knows": [],
-   "instance_assumptions": [
-    "unique_optimal_arm"
-   ],
+   "instance_assumptions": [],
    "extras": [
     "knapsack_constraints"
    ],
@@ -39,27 +37,60 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "hard_budget",
+    "violation": "never"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Each pull yields a random reward and a random cost (both in [0,1], independent of each other); play stops when budget B is exhausted; regret measured against the optimal policy with known distributions, as a function of budget B",
-    "Optimal arm is the one with maximal expected-reward-to-expected-cost ratio; all mean rewards and costs are positive"
+    "single resource: each pull incurs a random cost in [0,1], independent of the reward; game stops when budget B is exhausted (no time horizon); regret measured as a function of the budget B",
+    "optimal arm defined by maximum expected-reward-to-expected-cost ratio"
    ],
-   "definition_quote": "At round $t$, a player pulls an arm $i\\in[K]$, receives a random reward $r_i(t)$, and pays a random cost $c_i(t)$ until he runs out of his budget $B$, which is a positive integer. Both the reward $r_i(t)$ and the cost $c_i(t)$ are supported on $[0,1]$."
+   "definition_quote": "At round $t$, a player pulls an arm $i\\in[K]$, receives a random reward $r_i(t)$, and pays a random cost $c_i(t)$ until he runs out of his budget $B$, which is a positive integer.  Both the reward $r_i(t)$ and the cost $c_i(t)$ are supported on $[0,1]$. ... (i) the rewards of an arm are independent of its costs; (ii) ... (iii) the rewards and costs of the same arm at different rounds are independent and identically distributed."
   }
  ],
  "algorithms": [
@@ -83,41 +114,43 @@
    "algorithm_class": null,
    "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
-   "comparator": "best_fixed_action",
+   "comparator": "best_feasible_policy",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sum_subopt(2*log(B)/(gamma**2*mu_c_i*Delta_ratio_i)*(mu_r_1/mu_c_1 + 1)**2 + Phi_i) + K/gamma**2",
+    "expression": "sum_subopt(2*log(B_budget)/(gamma**2*mu_c_i*Delta_ratio_i)*(mu_r_1/mu_c_1 + 1)**2 + Phi_i) + K/gamma**2",
     "expression_latex": "\\sum_{i=2}^{K}\\Big\\{\\frac{2\\ln B}{\\gamma^2\\mu_i^c\\Delta_i}\\bigg(\\frac{\\mu_1^r}{\\mu_1^c}+1\\bigg)^2 + \\Phi_i(\\gamma)\\Big\\}+O\\bigg(\\frac{K}{\\gamma^2}\\bigg)",
-    "regime": null
+    "regime": "B > e"
    },
    "symbols": {
-    "B": "budget",
+    "B_budget": "budget B (plays the role of the horizon)",
     "gamma": "free analysis parameter in (0,1)",
+    "mu_c_i": "expected cost of arm i",
     "mu_r_1": "expected reward of optimal arm",
     "mu_c_1": "expected cost of optimal arm",
-    "mu_c_i": "expected cost of arm i",
     "Delta_ratio_i": "ratio gap mu_1^r/mu_1^c - mu_i^r/mu_i^c",
-    "Phi_i": "O(1/eps_i^4) if mu_1^c+eps_i>=1, else O(1/(eps_i^6 (1-mu_1^c-eps_i))), with eps_i(gamma)=(1-gamma) mu_1^c Delta_i/(mu_i^r/mu_i^c+1)"
+    "Phi_i": "O(1/eps_i^4) if mu_1^c+eps_i>=1, else O(1/(eps_i^6 (1-mu_1^c-eps_i))), eps_i=(1-gamma)mu_1^c Delta_i/(mu_i^r/mu_i^c+1); independent of B"
    },
    "conditions": [
-    "rewards and costs supported in [0,1], reward independent of cost",
+    "rewards and costs supported on [0,1]",
+    "reward independent of cost for each arm",
     "mu_i^r > 0 and mu_i^c > 0 for all arms",
-    "B positive integer (proof uses B > e)"
+    "arm 1 is the unique arm maximizing mu^r/mu^c",
+    "B is a positive integer"
    ],
    "tuning": [
-    "any gamma in (0,1)"
+    "any gamma in (0,1) (analysis parameter)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:bound_TS_asymp",
     "number": "Theorem 1",
-    "quote": "$\\forall \\gamma \\in (0,1)$, for both Bernoulli bandits and general bandits, the regret of the BTS algorithm can be upper bounded as below. Regret \\leq \\sum_{i=2}^{K}\\Big\\{\\frac{2\\ln B}{\\gamma^2\\mu_i^c\\Delta_i}\\bigg(\\frac{\\mu_1^r}{\\mu_1^c}+1\\bigg)^2 + \\Phi_i(\\gamma)\\Big\\}+O\\bigg(\\frac{K}{\\gamma^2}\\bigg)"
+    "quote": "$\\forall \\gamma \\in (0,1)$, for both Bernoulli bandits and general bandits, the regret of the BTS algorithm can be upper bounded as below. \\textrm{Regret} \\leq \\sum_{i=2}^{K}\\Big\\{\\frac{2\\ln B}{\\gamma^2\\mu_i^c\\Delta_i}\\bigg(\\frac{\\mu_1^r}{\\mu_1^c}+1\\bigg)^2 + \\Phi_i(\\gamma)\\Big\\}+O\\bigg(\\frac{K}{\\gamma^2}\\bigg)"
    },
    "confidence": "medium",
-   "notes": "Leading ln B term has explicit constants; remaining terms are O(.) with constants depending on the instance but not B. Holds for Bernoulli and general [0,1] bandits (Bernoulli is special case). Remark 4 instantiates gamma=1/sqrt(2), giving leading constant 4(mu_1^r/mu_1^c+1)^2 sum 1/(mu_i^c Delta_i). Comparator is the optimal policy knowing distributions (approximately always pulling the best-ratio arm). Algorithm does not need B, so recorded as anytime."
+   "notes": "Leading ln B term is explicit; remaining terms in O(·) with constants depending on instance means. Holds for both Bernoulli and general [0,1] bandits (Bernoulli case not recorded separately). Regret is R* minus expected reward, R* being the optimal policy's expected reward. Remark 2 with gamma=1/sqrt(2) gives leading constant 4(mu_1^r/mu_1^c+1)^2 sum 1/(mu_i^c Delta_i). The appendix uses B > e. Theorem number assumed 'Theorem 1' — counter shared with lemmas, so the printed number may differ (Lemmas 1,2 precede, so possibly Theorem 3)."
   }
  ],
  "cited_results": [
@@ -133,7 +166,7 @@
    "setting_description": "Budgeted MAB with deterministic fixed arm costs",
    "bound": {
     "notation": "O",
-    "expression": "B**(2/3)",
+    "expression": "B_budget**(2/3)",
     "expression_latex": "O(B^{\\frac{2}{3}})",
     "regime": null
    },
@@ -143,19 +176,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:13:59",
+  "date": "2026-10-21T15:23:08",
   "source_chars": 91363,
-  "input_tokens": 81343,
-  "output_tokens": 3342,
-  "cost_usd_equiv": 0.5000028,
+  "input_tokens": 87930,
+  "output_tokens": 3625,
+  "cost_usd_equiv": 0.50691,
   "status": "extracted"
  }
 }

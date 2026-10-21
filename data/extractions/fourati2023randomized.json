@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Randomized Greedy Learning for Non-monotone Stochastic Submodular Maximization Under Full-bandit Feedback",
   "arxiv_id": "2302.01324",
@@ -16,7 +16,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Unconstrained stochastic combinatorial MAB with non-monotone submodular-in-expectation reward under full-bandit feedback",
+   "name_in_paper": "Unconstrained stochastic combinatorial MAB with non-monotone submodular (in expectation) reward under full-bandit feedback",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -31,34 +31,66 @@
    "instance_assumptions": [],
    "extras": [],
    "action_set": {
-    "shape": "unspecified",
+    "shape": "finite",
     "time_varying": "fixed",
     "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "arbitrary_subset",
+    "reward": "submodular",
+    "loss_scale": "per_action"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Action set is all subsets of n base arms (unconstrained, no cardinality limit)",
-    "Reward function is submodular in expectation, not necessarily monotone; realizations need not be submodular",
-    "Regret is 1/2-approximation regret: compared against (1/2) E f(OPT)",
-    "Full-bandit feedback: only joint reward of the chosen set observed"
+    "reward function is submodular only in expectation (realizations need not be submodular)",
+    "reward function is not necessarily monotone",
+    "unconstrained: any subset of the n base arms can be played"
    ],
-   "definition_quote": "We assume the reward function $f(\\cdot)$ to be stochastic and submodular in expectation, see Definition \\ref{def:submod}, not necessarily monotone, and i.i.d. conditioned on a given subset. Without loss of generality, we assume $f(\\cdot)$ to be bounded in $[0,1]$ ... $\\mathbb{E}[\\mathcal{R}_{\\frac{1}{2}}] = \\frac{1}{2}T \\mathbb{E} [f(OPT)] - \\sum_{t=1}^{T} \\mathbb{E}[f(S_t)]$"
+   "definition_quote": "We assume the reward function $f(\\cdot)$ to be stochastic and submodular in expectation, see Definition \\ref{def:submod}, not necessarily monotone, and i.i.d. conditioned on a given subset. Without loss of generality, we assume $f(\\cdot)$ to be bounded in $[0,1]$."
   }
  ],
  "algorithms": [
@@ -83,7 +115,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "pseudo_regret",
+   "quantity": "alpha_regret",
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
@@ -96,15 +128,15 @@
     "regime": "T >= 2"
    },
    "symbols": {
-    "n": "number of base arms |Omega|"
+    "n": "number of base arms |Omega|",
+    "alpha_apx": "approximation factor, here 1/2"
    },
    "conditions": [
     "T >= 2",
-    "reward function submodular in expectation (not necessarily monotone)",
-    "regret is 1/2-regret against (1/2) E f(OPT)"
+    "alpha_apx = 1/2 (regret against (1/2) E f(OPT))"
    ],
    "tuning": [
-    "m = ceil((T*sqrt(25/32*log(T)))^(2/3))"
+    "m = ceil((T*sqrt(25/32*log T))^(2/3))"
    ],
    "is_new": true,
    "source": {
@@ -113,7 +145,7 @@
     "quote": "For the sequential decision making problem defined in Section \\ref{problem} with $T \\geq 2$, the expected cumulative $\\frac{1}{2}$-regret of RGL is at most $\\mathcal{O}(n T^{\\frac{2}{3}} \\log(T)^{\\frac{1}{3}})$."
    },
    "confidence": "high",
-   "notes": "Alpha-regret with alpha=1/2, defined through expected values, hence pseudo_regret. O(1) per-round time. Remark 3 notes an anytime version via doubling trick with the same rate up to constants (not formally stated)."
+   "notes": "Expected 1/2-regret defined as (1/2) T E f(OPT) - sum_t E f(S_t). Remark 3 informally extends to anytime via doubling trick."
   }
  ],
  "cited_results": [
@@ -123,7 +155,7 @@
    "cited_first_author": "Tim Roughgarden",
    "cited_year": 2018,
    "cited_arxiv_id": null,
-   "algorithm_name": "greedy algorithm (full information)",
+   "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
    "setting_description": "Adversarial online unconstrained non-monotone submodular maximization, full information, 1/2-regret",
@@ -133,7 +165,7 @@
     "expression_latex": "\\Tilde{\\mathcal{O}}(n T^{\\frac{1}{2}})",
     "regime": null
    },
-   "where": "Related Work (Section 1)"
+   "where": "Introduction, Related Work"
   },
   {
    "cited_key": "49310",
@@ -151,25 +183,43 @@
     "expression_latex": "\\Tilde{\\mathcal{O}}(n T^{\\frac{2}{3}})",
     "regime": null
    },
-   "where": "Related Work (Section 1)"
+   "where": "Introduction, Related Work"
+  },
+  {
+   "cited_key": "nie2022explore",
+   "cited_title": "An explore-then-commit algorithm for submodular maximization under full-bandit feedback",
+   "cited_first_author": "Guanyu Nie",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "ETCG",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic monotone submodular maximization under cardinality constraint, full-bandit feedback",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(2/3)",
+    "expression_latex": "\\Tilde{\\mathcal{O}}( T^{\\frac{2}{3}})",
+    "regime": null
+   },
+   "where": "Conclusion"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:05:37",
+  "date": "2026-10-21T15:14:46",
   "source_chars": 77962,
-  "input_tokens": 68863,
-  "output_tokens": 2692,
-  "cost_usd_equiv": 0.38716280000000003,
+  "input_tokens": 75450,
+  "output_tokens": 3090,
+  "cost_usd_equiv": 0.39637,
   "status": "extracted"
  }
 }

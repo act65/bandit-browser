@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Budgeted Online Influence Maximization",
   "arxiv_id": "2604.19672",
@@ -16,16 +16,18 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Budgeted online influence maximization, IC model with edge-level semi-bandit feedback (unknown costs)",
+   "name_in_paper": "Budgeted online influence maximization (IC model, edge-level semi-bandit feedback)",
    "objective": "cumulative_regret",
-   "feedback": "semi_bandit",
+   "feedback": "triggered_semi_bandit",
    "environment": "stochastic_iid",
    "action_space": "combinatorial",
    "function_class": [],
    "domain": "not_applicable",
    "context": "none",
    "noise": "bernoulli",
-   "learner_knows": [],
+   "learner_knows": [
+    "B"
+   ],
    "instance_assumptions": [],
    "extras": [
     "knapsack_constraints"
@@ -36,75 +38,62 @@
     "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "arbitrary_subset",
+    "reward": "submodular",
+    "loss_scale": "unspecified"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "hard_budget",
+    "violation": "unspecified"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Independent cascade diffusion on a known directed graph G=(V,E); edge weights Bernoulli(w*_ij) unknown",
-    "Probabilistically triggered arms: only edges out of influenced nodes are observed",
-    "Random costs in [0,1] per node plus fixed cost C_0 per round (c*_0>0), observed with semi-bandit feedback; costs may be correlated with diffusion",
-    "Total budget B over all rounds; random stopping round tau_B; seed sets of any size",
-    "Regret is (1-1/e-eps)-approximation regret against the optimal policy F*_B",
-    "Reward is the spread (number of influenced nodes)"
+    "Independent cascade diffusion on a known directed graph G=(V,E); edge weights w* unknown",
+    "Random node costs C in [0,1]^{V∪{0}} with semi-bandit cost feedback and fixed cost c0*>0; game stops when the total budget B is exhausted (random horizon tau_B)",
+    "Regret is (1-1/e-eps)-approximation regret relative to best policy F*_B",
+    "Reward is the spread sigma(S;W) (number of influenced nodes)"
    ],
-   "definition_quote": "R_{B,\\varepsilon}(\\pi) \\triangleq (1-1/e-\\varepsilon)F^\\star_{B} - F_{B}(\\pi), where F^\\star_{B} is the best possible value of F_{B} over all policies ... We assume that the feedback received by the agent at round t is {W_{ij,t}, ij in E, S_t ->W_t i}. The agent also receives semi-bandit feedback from the costs."
-  },
-  {
-   "id": "s2",
-   "name_in_paper": "Budgeted online influence maximization, IC model with edge-level semi-bandit feedback (known costs)",
-   "objective": "cumulative_regret",
-   "feedback": "semi_bandit",
-   "environment": "stochastic_iid",
-   "action_space": "combinatorial",
-   "function_class": [],
-   "domain": "not_applicable",
-   "context": "none",
-   "noise": "bernoulli",
-   "learner_knows": [],
-   "instance_assumptions": [],
-   "extras": [
-    "knapsack_constraints"
-   ],
-   "action_set": {
-    "shape": "finite",
-    "time_varying": "fixed",
-    "access": "explicit",
-    "norm_bound": "not_applicable",
-    "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
-   },
-   "corruption": {
-    "adversary": "not_applicable",
-    "budget_measure": "not_applicable",
-    "structure": "not_applicable",
-    "regret_reference": "not_applicable"
-   },
-   "feedback_graph": {
-    "observability": "not_applicable",
-    "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
-   },
-   "parameters": {},
-   "in_scope": true,
-   "out_of_scope_reason": null,
-   "unmapped": [
-    "Same as s1 but the true expected costs c* are known to the learner",
-    "Independent cascade diffusion, probabilistically triggered edges, total budget B, (1-1/e-eps)-approximation regret"
-   ],
-   "definition_quote": "In addition, if true costs are known, then ..."
+   "definition_quote": "The agent wants to follow a learning policy $\\pi$ which minimizes $R_{B,\\varepsilon}(\\pi)\\triangleq (1-1/e-\\varepsilon)F^\\star_{B} - F_{B}(\\pi)$, where $F^\\star_{B}$ is the best possible value of $F_{B}$ over all policies"
   }
  ],
  "algorithms": [
@@ -116,7 +105,9 @@
    "techniques": [
     "optimism"
    ],
-   "requires_knowledge_of": []
+   "requires_knowledge_of": [
+    "B"
+   ]
   },
   {
    "id": "a2",
@@ -126,7 +117,9 @@
    "techniques": [
     "optimism"
    ],
-   "requires_knowledge_of": []
+   "requires_knowledge_of": [
+    "B"
+   ]
   },
   {
    "id": "a3",
@@ -136,7 +129,9 @@
    "techniques": [
     "optimism"
    ],
-   "requires_knowledge_of": []
+   "requires_knowledge_of": [
+    "B"
+   ]
   },
   {
    "id": "a4",
@@ -146,7 +141,9 @@
    "techniques": [
     "optimism"
    ],
-   "requires_knowledge_of": []
+   "requires_knowledge_of": [
+    "B"
+   ]
   }
  ],
  "results": [
@@ -156,7 +153,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "other",
+   "quantity": "alpha_regret",
    "dependence": "instance_dependent",
    "comparator": "best_policy",
    "probability": "expectation",
@@ -164,40 +161,39 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "log(B)*sum_nodes(V_n*(lambda_star + d_i*p_i_max*V_n)/Delta_i_min)",
+    "expression": "log(B)*sum_arms(n_V*(lambda_star + d_i*p_i_max*n_V)/Delta_i_min)",
     "expression_latex": "\\log B\\left(\\sum_{i\\in V}|V|\\frac{\\lambda^\\star+d_ip_{i,\\max}|V|}{\\Delta_{i,\\min}}\\right)",
     "regime": null
    },
    "symbols": {
-    "sum_nodes": "sum over nodes i in V",
-    "V_n": "number of nodes |V|",
-    "lambda_star": "optimal ratio max_S E[sigma(S)]/E[cost(S ∪ {0})]",
+    "n_V": "number of nodes |V|",
     "d_i": "out-degree of node i",
-    "p_i_max": "max over S with p_i(S)>0 of sum_k d_k p_k(S; w*)",
-    "Delta_i_min": "minimum positive gap Delta(S) over S that trigger node i"
+    "lambda_star": "optimal ratio max_S E[sigma(S)]/E[cost(S ∪ {0})]",
+    "Delta_i_min": "minimum positive gap among seed sets that can reach node i",
+    "p_i_max": "max over S with p_i(S)>0 of sum_k d_k p_k(S;w*)"
    },
    "conditions": [
-    "fixed cost c*_0 > 0"
+    "costs unknown"
    ],
    "tuning": [
-    "eps > 0 approximation parameter"
+    "approximation parameter eps > 0"
    ],
    "is_new": true,
    "source": {
     "label": "thm:CUCBregret",
     "number": "Theorem 1",
-    "quote": "If $\\pi$ is the policy described in Algorithm~\\ref{algo:CUCB}, then R_{B,\\varepsilon}(\\pi) = O(log B (sum_{i in V} |V| (lambda* + d_i p_{i,max} |V|)/Delta_{i,min}))."
+    "quote": "If $\\pi$ is the policy described in Algorithm~\\ref{algo:CUCB}, then ${R_{B,\\varepsilon}}(\\pi) =\\cO(\\log{B}(\\sum_{i\\in V}|V|\\frac{\\lambda^\\star+d_ip_{i,\\max}|V| }{\\Delta_{i,\\min}}))$."
    },
    "confidence": "medium",
-   "notes": "Quantity is (1-1/e-eps)-approximation regret vs the optimal budgeted policy, recorded as 'other'. B is the total budget. Appendix also mentions a problem-independent bound O(|V| sqrt(B log B sum_i d_i p_{i,max})) informally. Non-budgeted version said to reduce to Wang & Chen (2017) analysis with improved factor."
+   "notes": "sum_arms here sums over nodes of the graph. Regret is (1-1/e-eps)-approximation regret against the best budget-respecting policy."
   },
   {
    "id": "r2",
-   "setting": "s2",
+   "setting": "s1",
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "other",
+   "quantity": "alpha_regret",
    "dependence": "instance_dependent",
    "comparator": "best_policy",
    "probability": "expectation",
@@ -205,32 +201,28 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "log(B)*sum_nodes(d_i*p_i_max*V_n**2/Delta_i_min)",
+    "expression": "log(B)*sum_arms(d_i*p_i_max*n_V**2/Delta_i_min)",
     "expression_latex": "\\log B\\left(\\sum_{i\\in V}\\frac{d_ip_{i,\\max}|V|^2}{\\Delta_{i,\\min}}\\right)",
     "regime": null
    },
    "symbols": {
-    "sum_nodes": "sum over nodes i in V",
-    "V_n": "number of nodes |V|",
+    "n_V": "number of nodes |V|",
     "d_i": "out-degree of node i",
-    "p_i_max": "max over S with p_i(S)>0 of sum_k d_k p_k(S; w*)",
-    "Delta_i_min": "minimum positive gap Delta(S) over S that trigger node i"
+    "Delta_i_min": "minimum positive gap among seed sets that can reach node i",
+    "p_i_max": "max over S with p_i(S)>0 of sum_k d_k p_k(S;w*)"
    },
    "conditions": [
-    "fixed cost c*_0 > 0",
-    "true costs known"
+    "true costs known to the agent"
    ],
-   "tuning": [
-    "eps > 0 approximation parameter"
-   ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:CUCBregret",
     "number": "Theorem 1",
-    "quote": "In addition, if true costs are known, then R_{B,\\varepsilon}(\\pi) = O(log B (sum_{i in V} d_i p_{i,max} |V|^2 / Delta_{i,min}))."
+    "quote": "In addition, if true costs are known, then ${R_{B,\\varepsilon}}(\\pi) =\\cO(\\log{B}(\\sum_{i\\in V}\\frac{d_ip_{i,\\max}|V|^2 }{\\Delta_{i,\\min}}))$."
    },
    "confidence": "medium",
-   "notes": "Known-cost case of Theorem 1; approximation regret recorded as 'other'."
+   "notes": "Known-cost case; learner knows costs (not expressible in vocab)."
   },
   {
    "id": "r3",
@@ -238,7 +230,7 @@
    "side": "upper",
    "algorithm": "a2",
    "algorithm_class": null,
-   "quantity": "other",
+   "quantity": "alpha_regret",
    "dependence": "instance_dependent",
    "comparator": "best_policy",
    "probability": "expectation",
@@ -246,31 +238,26 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "log(B)*(sum_nodes(V_n*(lambda_star + V_n*E_n*log(V_n)**2)/Delta_i_min) + lambda_star*V_n**2)",
+    "expression": "log(B)*(sum_arms(n_V*(lambda_star + n_V*n_E*log(n_V)**2)/Delta_i_min) + lambda_star*n_V**2)",
     "expression_latex": "\\log B\\left(\\sum_{i\\in V}|V|\\frac{\\lambda^\\star+|V||E|\\log^2|V|}{\\Delta_{i,\\min}}+\\lambda^\\star|V|^2\\right)",
     "regime": null
    },
    "symbols": {
-    "sum_nodes": "sum over nodes i in V",
-    "V_n": "number of nodes |V|",
-    "E_n": "number of edges |E|",
-    "lambda_star": "optimal ratio max_S E[sigma(S)]/E[cost(S ∪ {0})]",
-    "Delta_i_min": "minimum positive gap Delta(S) over S that trigger node i"
+    "n_V": "number of nodes |V|",
+    "n_E": "number of edges |E|",
+    "lambda_star": "optimal ratio",
+    "Delta_i_min": "minimum positive gap among seed sets that can reach node i"
    },
-   "conditions": [
-    "fixed cost c*_0 > 0"
-   ],
-   "tuning": [
-    "eps > 0 approximation parameter"
-   ],
+   "conditions": [],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:regret",
     "number": "Theorem 2",
-    "quote": "If $\\pi$ is the policy following \\textsc{boim-cucb}$_5$, then R_{B,\\varepsilon}(\\pi) = O(log B (sum_{i in V} |V| (lambda* + |V||E| log^2|V|)/Delta_{i,min} + lambda* |V|^2))."
+    "quote": "If $\\pi$ is the policy following \\textsc{boim-cucb}$_5$, then ${R_{B,\\varepsilon}}(\\pi) =\\cO(\\log{B}(\\sum_{i\\in V}|V|\\frac{\\lambda^\\star+|V||E| \\log^2{|V|}}{\\Delta_{i,\\min}} +\\lambda^\\star|V|^2))$."
    },
    "confidence": "medium",
-   "notes": "Text also states an informal non-budgeted analogue O(log T sum_i |V|^2|E|log^2|V|/Delta_{i,min}) for cardinality-constrained OIM."
+   "notes": "Text also states an informal non-budgeted analogue O(log T sum_i |V|^2|E|log^2|V|/Delta_i_min), not recorded as a separate formal result."
   },
   {
    "id": "r4",
@@ -278,7 +265,7 @@
    "side": "upper",
    "algorithm": "a3",
    "algorithm_class": null,
-   "quantity": "other",
+   "quantity": "alpha_regret",
    "dependence": "instance_dependent",
    "comparator": "best_policy",
    "probability": "expectation",
@@ -286,33 +273,29 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "log(B)*(sum_nodes(m*(lambda_star + m*V_n**2*d_i*log(E_n)**2)/Delta_i_min) + lambda_star*V_n**2*E_n)",
+    "expression": "log(B)*(sum_arms(m*(lambda_star + m*n_V**2*d_i*log(n_E)**2)/Delta_i_min) + lambda_star*n_V**2*n_E)",
     "expression_latex": "\\log B\\left(\\sum_{i\\in V}m\\frac{\\lambda^\\star+m|V|^2d_i\\log^2(|E|)}{\\Delta_{i,\\min}}+\\lambda^\\star|V|^2|E|\\right)",
     "regime": null
    },
    "symbols": {
-    "sum_nodes": "sum over nodes i in V",
-    "V_n": "number of nodes |V|",
-    "E_n": "number of edges |E|",
-    "lambda_star": "optimal ratio max_S E[sigma(S)]/E[cost(S ∪ {0})]",
+    "n_V": "number of nodes |V|",
+    "n_E": "number of edges |E|",
     "d_i": "out-degree of node i",
-    "Delta_i_min": "minimum positive gap Delta(S) over S that trigger node i"
+    "lambda_star": "optimal ratio",
+    "Delta_i_min": "minimum positive gap among seed sets that can reach node i"
    },
    "conditions": [
-    "all seed sets selected have cardinality at most m",
-    "fixed cost c*_0 > 0"
+    "all seed sets selected have cardinality at most m"
    ],
-   "tuning": [
-    "eps > 0 approximation parameter"
-   ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:low",
     "number": "Theorem 3",
-    "quote": "If $\\pi$ is the policy \\textsc{boim-cucb}$_1$, and if all seeds selected have a cardinality bounded by $m,$ then we have R_{B,eps}(pi)=O(log B (sum_{i in V} m (lambda* + m|V|^2 d_i log^2(|E|))/Delta_{i,min} + lambda* |V|^2 |E|))."
+    "quote": "If $\\pi$ is the policy \\textsc{boim-cucb}$_1$, and if all seeds selected have a cardinality bounded by $m,$ then we have ${R_{B,\\varepsilon}}(\\pi)=\\cO( \\log{B}(\\sum_{i\\in V}m\\frac{\\lambda^\\star +m|V|^2d_i\\log^2(|E|)}{\\Delta_{i,\\min}}+\\lambda^\\star{|V|^2}|E|))$."
    },
    "confidence": "medium",
-   "notes": "Non-budgeted analogue stated informally: O(log T (sum_i m^2|V|^2 d_i log^2|E|/Delta_{i,min} + |E||V|^2))."
+   "notes": "Condition on cardinality concerns the algorithm's chosen sets."
   },
   {
    "id": "r5",
@@ -320,7 +303,7 @@
    "side": "upper",
    "algorithm": "a4",
    "algorithm_class": null,
-   "quantity": "other",
+   "quantity": "alpha_regret",
    "dependence": "instance_dependent",
    "comparator": "best_policy",
    "probability": "expectation",
@@ -328,51 +311,46 @@
    "compute": "not_stated",
    "bound": {
     "notation": "O",
-    "expression": "log(B)*(sum_nodes((V_n*lambda_star + V_n**2*d_i*log(E_n)**2)/Delta_i_min) + lambda_star*V_n**2*E_n)",
+    "expression": "log(B)*(sum_arms((n_V*lambda_star + n_V**2*d_i*log(n_E)**2)/Delta_i_min) + lambda_star*n_V**2*n_E)",
     "expression_latex": "\\log B\\left(\\sum_{i\\in V}\\frac{|V|\\lambda^\\star+|V|^2d_i\\log^2(|E|)}{\\Delta_{i,\\min}}+\\lambda^\\star|V|^2|E|\\right)",
     "regime": null
    },
    "symbols": {
-    "sum_nodes": "sum over nodes i in V",
-    "V_n": "number of nodes |V|",
-    "E_n": "number of edges |E|",
-    "lambda_star": "optimal ratio max_S E[sigma(S)]/E[cost(S ∪ {0})]",
+    "n_V": "number of nodes |V|",
+    "n_E": "number of edges |E|",
     "d_i": "out-degree of node i",
-    "Delta_i_min": "minimum positive gap Delta(S) over S that trigger node i"
+    "lambda_star": "optimal ratio",
+    "Delta_i_min": "minimum positive gap among seed sets that can reach node i"
    },
-   "conditions": [
-    "fixed cost c*_0 > 0"
-   ],
-   "tuning": [
-    "eps > 0 approximation parameter"
-   ],
+   "conditions": [],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:jensen",
     "number": "Theorem 4",
-    "quote": "If $\\pi$ is the policy \\textsc{boim-cucb}$_4$, then we have R_{B,eps}(pi)=O(log B (sum_{i in V} (|V| lambda* + |V|^2 d_i log^2(|E|))/Delta_{i,min} + lambda* |V|^2 |E|))."
+    "quote": "If $\\pi$ is the policy \\textsc{boim-cucb}$_4$, then we have ${R_{B,\\varepsilon}}(\\pi)=\\cO( \\log{B}(\\sum_{i\\in V}\\frac{|V|\\lambda^\\star +|V|^2d_i\\log^2(|E|)}{\\Delta_{i,\\min}}+\\lambda^\\star{|V|^2}|E|))$."
    },
    "confidence": "medium",
-   "notes": "Paper notes Bonus_4 evaluation may need time polynomial in t (not 'efficient'), so compute not_stated. Non-budgeted analogue stated informally."
+   "notes": "Paper notes Bonus_4 computation may need time polynomial in t, violating its efficiency criterion."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:04:27",
+  "date": "2026-10-21T15:13:11",
   "source_chars": 131583,
-  "input_tokens": 102041,
-  "output_tokens": 6505,
-  "cost_usd_equiv": 0.7288468,
+  "input_tokens": 108628,
+  "output_tokens": 5358,
+  "cost_usd_equiv": 0.707154,
   "status": "extracted"
  }
 }
