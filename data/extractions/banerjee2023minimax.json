@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "On the Minimax Regret for Linear Bandits in a wide variety of Action Spaces",
   "arxiv_id": "2301.03597",
@@ -31,31 +31,61 @@
    "instance_assumptions": [],
    "extras": [],
    "action_set": {
-    "shape": "convex_body",
+    "shape": "lp_ball",
     "time_varying": "fixed",
     "access": "explicit",
     "norm_bound": "bounded_L",
     "parameter_set": "unspecified",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
-   "unmapped": [
-    "Action set is specifically the l_p ball {x : ||x||_p <= c} with 1 < p < infinity",
-    "Noise model not stated explicitly; KL computation in the proof implies unit-variance Gaussian noise (following Lattimore & Szepesvari Ch. 24)"
-   ],
+   "unmapped": [],
    "definition_quote": "Let $\\cX$ be the $L^p$ ball defined as $\\cX = \\{ x \\in \\Real^d \\; : \\norm{x}_p \\leq c \\}$, where $1 < p < \\infty$."
   }
  ],
@@ -77,16 +107,17 @@
     "notation": "exact",
     "expression": "d*sqrt(T)/(16*sqrt(3))",
     "expression_latex": "\\cR_n(\\theta) \\geq \\frac{d\\sqrt{n}}{16\\sqrt{3}}",
-    "regime": "d <= (2*c*T**2)**(p/2)"
+    "regime": "d <= (2*c_rad*T**2)**(p_ball/2)"
    },
    "symbols": {
-    "c": "radius of the l_p ball action set",
-    "p": "norm index of the l_p ball, 1 < p < infinity"
+    "c_rad": "radius c of the L^p ball action set",
+    "p_ball": "order p of the L^p ball, 1 < p < infinity"
    },
    "conditions": [
-    "action set is the l_p ball of radius c with 1 < p < infinity",
-    "d <= (2 c n^2)^{p/2} (as stated in the theorem; the proof uses d <= (2 n c^2)^{p/2})",
-    "hard parameter theta in {+Delta,-Delta}^d with ||theta||_p^p = d^2/((4 sqrt(3) c)^p n^{p/2})"
+    "action set is the L^p ball {x : ||x||_p <= c_rad} with 1 < p_ball < infinity",
+    "d <= (2 c_rad n^2)^(p_ball/2) as stated in the theorem (the proof uses d <= (2 n c_rad^2)^(p_ball/2))",
+    "hard instance theta in {+Delta,-Delta}^d with ||theta||_p^p = d^2 / ((4 sqrt(3) c_rad)^p n^(p/2))",
+    "unit-variance Gaussian noise (implicit in the KL computation, following Lattimore & Szepesvari Ch. 24)"
    ],
    "tuning": [],
    "is_new": true,
@@ -96,26 +127,26 @@
     "quote": "Let $\\cX$ be the $L^p$ ball defined as $\\cX = \\{ x \\in \\Real^d \\; : \\norm{x}_p \\leq c \\}$, where $1 < p < \\infty$. Assume $d \\leq (2cn^2)^\\frac{p}{2}$. Then there exists a parameter $\\theta \\in \\Real^d$ with $\\norm{\\theta}_p^p = \\frac{1}{(c4\\sqrt{3})^p}\\frac{d^2}{n^{\\frac{p}{2}}}$ such that $\\cR_n(\\theta) \\geq \\frac{d\\sqrt{n}}{16\\sqrt{3}}$."
    },
    "confidence": "medium",
-   "notes": "Regret written as sum of <theta, x* - x_t> without explicit expectation, but the proof works with expectations, so it is recorded as pseudo-regret. Noise model unstated; proof's KL step implies unit Gaussian noise. Minor typo in the theorem condition (2cn^2 vs 2nc^2 in proof)."
+   "notes": "The paper does not state the noise model explicitly. The KL step matches unit Gaussian noise, as in Lattimore & Szepesvari Section 24.2. The regret is defined via x*^T theta - x_t^T theta, which I read as expected (pseudo) regret. The assumption on d is written inconsistently: (2cn^2)^{p/2} in the theorem and (2nc^2)^{p/2} in the proof. The parameter norm of the hard instance depends on n, so the bound does not hold under a fixed bound S on the parameter norm."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:36:58",
+  "date": "2026-10-21T18:04:39",
   "source_chars": 9788,
-  "input_tokens": 34909,
-  "output_tokens": 2110,
-  "cost_usd_equiv": 0.1038908,
+  "input_tokens": 41496,
+  "output_tokens": 2420,
+  "cost_usd_equiv": 0.11133799999999999,
   "status": "extracted"
  }
 }

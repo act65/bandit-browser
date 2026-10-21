@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Thompson Sampling for (Combinatorial) Pure Exploration",
   "arxiv_id": "2206.09150",
@@ -15,7 +15,7 @@
   {
    "id": "s1",
    "name_in_paper": "Pure Exploration in Combinatorial Multi-armed Bandit",
-   "objective": "other_pure_exploration",
+   "objective": "bai_fixed_confidence",
    "feedback": "bandit",
    "environment": "stochastic_iid",
    "action_space": "combinatorial",
@@ -34,26 +34,58 @@
     "access": "linear_optimization_oracle",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "arbitrary_subset",
+    "reward": "linear",
+    "loss_scale": "per_base_arm"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Fixed-confidence identification of the optimal super arm (combinatorial pure exploration); each round the learner pulls a single base arm and observes its reward",
-    "Super arm set I subset of 2^[m] is arbitrary; access via offline maximization oracle",
-    "Learner uses |I| (or 2^m as an upper bound)"
+    "At each step the learner pulls a single base arm (observing its reward) rather than a super arm; goal is to identify the optimal super arm (combinatorial pure exploration)",
+    "Learner uses |I| (size of the super arm set), or 2^m as an upper bound"
    ],
    "definition_quote": "The arms $i\\in [m]$ are called base arms, and there is also a super arm set $\\mathcal{I} \\subseteq 2^{[m]}$. For each super arm $S \\in \\mathcal{I}$, its expected reward is $\\sum_{i\\in S} \\mu_i$. ... At each time step $t$, the learning policy $\\pi$ can either pull a base arm $i(t) \\in [m]$, or output a super arm $S(t) \\in \\mathcal{I}$. The goal of the learning policy is to make sure that with probability at least $1-\\delta$, its output $S(t) = S^*$."
   },
@@ -81,24 +113,57 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [],
-   "definition_quote": "A pure exploration problem instance of MAB is a tuple $([m], \\bm{D}, \\delta)$. ... we assume that all the distributions $D_i$'s are supported on $[0,1]$. ... we assume that the optimal arm is unique."
+   "definition_quote": "A pure exploration problem instance of MAB is a tuple $([m], \\bm{D}, \\delta)$. ... In this paper, we assume that all the distributions $D_i$'s are supported on $[0,1]$. ... we assume that the optimal arm is unique."
   }
  ],
  "algorithms": [
@@ -112,8 +177,8 @@
    ],
    "requires_knowledge_of": [
     "delta",
-    "|I| (or 2^m upper bound)",
-    "offline maximization oracle"
+    "|I| (size of super arm set, or 2^m)",
+    "offline Oracle argmax_{S in I} sum_{i in S} theta_i"
    ]
   }
  ],
@@ -134,17 +199,20 @@
     "notation": "O",
     "expression": "H_1c*(log(1/delta) + log(I_size*H_1c))*log(1/delta)/log(1/q) + H_1c*log(I_size*H_1c)**2/log(1/q)",
     "expression_latex": "O(H_{1,c}(\\log{1\\over \\delta} + \\log(|\\mathcal{I}|H_{1,c})){\\log{1\\over \\delta} \\over \\log{1\\over q}} + H_{1,c}{\\log^2(|\\mathcal{I}|H_{1,c}) \\over \\log{1\\over q}})",
-    "regime": null
+    "regime": "q in [delta, 0.1]"
    },
    "symbols": {
-    "H_1c": "width * sum_i 1/Delta_{i,c}^2, Delta_{i,c} gap between S* and best super arm containing (or not containing) i",
-    "I_size": "number of super arms |I|",
-    "q": "algorithm parameter in [delta, 0.1] controlling number of sample sets"
+    "H_1c": "width * sum_{i in [m]} 1/Delta_{i,c}^2, with Delta_{i,c} the combinatorial gap of base arm i",
+    "I_size": "|I|, number of super arms",
+    "q": "algorithm parameter q in [delta, 0.1] controlling the number of samples per step"
    },
-   "conditions": [],
+   "conditions": [
+    "unique optimal super arm",
+    "rewards supported on [0,1]"
+   ],
    "tuning": [
     "q in [delta, 0.1]",
-    "M = (1/q) log(12|I|^2 t^2/delta) sample sets, variance C(delta,q,t)/N_i"
+    "M = (1/q) log(12|I|^2 t^2/delta) sample sets, variance C/N_i with C = log(12|I|^2t^2/delta)/phi^2(q)"
    ],
    "is_new": true,
    "source": {
@@ -153,7 +221,7 @@
     "quote": "In the CMAB setting, for $q \\in [\\delta, 0.1]$, with probability at least $1-\\delta$, TS-Explore will output the optimal super arm $S^*$ with complexity upper bounded by $O(H_{1,c}(\\log{1\\over \\delta} + \\log(|\\mathcal{I}|H_{1,c})){\\log{1\\over \\delta} \\over \\log{1\\over q}} + H_{1,c}{\\log^2(|\\mathcal{I}|H_{1,c}) \\over \\log{1\\over q}})$."
    },
    "confidence": "high",
-   "notes": "Correctness and complexity hold jointly with probability >= 1-delta. Polynomial given the offline oracle. Remark 4.2 extends to delta in (0.1,1) by running with (0.1,0.1)."
+   "notes": "Correctness and complexity jointly hold w.p. >= 1-delta. Efficient given offline oracle."
   },
   {
    "id": "r2",
@@ -171,14 +239,16 @@
     "notation": "O",
     "expression": "H_1c*log(1/delta) + H_1c*log(I_size*H_1c)**2",
     "expression_latex": "O(H_{1,c}\\log{1\\over \\delta} + H_{1,c}\\log^2(|\\mathcal{I}|H_{1,c}))",
-    "regime": null
+    "regime": "q = delta"
    },
    "symbols": {
-    "H_1c": "width * sum_i 1/Delta_{i,c}^2",
-    "I_size": "number of super arms |I|"
+    "H_1c": "width * sum_{i in [m]} 1/Delta_{i,c}^2",
+    "I_size": "|I|, number of super arms"
    },
    "conditions": [
-    "delta <= 0.1"
+    "unique optimal super arm",
+    "rewards supported on [0,1]",
+    "delta <= 0.1 (Remark 4.2 extends to delta in (0.1,1) by running with delta_0 = 0.1)"
    ],
    "tuning": [
     "q = delta"
@@ -190,7 +260,7 @@
     "quote": "Specifically, if we choose $q = \\delta$, then the complexity upper bound is $O(H_{1,c}\\log{1\\over \\delta} + H_{1,c}\\log^2(|\\mathcal{I}|H_{1,c}))$."
    },
    "confidence": "high",
-   "notes": "q = delta requires delta <= 0.1 since q in [delta, 0.1]; Remark 4.2 covers delta in (0.1,1)."
+   "notes": "Remark 4.5: using 2^m in place of |I| only changes lower-order terms."
   },
   {
    "id": "r3",
@@ -208,13 +278,16 @@
     "notation": "O",
     "expression": "H_m*(log(1/delta) + log(K*H_m))*log(1/delta)/log(1/q) + H_m*log(K*H_m)**2/log(1/q)",
     "expression_latex": "O(H_{m}(\\log{1\\over \\delta} + \\log(mH_{m})){\\log{1\\over \\delta} \\over \\log{1\\over q}} + H_{m}{\\log^2(mH_m) \\over \\log{1\\over q}})",
-    "regime": null
+    "regime": "q in [delta, 0.1]"
    },
    "symbols": {
-    "H_m": "sum over all arms (including optimal, whose gap is mu* - second best) of 1/Delta_i^2",
-    "q": "algorithm parameter in [delta, 0.1]"
+    "H_m": "sum over all arms of 1/Delta_{i,m}^2, where the optimal arm's gap is mu_{a*} - max_{i != a*} mu_i",
+    "q": "algorithm parameter q in [delta, 0.1]"
    },
-   "conditions": [],
+   "conditions": [
+    "unique optimal arm",
+    "rewards supported on [0,1]"
+   ],
    "tuning": [
     "q in [delta, 0.1]"
    ],
@@ -243,13 +316,14 @@
     "notation": "O",
     "expression": "H_m*log(1/delta) + H_m*log(K*H_m)**2",
     "expression_latex": "O(H_{m}\\log{1\\over \\delta} + H_{m}\\log^2(mH_{m}))",
-    "regime": null
+    "regime": "q = delta"
    },
    "symbols": {
-    "H_m": "sum over all arms (including optimal) of 1/Delta_i^2"
+    "H_m": "sum over all arms of 1/Delta_{i,m}^2, where the optimal arm's gap is mu_{a*} - max_{i != a*} mu_i"
    },
    "conditions": [
-    "delta <= 0.1"
+    "unique optimal arm",
+    "rewards supported on [0,1]"
    ],
    "tuning": [
     "q = delta"
@@ -261,7 +335,7 @@
     "quote": "Specifically, if we choose $q = \\delta$, then the complexity upper bound is $O(H_{m}\\log{1\\over \\delta} + H_{m}\\log^2(mH_{m}))$."
    },
    "confidence": "high",
-   "notes": "Asymptotically optimal as delta -> 0 per the paper."
+   "notes": "Asymptotically optimal as delta -> 0, matching Omega(H_m log(1/delta))."
   }
  ],
  "cited_results": [
@@ -274,7 +348,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Fixed-confidence best-arm identification in K-armed stochastic bandits",
+   "setting_description": "Fixed-confidence best-arm identification in K-armed stochastic bandits; sample complexity of any delta-correct algorithm",
    "bound": {
     "notation": "Omega",
     "expression": "H_m*log(1/delta)",
@@ -292,7 +366,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Combinatorial pure exploration (fixed confidence); H_0c is the value of a convex program",
+   "setting_description": "Combinatorial pure exploration (fixed confidence), base-arm pulls; H_0c is the optimal value of a convex program",
    "bound": {
     "notation": "Omega",
     "expression": "H_0c*log(1/delta)",
@@ -308,16 +382,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-21T09:51:57",
+  "date": "2026-10-21T18:32:39",
   "source_chars": 75792,
-  "input_tokens": 66780,
-  "output_tokens": 5205,
-  "cost_usd_equiv": 0.4207588,
+  "input_tokens": 73376,
+  "output_tokens": 5924,
+  "cost_usd_equiv": 0.436458,
   "status": "extracted"
  }
 }

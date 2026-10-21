@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Online Conformal Prediction Beyond Feedback",
   "arxiv_id": "2608.07139",
@@ -26,8 +26,7 @@
    "context": "adversarial_contexts",
    "noise": "bounded_01",
    "learner_knows": [
-    "T",
-    "K"
+    "T"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -37,42 +36,74 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "globally_observable",
+    "structure": "finite_outcomes"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Actions are |M| finite prediction thresholds plus a 'query' action; prediction actions yield no observation, query yields zero reward but reveals the label (hence rewards of all thresholds)",
-    "Reward is the auxiliary reward R(m,t)=1-m(1-beta) if y_t in Gamma_C(x_t,m), else 0; regret compared to best fixed threshold in M",
-    "Inputs x_t observed each round from an oblivious data stream; black-box classifier C given"
+    "Actions are |M| conformal thresholds plus a query action; threshold actions give no observation, the query action yields zero reward but reveals the label (hence the reward of every threshold)",
+    "Auxiliary reward R(m,t) = 1 - m(1-beta) if y_t in Gamma_C(x_t,m), else 0; coverage guarantees derived from regret",
+    "Inputs x_t observed each round; regret against best fixed threshold"
    ],
-   "definition_quote": "On each round $t$, the learner observes the input $x_t$ and returns an action $a_t \\in \\mathcal A = \\mathcal{P}(\\mathcal{Y)} \\cup \\{\\texttt{query}\\}$ ... the learner receives an observation $\\omega_t$ ... where $\\omega_t = y_t$ if $a_t = \\texttt{query}$, and otherwise $\\omega_t$ is a null observation $\\bot$."
+   "definition_quote": "On each round, the learner may either deploy a prediction set or query the correct label, but not both. ... We reduce this problem to a partial monitoring game in which prediction actions return no observation and a separate query action reveals the label."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "OCPQ (OCP With Queries)",
+   "name": "OCPQ (OCP With Queries, label-efficient exponentially weighted forecaster)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
     "exponential_weights"
    ],
    "requires_knowledge_of": [
-    "T",
-    "K"
+    "T"
    ]
   },
   {
@@ -86,7 +117,7 @@
     "restarts_or_sliding_window"
    ],
    "requires_knowledge_of": [
-    "K"
+    "T"
    ]
   }
  ],
@@ -105,15 +136,17 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "log(M_size)/eta + eps_q*T + eta*T/eps_q",
+    "expression": "log(M_size)/eta + eps_q*T + (eta/eps_q)*T",
     "expression_latex": "\\frac{\\ln(|M|)}{\\eta} + \\epsilon \\cdot T + \\left(\\frac{\\eta}{\\epsilon}\\right) \\cdot T",
     "regime": null
    },
    "symbols": {
-    "M_size": "number of prediction thresholds |M|",
-    "eps_q": "query probability epsilon"
+    "M_size": "|M|, number of prediction thresholds",
+    "eps_q": "query probability epsilon of the algorithm"
    },
-   "conditions": [],
+   "conditions": [
+    "any data stream and classifier"
+   ],
    "tuning": [
     "eta in (0,1]",
     "epsilon in (0,0.5]"
@@ -125,7 +158,7 @@
     "quote": "For any data stream $z^T$ and classifier $C$, and any $\\eta \\in (0,1]$ and $\\epsilon \\in (0,0.5]$, the expected regret of Algorithm~\\ref{algorithm:OCP_with_queries} is at most $\\frac{\\ln(|M|)}{\\eta} + \\epsilon \\cdot T + \\left(\\frac{\\eta}{\\epsilon}\\right) \\cdot T$."
    },
    "confidence": "high",
-   "notes": "Restated as Theorem 5 in the appendix. Rewards are deterministic given the oblivious stream, so the expectation is over the algorithm's randomness only."
+   "notes": "Regret w.r.t. auxiliary reward; restated as Theorem 5 in appendix."
   },
   {
    "id": "r2",
@@ -146,12 +179,14 @@
     "regime": null
    },
    "symbols": {
-    "M_size": "number of prediction thresholds |M|"
+    "M_size": "|M|, number of prediction thresholds"
    },
-   "conditions": [],
+   "conditions": [
+    "T^{-1/3} <= 0.5 and T^{-2/3} sqrt(ln|M|) <= 1 (implicit from parameter ranges)"
+   ],
    "tuning": [
-    "epsilon = T^{-1/3} <= 0.5",
-    "eta = T^{-2/3} sqrt(ln|M|) <= 1"
+    "epsilon = T^{-1/3}",
+    "eta = T^{-2/3} sqrt(ln|M|)"
    ],
    "is_new": true,
    "source": {
@@ -160,7 +195,7 @@
     "quote": "If we set $\\epsilon = T^{-1/3}$ and $\\eta = T^{-2/3} \\cdot \\sqrt{\\ln(|M|)}$ then this simplifies to $T^{2/3} \\cdot (2 \\sqrt{\\ln(|M|)} + 1)$."
    },
    "confidence": "high",
-   "notes": "Expected query fraction is T^{-1/3}. The validity constraints on eta and epsilon are carried over from the first part of the theorem. Theorem 10 in the appendix gives the same bound for the fixed-rate special case."
+   "notes": "Expected query fraction T^{-1/3}. Appendix Theorem 10 recovers this for fixed q_t; doubling-trick anytime variant (2.71 factor) discussed informally."
   },
   {
    "id": "r3",
@@ -181,13 +216,15 @@
     "regime": null
    },
    "symbols": {
-    "M_size": "number of prediction thresholds |M|",
-    "beta_base": "baseline parameter beta in [0,1] (target-coverage proxy)"
+    "M_size": "|M|, number of prediction thresholds"
    },
-   "conditions": [],
+   "conditions": [
+    "any data stream and classifier",
+    "eta = T^{-2/3} sqrt(ln|M|) <= 1 and epsilon = T^{-1/3} <= 0.5"
+   ],
    "tuning": [
-    "eta = T^{-2/3} sqrt(ln|M|) <= 1",
-    "epsilon = T^{-1/3} <= 0.5"
+    "epsilon = T^{-1/3}",
+    "eta = T^{-2/3} sqrt(ln|M|)"
    ],
    "is_new": true,
    "source": {
@@ -196,7 +233,7 @@
     "quote": "On any data stream $z^T$ and for any classifier $C$, the coverage rate of Algorithm~\\ref{algorithm:OCP_with_queries} satisfies $\\mathbb{E}\\left[p_{\\text{cover}}\\right] \\geq \\beta - \\left(\\frac{2 \\sqrt{\\ln(|M|)} + 1}{\\sqrt[3]{T}}\\right)$ if $\\eta = T^{-2/3} \\cdot \\sqrt{\\ln|M|} \\leq 1$ and $\\epsilon = T^{-1/3} \\leq 0.5$."
    },
    "confidence": "medium",
-   "notes": "Recorded as an upper bound on the coverage deficit beta_base - E[p_cover]. Restated as Corollary 3 in the appendix and recovered as a special case of Corollary 6."
+   "notes": "Expression is the coverage deficit beta - E[p_cover]. Derived from Theorem 2 (pathwise: coverage >= beta - reg/T). Restated as Corollary 3 / Corollary 6."
   },
   {
    "id": "r4",
@@ -217,12 +254,14 @@
     "regime": null
    },
    "symbols": {
-    "M_size": "number of prediction thresholds |M|"
+    "M_size": "|M|, number of prediction thresholds"
    },
-   "conditions": [],
+   "conditions": [
+    "epsilon = T^{-1/3} <= 0.5, eta = T^{-2/3} sqrt(ln|M|) <= 1"
+   ],
    "tuning": [
-    "epsilon = T^{-1/3} <= 0.5",
-    "eta = T^{-2/3} sqrt(ln|M|) <= 1"
+    "epsilon = T^{-1/3}",
+    "eta = T^{-2/3} sqrt(ln|M|)"
    ],
    "is_new": true,
    "source": {
@@ -231,7 +270,7 @@
     "quote": "For any $\\delta \\in (0,1)$, if $\\epsilon = T^{-1/3} \\leq 0.5$ and $\\eta = T^{-2/3} \\cdot \\sqrt{\\ln(|M|)} \\leq 1$, then with probability at least $1-\\delta$, the regret of Algorithm~\\ref{algorithm:OCP_with_queries} is at most ..."
    },
    "confidence": "high",
-   "notes": "Realised regret, holding with probability at least 1-delta."
+   "notes": "Equals O(T^{2/3}(sqrt(ln|M|)+sqrt(ln(1/delta)))). Also in Theorem 7."
   },
   {
    "id": "r5",
@@ -247,14 +286,13 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "2*n_hp/eps_q + eps_q*T + eta*T + eta*T/eps_q + eta*n_hp/eps_q**2 + log(M_size)/eta",
-    "expression_latex": "2\\left(\\frac{n}{\\epsilon}\\right) + \\epsilon T + \\eta T + \\left(\\frac{\\eta}{\\epsilon}\\right)T + \\left(\\frac{\\eta}{\\epsilon^2}\\right)n + \\frac{\\ln(|M|)}{\\eta}",
+    "expression": "2*(2*sqrt(eps_q*T*log(3/delta)) + 2*log(3/delta))/eps_q + eps_q*T + eta*T + (eta/eps_q)*T + (eta/eps_q**2)*(2*sqrt(eps_q*T*log(3/delta)) + 2*log(3/delta)) + log(M_size)/eta",
+    "expression_latex": "2\\left(\\frac{n}{\\epsilon}\\right) + \\epsilon T + \\eta T + \\left(\\frac{\\eta}{\\epsilon}\\right)T + \\left(\\frac{\\eta}{\\epsilon^2}\\right)n + \\frac{\\ln(|M|)}{\\eta},\\ n = 2\\sqrt{\\epsilon T\\ln(3/\\delta)} + 2\\ln(3/\\delta)",
     "regime": null
    },
    "symbols": {
-    "M_size": "number of prediction thresholds |M|",
-    "eps_q": "query probability epsilon",
-    "n_hp": "n = 2*sqrt(eps_q*T*log(3/delta)) + 2*log(3/delta)"
+    "M_size": "|M|, number of prediction thresholds",
+    "eps_q": "query probability epsilon"
    },
    "conditions": [],
    "tuning": [
@@ -268,7 +306,7 @@
     "quote": "For any $\\epsilon \\in (0,0.5]$, $\\eta \\in (0,1]$, and $\\delta \\in (0,1)$, we have that the regret of Algorithm~\\ref{algorithm:OCP_with_queries} is at most $2\\left(\\frac{n}{\\epsilon}\\right) + \\epsilon T + \\eta T + \\left(\\frac{\\eta}{\\epsilon}\\right)T + \\left(\\frac{\\eta}{\\epsilon^2}\\right)n + \\frac{\\ln(|M|)}{\\eta}$ with probability at least $1-\\delta$, where $n = 2\\sqrt{\\epsilon T\\ln(3/\\delta)} + 2\\ln(3/\\delta)$."
    },
    "confidence": "high",
-   "notes": "General-parameter version of Theorem 3, given in the appendix."
+   "notes": "General-parameter version of Theorem 3 (appendix)."
   },
   {
    "id": "r6",
@@ -285,16 +323,18 @@
    "bound": {
     "notation": "exact",
     "expression": "(2*sqrt(log(M_size)) + 4*sqrt(log(3/delta)) + 1)/T**(1/3) + (sqrt(log(M_size)) + 4*log(3/delta) + 2*sqrt(log(3/delta)*log(M_size)))/T**(2/3) + 2*log(3/delta)*sqrt(log(M_size))/T",
-    "expression_latex": "p_\\text{cover} \\geq \\beta - \\frac{2\\sqrt{\\ln|M|}+4\\sqrt{\\ln(3/\\delta)}+1}{T^{1/3}} -\\frac{\\sqrt{\\ln|M|}+4\\ln(3/\\delta)+2\\sqrt{\\ln(3/\\delta)\\ln|M|}}{T^{2/3}} -\\frac{2\\ln(3/\\delta)\\sqrt{\\ln|M|}}{T}",
+    "expression_latex": "\\beta - \\frac{2\\sqrt{\\ln|M|}+4\\sqrt{\\ln(3/\\delta)}+1}{T^{1/3}} -\\frac{\\sqrt{\\ln|M|}+4\\ln(3/\\delta)+2\\sqrt{\\ln(3/\\delta)\\ln|M|}}{T^{2/3}} -\\frac{2\\ln(3/\\delta)\\sqrt{\\ln|M|}}{T}",
     "regime": null
    },
    "symbols": {
-    "M_size": "number of prediction thresholds |M|"
+    "M_size": "|M|, number of prediction thresholds"
    },
-   "conditions": [],
+   "conditions": [
+    "epsilon = T^{-1/3} <= 0.5, eta = T^{-2/3} sqrt(ln|M|) <= 1"
+   ],
    "tuning": [
-    "epsilon = T^{-1/3} <= 0.5",
-    "eta = T^{-2/3} sqrt(ln|M|) <= 1"
+    "epsilon = T^{-1/3}",
+    "eta = T^{-2/3} sqrt(ln|M|)"
    ],
    "is_new": true,
    "source": {
@@ -303,7 +343,7 @@
     "quote": "If $\\epsilon = T^{-1/3} \\leq 0.5$ and $\\eta = T^{-2/3} \\cdot \\sqrt{\\ln(|M|)} \\leq 1$, then for any $\\delta \\in (0, 1)$ we have that with probability at least $1-\\delta$, the coverage rate $p_\\text{cover}$ of Algorithm~\\ref{algorithm:OCP_with_queries} is at least ..."
    },
    "confidence": "medium",
-   "notes": "High-probability upper bound on the coverage deficit beta - p_cover. Restated as Corollary 4 in the appendix."
+   "notes": "Expression is the coverage deficit beta - p_cover, holding w.p. >= 1-delta. Restated as Corollary 4."
   },
   {
    "id": "r7",
@@ -319,32 +359,67 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "(1/2)**(2/3)*(2*sqrt(log(M_size)) + 1)/T**(1/3) + kappa_k/2",
+    "expression": "(1/2)**(2/3)*(2*sqrt(log(M_size)) + 1)/T**(1/3) + clip_err/2",
     "expression_latex": "\\mathbb{E}[p_{cover}] \\geq \\sigma - \\left(\\frac{1}{2}\\right)^{2/3}\\cdot\\left(\\frac{2\\sqrt{\\ln(|M|)} + 1}{\\sqrt[3]{T}}\\right) - \\frac{1}{2} \\cdot \\mathbb{E}\\left[\\max\\left(2\\sigma -\\theta_{k}^\\star - 1, 0\\right)\\right]",
     "regime": null
    },
    "symbols": {
-    "M_size": "number of prediction thresholds |M|",
-    "sigma_target": "target coverage sigma in [0,1]",
-    "kappa_k": "E[max(2*sigma_target - theta_k^* - 1, 0)], the clipping error term, where theta_k^* is the coverage estimate at the start of the last period"
+    "M_size": "|M|, number of prediction thresholds",
+    "clip_err": "E[max(2 sigma - theta_k^* - 1, 0)], clipping error term",
+    "sigma_target": "target coverage sigma"
    },
-   "conditions": [],
+   "conditions": [
+    "k >= 2 periods with n_i = n_1 2^{i-2} for i >= 2",
+    "each period long enough that eta_i <= 1 and epsilon_i <= 0.5"
+   ],
    "tuning": [
-    "k >= 2 periods with n_i = n_1 2^{i-2} for i>=2",
-    "beta_1 = sigma, beta_i = clip_[0,1](2 sigma - theta_i^*)",
-    "eta_i = n_i^{-2/3} sqrt(ln|M|) <= 1, epsilon_i = n_i^{-1/3} <= 0.5"
+    "beta_1 = sigma, beta_i = clip(2 sigma - theta_i^*)",
+    "eta_i = n_i^{-2/3} sqrt(ln|M|)",
+    "epsilon_i = n_i^{-1/3}"
    ],
    "is_new": true,
    "source": {
     "label": "thm:adaptive_ocpq_coverage_bound",
     "number": "Theorem 4",
-    "quote": "Suppose that we run the adaptive version of \\texttt{OCPQ} with target coverage $\\sigma \\in [0,1]$ over $k \\geq 2$ time periods whose lengths are $n_1 \\dots n_k$, with $n_i = n_1 \\cdot 2^{i-2}$ for $i \\geq 2$ ... We then have that $\\mathbb{E}[p_{cover}] \\geq \\sigma - \\left(\\frac{1}{2}\\right)^{2/3}\\cdot\\left(\\frac{2\\sqrt{\\ln(|M|)} + 1}{\\sqrt[3]{T}}\\right) - \\frac{1}{2} \\cdot \\mathbb{E}\\left[\\max\\left(2\\sigma -\\theta_{k}^\\star - 1, 0\\right)\\right]$."
+    "quote": "Suppose that we run the adaptive version of \\texttt{OCPQ} with target coverage $\\sigma \\in [0,1]$ over $k \\geq 2$ time periods ... We then have that $\\mathbb{E}[p_{cover}] \\geq \\sigma - \\left(\\frac{1}{2}\\right)^{2/3}\\cdot\\left(\\frac{2\\sqrt{\\ln(|M|)} + 1}{\\sqrt[3]{T}}\\right) - \\frac{1}{2} \\cdot \\mathbb{E}\\left[\\max\\left(2\\sigma -\\theta_{k}^\\star - 1, 0\\right)\\right]$."
    },
    "confidence": "medium",
-   "notes": "Upper bound on the coverage deficit sigma_target - E[p_cover]. Theorem 8 in the appendix generalises this to arbitrary period lengths. The clipping term is bounded separately in Theorem 9 and Corollary 5, which were not recorded."
+   "notes": "Expression is the coverage deficit sigma - E[p_cover]. General period-length version in Theorem 8; clipping term bounded in Theorem 9/Corollary 5 (not recorded)."
   },
   {
    "id": "r8",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Theta",
+    "expression": "T**(2/3)",
+    "expression_latex": "\\Theta(T^{2/3})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "beta < 1 (if beta = 1, zero regret is achievable)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "prop:OCPPF_is_a_hard_game",
+    "number": "Proposition 2",
+    "quote": "The optimal worst-case expected regret in OCPWF is $\\Theta(T^{2/3})$, unless $\\beta = 1$, in which case we get 0 regret by picking $a_t = 1$ every round."
+   },
+   "confidence": "medium",
+   "notes": "Minimax rate via Lattimore & Szepesvari classification: game is globally but not locally observable. Recorded as the lower-bound side of the Theta statement."
+  },
+  {
+   "id": "r9",
    "setting": "s1",
    "side": "upper",
    "algorithm": "a1",
@@ -362,7 +437,7 @@
     "regime": null
    },
    "symbols": {
-    "M_size": "number of prediction thresholds |M|",
+    "M_size": "|M|, number of prediction thresholds",
     "sum_q": "E[sum_t q_t], expected total query probability",
     "sum_inv_q": "E[sum_t 1/q_t]"
    },
@@ -377,40 +452,8 @@
     "number": "Theorem 10",
     "quote": "For any data stream $\\xi$ and classifier $C$, any $\\eta\\in(0,1]$, and any predictable sequence of query probabilities $q_t\\in(0,0.5]$, the expected regret of Algorithm~\\ref{algorithm:OCP_with_queries} with the auxiliary reward is at most $\\frac{\\ln(|M|)}{\\eta} +\\mathbb{E}\\left[\\sum_{t=1}^Tq_t\\right] +\\eta\\,\\mathbb{E}\\left[\\sum_{t=1}^T\\frac{1}{q_t}\\right]$."
    },
-   "confidence": "medium",
-   "notes": "Variant of OCPQ with an adaptive query rate. With q_t = epsilon it reduces to Theorem 1. Corollary 6 gives the matching coverage bound (not recorded separately)."
-  },
-  {
-   "id": "r9",
-   "setting": "s1",
-   "side": "lower",
-   "algorithm": null,
-   "algorithm_class": "all",
-   "quantity": "expected_regret",
-   "dependence": "worst_case",
-   "comparator": "best_fixed_action",
-   "probability": "expectation",
-   "horizon": "known",
-   "compute": "not_stated",
-   "bound": {
-    "notation": "Omega",
-    "expression": "T**(2/3)",
-    "expression_latex": "\\Theta(T^{2/3})",
-    "regime": null
-   },
-   "symbols": {},
-   "conditions": [
-    "beta < 1 (if beta = 1, zero regret is achievable)"
-   ],
-   "tuning": [],
-   "is_new": true,
-   "source": {
-    "label": "prop:OCPPF_is_a_hard_game",
-    "number": "Proposition 2",
-    "quote": "The optimal worst-case expected regret in OCPWF is $\\Theta(T^{2/3})$, unless $\\beta = 1$, in which case we get 0 regret by picking $a_t = 1$ every round."
-   },
-   "confidence": "medium",
-   "notes": "Only the lower side of the Theta statement is recorded (the upper side is r2). The proof applies Theorem 1 of Lattimore & Szepesvari (2018): the game is globally but not locally observable."
+   "confidence": "high",
+   "notes": "Adaptive query-rate variant of OCPQ; reduces to Theorem 1 for fixed q_t. Corollary 7 shows fixed rate minimizes this bound for a given budget."
   }
  ],
  "cited_results": [
@@ -423,20 +466,20 @@
    "algorithm_name": "Label efficient exponentially weighted average forecaster",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Label-efficient prediction (adversarial, K actions, learner may act and query on the same round; at most m queries), high-probability regret",
+   "setting_description": "Label-efficient prediction (adversarial, learner sees outcomes only on queried rounds; at most m queries), K actions, high-probability regret",
    "bound": {
     "notation": "exact",
     "expression": "2*T*sqrt(log(K)/m_q) + 6*T*sqrt(log(4*T/delta)/m_q)",
     "expression_latex": "2 \\cdot T \\cdot \\sqrt{\\frac{\\ln(K)}{m}} + 6 \\cdot T \\cdot \\sqrt{\\frac{\\ln(4\\cdot T/\\Delta)}{m}}",
-    "regime": "with probability at least 1-Delta; m_q = query budget m"
+    "regime": "with probability at least 1-Delta; m_q = query budget"
    },
-   "where": "Appendix (High-Probability Bound Comparisons), their Theorem 2"
+   "where": "Appendix (High-Probability Bound Comparisons)"
   },
   {
    "cited_key": "lattimore2018cleaningneighborhoodclassificationadversarial",
    "cited_title": null,
-   "cited_first_author": null,
-   "cited_year": null,
+   "cited_first_author": "Lattimore",
+   "cited_year": 2018,
    "cited_arxiv_id": null,
    "algorithm_name": null,
    "algorithm_registry_id": null,
@@ -446,9 +489,9 @@
     "notation": "Theta",
     "expression": "T**(2/3)",
     "expression_latex": "\\Theta(T^{2/3})",
-    "regime": "globally observable, not locally observable games"
+    "regime": "globally observable, not locally observable"
    },
-   "where": "Appendix A, proof of Proposition 2"
+   "where": "Proof of Proposition 2"
   }
  ],
  "_run": {
@@ -457,16 +500,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-21T09:47:40",
+  "date": "2026-10-21T18:27:29",
   "source_chars": 188161,
-  "input_tokens": 120577,
-  "output_tokens": 10640,
-  "cost_usd_equiv": 0.9598348,
+  "input_tokens": 127173,
+  "output_tokens": 9823,
+  "cost_usd_equiv": 0.944814,
   "status": "extracted"
  }
 }

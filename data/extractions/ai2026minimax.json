@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Minimax-Optimal Online Contract Design with Unrestricted Bounded Contracts",
   "arxiv_id": "2609.20353",
@@ -37,29 +37,61 @@
     "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "unspecified",
+    "structure": "unspecified"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Principal-agent contract design: actions are payment vectors f in [0,1]^m over m outcomes; agent of random type best-responds with a fixed (history-independent) selection rule; principal utility u(f)=P(f).(v-f) may be discontinuous in f",
-    "Feedback is the realized outcome category (one-hot vector over m outcomes), which is stronger than scalar bandit reward feedback; hidden actions/types are not observed",
-    "Stackelberg regret against the best fixed contract",
-    "Learner knows number of outcomes m and value vector v"
+    "Principal-agent contract design: principal posts payment vector f in [0,1]^m over m outcomes; a fresh agent type drawn i.i.d. selects a best response (fixed selection rule under ties); principal's utility P(f)·(v-f) may be discontinuous in f",
+    "Feedback is the realized outcome category (one-hot vector), which reveals the realized profit and is richer than scalar bandit feedback",
+    "Learner knows the number of outcomes m and the public value vector v, but not action sets, costs, type distribution or outcome laws"
    ],
-   "definition_quote": "After posting $f$ given history $\\mathcal H$, the principal observes the realized outcome as a one-hot vector $X$ satisfying $\\mathbb E[X\\mid f,\\mathcal H]=P(f)$. ... The principal's expected one-period utility is $u(f)=P(f)\\cdot(v-f)$. ... $\\mathfrak R_T=T\\sup_{f\\in[0,1]^m}u(f)-\\mathbb E[\\sum_{t=1}^T u(f_t)]$."
+   "definition_quote": "At each round, a type $\\theta$ is drawn independently from a fixed distribution. Type $\\theta$ has an action set $A_\\theta$. Action $a$ has outcome law $p_{\\theta,a}\\in\\Delta_m$ and cost $c_{\\theta,a}\\in\\mathbb R$. For every $\\theta$ and $f$, a selected response $a_\\theta(f)\\in\\argmax_{a\\in A_\\theta}\\{p_{\\theta,a}\\cdot f-c_{\\theta,a}\\}$ exists, is fixed independently of the learner's history ... The principal's expected one-period utility is $u(f)=P(f)\\cdot(v-f)$ ... $\\mathfrak R_T=T\\sup_{f\\in[0,1]^m}u(f)-\\mathbb E[\\sum_{t=1}^T u(f_t)]$."
   }
  ],
  "algorithms": [
@@ -73,10 +105,7 @@
     "other"
    ],
    "requires_knowledge_of": [
-    "T",
-    "m (number of outcomes)",
-    "v (value vector)",
-    "epsilon (grid resolution)"
+    "T"
    ]
   }
  ],
@@ -94,35 +123,34 @@
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
-    "notation": "exact",
-    "expression": "C_m*(T*eps_alg + L_T*sqrt(T*K_eps) + K_eps)",
+    "notation": "O",
+    "expression": "T*eps_alg + L_T*sqrt(T*K_eps) + K_eps",
     "expression_latex": "\\mathfrak R_T\\le C_m\\big(T\\varepsilon+L_T\\sqrt{TK_\\varepsilon}+K_\\varepsilon\\big)",
-    "regime": null
+    "regime": "T >= 2, eps in (0,1)"
    },
    "symbols": {
-    "C_m": "constant depending only on number of outcomes m",
-    "eps_alg": "grid resolution epsilon in (0,1)",
-    "K_eps": "grid size, <= (1+3*sqrt(m_out-1)/eps_alg)^(m_out-1)",
-    "L_T": "1+log^3(16*K_eps*T^3)",
-    "m_out": "total number of outcomes"
+    "m_out": "number of outcomes (paper's m)",
+    "K_eps": "grid size, K_eps <= (1+3*sqrt(m_out-1)/eps_alg)**(m_out-1)",
+    "L_T": "1 + log(16*K_eps*T**3)**3"
    },
    "conditions": [
-    "m_out >= 2",
-    "T >= 2",
-    "selected best responses fixed independently of learner history (Assumption 1)"
+    "m_out >= 2 fixed; constant C_m depends only on m_out",
+    "selected best response fixed independently of history (Assumption 1)",
+    "learner knows m and v"
    ],
    "tuning": [
-    "delta = T^{-2}",
-    "B_m sufficiently large dimension-only constant"
+    "delta = T^-2",
+    "B_m a sufficiently large dimension-only constant",
+    "eps_alg = grid resolution in (0,1)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:main",
     "number": "Theorem 2",
-    "quote": "For every fixed $m\\ge2$, there exists a finite constant $B_m$, depending only on $m$, such that, for every $T\\ge2$ and $\\varepsilon\\in(0,1)$, Algorithms~\\ref{alg:simulator}-\\ref{alg:master} with confidence $\\delta=T^{-2}$ use only $m$, $v$, $T$, and $\\varepsilon$ and satisfy, on every instance in $\\mathcal I_m$, \\[ \\mathfrak R_T\\le C_m\\big(T\\varepsilon+L_T\\sqrt{TK_\\varepsilon}+K_\\varepsilon\\big),\\]"
+    "quote": "For every fixed $m\\ge2$, there exists a finite constant $B_m$, depending only on $m$, such that, for every $T\\ge2$ and $\\varepsilon\\in(0,1)$, Algorithms~\\ref{alg:simulator}-\\ref{alg:master} with confidence $\\delta=T^{-2}$ use only $m$, $v$, $T$, and $\\varepsilon$ and satisfy, on every instance in $\\mathcal I_m$, \\[\\mathfrak R_T\\le C_m\\big(T\\varepsilon+L_T\\sqrt{TK_\\varepsilon}+K_\\varepsilon\\big),\\] where $K_\\varepsilon\\le(1+3\\sqrt{m-1}/\\varepsilon)^{m-1}$ and $L_T=1+\\log^3(16K_\\varepsilon T^3)$."
    },
-   "confidence": "high",
-   "notes": "Regret is Stackelberg regret defined via expected utilities (pseudo-regret). Compute polynomial in T for fixed m but exponential in m."
+   "confidence": "medium",
+   "notes": "Regret is through expected utility u(f), so pseudo_regret. Feedback mapped to partial_monitoring since algorithm uses outcome category (richer than scalar bandit). Compute: grid polynomial in T for fixed m, exponential in m."
   },
   {
    "id": "r2",
@@ -143,16 +171,15 @@
     "regime": null
    },
    "symbols": {
-    "m_out": "total number of outcomes (fixed); hidden constant depends on m_out"
+    "m_out": "number of outcomes (paper's m)"
    },
    "conditions": [
-    "m_out >= 2",
-    "T >= 2",
-    "selected best responses fixed independently of learner history (Assumption 1)"
+    "m_out >= 2 fixed; hidden constant depends on m_out",
+    "selected best response fixed independently of history (Assumption 1)"
    ],
    "tuning": [
-    "eps_alg ~ T^{-1/(m_out+1)} up to log factors",
-    "delta = T^{-2}"
+    "eps ~ T^{-1/(m+1)} up to log factors",
+    "delta = T^-2"
    ],
    "is_new": true,
    "source": {
@@ -161,7 +188,7 @@
     "quote": "Consequently, $\\varepsilon\\asymp T^{-1/(m+1)}$ up to logarithmic factors gives $\\mathfrak R_T\\le\\widetilde O_m(T^{m/(m+1)})$."
    },
    "confidence": "high",
-   "notes": "Hidden constant depends on m."
+   "notes": "Optimized consequence of the fixed-scale bound."
   },
   {
    "id": "r3",
@@ -177,18 +204,17 @@
    "compute": "not_stated",
    "bound": {
     "notation": "Omega",
-    "expression": "c_m*T**(m_out/(m_out+1))",
+    "expression": "T**(m_out/(m_out+1))",
     "expression_latex": "\\mathfrak R_T\\ge c_mT^{m/(m+1)}",
-    "regime": null
+    "regime": "T >= 1"
    },
    "symbols": {
-    "c_m": "positive constant depending only on m_out",
-    "m_out": "total number of outcomes"
+    "m_out": "number of outcomes (paper's m)"
    },
    "conditions": [
-    "m_out >= 2",
-    "T >= 1",
-    "hard instances: single type, finite action set, value vector (1,...,1,0), nonnegative costs bounded by one, common deterministic action-priority tie-breaking"
+    "m_out >= 2 fixed; constant c_m depends on m_out",
+    "hard instances: single type, finite action set, public value (1,...,1,0), nonnegative costs bounded by one, common deterministic action-priority tie-breaking",
+    "alternatives differ from baseline only in one action cost"
    ],
    "tuning": [],
    "is_new": true,
@@ -198,7 +224,7 @@
     "quote": "For every fixed $m\\ge2$, there is $c_m>0$ such that every adaptive outcome-feedback policy and every $T\\ge1$ incur $\\mathfrak R_T\\ge c_mT^{m/(m+1)}$ on some finite-action, single-type instance in $\\mathcal I_m$."
    },
    "confidence": "high",
-   "notes": "Holds for outcome-category feedback, hence also for weaker scalar feedback. Stated as explicit c_m T^{m/(m+1)}; recorded as Omega."
+   "notes": "Combined with Theorem 2 gives minimax regret tilde-Theta_m(T^{m/(m+1)})."
   }
  ],
  "cited_results": [
@@ -229,7 +255,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Online contract design, two outcomes",
+   "setting_description": "Online contract design with two outcomes",
    "bound": {
     "notation": "O_tilde",
     "expression": "T**(4/5)",
@@ -247,7 +273,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Online contract design, finite-action single-type, constant number of actions, high-probability regret",
+   "setting_description": "Online contract design, outcome feedback, finite-action single-type agent with constant number of actions, principal-favoring tie-breaking; high-probability regret",
    "bound": {
     "notation": "O_tilde",
     "expression": "T**(4/5)",
@@ -260,19 +286,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:52:28",
+  "date": "2026-10-21T18:20:38",
   "source_chars": 66594,
-  "input_tokens": 59625,
-  "output_tokens": 4678,
-  "cost_usd_equiv": 0.3529788,
+  "input_tokens": 66212,
+  "output_tokens": 5266,
+  "cost_usd_equiv": 0.365986,
   "status": "extracted"
  }
 }

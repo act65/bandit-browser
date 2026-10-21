@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Heterogeneous Multi-Agent Task-Assignment with Uncertain Execution Times and Preferences",
   "arxiv_id": "2510.16221",
@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Heterogeneous multi-agent sequential task assignment with uncertain rewards, completion times and resource consumption",
+   "name_in_paper": "Heterogeneous multi-agent sequential task assignment with uncertain rewards, execution times and resource consumption",
    "objective": "cumulative_regret",
    "feedback": "semi_bandit",
    "environment": "stochastic_iid",
@@ -29,7 +29,7 @@
    ],
    "instance_assumptions": [],
    "extras": [
-    "multi_agent_cooperative"
+    "safety_constraints"
    ],
    "action_set": {
     "shape": "finite",
@@ -37,30 +37,63 @@
     "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "arbitrary_subset",
+    "reward": "linear",
+    "loss_scale": "per_base_arm"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "unspecified",
+    "violation": "bounded_cumulative"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Actions are N x M binary task-agent assignment matrices; each task to at most one agent",
-    "Stochastic task completion times in {C_l,...,C_u} block agent-task pairs (blocking bandits); learner knows C_l and C_u",
-    "Unknown stochastic per-agent resource consumption in [0,1] with expected per-agent budget constraints L_m; feasibility must be learned; violation penalty measured separately",
-    "Rewards from tasks assigned beyond resource capacity are not counted",
-    "Regret is alpha-approximate regret against OPT/(1+alpha), where OPT is the optimal policy value with known distributions; planner may use a (1+alpha)-approximate optimization oracle"
+    "Actions are N x M binary task-to-agent assignment matrices; each task assigned to at most one agent",
+    "Tasks block agents for stochastic completion times with support {C_l,...,C_u}; reward observed at task completion (blocking/recurring tasks)",
+    "Per-agent expected resource constraint sum_i fbar_im a_im <= L_m with unknown stochastic resource consumption in [0,1]; violation penalty V_T measured separately",
+    "Learner knows C_l, C_u and resource capacities L_m",
+    "Regret against (1/(1+alpha)) OPT where OPT is the optimal policy with known distributions; alpha is the approximation factor of the assignment oracle"
    ],
-   "definition_quote": "The goal of the planner is to maximize the total expected reward that the team receives over the problem horizon while ensuring that the resource consumption required for any assigned task is within the capability of the agent."
+   "definition_quote": "The goal of the planner is to maximize the total expected reward that the team receives over the problem horizon while ensuring that the resource consumption required for any assigned task is within the capability of the agent. ... R^{\\alpha}_T = \\frac{1}{1+\\alpha} OPT - E_{T}"
   }
  ],
  "algorithms": [
@@ -76,7 +109,8 @@
    "requires_knowledge_of": [
     "T",
     "C_l",
-    "C_u"
+    "C_u",
+    "L_m"
    ]
   }
  ],
@@ -95,21 +129,20 @@
    "compute": "not_stated",
    "bound": {
     "notation": "O",
-    "expression": "C_u**2/C_l*log(T) + Lbar**2*log(T)/Delta_L_a**2 + Lbar*Delta_L_max",
+    "expression": "C_u**2/C_l*log(T) + Lbar**2*log(T)/DeltaL_max**2 + Lbar*DeltaL_inf_max",
     "expression_latex": "\\mc O\\Big( \\frac{C^2_u}{C_l}\\ln T + \\frac{\\bar{L}^2 \\ln T}{(\\max_{m}\\Delta^L_{am})^2} + \\bar{L} \\max_{a\\in \\mc A^c}\\Delta^L_{a} \\Big)",
     "regime": "T > M N B C_u"
    },
    "symbols": {
-    "C_l": "lower bound on task completion times",
-    "C_u": "upper bound on task completion times",
+    "C_l": "lower bound on task completion time",
+    "C_u": "upper bound on task completion time",
     "Lbar": "maximum number of tasks the team can execute simultaneously",
-    "Delta_L_a": "max_m Delta^L_{am}, violation gap of an infeasible assignment a (a left unspecified in the statement)",
-    "Delta_L_max": "max over infeasible assignments a of total violation gap Delta^L_a"
+    "DeltaL_max": "max_m Delta^L_{am}, violation gap of an infeasible assignment (a left implicit in the paper)",
+    "DeltaL_inf_max": "max over infeasible assignments a of total violation gap Delta^L_a"
    },
    "conditions": [
-    "T > M N B C_u",
-    "rewards, resource consumption in [0,1]; completion times in {C_l,...,C_u}",
-    "feasible set nonempty"
+    "T > MNBC_u",
+    "rewards, resources in [0,1]; completion times in {C_l,...,C_u}"
    ],
    "tuning": [
     "B = ceil(90 C_u/C_l ln T)"
@@ -121,7 +154,7 @@
     "quote": "If $T > MNBC_u$, the violation penalty $V_T$ defined in~\\eqref{eq:violation_penalty} for Algorithm~\\ref{alg:bandit} is bounded above by V_T \\leq \\mc O\\Big( \\frac{C^2_u}{C_l}\\ln T + \\frac{\\bar{L}^2 \\ln T}{(\\max_{m}\\Delta^L_{am})^2} + \\bar{L} \\max_{a\\in \\mc A^c}\\Delta^L_{a} \\Big)"
    },
    "confidence": "medium",
-   "notes": "Bound on violation penalty V_T (expected constraint violation), not regret. The middle term's dependence on 'a' is ambiguous in the statement (the proof sums over infeasible a)."
+   "notes": "Bound on the constraint violation penalty V_T, not regret. The index a in max_m Delta^L_{am} is not bound in the statement."
   },
   {
    "id": "r2",
@@ -129,7 +162,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "pseudo_regret",
+   "quantity": "alpha_regret",
    "dependence": "instance_dependent",
    "comparator": "best_policy",
    "probability": "expectation",
@@ -137,23 +170,24 @@
    "compute": "not_stated",
    "bound": {
     "notation": "O",
-    "expression": "(1/Delta_alpha_min + C_u)*C_u/C_l**2*N_task*M_agent*Lbar*log(T) + Lbar**3*log(T)*G_inf/C_l",
+    "expression": "(1/Delta_alpha_low + C_u)*C_u/C_l**2*N_tasks*M_agents*Lbar*log(T) + sum_infeasible(Lbar**3*log(T)/(C_l*DeltaL_max_a**2))",
     "expression_latex": "\\mc O\\Big(\\Big(\\frac{1 }{\\ul{\\Delta}^\\alpha } + C_u\\Big)\\frac{C_u}{C_l^2}NM\\ol{L} \\ln T +\\sum_{a \\in \\mc A^c} \\frac{\\bar{L}^3\\ln T}{C_l(\\max_{m}\\Delta^L_{am})^2} \\Big)",
     "regime": "T > M N B C_u"
    },
    "symbols": {
-    "C_l": "lower bound on task completion times",
-    "C_u": "upper bound on task completion times",
+    "C_l": "lower bound on task completion time",
+    "C_u": "upper bound on task completion time",
+    "N_tasks": "number of tasks",
+    "M_agents": "number of agents",
     "Lbar": "maximum number of tasks the team can execute simultaneously",
-    "N_task": "number of tasks (paper's N)",
-    "M_agent": "number of agents (paper's M)",
-    "Delta_alpha_min": "minimum alpha-suboptimality gap underline{Delta}^alpha",
-    "G_inf": "sum over infeasible assignments a of 1/(max_m Delta^L_{am})^2"
+    "Delta_alpha_low": "minimum alpha-sub-optimality gap underline Delta^alpha",
+    "sum_infeasible": "sum over infeasible assignments a in A^c",
+    "DeltaL_max_a": "max_m Delta^L_{am}, violation gap of infeasible assignment a",
+    "alpha_g": "approximation parameter: oracle is (1+alpha)-approximate, regret vs OPT/(1+alpha)"
    },
    "conditions": [
-    "T > M N B C_u",
-    "oracle returns a (1+alpha)-approximate solution, alpha >= 0",
-    "rewards, resource consumption in [0,1]; completion times in {C_l,...,C_u}"
+    "T > MNBC_u",
+    "assignment oracle returns a (1+alpha)-approximate solution, alpha >= 0"
    ],
    "tuning": [
     "B = ceil(90 C_u/C_l ln T)"
@@ -162,10 +196,10 @@
    "source": {
     "label": "thm:sub_optimal_bound",
     "number": "Theorem (thm:sub_optimal_bound)",
-    "quote": "Given that $T > MNBC_u$ and Algorithm~\\ref{alg:bandit} is an $(1+\\alpha)$-approximate algorithm for some $\\alpha \\geq 0$, the regret $R^{\\alpha}_T$ ... is bounded above by R^{\\alpha}_T \\leq \\mc O\\Big(\\Big(\\frac{1 }{\\ul{\\Delta}^\\alpha } + C_u\\Big)\\frac{C_u}{C_l^2}NM\\ol{L} \\ln T +\\sum_{a \\in \\mc A^c} \\frac{\\bar{L}^3\\ln T}{C_l(\\max_{m}\\Delta^L_{am})^2} \\Big)."
+    "quote": "Given that $T > MNBC_u$ and Algorithm~\\ref{alg:bandit} is an $(1+\\alpha)$-approximate algorithm for some $\\alpha \\geq 0$, the regret $R^{\\alpha}_T$ ... is bounded above by R^{\\alpha}_T \\leq \\mc O\\Big(\\Big(\\frac{1 }{\\ul{\\Delta}^\\alpha } + C_u\\Big)\\frac{C_u}{C_l^2}NM\\ol{L} \\ln T +\\sum_{a \\in \\mc A^c} \\frac{\\bar{L}^3\\ln T}{C_l(\\max_{m}\\Delta^L_{am})^2} \\Big)"
    },
    "confidence": "medium",
-   "notes": "Regret is alpha-approximate regret R^alpha_T = OPT/(1+alpha) - E_T, OPT the optimal policy value with known distributions; alpha = 0 gives exact regret."
+   "notes": "R^alpha_T = OPT/(1+alpha) - E_T; alpha=0 gives exact regret. Recorded as alpha_regret with approximation factor 1+alpha."
   },
   {
    "id": "r3",
@@ -173,7 +207,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "pseudo_regret",
+   "quantity": "alpha_regret",
    "dependence": "worst_case",
    "comparator": "best_policy",
    "probability": "expectation",
@@ -181,21 +215,22 @@
    "compute": "not_stated",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(C_u*N_task*M_agent*Lbar*T*log(T))/C_l + C_u**2/C_l**2*N_task*M_agent*Lbar*log(T) + Lbar**3*log(T)*G_inf/C_l",
-    "expression_latex": "\\mc O\\Big(\\frac{1}{C_l} \\sqrt{ C_u N M\\ol{L} T\\ln T} + \\frac{C^2_u}{C_l^2}NM\\ol{L} \\ln T  +\\sum_{a \\in \\mc A^c} \\frac{\\bar{L}^3\\ln T}{C_l(\\max_{m}\\Delta^L_{am})^2}\\Big)",
+    "expression": "sqrt(C_u*N_tasks*M_agents*Lbar*T*log(T))/C_l + C_u**2/C_l**2*N_tasks*M_agents*Lbar*log(T) + sum_infeasible(Lbar**3*log(T)/(C_l*DeltaL_max_a**2))",
+    "expression_latex": "\\mc O\\Big(\\frac{1}{C_l} \\sqrt{ C_u N M\\ol{L} T\\ln T} + \\frac{C^2_u}{C_l^2}NM\\ol{L} \\ln T +\\sum_{a \\in \\mc A^c} \\frac{\\bar{L}^3\\ln T}{C_l(\\max_{m}\\Delta^L_{am})^2}\\Big)",
     "regime": "T > M N B C_u"
    },
    "symbols": {
-    "C_l": "lower bound on task completion times",
-    "C_u": "upper bound on task completion times",
-    "Lbar": "maximum number of tasks the team can execute simultaneously",
-    "N_task": "number of tasks (paper's N)",
-    "M_agent": "number of agents (paper's M)",
-    "G_inf": "sum over infeasible assignments a of 1/(max_m Delta^L_{am})^2"
+    "C_l": "lower bound on task completion time",
+    "C_u": "upper bound on task completion time",
+    "N_tasks": "number of tasks",
+    "M_agents": "number of agents",
+    "Lbar": "maximum number of simultaneously executable tasks",
+    "sum_infeasible": "sum over infeasible assignments a in A^c",
+    "DeltaL_max_a": "max_m Delta^L_{am}, violation gap of infeasible assignment a"
    },
    "conditions": [
-    "T > M N B C_u",
-    "oracle returns a (1+alpha)-approximate solution, alpha >= 0"
+    "T > MNBC_u",
+    "assignment oracle returns a (1+alpha)-approximate solution, alpha >= 0"
    ],
    "tuning": [
     "B = ceil(90 C_u/C_l ln T)"
@@ -204,10 +239,10 @@
    "source": {
     "label": "thm:sub_optimal_bound",
     "number": "Theorem (thm:sub_optimal_bound)",
-    "quote": "Further, for any distribution of completion times and rewards, the regret is bounded as $R^{\\alpha}_T = \\mc O\\Big(\\frac{1}{C_l} \\sqrt{ C_u N M\\ol{L} T\\ln T} + \\frac{C^2_u}{C_l^2}NM\\ol{L} \\ln T  +\\sum_{a \\in \\mc A^c} \\frac{\\bar{L}^3\\ln T}{C_l(\\max_{m}\\Delta^L_{am})^2}\\Big)$."
+    "quote": "Further, for any distribution of completion times and rewards, the regret is bounded as $R^{\\alpha}_T = \\mc O\\Big(\\frac{1}{C_l} \\sqrt{ C_u N M\\ol{L} T\\ln T} + \\frac{C^2_u}{C_l^2}NM\\ol{L} \\ln T +\\sum_{a \\in \\mc A^c} \\frac{\\bar{L}^3\\ln T}{C_l(\\max_{m}\\Delta^L_{am})^2}\\Big)$."
    },
    "confidence": "medium",
-   "notes": "Distribution-free over reward/completion time distributions, but still depends on violation gaps through G_inf."
+   "notes": "Distribution-free in reward/completion times but still depends on resource violation gaps, so it is not fully worst-case."
   },
   {
    "id": "r4",
@@ -223,21 +258,21 @@
    "compute": "not_stated",
    "bound": {
     "notation": "Omega",
-    "expression": "Min(sqrt(C_u*N_task*M_agent*Lbar*T), Lbar*T)/C_l",
+    "expression": "Min(sqrt(C_u*N_tasks*M_agents*Lbar*T), Lbar*T)/C_l",
     "expression_latex": "\\Omega(\\frac{1}{C_l} \\min \\{\\sqrt{C_u NM \\ol{L} T}, \\ol{L}T\\})",
     "regime": "T = Omega(C_u)"
    },
    "symbols": {
-    "C_l": "lower bound on task completion times",
-    "C_u": "upper bound on task completion times",
-    "Lbar": "maximum number of tasks the team can execute simultaneously",
-    "N_task": "number of tasks",
-    "M_agent": "number of agents"
+    "C_l": "lower bound on task completion time",
+    "C_u": "upper bound on task completion time",
+    "N_tasks": "number of tasks",
+    "M_agents": "number of agents",
+    "Lbar": "maximum number of simultaneously executable tasks"
    },
    "conditions": [
     "exact regret R^0_T (alpha = 0)",
-    "T = Omega(C_u)",
-    "there exists a problem instance (minimax)"
+    "there exists a problem instance (minimax)",
+    "T = Omega(C_u)"
    ],
    "tuning": [],
    "is_new": true,
@@ -247,26 +282,26 @@
     "quote": "Moreover, when Algorithm~\\ref{alg:bandit} is an exact algorithm, for any $N,M,T, L$ such that $T = \\Omega(C_u)$, there exists a problem instance for which the optimal regret of any task assignment algorithm is lower bounded by $R^{0}_T= \\Omega(\\frac{1}{C_l} \\min \\{\\sqrt{C_u NM \\ol{L} T}, \\ol{L}T\\})$."
    },
    "confidence": "medium",
-   "notes": "Proof obtained by reduction to Ito et al. (2024) Theorem 4.5; minimax construction."
+   "notes": "Derived by leveraging Ito et al. (2024) Theorem 4.5. R^0_T = OPT - E_T, where OPT is the optimal expected reward with known distributions."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:41:12",
+  "date": "2026-10-21T18:09:41",
   "source_chars": 98051,
-  "input_tokens": 80366,
-  "output_tokens": 5612,
-  "cost_usd_equiv": 0.5375868,
+  "input_tokens": 180180,
+  "output_tokens": 11247,
+  "cost_usd_equiv": 0.7191242,
   "status": "extracted"
  }
 }

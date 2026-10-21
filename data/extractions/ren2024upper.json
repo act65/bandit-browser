@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "On Lai's Upper Confidence Bound in Multi-Armed Bandits",
   "arxiv_id": "2410.02279",
@@ -22,11 +22,11 @@
    "function_class": [],
    "domain": "not_applicable",
    "context": "none",
-   "noise": "gaussian_unknown_variance",
+   "noise": "gaussian_known_variance",
    "learner_knows": [
     "T",
-    "sigma",
-    "K"
+    "K",
+    "sigma"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -36,27 +36,60 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Arm variances are unknown but bounded above by a known sigma^2 used by the algorithm",
-    "Regret counted only after the K initialization rounds (horizon T' = T-K)"
+    "Gaussian rewards whose (possibly arm-dependent) variance is at most a known upper bound sigma^2",
+    "regret counted after the K initialization rounds (T' = T - K)"
    ],
-   "definition_quote": "We focus on a $K$-armed bandit problem with a fixed time horizon $T$, $2 \\le K \\le T$, and assume that the rewards sampled from arm $a$ are independent and identically distributed Gaussian random variables with mean $\\mu_a$ and a variance no greater than $\\sigma^2$."
+   "definition_quote": "We focus on a $K$-armed bandit problem with a fixed time horizon $T$, $2 \\le K \\le T$, and assume that the rewards sampled from arm $a$ are independent and identically distributed Gaussian random variables with mean $\\mu_a$ and a variance no greater than $\\sigma^2$. ... $R_{T'} = T'\\mu^* - \\E[\\sum_{t=K+1}^T y_t]= \\sum_{a= 1}^K \\Delta_a \\E[n_{a,T}-1]$"
   }
  ],
  "algorithms": [
@@ -70,13 +103,13 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "sigma",
-    "K"
+    "K",
+    "sigma"
    ]
   },
   {
    "id": "a2",
-   "name": "Lai's UCB with g(x)=1 v log x (kl-UCB+ for fixed horizon, Gaussian)",
+   "name": "Lai's UCB (g(x)=1 v log x), kl-UCB+ with fixed horizon",
    "registry_id": null,
    "is_new": false,
    "techniques": [
@@ -84,8 +117,8 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "sigma",
-    "K"
+    "K",
+    "sigma"
    ]
   }
  ],
@@ -109,16 +142,16 @@
     "regime": null
    },
    "symbols": {
-    "b_T": "exploration level b_{T'} of the UCB index",
-    "eta_b": "eta(b_{T'}) = 4T' Phi_2(-b_{T'}) + 3(b_{T'}^2+1) Phi^*(-b_{T'},T'), T'=T-K",
-    "T_p": "T' = T - K"
+    "b_T": "exploration level b_{T'} of the UCB rule",
+    "eta_b": "eta(b_{T'}) = 4T' Phi_2(-b_{T'}) + 3(b_{T'}^2+1) Phi^*(-b_{T'},T'), with Phi_2(x)=int (z+x)_+^2 phi(z)dz and Phi^* a Brownian boundary-crossing probability",
+    "T_prime": "T - K"
    },
    "conditions": [
-    "Gaussian rewards with variance <= sigma^2",
-    "2 <= K <= T"
+    "2 <= K <= T",
+    "Gaussian rewards with variance at most sigma^2"
    ],
    "tuning": [
-    "any exploration level b_{T'} > 0"
+    "any b_{T'} > 0"
    ],
    "is_new": true,
    "source": {
@@ -127,7 +160,7 @@
     "quote": "Suppose the rewards from arm $a$ follow a Gaussian distribution with mean $\\mu_a$ and no greater variance than $\\sigma^2$ for all $a=1,\\ldots,K$. Then, the regret of the UCB rule \\eqref{UCB-rule-T} is bounded by R_{T'} \\le \\sum_{a:\\mu_a<\\mu^*}\\frac{\\sigma^2(b_{T'}^2+1+\\eta(b_{T'}))}{\\mu^* - \\mu_a}"
    },
    "confidence": "high",
-   "notes": "Regret R_{T'} counts rounds K+1..T only and equals sum Delta_a E[n_{a,T}-1], i.e. pseudo-regret."
+   "notes": "Regret excludes the K initialization rounds (R_{T'})."
   },
   {
    "id": "r2",
@@ -143,16 +176,16 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "sum_subopt(sigma**2*(2*log(T_p) + c_1)/Delta_i)",
+    "expression": "sum_subopt(sigma**2*(2*log(T_prime) + c_1)/Delta_i)",
     "expression_latex": "\\sum_{a:\\mu_a<\\mu^*}\\frac{\\sigma^2(2\\log T'+c_1(T'))}{\\mu^* - \\mu_a}",
-    "regime": "T' >= 2"
+    "regime": null
    },
    "symbols": {
-    "T_p": "T' = T - K",
-    "c_1": "c_1(T') = o(1); c_1 <= 10.1, 7, 5.5, 4, 3 for T' >= 2, 20, 40, 100, 200"
+    "T_prime": "T - K",
+    "c_1": "c_1(T') = o(1), with c_1 <= 10.1, 7, 5.5, 4, 3 for T' >= 2, 20, 40, 100, 200"
    },
    "conditions": [
-    "Gaussian rewards with variance <= sigma^2"
+    "2 <= K <= T"
    ],
    "tuning": [
     "b_{T'} = sqrt(2 log T')"
@@ -164,7 +197,7 @@
     "quote": "Setting $b_{T'}=\\sqrt{2\\log T'}$ in \\eqref{UCB-rule-T}, we find that R_{T'} \\le \\sum_{a:\\mu_a<\\mu^*}\\frac{\\sigma^2(2\\log T'+c_1(T'))}{\\mu^* - \\mu_a}, where $c_1(T') =o(1)$ as $T' \\rightarrow \\infty$ and $c_1(T') \\le 10.1, 7, 5.5, 4, 3\\ldots$ for $T' \\ge 2, 20, 40, 100, 200\\ldots$."
    },
    "confidence": "high",
-   "notes": "Constants obtained via numerical evaluation. Remark 4 notes the uniform asymptotic optimality limsup sup_mu R/(log T' sum 2sigma^2/Delta) <= 1."
+   "notes": "Constants obtained by numerical evaluation. Remark 4 notes uniform asymptotic optimality: limsup sup_mu R_{T'}/((log T') sum 2 sigma^2/Delta_a) <= 1."
   },
   {
    "id": "r3",
@@ -180,16 +213,16 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "sum_subopt(sigma**2*(2*log(T_p) - 3*log(log(T_p)) - log(pi) + 1 + eps_T)/Delta_i)",
+    "expression": "sum_subopt(sigma**2*(2*log(T_prime) - 3*log(log(T_prime)) - log(pi) + 1 + eps_T)/Delta_i)",
     "expression_latex": "\\sum_{a:\\mu_a<\\mu^*}\\frac{\\sigma^2(2\\log T' - 3\\log\\log(T') -\\log \\pi +1 +\\eps_{T'})}{\\mu^* - \\mu_a}",
     "regime": null
    },
    "symbols": {
-    "T_p": "T' = T - K",
-    "eps_T": "eps_{T'} = o(1) as T' -> infinity, depending on T' only"
+    "T_prime": "T - K",
+    "eps_T": "eps_{T'} = o(1) depending only on T'"
    },
    "conditions": [
-    "Gaussian rewards with variance <= sigma^2"
+    "2 <= K <= T"
    ],
    "tuning": [
     "b_{T'} = argmin_{z>0} {z^2 + 4T' Phi_2(-z)}"
@@ -201,7 +234,7 @@
     "quote": "The UCB rule \\eqref{UCB-rule-T} with the exploration level $b_{T'}$ in \\eqref{th-Gaussian-LaiRobbins-T-4} enjoys the following regret bound, R_{T'} \\le \\sum_{a:\\mu_a<\\mu^*}\\frac{\\sigma^2(2\\log T' - 3\\log\\log(T') -\\log \\pi +1 +\\eps_{T'})}{\\mu^* - \\mu_a} for some $\\eps_{T'} = o(1)$ depending on $T'$ only."
    },
    "confidence": "high",
-   "notes": "Lower-order terms negative for large T'."
+   "notes": "Negative lower-order terms."
   },
   {
    "id": "r4",
@@ -217,28 +250,30 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "sum_subopt(sigma**2*(2*L_i + 1 + eps_i)/Delta_i)",
-    "expression_latex": "\\sum_{a:\\mu_a< \\mu^*} \\frac{\\sigma^2\\big(2L(T'\\gamma_a^2)+1+\\eps_{a,T'}\\big)}{\\mu^* - \\mu_a}",
+    "expression": "sum_subopt(sigma**2*(2*L_a + 1 + eps_a)/Delta_i)",
+    "expression_latex": "\\sum_{a:\\mu_a< \\mu^*}\\frac{\\sigma^2\\big(2L(T'\\gamma_a^2)+1+\\eps_{a,T'}\\big)}{\\mu^* - \\mu_a}",
     "regime": null
    },
    "symbols": {
-    "L_i": "L(T' gamma_i^2) with L(x) = log_+(x/log_+(x/log_+(x))), log_+(x)=max(1, log x), gamma_i = Delta_i/sigma, T'=T-K",
-    "eps_i": "eps_{a,T'} <= 14.8, eps_{a,T'} -> 0 as T' gamma_a^2 -> infinity"
+    "L_a": "L(T' gamma_a^2) with gamma_a = Delta_i/sigma, L(x) = log_+(x/log_+(x/log_+(x))), log_+(x) = max(1, log x)",
+    "eps_a": "eps_{a,T'} <= 14.8, tending to 0 as T' gamma_a^2 -> infinity",
+    "T_prime": "T - K"
    },
    "conditions": [
-    "Gaussian rewards with variance <= sigma^2"
+    "2 <= K <= T",
+    "Gaussian rewards with variance at most sigma^2"
    ],
    "tuning": [
-    "exploration function g(x) = 1 v log x"
+    "exploration function g(x) = 1 v log x, i.e. index mu_hat + sigma sqrt(2 log_+(T'/n)/n)"
    ],
    "is_new": true,
    "source": {
     "label": "th-Gaussian-Lai-T",
     "number": "Theorem 6",
-    "quote": "Suppose the rewards from arm $a$ follow a Gaussian distribution with mean $\\mu_a$ and no greater variance than $\\sigma^2$ for all $a=1,\\ldots,K$. Let $\\gamma_a = (\\mu^* - \\mu_a)/\\sigma$. Then, the UCB index policy in \\eqref{UCB-rule-Lai} satisfies R_{T'} \\le \\sum_{a:\\mu_a< \\mu^*} \\frac{\\sigma^2\\big(2L(T'\\gamma_a^2)+1+\\eps_{a,T'}\\big)}{\\mu^* - \\mu_a} where ... $L(x) = \\log_+(x/\\log_+(x/\\log_+(x)))$, and $\\eps_{a,T'}$ is uniformly bounded with $\\eps_{a,T'}\\le 14.8$ and $\\eps_{a,T'}\\to 0$ as $T'\\gamma_a^2\\to\\infty$."
+    "quote": "Suppose the rewards from arm $a$ follow a Gaussian distribution with mean $\\mu_a$ and no greater variance than $\\sigma^2$ for all $a=1,\\ldots,K$. Let $\\gamma_a = (\\mu^* - \\mu_a)/\\sigma$. Then, the UCB index policy in \\eqref{UCB-rule-Lai} satisfies R_{T'} \\le \\sum_{a:\\mu_a< \\mu^*}\\frac{\\sigma^2\\big(2L(T'\\gamma_a^2)+1+\\eps_{a,T'}\\big)}{\\mu^* - \\mu_a} where ... $\\eps_{a,T'}$ is uniformly bounded with $\\eps_{a,T'}\\le 14.8$ and $\\eps_{a,T'}\\to 0$ as $T'\\gamma_a^2\\to\\infty$."
    },
    "confidence": "high",
-   "notes": "Pseudo-regret after the K initialization rounds."
+   "notes": "Algorithm is Lai (1987)'s index with a specific g; analysis is new."
   }
  ],
  "cited_results": [
@@ -285,16 +320,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-21T10:00:16",
+  "date": "2026-10-21T18:41:30",
   "source_chars": 79055,
-  "input_tokens": 74605,
-  "output_tokens": 6084,
-  "cost_usd_equiv": 0.5009388,
+  "input_tokens": 81201,
+  "output_tokens": 5936,
+  "cost_usd_equiv": 0.499298,
   "status": "extracted"
  }
 }

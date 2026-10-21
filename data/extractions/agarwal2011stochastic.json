@@ -32,8 +32,7 @@
    "noise": "subgaussian",
    "learner_knows": [
     "T",
-    "sigma",
-    "d"
+    "sigma"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -94,14 +93,12 @@
    },
    "in_scope": true,
    "out_of_scope_reason": null,
-   "unmapped": [
-    "Domain is [0,1]; f is 1-Lipschitz (L_lip = 1) and values in [0,1]; loss minimization"
-   ],
+   "unmapped": [],
    "definition_quote": "We assume without loss of generality that the domain $\\xset = [0,1]$, and $f(x) \\in [0,1]$ (the latter can be achieved by pinning $f(x^*) = 0$ since $f$ is 1-Lipschitz)."
   },
   {
    "id": "s2",
-   "name_in_paper": "Stochastic convex bandit in d dimensions",
+   "name_in_paper": "Stochastic convex optimization with bandit feedback (d dimensions)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -176,10 +173,9 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "f is 1-Lipschitz (L_lip = 1)",
-    "X is compact convex and specified so the smallest enclosing Euclidean ball can be computed efficiently"
+    "algorithm can efficiently construct the smallest Euclidean ball containing the compact convex set X"
    ],
-   "definition_quote": "Let $\\xset$ be a compact and convex subset of $\\Reals^d$, and let $f\\colon\\xset\\to\\Reals$ be a $1$-Lipschitz convex function on $\\xset$ ... the response to the query $x$ is $y = f(x) + \\noise$ where $\\noise$ is an independent $\\sigma$-subgaussian random variable with mean zero ... $R_T = \\sum_{t=1}^T ( f(x_t) - f(x^*) )$"
+   "definition_quote": "Let $\\xset$ be a compact and convex subset of $\\Reals^d$, and let $f\\colon\\xset\\to\\Reals$ be a $1$-Lipschitz convex function on $\\xset$... the response to the query $x$ is $y = f(x) + \\noise$ where $\\noise$ is an independent $\\sigma$-subgaussian random variable with mean zero... $R_T = \\sum_{t=1}^T ( f(x_t) - f(x^*) )$"
   }
  ],
  "algorithms": [
@@ -189,7 +185,8 @@
    "registry_id": null,
    "is_new": true,
    "techniques": [
-    "elimination"
+    "elimination",
+    "other"
    ],
    "requires_knowledge_of": [
     "T",
@@ -202,7 +199,8 @@
    "registry_id": null,
    "is_new": true,
    "techniques": [
-    "elimination"
+    "elimination",
+    "other"
    ],
    "requires_knowledge_of": [
     "T",
@@ -227,12 +225,12 @@
    "bound": {
     "notation": "exact",
     "expression": "108*sqrt(sigma*T*log(T))*log(T/(8*sigma*log(T)))/log(4/3)",
-    "expression_latex": "108\\sqrt{\\sigma T\\log T}\\log_{4/3}\\left(\\frac{T}{8\\sigma\\log T}\\right)",
+    "expression_latex": "108\\sqrt{\\sigma T\\log T} \\log_{4/3}\\left(\\frac{T}{8\\sigma\\log T}\\right)",
     "regime": null
    },
    "symbols": {},
    "conditions": [
-    "f convex, 1-Lipschitz, values in [0,1] on [0,1]",
+    "f convex, 1-Lipschitz, bounded in [0,1] on [0,1]",
     "noise i.i.d. sigma-subgaussian",
     "holds with probability at least 1 - 1/T"
    ],
@@ -244,7 +242,7 @@
     "quote": "Suppose Algorithm~\\ref{alg:1d} is run on a convex, 1-Lipschitz function $f$ bounded in [0,1]. Suppose the noise in observations is i.i.d. and $\\sigma$-subgaussian. Then with probability at least $1 - 1/T$ we have \\sum_{t=1}^T f(x_t) - f(x^*) \\leq 108\\sqrt{\\sigma T\\log T} \\log_{4/3}\\left(\\frac{T}{8\\sigma\\log T}\\right)."
    },
    "confidence": "high",
-   "notes": "The paper's sigma appears linearly inside sqrt (query count 2 sigma log T / gamma^2) rather than sigma^2; recorded as stated. Paper notes doubling trick removes knowledge of T."
+   "notes": "Regret is sum of f(x_t)-f(x*), holding w.p. >= 1-1/T (delta = 1/T fixed). Known T; doubling remark for anytime."
   },
   {
    "id": "r2",
@@ -261,24 +259,24 @@
    "bound": {
     "notation": "exact",
     "expression": "768*d**3*sigma*sqrt(T)*log(T)**2*(2*d**2*log(d)/c_2**2 + 1)*(4*d**7*c_1/c_2**3 + d*(d+1)/c_2)*(4*c_1*d**4/c_2**2 + 11)",
-    "expression_latex": "768d^3\\sigma\\sqrt{T}\\log^2 T \\left(\\frac{2d^2\\log d}{c_2^2} + 1\\right)\\left(\\frac{4d^7c_1}{c_2^3} + \\frac{d(d+1)}{c_2} \\right) \\left(\\frac{4c_1 d^4}{c_2^2} + 11\\right)",
+    "expression_latex": "768d^3\\sigma\\sqrt{T}\\log^2 T \\left(\\frac{2d^2\\log d}{c_2^2} + 1\\right)\\left(\\frac{4d^7 c_1}{c_2^3} + \\frac{d(d+1)}{c_2} \\right) \\left(\\frac{4 c_1 d^4}{c_2^2} + 11\\right)",
     "regime": null
    },
    "symbols": {
-    "c_1": "algorithm constant: ratio of enclosing to inscribed ball radius divided by d (c_1 >= 64)",
-    "c_2": "algorithm constant: cos of pyramid half-angle times d (c_2 <= 1/32)"
+    "c_1": "algorithm constant: inner radius r = R/(c_1 d), c_1 >= 64",
+    "c_2": "algorithm constant: pyramid apex angle cos(phi) = c_2/d, c_2 <= 1/32"
    },
    "conditions": [
-    "f convex and 1-Lipschitz on compact convex X in R^d",
-    "noise sigma-subgaussian",
-    "d >= 2 (appendix assumption)",
+    "f convex and 1-Lipschitz on compact convex X subset R^d",
+    "noise i.i.d. sigma-subgaussian",
+    "d >= 2 (assumed in appendix)",
     "holds with probability at least 1 - 1/T"
    ],
    "tuning": [
     "c_1 >= 64",
     "c_2 <= 1/32",
     "Delta_tau(gamma) = (6 c_1 d^4/c_2^2 + 3) gamma",
-    "bar Delta_tau(gamma) = (6 c_1 d^4/c_2^2 + 5) gamma"
+    "Deltabar_tau(gamma) = (6 c_1 d^4/c_2^2 + 5) gamma"
    ],
    "is_new": true,
    "source": {
@@ -287,7 +285,7 @@
     "quote": "Suppose Algorithm~\\ref{alg:highd} is run with $\\inconst \\geq 64$, $\\phiconst \\leq 1/32$ and parameters ... Then with probability at least $1-1/T$, the net regret incurred by the algorithm is bounded by 768d^3\\sigma\\sqrt{T}\\log^2 T \\left(\\frac{2d^2\\log d}{\\phiconst^2} + 1\\right)\\left(\\frac{4d^7\\inconst}{\\phiconst^3} + \\frac{d(d+1)}{\\phiconst} \\right) \\left(\\frac{4\\inconst d^4}{\\phiconst^2} + 11\\right)."
    },
    "confidence": "medium",
-   "notes": "Constants in theorem differ slightly from proof (12 vs 4, d+2 vs d+1); recorded the theorem statement verbatim. Overall O~(poly(d) sqrt(T))."
+   "notes": "O~(poly(d) sqrt(T)). The volume-reduction lemma requires 'small enough constants' c_1,c_2, somewhat inconsistent with c_1>=64; recorded as stated. Computation is ellipsoid-like, stated efficient."
   }
  ],
  "cited_results": [
@@ -300,7 +298,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic bandit with linear mean cost over compact convex set in R^d",
+   "setting_description": "stochastic bandit with linear mean cost function on a convex compact set in R^d",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(d*T)",
@@ -315,10 +313,10 @@
    "cited_first_author": "A. D. Flaxman",
    "cited_year": 2005,
    "cited_arxiv_id": null,
-   "algorithm_name": "one-point gradient estimator",
+   "algorithm_name": "one-point gradient estimator (bandit gradient descent)",
    "algorithm_registry_id": "osgd_one_point",
    "side": "upper",
-   "setting_description": "Adversarial bandit convex Lipschitz optimization",
+   "setting_description": "adversarial bandit convex optimization, convex Lipschitz losses, one-point feedback",
    "bound": {
     "notation": "O",
     "expression": "T**(3/4)",
@@ -336,7 +334,7 @@
    "algorithm_name": "two-point gradient estimator",
    "algorithm_registry_id": "osgd_two_point",
    "side": "upper",
-   "setting_description": "Adversarial convex optimization with two-point bandit feedback",
+   "setting_description": "adversarial convex Lipschitz losses with two evaluations of the same function per round",
    "bound": {
     "notation": "O",
     "expression": "sqrt(T)",
@@ -352,16 +350,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "445998217a4b",
+  "prompt_sha": "00a106c81dc8",
   "schema_version": "0.5",
   "ontology_version": "bandits-0.5",
   "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-21T14:47:57",
+  "date": "2026-10-21T18:02:13",
   "source_chars": 99822,
-  "input_tokens": 83297,
-  "output_tokens": 5254,
-  "cost_usd_equiv": 0.7714479999999999,
+  "input_tokens": 83393,
+  "output_tokens": 5764,
+  "cost_usd_equiv": 0.782416,
   "status": "extracted"
  }
 }

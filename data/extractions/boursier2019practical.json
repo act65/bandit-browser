@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "A Practical Algorithm for Multiplayer Bandits when Arm Means Vary Among Players",
   "arxiv_id": "1902.01239",
@@ -16,7 +16,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Heterogeneous multiplayer multi-armed bandit with collisions (fully distributed)",
+   "name_in_paper": "Heterogeneous decentralized multiplayer multi-armed bandit with collision observation",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -40,40 +40,75 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Heterogeneous means: arm k has mean mu_k^m for player m",
-    "Players observe their reward and the collision indicator; colliding players get zero reward",
-    "No explicit communication between players; number of players M <= K initially unknown",
-    "Regret measured against the maximum-weight matching of players to arms"
+    "heterogeneous means: arm means mu_k^m differ across players",
+    "M <= K players (N in expressions), number of players initially unknown",
+    "fully distributed: no communication; each player observes own reward and collision indicator",
+    "colliding players receive zero reward",
+    "regret measured against the maximum-weight matching of players to arms"
    ],
-   "definition_quote": "We study a multi-armed bandit model where $M$ players compete over $K$ arms, with $M \\leq K$. We denote by $\\mu_k^m$ the mean reward (or expected utility) of arm $k$ for player $m$. ... $R_T \\coloneqq T U^\\star - \\bE\\left[\\sum_{t=1}^T\\sum_{m=1}^M R^m(t)\\right]$."
+   "definition_quote": "We study a multi-armed bandit model where $M$ players compete over $K$ arms, with $M \\leq K$. We denote by $\\mu_k^m$ the mean reward (or expected utility) of arm $k$ for player $m$. ... We assume that each player $m$ in each round $t$ observes her reward $R^m(t)$ and the collision indicator ... R_T := T U^\\star - E[\\sum_t \\sum_m R^m(t)]."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "M-ETC-Elim (Multiplayer Explore-Then-Commit with matching Eliminations)",
+   "name": "M-ETC-Elim",
    "registry_id": null,
    "is_new": true,
    "techniques": [
     "explore_then_commit",
-    "elimination"
+    "elimination",
+    "other"
    ],
    "requires_knowledge_of": [
     "T",
@@ -96,14 +131,14 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "N*K*(N**2*log(T)/Delta_M)**(1 + 1/c_alg)",
+    "expression": "N*K*(N**2*log(T)/Delta_match)**(1+1/c_alg)",
     "expression_latex": "O\\left(MK \\left(\\frac{M^2\\ln(T)}{\\Delta}\\right)^{1+1/c}\\right)",
     "regime": "Delta != infinity"
    },
    "symbols": {
     "N": "number of players M",
-    "Delta_M": "gap between utility of best matching and best suboptimal matching",
-    "c_alg": "epoch-size parameter c in {1,2,...}"
+    "Delta_match": "gap between utility of optimal matching and best suboptimal matching",
+    "c_alg": "epoch-size parameter c"
    },
    "conditions": [],
    "tuning": [
@@ -113,10 +148,10 @@
    "source": {
     "label": "thm:main",
     "number": "Theorem 1",
-    "quote": "(a) The \\NameSecond{} algorithm with parameter $c\\in\\{1,2,\\dots\\}$ satisfies $R_T = O\\left(MK \\left(\\frac{M^2\\ln(T)}{\\Delta}\\right)^{1+1/c}\\right)$ if $\\Delta\\neq\\infty$"
+    "quote": "(a) The \\NameSecond{} algorithm with parameter $c\\in\\{1,2,\\dots\\}$ satisfies R_T = O(MK (M^2\\ln(T)/\\Delta)^{1+1/c}) if \\Delta\\neq\\infty"
    },
    "confidence": "high",
-   "notes": "Hidden constants depend on c. Comparator is the best matching. Regret defined via U* minus expected rewards (pseudo-regret)."
+   "notes": "Hidden constants depend on c; follows from Theorem 3 (requires T >= T_0(c))."
   },
   {
    "id": "r2",
@@ -132,15 +167,17 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "N**3*K*log(K)*sqrt(log(T)) + N**2*K*log(T)**(1 + 1/c_alg)",
-    "expression_latex": "O\\left( M^3K\\log(K)\\sqrt{\\log T} + M^2K \\log(T)^{1+1/c}  \\right)",
+    "expression": "N**3*K*log(K)*sqrt(log(T)) + N**2*K*log(T)**(1+1/c_alg)",
+    "expression_latex": "O\\left( M^3K\\log(K)\\sqrt{\\log T} + M^2K \\log(T)^{1+1/c} \\right)",
     "regime": "Delta = infinity (all matchings optimal)"
    },
    "symbols": {
     "N": "number of players M",
     "c_alg": "epoch-size parameter c"
    },
-   "conditions": [],
+   "conditions": [
+    "all matchings have the same utility"
+   ],
    "tuning": [
     "c in {1,2,...}"
    ],
@@ -148,10 +185,10 @@
    "source": {
     "label": "thm:main",
     "number": "Theorem 1",
-    "quote": "R_T =O\\left( M^3K\\log(K)\\sqrt{\\log T} + M^2K \\log(T)^{1+1/c}  \\right) if $\\Delta=\\infty$."
+    "quote": "R_T =O\\left( M^3K\\log(K)\\sqrt{\\log T} + M^2K \\log(T)^{1+1/c} \\right) if $\\Delta=\\infty$."
    },
    "confidence": "high",
-   "notes": "Degenerate case where all matchings have the same utility."
+   "notes": "Degenerate case."
   },
   {
    "id": "r3",
@@ -167,13 +204,13 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "N**3*K*log(T)/Delta_M",
+    "expression": "N**3*K*log(T)/Delta_match",
     "expression_latex": "O\\left(\\frac{M^3K\\ln(T)}{\\Delta}\\right)",
     "regime": null
    },
    "symbols": {
     "N": "number of players M",
-    "Delta_M": "gap between utility of best matching and second-best matching"
+    "Delta_match": "gap between utility of optimal matching and second-best matching"
    },
    "conditions": [
     "the maximum matching is unique"
@@ -185,7 +222,7 @@
    "source": {
     "label": "thm:main",
     "number": "Theorem 1",
-    "quote": "(b) If the maximum matching is unique, \\NameSecond{} with  $c=1$ satisfies $R_T = O\\left(\\frac{M^3K\\ln(T)}{\\Delta}\\right).$"
+    "quote": "(b) If the maximum matching is unique, \\NameSecond{} with $c=1$ satisfies R_T = O\\left(\\frac{M^3K\\ln(T)}{\\Delta}\\right)."
    },
    "confidence": "high",
    "notes": ""
@@ -219,7 +256,7 @@
    "source": {
     "label": "thm:main",
     "number": "Theorem 1",
-    "quote": "(c) Regardless of whether the optimal matching is unique or not, \\NameSecond{} with  $c=1$ satisfies the minimax regret bound $R_T = O\\left(M^{\\frac{3}{2}}\\sqrt{KT\\ln(T)}\\right).$"
+    "quote": "(c) Regardless of whether the optimal matching is unique or not, \\NameSecond{} with $c=1$ satisfies the minimax regret bound R_T = O\\left(M^{\\frac{3}{2}}\\sqrt{KT\\ln(T)}\\right)."
    },
    "confidence": "high",
    "notes": ""
@@ -238,19 +275,18 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "2 + N*K*log(E**2*K**2*T) + 6*N**2*K*log(K, 2)*log(T, 2)**(1/c_alg) + E**2*N*K*log(T, 2)**(1 + 1/c_alg) + 2*N**3*K*log(K, 2)/(sqrt(2) - 1)*sqrt(log(2*N**2*K*T**2)) + 2*sqrt(2)/(3 - 2*sqrt(2))*N**2*K*sqrt(log(2*N**2*K*T**2))*log(log(T), 2) + (2*sqrt(2) - 1)/(sqrt(2) - 1)*sum_edges((32*N**2*log(2*N**2*K*T**2)/Delta_pi_mk)**(1 + 1/c_alg))",
-    "expression_latex": "2+MK \\ln (e^2 K^2 T) +  6 M^2 K \\lg(K) (\\lg T)^{1/c} +  e^2 M K  (\\lg T)^{1+1/c} + \\frac{2M^3K\\lg (K)}{\\sqrt{2}-1}\\sqrt{\\ln(2M^2 K T^2)} +  \\frac{2 \\sqrt{2}}{3-2\\sqrt{2}} M^2K \\sqrt{\\ln(2M^2KT^2)} \\lg(\\ln(T)) + \\frac{2\\sqrt{2}-1}{\\sqrt{2}-1} \\sum_{(m,k)} \\left(\\frac{32 M^2 \\ln(2M^2KT^2)}{\\Delta(\\pi^{m,k})}\\right)^{1+1/c}",
+    "expression": "2 + N*K*log(E**2*K**2*T) + 6*N**2*K*log(K,2)*log(T,2)**(1/c_alg) + E**2*N*K*log(T,2)**(1+1/c_alg) + 2*N**3*K*log(K,2)/(sqrt(2)-1)*sqrt(log(2*N**2*K*T**2)) + 2*sqrt(2)/(3-2*sqrt(2))*N**2*K*sqrt(log(2*N**2*K*T**2))*log(log(T),2) + (2*sqrt(2)-1)/(sqrt(2)-1)*sum_edges((32*N**2*log(2*N**2*K*T**2)/Delta_mk)**(1+1/c_alg))",
+    "expression_latex": "2+MK \\ln (e^2 K^2 T) + 6 M^2 K \\lg(K) (\\lg T)^{1/c} + e^2 M K (\\lg T)^{1+1/c} + \\frac{2M^3K\\lg (K)}{\\sqrt{2}-1}\\sqrt{\\ln(2M^2 K T^2)} + \\frac{2 \\sqrt{2}}{3-2\\sqrt{2}} M^2K \\sqrt{\\ln(2M^2KT^2)} \\lg(\\ln(T)) + \\frac{2\\sqrt{2}-1}{\\sqrt{2}-1} \\sum_{(m,k)} \\left(\\frac{32 M^2 \\ln(2M^2KT^2)}{\\Delta(\\pi^{m,k})}\\right)^{1+1/c}",
     "regime": "T >= T_0(c) = exp(2^{c^c / ln^c(1+1/(2c))})"
    },
    "symbols": {
     "N": "number of players M",
-    "c_alg": "epoch-size parameter c >= 1",
-    "sum_edges": "sum over all edges (m,k) in [M] x [K]",
-    "Delta_pi_mk": "gap U* - U(pi^{m,k}) of the best suboptimal matching assigning arm k to player m"
+    "c_alg": "epoch-size parameter c",
+    "Delta_mk": "gap Delta(pi^{m,k}) of the best suboptimal matching assigning arm k to player m",
+    "sum_edges": "sum over all player-arm pairs (m,k) in [M]x[K]"
    },
    "conditions": [
-    "Delta != infinity",
-    "T >= T_0(c)"
+    "Delta != infinity"
    ],
    "tuning": [
     "c >= 1"
@@ -262,7 +298,7 @@
     "quote": "For all $c \\geq 1$, let $T_0(c):=\\exp\\left(2^{\\frac{c^c}{\\ln^c(1+\\frac{1}{2c})}}\\right)$. For all $T \\geq T_0(c)$, if $\\Delta\\neq\\infty$, the regret of \\NameSecond{} with parameter $c$ is upper bounded as ..."
    },
    "confidence": "high",
-   "notes": "lg is log base 2, written log(x,2)."
+   "notes": "lg is log base 2. T_0(1)=252."
   },
   {
    "id": "r6",
@@ -278,15 +314,15 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "2 + N*K*log(E**2*K**2*T) + 3*N**2*K*log(K, 2)*log(64*N**2*log(2*N**2*K*T**2)/Delta_M**2, 2) + N*K*log(64*N**2*log(2*N**2*K*T**2)/Delta_M**2, 2)**2 + (4*sqrt(2) - 2)/(3 - 2*sqrt(2))*N**3*K*log(K, 2)*sqrt(log(2*N**2*K*T**2)) + (2*sqrt(2) - 1)/(sqrt(2) - 1)*sum_edges(64*N**2*log(2*N**2*K*T**2)/Delta_pi_mk)",
-    "expression_latex": "2+MK \\ln (e^2 K^2 T) +   3M^2 K  \\lg(K) \\lg \\left( \\frac{64M^2 \\ln(2M^2KT^2)}{\\Delta^2} \\right) + M K \\lg^2 \\left( \\frac{64M^2 \\ln(2M^2KT^2)}{\\Delta^2} \\right) + \\frac{4\\sqrt{2}-2}{3-2\\sqrt{2}} M^3K \\lg (K)\\sqrt{\\ln(2M^2 K T^2)} + \\frac{2\\sqrt{2}-1}{\\sqrt{2}-1}\\sum_{(m,k)} \\frac{64 M^2 \\ln (2M^2KT^2)}{\\Delta(\\pi^{m,k})}",
+    "expression": "2 + N*K*log(E**2*K**2*T) + 3*N**2*K*log(K,2)*log(64*N**2*log(2*N**2*K*T**2)/Delta_match**2, 2) + N*K*log(64*N**2*log(2*N**2*K*T**2)/Delta_match**2, 2)**2 + (4*sqrt(2)-2)/(3-2*sqrt(2))*N**3*K*log(K,2)*sqrt(log(2*N**2*K*T**2)) + (2*sqrt(2)-1)/(sqrt(2)-1)*sum_edges(64*N**2*log(2*N**2*K*T**2)/Delta_mk)",
+    "expression_latex": "2+MK \\ln (e^2 K^2 T) + 3M^2 K \\lg(K) \\lg \\left( \\frac{64M^2 \\ln(2M^2KT^2)}{\\Delta^2} \\right) + M K \\lg^2 \\left( \\frac{64M^2 \\ln(2M^2KT^2)}{\\Delta^2} \\right) + \\frac{4\\sqrt{2}-2}{3-2\\sqrt{2}} M^3K \\lg (K)\\sqrt{\\ln(2M^2 K T^2)} + \\frac{2\\sqrt{2}-1}{\\sqrt{2}-1}\\sum_{(m,k)} \\frac{64 M^2 \\ln (2M^2KT^2)}{\\Delta(\\pi^{m,k})}",
     "regime": null
    },
    "symbols": {
     "N": "number of players M",
-    "Delta_M": "gap between best and second-best matching",
-    "sum_edges": "sum over all edges (m,k) in [M] x [K]",
-    "Delta_pi_mk": "gap U* - U(pi^{m,k}) of the best suboptimal matching assigning arm k to player m"
+    "Delta_match": "gap between optimal and second-best matching",
+    "Delta_mk": "gap Delta(pi^{m,k}) of the best suboptimal matching assigning arm k to player m",
+    "sum_edges": "sum over all player-arm pairs (m,k) in [M]x[K]"
    },
    "conditions": [
     "the maximum matching is unique"
@@ -301,7 +337,7 @@
     "quote": "If the maximum matching is unique, for any $T>0$ the regret of the \\NameSecond{} algorithm with parameter $c=1$ is upper bounded by ..."
    },
    "confidence": "high",
-   "notes": "Valid for all T > 0."
+   "notes": "Valid for all T."
   },
   {
    "id": "r7",
@@ -317,8 +353,8 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "2 + N*K*log(E**2*K**2*T) + 3*N**2*K*log(K, 2)*log(T, 2) + N*K*log(T, 2)**2 + (4*sqrt(2) - 2)/(3 - 2*sqrt(2))*N**3*K*log(K, 2)*sqrt(log(2*N**2*K*T**2)) + 8/(sqrt(2) - 1)*sqrt(K)*N**(3/2)*sqrt(T*log(2*N**2*K*T**2))",
-    "expression_latex": "2+MK \\ln (e^2 K^2 T) +   3M^2 K  \\lg(K) \\lg \\left(T \\right) + M K \\lg^2 \\left( T \\right) + \\frac{4\\sqrt{2}-2}{3-2\\sqrt{2}} M^3K \\lg (K)\\sqrt{\\ln(2M^2 K T^2)} + \\frac{8}{\\sqrt{2}-1} K^{\\frac{1}{2}}M^{\\frac{3}{2}} \\sqrt{T\\ln (2M^2KT^2)}",
+    "expression": "2 + N*K*log(E**2*K**2*T) + 3*N**2*K*log(K,2)*log(T,2) + N*K*log(T,2)**2 + (4*sqrt(2)-2)/(3-2*sqrt(2))*N**3*K*log(K,2)*sqrt(log(2*N**2*K*T**2)) + 8/(sqrt(2)-1)*sqrt(K)*N**(3/2)*sqrt(T*log(2*N**2*K*T**2))",
+    "expression_latex": "2+MK \\ln (e^2 K^2 T) + 3M^2 K \\lg(K) \\lg (T) + M K \\lg^2 (T) + \\frac{4\\sqrt{2}-2}{3-2\\sqrt{2}} M^3K \\lg (K)\\sqrt{\\ln(2M^2 K T^2)} + \\frac{8}{\\sqrt{2}-1} K^{\\frac{1}{2}}M^{\\frac{3}{2}} \\sqrt{T\\ln (2M^2KT^2)}",
     "regime": null
    },
    "symbols": {
@@ -335,27 +371,63 @@
     "quote": "For all $T$, the regret of the \\NameSecond{} algorithm with parameter $c=1$ is upper bounded by ..."
    },
    "confidence": "high",
-   "notes": "Gap-independent bound."
+   "notes": "Gap-independent."
   }
  ],
  "cited_results": [
+  {
+   "cited_key": "KvetonWAS15",
+   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
+   "cited_first_author": "Kveton",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Centralized heterogeneous variant: combinatorial semi-bandit over matchings",
+   "bound": {
+    "notation": "O",
+    "expression": "N**2*K*log(T)/Delta_match",
+    "expression_latex": "O\\left(({M^2 K}/{\\Delta})\\ln(T)\\right)",
+    "regime": null
+   },
+   "where": "Section 3"
+  },
   {
    "cited_key": "got",
    "cited_title": "Distributed multi-player bandits - a game of thrones approach",
    "cited_first_author": "Bistritz",
    "cited_year": 2018,
    "cited_arxiv_id": null,
-   "algorithm_name": "Game of Thrones (GoT)",
+   "algorithm_name": "Game-of-Thrones (GoT)",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Heterogeneous fully distributed multiplayer bandit with collisions",
+   "setting_description": "Fully distributed heterogeneous multiplayer bandit",
    "bound": {
     "notation": "O",
-    "expression": "log(T)**(2 + kappa)",
+    "expression": "log(T)**(2+kappa)",
     "expression_latex": "O((\\ln T)^{2+\\kappa})",
     "regime": "any constant kappa > 0, parameters appropriately tuned"
    },
-   "where": "Introduction / Section 3"
+   "where": "Section 1/3"
+  },
+  {
+   "cited_key": "got_arxiv",
+   "cited_title": "Game of thrones: Fully distributed learning for multi-player bandits",
+   "cited_first_author": "Bistritz",
+   "cited_year": 2019,
+   "cited_arxiv_id": "1810.11162",
+   "algorithm_name": "Game-of-Thrones (GoT)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Fully distributed heterogeneous multiplayer bandit",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)**(1+kappa)",
+    "expression_latex": "O((\\ln T)^{1+\\kappa})",
+    "regime": "T large enough (depending on Delta), eps small enough"
+   },
+   "where": "Section 3"
   },
   {
    "cited_key": "got",
@@ -366,68 +438,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Heterogeneous fully distributed multiplayer bandit with collisions, any algorithm",
+   "setting_description": "Fully distributed heterogeneous multiplayer bandit, any algorithm",
    "bound": {
     "notation": "Omega",
     "expression": "log(T)",
     "expression_latex": "\\Omega(\\ln T)",
     "regime": null
    },
-   "where": "Introduction"
-  },
-  {
-   "cited_key": "got_arxiv",
-   "cited_title": "Game of thrones: Fully distributed learning for multi-player bandits",
-   "cited_first_author": "Bistritz",
-   "cited_year": 2019,
-   "cited_arxiv_id": "1810.11162",
-   "algorithm_name": "Game of Thrones (GoT)",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Heterogeneous fully distributed multiplayer bandit with collisions",
-   "bound": {
-    "notation": "O",
-    "expression": "log(T)**(1 + kappa)",
-    "expression_latex": "O((\\ln T)^{1+\\kappa})",
-    "regime": "T large enough (depends on Delta), epsilon small enough"
-   },
-   "where": "Section 3"
-  },
-  {
-   "cited_key": "KvetonWAS15",
-   "cited_title": "Tight regret bounds for stochastic combinatorial semi-bandits",
-   "cited_first_author": "Kveton",
-   "cited_year": 2015,
-   "cited_arxiv_id": null,
-   "algorithm_name": "CUCB",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Centralized combinatorial semi-bandit over matchings (M players, K arms)",
-   "bound": {
-    "notation": "O",
-    "expression": "N**2*K*log(T)/Delta_M",
-    "expression_latex": "O\\left(({M^2 K}/{\\Delta})\\ln(T)\\right)",
-    "regime": null
-   },
-   "where": "Section 3"
-  },
-  {
-   "cited_key": "BoursierPerchet18",
-   "cited_title": "SIC-MMAB: synchronisation involves communication in multiplayer multi-armed bandits",
-   "cited_first_author": "Boursier",
-   "cited_year": 2019,
-   "cited_arxiv_id": null,
-   "algorithm_name": "SIC-MMAB",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Homogeneous decentralized multiplayer bandit with collisions",
-   "bound": {
-    "notation": "O",
-    "expression": "((K - N)/Delta + K*N)*log(T)",
-    "expression_latex": "O\\left(\\left( (K-M)/\\Delta+ KM\\right)\\ln(T)\\right)",
-    "regime": null
-   },
-   "where": "Section 3"
+   "where": "Section 1"
   },
   {
    "cited_key": "Anantharam87",
@@ -441,7 +459,7 @@
    "setting_description": "Centralized homogeneous multiple-play bandit, asymptotic",
    "bound": {
     "notation": "Omega",
-    "expression": "(K - N)*log(T)/Delta",
+    "expression": "(K-N)*log(T)/Delta",
     "expression_latex": "\\Omega((K-M)\\ln(T)/\\Delta)",
     "regime": "asymptotic"
    },
@@ -459,8 +477,8 @@
    "setting_description": "Centralized combinatorial semi-bandit over matchings",
    "bound": {
     "notation": "Omega",
-    "expression": "K*log(T)/Delta_M",
-    "expression_latex": "c(\\bm\\mu,M)\\ln(T),\\ c(\\bm\\mu,M) = \\Theta(K/\\Delta)",
+    "expression": "K*log(T)/Delta_match",
+    "expression_latex": "c(\\bm\\mu,M)\\ln(T),\\ c(\\bm\\mu,M)=\\Theta(K/\\Delta)",
     "regime": "asymptotic"
    },
    "where": "Section 3, Lower Bounds"
@@ -474,7 +492,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Centralized combinatorial semi-bandit (minimax)",
+   "setting_description": "Centralized combinatorial semi-bandit, minimax",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(N*K*T)",
@@ -482,24 +500,42 @@
     "regime": null
    },
    "where": "Section 3, Lower Bounds"
+  },
+  {
+   "cited_key": "BoursierPerchet18",
+   "cited_title": "SIC-MMAB: synchronisation involves communication in multiplayer multi-armed bandits",
+   "cited_first_author": "Boursier",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SIC-MMAB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Decentralized homogeneous multiplayer bandit with collision observation",
+   "bound": {
+    "notation": "O",
+    "expression": "((K-N)/Delta + K*N)*log(T)",
+    "expression_latex": "O\\left(\\left( (K-M)/\\Delta+ KM\\right)\\ln(T)\\right)",
+    "regime": null
+   },
+   "where": "Section 3"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:45:26",
+  "date": "2026-10-21T18:13:23",
   "source_chars": 81047,
-  "input_tokens": 67009,
-  "output_tokens": 9321,
-  "cost_usd_equiv": 0.5049108,
+  "input_tokens": 73596,
+  "output_tokens": 9349,
+  "cost_usd_equiv": 0.506718,
   "status": "extracted"
  }
 }

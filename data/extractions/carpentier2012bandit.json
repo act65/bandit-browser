@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Bandit Theory meets Compressed Sensing for high dimensional Stochastic Linear Bandit",
   "arxiv_id": "1205.4094",
@@ -25,9 +25,9 @@
    "noise": "subgaussian",
    "learner_knows": [
     "T",
+    "d",
     "S",
-    "sigma",
-    "d"
+    "sigma"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -36,27 +36,60 @@
     "time_varying": "fixed",
     "access": "explicit",
     "norm_bound": "unit_l2",
-    "parameter_set": "unbounded",
-    "loss_set": "not_applicable"
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "sparse"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "theta is s-sparse (at most s nonzero coordinates), sparsity unknown to learner; dimension K (here d) may be much larger than n",
-    "noise enters the parameter: r_t = <x_t, theta + eta_t> with eta_t i.i.d. white noise, coordinatewise bounded |eta_{k,t}| <= sigma_k/2",
-    "learner knows upper bounds on ||theta||_2 and ||sigma||_2 (not the sparsity)"
+    "Noise is added to the parameter: r_t = <x_t, theta + eta_t> with eta_t an i.i.d. white-noise vector whose coordinates are independent and bounded |eta_{k,t}| <= sigma_k/2",
+    "High-dimensional regime: dimension K much larger than horizon n; sparsity S < n unknown to the learner",
+    "Learner knows upper bounds on ||theta||_2 and ||sigma||_2 (vector of coordinate noise ranges)"
    ],
    "definition_quote": "At each round $1\\leq t \\leq n$ it selects an arm $x_t$ in the set of arms $\\D_{K}$, which is the unit ball for the $||.||_2$-norm induced by the inner product. It then receives a reward $r_t = \\langle x_t,\\theta+\\eta_t\\rangle$, where $\\eta_t\\in \\R^K$ is an i.i.d.~white noise ... we make the assumption that $\\theta$ is $S-$sparse with $S<n$."
   }
@@ -74,9 +107,9 @@
    ],
    "requires_knowledge_of": [
     "T",
+    "d",
     "S",
-    "sigma",
-    "d"
+    "sigma"
    ]
   },
   {
@@ -88,8 +121,7 @@
     "optimism"
    ],
    "requires_knowledge_of": [
-    "T",
-    "d"
+    "T"
    ]
   }
  ],
@@ -108,32 +140,32 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "118*(theta_bar + sigma_bar)**2*log(2*d/delta)*s_sp*sqrt(T)",
+    "expression": "118*(theta_bar_2 + sigma_bar_2)**2*log(2*d/delta)*s_sparse*sqrt(T)",
     "expression_latex": "118 (\\bar{\\theta}_2+ \\bar{\\sigma}_2)^2 \\log(2K/\\delta)S \\sqrt{n}",
     "regime": null
    },
    "symbols": {
-    "theta_bar": "input upper bound on ||theta||_2",
-    "sigma_bar": "input upper bound on ||sigma||_2 (sigma_k bounds the noise coordinates)",
-    "s_sp": "sparsity of theta (number of nonzero components); paper's S"
+    "theta_bar_2": "known upper bound on ||theta||_2",
+    "sigma_bar_2": "known upper bound on ||sigma||_2, sigma the vector of per-coordinate noise ranges"
    },
    "conditions": [
     "Assumption 1: (eta_{k,t}) i.i.d. white noise with |eta_{k,t}| <= sigma_k/2",
-    "theta is s_sp-sparse",
-    "theta_bar >= ||theta||_2, sigma_bar >= ||sigma||_2"
+    "theta is S-sparse with S < n",
+    "holds with probability at least 1 - 5 delta"
    ],
    "tuning": [
-    "b = (theta_bar + sigma_bar)*sqrt(2 log(2K/delta))",
-    "confidence parameter delta"
+    "bar sigma_2 >= ||sigma||_2",
+    "bar theta_2 >= ||theta||_2",
+    "b = (bar theta_2 + bar sigma_2) sqrt(2 log(2K/delta))"
    ],
    "is_new": true,
    "source": {
     "label": "thm:m1-regret",
     "number": "Theorem 2",
-    "quote": "Under Assumption~\\ref{as:noise1}, if we choose $\\bar{\\sigma}_2 \\geq ||\\si||_2$, and $\\bar{\\theta}_2 \\geq ||\\theta||_2$, the regret of SL-UCB is bounded with probability at least $1-5\\delta$, as $R_n(\\Alg_{SL-UCB})\\leq 118 (\\bar{\\theta}_2+ \\bar{\\sigma}_2)^2 \\log(2K/\\delta)S \\sqrt{n}.$"
+    "quote": "Under Assumption~\\ref{as:noise1}, if we choose $\\bar{\\sigma}_2 \\geq ||\\si||_2$, and $\\bar{\\theta}_2 \\geq ||\\theta||_2$, the regret of SL-UCB is bounded with probability at least $1-5\\delta$, as $R_n(\\Alg_{SL-UCB})\\leq 118 (\\bar{\\theta}_2+ \\bar{\\sigma}_2)^2 \\log(2K/\\delta)S \\sqrt{n}$."
    },
    "confidence": "medium",
-   "notes": "Paper's K is the ambient dimension (mapped to d), paper's n is T, paper's S is sparsity (renamed s_sp since canonical S is a norm bound). Holds with probability at least 1-5delta. Regret is n||theta||_2 - sum <theta,x_t> (pseudo-regret style, w.r.t. means) bounded with high probability. Learner does not need the sparsity."
+   "notes": "Paper's K is the dimension (d), n the horizon (T), S the sparsity (s_sparse). Regret is n||theta||_2 - sum_t <theta,x_t> (through means, but random actions), stated w.p. 1-5delta. Sparsity S not required by algorithm. Noise mapped to subgaussian since reward noise <x,eta> is bounded."
   }
  ],
  "cited_results": [
@@ -146,14 +178,14 @@
    "algorithm_name": "ConfidenceBall_2",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic linear bandit in dimension d on the unit l2 ball, noise r_t=<x_t,theta+eta_t> with |eta_{t,k}| <= sigma_k/2; high probability 1-delta, n large enough",
+   "setting_description": "Stochastic linear bandit in dimension d on the unit l2 ball, noise on parameter with bounded coordinates |eta_{t,k}| <= sigma_k/2; high-probability regret, for large enough n",
    "bound": {
     "notation": "exact",
     "expression": "64*d*(theta_norm + sigma_norm)*log(T**2/delta)**2*sqrt(T)",
     "expression_latex": "64 d\\Big(||\\theta||_2 + ||\\si||_2\\Big)(\\log(n^2/\\delta))^2\\sqrt{n}",
-    "regime": "for large enough n"
+    "regime": "n large enough"
    },
-   "where": "Theorem 1 (Section 1.2)"
+   "where": "Theorem 1"
   },
   {
    "cited_key": "Yasin",
@@ -164,10 +196,10 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Sparse stochastic linear bandit, dimension K, sparsity S, general action set, different noise model",
+   "setting_description": "Sparse stochastic linear bandit (general action sets, different noise model)",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(d*s_sp*T)",
+    "expression": "sqrt(d*s_sparse*T)",
     "expression_latex": "O(\\sqrt{K S n})",
     "regime": null
    },
@@ -177,19 +209,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:39:38",
+  "date": "2026-10-21T18:07:41",
   "source_chars": 56919,
-  "input_tokens": 58389,
-  "output_tokens": 3238,
-  "cost_usd_equiv": 0.3142908,
+  "input_tokens": 64976,
+  "output_tokens": 3738,
+  "cost_usd_equiv": 0.325538,
   "status": "extracted"
  }
 }

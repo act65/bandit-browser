@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Time-varying Gaussian Process Bandit Optimization with Experts: no-regret in logarithmically-many side queries",
   "arxiv_id": "2510.21274",
@@ -20,45 +20,80 @@
    "feedback": "bandit",
    "environment": "nonstationary_drifting",
    "action_space": "kernel_rkhs",
-   "function_class": [],
+   "function_class": [
+    "bounded"
+   ],
    "domain": "constrained",
    "context": "none",
    "noise": "gaussian_known_variance",
    "learner_knows": [
-    "sigma"
+    "sigma",
+    "S",
+    "kernel"
    ],
    "instance_assumptions": [],
    "extras": [],
    "action_set": {
     "shape": "convex_body",
     "time_varying": "fixed",
-    "access": "explicit",
+    "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Each f_t lies in an RKHS with bounded kernel k(x,x) <= M_k^2 and ||f_t||_k <= B (B used in beta_t)",
-    "Per-round variation bounded: sup_x |f_{t+1}(x)-f_t(x)| <= 1 (not a total variation budget V_T)",
-    "Learner may additionally query an expert for noisy evaluations of the current f_t at O(log^d t) points per round",
-    "Squared exponential kernel",
-    "Regret is dynamic: against max_x f_t(x) at each round"
+    "Learner may query an expert each round for noisy evaluations of the current function f_t at selected previously observed points (O(log^d t) side queries per step)",
+    "Time variation measured by per-step sup-norm bound sup_x |f_{t+1}(x)-f_t(x)| <= Delta = 1 (not a total variation budget)",
+    "Each f_t in RKHS with ||f_t||_k <= B and k(x,x) <= M_k^2"
    ],
-   "definition_quote": "We consider the problem of sequentially optimizing a reward function $f: \\Dset \\times \\mathbb{R}_+ \\to \\mathbb{R}$ where $\\Dset \\subset \\mathbb{R}^d$ is a compact convex set... $y_t = f(x_t, t) + \\epsilon_t$, where $\\epsilon_t \\sim \\mathcal{N}(0, \\sigma^2)$... $R_T = \\sum_{t=1}^T (\\max_{x} f_t(x) - f_t(x_t))$"
+   "definition_quote": "We consider the problem of sequentially optimizing a reward function $f: \\Dset \\times \\mathbb{R}_+ \\to \\mathbb{R}$ where $\\Dset \\subset \\mathbb{R}^d$ is a compact convex set... we obtain a noisy observation of the reward $y_t = f(x_t, t) + \\epsilon_t$, where $\\epsilon_t \\sim \\mathcal{N}(0, \\sigma^2)$... Assumption 2: there exists a bounded constant $\\Delta$, such that $\\forall t, \\sup_{x} |f_{t+1}(x) - f_{t}(x)| \\leq \\Delta$."
   }
  ],
  "algorithms": [
@@ -69,14 +104,12 @@
    "is_new": true,
    "techniques": [
     "optimism",
-    "restarts_or_sliding_window",
     "other"
    ],
    "requires_knowledge_of": [
     "sigma",
-    "RKHS norm bound ||f_t||_k",
-    "kernel k",
-    "delta"
+    "S",
+    "kernel"
    ]
   }
  ],
@@ -101,24 +134,25 @@
    },
    "symbols": {},
    "conditions": [
-    "Assumption 1: f_t in RKHS with k(x,x) <= M_k^2 and ||f_t||_k <= B",
-    "Assumption 2: sup_x |f_{t+1}(x) - f_t(x)| <= 1",
     "squared exponential kernel",
-    "Gaussian noise N(0, sigma^2) i.i.d.",
-    "expert queried O(log^d t) times per round with noisy updated observations"
+    "Assumption 1: ||f_t||_k <= B, k(x,x) <= M_k^2",
+    "Assumption 2: sup_x |f_{t+1}(x)-f_t(x)| <= 1",
+    "noise i.i.d. N(0, sigma^2)",
+    "learner asks an expert O(log^d t) noisy queries per time step"
    ],
    "tuning": [
     "beta_t = sqrt(2 log(2|Sigma^s_t + K^s_tt|^{1/2}/(delta |Sigma^s_t|^{1/2}))) + ||f_t||_k",
-    "discard observations with injected variance > sigma^2 log t"
+    "discard observations with injected variance > sigma^2 log t",
+    "approximate Q_t-DPP sparse inference with eps_t = O(eta/t)"
    ],
    "is_new": true,
    "source": {
     "label": "Thm:regret",
     "number": "Theorem (Thm:regret)",
-    "quote": "Take any $0 < \\delta \\leq 1$ ... Then, with probability at least $1-\\delta$, by asking to an expert $\\mathcal{O}\\left(\\log^d (t)\\right)$ queries per time step, SparQ-GP-UCB attains a cumulative dynamic regret of $R_T = \\mathcal{O}\\left(\\sqrt{ Td \\log^{d+5}(T)}\\sqrt{\\log\\left( \\frac{1}{\\delta} \\right) +  d \\log^{d+3}\\left( d\\log\\left(T \\right) \\right)}\\right) = \\Ot(\\sqrt{T})$."
+    "quote": "Take any $0 < \\delta \\leq 1$ ... Let Assumptions~\\ref{as.1} and \\ref{as.2} hold and consider a squared exponential kernel $k$. ... Then, with probability at least $1-\\delta$, by asking to an expert $\\mathcal{O}\\left(\\log^d (t)\\right)$ queries per time step, SparQ-GP-UCB attains a cumulative dynamic regret of $R_T = \\mathcal{O}(\\sqrt{ Td \\log^{d+5}(T)}\\sqrt{\\log( 1/\\delta ) +  d \\log^{d+3}( d\\log(T) )}) = \\Ot(\\sqrt{T})$."
    },
    "confidence": "medium",
-   "notes": "Regret uses extra expert observations beyond bandit feedback. Horizon marked anytime since algorithm does not use T, though theorem says 'Let T be a time horizon'. Constants (sigma, B, M_k) hidden. Computational complexity theorem (O~(T^2)) not recorded as performance bound."
+   "notes": "Dynamic regret against per-round maximizer. Algorithm loop does not use T, so marked anytime (uncertain). Relies on expert side queries; computational complexity O~(T^2) given separately (Theorem Thm:complexity, not recorded as a regret result)."
   }
  ],
  "cited_results": [
@@ -131,14 +165,32 @@
    "algorithm_name": "GP-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Static GP bandit, f with bounded RKHS norm, squared exponential kernel",
+   "setting_description": "Static GP bandit optimization, f with bounded RKHS norm, squared exponential kernel, high probability",
    "bound": {
     "notation": "O_tilde",
     "expression": "sqrt(T)",
     "expression_latex": "R_T = \\Ot(\\sqrt{T})",
     "regime": null
    },
-   "where": "Section 1.1"
+   "where": "Section 1.1 Related work"
+  },
+  {
+   "cited_key": "DBLP:journals/corr/abs-2111-03637",
+   "cited_title": "Risk-averse heteroscedastic Bayesian optimization",
+   "cited_first_author": "Makarova",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Static GP bandit optimization with heteroscedastic Gaussian noise; bound matches O~(sqrt T) up to factor sigma_bar = max sigma_i",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sigma_bar*sqrt(T)",
+    "expression_latex": "\\Ot(\\sqrt{T}) \\text{ up to } \\bar{\\sigma}",
+    "regime": null
+   },
+   "where": "Section 1.1 Related work"
   },
   {
    "cited_key": "bogunovic2016",
@@ -149,14 +201,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Time-varying GP bandit with forgetting factor epsilon spatio-temporal kernel",
+   "setting_description": "Time-varying GP bandit optimization with spatio-temporal kernel and forgetting factor epsilon; any algorithm",
    "bound": {
     "notation": "Omega",
-    "expression": "T*eps_f",
+    "expression": "T*varepsilon",
     "expression_latex": "\\mathbb{E}[R_T]=\\Omega(T\\varepsilon)",
     "regime": null
    },
-   "where": "Section 1.1"
+   "where": "Section 1.1 Related work"
   },
   {
    "cited_key": "bogunovic2016",
@@ -167,32 +219,32 @@
    "algorithm_name": "TV-GP-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Time-varying GP bandit with forgetting factor epsilon",
+   "setting_description": "Time-varying GP bandit optimization with spatio-temporal kernel, fixed forgetting factor",
    "bound": {
     "notation": "O_tilde",
     "expression": "T",
     "expression_latex": "R_T = \\Ot(T)",
     "regime": null
    },
-   "where": "Section 1.1"
+   "where": "Section 1.1 Related work"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:47:43",
+  "date": "2026-10-21T18:15:23",
   "source_chars": 85139,
-  "input_tokens": 72019,
-  "output_tokens": 3328,
-  "cost_usd_equiv": 0.42513080000000003,
+  "input_tokens": 78606,
+  "output_tokens": 3985,
+  "cost_usd_equiv": 0.43951799999999996,
   "status": "extracted"
  }
 }

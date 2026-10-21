@@ -99,6 +99,9 @@ def setting_key(s: dict, ont: dict) -> dict:
         given = s.get(name) or {}
         key[name] = {f: given.get(f, "not_applicable") for f, fs in spec["fields"].items()
                      if not fs.get("computational_only")}
+        for f, fs in spec["fields"].items():  # field defaults, e.g. unstated noise variance = homoscedastic
+            if fs.get("unspecified_means") and key[name].get(f) == "unspecified":
+                key[name][f] = fs["unspecified_means"]
     key["parameters"] = dict(sorted((s.get("parameters") or {}).items()))
     return key
 

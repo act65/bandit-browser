@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Tight Regret Bounds for Bilateral Trade under Semi Feedback",
   "arxiv_id": "2601.16412",
@@ -13,7 +13,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "GBB semi-feedback fixed-price bilateral trade, adversarial values",
+   "name_in_paper": "Repeated bilateral trade, GBB semi-feedback fixed-price mechanisms, adversarial values",
    "objective": "cumulative_regret",
    "feedback": "partial_monitoring",
    "environment": "adversarial_oblivious",
@@ -35,29 +35,62 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "unspecified",
+    "structure": "unspecified"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Repeated bilateral trade: action is a pair of prices (p,q) in [0,1]^2; reward is gains from trade (B-S)*1[S<=p, q<=B]",
-    "Semi feedback: learner observes seller's value S^t and the trade outcome Z^t (one-sided value revelation)",
-    "Global Budget Balance constraint: total profit sum_t (q-p)*trade must be nonnegative ex post",
-    "Benchmark: best fixed price pair (equivalently best p=q)"
+    "Bilateral trade: mechanism posts seller price P and buyer price Q in [0,1]^2; reward is gains from trade (B-S)*1[S<=P, Q<=B]",
+    "Semi feedback: observe seller value S^t and trade outcome Z^t (or symmetric/more informative variants)",
+    "Global Budget Balance constraint: total profit sum_t (Q^t-P^t)*Z^t >= 0 ex post",
+    "Comparator: best fixed price pair (p,q), equivalently p=q"
    ],
-   "definition_quote": "We study a $T$-round repeated game against an oblivious adversary ... Adversarial Values: The adversary chooses an arbitrary joint distribution $\\+D$ supported on $[0, 1]^{2T}$. ... $(\\SVal{t}, \\Trade{t}) \\in [0, 1] \\times \\{0, 1\\}$ reveals the seller's value and the trade outcome ... Global Budget Balance: $\\sum_{t} \\Profit^{t} \\ge 0$ ex post."
+   "definition_quote": "Adversarial Values: The adversary chooses an arbitrary joint distribution D supported on [0,1]^{2T}. ... Semi Feedback: ... (S^t, Z^t) in [0,1] x {0,1} reveals the seller's value S^t and the trade outcome ... Global Budget Balance: sum_{t in [T]} Profit^t(P^t,Q^t) >= 0 ex post."
   }
  ],
  "algorithms": [
@@ -68,7 +101,18 @@
    "is_new": true,
    "techniques": [
     "exponential_weights",
-    "explore_then_commit",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "ProfitMax",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
     "other"
    ],
    "requires_knowledge_of": [
@@ -83,7 +127,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "expected_regret",
+   "quantity": "pseudo_regret",
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
@@ -97,12 +141,13 @@
    },
    "symbols": {},
    "conditions": [
-    "T sufficiently large (T >> 1)"
+    "values (S^t,B^t) in [0,1]^2",
+    "mechanism satisfies Global Budget Balance (with probability 1-1/T, or always with the modification of Remark 2)"
    ],
    "tuning": [
     "K = (1/4) T^{1/3} log^{-2/3}(T)",
     "beta = 3T/(K+1)",
-    "eta = sqrt(ln(K)/(T(K+1)))",
+    "eta = (ln K/(T(K+1)))^{1/2}",
     "gamma = 1/(K+1)"
    ],
    "is_new": true,
@@ -112,7 +157,7 @@
     "quote": "In the ``adversarial values'' setting, there is a ``{\\GBB} semi-feedback fixed-price mechanism'' achieving $\\tO(T^{2 / 3})$ regret."
    },
    "confidence": "medium",
-   "notes": "Proof gives roughly 306 T^{2/3} log^{5/3}(T) (first phase, w.p. 1-1/T) + 9 T^{2/3} log^{2/3}(T) (second phase). Regret is GFT benchmark minus expected GFT of mechanism. Mapping bilateral trade onto bandit ontology is approximate (semi feedback mapped to partial_monitoring)."
+   "notes": "Proof gives explicit regret <= 306 T^{2/3} log^{5/3}(T) (first phase, w.p. 1-1/T) + 9 T^{2/3} log^{2/3}(T) (second phase). Regret defined as max_D (GFT*_D - GFT^M_D) with max over fixed prices outside the expectation, hence pseudo-regret. Matches Omega(T^{2/3}) lower bound of CJLZ25."
   }
  ],
  "cited_results": [
@@ -125,14 +170,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "GBB semi-feedback fixed-price bilateral trade, independent values (hence also adversarial)",
+   "setting_description": "Bilateral trade, semi-feedback fixed-price mechanisms (GBB), independent values (hence also adversarial)",
    "bound": {
     "notation": "Omega",
     "expression": "T**(2/3)",
-    "expression_latex": "\\Omega(T^{2 / 3})",
+    "expression_latex": "\\Omega(T^{2/3})",
     "regime": null
    },
-   "where": "Section 3, after Theorem 1 (Theorem 20 of CJLZ25)"
+   "where": "Section 3 (after Theorem 1), Theorem 20 of CJLZ25"
   },
   {
    "cited_key": "CJLZ25",
@@ -143,7 +188,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Semi-feedback fixed-price bilateral trade (LBB or GBB), independent/correlated values (also LCM25a)",
+   "setting_description": "Bilateral trade, semi-feedback fixed-price mechanisms (LBB/GBB), independent or correlated values",
    "bound": {
     "notation": "O_tilde",
     "expression": "T**(2/3)",
@@ -161,7 +206,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "LBB semi-feedback (and full-feedback) fixed-price bilateral trade, adversarial values (also AFF24)",
+   "setting_description": "Bilateral trade, LBB fixed-price mechanisms, adversarial values, full (hence semi) feedback: linear regret",
    "bound": {
     "notation": "Omega",
     "expression": "T",
@@ -169,24 +214,6 @@
     "regime": null
    },
    "where": "Tables 1 and 3"
-  },
-  {
-   "cited_key": "CCCFL24mor",
-   "cited_title": null,
-   "cited_first_author": null,
-   "cited_year": 2024,
-   "cited_arxiv_id": null,
-   "algorithm_name": null,
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Full-feedback fixed-price bilateral trade, independent/correlated values (LBB and GBB), also BCCF24, CJLZ25",
-   "bound": {
-    "notation": "O_tilde",
-    "expression": "sqrt(T)",
-    "expression_latex": "T^{1/2}",
-    "regime": null
-   },
-   "where": "Table 1"
   },
   {
    "cited_key": "BCCF24",
@@ -197,7 +224,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "GBB partial-feedback fixed-price bilateral trade, correlated/adversarial values (also CJLZ25, LCM25b)",
+   "setting_description": "Bilateral trade, GBB fixed-price mechanisms, partial (one-bit) feedback, adversarial values",
    "bound": {
     "notation": "O_tilde",
     "expression": "T**(3/4)",
@@ -215,7 +242,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "GBB partial-feedback fixed-price bilateral trade, independent values",
+   "setting_description": "Bilateral trade, GBB fixed-price mechanisms, partial feedback, independent values",
    "bound": {
     "notation": "O_tilde",
     "expression": "T**(2/3)",
@@ -223,6 +250,42 @@
     "regime": null
    },
    "where": "Table 2"
+  },
+  {
+   "cited_key": "CCCFL24mor",
+   "cited_title": null,
+   "cited_first_author": null,
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Bilateral trade, fixed-price mechanisms, full feedback, independent/correlated values",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(1/2)",
+    "expression_latex": "T^{1/2}",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "BCCF24",
+   "cited_title": null,
+   "cited_first_author": null,
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": "ProfitMax",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "ProfitMax subroutine, one-bit feedback, adversarial values: regret until profit threshold beta' reached, w.p. 1-1/T",
+   "bound": {
+    "notation": "exact",
+    "expression": "(8*beta_p + 8)*log(T) + 5*T/K_p + 256*sqrt(T*F_K*log(T*F_K))*log(T)",
+    "expression_latex": "(8\\beta' + 8)\\log(T) + \\frac{5T}{K'} + 256\\sqrt{T |F_{K'}| \\log(T |F_{K'}|)} \\cdot \\log(T)",
+    "regime": "F_K = 2K'(log T + 1); beta_p = profit threshold; K_p = discretization parameter"
+   },
+   "where": "Proposition 1 (Lemma 5.1 of BCCF24)"
   }
  ],
  "_run": {
@@ -231,16 +294,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-21T09:46:17",
+  "date": "2026-10-21T18:26:13",
   "source_chars": 54846,
-  "input_tokens": 60192,
-  "output_tokens": 3441,
-  "cost_usd_equiv": 0.3327748,
+  "input_tokens": 66788,
+  "output_tokens": 4213,
+  "cost_usd_equiv": 0.349534,
   "status": "extracted"
  }
 }

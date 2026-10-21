@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Efficient Automatic CASH via Rising Bandits",
   "arxiv_id": "2012.04371",
@@ -21,12 +21,12 @@
    "name_in_paper": "Rising Bandits",
    "objective": "other_pure_exploration",
    "feedback": "bandit",
-   "environment": "adversarial_restricted",
+   "environment": "adversarial_adaptive",
    "action_space": "finite_K",
    "function_class": [],
    "domain": "not_applicable",
    "context": "none",
-   "noise": "noise_free",
+   "noise": "bounded_01",
    "learner_knows": [
     "T",
     "K"
@@ -41,39 +41,72 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
    },
-   "parameters": {
-    "restriction": "each arm has a fixed deterministic reward function r_k(n) of its pull count, bounded in [0,1], increasing and concave (Assumption 1)"
+   "noise_detail": {
+    "variance": "not_applicable"
    },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "comparison": "not_applicable",
+    "model": "not_applicable",
+    "winner": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Rested rising bandit: reward of arm k on its n-th pull is r_k(n), deterministic, increasing and concave in n",
-    "Objective is the maximum observed reward J(T;pi)=max_t r_{pi(t)}(N_{pi(t)}(t)+1); regret is max over policies of J minus J of the learner (not cumulative regret)"
+    "Rested rising bandit: arm k's reward on its n-th pull is a deterministic fixed function r_k(n) in [0,1], increasing and concave in n (Assumption 1)",
+    "Objective is the maximum observed reward max_t r_{pi(t)}(N+1) within T, regret against the best pull sequence (not cumulative reward)",
+    "Environment is deterministic with rewards depending on the learner's own pull counts; mapped to adversarial_adaptive only as closest vocabulary"
    ],
-   "definition_quote": "In Rising Bandits, we model the non-stationary reward sequences of the arms as follows: each arm $k$ has a fixed underlying reward function denoted by $r_k(.)$. All the reward functions are bounded within $[0, 1]$. When the agent pulls arm $k$ for the $n^{th}$ time, he receives an instantaneous reward $r_k(n)$. ... the objective of the agent in CASH is to maximize the observed reward within $T$ ... \\textbf{Assumption 1. } (Rising) $\\forall{k} \\in [K]$, $r_k(n)$ is bounded, increasing, and concave in $n$."
+   "definition_quote": "each arm $k$ has a fixed underlying reward function denoted by $r_k(.)$. All the reward functions are bounded within $[0, 1]$. When the agent pulls arm $k$ for the $n^{th}$ time, he receives an instantaneous reward $r_k(n)$. ... the objective of the agent in CASH is to maximize the observed reward within $T$ ... $J(T;\\pi) = \\max_{t=1:T} r_{\\pi(t)}(N_{\\pi(t)}(t) + 1)$ ... $R(T;\\pi) = \\max_{\\tilde{\\pi} \\in \\Pi}\\{J(T;\\tilde{\\pi})\\} - J(T; \\pi)$. Assumption 1 (Rising) $\\forall k$, $r_k(n)$ is bounded, increasing, and concave in $n$."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Online algorithm for Rising Bandit (Algorithm 1)",
+   "name": "Online algorithm for Rising Bandit (elimination with concave upper bounds)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
-    "elimination"
+    "elimination",
+    "optimism"
    ],
    "requires_knowledge_of": [
     "T"
@@ -95,18 +128,18 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "r_opt(T) - r_opt(T - (n_paper - 1)*gamma_id)",
+    "expression": "r_star(T) - r_star(T - (n_paper - 1)*gamma_id)",
     "expression_latex": "R(T; \\bar{\\pi}) \\le r_{k_{\\ast}^T}(T) - r_{k_{\\ast}^T}(T - (n-1)\\gamma(T))",
     "regime": null
    },
    "symbols": {
-    "r_opt": "reward function r_{k*}(.) of the optimal arm for horizon T",
-    "gamma_id": "gamma(T) = max_k gamma_k(T), the number of steps needed to distinguish suboptimal arm k from the optimal arm via the upper/lower bound elimination criterion",
-    "n_paper": "the paper's n (not defined in the theorem; presumably the number of arms K)"
+    "r_star": "reward function r_{k*}(.) of the optimal arm for horizon T",
+    "gamma_id": "gamma(T) = max_k gamma_k(T), the number of steps needed to distinguish sub-optimal arm k from the optimal arm via the elimination bounds",
+    "n_paper": "the paper's n in the bound (undefined in the statement; likely the number of arms K)"
    },
    "conditions": [
-    "Assumption 1: each r_k is bounded in [0,1], increasing and concave",
-    "deterministic rewards"
+    "Assumption 1: each r_k(n) bounded, increasing and concave in n",
+    "rewards deterministic"
    ],
    "tuning": [],
    "is_new": true,
@@ -116,7 +149,7 @@
     "quote": "Suppose Assumption 1 holds. The proposed algorithm achieves regret bounded by, R(T; \\bar{\\pi}) \\le r_{k_{\\ast}^T}(T) - r_{k_{\\ast}^T}(T - (n-1)\\gamma(T))."
    },
    "confidence": "medium",
-   "notes": "Regret is with respect to the max-observed-reward objective, not cumulative reward; quantity set to 'other'. Rewards are deterministic so the bound holds surely. Meaning of n in the theorem is not defined in the main text (likely K)."
+   "notes": "Regret is on the maximum-observed-reward objective, not cumulative; quantity 'other'. Rewards are deterministic so the bound holds surely. The symbol n in the statement is not defined; probably K."
   },
   {
    "id": "r2",
@@ -132,16 +165,16 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "r_opt(T) - r_uni",
+    "expression": "r_star(T) - r_best(T/K)",
     "expression_latex": "R(T; \\bar{\\pi}) \\le R(T; \\pi_{uni}) = r_{k_{\\ast}^T}(T) - \\max_k r_k(\\frac{T}{K})",
     "regime": "gamma(T) <= (K*T - T)/(K*(K-1))"
    },
    "symbols": {
-    "r_opt": "reward function value r_{k*}(T) of the optimal arm",
-    "r_uni": "max_k r_k(T/K), the best reward reached by the uniform policy pulling each arm T/K times"
+    "r_star": "reward function of the optimal arm",
+    "r_best": "r_best(x) = max_k r_k(x)"
    },
    "conditions": [
-    "Assumption 1 holds",
+    "Assumption 1: rewards bounded, increasing, concave",
     "gamma(T) <= (KT - T)/(K(K-1))"
    ],
    "tuning": [],
@@ -152,7 +185,7 @@
     "quote": "When the problem-dependent term $\\gamma(T)$ satisfies: $\\gamma(T) \\le \\frac{KT - T}{K(K-1)}$, the regret of the proposed algorithm will not be worse than the average strategy's. R(T; \\bar{\\pi}) \\le R(T; \\pi_{uni})."
    },
    "confidence": "medium",
-   "notes": "Comparison with the average policy; expression substitutes the paper's stated regret of the uniform policy."
+   "notes": "Comparison with uniform allocation policy; expression substitutes the paper's formula for R(T; pi_uni)."
   }
  ],
  "cited_results": [],
@@ -162,16 +195,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-21T10:01:21",
+  "date": "2026-10-21T18:42:58",
   "source_chars": 59734,
-  "input_tokens": 55936,
-  "output_tokens": 3042,
-  "cost_usd_equiv": 0.29074679999999997,
+  "input_tokens": 62532,
+  "output_tokens": 3424,
+  "cost_usd_equiv": 0.299706,
   "status": "extracted"
  }
 }

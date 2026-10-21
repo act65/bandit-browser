@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Efficient Online Lexicographic Generalized Low-Rank Matrix Bandits",
   "arxiv_id": "2608.04324",
@@ -25,12 +25,15 @@
    "function_class": [],
    "domain": "not_applicable",
    "context": "none",
-   "noise": "conditionally_subgaussian",
+   "noise": "bounded_pm1",
    "learner_knows": [
     "T",
     "S",
+    "r_rank",
     "c_mu",
-    "sigma"
+    "k_mu",
+    "loss_range",
+    "moment_bound"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -40,31 +43,64 @@
     "access": "explicit",
     "norm_bound": "unit_l2",
     "parameter_set": "l2_ball",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "low_rank"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
-   "in_scope": true,
-   "out_of_scope_reason": null,
+   "in_scope": false,
+   "out_of_scope_reason": "Multi-objective (vector-valued) rewards with lexicographic preference; ontology scope excludes multi-objective rewards.",
    "unmapped": [
-    "Matrix-valued arms X in R^{d1 x d2} with ||X||_F <= 1; parameter matrices Theta_i^* of rank at most r with ||Theta_i^*||_F <= S",
-    "Multi-objective (m objectives) vector-valued reward, each objective with its own GLM link mu_i and parameter Theta_i^*; regret measured per objective against the lexicographically optimal arm",
-    "Lexicographic trade-off assumption with known parameter w (Assumption 5)",
-    "Bounded noise |eta| <= R and bounded mean |mu_i| <= U",
-    "Existence of an exploration distribution D over the arm set with bounded second moment M of the score function and pairwise-independent rows or columns (Assumption 6)",
-    "Learner uses rank r, w, D_rr (r-th singular value lower bound), M, L_mu, U, R in tuning"
+    "m objectives with vector-valued reward, each with its own GLM link and rank-<=r parameter matrix Theta_i in R^{d1 x d2}",
+    "lexicographic preference order; regret per objective w.r.t. lexicographically optimal arm",
+    "lexicographic trade-off assumption with parameter w (Assumption 5)",
+    "matrix-valued arms with ||X||_F <= 1, ||Theta_i||_F <= S",
+    "existence of exploration distribution with bounded score second moment M (Assumption 6)",
+    "bounded mean |mu_i| <= U and noise |eta| <= R"
    ],
-   "definition_quote": "At each round $t\\in[T]$, the learner first observes the arm set $\\SX\\subseteq\\R^{d_1\\times d_2}$, selects an arm $\\X_t\\in\\SX$, and then receives a stochastic reward vector $y_t=(y_{t,1},\\ldots,y_{t,m})\\in\\R^m$ ... $\\E[y_{t,i}\\mid \\X_t]=\\mu_i(\\langle \\X_t,\\Theta_i^*\\rangle)$"
+   "definition_quote": "At each round $t\\in[T]$, the learner first observes the arm set $\\SX\\subseteq\\R^{d_1\\times d_2}$, selects an arm $\\X_t\\in\\SX$, and then receives a stochastic reward vector $y_t=(y_{t,1},\\ldots,y_{t,m})\\in\\R^m$... $\\E[y_{t,i}\\mid \\X_t]=\\mu_i(\\langle \\X_t,\\Theta_i^*\\rangle)$"
   }
  ],
  "algorithms": [
@@ -79,15 +115,15 @@
    ],
    "requires_knowledge_of": [
     "T",
+    "r_rank",
+    "w",
     "S",
     "c_mu",
-    "sigma",
-    "r",
-    "w",
-    "D_rr",
+    "k_mu",
     "M",
-    "L_mu",
-    "delta"
+    "D_rr",
+    "U",
+    "R"
    ]
   },
   {
@@ -97,21 +133,20 @@
    "is_new": true,
    "techniques": [
     "elimination",
-    "ftrl_or_mirror_descent",
+    "optimism",
     "other"
    ],
    "requires_knowledge_of": [
     "T",
+    "r_rank",
+    "w",
     "S",
     "c_mu",
-    "sigma",
-    "r",
-    "w",
-    "D_rr",
+    "k_mu",
     "M",
-    "L_mu",
+    "D_rr",
     "U",
-    "delta"
+    "R"
    ]
   }
  ],
@@ -130,37 +165,40 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O_tilde",
-    "expression": "W_sca*(d_1 + d_2)*r*sqrt(T)",
-    "expression_latex": "\\widetilde O\\!\\left(W^{\\rm sca}\\cdot(d_1+d_2)r\\sqrt{T}\\right)",
+    "expression": "W_sca*(d_1 + d_2)*r_rank*sqrt(T)",
+    "expression_latex": "\\widetilde O\\left(W^{\\rm sca}\\cdot(d_1+d_2)r\\sqrt{T}\\right)",
     "regime": null
    },
    "symbols": {
-    "d_1": "number of rows of matrix arms",
-    "d_2": "number of columns of matrix arms",
-    "r": "upper bound on rank of each parameter matrix",
-    "W_sca": "sum_{i=1}^{m_obj} (1+w)^{i-1}",
+    "d_1": "row dimension of matrix arms",
+    "d_2": "column dimension of matrix arms",
+    "W_sca": "sum_{i=1}^{m} (1+w)^{i-1}, m = number of objectives, w = lexicographic trade-off parameter",
     "w": "lexicographic trade-off parameter (Assumption 5)",
-    "m_obj": "number of objectives"
+    "M": "bound on second moment of score function of exploration distribution",
+    "D_rr": "minimum over objectives of r-th largest singular value of Theta_i",
+    "U": "bound on |mu_i|",
+    "R": "bound on noise magnitude"
    },
    "conditions": [
-    "Assumptions 1-6 (low rank, ||Theta_i||_F<=S, ||X||_F<=1, c_mu<=mu_i'<=L_mu, bounded rewards U and noise R, lexicographic trade-off w, exploration distribution with score moment M)",
-    "regret bound holds for each objective i in [m_obj]",
-    "proof additionally uses sqrt(M(d1+d2)r)/D_rr <~ (d1+d2)r and treats U, L_mu, R, c_mu, S as constants"
+    "Assumptions 1-6 (rank <= r, ||Theta_i||_F <= S, ||X||_F <= 1, c_mu <= mu_i' <= L_mu, bounded rewards/noise, lexicographic trade-off w, exploration distribution with bounded score moment M)",
+    "U, R, L_mu, c_mu, S treated as constants",
+    "sqrt(M(d1+d2)r)/D_rr <= O((d1+d2)r) (scaling condition used in proof)",
+    "bound holds for every objective i in [m]"
    ],
    "tuning": [
     "T_1 ~ sqrt(M(d1+d2) r T log((d1+d2)m/delta))/D_rr",
     "lambda_0 = max{1, c_mu/2}",
-    "lambda_perp = c_mu T/(k log(1+c_mu T/(k lambda_0))), k=(d1+d2)r-r^2",
+    "lambda_perp = c_mu T/(k log(1 + c_mu T/(k lambda_0))), k=(d1+d2)r-r^2",
     "S_perp = sqrt(M(d1+d2) r log(m(d1+d2)/delta)/(D_rr^2 T))"
    ],
    "is_new": true,
    "source": {
     "label": "thm:scalar_lowglm",
     "number": "Theorem 1",
-    "quote": "Suppose that Assumptions~\\ref{ass:low_rank}--\\ref{ass:exploration} hold. ... Then, with probability at least $1-2\\delta$, for every objective $i\\in[m]$, the cumulative regret satisfies $R_i(T)=\\widetilde O\\!\\left(W^{\\rm sca}\\cdot(d_1+d_2)r\\sqrt{T}\\right)$, where $W^{\\rm sca}=\\sum_{i=1}^m (1+w)^{i-1}$."
+    "quote": "Then, with probability at least $1-2\\delta$, for every objective $i\\in[m]$, the cumulative regret satisfies \\[ R_i(T)= \\widetilde O\\!\\left(W^{\\rm sca}\\cdot(d_1+d_2)r\\sqrt{T}\\right), \\] where $W^{\\rm sca}=\\sum_{i=1}^m (1+w)^{i-1}$."
    },
    "confidence": "medium",
-   "notes": "Probability 1-2delta. Regret is defined through means (pseudo-regret on the realized arm sequence) but holds w.h.p. Multi-objective lexicographic setting not fully captured by the ontology."
+   "notes": "Regret is per-objective pseudo-regret through means, holding w.p. 1-2delta. Multi-objective setting (out of scope). k_mu corresponds to the paper's L_mu."
   },
   {
    "id": "r2",
@@ -176,41 +214,45 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O_tilde",
-    "expression": "W_lex_i*sqrt(m_obj)*(d_1 + d_2)*r*sqrt(T)",
+    "expression": "W_lex_i*sqrt(m_obj)*(d_1 + d_2)*r_rank*sqrt(T)",
     "expression_latex": "\\widetilde O\\left(W_i^{\\rm lex}\\sqrt{m}\\cdot(d_1+d_2)r\\sqrt{T}\\right)",
     "regime": null
    },
    "symbols": {
-    "d_1": "number of rows of matrix arms",
-    "d_2": "number of columns of matrix arms",
-    "r": "upper bound on rank of each parameter matrix",
+    "d_1": "row dimension of matrix arms",
+    "d_2": "column dimension of matrix arms",
     "W_lex_i": "1 + w + ... + w^{i-1} for objective i",
+    "m_obj": "number of objectives",
     "w": "lexicographic trade-off parameter (Assumption 5)",
-    "m_obj": "number of objectives"
+    "M": "bound on second moment of score function of exploration distribution",
+    "D_rr": "minimum over objectives of r-th largest singular value of Theta_i",
+    "U": "bound on |mu_i|",
+    "R": "bound on noise magnitude"
    },
    "conditions": [
     "Assumptions 1-6",
-    "bound for each objective i in [m_obj]",
-    "proof additionally uses sqrt(M(d1+d2)r)/D_rr <~ (d1+d2)r and treats U, L_mu, R, c_mu, S as constants"
+    "U, R, L_mu, c_mu, S treated as constants",
+    "sqrt(M(d1+d2)r)/D_rr <= O((d1+d2)r) (scaling condition used in proof)",
+    "bound holds for every objective i in [m]"
    ],
    "tuning": [
-    "same parameters as Theorem 1 (T_1, lambda_0, lambda_perp, S_perp)"
+    "same parameters as Theorem 1: T_1 ~ sqrt(M(d1+d2) r T log((d1+d2)m/delta))/D_rr, lambda_0 = max{1,c_mu/2}, lambda_perp = c_mu T/(k log(1+c_mu T/(k lambda_0))), S_perp as in Theorem 1"
    ],
    "is_new": true,
    "source": {
     "label": "thm:lexi_lowglm_ucb",
     "number": "Theorem 2",
-    "quote": "Suppose that Assumptions~\\ref{ass:low_rank}--\\ref{ass:exploration} hold, and run Algorithm~\\ref{alg:lexi_ucb} with the same parameters as specified in Theorem~\\ref{thm:scalar_lowglm}. Then, with probability at least $1-2\\delta$, for every objective $i\\in[m]$, the cumulative regret satisfies $R_i(T)=\\widetilde O\\left(W_i^{\\rm lex}\\sqrt{m}\\cdot(d_1+d_2)r\\sqrt{T}\\right)$, where $W_i^{\\rm lex} = 1+w+\\cdots+w^{i-1}$."
+    "quote": "Then, with probability at least $1-2\\delta$, for every objective $i\\in[m]$, the cumulative regret satisfies \\begin{equation*} R_i(T)=\\widetilde O\\left(W_i^{\\rm lex}\\sqrt{m}\\cdot(d_1+d_2)r\\sqrt{T}\\right), \\end{equation*} where $W_i^{\\rm lex} = 1+w+\\cdots+w^{i-1}$."
    },
    "confidence": "medium",
-   "notes": "Online Newton-step estimator updates; O(T) total estimator update cost. Probability 1-2delta."
+   "notes": "Per-objective regret through means w.p. 1-2delta; online Newton-step updates, O(T) total estimator-update cost. m here is the number of objectives (declared m_obj)."
   }
  ],
  "cited_results": [
   {
    "cited_key": "Kang:2022",
    "cited_title": null,
-   "cited_first_author": null,
+   "cited_first_author": "Kang",
    "cited_year": 2022,
    "cited_arxiv_id": null,
    "algorithm_name": "G-ESTT",
@@ -219,7 +261,7 @@
    "setting_description": "Single-objective generalized low-rank matrix bandits",
    "bound": {
     "notation": "O_tilde",
-    "expression": "(d_1 + d_2)*r*sqrt(T)",
+    "expression": "(d_1 + d_2)*r_rank*sqrt(T)",
     "expression_latex": "\\widetilde O((d_1+d_2)r\\sqrt{T})",
     "regime": null
    },
@@ -229,19 +271,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:35:34",
+  "date": "2026-10-21T18:03:30",
   "source_chars": 96760,
-  "input_tokens": 81560,
-  "output_tokens": 4342,
-  "cost_usd_equiv": 0.5217388000000001,
+  "input_tokens": 88147,
+  "output_tokens": 4535,
+  "cost_usd_equiv": 0.526846,
   "status": "extracted"
  }
 }

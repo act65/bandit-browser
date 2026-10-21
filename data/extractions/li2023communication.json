@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Communication-Efficient Federated Non-Linear Bandit Optimization",
   "arxiv_id": "2311.01695",
@@ -26,13 +26,13 @@
    "noise": "subgaussian",
    "learner_knows": [
     "T",
+    "N",
     "sigma",
-    "d"
+    "function_class"
    ],
    "instance_assumptions": [],
    "extras": [
-    "federated",
-    "multi_agent_cooperative"
+    "federated"
    ],
    "action_set": {
     "shape": "not_applicable",
@@ -40,30 +40,62 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "realizable_general_class"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "N clients interacting round-robin with a central server (star network); total NT interactions",
-    "Domain X subset of [0,1]^{d_x}; realizable parametric class f_w with W subset [0,1]^{d_w}",
-    "Bounded, differentiable, smooth function approximation (constants F, C_g, C_h)",
-    "Growth condition / local strong convexity (mu), dissipativity and local self-concordance of expected loss L(w)",
-    "Algorithm tuning uses F, mu, d_w, C_h; communication cost also measured"
+    "N clients interact round-robin with a shared function for T rounds each (NT total interactions), star-shaped communication via a server; communication cost is also measured",
+    "Parametric class f_w with w in [0,1]^{d_w}, domain X subset [0,1]^{d_x}; bounded |f|<=F, gradient bound C_g and Hessian bound C_h in w",
+    "Geometric conditions on expected squared loss L(w): (tau,gamma)-growth or local mu-strong convexity, dissipativity, local self-concordance",
+    "Learner uses knowledge of F, mu, d_w to set communication threshold"
    ],
-   "definition_quote": "In each round, $N$ clients interact with the unknown function $f$ in a round-robin manner, for a total number of $T$ rounds, so the total number of interactions is $NT$. ... $y_{t}=f(\\bx_{t}) + \\eta_{t}$ ... $\\eta_{t}$ is independent, zero-mean, $\\sigma$-sub-Gaussian noise ... $R_{NT}=\\sum_{t=1}^{NT} f(\\bx^*) - f(\\bx_t)$"
+   "definition_quote": "In each round, $N$ clients interact with the unknown function $f$ in a round-robin manner, for a total number of $T$ rounds ... $y_{t}=f(\\bx_{t}) + \\eta_{t}$ ... $\\eta_{t}$ is independent, zero-mean, $\\sigma$-sub-Gaussian noise ... $R_{NT}=\\sum_{t=1}^{NT} f(\\bx^*) - f(\\bx_t)$"
   }
  ],
  "algorithms": [
@@ -73,17 +105,15 @@
    "registry_id": null,
    "is_new": true,
    "techniques": [
-    "explore_then_commit",
     "optimism",
+    "explore_then_commit",
     "other"
    ],
    "requires_knowledge_of": [
     "T",
+    "N",
     "sigma",
-    "d",
-    "F",
-    "mu",
-    "N"
+    "function_class"
    ]
   }
  ],
@@ -107,29 +137,28 @@
     "regime": "T >= C d_w^2 F^4 iota^2 / N * max{mu^{gamma/(2-gamma)}/tau^{2/(2-gamma)}, zeta/(mu c^2)}^2"
    },
    "symbols": {
-    "N": "number of clients",
+    "d_w": "parameter dimension of the function class",
     "F": "bound on |f_x(w)|",
-    "d_w": "parameter dimension",
-    "mu_sc": "local strong convexity parameter mu of expected loss (Assumption 3)"
+    "mu_sc": "local strong convexity parameter mu of the expected loss L(w) at w*"
    },
    "conditions": [
-    "Assumptions 1-3 (realizability, bounded/smooth approximation, growth/local strong convexity, dissipativity, local self-concordance)",
-    "T >= C d_w^2 F^4 iota^2/N * max{...}^2"
+    "Assumptions 1-3: realizability, bounded/smooth function approximation, growth/local strong convexity, dissipativity, local self-concordance",
+    "T lower bound as in regime"
    ],
    "tuning": [
     "T_0 = sqrt(NT)",
     "lambda = C_lambda sqrt(NT)",
     "gamma = d_w F^4 T/(mu^2 N)",
-    "epsilon <= 8/(C sqrt(NT))"
+    "oracle approximation epsilon <= 8/(C sqrt(NT))"
    ],
    "is_new": true,
    "source": {
     "label": "thm:regret_communication",
     "number": "Theorem 5",
-    "quote": "Algorithm \\ref{alg:fed_go_ucb} with parameters $T_{0}=\\sqrt{NT}$, $\\lambda=C_{\\lambda}\\sqrt{NT}$, $\\gamma=\\frac{d_{w} F^{4} T}{\\mu^{2}N}$, and $\\epsilon \\leq \\frac{8}{C \\sqrt{NT}}$, has cumulative regret $R = \\tilde{O} (\\sqrt{NT}F + \\sqrt{NT} d_{w}^{3}F^{4}/\\mu^{2} + N d_{w}^{4}F^{4}/\\mu^{2})$, with probability at least $1-\\delta$"
+    "quote": "Algorithm \\ref{alg:fed_go_ucb} with parameters $T_{0}=\\sqrt{NT}$, $\\lambda=C_{\\lambda}\\sqrt{NT}$, $\\gamma=\\frac{d_{w} F^{4} T}{\\mu^{2}N}$, and $\\epsilon \\leq \\frac{8}{C \\sqrt{NT}}$, has cumulative regret $R = \\tilde{O}(\\sqrt{NT}F + \\sqrt{NT} d_{w}^{3}F^{4}/\\mu^{2} + N d_{w}^{4}F^{4}/\\mu^{2})$ with probability at least $1-\\delta$"
    },
    "confidence": "medium",
-   "notes": "Regret over NT total interactions plus Phase I. Setting does not fit a standard action-space category well (generic parametric nonlinear function on continuous domain)."
+   "notes": "Regret over NT total interactions (Phase I + Phase II). Regret is the realized sum f(x*)-f(x_t) bounded w.p. 1-delta."
   },
   {
    "id": "r2",
@@ -147,24 +176,23 @@
     "notation": "O_tilde",
     "expression": "N**1.5*sqrt(T)*d_w*d_x*exp(d_x) + N**1.5*d_w**2*mu_sc/F**2",
     "expression_latex": "\\tilde{O}(N^{1.5} \\sqrt{T}d_{w}d_{x}\\exp{(d_{x})}+N^{1.5} d_{w}^{2}\\mu/F^{2} )",
-    "regime": null
+    "regime": "same T lower bound as Theorem 5"
    },
    "symbols": {
-    "N": "number of clients",
-    "F": "bound on |f_x(w)|",
     "d_w": "parameter dimension",
-    "d_x": "domain dimension",
+    "d_x": "input domain dimension",
+    "F": "bound on |f_x(w)|",
     "mu_sc": "local strong convexity parameter mu"
    },
    "conditions": [
-    "Assumptions 1-3",
-    "same T condition as regret bound"
+    "Assumptions 1-3"
    ],
    "tuning": [
     "T_0 = sqrt(NT)",
     "lambda = C_lambda sqrt(NT)",
     "gamma = d_w F^4 T/(mu^2 N)",
-    "epsilon <= 8/(C sqrt(NT))"
+    "epsilon <= 8/(C sqrt(NT))",
+    "Oracle = distributed GLD"
    ],
    "is_new": true,
    "source": {
@@ -173,26 +201,26 @@
     "quote": "and communication cost $C_{\\text{phase I + phase II}} = \\tilde{O}(N^{1.5} \\sqrt{T}d_{w}d_{x}\\exp{(d_{x})}+N^{1.5} d_{w}^{2}\\mu/F^{2} )$."
    },
    "confidence": "medium",
-   "notes": "Communication cost (number of real numbers transferred). Theorem does not separately state probability for communication cost; marked high-probability by context."
+   "notes": "Communication cost = total number of real numbers transferred. Probability qualifier not explicitly attached to communication cost in the statement; treated as part of the same high-probability theorem."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:42:31",
+  "date": "2026-10-21T18:10:20",
   "source_chars": 104693,
-  "input_tokens": 85128,
-  "output_tokens": 3402,
-  "cost_usd_equiv": 0.5314828,
+  "input_tokens": 91715,
+  "output_tokens": 3676,
+  "cost_usd_equiv": 0.5382100000000001,
   "status": "extracted"
  }
 }

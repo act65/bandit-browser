@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Quantum Bandits",
   "arxiv_id": "2002.06395",
@@ -34,27 +34,59 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
-   "in_scope": true,
-   "out_of_scope_reason": null,
+   "in_scope": false,
+   "out_of_scope_reason": "Quantum oracle access: the agent queries the environment via unitary oracles O_e and O_f in superposition.",
    "unmapped": [
-    "Quantum access model: the agent queries the environment in superposition via unitary oracles O_e (preparing sum_y sqrt(nu_x(y))|y>) and O_f (phase oracle on reward f(x,y) in {0,1}); 'rounds' are oracle applications, not classical samples",
-    "Choosing the number of rounds n ≈ (pi/4) sqrt(1/p) requires knowing p = sum_x |<x|A|0>|^2 a_x"
+    "environment accessed through quantum unitary oracles (superposition queries over actions and environment states)"
    ],
-   "definition_quote": "we define a composite Hilbert space $\\Hi = \\Hi_X\\otimes\\Hi_Y$ ... \\forall x \\in X, O_e\\ket{x 0} = \\ket{x \\psi_x} : \\abs{\\braket{y}{\\psi_x}}^2 = \\nu_x(y) ... O_f\\ket{xy} = -\\ket{x y} if f(x,y) = 1, \\ket{x y} otherwise."
+   "definition_quote": "we define a composite Hilbert space $\\Hi = \\Hi_X\\otimes\\Hi_Y$ ... prepare the state of the environment in a superposition $\\ket{\\psi_x} = \\sum_{y \\in Y} \\sqrt{\\nu_x(y)} \\ket{y}$ ... we build the oracle $O_f$ on the composite Hilbert space of the agent and the environment"
   }
  ],
  "algorithms": [
@@ -66,9 +98,7 @@
    "techniques": [
     "other"
    ],
-   "requires_knowledge_of": [
-    "p (average success probability under A) to set the number of rounds"
-   ]
+   "requires_knowledge_of": []
   }
  ],
  "results": [
@@ -86,21 +116,21 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "w_star*mu_star/p",
+    "expression": "A_star*mu_star/p_q",
     "expression_latex": "P_{n}(\\tilde x ) = \\abs{\\bra{\\tilde x }A\\ket{0}}^2\\frac{a^*}{p}",
     "regime": "n approx (pi/4)*sqrt(1/p) - 1/2"
    },
    "symbols": {
-    "w_star": "|<x*|A|0>|^2, initial amplitude-squared of the optimal action under the agent's preparation unitary A",
-    "p": "sin(theta)^2 = sum_x |<x|A|0>|^2 a_x, initial probability of measuring a rewarding state",
-    "n": "number of applications of the Grover-type operator G"
+    "A_star": "|<x*|A|0>|^2, initial amplitude-squared of the optimal action",
+    "p_q": "p = sin(theta)^2, probability of a good (reward-1) outcome in the initial state",
+    "P_n": "probability QBAI recommends the optimal action after n oracle rounds"
    },
    "conditions": [
-    "rewards f(x,y) in {0,1}",
-    "quantum oracle access to environment via O_e and O_f"
+    "Rewards f(x,y) in {0,1}",
+    "quantum oracle access to environment"
    ],
    "tuning": [
-    "n ≈ (pi/4) sqrt(1/p) - 1/2"
+    "n approx (pi/4)*sqrt(1/p) - 1/2 rounds"
    ],
    "is_new": true,
    "source": {
@@ -109,7 +139,7 @@
     "quote": "The probability $P_{n}(\\tilde x)$ that QBAI will recommend the optimal action $\\tilde x$ is maximized when $n \\approx \\frac{\\pi}{4}\\sqrt{1/p} - \\frac{1}{2}$. It follows that {$P_{n}(\\tilde x ) = \\abs{\\bra{\\tilde x }A\\ket{0}}^2\\frac{a^*}{p}$}."
    },
    "confidence": "low",
-   "notes": "Result gives the (maximal) probability of recommending the optimal arm, not a regret/error bound; recorded as quantity 'other'. With uniform A, success probability is a*/(N E_X[a_x]) after about (pi/4)/sqrt(E_X[a_x]) rounds (paper's discussion, not a separate formal statement). Quantum oracle model, not directly comparable to classical sample complexity."
+   "notes": "Statement is an exact value of the success probability (recommendation probability of the optimal arm), not an error bound; quantity 'other', probability field set to 'expectation' only because the schema forces a value. With uniform A, success probability a*/(N E_X[a_x]) after about (pi/4)/sqrt(E_X[a_x]) rounds. Out of scope (quantum oracle)."
   }
  ],
  "cited_results": [
@@ -122,30 +152,12 @@
    "algorithm_name": "UCB-E",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Classical stochastic BAI, fixed budget T, Bernoulli rewards, K=N arms; probability of not recommending the best arm with well-tuned exploration parameter",
+   "setting_description": "Classical stochastic K-armed best arm identification with fixed budget T, Bernoulli rewards; error probability of recommending a suboptimal arm",
    "bound": {
     "notation": "exact",
     "expression": "2*T*K*exp(-(T - K)/(18*H_1))",
     "expression_latex": "e_T <  2T N\\exp\\left(- \\frac{T - N}{18H_1}\\right)",
-    "regime": null
-   },
-   "where": "Section 2.2"
-  },
-  {
-   "cited_key": "best_arm_ident",
-   "cited_title": "Best Arm Identification in Multi-Armed Bandits",
-   "cited_first_author": "Jean-Yves Audibert",
-   "cited_year": 2010,
-   "cited_arxiv_id": null,
-   "algorithm_name": "UCB-E",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Classical stochastic BAI; number of rounds sufficient for UCB-E to recommend the best arm with probability >= 1-delta (deduced from the error bound)",
-   "bound": {
-    "notation": "exact",
-    "expression": "18*H_1*log(2*K/delta) + K",
-    "expression_latex": "T >  18H_1\\ln\\left(\\frac{2N}{\\delta}\\right) + N",
-    "regime": null
+    "regime": "exploration parameter p well tuned"
    },
    "where": "Section 2.2"
   }
@@ -156,16 +168,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-21T09:52:35",
+  "date": "2026-10-21T18:33:17",
   "source_chars": 36882,
-  "input_tokens": 45364,
-  "output_tokens": 2916,
-  "cost_usd_equiv": 0.20365080000000002,
+  "input_tokens": 106690,
+  "output_tokens": 4978,
+  "cost_usd_equiv": 0.2787696,
   "status": "extracted"
  }
 }

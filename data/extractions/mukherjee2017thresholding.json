@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Thresholding Bandits with Augmented UCB",
   "arxiv_id": "1704.02281",
@@ -16,8 +16,8 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Thresholding bandit problem (fixed budget)",
-   "objective": "other_pure_exploration",
+   "name_in_paper": "Fixed-budget thresholding bandit problem (TBP)",
+   "objective": "thresholding",
    "feedback": "bandit",
    "environment": "stochastic_iid",
    "action_space": "finite_K",
@@ -37,38 +37,71 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_unknown"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Thresholding bandit: identify all arms with mean above a known threshold tau; fixed budget T; loss = probability of mis-classification",
-    "Delta_i = |tau - r_i| is the distance to the threshold, not a gap to the best arm"
+    "Threshold tau is given to the learner; gaps are Delta_i = |tau - r_i| (distance to threshold), not to the best arm",
+    "Arm-dependent unknown variances sigma_i^2 enter the complexity"
    ],
-   "definition_quote": "the learning algorithm is provided with a threshold $\\tau$, and the objective, after exploring for $T$ rounds, is to output all arms $i$ whose $r_{i}$ is above $\\tau$. ... \\E[\\Ls(T)] = \\Pb\\big(\\lbrace S_{\\tau}\\cap \\hat{S}_{\\tau}^{c} \\neq \\emptyset \\rbrace \\cup \\lbrace \\hat{S}_{\\tau}\\cap S_{\\tau}^{c} \\neq \\emptyset\\rbrace\\big). ... the rewards are assumed to take values in $[0,1]$."
+   "definition_quote": "the learning algorithm is provided with a threshold $\\tau$, and the objective, after exploring for $T$ rounds, is to output all arms $i$ whose $r_{i}$ is above $\\tau$. ... the goal of the learning agent is to minimize the expected loss: $\\E[\\Ls(T)] = \\Pb(\\lbrace S_{\\tau}\\cap \\hat{S}_{\\tau}^{c} \\neq \\emptyset \\rbrace \\cup \\lbrace \\hat{S}_{\\tau}\\cap S_{\\tau}^{c} \\neq \\emptyset\\rbrace)$. ... the rewards are assumed to take values in $[0,1]$."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "AugUCB (Augmented-UCB)",
+   "name": "Augmented-UCB (AugUCB)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
-    "elimination",
-    "optimism"
+    "optimism",
+    "elimination"
    ],
    "requires_knowledge_of": [
     "T",
@@ -99,8 +132,7 @@
     "H_sigma_2": "max_i i / tilde_Delta_(i)^2 with tilde_Delta_i^2 = Delta_i^2/(sigma_i + sqrt(sigma_i^2 + (16/3) Delta_i)), Delta_i = |tau - r_i|"
    },
    "conditions": [
-    "K >= 4",
-    "rewards in [0,1]"
+    "K >= 4"
    ],
    "tuning": [
     "rho = 1/3"
@@ -112,7 +144,7 @@
     "quote": "For $K\\geq 4$ and $\\rho={1}/{3}$, the expected loss of the AugUCB algorithm is given by, \\E[\\Ls(T)] \\leq 2KT \\exp\\bigg(- \\frac{T}{4096 \\log( K\\log K) H_{\\sigma,2}} \\bigg)."
    },
    "confidence": "medium",
-   "notes": "Expected loss = probability of misclassification. The proof's final line gives 4KT rather than 2KT as in the statement; recorded as stated. Proof step (b) also uses an unstated assumption min Delta = sqrt(K log K / T)."
+   "notes": "Expected loss = probability of misclassification. The proof's last line gives 4KT rather than 2KT, and step (b) uses min_j Delta_j = sqrt(K log K / T), an implicit assumption; recorded as stated in the theorem."
   }
  ],
  "cited_results": [
@@ -125,7 +157,7 @@
    "algorithm_name": "UCBEV",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Thresholding bandit, fixed budget, expected loss (misclassification probability); UCBEV requires H_sigma_1 as input",
+   "setting_description": "Fixed-budget thresholding bandit, rewards in [0,1]; algorithm requires H_sigma_1 as input. H_sigma_1 = sum_i (sigma_i + sqrt(sigma_i^2+(16/3)Delta_i))/Delta_i^2.",
    "bound": {
     "notation": "exact",
     "expression": "exp(-(T - 2*K)/(512*H_sigma_1) + log(6*K*T))",
@@ -143,7 +175,7 @@
    "algorithm_name": "APT",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Thresholding bandit, fixed budget, expected loss; H_1 = sum_i 1/|tau - r_i|^2",
+   "setting_description": "Fixed-budget thresholding bandit; H_1 = sum_i 1/Delta_i^2 with Delta_i = |tau - r_i|.",
    "bound": {
     "notation": "exact",
     "expression": "exp(-T/(64*H_1) + 2*log((log(T) + 1)*K))",
@@ -161,7 +193,7 @@
    "algorithm_name": "CSAR",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Thresholding bandit, fixed budget, expected loss; H_CSAR_2 = max_i i/Delta_(i)^2",
+   "setting_description": "Fixed-budget thresholding bandit; H_CSAR_2 = max_i i/Delta_(i)^2.",
    "bound": {
     "notation": "exact",
     "expression": "exp(-(T - K)/(72*log(K)*H_CSAR_2) + 2*log(K))",
@@ -177,16 +209,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-21T09:54:33",
+  "date": "2026-10-21T18:35:12",
   "source_chars": 50337,
-  "input_tokens": 53312,
-  "output_tokens": 3108,
-  "cost_usd_equiv": 0.2710748,
+  "input_tokens": 59908,
+  "output_tokens": 3402,
+  "cost_usd_equiv": 0.278274,
   "status": "extracted"
  }
 }

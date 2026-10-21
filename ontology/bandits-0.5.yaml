@@ -45,7 +45,9 @@ dimensions:
       - {pair: [full_information, limited_advice], justification: "observing every expert's advice and loss includes observing M of them"}
       - {pair: [semi_bandit, bandit], justification: "a bandit algorithm can ignore per-arm feedback"}
       - {pair: [full_information, decoupled], justification: "full information reveals the exploration arm's loss too"}
-      - {pair: [bandit, partial_monitoring], justification: "bandit feedback is a partial-monitoring game whose feedback matrix reveals the loss of the chosen action"}
+      - {pair: [bandit, partial_monitoring], justification: "bandit feedback is a partial-monitoring game whose feedback matrix reveals the loss of the chosen action",
+         requires_general: {partial_monitoring.observability: [locally_observable, globally_observable, any_game]},
+         caveat: "only when the partial-monitoring setting is a class of games (which contains the bandit game), not one specific feedback mechanism"}
     # value_maps_up: symbols instantiated when a LOWER bound is transferred INTO a setting with this
     # value. Graph-feedback lower bounds are stated for every feedback graph G; bandit feedback is the
     # graph with self-loops only, whose independence number is K.
@@ -426,6 +428,7 @@ node_parameters:
       variance:
         values: [not_applicable, unspecified, homoscedastic, heteroscedastic_revealed, heteroscedastic_unknown]
         order: [[homoscedastic, heteroscedastic_revealed], [heteroscedastic_revealed, heteroscedastic_unknown]]
+        unspecified_means: homoscedastic   # resolve.py: a paper that says nothing uses the standard model
         note: "heteroscedastic_revealed: the per-round variance sigma_t^2 is observed; variance-aware bounds use Lambda_T"
   combinatorial:
     applies_to: "action_space = combinatorial; else all fields not_applicable"
@@ -597,3 +600,7 @@ vocabularies:
 #   + node parameters noise_detail, combinatorial (family, reward, loss_scale), reward_model, constraints,
 #     preference, partial_monitoring, delay
 #   + extras streaming_bounded_memory, rare_policy_updates; guidance lines for the expressible themes
+#   noise_detail.variance: `unspecified_means: homoscedastic` (applied by resolve.py) after the re-extraction showed
+#   455 unspecified vs 221 homoscedastic settings for the same standard model, which split core K-armed cells.
+#   bandit ⊑ partial_monitoring now `requires_general` a class of games (observability locally / globally / any):
+#   specific feedback mechanisms mapped to partial_monitoring (e.g. transparent auctions) are richer than bandit.

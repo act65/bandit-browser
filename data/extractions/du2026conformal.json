@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Conformal-Style Quantile Analyses for Stochastic Bandits",
   "arxiv_id": "2605.07115",
@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Stochastic K-armed bandit with upper-tail (conformal endpoint) pseudo-regret",
+   "name_in_paper": "Upper-tail (ACP) stochastic K-armed bandit",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -24,7 +24,8 @@
    "context": "none",
    "noise": "general_model_class",
    "learner_knows": [
-    "T"
+    "T",
+    "K"
    ],
    "instance_assumptions": [
     "unique_optimal_arm"
@@ -36,28 +37,61 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Arm value is the upper quantile F_j^{-1}(1-alpha/2) (conformal upper endpoint), not the mean; regret measured in these upper-tail values",
-    "Reward distributions continuous with densities satisfying local regularity (Assumption 1: density bounds f_min, f_max on reward-quantile neighborhoods, score density >= g_min near score quantiles)",
-    "Algorithm tuning needs local regularity constants (h_min, g_min, rho) through b >= 64/h_min, lambda <= b g_min/4, s_0 = ceil(b^2 log n/(16 rho^2))"
+    "Arm value is the upper quantile F_j^{-1}(1-alpha/2) (conformal upper endpoint), not the mean; regret measured on these quantile values",
+    "Rewards continuous with local density lower/upper bounds near reward and score quantiles (Assumption 1)",
+    "Learner needs local regularity constants r_y, r_s, g_min, h_min to tune b, lambda and initialization length"
    ],
-   "definition_quote": "The performance criterion associated with ACP-UCB1 is pseudo-regret under the population upper-tail values: R_n^{ACP} = n max_j u_j^* - E[sum_t u_{I_t}^*]. ... u_j^* = V_j(alpha) = q_j^high = F_j^{-1}(1-alpha/2)"
+   "definition_quote": "R_n^{\\rm ACP} = n\\max_{j\\in\\mathcal A}u_j^\\star - \\E[\\sum_{t=1}^n u_{I_t}^\\star], ... u_j^\\star = V_j(\\alpha)=q_j^{\\rm high}=F_j^{-1}(1-\\alpha/2)"
   }
  ],
  "algorithms": [
@@ -70,7 +104,12 @@
     "optimism"
    ],
    "requires_knowledge_of": [
-    "T"
+    "T",
+    "alpha (miscoverage level)",
+    "r_y",
+    "r_s",
+    "g_min",
+    "h_min"
    ]
   }
  ],
@@ -83,7 +122,7 @@
    "algorithm_class": null,
    "quantity": "other",
    "dependence": "instance_dependent",
-   "comparator": "not_applicable",
+   "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "known",
    "compute": "polynomial",
@@ -96,12 +135,12 @@
    "symbols": {
     "b": "exploration coefficient of ACP-UCB1",
     "B_j": "finite constant independent of n",
-    "Delta_i": "upper-tail (ACP) gap u_A^* - u_j^* of arm j (not the mean gap)"
+    "Delta_i": "ACP upper-quantile gap u_A^* - u_j^*"
    },
    "conditions": [
     "Assumption 1 (local density regularity)",
-    "unique upper-tail-optimal arm",
-    "r_y >= Delta_j^ACP/4 and r_s >= Delta_j^ACP/4 for each suboptimal j",
+    "unique upper-tail optimal arm",
+    "r_y >= Delta_j^ACP/4 and r_s >= Delta_j^ACP/4",
     "n >= K s_0"
    ],
    "tuning": [
@@ -115,8 +154,8 @@
     "number": "Theorem 1",
     "quote": "If \\(b\\ge b_0\\), \\(s_0=s_{\\rm loc}(n)\\), and \\(n\\ge Ks_0\\), then for every \\(j\\ne A\\), \\E[T_j(n)] \\le \\frac{4b^2\\log n}{(\\Delta_j^{\\rm ACP})^2}+B_j, where \\(B_j<\\infty\\) is independent of \\(n\\)."
    },
-   "confidence": "high",
-   "notes": "Expected pull count bound for suboptimal arm j."
+   "confidence": "medium",
+   "notes": "Expected pull count bound for a suboptimal arm (quantity other)."
   },
   {
    "id": "r2",
@@ -124,28 +163,28 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "pseudo_regret",
+   "quantity": "other",
    "dependence": "instance_dependent",
    "comparator": "best_fixed_action",
    "probability": "expectation",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
-    "notation": "exact",
-    "expression": "sum_subopt(4*b**2*log(T)/Delta_i) + B_const",
-    "expression_latex": "R_n^{\\rm ACP}(ACP-UCB1) \\le \\sum_{j\\ne A} \\frac{4b^2\\log n}{\\Delta_j^{\\rm ACP}} +O(1)",
+    "notation": "O",
+    "expression": "sum_subopt(4*b**2*log(T)/Delta_i) + 1",
+    "expression_latex": "R_n^{\\rm ACP} \\le \\sum_{j\\ne A}\\frac{4b^2\\log n}{\\Delta_j^{\\rm ACP}}+O(1)",
     "regime": null
    },
    "symbols": {
     "b": "exploration coefficient of ACP-UCB1",
-    "B_const": "O(1) term independent of n",
-    "Delta_i": "upper-tail (ACP) gap u_A^* - u_j^* of arm j (not the mean gap)"
+    "Delta_i": "ACP upper-quantile gap u_A^* - u_j^*"
    },
    "conditions": [
     "Assumption 1 (local density regularity)",
-    "unique upper-tail-optimal arm",
-    "r_y >= Delta_j^ACP/4 and r_s >= Delta_j^ACP/4 for each suboptimal j",
-    "n >= K s_0"
+    "unique upper-tail optimal arm",
+    "r_y >= Delta_j^ACP/4 and r_s >= Delta_j^ACP/4 for all j != A",
+    "n >= K s_0",
+    "regret defined on upper quantile values F_j^{-1}(1-alpha/2) (pseudo-regret form)"
    ],
    "tuning": [
     "0 < lambda <= b g_min/4",
@@ -158,8 +197,8 @@
     "number": "Theorem 1",
     "quote": "Consequently, R_n^{\\rm ACP}(ACP-UCB1) \\le \\sum_{j\\ne A} \\frac{4b^2\\log n}{\\Delta_j^{\\rm ACP}} +O(1)."
    },
-   "confidence": "high",
-   "notes": "Regret is in upper-tail (quantile) values, not means. O(1) additive term recorded as constant symbol."
+   "confidence": "medium",
+   "notes": "Leading term exact, additive O(1); quantity 'other' since the regret is on a quantile functional (pseudo-regret on upper quantiles)."
   }
  ],
  "cited_results": [
@@ -179,7 +218,7 @@
     "expression_latex": "\\sum_{j\\ne A}\\left(\\frac{256\\sigma_j^2}{\\Delta_j^\\mu}+8\\Delta_j^\\mu\\right)\\log n+\\left(1+\\frac{\\pi^2}{2}\\right)\\sum_{j\\ne A}\\Delta_j^\\mu",
     "regime": null
    },
-   "where": "Section 4.3, eq. (auer_ucb1_normal_theorem4)"
+   "where": "Section 4.3.3, eq. (auer_ucb1_normal_theorem4)"
   }
  ],
  "_run": {
@@ -188,16 +227,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-21T09:57:44",
+  "date": "2026-10-21T18:38:48",
   "source_chars": 63019,
-  "input_tokens": 61332,
-  "output_tokens": 3619,
-  "cost_usd_equiv": 0.3454548,
+  "input_tokens": 67928,
+  "output_tokens": 3913,
+  "cost_usd_equiv": 0.352654,
   "status": "extracted"
  }
 }

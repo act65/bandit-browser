@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Leveraging Side Observations in Stochastic Bandits",
   "arxiv_id": "1210.4839",
@@ -16,7 +16,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Stochastic bandits with side observations (SO graph)",
+   "name_in_paper": "stochastic bandits with side observations",
    "objective": "cumulative_regret",
    "feedback": "graph_feedback",
    "environment": "stochastic_iid",
@@ -36,70 +36,57 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "strongly_observable",
     "time_varying": "fixed",
-    "knowledge": "known_in_advance"
+    "knowledge": "known_in_advance",
+    "self_loops": "all",
+    "directedness": "undirected",
+    "generation": "arbitrary"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
-   "unmapped": [
-    "Side-observation graph is undirected; each arm observes itself and its neighbours"
-   ],
+   "unmapped": [],
    "definition_quote": "The side observation (SO) graph G = (V, E) is an undirected graph over the set of arms V = [1, K], where an edge i <-> j means that pulling arm i (resp. j) at time t yields a side observation of X_{j,t} (resp. X_{i,t}). ... We will also assume that all {P_i} have support in [0, 1]."
-  },
-  {
-   "id": "s2",
-   "name_in_paper": "Stochastic bandits with side observations (SO graph) (lower bound)",
-   "objective": "cumulative_regret",
-   "feedback": "graph_feedback",
-   "environment": "stochastic_iid",
-   "action_space": "finite_K",
-   "function_class": [],
-   "domain": "not_applicable",
-   "context": "none",
-   "noise": "bounded_01",
-   "learner_knows": [
-    "K",
-    "T"
-   ],
-   "instance_assumptions": [],
-   "extras": [],
-   "action_set": {
-    "shape": "not_applicable",
-    "time_varying": "not_applicable",
-    "access": "not_applicable",
-    "norm_bound": "not_applicable",
-    "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
-   },
-   "corruption": {
-    "adversary": "not_applicable",
-    "budget_measure": "not_applicable",
-    "structure": "not_applicable",
-    "regret_reference": "not_applicable"
-   },
-   "feedback_graph": {
-    "observability": "strongly_observable",
-    "time_varying": "fixed",
-    "knowledge": "known_in_advance"
-   },
-   "parameters": {},
-   "in_scope": true,
-   "out_of_scope_reason": null,
-   "unmapped": [
-    "Side-observation graph is undirected"
-   ],
-   "definition_quote": "The side observation (SO) graph G = (V, E) is an undirected graph over the set of arms ..."
   }
  ],
  "algorithms": [
@@ -127,7 +114,7 @@
  "results": [
   {
    "id": "r1",
-   "setting": "s2",
+   "setting": "s1",
    "side": "lower",
    "algorithm": null,
    "algorithm_class": "uniformly_good",
@@ -145,17 +132,17 @@
    },
    "symbols": {},
    "conditions": [
-    "The union of neighbourhoods of optimal arms does not cover all arms: \\cup_{i in B*} N(i) != V"
+    "The union of the neighborhoods N(i) of the optimal arms i in B* is not the whole vertex set V"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Theorem 1",
-    "quote": "Let B* := arg max{µi | i ∈ V} and suppose ∪_{i∈B*} N(i) ≠ V. Then, for any uniformly good allocation rule, E[R(n)] = Ω(ln n)."
+    "quote": "Let B* := arg max{µ_i | i ∈ V} and suppose ∪_{i∈B*} N(i) ≠ V. Then, for any uniformly good allocation rule, E[R(n)] = Ω(ln n)."
    },
    "confidence": "medium",
-   "notes": "Proved via reduction to Lai-Robbins two-armed lower bound; asymptotic in n."
+   "notes": "Proved by reduction to the two-armed Lai-Robbins lower bound. Constants not specified."
   },
   {
    "id": "r2",
@@ -171,12 +158,14 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "8*Gamma_cov*log(T) + (1 + pi**2/3)*sum_arms(Delta_i)",
-    "expression_latex": "\\inf_{\\mathcal{C}} \\{ 8 (\\sum_{C} \\frac{\\max_{i\\in C}\\Delta_i}{\\Delta_C^2}) \\ln n + (1+\\frac{\\pi^2}{3}) \\sum_{i=1}^K \\Delta_i \\}",
+    "expression": "8*sum_cliques(Delta_max_C/Delta_C**2)*log(T) + (1 + pi**2/3)*sum_arms(Delta_i)",
+    "expression_latex": "\\inf_{\\mathcal{C}} \\left\\{ 8 \\left(\\sum_{C\\in\\mathcal{C}} \\frac{\\max_{i\\in C}\\Delta_i}{\\Delta_C^2}\\right)\\ln n \\right\\} + \\left(1+\\frac{\\pi^2}{3}\\right)\\sum_{i=1}^K \\Delta_i",
     "regime": null
    },
    "symbols": {
-    "Gamma_cov": "sum over cliques C of a clique covering of the SO graph of max_{i in C} Delta_i / (min_{i in C} Delta_i)^2; bound holds with infimum over clique coverings"
+    "sum_cliques": "sum over the cliques C of a clique covering of the side-observation graph (bound holds for the infimum over all clique coverings)",
+    "Delta_max_C": "max_{i in C} Delta_i, largest gap in clique C",
+    "Delta_C": "min_{i in C} Delta_i, smallest gap in clique C"
    },
    "conditions": [],
    "tuning": [],
@@ -184,10 +173,10 @@
    "source": {
     "label": null,
     "number": "Theorem 2",
-    "quote": "The expected regret of policy UCB-N after n steps is upper bounded by E[R(n)] ≤ inf_C { 8 ( Σ_{C∈C} max_{i∈C} ∆i / ∆_C^2 ) ln n + (1 + π^2/3) Σ_{i=1}^K ∆i }, where ∆_C = min_{i∈C} ∆i."
+    "quote": "The expected regret of policy UCB-N after n steps is upper bounded by E[R(n)] ≤ inf_C { 8 (Σ_{C∈C} max_{i∈C}∆_i / ∆_C^2) ln n } + (1 + π²/3) Σ_{i=1}^K ∆_i, where ∆_C = min_{i∈C} ∆_i."
    },
-   "confidence": "high",
-   "notes": "Infimum over clique coverings; expressed for a covering with Gamma_cov. Reduces to UCB1 bound for trivial covering."
+   "confidence": "medium",
+   "notes": "Infimum over clique coverings of the SO graph; recorded for any covering. Regret defined via realized rewards but rewritten as sum Delta_i E[T_i(n)], i.e. pseudo-regret. Reduces to UCB1 bound with trivial covering."
   },
   {
    "id": "r3",
@@ -203,14 +192,15 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "8*Gamma_cov*log(T) + (1 + pi**2/3)*Sigma_cov + rem_T",
-    "expression_latex": "\\inf_{\\mathcal{C}} \\{ 8 (\\sum_{C} \\frac{\\max_{i\\in C}\\Delta_i}{\\Delta_C^2}) \\ln n + (1+\\frac{\\pi^2}{3}) \\sum_{C} \\Delta_C \\} + o_{n\\to\\infty}(1)",
+    "expression": "8*sum_cliques(Delta_max_C/Delta_C**2)*log(T) + (1 + pi**2/3)*sum_cliques(Delta_C) + o_T",
+    "expression_latex": "\\inf_{\\mathcal{C}} \\left\\{ 8 \\left(\\sum_{C\\in\\mathcal{C}} \\frac{\\max_{i\\in C}\\Delta_i}{\\Delta_C^2}\\right)\\ln n + \\left(1+\\frac{\\pi^2}{3}\\right)\\sum_{C\\in\\mathcal{C}}\\Delta_C \\right\\} + o_{n\\to\\infty}(1)",
     "regime": null
    },
    "symbols": {
-    "Gamma_cov": "sum over cliques C of a clique covering of max_{i in C} Delta_i / Delta_C^2, Delta_C = min_{i in C} Delta_i",
-    "Sigma_cov": "sum over cliques C of the covering of Delta_C",
-    "rem_T": "term vanishing as n -> infinity (o(1)), explicit in proof: 2 sum_i Delta_i (1-e^{-n delta_i^2/2})/(1-e^{-delta_i^2/2}) (1/n)^{4 delta_i^2/Delta_C^2}"
+    "sum_cliques": "sum over the cliques C of a clique covering (bound holds for the infimum over coverings)",
+    "Delta_max_C": "max_{i in C} Delta_i",
+    "Delta_C": "min_{i in C} Delta_i",
+    "o_T": "term vanishing as T -> infinity (explicit in proof: 2 sum_{i in C, delta_i>0} Delta_i (1/T)^{4 delta_i^2/Delta_C^2} (1-e^{-T delta_i^2/2})/(1-e^{-delta_i^2/2}) summed over cliques)"
    },
    "conditions": [],
    "tuning": [],
@@ -218,10 +208,10 @@
    "source": {
     "label": null,
     "number": "Theorem 3",
-    "quote": "The expected regret of strategy UCB-MaxN after n steps is upper bounded by E[R(n)] ≤ inf_C { 8 ( Σ_{C∈C} max_{i∈C} ∆i / ∆_C^2 ) ln n + (1 + π^2/3) Σ_{C∈C} ∆_C } + o_{n→∞}(1)"
+    "quote": "The expected regret of strategy UCB-MaxN after n steps is upper bounded by E[R(n)] ≤ inf_C { 8 (Σ_{C∈C} max_{i∈C}∆_i/∆_C^2) ln n + (1 + π²/3) Σ_{C∈C} ∆_C } + o_{n→∞}(1)"
    },
    "confidence": "medium",
-   "notes": "Infimum over clique coverings. Paper states the bound holds uniformly over time; o(1) term may be large for small n."
+   "notes": "The o(1) term may be large for small n; paper says bound holds uniformly over time."
   }
  ],
  "cited_results": [
@@ -234,11 +224,11 @@
    "algorithm_name": "UCB1",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic K-armed bandit, rewards in [0,1], no side observations",
+   "setting_description": "stochastic K-armed bandit, rewards in [0,1], no side observations",
    "bound": {
     "notation": "exact",
     "expression": "8*sum_subopt(1/Delta_i)*log(T) + (1 + pi**2/3)*sum_arms(Delta_i)",
-    "expression_latex": "8 (\\sum_{i} \\frac{1}{\\Delta_i}) \\ln n + (1+\\frac{\\pi^2}{3})\\sum_{i=1}^K \\Delta_i",
+    "expression_latex": "8\\left(\\sum_{i=1}^K \\frac{1}{\\Delta_i}\\right)\\ln n + \\left(1+\\frac{\\pi^2}{3}\\right)\\sum_{i=1}^K \\Delta_i",
     "regime": null
    },
    "where": "Section 3.2, Equation (2)"
@@ -252,12 +242,12 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic multi-armed bandit, uniformly good policies",
+   "setting_description": "stochastic multi-armed bandit, uniformly good policies",
    "bound": {
     "notation": "Omega",
     "expression": "log(T)",
     "expression_latex": "E[R(n)] = \\Omega(\\ln n)",
-    "regime": "asymptotic"
+    "regime": null
    },
    "where": "Section 2"
   }
@@ -268,16 +258,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-21T09:48:41",
+  "date": "2026-10-21T18:29:22",
   "source_chars": 38441,
-  "input_tokens": 45740,
-  "output_tokens": 4379,
-  "cost_usd_equiv": 0.23591879999999998,
+  "input_tokens": 52336,
+  "output_tokens": 4355,
+  "cost_usd_equiv": 0.236758,
   "status": "extracted"
  }
 }

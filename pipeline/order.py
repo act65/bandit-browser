@@ -10,7 +10,8 @@ ontology's dimensions:
     instance_assumptions): more elements = special case (P ⊑ Q iff Q ⊆ P);
     multi-valued dimensions without one (extras) must be equal;
   - an `order_notes` entry may `require` node-field values in the special setting (graph
-    feedback ⊑ bandit only for strongly observable graphs); unspecified gives a caveat;
+    feedback ⊑ bandit only with self-loops; unspecified gives a caveat), or `requires_general`
+    values in the general one (bandit ⊑ partial monitoring only for a class of games; strict);
   - node parameters (action_set, corruption, feedback_graph fields): per-field orders and
     value maps; computational-only fields are ignored; `not_applicable` on one side defers
     to the governing dimension; `unspecified` is compatible with a caveat;
@@ -40,6 +41,7 @@ class Change:
     caveats: list = field(default_factory=list)
     valid_for_comparator: set | None = None    # None = all comparators
     requires: dict = field(default_factory=dict)  # node field -> values the special setting must have
+    requires_general: dict = field(default_factory=dict)  # node field -> values the general setting must have (strict)
 
 
 def _closure(pairs) -> set:
@@ -122,7 +124,8 @@ class Order:
                           justification=[n["justification"] for n in notes if n.get("justification")],
                           caveats=[n["caveat"] for n in notes if n.get("caveat")],
                           valid_for_comparator=set.intersection(*scopes) if scopes else None,
-                          requires={k: v for n in notes for k, v in (n.get("requires") or {}).items()})
+                          requires={k: v for n in notes for k, v in (n.get("requires") or {}).items()},
+                          requires_general={k: v for n in notes for k, v in (n.get("requires_general") or {}).items()})
         red = self.reductions.get(dim, {})
         if (a, b) in red:
             return Change(dim, a, b, "reduction", red[(a, b)])
@@ -179,6 +182,12 @@ class Order:
                 if v == "unspecified":
                     ch.caveats = ch.caveats + [f"{path} unspecified; the edge needs {' or '.join(allowed)}"]
                 elif v != "not_applicable" and v not in allowed:
+                    return None
+            for path, allowed in ch.requires_general.items():
+                # e.g. bandit ⊑ partial monitoring only for a class of games, not a specific mechanism;
+                # strict: an unspecified value fails
+                name, f = path.split(".")
+                if (kb.get(name) or {}).get(f, "not_applicable") not in allowed:
                     return None
         pa, pb = ka.get("parameters", {}), kb.get("parameters", {})
         if pa != pb:

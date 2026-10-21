@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Distributed Learning Over Markovian Fading Channels for Stable Spectrum Access",
   "arxiv_id": "2101.11292",
@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Multi-user spectrum access over restless unknown Markovian (FSMC) channels with user-dependent rates; regret w.r.t. stable matching",
+   "name_in_paper": "Multi-user spectrum access over unknown restless Markovian channels with user-dependent rates (stable matching regret)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "markovian",
@@ -24,8 +24,9 @@
    "context": "none",
    "noise": "general_model_class",
    "learner_knows": [
-    "Delta_min",
-    "K"
+    "K",
+    "N",
+    "Delta_min"
    ],
    "instance_assumptions": [],
    "extras": [
@@ -38,30 +39,62 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
-   "in_scope": true,
-   "out_of_scope_reason": null,
+   "in_scope": false,
+   "out_of_scope_reason": "Restless Markovian arms (environment markovian) are out of scope from ontology v0.5.",
    "unmapped": [
-    "M users (agents) and K >= M channels; each user's rate on each channel is a finite-state irreducible aperiodic Markov chain, independent across user-channel pairs, evolving regardless of actions (restless)",
-    "Rates (means) differ across users; all entries of expected-rate matrix U are distinct (unique stable matching)",
-    "Comparator is the stable matching allocation (not the optimal matching), with weak regret against a genie knowing only means",
-    "Channel states observed via carrier sensing regardless of collisions; collisions yield zero reward",
-    "Algorithm uses parameter L depending on Markov chain constants (eigenvalue gap, state values, stationary distribution) and epsilon; uses opportunistic CSMA backoff signalling between users"
+    "Each user-channel rate is an independent irreducible aperiodic finite-state Markov chain (restless) with unknown transitions",
+    "Rewards differ across users (heterogeneous multiplayer); regret measured against the unique stable matching w.r.t. expected rates",
+    "Channel states observed via carrier sensing regardless of collisions; users can signal interruptions and use opportunistic CSMA backoff to learn others' sample means",
+    "Algorithm requires constant L depending on Markov chain parameters (eigenvalue gap, x_max, r_max, pi_hat_max) and epsilon, I"
    ],
-   "definition_quote": "we define the regret for policy $\\phi$ as the loss in the expected aggregated data rate with respect to the stable matching solution that uses the true expected rates: r_\\phi(t) \\triangleq t \\cdot \\sum_{i=1}^M \\mu_{i,S(i)} - \\mathbb{E}_\\phi [\\sum_{n=1}^t \\sum_{i=1}^M X_{i,\\phi_i(n)}(n) ]."
+   "definition_quote": "the rate of user $i$ on channel $k$, $r_{i,k}(t)$, is modeled as a discrete time, irreducible and aperiodic Markov chain on a finite-state space ... we define the regret ... as the loss in the expected aggregated data rate with respect to the stable matching solution that uses the true expected rates"
   }
  ],
  "algorithms": [
@@ -75,10 +108,9 @@
     "other"
    ],
    "requires_knowledge_of": [
-    "Delta_min",
     "K",
-    "L (Markov-chain mixing/scale constant)",
-    "epsilon"
+    "N",
+    "Delta_min"
    ]
   }
  ],
@@ -89,54 +121,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "other",
-   "dependence": "instance_dependent",
-   "comparator": "best_fixed_action",
-   "probability": "expectation",
-   "horizon": "anytime",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "exact",
-    "expression": "A_max*n_O_sum + R_explore + N**2*A_max*n_O_sum + 2*E*log(N+1)*n_O_sum*mu_SM + (A_max + (N**2*K + N*K)*6*X_max/pi_min*mu_SM)*ceiling(log(3*T/2 + 1)/log(4)) + C_0",
-    "expression_latex": "A_{\\max}(\\sum_{i,k}(\\lfloor \\log_4(3A_{i,k}\\log t+1)\\rfloor+1)) + \\sum_{i,k}[(4A_{i,k}\\log t+1+M^{i,k}_{\\max}(\\lfloor\\log_4(3A_{i,k}\\log t+1)\\rfloor+1))(\\mu_{i,S(i)}+\\mu_{S^{-1}(k),k}-\\mu_{i,k})] + M^2 A_{\\max}(\\sum_{i,k}(\\cdots)) + [2e\\log(M+1)(\\sum_{i,k}(\\cdots))][\\sum_j \\mu_{j,S(j)}] + (A_{\\max}+(M^2K+MK)\\frac{6X_{\\max}}{\\pi_{\\min}}\\sum_j\\mu_{j,S(j)})\\lceil\\log_4(\\frac32 t+1)\\rceil + O(1)",
-    "regime": null
-   },
-   "symbols": {
-    "N": "number of users M in the paper",
-    "A_max": "max_{i,k} (min_x pi^x_{i,k})^{-1} sum_x x (transient-effect constant)",
-    "n_O_sum": "sum_{i=1}^M sum_{k=1}^K (floor(log_4(3 A_{i,k} log t + 1)) + 1), with A_{i,k} = max{2/I, D^{(max)}_{i,k}} if k in G_i else max{2/I, 4L/Delta_min^2}",
-    "R_explore": "sum_{i,k} (4 A_{i,k} log t + 1 + M^{i,k}_max (floor(log_4(3A_{i,k} log t+1))+1)) * (mu_{i,S(i)} + mu_{S^{-1}(k),k} - mu_{i,k}); M^{i,k}_max is the max mean hitting time",
-    "mu_SM": "sum_j mu_{j,S(j)}, total expected rate of the stable matching",
-    "X_max": "maximal cardinality of the Markov chain state spaces",
-    "pi_min": "minimal stationary probability over all states, users, channels",
-    "C_0": "constant independent of t (the O(1) term)"
-   },
-   "conditions": [
-    "rates are finite-state irreducible aperiodic Markov chains, independent across user-channel pairs",
-    "all entries of the expected rate matrix U are distinct",
-    "K >= M"
-   ],
-   "tuning": [
-    "L = 28 x_max^2 r_max^2 pi_hat_max^2 / lambda_bar_min",
-    "I = 7 eps^2 / (48 (r_max+2)^2 L)",
-    "exploration condition T^O_{i,k}(t) > max{D_hat_{i,k}(t), 2/I} log t"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "th:regret",
-    "number": "Theorem 1",
-    "quote": "Assume that the proposed DSSL algorithm is implemented and that the assumptions on the system model described in Section \\ref{sec:problem} hold. Then, the regret at time $t$ is upper bounded by: r(t) \\leq A_{\\max} \\cdot (\\sum_{i=1}^{M} \\sum_{k=1}^{K} (\\lfloor \\log_4(3A_{i,k}\\log(t)+1) \\rfloor +1) ) + \\sum_{i=1}^{M} \\sum_{k=1}^{K} [( 4A_{i,k} \\cdot \\log(t) + 1 + M_{\\max}^{i,k}(\\lfloor \\log_4(3A_{i,k}\\log(t)+1) \\rfloor +1 ) ) \\cdot ( \\mu_{i,S(i)} + \\mu_{S^{-1}(k),k} - \\mu_{i,k} ) ] + M^2 \\cdot A_{\\max} \\cdot (...) + ... +O(1)"
-   },
-   "confidence": "medium",
-   "notes": "Regret is t*sum of stable-matching means minus expected realized rewards (weak regret vs stable matching, not optimal matching); quantity set to 'other' and comparator approximated as best_fixed_action. Expression compresses the double sums into declared symbols; T denotes current time t. Paper's M (users) mapped to N."
-  },
-  {
-   "id": "r2",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "other",
+   "quantity": "pseudo_regret",
    "dependence": "instance_dependent",
    "comparator": "best_fixed_action",
    "probability": "expectation",
@@ -144,16 +129,59 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "(1/Delta_U**2 + N*K)*log(T)",
-    "expression_latex": "O((\\frac{1}{(\\Delta_{\\min})^2}+MK)\\log(t))",
+    "expression": "4*W*log(T) + (A_max + 6*(N**2*K + N*K)*X_max*R_S/pi_min)*log(T)",
+    "expression_latex": "r(t) \\leq A_{\\max} (\\sum_{i,k} (\\lfloor \\log_4(3A_{i,k}\\log t+1)\\rfloor+1)) + \\sum_{i,k}[(4A_{i,k}\\log t + 1 + M^{i,k}_{\\max}(\\ldots))(\\mu_{i,S(i)}+\\mu_{S^{-1}(k),k}-\\mu_{i,k})] + M^2 A_{\\max}(\\ldots) + 2e\\log(M+1)(\\ldots)\\sum_j\\mu_{j,S(j)} + (A_{\\max} + (M^2K+MK)\\frac{6X_{\\max}}{\\pi_{\\min}}\\sum_j \\mu_{j,S(j)})\\lceil\\log_4(\\frac{3}{2}t+1)\\rceil + O(1)",
     "regime": null
    },
    "symbols": {
-    "N": "number of users M",
-    "Delta_U": "paper's Delta_min: in the benchmark, difference in rates between the M-th and (M+1)-th best channels"
+    "W": "sum over users i and channels k of A_{i,k}*(mu_{i,S(i)} + mu_{S^{-1}(k),k} - mu_{i,k})",
+    "A_max": "max_{i,k} (min_x pi^x_{i,k})^{-1} sum_x x (transient constant)",
+    "X_max": "maximal cardinality of the Markov state spaces",
+    "pi_min": "minimal stationary probability over all states, users, channels",
+    "R_S": "sum_j mu_{j,S(j)}, expected total rate of the stable matching",
+    "N": "number of users M in the paper"
    },
    "conditions": [
-    "benchmark setting: equal rates among users (rates vary only across channels)",
+    "entries of the expected rate matrix U are all distinct (unique stable matching)",
+    "K >= M",
+    "rate processes are irreducible aperiodic finite-state Markov chains, independent across users/channels"
+   ],
+   "tuning": [
+    "exploration DE epochs of length 4^n, exploitation epochs of length 2*4^(n-1)",
+    "condition T^(O)_{i,k}(t) > max{hat D_{i,k}(t), 2/I} log t with I = 7 eps^2/(48 (r_max+2)^2 L)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:regret",
+    "number": "Theorem 1",
+    "quote": "Assume that the proposed DSSL algorithm is implemented and that the assumptions on the system model described in Section \\ref{sec:problem} hold. Then, the regret at time $t$ is upper bounded by: r(t) \\leq A_{\\max} \\cdot (\\sum_{i=1}^{M} \\sum_{k=1}^{K} (\\lfloor \\log_4(3A_{i,k}\\log(t)+1) \\rfloor +1)) + \\sum_{i}\\sum_{k}[(4A_{i,k}\\log(t)+1+M_{\\max}^{i,k}(\\ldots))(\\mu_{i,S(i)}+\\mu_{S^{-1}(k),k}-\\mu_{i,k})] + ... + O(1), where A_{i,k} = max{2/I, D^{(max)}_{i,k}} if k in G_i, max{2/I, 4L/Delta_min^2} otherwise"
+   },
+   "confidence": "medium",
+   "notes": "Exact finite-time bound simplified to its dominant log(T) terms (log log T terms in floor(log_4(3A log t+1)) and constants dropped, log_4 vs natural log absorbed into O). A_{i,k} depends on L, epsilon, gaps and Delta_min. Regret is relative to the stable matching via expected rates (weak regret for restless chains)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "(1/Delta_min**2 + N*K)*log(T)",
+    "expression_latex": "O((\\frac{1}{(\\Delta_{\\min})^2}+MK)\\log(t))",
+    "regime": "equal rates among users (varying among channels), K > M"
+   },
+   "symbols": {
+    "N": "number of users M in the paper"
+   },
+   "conditions": [
+    "expected rates equal across users but vary among channels",
     "K > M"
    ],
    "tuning": [],
@@ -161,10 +189,10 @@
    "source": {
     "label": "th:regret",
     "number": "Theorem 1",
-    "quote": "In contrast, under DSSL, the regret scales as $O((\\frac{1}{(\\Delta_{\\min})^2}+MK)\\log(t))$ due to the novel algorithm design that explores every channel according to its unique adaptive exploration rate"
+    "quote": "under a common benchmark setting of equal rates among users (but still vary among channels), and $K>M$ ... In contrast, under DSSL, the regret scales as $O((\\frac{1}{(\\Delta_{\\min})^2}+MK)\\log(t))$"
    },
    "confidence": "low",
-   "notes": "Informal scaling consequence of Theorem 1 stated in the discussion after the theorem, for a special benchmark case; dependence on Markov constants suppressed."
+   "notes": "Scaling claim stated in text following Theorem 1, not a separate formal statement; here Delta_min is the gap between the M-th and (M+1)-th best channels. Hard to reconcile with Theorem 1 where A_{i,k} appears for all M*K pairs."
   }
  ],
  "cited_results": [
@@ -177,14 +205,14 @@
    "algorithm_name": "dE^3",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Decentralized multiplayer bandits, benchmark with equal rates among users, K > M",
+   "setting_description": "Decentralized multiplayer bandit, equal rates among users, K > M (as compared in this paper)",
    "bound": {
     "notation": "O",
-    "expression": "N*K/Delta_U**2*log(T)",
+    "expression": "N*K*log(T)/Delta_min**2",
     "expression_latex": "O(\\frac{MK}{(\\Delta_{\\min})^2}\\log(t))",
-    "regime": null
+    "regime": "equal rates among users, K > M"
    },
-   "where": "Section 1.1 and after Theorem 1"
+   "where": "Section 1.1 / after Theorem 1"
   },
   {
    "cited_key": "Liu_2013_Learning",
@@ -195,14 +223,14 @@
    "algorithm_name": "DSEE",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Restless multi-user bandit, equal rates among users, K > M",
+   "setting_description": "Restless multi-armed bandit with unknown dynamics, multiple users with equal rates, K > M",
    "bound": {
     "notation": "O",
-    "expression": "N*K/Delta_U**2*log(T)",
+    "expression": "N*K*log(T)/Delta_min**2",
     "expression_latex": "O(\\frac{MK}{(\\Delta_{\\min})^2}\\log(t))",
-    "regime": null
+    "regime": "equal rates among users, K > M"
    },
-   "where": "Section 1.1 and after Theorem 1"
+   "where": "Section 1.1 / after Theorem 1"
   },
   {
    "cited_key": "2019arXiv190201239B",
@@ -213,14 +241,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Multiplayer bandits with i.i.d. channels, benchmark equal rates among users, K > M",
+   "setting_description": "Multiplayer bandits, i.i.d. channels, no communication; equal rates among users, K > M benchmark",
    "bound": {
     "notation": "O",
-    "expression": "N**3*K/Delta_U**2*log(T)",
+    "expression": "N**3*K*log(T)/Delta_min**2",
     "expression_latex": "O(\\frac{M^3K}{(\\Delta_{\\min})^2}\\log(t))",
-    "regime": null
+    "regime": "equal rates among users, K > M"
    },
-   "where": "Section 1.1 and after Theorem 1"
+   "where": "Section 1.1 / after Theorem 1"
   },
   {
    "cited_key": "bistritz2018distributed",
@@ -231,32 +259,32 @@
    "algorithm_name": "Game of Thrones",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Multiplayer bandits with i.i.d. channels, benchmark equal rates among users, K > M",
+   "setting_description": "Multiplayer bandits, i.i.d. channels, no communication; equal rates among users, K > M benchmark",
    "bound": {
     "notation": "O",
-    "expression": "N*K**2/Delta_U**2*log(T)",
+    "expression": "N*K**2*log(T)/Delta_min**2",
     "expression_latex": "O(\\frac{MK^2}{(\\Delta_{\\min})^2}\\log(t))",
-    "regime": null
+    "regime": "equal rates among users, K > M"
    },
-   "where": "Section 1.1 and after Theorem 1"
+   "where": "Section 1.1 / after Theorem 1"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:43:09",
+  "date": "2026-10-21T18:11:15",
   "source_chars": 119430,
-  "input_tokens": 92699,
-  "output_tokens": 6249,
-  "cost_usd_equiv": 0.6489908,
+  "input_tokens": 99286,
+  "output_tokens": 6138,
+  "cost_usd_equiv": 0.648018,
   "status": "extracted"
  }
 }

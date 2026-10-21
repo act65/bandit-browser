@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Optimal Analysis for Bandit Learning in Matching Markets with Serial Dictatorship",
   "arxiv_id": "2512.06758",
@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Bandit learning in (decentralized) two-sided matching markets under serial dictatorship",
+   "name_in_paper": "Decentralized bandit learning in two-sided matching markets under serial dictatorship",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -25,10 +25,11 @@
    "noise": "subgaussian",
    "learner_knows": [
     "T",
-    "K"
+    "K",
+    "N"
    ],
    "instance_assumptions": [
-    "unique_optimal_arm"
+    "gap_bounded_below"
    ],
    "extras": [
     "multi_player_collision"
@@ -39,64 +40,93 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Two-sided matching market: N players (learners) and K >= N arms; arms have known fixed preferences over players",
-    "Serial dictatorship: all arms share the same preference ranking over players (guarantees unique stable matching)",
-    "Collisions resolved by arms' preferences: only the most preferred proposing player is matched, others get reward 0",
-    "Players observe the full matching result each round",
-    "Decentralized: each player acts independently, knows N, K",
-    "Regret measured per player against its unique stable matched arm (stable regret)",
-    "All players' preferences are distinct (mu_{i,k} != mu_{i,k'})",
-    "Delta is the minimum gap over all players and all pairs of arms"
+    "Two-sided matching market: N players (learners) and K >= N arms; arms have known fixed preferences over players and resolve collisions by accepting their most preferred proposing player (rejected players get reward 0)",
+    "Serial dictatorship: all arms share the same preference ranking over players, giving a unique stable matching",
+    "Regret per player is stable regret, measured against the player's stable-matched arm rather than its best arm",
+    "Players observe the full matching result each round (decentralized, collision-based communication)",
+    "All players' preferences are distinct"
    ],
-   "definition_quote": "If player $p_i$ is successfully matched, it will receive a random reward $X_i(t)$, which is 1-subgaussian with mean $\\mu_{i,\\bar{A}_i(t)}$. If player $p_i$ is rejected, it will receive $X_i(t) = 0$. ... We consider the market satisfies serial dictatorship, where each arm shares the same preference. ... R_i(T) = \\sum_{t=1}^T \\mu_{i,m^\\ast(i)} - \\EE{\\sum_{t=1}^{T}X_i(T)}"
+   "definition_quote": "If player $p_i$ is successfully matched, it will receive a random reward $X_i(t)$, which is 1-subgaussian with mean $\\mu_{i,\\bar{A}_i(t)}$. If player $p_i$ is rejected, it will receive $X_i(t) = 0$. ... We consider the market satisfies serial dictatorship, where each arm shares the same preference. ... $R_i(T) = \\sum_{t=1}^T \\mu_{i,m^\\ast(i)} - \\EE{\\sum_{t=1}^{T}X_i(T)}$"
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Decentralized Multi-Level Successive Selection with elimination subroutine (MLSE)",
+   "name": "Multi-level successive selection with elimination subroutine (MLSE)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
     "elimination",
-    "other"
+    "optimism"
    ],
    "requires_knowledge_of": [
     "T",
-    "K",
-    "N"
+    "N",
+    "K"
    ]
   },
   {
    "id": "a2",
-   "name": "Multi-Level Successive Selection with UCB subroutine (ML-UCB)",
+   "name": "Multi-level successive selection with UCB subroutine (ML-UCB)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
-    "optimism",
-    "other"
+    "optimism"
    ],
    "requires_knowledge_of": [
     "T",
-    "K",
-    "N"
+    "N",
+    "K"
    ]
   }
  ],
@@ -115,34 +145,33 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "32*i_rank*log(T)/Delta_mm**2 + 32*(K - ell_i)*log(T)/Delta_mm + 2*N*K + N + 32*i_rank*(N*log(K) + K)/Delta_mm**2",
-    "expression_latex": "\\frac{32i \\log(T)}{\\Delta^2}+\\frac{32(K-\\ell_i) \\log(T)}{\\Delta}+2NK + N +  \\frac{32 i (N \\log K + K)}{\\Delta^2}",
+    "expression": "32*i*log(T)/Delta_mkt**2 + sum_subopt(32*log(T)/Delta_i) + 2*N*K + N + 32*i*(N*log(K) + K)/Delta_mkt**2",
+    "expression_latex": "\\frac{32i \\log(T)}{\\Delta^2} + \\sum_{k=\\ell_i+1}^{K} \\frac{32\\log(T)}{\\Delta_{i,\\sigma_i(\\ell_i),\\sigma_i(k)}} + 2NK + N + \\frac{32 i (N \\log K + K)}{\\Delta^2}",
     "regime": null
    },
    "symbols": {
-    "i_rank": "rank i of player p_i in the arms' common preference order",
-    "ell_i": "rank of p_i's stable matched arm in p_i's own preference list (ell_i <= N)",
-    "N": "number of players",
-    "Delta_mm": "minimum reward gap across all players and all pairs of arms, min_{i,k,k'} |mu_{i,k}-mu_{i,k'}|"
+    "i": "rank of the player under serial dictatorship (regret of player p_i)",
+    "Delta_mkt": "minimum reward gap across all players and all pairs of arms",
+    "Delta_i": "here: gap mu_{i,sigma_i(ell_i)} - mu_{i,sigma_i(k)} between player i's stable arm and arm ranked k; sum_subopt ranges over arms ranked below player i's stable arm (k = ell_i+1..K)"
    },
    "conditions": [
-    "serial dictatorship (all arms share the same preference over players)",
+    "serial dictatorship",
     "N <= K",
-    "rewards 1-subgaussian",
-    "all player preferences distinct"
+    "1-subgaussian rewards",
+    "distinct preferences"
    ],
    "tuning": [
-    "confidence width 2*sqrt(2 log T / N_{i,k})",
-    "communication every log T rounds"
+    "confidence radius 2*sqrt(2 log T / N_{i,k})",
+    "communication block every log T rounds"
    ],
    "is_new": true,
    "source": {
     "label": "theorem: 1",
     "number": "Theorem 1",
-    "quote": "Following the multi-level successive selection algorithm (Algorithm \\ref{alg:main}) with elimination subroutine, the stable regret of player $p_i \\in \\mathcal{N}$ satisfies R_{i}(T) \\leq \\frac{32i \\log(T)}{\\Delta^2} + \\sum_{k=\\ell_i+1}^{K}  \\frac{32\\log(T)}{\\Delta_{i,\\sigma_i(\\ell_i),\\sigma_i(k)}}  + 2NK + N +  \\frac{32 i (N \\log K + K)}{\\Delta^2} \\leq   \\frac{32i \\log(T)}{\\Delta^2}+\\frac{32(K-\\ell_i) \\log(T)}{\\Delta}+2NK + N +  \\frac{32 i (N \\log K + K)}{\\Delta^2}"
+    "quote": "Following the multi-level successive selection algorithm (Algorithm \\ref{alg:main}) with elimination subroutine, the stable regret of player $p_i \\in \\mathcal{N}$ satisfies R_{i}(T) \\leq \\frac{32i \\log(T)}{\\Delta^2} + \\sum_{k=\\ell_i+1}^{K} \\frac{32\\log(T)}{\\Delta_{i,\\sigma_i(\\ell_i),\\sigma_i(k)}} + 2NK + N + \\frac{32 i (N \\log K + K)}{\\Delta^2}"
    },
    "confidence": "medium",
-   "notes": "Per-player stable regret against unique stable matched arm (mapped to best_fixed_action). Regret defined via means minus expected rewards, i.e. pseudo-regret. The first (finer) form in the theorem replaces 32(K-ell_i)log T/Delta by sum_{k>ell_i} 32 log T/Delta_{i,sigma_i(ell_i),sigma_i(k)}. Since i <= N this gives O(N log T/Delta^2 + K log T/Delta). Appendix states ML-UCB attains the same O bound informally (not a formal statement)."
+   "notes": "Per-player stable regret. Regret defined via means of stable arm minus expected received reward; recorded as pseudo-regret. Comparator is the player's stable-matched arm (fixed). Appendix argues ML-UCB attains the same O(N log T/Delta^2 + K log T/Delta) bound informally (no formal statement)."
   },
   {
    "id": "r2",
@@ -158,20 +187,60 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "N + 32*(K - i_rank)*log(T)/Delta_mm + 2*N*K + 32*i_rank*(N*log(K) + K)/Delta_mm**2",
+    "expression": "32*i*log(T)/Delta_mkt**2 + 32*(K - ell_i)*log(T)/Delta_mkt + 2*N*K + N + 32*i*(N*log(K) + K)/Delta_mkt**2",
+    "expression_latex": "\\frac{32i \\log(T)}{\\Delta^2}+\\frac{32(K-\\ell_i) \\log(T)}{\\Delta}+2NK + N + \\frac{32 i (N \\log K + K)}{\\Delta^2}",
+    "regime": null
+   },
+   "symbols": {
+    "i": "rank of the player under serial dictatorship",
+    "ell_i": "rank of player i's stable arm in its own preference list (ell_i <= N)",
+    "Delta_mkt": "minimum reward gap across all players and all pairs of arms"
+   },
+   "conditions": [
+    "serial dictatorship",
+    "N <= K",
+    "1-subgaussian rewards",
+    "distinct preferences"
+   ],
+   "tuning": [
+    "confidence radius 2*sqrt(2 log T / N_{i,k})"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem: 1",
+    "number": "Theorem 1",
+    "quote": "R_{i}(T) \\leq \\frac{32i \\log(T)}{\\Delta^2}+\\frac{32(K-\\ell_i) \\log(T)}{\\Delta}+2NK + N + \\frac{32 i (N \\log K + K)}{\\Delta^2}"
+   },
+   "confidence": "medium",
+   "notes": "Second inequality of Theorem 1; with i <= N this gives O(N log T/Delta^2 + K log T/Delta) matching Sankararaman et al.'s lower bound. Note Lemma 4 inside the proof gives 64(i-1) rather than 32i, so constants in the theorem may be inconsistent with the proof."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "N + 32*(K - i)*log(T)/Delta_mkt + 2*N*K + 32*i*(N*log(K) + K)/Delta_mkt**2",
     "expression_latex": "N + \\frac{32 (K-i) \\log T}{\\Delta} + 2NK + \\frac{32 i (N \\log K + K)}{\\Delta^2}",
     "regime": null
    },
    "symbols": {
-    "i_rank": "rank i of player p_i in the arms' common preference order",
-    "N": "number of players",
-    "Delta_mm": "minimum reward gap across all players and all pairs of arms"
+    "i": "rank of the player under serial dictatorship",
+    "Delta_mkt": "minimum reward gap across all players and all pairs of arms"
    },
    "conditions": [
-    "for every player i, its stable matched arm is its i-th favourite arm",
+    "for every player i, its stable matched arm is its i-th favorite arm",
     "serial dictatorship",
     "N <= K",
-    "rewards 1-subgaussian"
+    "1-subgaussian rewards"
    ],
    "tuning": [],
    "is_new": true,
@@ -181,7 +250,7 @@
     "quote": "If for any player $i\\in [N]$, its stable matched arm is its $i$-th favorite arm, then the regret for player $i$ is bounded by R_i(T) \\leq N + \\frac{32 (K-i) \\log T}{\\Delta} + 2NK + \\frac{32 i (N \\log K + K)}{\\Delta^2}."
    },
    "confidence": "medium",
-   "notes": "Algorithm assumed to be MLSE (corollary follows Theorem 1)."
+   "notes": "Algorithm not explicitly named in corollary; assumed MLSE as it follows Theorem 1."
   }
  ],
  "cited_results": [
@@ -194,14 +263,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Decentralized matching market bandits under serial dictatorship (unique stable matching), stable regret",
+   "setting_description": "Decentralized matching market bandits with serial dictatorship, stable regret (unique stable matching)",
    "bound": {
     "notation": "Omega",
-    "expression": "Max(N*log(T)/Delta**2, K*log(T)/Delta)",
-    "expression_latex": "\\Omega\\left(\\max \\left\\{\\frac{N\\log(T)}{\\Delta^2}, \\frac{K\\log(T)}{\\Delta} \\right\\} \\right)",
+    "expression": "N*log(T)/Delta_mkt**2 + K*log(T)/Delta_mkt",
+    "expression_latex": "\\Omega\\left( \\frac{N\\log(T)}{\\Delta^2} + \\frac{K\\log(T)}{\\Delta} \\right)",
     "regime": null
    },
-   "where": "Table 1"
+   "where": "Abstract, Introduction, Table 1"
   },
   {
    "cited_key": "sankararaman2021dominate",
@@ -212,11 +281,29 @@
    "algorithm_name": "UCB-D3",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Decentralized matching market bandits under serial dictatorship, stable regret",
+   "setting_description": "Decentralized matching market bandits with serial dictatorship, stable regret",
    "bound": {
     "notation": "O",
-    "expression": "N*K*log(T)/Delta**2",
+    "expression": "N*K*log(T)/Delta_mkt**2",
     "expression_latex": "O\\left(\\frac{NK\\log(T)}{\\Delta^2}\\right)",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "kong2023player",
+   "cited_title": null,
+   "cited_first_author": "Kong",
+   "cited_year": 2023,
+   "cited_arxiv_id": null,
+   "algorithm_name": "ET-GS",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Decentralized matching market bandits, general market, player-optimal stable regret",
+   "bound": {
+    "notation": "O",
+    "expression": "K*log(T)/Delta_mkt**2",
+    "expression_latex": "O\\left(\\frac{K\\log(T)}{\\Delta^2}\\right)",
     "regime": null
    },
    "where": "Table 1"
@@ -227,13 +314,13 @@
    "cited_first_author": "Liu",
    "cited_year": 2020,
    "cited_arxiv_id": null,
-   "algorithm_name": "centralized ETC",
+   "algorithm_name": "Centralized ETC",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Centralized matching market bandits, general market, player-optimal stable regret (requires Delta and T)",
+   "setting_description": "Centralized matching market bandits, general market, player-optimal stable regret (requires knowledge of Delta and T)",
    "bound": {
     "notation": "O",
-    "expression": "K*log(T)/Delta**2",
+    "expression": "K*log(T)/Delta_mkt**2",
     "expression_latex": "O\\left( \\frac{K\\log(T)}{\\Delta^2} \\right)",
     "regime": null
    },
@@ -245,13 +332,13 @@
    "cited_first_author": "Liu",
    "cited_year": 2020,
    "cited_arxiv_id": null,
-   "algorithm_name": "centralized UCB",
+   "algorithm_name": "Centralized UCB",
    "algorithm_registry_id": null,
    "side": "upper",
    "setting_description": "Centralized matching market bandits, general market, player-pessimal stable regret",
    "bound": {
     "notation": "O",
-    "expression": "N*K*log(T)/Delta**2",
+    "expression": "N*K*log(T)/Delta_mkt**2",
     "expression_latex": "O\\left( \\frac{NK\\log(T)}{\\Delta^2} \\right)",
     "regime": null
    },
@@ -263,13 +350,13 @@
    "cited_first_author": "Liu",
    "cited_year": 2021,
    "cited_arxiv_id": null,
-   "algorithm_name": "decentralized UCB",
+   "algorithm_name": "Decentralized UCB",
    "algorithm_registry_id": null,
    "side": "upper",
    "setting_description": "Decentralized matching market bandits, general market, player-pessimal stable regret",
    "bound": {
     "notation": "O",
-    "expression": "exp(N**4)*N**5*K**2*log(T)**2/Delta**2",
+    "expression": "exp(N**4)*N**5*K**2*log(T)**2/Delta_mkt**2",
     "expression_latex": "O\\left( \\frac{\\exp(N^4) N^5K^2\\log^2(T)}{\\Delta^2} \\right)",
     "regime": null
    },
@@ -281,13 +368,13 @@
    "cited_first_author": "Kong",
    "cited_year": 2022,
    "cited_arxiv_id": null,
-   "algorithm_name": "decentralized Thompson sampling",
+   "algorithm_name": "Decentralized Thompson Sampling",
    "algorithm_registry_id": null,
    "side": "upper",
    "setting_description": "Decentralized matching market bandits, general market, player-pessimal stable regret",
    "bound": {
     "notation": "O",
-    "expression": "exp(N**4)*N**5*K**2*log(T)**2/Delta**2",
+    "expression": "exp(N**4)*N**5*K**2*log(T)**2/Delta_mkt**2",
     "expression_latex": "O\\left( \\frac{\\exp(N^4) N^5K^2\\log^2(T)}{\\Delta^2} \\right)",
     "regime": null
    },
@@ -305,7 +392,7 @@
    "setting_description": "Decentralized matching market bandits under alpha-condition (unique stable matching)",
    "bound": {
     "notation": "O",
-    "expression": "N*K*log(T)/Delta**2",
+    "expression": "N*K*log(T)/Delta_mkt**2",
     "expression_latex": "O\\left(\\frac{NK\\log(T)}{\\Delta^2}\\right)",
     "regime": null
    },
@@ -320,10 +407,10 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Decentralized matching market bandits, general market, player-optimal stable regret; eps is an algorithm hyperparameter",
+   "setting_description": "Decentralized matching market bandits, general market, player-optimal stable regret",
    "bound": {
     "notation": "O",
-    "expression": "K*log(T)**(1 + eps_alg) + 2**((1/Delta**2)**(1/eps_alg))",
+    "expression": "K*log(T)**(1 + eps_alg) + 2**((1/Delta_mkt**2)**(1/eps_alg))",
     "expression_latex": "O\\left(K\\log^{1+\\epsilon}(T) + 2^{(\\frac{1}{\\Delta^2})^{\\frac{1}{\\epsilon}}}\\right)",
     "regime": null
    },
@@ -338,10 +425,10 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Decentralized matching market bandits under alpha-reducibility (unique stable matching); C is a market-structure constant possibly exponential in N",
+   "setting_description": "Decentralized matching market bandits under alpha-reducible markets (unique stable matching); C market-structure constant possibly exponential in N",
    "bound": {
     "notation": "O",
-    "expression": "C_mkt*N*K*log(T)/Delta**2",
+    "expression": "C_mkt*N*K*log(T)/Delta_mkt**2",
     "expression_latex": "O\\left(\\frac{CNK\\log(T)}{\\Delta^2}\\right)",
     "regime": null
    },
@@ -359,47 +446,29 @@
    "setting_description": "Decentralized matching market bandits, general market, player-optimal stable regret",
    "bound": {
     "notation": "O",
-    "expression": "K*log(T)/Delta**2",
+    "expression": "K*log(T)/Delta_mkt**2",
     "expression_latex": "O\\left(\\frac{K\\log(T)}{\\Delta^2}\\right)",
     "regime": null
    },
-   "where": "Table 1 (Related Work text states NK log(T)/Delta^2)"
-  },
-  {
-   "cited_key": "kong2023player",
-   "cited_title": null,
-   "cited_first_author": "Kong",
-   "cited_year": 2023,
-   "cited_arxiv_id": null,
-   "algorithm_name": "ET-GS",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Decentralized matching market bandits, general market, player-optimal stable regret",
-   "bound": {
-    "notation": "O",
-    "expression": "K*log(T)/Delta**2",
-    "expression_latex": "O\\left(\\frac{K\\log(T)}{\\Delta^2}\\right)",
-    "regime": null
-   },
-   "where": "Table 1"
+   "where": "Table 1 (Related Work states O(NK log T/Delta^2))"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:42:15",
+  "date": "2026-10-21T18:10:29",
   "source_chars": 66152,
-  "input_tokens": 60848,
-  "output_tokens": 6610,
-  "cost_usd_equiv": 0.40140280000000006,
+  "input_tokens": 67435,
+  "output_tokens": 7668,
+  "cost_usd_equiv": 0.42381,
   "status": "extracted"
  }
 }

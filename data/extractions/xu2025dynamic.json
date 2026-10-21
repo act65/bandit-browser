@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Dynamic Pricing with Adversarially-Censored Demands",
   "arxiv_id": "2502.06168",
@@ -16,17 +16,20 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Dynamic pricing with adversarial inventory constraint (censored linear noisy demand)",
+   "name_in_paper": "Dynamic pricing with adversarial inventory constraint (censored linear demand)",
    "objective": "cumulative_regret",
-   "feedback": "bandit",
+   "feedback": "partial_monitoring",
    "environment": "stochastic_iid",
    "action_space": "continuum_other",
-   "function_class": [],
+   "function_class": [
+    "unimodal"
+   ],
    "domain": "constrained",
    "context": "adversarial_contexts",
    "noise": "general_model_class",
    "learner_knows": [
-    "T"
+    "T",
+    "loss_range"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -36,18 +39,51 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "unspecified",
+    "structure": "unspecified"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {
     "d": "1"
@@ -55,14 +91,13 @@
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Action is a price p_t in [0, p_max]; potential demand d_t = a - b p_t + N_t is linear with unknown a, b",
-    "Observed demand is censored by an adversarially pre-committed inventory level gamma_t revealed at start of round: D_t = min(gamma_t, d_t); reward p_t D_t",
-    "Noise N_t i.i.d., zero mean, supported on [-c, c], unknown distribution with L_F-Lipschitz CDF",
-    "Learner knows bounds a_max, b_min, b_max, gamma_min, c, p_max",
-    "Regret against per-round optimal price p_t^* given gamma_t",
-    "Inequality assumptions on parameters (Assumption 4) and T larger than any polynomial of problem constants (Assumption 5)"
+    "Price p_t in [0, p_max]; potential demand d_t = a - b p_t + N_t linear with unknown a, b",
+    "Observed demand censored by inventory: D_t = min(gamma_t, d_t); reward p_t * D_t",
+    "Inventory levels gamma_t chosen adversarially (pre-committed) and revealed at start of each round",
+    "Noise i.i.d., zero mean, supported on [-c, c], unknown distribution with L_F-Lipschitz CDF",
+    "Learner knows bounds a_max, b_min, b_max, gamma_min, c, p_max"
    ],
-   "definition_quote": "At each time $t=1,2,\\ldots, T$, we firstly propose a price $p_t$, and then a price-dependent \\emph{potential demand} occurs as $d_t$. However, we might have no access to $d_t$ as it is censored by an \\emph{adversarial} inventory level $\\gamma_t$. Instead, we observe a censored demand $D_t = \\min\\{\\gamma_t, d_t\\}$ and receive the revenue $r_t$ as a reward at $t$."
+   "definition_quote": "For $t=1,2,...,T:$ The seller (we) receives $\\gamma_t$ identical products. The seller proposes a price $p_t\\geq0$. The customers generate an invisible potential demand $d_t\\geq 0$, dependent on $p_t$. The market reveals an inventory-censored demand $D_t=\\min\\{\\gamma_t, d_t\\}$. The seller gets a reward $r_t = p_t\\cdot D_t$. All unsold products perish before $t+1$."
   }
  ],
  "algorithms": [
@@ -107,15 +142,15 @@
    },
    "symbols": {},
    "conditions": [
-    "Linear demand d_t = a - b p + N_t (Assumption 1)",
-    "Known bounds a<=a_max, b_min<=b<=b_max, gamma_t>=gamma_min, N_t in [-c,c], p_t in [0,p_max] (Assumption 2)",
-    "Noise i.i.d. zero mean with L_F-Lipschitz CDF (Assumption 3)",
-    "Parameter inequalities of Assumption 4 (e.g. a-c>gamma_t>2c, gamma_min > a_max - b_min p_max + c, p_max >= a/(2b))",
-    "T larger than any polynomial of problem constants (Assumption 5)",
-    "Inventory sequence gamma_t arbitrary (adversarially pre-committed)"
+    "linear demand d_t = a - b p + N_t with 0<a<=a_max, b_min<=b<=b_max (Assumptions 1-2)",
+    "noise i.i.d., zero mean, supported in [-c,c], CDF L_F-Lipschitz (Assumption 3)",
+    "inequalities of Assumption 4: a-c > gamma_t > 2c, a - b p_max - c > 0, gamma_min > a_max - b_min p_max + c, p_max >= a/(2b)",
+    "T larger than any polynomial of the problem constants (Assumption 5)",
+    "inventory sequence arbitrary (adversarially pre-committed)"
    ],
    "tuning": [
-    "tau = sqrt(T)"
+    "tau = sqrt(T)",
+    "confidence constants C_a, C_b, C_N, C_tau set with eta = (C_a + C_b p_max)/(10 c T^{5/4})"
    ],
    "is_new": true,
    "source": {
@@ -124,7 +159,7 @@
     "quote": "Let $\\tau={\\sqrt{T}}$ in \\Cref{algo:C20CB}. For any adversarial $\\{\\gamma_t\\}_{t=1}^T$ input sequence, C20CB suffers at most $\\tilde{O}\\left(\\sqrt{T}\\cdot\\log\\frac{T}{\\delta}\\right)$ regret, with probability $\\Pr\\geq 1-\\delta$."
    },
    "confidence": "medium",
-   "notes": "Regret defined via expected revenue functions r_t(p) against per-round optimal prices. Mapping to ontology is approximate: pricing with censored demand, continuous 1-D action, inventory treated as adversarial context. Algorithm runs ~O~(T^{5/4}) total time."
+   "notes": "Regret defined via expected revenue functions r_t (pseudo-regret style) against per-round optimal price p_t^*, holding with prob >= 1-delta. Feedback mapped to partial_monitoring per guidance on censored observations. Constants depend on problem parameters hidden in O_tilde."
   }
  ],
  "cited_results": [
@@ -183,24 +218,6 @@
    "where": "Section 2 (Related Works)"
   },
   {
-   "cited_key": "wang2021multimodal",
-   "cited_title": "Multimodal dynamic pricing",
-   "cited_first_author": "Wang",
-   "cited_year": 2021,
-   "cited_arxiv_id": null,
-   "algorithm_name": null,
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Dynamic pricing with k-times continuously differentiable demand curves",
-   "bound": {
-    "notation": "O",
-    "expression": "T**((k+1)/(2*k+1))",
-    "expression_latex": "O(T^{\\frac{k+1}{2k+1}})",
-    "regime": null
-   },
-   "where": "Section 2 (Related Works)"
-  },
-  {
    "cited_key": "chen2023optimal",
    "cited_title": "Optimal policies for dynamic pricing and inventory control with nonparametric censored demands",
    "cited_first_author": "Chen",
@@ -235,42 +252,24 @@
     "regime": null
    },
    "where": "Section 2 (Related Works)"
-  },
-  {
-   "cited_key": "chen2019coordinating",
-   "cited_title": "Coordinating pricing and inventory replenishment with nonparametric demand learning",
-   "cited_first_author": "Chen",
-   "cited_year": 2019,
-   "cited_arxiv_id": null,
-   "algorithm_name": null,
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Pricing and inventory replenishment with additive/multiplicative noise demand",
-   "bound": {
-    "notation": "O",
-    "expression": "sqrt(T)",
-    "expression_latex": "O(\\sqrt{T})",
-    "regime": null
-   },
-   "where": "Section 2 (Related Works)"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:53:00",
+  "date": "2026-10-21T18:21:13",
   "source_chars": 108333,
-  "input_tokens": 82636,
-  "output_tokens": 3993,
-  "cost_usd_equiv": 0.5233668,
+  "input_tokens": 89223,
+  "output_tokens": 3925,
+  "cost_usd_equiv": 0.523254,
   "status": "extracted"
  }
 }

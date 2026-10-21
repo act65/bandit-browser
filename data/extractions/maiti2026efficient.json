@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Efficient Uncoupled Learning Dynamics with $\\tilde{O}\\!\\left(T^{-1/4}\\right)$ Last-Iterate Convergence in Bilinear Saddle-Point Problems over Convex Sets under Bandit Feedback",
   "arxiv_id": "2602.21436",
@@ -18,7 +18,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Last-iterate convergence in bilinear saddle-point problems over compact convex sets under bandit feedback (self-play, uncoupled)",
+   "name_in_paper": "Last-iterate convergence in bilinear saddle-point problems over compact convex sets under bandit feedback (self-play)",
    "objective": "other_pure_exploration",
    "feedback": "bandit",
    "environment": "adversarial_adaptive",
@@ -27,9 +27,7 @@
    "domain": "not_applicable",
    "context": "none",
    "noise": "bounded_pm1",
-   "learner_knows": [
-    "d"
-   ],
+   "learner_knows": [],
    "instance_assumptions": [
     "arms_span_Rd"
    ],
@@ -38,46 +36,76 @@
     "shape": "convex_body",
     "time_varying": "fixed",
     "access": "linear_optimization_oracle",
-    "norm_bound": "not_applicable",
+    "norm_bound": "unspecified",
     "parameter_set": "not_applicable",
-    "loss_set": "unspecified"
+    "loss_set": "unspecified",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": false,
-   "out_of_scope_reason": "Two-player zero-sum game (learning in games / self-play); the guarantee is last-iterate convergence to a Nash equilibrium, not a bandit regret or identification objective.",
+   "out_of_scope_reason": "Learning in two-player zero-sum games with a Nash-equilibrium (last-iterate convergence) objective under self-play.",
    "unmapped": [
-    "Two-player zero-sum bilinear game <x, A y>, both players run the uncoupled algorithm in self-play",
-    "Objective: the round-k iterate (x_k, y_k) is an eps_k-approximate Nash equilibrium (last-iterate convergence)",
-    "<x, A y> in [-1,1] for all x in X, y in Y",
-    "Players do not observe opponent actions, action set or dimension"
+    "two-player zero-sum bilinear game <x, A y> with both players running uncoupled dynamics (self-play)",
+    "objective: the iterate (x_k, y_k) is an eps_k-approximate Nash equilibrium (last-iterate convergence)",
+    "uncoupled: players observe neither the opponent's actions nor its action set or dimension"
    ],
-   "definition_quote": "In each round $k$, the row player selects $x_k \\in \\mathcal{X}$ and the column player selects $y_k \\in \\mathcal{Y}$. They then receive standard bandit feedback in the form of $\\langle x_k, Ay_k \\rangle$ and $-\\langle x_k, Ay_k \\rangle$, respectively."
+   "definition_quote": "Let $\\mathcal{X} \\subset \\mathbb{R}^{n}$ and $\\mathcal{Y} \\subset \\mathbb{R}^{m}$ be compact, convex sets, and let $A \\in \\mathbb{R}^{n \\times m}$ be an input matrix. We assume $\\mathrm{span}(\\mathcal{X}) = \\mathbb{R}^{n}$ ... $\\langle x, Ay \\rangle \\in [-1,1]$ ... In each round $k$, the row player selects $x_k \\in \\mathcal{X}$ and the column player selects $y_k \\in \\mathcal{Y}$. They then receive standard bandit feedback in the form of $\\langle x_k, Ay_k \\rangle$ and $-\\langle x_k, Ay_k \\rangle$, respectively."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Last-iterate algorithm under bandit feedback (phased OFTRL with ellipsoid regularizer and volumetric-spanner exploration)",
+   "name": "Last-iterate algorithm under bandit feedback (phased OFTRL with experimental-design exploration and ellipsoid regularizer)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
     "ftrl_or_mirror_descent",
     "other"
    ],
-   "requires_knowledge_of": [
-    "d"
-   ]
+   "requires_knowledge_of": []
   }
  ],
  "results": [
@@ -95,35 +123,35 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "(n_dim**3 + m_dim**3)*log(k)*log(8*k**2/delta)**(1/4)*k**(-1/4)",
-    "expression_latex": "\\varepsilon_k = \\mathrm{poly}(n,m,\\log(k/\\delta)) \\, k^{-1/4};\\ \\varepsilon_k\\leq O((n^3+m^3)\\log (k)\\log^{1/4}(8k^2/\\delta)k^{-1/4})",
-    "regime": "for every k >= 1, simultaneously, with probability at least 1-delta"
+    "expression": "(n_dim**3 + m_dim**3)*log(T)*log(8*T**2/delta)**(1/4)*T**(-1/4)",
+    "expression_latex": "\\varepsilon_k\\leq O((n^3+m^3)\\log (k)\\log^{1/4}(8k^2/\\delta)k^{-1/4})",
+    "regime": null
    },
    "symbols": {
-    "n_dim": "dimension of the row player's action set X in R^n",
-    "m_dim": "dimension of the column player's action set Y in R^m",
-    "k": "round index",
-    "eps_k": "Nash-equilibrium approximation level of the round-k iterate (x_k, y_k)"
+    "n_dim": "dimension of the row player's action set X",
+    "m_dim": "dimension of the column player's action set Y",
+    "T": "round index k at which the Nash gap eps_k of the iterate (x_k,y_k) is measured"
    },
    "conditions": [
-    "X and Y compact convex with span(X)=R^n, span(Y)=R^m",
+    "X, Y compact convex, spanning R^n and R^m",
     "<x, A y> in [-1,1] for all x in X, y in Y",
-    "both players run Algorithm 1 (self-play)"
+    "both players run the algorithm (self-play)",
+    "simultaneously for all k >= 1"
    ],
    "tuning": [
     "eta = 1/6",
-    "B_t = log(8 t^2/delta) t^3",
-    "lambda_t = t^{-2}",
-    "exploration distribution uniform over a volumetric-spanner-type subset with sup x^T V^{-1} x <= 2n^2"
+    "B_t = log(8t^2/delta) t^3",
+    "lambda_t = t^-2",
+    "delta in (0,1/2]"
    ],
    "is_new": true,
    "source": {
     "label": "thm:main_theorem",
     "number": "Theorem (thm:main_theorem)",
-    "quote": "Consider a two-player zero-sum game with action sets $\\mathcal{X} \\subseteq \\mathbb{R}^n$ and $\\mathcal{Y} \\subseteq \\mathbb{R}^m$, where both $\\mathcal{X}$ and $\\mathcal{Y}$ are convex and compact. Let $(x_k, y_k)$ denote the iterates generated by the two players running Algorithm~1 with step size $\\eta = \\tfrac{1}{6}$ in each round $k$. Then, with probability at least $1 - \\delta$, for every $k \\geq 1$, the iterate $(x_k,y_k)$ is an $\\varepsilon_k$-approximate Nash equilibrium, where $\\varepsilon_k = \\mathrm{poly}(n,m,\\log(k/\\delta)) \\, k^{-1/4}$."
+    "quote": "Let $(x_k, y_k)$ denote the iterates generated by the two players running Algorithm~\\ref{algo:last_iter_bandit_feedback} with step size $\\eta = \\tfrac{1}{6}$ in each round $k$. Then, with probability at least $1 - \\delta$, for every $k \\geq 1$, the iterate $(x_k,y_k)$ is an $\\varepsilon_k$-approximate Nash equilibrium, where $\\varepsilon_k = \\mathrm{poly}(n,m,\\log(k/\\delta)) \\, k^{-1/4}$."
    },
    "confidence": "medium",
-   "notes": "The theorem states only poly(n,m,log(k/delta)) k^{-1/4}; the explicit polynomial (n^3+m^3) log k log^{1/4}(8k^2/delta) is from the proof sketch at the end of Section 3. Quantity is the Nash-gap of the last iterate, not regret. Polynomial-time given a linear optimization oracle (Section 4)."
+   "notes": "The theorem itself states eps_k = poly(n,m,log(k/delta)) k^{-1/4}. The explicit polynomial is the one derived at the end of Section 3. The quantity is the Nash-equilibrium gap of the last iterate, not regret. Polynomial time requires linear optimization oracles for the action sets."
   }
  ],
  "cited_results": [
@@ -133,17 +161,17 @@
    "cited_first_author": "Yang Cai",
    "cited_year": 2023,
    "cited_arxiv_id": null,
-   "algorithm_name": "Mirror descent with KL-divergence uncoupled dynamics",
+   "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Last-iterate convergence (Nash gap) in two-player zero-sum matrix games, variant bandit feedback (sampled pure actions), high probability",
+   "setting_description": "Last-iterate convergence in matrix games (simplices) under a variant of bandit feedback (sampled entries), high probability",
    "bound": {
     "notation": "O_tilde",
     "expression": "T**(-1/8)",
     "expression_latex": "\\tilde{O}(T^{-1/8})",
-    "regime": "high probability"
+    "regime": null
    },
-   "where": "Related Work"
+   "where": "Introduction / Related Work"
   },
   {
    "cited_key": "cai2023uncoupled",
@@ -151,15 +179,15 @@
    "cited_first_author": "Yang Cai",
    "cited_year": 2023,
    "cited_arxiv_id": null,
-   "algorithm_name": "Mirror descent with KL-divergence uncoupled dynamics",
+   "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Last-iterate convergence in two-player zero-sum matrix games, variant bandit feedback, in expectation",
+   "setting_description": "Last-iterate convergence in matrix games under a variant of bandit feedback, in expectation",
    "bound": {
     "notation": "O_tilde",
     "expression": "T**(-1/6)",
     "expression_latex": "\\tilde{O}(T^{-1/6})",
-    "regime": "in expectation"
+    "regime": null
    },
    "where": "Related Work"
   },
@@ -169,17 +197,17 @@
    "cited_first_author": "Yang Cai",
    "cited_year": 2025,
    "cited_arxiv_id": "2506.03464",
-   "algorithm_name": "Average-to-last-iterate reduction",
+   "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Last-iterate convergence in two-player zero-sum matrix games, variant bandit feedback, high probability",
+   "setting_description": "Last-iterate convergence in matrix games under a variant of bandit feedback, high probability",
    "bound": {
     "notation": "O_tilde",
     "expression": "T**(-1/5)",
     "expression_latex": "\\tilde{O}(T^{-1/5})",
-    "regime": "high probability"
+    "regime": null
    },
-   "where": "Related Work"
+   "where": "Introduction / Related Work"
   },
   {
    "cited_key": "fiegel2025harder",
@@ -190,7 +218,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Last-iterate convergence in two-player zero-sum matrix games, variant bandit feedback, uncoupled dynamics",
+   "setting_description": "Last-iterate convergence in matrix games under a variant of bandit feedback",
    "bound": {
     "notation": "Omega",
     "expression": "T**(-1/3)",
@@ -205,15 +233,15 @@
    "cited_first_author": "Jing Dong",
    "cited_year": 2024,
    "cited_arxiv_id": "2408.08395",
-   "algorithm_name": "Mirror descent based uncoupled dynamics with gradient estimators",
+   "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Last-iterate convergence in bilinear saddle-point problems over convex sets under standard bandit feedback, in expectation",
+   "setting_description": "Last-iterate convergence in bilinear games over convex sets under standard bandit feedback, in expectation only",
    "bound": {
     "notation": "O",
     "expression": "T**(-1/6)",
     "expression_latex": "O(T^{-1/6})",
-    "regime": "in expectation"
+    "regime": null
    },
    "where": "Introduction / Related Work"
   }
@@ -221,19 +249,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:40:15",
+  "date": "2026-10-21T18:08:19",
   "source_chars": 83338,
-  "input_tokens": 74397,
-  "output_tokens": 4524,
-  "cost_usd_equiv": 0.4680748,
+  "input_tokens": 80984,
+  "output_tokens": 4347,
+  "cost_usd_equiv": 0.465782,
   "status": "extracted"
  }
 }

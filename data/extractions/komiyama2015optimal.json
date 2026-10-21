@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Optimal Regret Analysis of Thompson Sampling in Stochastic Multi-armed Bandit Problem with Multiple Plays",
   "arxiv_id": "1506.00779",
@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Multiple-play multi-armed bandit (MP-MAB) problem with Bernoulli rewards",
+   "name_in_paper": "Multiple-play MAB (MP-MAB) problem with Bernoulli rewards",
    "objective": "cumulative_regret",
    "feedback": "semi_bandit",
    "environment": "stochastic_iid",
@@ -25,36 +25,68 @@
    "context": "none",
    "noise": "bernoulli",
    "learner_knows": [
-    "K"
+    "K",
+    "m"
    ],
    "instance_assumptions": [],
    "extras": [],
    "action_set": {
-    "shape": "finite",
+    "shape": "not_applicable",
     "time_varying": "fixed",
     "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "m_set",
+    "reward": "linear",
+    "loss_scale": "per_base_arm"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
-   "unmapped": [
-    "Action set is all subsets of exactly L < K arms (uniform matroid); total reward is the sum of the selected arms' rewards; m = L"
-   ],
-   "definition_quote": "Each arm $i \\in [K]$ is associated with a probability distribution $\\nu_i = \\Bernoulli(\\mu_i)$, $\\mu_i \\in (0,1)$. At each round $t=1,2,\\dots,T$, the forecaster selects a set of $L < K$ arms $I(t)$, then receives the rewards of the selected arms."
+   "unmapped": [],
+   "definition_quote": "Let there be $K$ arms. Each arm $i \\in [K]$ is associated with a probability distribution $\\nu_i = \\Bernoulli(\\mu_i)$, $\\mu_i \\in (0,1)$. At each round $t=1,2,\\dots,T$, the forecaster selects a set of $L < K$ arms $I(t)$, then receives the rewards of the selected arms. ... \\Regret(T)=\\sum_{t=1}^T (\\sum_{i \\in [L]} \\mu_i - \\sum_{i \\in I(t)} \\mu_i)."
   }
  ],
  "algorithms": [
@@ -67,31 +99,8 @@
     "thompson_sampling"
    ],
    "requires_knowledge_of": [
-    "K"
-   ]
-  },
-  {
-   "id": "a2",
-   "name": "IMP-TS (improved MP-TS)",
-   "registry_id": null,
-   "is_new": true,
-   "techniques": [
-    "thompson_sampling"
-   ],
-   "requires_knowledge_of": [
-    "K"
-   ]
-  },
-  {
-   "id": "a3",
-   "name": "BC-MP-TS (Bias-corrected MP-TS)",
-   "registry_id": null,
-   "is_new": true,
-   "techniques": [
-    "thompson_sampling"
-   ],
-   "requires_knowledge_of": [
-    "K"
+    "K",
+    "m"
    ]
   }
  ],
@@ -110,23 +119,25 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "sum_subopt((1 + eps_alg)*Delta_iL*log(T)/kl(mu_i, mu_L)) + C_a + C_b",
+    "expression": "sum_subopt((1 + eps_alg)*Delta_iL*log(T)/d_iL) + C_a + C_b",
     "expression_latex": "\\sum_{i \\in [K]\\setminus[L]} \\left( \\frac{(1+\\epsilon_1) \\Delta_{i,L} \\log{T}}{d(\\mu_i, \\mu_L)} \\right) + C_a(\\epsilon_1, \\mu_1,\\dots,\\mu_K) + C_b(T, \\epsilon_2, \\mu_1,\\dots,\\mu_K)",
     "regime": "for any sufficiently small eps_1 > 0, eps_2 > 0"
    },
    "symbols": {
-    "Delta_iL": "mu_L - mu_i, gap between the L-th best arm and suboptimal arm i",
-    "mu_L": "mean of the L-th best arm",
-    "L": "number of arms selected per round (m)",
-    "C_a": "constant independent of T, O(eps_1^{-2}) treating means as constants",
-    "C_b": "function of T that grows as O(log log T) for proper choice of eps_2"
+    "Delta_iL": "mu_L - mu_i, gap between suboptimal arm i and the L-th (m-th) best arm",
+    "d_iL": "Bernoulli KL divergence d(mu_i, mu_L)",
+    "C_a": "constant independent of T, O(eps_1^-2) for fixed means",
+    "C_b": "function of T that grows as O(log log T) for a proper choice of eps_2",
+    "m": "number of arms selected per round (paper's L)"
    },
    "conditions": [
-    "mu_L is distinct: mu_{L-1} > mu_L > mu_{L+1} (Appendix: other ties allowed)",
-    "mu_i in (0,1)"
+    "all arms have distinct means (or more generally the L-th arm's mean is distinct: mu_{L-1} > mu_L > mu_{L+1})",
+    "mu_i in (0,1)",
+    "L < K"
    ],
    "tuning": [
-    "uniform Beta(1,1) prior on each arm"
+    "uniform Beta(1,1) prior on each arm",
+    "eps_2 = O(log log T / log T) in the analysis gives C_b = O(log log T)"
    ],
    "is_new": true,
    "source": {
@@ -135,7 +146,7 @@
     "quote": "For any sufficiently small $\\epsilonOne>0, \\epsilon_2>0$, the regret of MP-TS is upper-bounded as \\Expect[\\Regret(T)] \\leq \\sum_{i \\in \\subopts} \\left( \\frac{(1+\\epsilonOne) \\Delta_{i,L} \\log{T}}{d(\\mu_i, \\mu_L)} \\right) + C_a(\\epsilonOne, \\mu_1,\\mu_2,\\dots,\\mu_K) + C_b(T, \\epsilon_2, \\mu_1,\\mu_2,\\dots,\\mu_K), where, $C_a$ is a constant independent on $T$ and is $O(\\epsilonOne^{-2})$ ... $C_b$ ... grows at a rate of $O(\\log \\log{T}) = o(\\log{T})$."
    },
    "confidence": "medium",
-   "notes": "Sum is over suboptimal arms i in [K]\\[L]; d is Bernoulli KL. Regret defined via means, hence pseudo-regret. Paper then sets eps_1 = O((log T)^{-1/3}) to get sum Delta_{i,L} log T / d(mu_i,mu_L) + O((log T)^{2/3}), matching Anantharam et al. lower bound; also derives asymptotic high-probability optimality. eps_1, eps_2 are analysis parameters. Originally stated assuming all means distinct; Appendix extends to cases where only the marginal arm L must be distinct."
+   "notes": "Paper's L is m. Regret defined through means, so pseudo-regret. By setting eps_1 = O((log T)^{-1/3}), the paper derives E[Reg] <= sum_{i>L} Delta_{i,L} log T / d(mu_i,mu_L) + O((log T)^{2/3}), matching Anantharam et al.'s lower bound asymptotically; it also notes asymptotic high-probability optimality. The algorithm does not use T, but the analysis choice of eps_2 depends on T."
   }
  ],
  "cited_results": [
@@ -148,14 +159,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Multiple-play stochastic bandit (select L of K arms per round), Bernoulli rewards, strongly consistent algorithms",
+   "setting_description": "Stochastic multiple-play bandit (select L of K arms per round, semi-bandit, Bernoulli rewards), strongly consistent algorithms",
    "bound": {
     "notation": "liminf",
-    "expression": "sum_subopt(Delta_iL/kl(mu_i, mu_L))*log(T)",
+    "expression": "sum_subopt(Delta_iL/d_iL)*log(T)",
     "expression_latex": "\\Expect[\\Regret(T)] \\geq \\sum_{i \\in [K]\\setminus[L]} \\frac{ (1 - o(1)) \\Delta_{i,L} }{d(\\mu_i, \\mu_L) } \\log{T}",
-    "regime": "asymptotic, T -> infinity"
+    "regime": "T -> infinity"
    },
-   "where": "Section 3.2, eq. (ineq:multiregretlower)"
+   "where": "Section 3.2, inequality (ineq:multiregretlower)"
   },
   {
    "cited_key": "LaiRobbins1985",
@@ -166,14 +177,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Single-play stochastic K-armed bandit, Bernoulli rewards, strongly consistent algorithms",
+   "setting_description": "Single-play stochastic K-armed Bernoulli bandit, strongly consistent algorithms",
    "bound": {
     "notation": "liminf",
     "expression": "sum_subopt(Delta_i/kl_i)*log(T)",
     "expression_latex": "\\Expect[\\Regret(T)] \\geq \\sum_{i \\neq 1} \\left( \\frac{(1 - o(1))\\Delta_{i,1}}{d(\\mu_i, \\mu_1)} \\right) \\log{T}",
-    "regime": "asymptotic, T -> infinity"
+    "regime": "T -> infinity"
    },
-   "where": "Section 3.1, eq. (lower_single)"
+   "where": "Section 3.1, inequality (lower_single)"
   }
  ],
  "_run": {
@@ -182,16 +193,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-21T10:02:50",
+  "date": "2026-10-21T18:44:27",
   "source_chars": 88119,
-  "input_tokens": 76305,
-  "output_tokens": 3753,
-  "cost_usd_equiv": 0.46791879999999997,
+  "input_tokens": 82901,
+  "output_tokens": 3900,
+  "cost_usd_equiv": 0.472178,
   "status": "extracted"
  }
 }

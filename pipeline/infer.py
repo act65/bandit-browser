@@ -6,7 +6,9 @@ Rules, for every pair S ⊑ S' (S a special case of S'):
     are substituted (e.g. K = 2);
   - a lower bound proved on S holds on S'. Reduction maps are inverted (a K-armed
     Omega(sqrt(KT)) becomes Omega(sqrt(dT)) on linear); for a parameter fixed in S
-    the bound holds for that parameter value.
+    the bound holds for that parameter value. Lower bounds also hold for a learner that
+    knows more about the problem CLASS (noise level, horizon, norm bounds, reward family):
+    for them the order ignores class-level learner_knows, with a caveat.
 Only extracted results are propagated (one hop over the transitively closed order),
 so derivations never chain through other inferred results.
 
@@ -120,6 +122,18 @@ def mentions(r: dict, symbols: set[str]) -> bool:
     return bool(set(resolve.IDENT_RE.findall(expr)) & symbols)
 
 
+# Knowledge that defines the problem class rather than the instance: a minimax lower bound over
+# the class holds even for a learner that knows it. Instance quantities (gaps, the optimal mean),
+# gap lower bounds and priors are not class-level.
+CLASS_LEVEL_NAMED = {"reward_family", "kernel", "function_class", "loss_range", "context_distribution", "moment_bound"}
+
+
+def class_level_knowledge(ont: dict) -> set[str]:
+    variables = schema.load_variables()["variables"]
+    knowable = set(ont["dimensions"]["learner_knows"]["values"])
+    return ({k for k, v in variables.items() if v["kind"] == "problem_parameter"} | CLASS_LEVEL_NAMED) & knowable
+
+
 def main() -> None:
     ont = schema.load_ontology()
     order = Order(ont)
@@ -130,9 +144,22 @@ def main() -> None:
     for r in results:
         by_setting[r["setting_id"]].append(r)
 
-    pairs = list(order.comparable_pairs({k: v["key"] for k, v in settings.items()}))
+    keys = {k: v["key"] for k, v in settings.items()}
+    pairs = list(order.comparable_pairs(keys))
+    # Lower bounds also hold for a learner that knows the problem class (noise level, horizon,
+    # norm bounds, reward family, ...): they move along the order computed with class-level
+    # knowledge removed, and between settings that differ only in such knowledge.
+    class_knowledge = class_level_knowledge(ont)
+    stripped = {k: {**v, "learner_knows": [x for x in v.get("learner_knows") or [] if x not in class_knowledge]}
+                for k, v in keys.items()}
+    lb_pairs = list(order.comparable_pairs(stripped))
+    groups = collections.defaultdict(list)
+    for k, v in stripped.items():
+        groups[json.dumps(v, sort_keys=True)].append(k)
+    lb_pairs += [(a, b, []) for g in groups.values() for a in g for b in g if a != b]
     inferred = []
-    for special, general, changes in pairs:
+
+    def pair_info(changes):
         down_map, up_map, fixed, caveats = {}, {}, {}, []
         for ch in changes:
             if ch.kind in ("reduction", "order") and ch.param_map:
@@ -153,7 +180,10 @@ def main() -> None:
         comparators = set.intersection(*scopes) if scopes else None
         change_list = [{"dim": c.dim, "special": c.special, "general": c.general, "kind": c.kind,
                         "justification": c.justification} for c in changes]
+        return down_map, up_map, fixed, caveats, comparators, change_list
 
+    for special, general, changes in pairs:
+        down_map, up_map, fixed, caveats, comparators, change_list = pair_info(changes)
         for r in by_setting.get(general, []):
             if r["side"] != "upper" or not transferable(r, settings[special]["key"]) \
                     or (comparators is not None and r.get("comparator") not in comparators):
@@ -170,6 +200,16 @@ def main() -> None:
                              "caveats": caveats + ([f"uses symbols defined only in the source setting: {', '.join(foreign)}"] if foreign else [])
                                         + ([f"conditional on: {'; '.join(r['conditions'])}"] if r.get("conditions") else [])
                                         + ([f"regime involves substituted symbols: {r['bound']['regime']}"] if survives is None else [])})
+
+    for special, general, changes in lb_pairs:
+        down_map, up_map, fixed, caveats, comparators, change_list = pair_info(changes)
+        extra = sorted(set(keys[general].get("learner_knows") or []) - set(keys[special].get("learner_knows") or []))
+        knows_note = ([f"lower bound read for a learner that also knows {', '.join(extra)} (class-level knowledge)"]
+                      if extra else [])
+        if extra:
+            change_list = change_list + [{"dim": "learner_knows", "special": keys[special].get("learner_knows"),
+                                          "general": keys[general].get("learner_knows"), "kind": "class_knowledge",
+                                          "justification": ["minimax lower bounds hold for learners that know the problem class"]}]
         via_reduction = any(c.kind == "reduction" for c in changes)
         for r in by_setting.get(special, []):
             if r["side"] != "lower" or not transferable(r, settings[general]["key"]) \
@@ -186,7 +226,7 @@ def main() -> None:
             rec = {"id": f"{r['id']}>{general}", "rule": "lower_bound_to_generalisation",
                    "setting_id": general, "from_setting": special, "from_result": r["id"],
                    "expression": expr, "substitutions": subs, "changes": change_list,
-                   "caveats": caveats + note}
+                   "caveats": caveats + note + knows_note}
             if bayes_to_worst_case(r, settings[general]["key"]):
                 rec.update(quantity="pseudo_regret", dependence="worst_case")
                 rec["caveats"] = rec["caveats"] + ["Bayesian lower bound read as a worst-case lower bound (sup >= average)"]

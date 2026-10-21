@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Instance-Optimal Estimation with Multiple LLM Judges on a Budget",
   "arxiv_id": "2605.23362",
@@ -18,55 +18,7 @@
   {
    "id": "s1",
    "name_in_paper": "Budgeted heteroskedastic multi-judge estimation (bounded scores, unknown variances)",
-   "objective": "other_pure_exploration",
-   "feedback": "bandit",
-   "environment": "stochastic_iid",
-   "action_space": "finite_K",
-   "function_class": [],
-   "domain": "not_applicable",
-   "context": "none",
-   "noise": "bounded_01",
-   "learner_knows": [
-    "K"
-   ],
-   "instance_assumptions": [],
-   "extras": [
-    "budgeted_exploration"
-   ],
-   "action_set": {
-    "shape": "not_applicable",
-    "time_varying": "not_applicable",
-    "access": "not_applicable",
-    "norm_bound": "not_applicable",
-    "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
-   },
-   "corruption": {
-    "adversary": "not_applicable",
-    "budget_measure": "not_applicable",
-    "structure": "not_applicable",
-    "regret_reference": "not_applicable"
-   },
-   "feedback_graph": {
-    "observability": "not_applicable",
-    "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
-   },
-   "parameters": {},
-   "in_scope": true,
-   "out_of_scope_reason": null,
-   "unmapped": [
-    "actions are K x J query-judge pairs; goal is to estimate all K means (score vector) in l_p norm, not to identify a best arm",
-    "each judge j has known cost c_j; total cost budget B must be respected almost surely",
-    "scores bounded in [0,R] with R known (not necessarily [0,1])",
-    "heteroskedastic unknown variances sigma_{k,j}^2 per pair; all judges for query k share mean s_k"
-   ],
-   "definition_quote": "Whenever the learner assigns query k to judge j, she incurs a cost c_j and observes a random estimate s_{k,j}\\in[0,R]. We assume that E[s_{k,j}] = s_k and \\sigma_{k,j}^2 := Var(s_{k,j}) > 0. The variances are unknown, while the score upper bound R is known."
-  },
-  {
-   "id": "s2",
-   "name_in_paper": "Budgeted multi-judge estimation (bounded scores, known variances)",
-   "objective": "other_pure_exploration",
+   "objective": "mean_estimation",
    "feedback": "bandit",
    "environment": "stochastic_iid",
    "action_space": "finite_K",
@@ -76,7 +28,8 @@
    "noise": "bounded_01",
    "learner_knows": [
     "K",
-    "moment_bound"
+    "B",
+    "loss_range"
    ],
    "instance_assumptions": [],
    "extras": [
@@ -88,43 +41,79 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_unknown"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "learner knows the full variance profile sigma_{k,j}",
-    "actions are K x J query-judge pairs; goal is l_p estimation of the K-dim score vector",
-    "known costs c_j and total budget B",
-    "scores in [0,R], R known"
+    "Arms are K queries x J judges; each query's mean is shared across judges, with pair-dependent variance sigma_{k,j}^2",
+    "Each judge j has known per-query cost c_j; total cost must be <= B almost surely",
+    "Goal is to estimate the full score vector in l_p norm, p in [1,infty]",
+    "Scores in [0,R] with R known"
    ],
-   "definition_quote": "This allocation is referred to as the Oracle allocation, because it requires the knowledge of the variances \\sigma_{k,j}^2."
+   "definition_quote": "Whenever the learner assigns query k to judge j, she incurs a cost c_j and observes a random estimate s_{k,j} in [0,R]. We assume that E[s_{k,j}] = s_k and sigma_{k,j}^2 := Var(s_{k,j}) > 0. The variances are unknown, while the score upper bound R is known."
   },
   {
-   "id": "s3",
-   "name_in_paper": "Budgeted multi-judge estimation with Gaussian scores (unknown variances)",
-   "objective": "other_pure_exploration",
+   "id": "s2",
+   "name_in_paper": "Budgeted heteroskedastic multi-judge estimation (bounded scores, known variances)",
+   "objective": "mean_estimation",
    "feedback": "bandit",
    "environment": "stochastic_iid",
    "action_space": "finite_K",
    "function_class": [],
    "domain": "not_applicable",
    "context": "none",
-   "noise": "gaussian_unknown_variance",
+   "noise": "bounded_01",
    "learner_knows": [
-    "K"
+    "K",
+    "B",
+    "loss_range",
+    "sigma_i"
    ],
    "instance_assumptions": [],
    "extras": [
@@ -136,32 +125,67 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_revealed"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "K x J query-judge pairs, l_p estimation of score vector",
-    "known costs c_j and budget B"
+    "Arms are K queries x J judges with shared per-query mean",
+    "Known per-judge costs c_j with total budget B",
+    "l_p estimation error",
+    "Variance profile sigma_{k,j} known to the learner"
    ],
-   "definition_quote": "If the learner queries k to a judge j, she observes a noisy score \\tilde{s} \\sim s_k + \\varepsilon_{k,j}, where \\varepsilon_{k,j}\\sim N(0,\\sigma_{k,j}^2)."
+   "definition_quote": "This allocation is referred to as the Oracle allocation, because it requires the knowledge of the variances sigma_{k,j}^2."
   },
   {
-   "id": "s4",
-   "name_in_paper": "Budgeted multi-judge estimation with Gaussian scores (known variances)",
-   "objective": "other_pure_exploration",
+   "id": "s3",
+   "name_in_paper": "Gaussian scores, known variances",
+   "objective": "mean_estimation",
    "feedback": "bandit",
    "environment": "stochastic_iid",
    "action_space": "finite_K",
@@ -171,7 +195,8 @@
    "noise": "gaussian_known_variance",
    "learner_knows": [
     "K",
-    "sigma"
+    "B",
+    "sigma_i"
    ],
    "instance_assumptions": [],
    "extras": [
@@ -183,46 +208,162 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_revealed"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "learner knows pair-dependent variances sigma_{k,j}^2",
-    "K x J query-judge pairs, l_p estimation of score vector",
-    "known costs c_j and budget B"
+    "K queries x J judges with shared per-query mean, Gaussian noise N(0, sigma_{k,j}^2)",
+    "Known per-judge costs, budget B",
+    "l_p estimation error"
    ],
-   "definition_quote": "If the learner queries k to a judge j, she observes a noisy score \\tilde{s} \\sim s_k + \\varepsilon_{k,j}, where \\varepsilon_{k,j}\\sim N(0,\\sigma_{k,j}^2)."
+   "definition_quote": "If the learner queries k to a judge j, she observes a noisy score s ~ s_k + eps_{k,j}, where eps_{k,j} ~ N(0, sigma_{k,j}^2)."
+  },
+  {
+   "id": "s4",
+   "name_in_paper": "Gaussian scores, unknown variances",
+   "objective": "mean_estimation",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_unknown_variance",
+   "learner_knows": [
+    "K",
+    "B"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "budgeted_exploration"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_unknown"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "K queries x J judges with shared per-query mean, Gaussian noise",
+    "Known per-judge costs, budget B",
+    "l_p estimation error"
+   ],
+   "definition_quote": "If the learner queries k to a judge j, she observes a noisy score s ~ s_k + eps_{k,j}, where eps_{k,j} ~ N(0, sigma_{k,j}^2)."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "IVWE (inverse-variance weighted estimator) with given / oracle allocation",
+   "name": "IVWE (inverse-variance weighted estimator, with given/oracle allocation)",
    "registry_id": null,
    "is_new": false,
    "techniques": [
     "other"
    ],
    "requires_knowledge_of": [
-    "sigma"
+    "sigma_i",
+    "B",
+    "loss_range"
    ]
   },
   {
    "id": "a2",
-   "name": "Est-IVWE (Estimate-then-IVWE, optimistic variance estimates)",
+   "name": "Est-IVWE (Estimate-then-IVWE)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -231,8 +372,8 @@
    ],
    "requires_knowledge_of": [
     "B",
-    "R",
-    "c",
+    "K",
+    "loss_range",
     "delta"
    ]
   },
@@ -246,7 +387,7 @@
    ],
    "requires_knowledge_of": [
     "B",
-    "c",
+    "K",
     "delta"
    ]
   }
@@ -266,32 +407,29 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "sqrt(2*A_p_omega*log(2*K/delta)/B) + R*B_p_omega*log(2*K/delta)/(3*B)",
+    "expression": "sqrt(2*A_p_omega*log(2*K/delta)/B) + R_range*B_p_omega*log(2*K/delta)/(3*B)",
     "expression_latex": "\\sqrt{\\frac{2 \\gA_p(\\bm\\omega; \\bm\\sigma, \\vc) \\log\\frac{2K}{\\delta}}{B}} + \\frac{R \\gB_p(\\bm\\omega; \\bm\\sigma, \\vc) \\log\\frac{2K}{\\delta}}{3B}",
     "regime": null
    },
    "symbols": {
-    "A_p_omega": "allocation objective (sum_k (sum_j omega_{kj}/(c_j sigma_{kj}^2))^{-p/2})^{2/p}",
-    "B_p_omega": "secondary allocation quantity defined in Prop A.1",
-    "R": "range of scores [0,R]",
-    "B": "total budget",
-    "p": "norm order of the l_p error"
+    "A_p_omega": "allocation objective (sum_k (sum_j omega_{k,j}/(c_j sigma_{k,j}^2))^{-p/2})^{2/p}",
+    "B_p_omega": "secondary allocation term defined in Prop A.1",
+    "R_range": "length of the score range [0,R]",
+    "J": "number of judges"
    },
    "conditions": [
     "scores in [0,R]",
-    "p in [1, infinity]"
+    "any fixed allocation N_{k,j} with budget-weighted proportions omega"
    ],
-   "tuning": [
-    "any fixed allocation N_{k,j}"
-   ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "prop:upper-bound-allocation",
     "number": "Proposition A.1",
-    "quote": "Then, IVWE is $(B, \\delta, \\ell_p)$-budget efficient at any $(\\vs, \\bm\\sigma, \\vc)$ with the following error rate $\\varepsilon_p$: $\\varepsilon_p = \\sqrt{\\frac{2 \\gA_p(\\bm\\omega; \\bm\\sigma, \\vc) \\log\\frac{2K}{\\delta}}{B}} + \\frac{R \\gB_p(\\bm\\omega; \\bm\\sigma, \\vc) \\log\\frac{2K}{\\delta}}{3B}$"
+    "quote": "Then, IVWE is (B, δ, ℓ_p)-budget efficient at any (s, σ, c) with the following error rate ε_p = sqrt(2 A_p(ω;σ,c) log(2K/δ)/B) + R B_p(ω;σ,c) log(2K/δ)/(3B)"
    },
-   "confidence": "medium",
-   "notes": "Bound is on the l_p estimation error holding w.p. >= 1-delta. Proposition 3.1 is the main-text summary. With the oracle allocation of Theorem 3.2, A_p becomes A_p_star."
+   "confidence": "high",
+   "notes": "Bound on ℓ_p estimation error holding w.p. ≥1-δ. Proposition 3.1 is the informal version. With optimal allocation (Theorem 3.2) the leading term becomes sqrt(2 A_p^* log(2K/δ)/B)."
   },
   {
    "id": "r2",
@@ -307,33 +445,32 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(2*A_p_star*log(4*K/delta)/B) + R**(1/3)*A_p_star*log(4*K*J/delta)**(2/3)/B**(2/3)",
-    "expression_latex": "\\sqrt{\\frac{2 \\gA_p^*(\\bm\\sigma, \\vc) \\log\\frac{4K}{\\delta}}{B}} + \\gO\\left( \\frac{R^{\\frac{1}{3}} \\gA_p^*(\\bm\\sigma, \\vc) \\left( \\log\\frac{4KJ}{\\delta} \\right)^{\\frac{2}{3}}}{B^{\\frac{2}{3}}} \\right)",
-    "regime": "p >= 2"
+    "expression": "sqrt(2*A_p_star*log(4*K/delta)/B) + R_range**(1/3)*A_p_star*log(4*K*J/delta)**(2/3)/B**(2/3)",
+    "expression_latex": "\\sqrt{\\frac{2 \\gA_p^*(\\bm\\sigma, \\vc) \\log\\frac{4K}{\\delta}}{B}} + \\gO\\left( \\frac{R^{\\frac{1}{3}} \\gA_p^*(\\bm\\sigma, \\vc) \\left( \\log\\frac{4 K J}{\\delta} \\right)^{\\frac{2}{3}}}{B^{\\frac{2}{3}}} \\right)",
+    "regime": "p_norm >= 2"
    },
    "symbols": {
     "A_p_star": "optimal allocation value (sum_k (c_{j*(k)} sigma_{k,j*(k)}^2)^{p/(p+2)})^{(p+2)/p}",
-    "R": "score range",
-    "B": "total budget",
+    "R_range": "score range length",
     "J": "number of judges",
-    "p": "norm order"
+    "p_norm": "norm exponent p of the l_p error"
    },
    "conditions": [
     "scores in [0,R]",
     "B >= 2 N_0 K sum_j c_j"
    ],
    "tuning": [
-    "tau = R sqrt(2/(N_0-1) log(4KJ/delta))",
-    "N_0 = (2B)^{1/3} (R^2 log(4KJ/delta))^{2/3}"
+    "tau = R sqrt(2/(N_0-1) log(4KJ/δ))",
+    "N_0 = (2B)^{1/3} (R^2 log(4KJ/δ))^{2/3}"
    ],
    "is_new": true,
    "source": {
     "label": "thm:est-ivwe",
     "number": "Theorem 4.1",
-    "quote": "Then, \\estivwe{} is $(B, \\delta, \\ell_p)$-budget efficient at any $(\\vs, \\bm\\sigma, \\vc)$ with the following error rate $\\varepsilon_p$: $\\varepsilon_p = \\sqrt{\\frac{2 \\gA_p^*(\\bm\\sigma, \\vc) \\log\\frac{4K}{\\delta}}{B}} + \\gO(\\frac{R^{1/3} \\gA_p^* (\\log\\frac{4KJ}{\\delta})^{2/3}}{B^{2/3}})$ if $p \\geq 2$"
+    "quote": "Then, Est-IVWE is (B, δ, ℓ_p)-budget efficient at any (s, σ, c) with the following error rate ε_p = sqrt(2 A_p^*(σ,c) log(4K/δ)/B) + O(R^{1/3} A_p^* (log(4KJ/δ))^{2/3}/B^{2/3}) if p ≥ 2"
    },
-   "confidence": "medium",
-   "notes": "Leading term is exact with constant 2; O applies to the second-order term only."
+   "confidence": "high",
+   "notes": "Leading term has exact constant; only the lower-order term is O(·)."
   },
   {
    "id": "r3",
@@ -349,33 +486,32 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(2*A_p_star*log(4*K/delta)/B) + R**(p/(2*p+2))*A_p_star*log(4*K*J/delta)**((3*p+2)/(4*p+4))/B**((3*p+2)/(4*p+4))",
-    "expression_latex": "\\sqrt{\\frac{2 \\gA_p^* \\log\\frac{4K}{\\delta}}{B}} + \\gO\\left( \\frac{R^{\\frac{p}{2p+2}} \\gA_p^*(\\bm\\sigma, \\vc) \\left( \\log\\frac{4KJ}{\\delta} \\right)^{\\frac{3p+2}{4p+4}}}{B^{\\frac{3p+2}{4p+4}}} \\right)",
-    "regime": "1 <= p < 2"
+    "expression": "sqrt(2*A_p_star*log(4*K/delta)/B) + R_range**(p_norm/(2*p_norm+2))*A_p_star*log(4*K*J/delta)**((3*p_norm+2)/(4*p_norm+4))/B**((3*p_norm+2)/(4*p_norm+4))",
+    "expression_latex": "\\sqrt{\\frac{2 \\gA_p^* \\log\\frac{4K}{\\delta}}{B}} + \\gO\\left( \\frac{R^{\\frac{p}{2p+2}} \\gA_p^* \\left( \\log\\frac{4KJ}{\\delta} \\right)^{\\frac{3p+2}{4p+4}}}{B^{\\frac{3p+2}{4p+4}}} \\right)",
+    "regime": "1 <= p_norm < 2"
    },
    "symbols": {
     "A_p_star": "optimal allocation value",
-    "R": "score range",
-    "B": "total budget",
+    "R_range": "score range length",
     "J": "number of judges",
-    "p": "norm order"
+    "p_norm": "norm exponent p"
    },
    "conditions": [
     "scores in [0,R]",
     "B >= 2 N_0 K sum_j c_j"
    ],
    "tuning": [
-    "tau = R sqrt(2/(N_0-1) log(4KJ/delta))",
-    "N_0 = 2^{p/(2p+2)} R^{(3p+2)/(2p+2)} (log(4KJ/delta))^{(3p+2)/(4p+4)} B^{(p+2)/(4p+4)}"
+    "tau = R sqrt(2/(N_0-1) log(4KJ/δ))",
+    "N_0 = 2^{p/(2p+2)} R^{(3p+2)/(2p+2)} (log(4KJ/δ))^{(3p+2)/(4p+4)} B^{(p+2)/(4p+4)}"
    ],
    "is_new": true,
    "source": {
     "label": "thm:est-ivwe",
     "number": "Theorem 4.1",
-    "quote": "\\gO\\left( \\frac{R^{\\frac{p}{2p+2}} \\gA_p^*(\\bm\\sigma, \\vc) \\left( \\log\\frac{4KJ}{\\delta} \\right)^{\\frac{3p+2}{4p+4}}}{B^{\\frac{3p+2}{4p+4}}} \\right) & \\hbox{ if } 1 \\leq p < 2."
+    "quote": "... O( R^{p/(2p+2)} A_p^*(σ,c) (log(4KJ/δ))^{(3p+2)/(4p+4)} / B^{(3p+2)/(4p+4)} ) if 1 ≤ p < 2."
    },
-   "confidence": "medium",
-   "notes": "Leading term exact; O on the lower-order term."
+   "confidence": "high",
+   "notes": "Leading term exact; second term O(·)."
   },
   {
    "id": "r4",
@@ -390,31 +526,32 @@
    "horizon": "known",
    "compute": "not_stated",
    "bound": {
-    "notation": "exact",
+    "notation": "Omega",
     "expression": "sqrt(kl(1-delta, delta)*A_q_star/(C_1*B))",
     "expression_latex": "\\varepsilon_p \\geq \\sqrt{\\frac{\\kl(1 - \\delta, \\delta)}{C_1 B} \\gA_{\\frac{2p}{2-p}}^*(\\bm\\sigma, \\vc)}",
-    "regime": "1 <= p < 2"
+    "regime": "1 <= p_norm < 2"
    },
    "symbols": {
-    "A_q_star": "optimal allocation value A^*_{2p/(2-p)}",
+    "A_q_star": "A^*_{2p/(2-p)}(sigma,c), optimal allocation value with exponent 2p/(2-p)",
     "C_1": "absolute constant",
-    "B": "total budget",
-    "p": "norm order"
+    "p_norm": "norm exponent p"
    },
    "conditions": [
     "delta in (0, e^{-2}]",
-    "max_j sigma_{k,j}^2 <= R_k^2/2 with R_k = min(s_k, R - s_k) > 0",
-    "error rate eps_p in (0, R_min/8]"
+    "R_k = min(s_k, R-s_k) > 0",
+    "max_j sigma_{k,j}^2 <= R_k^2/2",
+    "eps_p in (0, R_min/8]",
+    "algorithm is (B,δ,ℓ_p)-budget efficient at all s' with ||s'-s||_p <= 2 eps_p (locally stable)"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:lower-bound-whp",
     "number": "Theorem 5.1",
-    "quote": "any algorithm that is $(B, \\delta, \\ell_p)$-budget efficient with an error rate of $\\varepsilon_p \\in ( 0, \\frac{R_{\\min}}{8} ]$ at any $(\\vs', \\bm\\sigma, \\vc)$ with $\\|\\vs' - \\vs\\|_p \\leq 2\\varepsilon_p$ must satisfy ... $\\varepsilon_p \\geq \\sqrt{\\frac{\\kl(1 - \\delta, \\delta)}{C_1 B} \\gA_{\\frac{2p}{2-p}}^*}$ for $1 \\leq p < 2$"
+    "quote": "any algorithm that is (B, δ, ℓ_p)-budget efficient with an error rate of ε_p ∈ (0, R_min/8] at any (s', σ, c) with ||s' - s||_p ≤ 2ε_p must satisfy ... ε_p ≥ sqrt(kl(1-δ,δ)/(C_1 B) A^*_{2p/(2-p)}(σ,c)) for 1 ≤ p < 2"
    },
    "confidence": "medium",
-   "notes": "Local lower bound for locally stable (B,delta,l_p)-budget efficient algorithms; learner may know sigma. Not tight vs upper bound."
+   "notes": "Lower bound on the achievable error rate ε_p; learner knows σ. Not tight with upper bound except p=∞."
   },
   {
    "id": "r5",
@@ -429,30 +566,31 @@
    "horizon": "known",
    "compute": "not_stated",
    "bound": {
-    "notation": "exact",
+    "notation": "Omega",
     "expression": "sqrt(log(1/delta)*A_inf_star/(C_2*B))",
     "expression_latex": "\\varepsilon_p \\geq \\sqrt{\\frac{ \\log\\frac{1}{\\delta}}{C_2 B} \\gA^*_{\\infty}(\\bm\\sigma, \\vc)}",
-    "regime": "p >= 2"
+    "regime": "p_norm >= 2"
    },
    "symbols": {
     "A_inf_star": "sum_k c_{j*(k)} sigma_{k,j*(k)}^2",
     "C_2": "absolute constant",
-    "B": "total budget"
+    "p_norm": "norm exponent p"
    },
    "conditions": [
     "delta in (0, e^{-2}]",
     "max_j sigma_{k,j}^2 <= R_k^2/2",
-    "error rate eps_p in (0, R_min/8]"
+    "eps_p in (0, R_min/8]",
+    "locally budget-efficient algorithm"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:lower-bound-whp",
     "number": "Theorem 5.1",
-    "quote": "$\\varepsilon_p \\geq \\sqrt{\\frac{ \\log\\frac{1}{\\delta}}{C_2 B} \\gA^*_{\\infty}(\\bm\\sigma, \\vc)}$ for $p \\geq 2$"
+    "quote": "ε_p ≥ sqrt(log(1/δ)/(C_2 B) A^*_∞(σ,c)) for p ≥ 2."
    },
    "confidence": "medium",
-   "notes": "Matches upper bound for p = infinity up to sqrt(log K)."
+   "notes": "Matches upper bound for p=∞ up to sqrt(log K)."
   },
   {
    "id": "r6",
@@ -467,7 +605,7 @@
    "horizon": "known",
    "compute": "not_stated",
    "bound": {
-    "notation": "exact",
+    "notation": "Omega",
     "expression": "C_3*sqrt(A_p_star/B)",
     "expression_latex": "\\inf_{\\hat{\\vs}} \\sup_{\\vs : \\|\\vs - \\vs^\\star\\|_p \\leq \\xi(B)} \\E[\\|\\hat{\\vs} - \\vs\\|_p] \\geq C_3 \\sqrt{\\frac{\\gA_p^*(\\bm\\sigma, \\vc)}{B}}",
     "regime": "B >= B_0"
@@ -475,11 +613,11 @@
    "symbols": {
     "A_p_star": "optimal allocation value",
     "C_3": "universal constant",
-    "B_0": "threshold budget defined in theorem",
-    "B": "total budget"
+    "B_0": "threshold budget defined in Theorem 5.2"
    },
    "conditions": [
-    "local minimax over l_p ball of radius xi(B)=sqrt(A_p_star/(16B)) around s*",
+    "local minimax over ||s - s*||_p <= sqrt(A_p^*/(16B))",
+    "R_k = min(s*_k, R-s*_k)",
     "B >= B_0"
    ],
    "tuning": [],
@@ -487,10 +625,10 @@
    "source": {
     "label": "thm:lower-bound-exp",
     "number": "Theorem 5.2",
-    "quote": "Then, there exists a universal constant $C_3 > 0$ such that for $B \\geq B_0$, $\\inf_{\\hat{\\vs}} \\sup_{\\vs : \\|\\vs - \\vs^\\star\\|_p \\leq \\xi(B)} \\E^{\\hat{\\vs}}_{\\vs}[ \\|\\hat{\\vs} - \\vs\\|_p ] \\geq C_3 \\sqrt{\\frac{\\gA_p^*(\\bm\\sigma, \\vc)}{B}}$"
+    "quote": "Then, there exists a universal constant C_3 > 0 such that for B ≥ B_0, inf_ŝ sup_{s: ||s - s*||_p ≤ ξ(B)} E[||ŝ - s||_p] ≥ C_3 sqrt(A_p^*(σ,c)/B)"
    },
    "confidence": "high",
-   "notes": "Expected l_p estimation error; holds for adaptive algorithms obeying the budget, even with known sigma."
+   "notes": "Local minimax lower bound on expected ℓ_p error; matches leading term of Est-IVWE up to log factors."
   },
   {
    "id": "r7",
@@ -505,68 +643,33 @@
    "horizon": "known",
    "compute": "not_stated",
    "bound": {
-    "notation": "exact",
-    "expression": "4**(1-1/p)*C_3*sqrt(p*A_p_star/B)",
-    "expression_latex": "\\inf_{\\hat{\\vs}} \\sup_{\\vs : \\|\\vs - \\vs^\\star\\|_p \\leq \\sqrt{p}\\xi(B)} \\E[\\|\\hat{\\vs} - \\vs\\|_p^p]^{\\frac{1}{p}} \\geq 4^{1 - \\frac{1}{p}} C_3 \\sqrt{\\frac{p \\gA_p^*(\\bm\\sigma, \\vc)}{B}}",
-    "regime": "1 <= p < infinity, B >= p*B_0"
+    "notation": "Omega",
+    "expression": "4**(1-1/p_norm)*C_3*sqrt(p_norm*A_p_star/B)",
+    "expression_latex": "\\E[\\|\\hat{\\vs} - \\vs\\|_p^p]^{1/p} \\geq 4^{1 - \\frac{1}{p}} C_3 \\sqrt{\\frac{p \\gA_p^*(\\bm\\sigma, \\vc)}{B}}",
+    "regime": "1 <= p_norm < infinity, B >= p_norm*B_0"
    },
    "symbols": {
     "A_p_star": "optimal allocation value",
     "C_3": "universal constant",
-    "p": "norm order",
-    "B": "total budget"
+    "p_norm": "norm exponent p",
+    "B_0": "threshold budget"
    },
    "conditions": [
-    "local minimax over l_p ball of radius sqrt(p) xi(B)"
+    "local minimax over ||s - s*||_p <= sqrt(p) xi(B)"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:lower-bound-exp",
     "number": "Theorem 5.2",
-    "quote": "and furthermore for $1 \\leq p < \\infty$ and $B \\geq p B_0$, ... $\\geq 4^{1 - \\frac{1}{p}} C_3 \\sqrt{\\frac{p \\gA_p^*(\\bm\\sigma, \\vc)}{B}}$"
+    "quote": "furthermore for 1 ≤ p < ∞ and B ≥ p B_0, inf_ŝ sup_{s: ||s - s*||_p ≤ sqrt(p) ξ(B)} E[||ŝ - s||_p^p]^{1/p} ≥ 4^{1-1/p} C_3 sqrt(p A_p^*(σ,c)/B)."
    },
    "confidence": "high",
-   "notes": "p-th moment of l_p error."
+   "notes": "Bound on p-th moment of the error."
   },
   {
    "id": "r8",
-   "setting": "s4",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "other",
-   "dependence": "instance_dependent",
-   "comparator": "not_applicable",
-   "probability": "high_probability",
-   "horizon": "known",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "exact",
-    "expression": "sqrt(2*A_p_omega*log(2*K/delta)/B)",
-    "expression_latex": "\\varepsilon_p = \\sqrt{\\frac{2 \\gA_p(\\bm\\omega; \\bm\\sigma, \\vc) \\log\\frac{2K}{\\delta}}{B}}",
-    "regime": null
-   },
-   "symbols": {
-    "A_p_omega": "allocation objective for allocation omega",
-    "B": "total budget"
-   },
-   "conditions": [],
-   "tuning": [
-    "any fixed allocation"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "prop:upper-bound-gaussian",
-    "number": "Proposition F.2",
-    "quote": "Then, IVWE is $(B, \\delta, \\ell_p)$-budget efficient at any $(\\vs, \\bm\\sigma, \\vc)$ with the following error rate $\\varepsilon_p = \\sqrt{\\frac{2 \\gA_p(\\bm\\omega; \\bm\\sigma, \\vc) \\log\\frac{2K}{\\delta}}{B}}$"
-   },
-   "confidence": "high",
-   "notes": "General allocation."
-  },
-  {
-   "id": "r9",
-   "setting": "s4",
+   "setting": "s3",
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
@@ -583,25 +686,26 @@
     "regime": null
    },
    "symbols": {
-    "A_p_star": "optimal allocation value",
-    "B": "total budget"
+    "A_p_star": "optimal allocation value"
    },
-   "conditions": [],
+   "conditions": [
+    "Gaussian scores"
+   ],
    "tuning": [
-    "oracle allocation omega* of Theorem 3.2"
+    "optimal allocation omega* from Theorem 3.2"
    ],
    "is_new": true,
    "source": {
     "label": "prop:upper-bound-gaussian",
     "number": "Proposition F.2",
-    "quote": "Then, with the optimal allocation, we have $\\varepsilon_p = \\sqrt{\\frac{2 \\gA_p^*(\\bm\\sigma, \\vc) \\log\\frac{2K}{\\delta}}{B}}.$"
+    "quote": "Then, with the optimal allocation, we have ε_p = sqrt(2 A_p^*(σ,c) log(2K/δ)/B)."
    },
    "confidence": "high",
-   "notes": "Oracle allocation."
+   "notes": "For a general allocation the bound is sqrt(2 A_p(ω) log(2K/δ)/B)."
   },
   {
-   "id": "r10",
-   "setting": "s3",
+   "id": "r9",
+   "setting": "s4",
    "side": "upper",
    "algorithm": "a3",
    "algorithm_class": null,
@@ -614,104 +718,31 @@
    "bound": {
     "notation": "O",
     "expression": "sqrt(13*A_p_star*log(4*K/delta)/(2*B)) + sqrt(A_p_star)*log(K*J/delta)**(3/2)/B**(3/2)",
-    "expression_latex": "\\sqrt{\\frac{13\\gA_p^*(\\bm\\sigma, \\vc) \\log \\frac{4K}{\\delta}}{2B}} + \\gO \\left( \\frac{\\sqrt{\\gA_p^*(\\bm\\sigma, \\vc)} \\left(\\log \\frac{K J}{\\delta}\\right)^{\\frac{3}{2}}}{B^{\\frac{3}{2}}}\\right)",
+    "expression_latex": "\\sqrt{\\frac{13\\gA_p^* \\log \\frac{4K}{\\delta}}{2B}} + \\gO \\left( \\frac{\\sqrt{\\gA_p^*} \\left(\\log \\frac{K J}{\\delta}\\right)^{\\frac{3}{2}}}{B^{\\frac{3}{2}}}\\right)",
     "regime": null
    },
    "symbols": {
     "A_p_star": "optimal allocation value",
-    "J": "number of judges",
-    "B": "total budget"
+    "J": "number of judges"
    },
    "conditions": [
     "B >= N_0 K sum_j c_j"
    ],
    "tuning": [
-    "N_0 = 1 + ceil(16 log(4KJ/delta))"
+    "N_0 = 1 + ceil(16 log(4KJ/δ))"
    ],
    "is_new": true,
    "source": {
     "label": "thm:est-ivwe-Gaussian",
     "number": "Theorem F.4",
-    "quote": "Then, Est-IVWE-Gaussian is $(B, \\delta, \\ell_p)$-budget efficient at any $(\\vs, \\bm\\sigma, \\vc)$ with the following error rate $\\varepsilon_p = \\sqrt{\\frac{13\\gA_p^*(\\bm\\sigma, \\vc) \\log \\frac{4K}{\\delta}}{2B}} + \\gO(...)$"
+    "quote": "Then, Est-IVWE-Gaussian is (B, δ, ℓ_p)-budget efficient at any (s, σ, c) with the following error rate ε_p = sqrt(13 A_p^* log(4K/δ)/(2B)) + O(sqrt(A_p^*) (log(KJ/δ))^{3/2}/B^{3/2})."
    },
-   "confidence": "medium",
-   "notes": "Leading term exact with constant 13/2; O on second term."
+   "confidence": "high",
+   "notes": "Leading term exact with constant 13/2."
   },
   {
-   "id": "r11",
-   "setting": "s4",
-   "side": "lower",
-   "algorithm": null,
-   "algorithm_class": "other",
-   "quantity": "other",
-   "dependence": "instance_dependent",
-   "comparator": "not_applicable",
-   "probability": "high_probability",
-   "horizon": "known",
-   "compute": "not_stated",
-   "bound": {
-    "notation": "exact",
-    "expression": "sqrt(kl(1-delta, delta)*A_q_star/(C_1*B))",
-    "expression_latex": "\\varepsilon_p \\geq \\sqrt{\\frac{\\kl(1 - \\delta, \\delta)}{C_1 B} \\gA_{\\frac{2p}{2-p}}^*(\\bm\\sigma, \\vc)}",
-    "regime": "1 <= p < 2"
-   },
-   "symbols": {
-    "A_q_star": "A^*_{2p/(2-p)}",
-    "C_1": "absolute constant",
-    "B": "total budget"
-   },
-   "conditions": [
-    "delta in (0, 1/2]"
-   ],
-   "tuning": [],
-   "is_new": true,
-   "source": {
-    "label": "thm:lower-bound-whp-gaussian",
-    "number": "Theorem F.5",
-    "quote": "any algorithm that is $(B, \\delta, \\ell_p)$-budget efficient with an error rate of $\\varepsilon_p > 0$ at any $(\\vs', \\bm\\sigma, \\vc)$ with $\\|\\vs' - \\vs\\|_p \\leq 2\\varepsilon_p$ must satisfy ..."
-   },
-   "confidence": "medium",
-   "notes": "Gaussian analogue of Theorem 5.1; proof only sketched."
-  },
-  {
-   "id": "r12",
-   "setting": "s4",
-   "side": "lower",
-   "algorithm": null,
-   "algorithm_class": "other",
-   "quantity": "other",
-   "dependence": "instance_dependent",
-   "comparator": "not_applicable",
-   "probability": "high_probability",
-   "horizon": "known",
-   "compute": "not_stated",
-   "bound": {
-    "notation": "exact",
-    "expression": "sqrt(log(1/delta)*A_inf_star/(C_2*B))",
-    "expression_latex": "\\varepsilon_p \\geq \\sqrt{\\frac{ \\log\\frac{1}{\\delta}}{C_2 B} \\gA^*_{\\infty}(\\bm\\sigma, \\vc)}",
-    "regime": "p >= 2"
-   },
-   "symbols": {
-    "A_inf_star": "sum_k c_{j*(k)} sigma_{k,j*(k)}^2",
-    "C_2": "absolute constant",
-    "B": "total budget"
-   },
-   "conditions": [
-    "delta in (0, 1/2]"
-   ],
-   "tuning": [],
-   "is_new": true,
-   "source": {
-    "label": "thm:lower-bound-whp-gaussian",
-    "number": "Theorem F.5",
-    "quote": "$\\varepsilon_p \\geq \\sqrt{\\frac{ \\log\\frac{1}{\\delta}}{C_2 B} \\gA^*_{\\infty}(\\bm\\sigma, \\vc)}$ for $p \\geq 2$"
-   },
-   "confidence": "medium",
-   "notes": "Proof via Theorem 5.1 with delta <= e^{-2} there; here stated delta <= 1/2."
-  },
-  {
-   "id": "r13",
-   "setting": "s4",
+   "id": "r10",
+   "setting": "s3",
    "side": "lower",
    "algorithm": null,
    "algorithm_class": "all",
@@ -724,27 +755,29 @@
    "bound": {
     "notation": "exact",
     "expression": "sqrt(2/pi)*sqrt(A_p_star/B)",
-    "expression_latex": "\\inf_{\\hat{\\vs}} \\sup_{\\vs \\in \\sR^K} \\E[\\|\\hat{\\vs} - \\vs\\|_p] \\geq \\sqrt{\\frac{2}{\\pi}} \\sqrt{\\frac{\\gA_p^*(\\bm\\sigma, \\vc)}{B}}",
-    "regime": "1 <= p <= infinity"
+    "expression_latex": "\\inf_{\\hat{\\vs}} \\sup_{\\vs} \\E[\\|\\hat{\\vs} - \\vs\\|_p] \\geq \\sqrt{\\frac{2}{\\pi}} \\sqrt{\\frac{\\gA_p^*(\\bm\\sigma, \\vc)}{B}}",
+    "regime": null
    },
    "symbols": {
-    "A_p_star": "optimal allocation value",
-    "B": "total budget"
+    "A_p_star": "optimal allocation value"
    },
-   "conditions": [],
+   "conditions": [
+    "global minimax over s in R^K",
+    "learner knows variance profile"
+   ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:gaussian-global-exp-lower",
     "number": "Theorem F.6",
-    "quote": "For each $1 \\leq p \\leq \\infty$, $\\inf_{\\hat{\\vs}} \\sup_{\\vs \\in \\sR^K} \\E[\\|\\hat{\\vs} - \\vs\\|_p] \\geq \\sqrt{\\frac{2}{\\pi}} \\sqrt{\\frac{\\gA_p^*(\\bm\\sigma, \\vc)}{B}}$."
+    "quote": "For each 1 ≤ p ≤ ∞, inf_ŝ sup_{s ∈ R^K} E[||ŝ - s||_p] ≥ sqrt(2/π) sqrt(A_p^*(σ,c)/B)."
    },
-   "confidence": "high",
-   "notes": "Global minimax; holds even when learner knows sigma."
+   "confidence": "medium",
+   "notes": "Recorded as an exact lower-bound inequality (the bound expression is the RHS). The statement's 'E_{s~μ}' notation is a typo in the paper."
   },
   {
-   "id": "r14",
-   "setting": "s4",
+   "id": "r11",
+   "setting": "s3",
    "side": "lower",
    "algorithm": null,
    "algorithm_class": "all",
@@ -758,27 +791,29 @@
     "notation": "exact",
     "expression": "m_p*sqrt(A_p_star/B)",
     "expression_latex": "\\inf_{\\hat{\\vs}} \\sup_{\\vs} \\E[\\|\\hat{\\vs} - \\vs\\|_p^p]^{1/p} \\geq m_p \\sqrt{\\frac{\\gA_p^*(\\bm\\sigma, \\vc)}{B}}",
-    "regime": "1 <= p < infinity"
+    "regime": "1 <= p_norm < infinity"
    },
    "symbols": {
-    "m_p": "E[|Z|^p]^{1/p} for Z standard normal",
     "A_p_star": "optimal allocation value",
-    "B": "total budget"
+    "m_p": "E[|Z|^p]^{1/p} for Z ~ N(0,1)",
+    "p_norm": "norm exponent p"
    },
-   "conditions": [],
+   "conditions": [
+    "global minimax over s in R^K"
+   ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:gaussian-global-exp-lower",
     "number": "Theorem F.6",
-    "quote": "For $1 \\leq p < \\infty$, we also have: $\\inf_{\\hat{\\vs}} \\sup_{\\vs \\in \\sR^K} \\E[\\|\\hat{\\vs} - \\vs\\|_p^p]^{\\frac{1}{p}} \\geq m_p \\sqrt{\\frac{\\gA_p^*(\\bm\\sigma, \\vc)}{B}}$"
+    "quote": "For 1 ≤ p < ∞, we also have: inf_ŝ sup_{s ∈ R^K} E[||ŝ - s||_p^p]^{1/p} ≥ m_p sqrt(A_p^*(σ,c)/B)"
    },
    "confidence": "high",
-   "notes": "Tight by Theorem F.7."
+   "notes": "Tight with Theorem F.7 upper bound, constant included."
   },
   {
-   "id": "r15",
-   "setting": "s4",
+   "id": "r12",
+   "setting": "s3",
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
@@ -791,30 +826,31 @@
    "bound": {
     "notation": "exact",
     "expression": "m_p*sqrt(A_p_star/B)",
-    "expression_latex": "\\E[\\|\\hat{\\vs} - \\vs\\|_p^p]^{\\frac{1}{p}} \\leq m_p \\sqrt{\\frac{\\gA_p^*(\\bm\\sigma, \\vc)}{B}}",
+    "expression_latex": "\\E[\\|\\hat{\\vs} - \\vs\\|_p^p]^{1/p} \\leq m_p \\sqrt{\\frac{\\gA_p^*(\\bm\\sigma, \\vc)}{B}}",
     "regime": null
    },
    "symbols": {
-    "m_p": "E[|Z|^p]^{1/p} for Z standard normal",
     "A_p_star": "optimal allocation value",
-    "B": "total budget"
+    "m_p": "E[|Z|^p]^{1/p} for Z ~ N(0,1)"
    },
-   "conditions": [],
+   "conditions": [
+    "Gaussian scores with known variances"
+   ],
    "tuning": [
-    "oracle allocation"
+    "optimal allocation"
    ],
    "is_new": true,
    "source": {
     "label": "thm:in-exp-upper-bound-known",
     "number": "Theorem F.7",
-    "quote": "When the variances are known, IVWE with optimal allocation achieves the following: $\\E[\\|\\hat{\\vs} - \\vs\\|_p^p]^{\\frac{1}{p}} \\leq m_p \\sqrt{\\frac{\\gA_p^*(\\bm\\sigma, \\vc)}{B}}$."
+    "quote": "When the variances are known, IVWE with optimal allocation achieves the following: E[||ŝ - s||_p^p]^{1/p} ≤ m_p sqrt(A_p^*(σ,c)/B)."
    },
    "confidence": "high",
-   "notes": "Ignores integrality of allocations."
+   "notes": ""
   },
   {
-   "id": "r16",
-   "setting": "s4",
+   "id": "r13",
+   "setting": "s3",
    "side": "lower",
    "algorithm": null,
    "algorithm_class": "all",
@@ -827,43 +863,119 @@
    "bound": {
     "notation": "exact",
     "expression": "sqrt(2*pi*E)/C_ME*sqrt(A_p_star/B)",
-    "expression_latex": "\\inf_{\\hat{\\vs}} \\sup_{\\vs} \\E[\\|\\hat{\\vs} - \\vs\\|_p^p]^{\\frac{1}{p}} \\geq \\frac{\\sqrt{2 \\pi e}}{C_{\\mathrm{ME}}(p)} \\sqrt{\\frac{\\gA_p^*(\\bm\\sigma, \\vc)}{B}}",
-    "regime": "1 <= p < infinity"
+    "expression_latex": "\\inf_{\\hat{\\vs}} \\sup_{\\vs} \\E[\\|\\hat{\\vs} - \\vs\\|_p^p]^{1/p} \\geq \\frac{\\sqrt{2 \\pi e}}{C_{\\mathrm{ME}}(p)} \\sqrt{\\frac{\\gA_p^*(\\bm\\sigma, \\vc)}{B}}",
+    "regime": "1 <= p_norm < infinity"
    },
    "symbols": {
-    "C_ME": "2 e^{1/p} Gamma(1/p) p^{1/p-1}, partition function of L_p max-entropy distribution",
     "A_p_star": "optimal allocation value",
-    "B": "total budget"
+    "C_ME": "2 e^{1/p} Gamma(1/p) p^{1/p-1}, partition function of L_p max-entropy distribution",
+    "p_norm": "norm exponent p"
    },
-   "conditions": [],
+   "conditions": [
+    "global minimax over s in R^K"
+   ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:lower-bound-van-trees",
     "number": "Theorem F.8",
-    "quote": "For $1 \\leq p < \\infty$, we have: $\\inf_{\\hat{\\vs}} \\sup_{\\vs \\in \\sR^K} \\E[\\|\\hat{\\vs} - \\vs\\|_p^p]^{\\frac{1}{p}} \\geq \\frac{\\sqrt{2 \\pi e}}{C_{\\mathrm{ME}}(p)} \\sqrt{\\frac{\\gA_p^*(\\bm\\sigma, \\vc)}{B}}$"
+    "quote": "For 1 ≤ p < ∞, we have: inf_ŝ sup_{s ∈ R^K} E[||ŝ - s||_p^p]^{1/p} ≥ sqrt(2πe)/C_ME(p) sqrt(A_p^*(σ,c)/B)"
    },
    "confidence": "high",
-   "notes": "Via L_p van Trees inequality."
+   "notes": "van Trees based; constant-optimal at p=2."
+  },
+  {
+   "id": "r14",
+   "setting": "s3",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(kl(1-delta, delta)*A_q_star/(C_1*B))",
+    "expression_latex": "\\varepsilon_p \\geq \\sqrt{\\frac{\\kl(1 - \\delta, \\delta)}{C_1 B} \\gA_{\\frac{2p}{2-p}}^*(\\bm\\sigma, \\vc)}",
+    "regime": "1 <= p_norm < 2"
+   },
+   "symbols": {
+    "A_q_star": "A^*_{2p/(2-p)}(sigma,c)",
+    "C_1": "absolute constant",
+    "p_norm": "norm exponent p"
+   },
+   "conditions": [
+    "delta in (0,1/2]",
+    "locally budget-efficient algorithm at all s' with ||s'-s||_p <= 2 eps_p"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lower-bound-whp-gaussian",
+    "number": "Theorem F.5",
+    "quote": "any algorithm that is (B, δ, ℓ_p)-budget efficient ... must satisfy ε_p ≥ sqrt(kl(1-δ,δ)/(C_1 B) A^*_{2p/(2-p)}) for 1 ≤ p < 2"
+   },
+   "confidence": "medium",
+   "notes": "Gaussian analogue of Theorem 5.1."
+  },
+  {
+   "id": "r15",
+   "setting": "s3",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(log(1/delta)*A_inf_star/(C_2*B))",
+    "expression_latex": "\\varepsilon_p \\geq \\sqrt{\\frac{ \\log\\frac{1}{\\delta}}{C_2 B} \\gA^*_{\\infty}(\\bm\\sigma, \\vc)}",
+    "regime": "p_norm >= 2"
+   },
+   "symbols": {
+    "A_inf_star": "sum_k c_{j*(k)} sigma_{k,j*(k)}^2",
+    "C_2": "absolute constant",
+    "p_norm": "norm exponent p"
+   },
+   "conditions": [
+    "delta in (0,1/2]",
+    "locally budget-efficient algorithm"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lower-bound-whp-gaussian",
+    "number": "Theorem F.5",
+    "quote": "ε_p ≥ sqrt(log(1/δ)/(C_2 B) A^*_∞(σ,c)) for p ≥ 2."
+   },
+   "confidence": "medium",
+   "notes": "Paper states δ ∈ (0,1/2] here though the bounded proof used δ ≤ e^{-2}."
   }
  ],
  "cited_results": [],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:53:41",
+  "date": "2026-10-21T18:21:51",
   "source_chars": 182251,
-  "input_tokens": 129582,
-  "output_tokens": 14514,
-  "cost_usd_equiv": 1.1093548,
+  "input_tokens": 136169,
+  "output_tokens": 15354,
+  "cost_usd_equiv": 1.127402,
   "status": "extracted"
  }
 }

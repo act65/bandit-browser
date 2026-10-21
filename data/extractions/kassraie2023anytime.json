@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Anytime Model Selection in Linear Bandits",
   "arxiv_id": "2307.12897",
@@ -16,7 +16,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Online model selection in linearly parametrizable bandits",
+   "name_in_paper": "Online model selection for linearly parametrizable bandits",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -27,8 +27,8 @@
    "noise": "subgaussian",
    "learner_knows": [
     "sigma",
-    "d",
-    "S"
+    "S",
+    "d"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -38,51 +38,82 @@
     "access": "explicit",
     "norm_bound": "unit_l2",
     "parameter_set": "l2_ball",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "sparse"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Reward is linear in an unknown feature map from a class of M candidate feature maps phi_j: R^{d0} -> R^d; at least one map j* represents the reward (model selection over M models)",
-    "Image of each phi_j spans R^d and no two feature maps are linearly dependent",
-    "Concatenated feature map normalized ||phi(x)|| <= 1; ||theta_{j*}|| <= B",
-    "Learner must use an exploration distribution pi maximizing the minimum eigenvalue C_min of the feature covariance",
-    "Horizon unknown; anytime guarantees"
+    "Model selection among M candidate feature maps phi_j: R^{d0} -> R^d, one of which realizes the reward (group sparsity: one nonzero group of size d in R^{Md})",
+    "Reward is linear in an unknown (but one-of-M) nonlinear feature map of the action, domain X subset R^{d0} compact",
+    "Image of each phi_j spans R^d and no two feature maps are linearly dependent; concatenated map normalized ||phi(x)|| <= 1",
+    "Learner needs the number of models M and the exploration quantity C_min (max over designs of min eigenvalue of covariance)"
    ],
-   "definition_quote": "At step $t$ the learner selects an action $\\vx_t \\in \\calX$, where $\\calX \\subset \\sR^{d_0}$ is a compact domain and observes a noisy reward $y_t = r(\\vx_t) + \\varepsilon_t$ such that $\\varepsilon_t$ is an i.i.d.~zero-mean sub-Gaussian variable with parameter $\\sigma^2$. We assume the reward function $r$ is linearly parametrizable by some unknown feature map, and that the model class $\\{\\vphi_j\\}$ contains the set of plausible feature maps ... there exists $j^\\star \\in [M]$ such that $r(\\cdot) = \\vtheta^\\top_{j^\\star} \\vphi_{j^\\star}(\\cdot)$."
+   "definition_quote": "At step $t$ the learner selects an action $\\vx_t \\in \\calX$, where $\\calX \\subset \\sR^{d_0}$ is a compact domain and observes a noisy reward $y_t = r(\\vx_t) + \\varepsilon_t$ such that $\\varepsilon_t$ is an i.i.d.~zero-mean sub-Gaussian variable with parameter $\\sigma^2$. ... there exists $j^\\star \\in [M]$ such that $r(\\cdot) = \\vtheta^\\top_{j^\\star} \\vphi_{j^\\star}(\\cdot)$. ... $\\norm{\\vphi(\\vx)} \\leq 1$ ... $\\norm{\\vtheta_{j^\\star}}\\leq B$"
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "ALExp (Anytime Exponential weighting algorithm based on Lasso reward estimates)",
+   "name": "ALEXP (Anytime Exponential weighting based on Lasso reward estimates)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
     "exponential_weights",
     "epsilon_greedy",
-    "optimism",
-    "other"
+    "optimism"
    ],
    "requires_knowledge_of": [
     "sigma",
-    "d",
     "S",
-    "C_min",
+    "d",
     "M",
-    "exploration distribution pi maximizing C_min"
+    "C_min",
+    "delta"
    ]
   }
  ],
@@ -101,18 +132,18 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "T**(3/4)*S + T**(3/4)*C_M + sqrt(T)*C_M*log(M)/C_min + T**(5/8)*sqrt(d*log(T) + log(1/delta))/sqrt(C_min)",
-    "expression_latex": "n^{3/4}B + n^{3/4}C(M,\\delta,d) + \\cmin^{-1}\\sqrt{n} C(M,\\delta,d)\\log M + \\cmin^{-1/2}n^{5/8}\\sqrt{d\\log(n) + \\log(1/\\delta)}",
-    "regime": "simultaneously for all n >= 1"
+    "expression": "T**(3/4)*S + T**(3/4)*C_conf + sqrt(T)*C_conf*log(M)/C_min + T**(5/8)*sqrt(d*log(T) + log(1/delta))/sqrt(C_min)",
+    "expression_latex": "n^{3/4}B + \\,n^{3/4}C(M,\\delta,d) +\\,\\cmin^{-1}\\sqrt{n} C(M,\\delta,d)\\log M + \\cmin^{-1/2}n^{5/8}\\sqrt{d\\log\\left(n\\right) + \\log(1/\\delta)}",
+    "regime": null
    },
    "symbols": {
-    "M": "number of candidate models/feature maps",
-    "C_min": "max over pi of the minimum eigenvalue of E_{x~pi} phi(x)phi(x)^T",
-    "C_M": "C(M,delta,d) = sqrt(1 + log(M/delta) + (log log d)_+ + sqrt(d(log(M/delta) + (log log d)_+)))"
+    "M": "number of candidate feature maps (models)",
+    "C_min": "max over exploration distributions pi of lambda_min(E_pi phi(x)phi(x)^T)",
+    "C_conf": "C(M,delta,d) = sqrt(1 + log(M/delta) + (loglog d)_+ + sqrt(d(log(M/delta) + (loglog d)_+)))"
    },
    "conditions": [
     "oracle agent j* uses UCB or Greedy policy; other agents arbitrary",
-    "||phi(x)|| <= 1, ||theta_{j*}|| <= S"
+    "||phi(x)|| <= 1, ||theta_{j*}|| <= B (S = B)"
    ],
    "tuning": [
     "pi = maximizer of C_min",
@@ -127,7 +158,7 @@
     "quote": "Then \\alexp satisfies the cumulative regret R(n) = O(n^{3/4}B + n^{3/4}C(M,\\delta,d) + \\cmin^{-1}\\sqrt{n} C(M,\\delta,d)\\log M + \\cmin^{-1/2}n^{5/8}\\sqrt{d\\log(n) + \\log(1/\\delta)}) simultaneously for all $n \\geq 1$, with probability greater than $1-\\delta$."
    },
    "confidence": "medium",
-   "notes": "Informal theorem; only fastest-growing terms. B mapped to S. Regret is realized sum r(x*)-r(x_t) bounded w.p. 1-delta."
+   "notes": "Informal theorem; holds simultaneously for all n w.p. 1-delta, horizon not needed. Paper summarizes as O(max{sqrt(n log^3 M), n^{3/4} sqrt(log M)})."
   },
   {
    "id": "r2",
@@ -143,18 +174,18 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "S*T**(3/4) + sqrt(T)*sigma*C_M*log(M)/C_min + S**2*C_min*sqrt(T) + S*sqrt(T*(log(log(T*S**2)) + log(1/delta))) + (1 + T**(-3/8)*sqrt(log(M*d/delta) + log(log(T)))/C_min)*(S*T**(1/4) + (T**(3/4) + log(T)/C_min)*sigma*C_M + T**(5/8)*sqrt(d*log(T) + log(1/delta) + S**2)/sqrt(C_min))",
-    "expression_latex": "C_1Bn^{3/4} + C_2 \\sqrt{n} \\cmin^{-1} C(M, \\delta, d)\\log M + C_3 B^2\\cmin\\sqrt{n} + C_4 B\\sqrt{ n( (\\log \\log nB^2)_+ + \\log(1/\\delta))} + C_5 (1+\\cmin^{-1}n^{-3/8}\\sqrt{\\log(Md/\\delta) + (\\log\\log n)_+} ) [ Bn^{1/4} + (n^{3/4} + \\frac{\\log n}{\\cmin})C(M, \\delta, d)+ \\frac{n^{5/8}}{\\sqrt{\\cmin}}\\sqrt{d\\log n + \\log(1/\\delta) + B^2}]",
-    "regime": "simultaneously for all n >= 1"
+    "expression": "S*T**(3/4) + sqrt(T)*C_conf*log(M)/C_min + S**2*C_min*sqrt(T) + S*sqrt(T*(log(log(T*S**2)) + log(1/delta))) + (1 + T**(-3/8)*sqrt(log(M*d/delta) + log(log(T)))/C_min)*(S*T**(1/4) + (T**(3/4) + log(T)/C_min)*C_conf + T**(5/8)*sqrt(d*log(T) + log(1/delta) + S**2)/sqrt(C_min))",
+    "expression_latex": "C_1Bn^{3/4} + C_2 \\sqrt{n} \\cmin^{-1} C(M, \\delta, d)\\log M +C_3 B^2\\cmin\\sqrt{n} + C_4 B\\sqrt{ n\\left( (\\log \\log nB^2)_+ + \\log(1/\\delta)\\right)} + C_5 (1+\\cmin^{-1}n^{-3/8}\\sqrt{\\log(Md/\\delta) + (\\log\\log n)_+} ) \\times [ Bn^{1/4} + (n^{3/4} + \\frac{\\log n}{\\cmin})C(M, \\delta, d)+ \\frac{n^{5/8}}{\\sqrt{\\cmin}}\\sqrt{d\\log n + \\log(1/\\delta) + B^2}]",
+    "regime": null
    },
    "symbols": {
-    "M": "number of candidate models/feature maps",
-    "C_min": "max over pi of the minimum eigenvalue of E_{x~pi} phi(x)phi(x)^T",
-    "C_M": "sqrt(1 + sqrt(d(log(M/delta) + (log log d)_+)) + log(M/delta) + (log log d)_+); C(M,delta,d) = C_6 sigma C_M"
+    "M": "number of candidate feature maps",
+    "C_min": "max over exploration distributions of min eigenvalue of feature covariance",
+    "C_conf": "C(M,delta,d) = C_6 sigma sqrt(1 + sqrt(d(log(M/delta)+(loglog d)_+)) + log(M/delta) + (loglog d)_+)"
    },
    "conditions": [
-    "oracle agent j* uses UCB or Greedy policy",
-    "||phi(x)|| <= 1, ||theta_{j*}|| <= S"
+    "oracle agent uses UCB or Greedy policy",
+    "||phi(x)|| <= 1, ||theta_{j*}|| <= B"
    ],
    "tuning": [
     "pi = maximizer of C_min",
@@ -166,10 +197,10 @@
    "source": {
     "label": "thm:main_regret_rigorous",
     "number": "Theorem 14",
-    "quote": "then exists absolute constants $C_1, \\dots, C_6$ for which \\algo attains the regret R(n) \\leq C_1Bn^{3/4} + C_2 \\sqrt{n} \\cmin^{-1} C(M, \\delta, d)\\log M + C_3 B^2\\cmin\\sqrt{n} + ... with probability greater than $1-\\delta$, simultaneously for all $n \\geq 1$."
+    "quote": "Let $\\delta \\in (0, 1]$ and $\\pi$ be the maximizer of \\eqref{eq:cmin_def}. Assume the oracle agent employs a UCB or a Greedy policy... then exists absolute constants $C_1, \\dots, C_6$ for which \\algo attains the regret R(n) \\leq C_1Bn^{3/4} + C_2 \\sqrt{n} \\cmin^{-1} C(M, \\delta, d)\\log M + ... with probability greater than $1-\\delta$, simultaneously for all $n \\geq 1$."
    },
    "confidence": "medium",
-   "notes": "Absolute constants C_1..C_6 unspecified, so recorded as O. Log log terms written without (.)_+."
+   "notes": "Unspecified absolute constants C_1..C_6, recorded with O notation. loglog terms are positive parts in the paper."
   },
   {
    "id": "r3",
@@ -185,17 +216,18 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "S*T**(3/4) + sqrt(T)*C_M*log(M) + S**2*sqrt(T) + S*sqrt(T*(log(log(T*S**2)) + log(1/delta))) + (T**(3/4) + log(T))*C_M + T**(5/8)*sqrt(d*log(T) + log(1/delta) + S**2)",
-    "expression_latex": "Bn^{3/4} + \\sqrt{n} C(M, \\delta, d)\\log M + B^2 \\sqrt{n} + B\\sqrt{ n( (\\log \\log nB^2)_+ + \\log(1/\\delta))} +(n^{3/4} + \\log n )C(M, \\delta, d)+ n^{5/8}\\sqrt{d\\log n + \\log(1/\\delta) + B^2}",
-    "regime": "simultaneously for all n >= 1"
+    "expression": "S*T**(3/4) + sqrt(T)*C_conf*log(M) + S**2*sqrt(T) + S*sqrt(T*(log(log(T*S**2)) + log(1/delta))) + (T**(3/4) + log(T))*C_conf + T**(5/8)*sqrt(d*log(T) + log(1/delta) + S**2)",
+    "expression_latex": "Bn^{3/4} + \\sqrt{n} C(M, \\delta, d)\\log M + B^2 \\sqrt{n} + B\\sqrt{ n\\left( (\\log \\log nB^2)_+ + \\log(1/\\delta)\\right)} +(n^{3/4} + \\log n )C(M, \\delta, d)+ n^{5/8}\\sqrt{d\\log n + \\log(1/\\delta) + B^2}",
+    "regime": null
    },
    "symbols": {
-    "M": "number of candidate models/feature maps",
-    "C_M": "C(M,delta,d) = sqrt(1 + sqrt(d(log(M/delta)+(log log d)_+)) + log(M/delta) + (log log d)_+)"
+    "M": "number of candidate feature maps",
+    "C_conf": "C(M,delta,d) = sqrt(1 + sqrt(d(log(M/delta)+(loglog d)_+)) + log(M/delta) + (loglog d)_+)"
    },
    "conditions": [
     "feature maps phi_j: X -> R chosen from an orthogonal basis of L^2(X) with ||phi_i||_{L^2}/Vol(X) >= 1",
-    "oracle agent uses UCB or Greedy policy"
+    "oracle agent uses UCB or Greedy policy",
+    "||theta_{j*}|| <= B"
    ],
    "tuning": [
     "pi = Unif(X)",
@@ -207,10 +239,10 @@
    "source": {
     "label": "cor:alexp_unif",
     "number": "Corollary 12",
-    "quote": "then \\algo with uniform exploration $\\pi = \\mathrm{Unif}(\\calX)$ attains the regret R(n) = O( Bn^{3/4} + \\sqrt{n} C(M, \\delta, d)\\log M + B^2 \\sqrt{n} + B\\sqrt{ n( (\\log \\log nB^2)_+ + \\log(1/\\delta))} +(n^{3/4} + \\log n )C(M, \\delta, d)+ n^{5/8}\\sqrt{d\\log n + \\log(1/\\delta) + B^2}) with probability greater than $1-\\delta$, simultaneously for all $n \\geq 1$."
+    "quote": "Suppose $\\vphi_j: \\calX \\rightarrow \\sR$ are chosen from an orthogonal basis of $L^2(\\calX)$ ... then \\algo with uniform exploration $\\pi = \\mathrm{Unif}(\\calX)$ attains the regret R(n) = O( Bn^{3/4} + \\sqrt{n} C(M, \\delta, d)\\log M + B^2 \\sqrt{n} + ... ) with probability greater than $1-\\delta$, simultaneously for all $n \\geq 1$."
    },
    "confidence": "medium",
-   "notes": "Independent of C_min; scalar feature maps (d=1 per map in the statement although d still appears)."
+   "notes": "C_min-free bound under orthonormal scalar features; learner does not need C_min here."
   }
  ],
  "cited_results": [
@@ -223,32 +255,14 @@
    "algorithm_name": "UCB with SeqSEW online regression oracle",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Sparse linear bandits, compact action set, data-rich regime, M models of dimension d",
+   "setting_description": "Sparse linear bandit, compact action set (model selection among M d-dim parametrizations)",
    "bound": {
-    "notation": "O_tilde",
+    "notation": "O",
     "expression": "sqrt(d*M*T)",
     "expression_latex": "\\sqrt{dMn}",
     "regime": null
    },
    "where": "Table 2 / Appendix A"
-  },
-  {
-   "cited_key": "lattimore2020bandit",
-   "cited_title": "Bandit algorithms",
-   "cited_first_author": "Tor Lattimore",
-   "cited_year": 2020,
-   "cited_arxiv_id": null,
-   "algorithm_name": null,
-   "algorithm_registry_id": null,
-   "side": "lower",
-   "setting_description": "Sparse linear bandits (Theorem 24.3), data-rich regime",
-   "bound": {
-    "notation": "Omega",
-    "expression": "sqrt(d*M*T)",
-    "expression_latex": "\\sqrt{dMn}",
-    "regime": null
-   },
-   "where": "Appendix A"
   },
   {
    "cited_key": "carpentier2012bandit",
@@ -259,14 +273,14 @@
    "algorithm_name": "UCB with hard thresholding",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Sparse linear bandit on Euclidean ball with parameter noise",
+   "setting_description": "Sparse linear bandit on a Euclidean ball with parameter noise",
    "bound": {
-    "notation": "O_tilde",
+    "notation": "O",
     "expression": "d*sqrt(T)",
     "expression_latex": "d\\sqrt{n}",
     "regime": null
    },
-   "where": "Table 2"
+   "where": "Table 2 / Appendix A"
   },
   {
    "cited_key": "hao2020high",
@@ -277,9 +291,9 @@
    "algorithm_name": "ETC with Lasso",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Sparse linear bandit, compact action set spanning R^{dM}, data-poor regime",
+   "setting_description": "Sparse linear bandit, compact action set spanning R^{dM}",
    "bound": {
-    "notation": "O_tilde",
+    "notation": "O",
     "expression": "(T*d/C_min)**(2/3)*log(M)**(1/3)",
     "expression_latex": "(nd\\cmin^{-1})^{2/3}(\\log M)^{1/3}",
     "regime": null
@@ -297,9 +311,27 @@
    "side": "upper",
    "setting_description": "Sparse linear bandit, action set in [-1,1]^{Md} spanning R^{Md}",
    "bound": {
-    "notation": "O_tilde",
+    "notation": "O",
     "expression": "(T*d)**(2/3)*(log(M)/C_min)**(1/3)",
     "expression_latex": "(nd)^{2/3}(\\cmin^{-1}\\log M)^{1/3}",
+    "regime": null
+   },
+   "where": "Table 2"
+  },
+  {
+   "cited_key": "foster2019model",
+   "cited_title": "Model selection for contextual bandits",
+   "cited_first_author": "Dylan J Foster",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "EXP4 on squared error with UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Model selection for K-armed linear contextual bandits, lambda_min(Sigma) >= c",
+   "bound": {
+    "notation": "O",
+    "expression": "(M*T)**(3/4)*K**(1/4) + sqrt(K*d*M*T)",
+    "expression_latex": "(Mn)^{3/4}K^{1/4}+ \\sqrt{KdMn}",
     "regime": null
    },
    "where": "Table 2"
@@ -308,19 +340,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:37:51",
+  "date": "2026-10-21T18:05:27",
   "source_chars": 155502,
-  "input_tokens": 110582,
-  "output_tokens": 7043,
-  "cost_usd_equiv": 0.8079348,
+  "input_tokens": 117169,
+  "output_tokens": 7055,
+  "cost_usd_equiv": 0.809422,
   "status": "extracted"
  }
 }

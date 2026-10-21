@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Best-Arm Identification in Linear Bandits",
   "arxiv_id": "1409.6110",
@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Best-arm identification in linear bandits with fixed confidence ((epsilon,delta)-best-arm identification with epsilon=0)",
+   "name_in_paper": "Best-arm identification in linear bandits with fixed confidence",
    "objective": "bai_fixed_confidence",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -29,9 +29,7 @@
     "K",
     "d"
    ],
-   "instance_assumptions": [
-    "unique_optimal_arm"
-   ],
+   "instance_assumptions": [],
    "extras": [],
    "action_set": {
     "shape": "finite",
@@ -39,32 +37,66 @@
     "access": "explicit",
     "norm_bound": "bounded_L",
     "parameter_set": "unbounded",
-    "loss_set": "unspecified"
+    "loss_set": "not_applicable",
+    "parameter_structure": "unspecified"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "noise is zero-mean i.i.d. and bounded in [-sigma, sigma] (stronger than sub-Gaussian)"
+    "noise is zero-mean i.i.d. and bounded in [-sigma, sigma] (hence sigma-sub-Gaussian)",
+    "epsilon = 0 (exact best-arm identification)"
    ],
-   "definition_quote": "Let $\\X\\subseteq \\Re^d$ be a finite set of arms, where $|\\X| = K$ and the $\\ell_2$-norm of any arm $x\\in\\X$ ... is upper-bounded by $L$. ... $r(x) = x^\\top \\theta^* + \\eps$, where $\\eps$ is a zero-mean i.i.d. noise bounded in $[-\\sigma;\\sigma]$. ... we will focus on the case of $\\epsilon=0$ and we will provide high-probability bounds on the sample complexity $n$."
+   "definition_quote": "Let $\\X\\subseteq \\Re^d$ be a finite set of arms, where $|\\X| = K$ and the $\\ell_2$-norm of any arm $x\\in\\X$ ... is upper-bounded by $L$. ... $r(x) = x^\\top \\theta^* + \\eps$, where $\\eps$ is a zero-mean i.i.d. noise bounded in $[-\\sigma;\\sigma]$."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "G-allocation",
+   "name": "G-allocation (static, with empirical stopping rule)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -72,13 +104,12 @@
    ],
    "requires_knowledge_of": [
     "sigma",
-    "K",
-    "delta"
+    "K"
    ]
   },
   {
    "id": "a2",
-   "name": "XY-allocation",
+   "name": "XY-allocation (static, transductive G-optimal design)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -86,8 +117,7 @@
    ],
    "requires_knowledge_of": [
     "sigma",
-    "K",
-    "delta"
+    "K"
    ]
   },
   {
@@ -96,13 +126,13 @@
    "registry_id": null,
    "is_new": true,
    "techniques": [
-    "elimination"
+    "elimination",
+    "other"
    ],
    "requires_knowledge_of": [
     "sigma",
     "K",
-    "d",
-    "delta"
+    "d"
    ]
   }
  ],
@@ -121,22 +151,20 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "16*c_0**2*d*(1 + beta_apx)*log_n/Delta_min**2",
+    "expression": "16*8*sigma**2*d*(1+beta_apx)*log_n_term/Delta_min**2",
     "expression_latex": "N^G \\leq \\frac{16c^2 d (1+\\beta)\\log_n(K^2/\\delta)}{\\Delta_{\\min}^2}",
     "regime": null
    },
    "symbols": {
-    "c_0": "constant c = 2*sigma*sqrt(2)",
-    "beta_apx": "approximation factor of the method used to compute the G-allocation (performance within (1+beta) of optimal)",
-    "log_n": "log(c' n^2 K^2/delta) with c' = 6/pi^2, n the stopping time"
+    "beta_apx": "approximation factor of the method used to compute the G-optimal allocation",
+    "log_n_term": "log_n(K^2/delta) = log(c' n^2 K^2/delta) with c' = 6/pi^2"
    },
    "conditions": [
-    "noise bounded in [-sigma, sigma]",
     "Delta_min > 0"
    ],
    "tuning": [
-    "beta-approximate implementation of G-optimal design",
-    "stopping condition Eq. (emp.stop.condition.2)"
+    "c = 2*sqrt(2)*sigma in the stopping condition",
+    "beta-approximate G-optimal design"
    ],
    "is_new": true,
    "source": {
@@ -145,7 +173,7 @@
     "quote": "If the $G$-allocation strategy is implemented with a $\\beta$-approximate method and the stopping condition in Eq.~\\ref{eq:emp.stop.condition.2} is used, then $\\Prob\\bigg[ N^G \\leq \\frac{16c^2 d (1+\\beta)\\log_n(K^2/\\delta)}{\\Delta_{\\min}^2} \\wedge \\Pi(\\htheta_{N^G}) = x^* \\bigg] \\geq 1-\\delta.$"
    },
    "confidence": "medium",
-   "notes": "Bound holds jointly with correct identification w.p. >= 1-delta. The log term depends on n (the stopping time) itself, so the bound is implicit. Compute marked polynomial since approximate implementations (convex relaxation + rounding, greedy) are polynomial, though exact discrete design is NP-hard."
+   "notes": "c^2 = 8 sigma^2 substituted. The log term depends on n itself (implicit). Holds jointly with correct identification w.p. 1-delta."
   },
   {
    "id": "r2",
@@ -161,22 +189,20 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "32*c_0**2*d*(1 + beta_apx)*log_n/Delta_min**2",
+    "expression": "32*8*sigma**2*d*(1+beta_apx)*log_n_term/Delta_min**2",
     "expression_latex": "N^{\\X\\Y} \\leq \\frac{32c^2 d (1+\\beta)\\log_n(K^2/\\delta)}{\\Delta_{\\min}^2}",
     "regime": null
    },
    "symbols": {
-    "c_0": "constant c = 2*sigma*sqrt(2)",
-    "beta_apx": "approximation factor of the method used to compute the XY-allocation",
-    "log_n": "log(c' n^2 K^2/delta) with c' = 6/pi^2, n the stopping time"
+    "beta_apx": "approximation factor of the method used to compute the XY allocation",
+    "log_n_term": "log_n(K^2/delta) = log(c' n^2 K^2/delta) with c' = 6/pi^2"
    },
    "conditions": [
-    "noise bounded in [-sigma, sigma]",
     "Delta_min > 0"
    ],
    "tuning": [
-    "beta-approximate implementation of XY-optimal design",
-    "stopping condition Eq. (emp.stop.condition.2)"
+    "c = 2*sqrt(2)*sigma in the stopping condition",
+    "beta-approximate XY design"
    ],
    "is_new": true,
    "source": {
@@ -185,7 +211,7 @@
     "quote": "If the $\\X\\Y$-allocation strategy is implemented with a $\\beta$-approximate method and the stopping condition in Eq.~\\ref{eq:emp.stop.condition.2} is used, then $\\Prob\\bigg[ N^{\\X\\Y} \\leq \\frac{32c^2 d (1+\\beta)\\log_n(K^2/\\delta)}{\\Delta_{\\min}^2} \\wedge \\Pi(\\htheta_{N^{\\X\\Y}}) = x^* \\bigg] \\geq 1-\\delta.$"
    },
    "confidence": "medium",
-   "notes": "Joint with correct identification w.p. >= 1-delta. Log term implicit in n."
+   "notes": "c^2 = 8 sigma^2 substituted. Log term implicit in n."
   },
   {
    "id": "r3",
@@ -201,25 +227,23 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "(1 + beta_apx)*Max(M_star, 16*N_star/alpha_ph)/log(1/alpha_ph)*log(c_0*sqrt(log_n)/Delta_min)",
+    "expression": "(1+beta_apx)*Max(M_star, 16*N_star/alpha_ph)/log(1/alpha_ph)*log(2*sqrt(2)*sigma*sqrt(log_n_term)/Delta_min)",
     "expression_latex": "N \\leq \\frac{(1+\\beta)\\max\\{M^*,\\frac{16}{\\alpha}N^*\\}}{\\log(1/\\alpha)} \\log\\Big(\\frac{c\\sqrt{\\log_n(K^2/\\delta)}}{\\Delta_{\\min}}\\Big)",
     "regime": null
    },
    "symbols": {
-    "c_0": "constant c = 2*sigma*sqrt(2)",
     "beta_apx": "approximation factor of the allocation method",
     "alpha_ph": "phase-length parameter alpha in (0,1)",
-    "M_star": "number of steps needed by static XY-allocation to discard all suboptimal directions (Eq. m.value)",
-    "N_star": "oracle sample complexity c^2 H_LB log_n(K^2/delta), H_LB = min_lambda max_{y in Y*} ||y||^2_{Lambda_lambda^{-1}}/Delta^2(y)",
-    "log_n": "log(c' n^2 K^2/delta) with c' = 6/pi^2"
+    "M_star": "minimum number of steps of static XY-allocation to discard all suboptimal directions (Eq. m.value)",
+    "N_star": "oracle sample complexity c^2 H_LB log_n(K^2/delta), H_LB = min_lambda max_{y in Y*} ||y||^2_{Lambda^-1}/Delta^2(y)",
+    "log_n_term": "log_n(K^2/delta) = log(c' n^2 K^2/delta) with c' = 6/pi^2"
    },
    "conditions": [
-    "noise bounded in [-sigma, sigma]",
     "Delta_min > 0"
    ],
    "tuning": [
     "alpha in (0,1)",
-    "beta-approximate implementation",
+    "c = 2*sqrt(2)*sigma",
     "n_0 = d(d+1)+1"
    ],
    "is_new": true,
@@ -229,7 +253,7 @@
     "quote": "If the $\\X\\Y$-Adaptive allocation strategy is implemented with a $\\beta$-approximate method and the stopping condition in Eq.~\\ref{eq:emp.stop.condition.2} is used, then $\\Prob\\bigg[ N \\leq \\frac{(1+\\beta)\\max\\{M^*,\\frac{16}{\\alpha}N^*\\}}{\\log(1/\\alpha)} \\log\\Big(\\frac{c\\sqrt{\\log_n(K^2/\\delta)}}{\\Delta_{\\min}}\\Big) \\wedge \\Pi(\\htheta_{N}) = x^* \\bigg] \\geq 1-\\delta.$"
    },
    "confidence": "medium",
-   "notes": "Joint with correct identification w.p. >= 1-delta. M* and N* are problem-dependent quantities defined in the paper."
+   "notes": "c = 2 sqrt(2) sigma substituted inside the log. Lemma 2 (range of H_LB: max||y||^2/(L Delta_min^2) <= H_LB <= 4d/Delta_min^2; H_MAB <= H_LB <= 2 H_MAB for canonical basis) not recorded as it bounds a complexity measure, not an algorithm guarantee."
   }
  ],
  "cited_results": [],
@@ -239,16 +263,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-21T09:56:19",
+  "date": "2026-10-21T18:37:03",
   "source_chars": 95225,
-  "input_tokens": 75514,
-  "output_tokens": 4662,
-  "cost_usd_equiv": 0.4797708,
+  "input_tokens": 82110,
+  "output_tokens": 4884,
+  "cost_usd_equiv": 0.48553,
   "status": "extracted"
  }
 }

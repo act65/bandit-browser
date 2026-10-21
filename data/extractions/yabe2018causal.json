@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Causal Bandits with Propagating Inference",
   "arxiv_id": "1806.02252",
@@ -19,7 +19,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Causal bandit problem (hard interventions, arbitrary intervention set)",
+   "name_in_paper": "Causal bandit problem (hard interventions on a known causal DAG with binary variables)",
    "objective": "simple_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -29,7 +29,8 @@
    "context": "none",
    "noise": "bernoulli",
    "learner_knows": [
-    "T"
+    "T",
+    "K"
    ],
    "instance_assumptions": [],
    "extras": [
@@ -41,84 +42,76 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "unspecified"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Known causal DAG over N binary variables; arms are interventions A in {0,1,*}^N; after each experiment the full realization of all N nodes is observed (richer than bandit feedback); conditional probabilities alpha_n unknown; target is P(V_N=1|do(A))"
+    "Arms are interventions A in {0,1,*}^N on a known DAG with binary node variables; the learner knows the DAG structure but not the conditional probabilities alpha_n",
+    "After each intervention the realization of all N nodes is observed (richer than bandit feedback on the target only)",
+    "Reward is the probability that the target node V_N = 1 under do(A); interventions may propagate through the whole graph"
    ],
    "definition_quote": "In the causal bandit problem, we are given a DAG $G=(\\cV,E)$ and a set $\\cA$ of interventions. However, the parameters $\\alpha_n$ ($n=1,\\ldots,N$) are not known. Our ideal goal is then to find an intervention $A^* \\in \\cA$ that maximizes the probability $\\mu (A^*)$ of realizing $V_N = 1$ ... $R_T = \\mu(A^*) - E[\\mu(\\hat{A})]$."
-  },
-  {
-   "id": "s2",
-   "name_in_paper": "Causal bandit with alpha_n known for every n<N",
-   "objective": "simple_regret",
-   "feedback": "bandit",
-   "environment": "stochastic_iid",
-   "action_space": "structured_general",
-   "function_class": [],
-   "domain": "not_applicable",
-   "context": "none",
-   "noise": "bernoulli",
-   "learner_knows": [
-    "T"
-   ],
-   "instance_assumptions": [],
-   "extras": [
-    "causal"
-   ],
-   "action_set": {
-    "shape": "not_applicable",
-    "time_varying": "not_applicable",
-    "access": "not_applicable",
-    "norm_bound": "not_applicable",
-    "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
-   },
-   "corruption": {
-    "adversary": "not_applicable",
-    "budget_measure": "not_applicable",
-    "structure": "not_applicable",
-    "regret_reference": "not_applicable"
-   },
-   "feedback_graph": {
-    "observability": "not_applicable",
-    "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
-   },
-   "parameters": {},
-   "in_scope": true,
-   "out_of_scope_reason": null,
-   "unmapped": [
-    "Known causal DAG; conditional probabilities alpha_n known for all n<N, only those of the target node unknown (setting of Lattimore et al. 2016); full realization observed"
-   ],
-   "definition_quote": "Suppose that $\\alpha_n(\\pi)$ is known for every $n<N$ and $\\pi \\in \\{0,1\\}^{\\overline{\\cP_n}}$."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Causal Bandit (Algorithm 3: estimation of beta then alpha with importance-sampling design)",
+   "name": "Causal Bandit (Algorithm 3: estimation of beta, then of alpha via importance-sampling design eta)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
+    "explore_then_commit",
     "other"
    ],
    "requires_knowledge_of": [
-    "T"
+    "T",
+    "K"
    ]
   }
  ],
@@ -131,48 +124,49 @@
    "algorithm_class": null,
    "quantity": "simple_regret",
    "dependence": "instance_dependent",
-   "comparator": "best_fixed_action",
+   "comparator": "not_applicable",
    "probability": "expectation",
    "horizon": "known",
    "compute": "not_stated",
    "bound": {
     "notation": "O",
     "expression": "sqrt(Max(gamma_star, N_nodes)*log(K*T)/T)",
-    "expression_latex": "O\\left( \\sqrt{\\frac{ \\max\\{\\gamma^*, N\\} \\log(|\\cA|T)}{T}} \\right)",
+    "expression_latex": "R_T \\leq O\\left( \\sqrt{\\frac{ \\max\\{\\gamma^*, N\\} \\log(|\\cA|T)}{T}} \\right)",
     "regime": "N sufficiently small with respect to T"
    },
    "symbols": {
-    "gamma_star": "optimum value of the min-max design problem (optProb*) determined by the causal graph and interventions; N - min|A| <= gamma* <= min{NC, N|A|}",
-    "N_nodes": "number of nodes in the causal graph",
+    "gamma_star": "optimal value of the min-max design problem (optProb*) determined by the causal graph and beta_n",
+    "N_nodes": "number of nodes of the causal graph",
     "K": "number of interventions |A|"
    },
    "conditions": [
     "N >= 3",
     "T >= 2",
     "causal DAG structure known",
-    "N sufficiently small relative to T (hidden lower-order term 384 e^2 N C^7 log T / T)"
+    "binary node variables"
    ],
    "tuning": [
-    "lambda = C^3/N in Algorithm 1"
+    "lambda = C^3/N",
+    "T/3 experiments in phase 1, 2T/3 in phase 2"
    ],
    "is_new": true,
    "source": {
     "label": "thm_main",
     "number": "Theorem 1",
-    "quote": "The regret $R_T$ of Algorithm~\\ref{algo_select} satisfies $R_T \\leq O\\left( \\sqrt{\\frac{ \\max\\{\\gamma^*, N\\} \\log(|\\cA|T)}{T}} \\right)$."
+    "quote": "The regret $R_T$ of Algorithm~\\ref{algo_select} satisfies $R_T \\leq  O\\left( \\sqrt{\\frac{ \\max\\{\\gamma^*, N\\} \\log(|\\cA|T)}{T}} \\right).$"
    },
-   "confidence": "high",
-   "notes": "Proof gives explicit R_T <= sqrt(32 e^6 gamma* log(|A|T)/T) + (384 e^2 N C^7 log T + 16C + 2)/T where C = sum_n 2^{|P_n|}. Gamma* is graph-dependent; Proposition 2 bounds it by min{NC, N|A|} (so O(N^2) for bounded in-degree)."
+   "confidence": "medium",
+   "notes": "The proof gives the explicit bound sqrt(32 e^6 gamma* log(|A|T)/T) + (384 e^2 N C^7 log T + 16C + 2)/T with C = sum_n 2^{|P_n|}; the O hides the C^7/T term under 'N small relative to T'. Proposition 2 gives N - min|A| <= gamma* <= min{NC, N|A|}; with bounded in-degree gamma* = O(N^2)."
   },
   {
    "id": "r2",
-   "setting": "s2",
+   "setting": "s1",
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "simple_regret",
    "dependence": "instance_dependent",
-   "comparator": "best_fixed_action",
+   "comparator": "not_applicable",
    "probability": "expectation",
    "horizon": "known",
    "compute": "not_stated",
@@ -183,25 +177,25 @@
     "regime": null
    },
    "symbols": {
-    "gamma_star_N": "min over eta in simplex of max_A sum_{pi in {0,1}^{P_N}} beta_N^2(pi,A)/sum_{A'} eta_{A'} beta_N(pi,A')",
+    "gamma_star_N": "reduced gamma*: min over designs eta of max_A sum_{pi in {0,1}^{P_N}} beta_N^2(pi,A)/sum_A' eta_A' beta_N(pi,A')",
     "K": "number of interventions |A|"
    },
    "conditions": [
-    "alpha_n known for every n < N",
+    "alpha_n(pi) is known for every n < N (only the target node's conditional probabilities are unknown)",
     "N >= 3",
     "T >= 2"
    ],
    "tuning": [
-    "modified algorithm skipping experiments for known alpha_n"
+    "modified algorithm skips experiments for known alpha_n"
    ],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Corollary 4",
-    "quote": "Suppose that $\\alpha_n(\\pi)$ is known for every $n<N$ and $\\pi \\in \\{0,1\\}^{\\overline{\\cP_n}}$. Then the regret $R_T$ of Algorithm~\\ref{algo_select} satisfies $R_T \\leq O(\\sqrt{\\gamma^* \\log (|\\cA|T) / T })$, where $\\gamma^* = \\min_{\\eta} \\max_{A} \\sum_{ \\pi \\in \\{0,1\\}^{\\cP_N}} \\frac{\\beta_{N}^2(\\pi, A)}{\\sum_{A'} \\eta_{A'} \\beta_N(\\pi,A')}$"
+    "quote": "Suppose that $\\alpha_n(\\pi)$ is known for every $n<N$ and $\\pi \\in \\{0,1\\}^{\\overline{\\cP_n}}$. Then the regret $R_T$ of Algorithm~\\ref{algo_select} satisfies $R_T \\leq O(\\sqrt{\\gamma^* \\log (|\\cA|T) / T })$, where ..."
    },
    "confidence": "medium",
-   "notes": "Recovers Lattimore et al. (2016) Theorem 3 per the paper. Uses a minor modification of the algorithm (Remark 3)."
+   "notes": "Recovers the setting of Lattimore et al. 2016 Theorem 3. Learner additionally knows alpha_n for n<N (not expressible in setting vocabulary; put in conditions)."
   }
  ],
  "cited_results": [
@@ -214,32 +208,32 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "General best-arm identification / simple regret in K-armed stochastic bandit without side information",
+   "setting_description": "General best-arm identification (simple regret) with |A| arms, no side information",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(K/T)",
-    "expression_latex": "\\Omega(\\sqrt{|\\cA|/T})",
+    "expression_latex": "\\Omega(\\sqrt{|\\cA| / T})",
     "regime": null
    },
-   "where": "Introduction and Section 3 (after Proposition 2)"
+   "where": "Introduction; Section 3 after Proposition 2"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:56:12",
+  "date": "2026-10-21T18:24:10",
   "source_chars": 123042,
-  "input_tokens": 100640,
-  "output_tokens": 3817,
-  "cost_usd_equiv": 0.6638788,
+  "input_tokens": 107227,
+  "output_tokens": 3672,
+  "cost_usd_equiv": 0.662226,
   "status": "extracted"
  }
 }

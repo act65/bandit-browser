@@ -100,24 +100,41 @@ def key_matches(old: dict, new: dict) -> bool:
     return True
 
 
+def with_defaults(key: dict, ont: dict) -> dict:
+    """Apply the ontology's field defaults (`unspecified_means`) to a key written before them."""
+    key = json.loads(json.dumps(key))
+    for name, spec in (ont.get("node_parameters") or {}).items():
+        for f, fs in spec["fields"].items():
+            if fs.get("unspecified_means") and (key.get(name) or {}).get(f) == "unspecified":
+                key[name][f] = fs["unspecified_means"]
+    return key
+
+
 def remap(done: dict, old_settings: Path | None) -> int:
     """Re-attach verdicts whose setting id disappeared (ids hash the whole key, so every
     ontology change renames settings) to the current settings with a matching key."""
     settings = {s["id"]: s for s in json.loads((CAN / "settings.json").read_text())}
     cmp = json.loads((CAN / "comparison.json").read_text())["settings"]
     old_keys = ({s["id"]: s["key"] for s in json.loads(old_settings.read_text())} if old_settings else {})
+    ont = schema.load_ontology()
     moved = 0
     for vid in [v for v in done if v.split("|")[0] not in settings]:
         sid, _, reg = vid.partition("|")
         key = done[vid].get("key") or old_keys.get(sid)
         if not key:
-            continue
+            continue  # kept as stale (site_index warns); never deleted: the searches stay useful
+        key = with_defaults(key, ont)
+        hits = 0
         for nid, s in settings.items():
             if key_matches(key, s["key"]) and reg in cmp.get(nid, {}) and f"{nid}|{reg}" not in done:
                 done[f"{nid}|{reg}"] = {**done[vid], "key": s["key"], "remapped_from": vid,
                                         "status_now": cmp[nid][reg]["status"]}
                 moved += 1
-        del done[vid]
+                hits += 1
+        if hits:
+            del done[vid]
+        else:
+            done[vid]["key"] = key  # unmatched: kept with its key for a later remap
     return moved
 
 

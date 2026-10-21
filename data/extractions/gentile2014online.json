@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Online Clustering of Bandits",
   "arxiv_id": "1401.8257",
@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Clustered linear contextual bandits (n users in m unknown clusters)",
+   "name_in_paper": "Clustered linear contextual bandits (users partitioned into m unknown clusters)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -25,45 +25,77 @@
    "context": "stochastic_contexts",
    "noise": "bounded_pm1",
    "learner_knows": [
-    "sigma",
-    "d"
+    "d",
+    "sigma_std"
    ],
    "instance_assumptions": [],
-   "extras": [
-    "time_varying_action_sets",
-    "multi_agent_cooperative"
-   ],
    "action_set": {
-    "shape": "sphere",
+    "shape": "finite",
     "time_varying": "adaptive_sequence",
     "access": "explicit",
     "norm_bound": "unit_l2",
     "parameter_set": "l2_ball",
-    "loss_set": "bounded_mean_reward"
+    "loss_set": "bounded_mean_reward",
+    "parameter_structure": "clustered"
    },
+   "extras": [
+    "time_varying_action_sets"
+   ],
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_unknown"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "n users partitioned into m unknown clusters, each cluster sharing an unknown parameter u_j with ||u_j||=1",
-    "user i_t drawn uniformly at random from V each round",
-    "context vectors drawn i.i.d. on unit sphere from process with E[XX^T] of minimal eigenvalue lambda>0, number c_t chosen adaptively",
-    "cluster separation ||u_j-u_j'|| >= gamma (gamma unknown)",
-    "noise conditionally zero mean with variance at most sigma^2, payoffs in [-1,1]",
-    "theoretical confidence bounds use lambda, n, and delta"
+    "n users partitioned into m unknown clusters; each cluster has its own parameter vector u_j with ||u_j||=1",
+    "user i_t drawn uniformly at random each round",
+    "clusters well separated: ||u_j-u_j'|| >= gamma (gamma unknown)",
+    "number of clusters m and the partition are unknown to the learner",
+    "context vectors i.i.d. on the unit sphere from a process with E[XX^T] having minimal eigenvalue lambda > 0",
+    "noise is conditionally zero-mean with conditional variance <= sigma^2"
    ],
-   "definition_quote": "the learner receives a user index $i_t \\in V$ together with a set of context vectors $C_{i_t} = \\{\\bx_{t,1}, \\ldots,\\bx_{t,c_t}\\} \\subseteq \\R^d$. ... $a_i(\\bx) = \\bu_{j(i)}^\\top\\bx + \\epsilon_{j(i)}(\\bx)$ ... $r_t = \\left(\\max_{\\bx \\in C_{i_t} }\\, \\bu_{j(i_t)}^\\top\\bx\\right) - \\bu_{j(i_t)}^\\top{\\bar \\bx_{t}}$"
+   "definition_quote": "let $V = \\{1,\\ldots, n\\}$ represent the set of $n$ users. Then $V$ can be partitioned into a small number $m$ of clusters $V_1, V_2, \\ldots, V_m$ ... each cluster $V_j$ hosts an unknown parameter vector $\\bu_j \\in \\R^d$ ... $a_i(\\bx) = \\bu_{j(i)}^\\top\\bx + \\epsilon_{j(i)}(\\bx)$ ... $r_t = \\left(\\max_{\\bx \\in C_{i_t} }\\, \\bu_{j(i_t)}^\\top\\bx\\right) - \\bu_{j(i_t)}^\\top{\\bar \\bx_{t}}$"
   }
  ],
  "algorithms": [
@@ -73,13 +105,14 @@
    "registry_id": null,
    "is_new": true,
    "techniques": [
-    "optimism"
+    "optimism",
+    "other"
    ],
    "requires_knowledge_of": [
-    "sigma",
+    "sigma_std",
     "d",
-    "lambda (min eigenvalue of E[XX^T])",
-    "n",
+    "lambda_X",
+    "n_users",
     "delta"
    ]
   }
@@ -99,29 +132,30 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O_tilde",
-    "expression": "(sigma_std*sqrt(d) + 1)*sqrt(m_c)*(n_u/lambda_min**2 + sqrt(T)*(1 + S_v)) + (n_u/lambda_min**2 + n_u*sigma_std**2*d/(lambda_min*gamma_sep**2))*E_SD + m_c",
-    "expression_latex": "(\\sigma\\sqrt{d}+1)\\,\\sqrt{m}\\,\\Biggl(\\frac{n}{\\lambda^2}+\\sqrt{T}\\Bigl(1+\\sum_{j=1}^m \\sqrt{\\frac{v_j}{\\lambda\\,n}} \\Bigl)\\Biggl) + \\left(\\frac{n}{\\lambda^2} + \\frac{n\\,\\sigma^2\\,d\\,}{\\lambda\\gamma^2} \\right)\\,\\E[SD(\\bu_{i_t})] + m",
+    "expression": "(sigma_std*sqrt(d) + 1)*sqrt(m_c)*(n_users/lambda_X**2 + sqrt(T)*(1 + sum_clusters(sqrt(v_j/(lambda_X*n_users))))) + (n_users/lambda_X**2 + n_users*sigma_std**2*d/(lambda_X*gamma_sep**2))*E_SD + m_c",
+    "expression_latex": "{\\tilde O}\\Biggl( (\\sigma\\sqrt{d}+1)\\,\\sqrt{m}\\,\\Biggl(\\frac{n}{\\lambda^2}+\\sqrt{T}\\Bigl(1+\\sum_{j=1}^m \\sqrt{\\frac{v_j}{\\lambda\\,n}} \\Bigl)\\Biggl) + \\left(\\frac{n}{\\lambda^2} + \\frac{n\\,\\sigma^2\\,d\\,}{\\lambda\\gamma^2} \\right)\\,\\E[SD(\\bu_{i_t})] + m \\Biggl)",
     "regime": null
    },
    "symbols": {
+    "n_users": "number of users n",
     "m_c": "number of true clusters m",
-    "n_u": "number of users n",
-    "lambda_min": "minimal eigenvalue lambda of E[XX^T]",
-    "gamma_sep": "cluster separation gamma",
-    "S_v": "sum_{j=1}^m sqrt(v_j/(lambda n)), v_j cluster sizes",
+    "lambda_X": "minimal eigenvalue of E[XX^T] of the context process",
+    "gamma_sep": "separation between cluster vectors",
+    "v_j": "size of cluster j",
+    "sum_clusters": "sum over the m clusters j",
     "E_SD": "E[SD(u_{i_t})] = sum_j (v_j/n) sum_j' ||u_j - u_j'||"
    },
    "conditions": [
-    "initial graph G_1 complete",
-    "||u_j|| = 1 for all clusters",
-    "||u_j - u_j'|| >= gamma > 0",
-    "contexts i.i.d. with ||X||=1, E[XX^T] full rank with min eigenvalue lambda > 0",
+    "initial graph is complete",
+    "||u_j|| = 1 for all j",
+    "||u_j - u_j'|| >= gamma > 0 for j != j'",
+    "||X|| = 1, E[XX^T] full rank with minimal eigenvalue lambda > 0",
     "(z^T X)^2 conditionally sub-Gaussian with variance parameter <= lambda^2/(8 log(4c)), c_t <= c",
-    "i_t uniform over users",
-    "noise conditionally zero mean with variance <= sigma^2; payoffs in [-1,1]"
+    "payoffs in [-1,1], noise conditional variance <= sigma^2",
+    "users i_t drawn uniformly at random"
    ],
    "tuning": [
-    "CB replaced by theoretical TCB and sTCB with delta replaced by delta/10.5"
+    "CB and CB-tilde replaced by theoretical TCB and TCB-tilde with delta replaced by delta/10.5"
    ],
    "is_new": true,
    "source": {
@@ -130,7 +164,7 @@
     "quote": "Then with probability at least $1-\\delta$ the cumulative regret satisfies \\sum_{t=1}^T r_t = {\\tilde O}\\Biggl( (\\sigma\\sqrt{d}+1)\\,\\sqrt{m}\\,\\Biggl(\\frac{n}{\\lambda^2}+\\sqrt{T}\\Bigl(1+\\sum_{j=1}^m \\sqrt{\\frac{v_j}{\\lambda\\,n}} \\Bigl)\\Biggl) + \\left(\\frac{n}{\\lambda^2} + \\frac{n\\,\\sigma^2\\,d\\,}{\\lambda\\gamma^2} \\right)\\,\\E[SD(\\bu_{i_t})] + m \\Biggl) ... In the above, the ${\\tilde O}$-notation hides $\\log (1/\\delta)$, $\\log m$, $\\log n$, and $\\log T$ factors."
    },
    "confidence": "medium",
-   "notes": "Õ hides log(1/delta), log m, log n, log T. sigma is a variance bound so mapped to sigma_std. Remark 4 says the result extends to sparse Erdos-Renyi initial graphs when clusters are large. Horizon marked anytime since the algorithm's confidence bounds do not use T (somewhat uncertain)."
+   "notes": "Õ hides log(1/delta), log m, log n, log T. Regret is per-round gap of chosen context vs best in C_{i_t}. sigma is bound on conditional noise std."
   },
   {
    "id": "r2",
@@ -146,25 +180,22 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O_tilde",
-    "expression": "(sigma_std*sqrt(d) + 1)*sqrt(m_c*T)*(1 + S_v)",
-    "expression_latex": "(\\sigma\\sqrt{d}+1)\\,\\sqrt{m\\,T}\\,\\Bigl(1+\\sum_{j=1}^m \\sqrt{\\frac{v_j}{\\lambda\\,n}} \\Bigl)",
+    "expression": "(sigma_std*sqrt(d) + 1)*sqrt(m_c*T)*(1 + sum_clusters(sqrt(v_j/(lambda_X*n_users))))",
+    "expression_latex": "{\\tilde O}\\Biggl( (\\sigma\\sqrt{d}+1)\\,\\sqrt{m\\,T}\\,\\Bigl(1+\\sum_{j=1}^m \\sqrt{\\frac{v_j}{\\lambda\\,n}} \\Bigl) \\Biggl)",
     "regime": "as T grows large"
    },
    "symbols": {
+    "n_users": "number of users n",
     "m_c": "number of true clusters m",
-    "S_v": "sum_{j=1}^m sqrt(v_j/(lambda n)), v_j cluster sizes, lambda min eigenvalue of E[XX^T]"
+    "lambda_X": "minimal eigenvalue of E[XX^T]",
+    "v_j": "size of cluster j",
+    "sum_clusters": "sum over the m clusters j"
    },
    "conditions": [
-    "initial graph G_1 complete",
-    "||u_j|| = 1 for all clusters",
-    "||u_j - u_j'|| >= gamma > 0",
-    "contexts i.i.d. with ||X||=1, E[XX^T] full rank with min eigenvalue lambda > 0",
-    "(z^T X)^2 conditionally sub-Gaussian with variance parameter <= lambda^2/(8 log(4c)), c_t <= c",
-    "i_t uniform over users",
-    "noise conditionally zero mean with variance <= sigma^2; payoffs in [-1,1]"
+    "same assumptions as Theorem 1 (complete initial graph, unit-norm separated cluster vectors, sub-Gaussian context condition, uniform user arrivals)"
    ],
    "tuning": [
-    "theoretical TCB and sTCB with delta replaced by delta/10.5"
+    "theoretical confidence bounds with delta/10.5"
    ],
    "is_new": true,
    "source": {
@@ -173,7 +204,7 @@
     "quote": "= {\\tilde O}\\Biggl( (\\sigma\\sqrt{d}+1)\\,\\sqrt{m\\,T}\\,\\Bigl(1+\\sum_{j=1}^m \\sqrt{\\frac{v_j}{\\lambda\\,n}} \\Bigl) \\Biggl)~, as $T$ grows large."
    },
    "confidence": "medium",
-   "notes": "Asymptotic form of the same theorem (eq. asymptotic_bound)."
+   "notes": "Asymptotic form of the same theorem."
   }
  ],
  "cited_results": [
@@ -183,35 +214,35 @@
    "cited_first_author": "Abbasi-Yadkori",
    "cited_year": 2011,
    "cited_arxiv_id": null,
-   "algorithm_name": "LinUCB / OFUL (one instance per known cluster)",
+   "algorithm_name": "LinUCB / OFUL (single user)",
    "algorithm_registry_id": "oful",
    "side": "upper",
-   "setting_description": "Linear contextual bandit with m known clusters, each solved as independent bandit; high-probability regret, ||u_j||=1 not yet assumed",
+   "setting_description": "single-user stochastic linear contextual bandit, ||u||=1, noise variance sigma^2, high probability",
    "bound": {
     "notation": "O_tilde",
-    "expression": "m_c*(sigma_std*d + S*sqrt(d))*sqrt(T)",
-    "expression_latex": "{\\tilde O}\\Bigl(\\sum_{j = 1}^m \\left(\\sigma\\,d + ||\\bu_j||\\,\\sqrt{d}\\right)\\,\\sqrt{T}\\Bigl)",
-    "regime": "as T grows large; S stands for ||u_j||, m_c number of clusters"
+    "expression": "(sigma_std*d + sqrt(d))*sqrt(T)",
+    "expression_latex": "{\\widetilde O}\\left((\\sigma\\,d+\\sqrt{d})\\sqrt{T}\\right)",
+    "regime": null
    },
-   "where": "Section 2 (reference bound; also attributed to Aue02, chu2011contextual)"
+   "where": "Appendix, Derivation of the Reference Bounds"
   }
  ],
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:39:37",
+  "date": "2026-10-21T18:07:31",
   "source_chars": 111968,
-  "input_tokens": 87983,
-  "output_tokens": 4636,
-  "cost_usd_equiv": 0.5790028,
+  "input_tokens": 94570,
+  "output_tokens": 4722,
+  "cost_usd_equiv": 0.58197,
   "status": "extracted"
  }
 }

@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Be More Diverse than the Most Diverse: Optimal Mixtures of Generative Models via Mixture-UCB Bandit Algorithms",
   "arxiv_id": "2412.17622",
@@ -23,8 +23,12 @@
    "function_class": [],
    "domain": "not_applicable",
    "context": "none",
-   "noise": "general_model_class",
-   "learner_knows": [],
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K",
+    "loss_range"
+   ],
    "instance_assumptions": [],
    "extras": [],
    "action_set": {
@@ -33,26 +37,58 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Objective is the quadratic loss L(P_hat^(T)) = (1/T^2) sum_{s,t} kappa(x^(s),x^(t)) + (1/T) sum_t f(x^(t)) of the empirical distribution of all collected samples, compared with the best mixture of arms min_alpha L(alpha); comparator is the best mixture, not the best single arm",
-    "kappa is a bounded positive semidefinite kernel with values in [kappa_0,kappa_1], f bounded in [f_0,f_1]; samples x lie in an arbitrary space X",
-    "Algorithm uses the sensitivity Delta_L = 2 Delta_kappa + Delta_f and Delta_kappa (range bounds of kappa and f)"
+    "Objective is a quadratic loss L(P_hat_T) = E[kappa(X,X')] + E[f(X)] of the empirical distribution of all T samples (cross terms between rounds), with kappa a bounded PSD kernel; comparator is the optimal mixture of arms rather than the best single arm",
+    "Each pull returns a sample in a general space X (not a scalar reward)"
    ],
    "definition_quote": "At time $t=1,\\ldots,T$, we choose and pull an arm $b^{(t)}\\in[m]$ (i.e., generate a sample from model $b^{(t)}$), and obtain a sample $x^{(t)}$ from the distribution $P_{b^{(t)}}$. ... here we minimize the loss $L(\\hat{P}^{(T)})$ which involve cross terms $\\kappa(x^{(s)},x^{(t)})$ between samples at different rounds."
   }
@@ -67,8 +103,9 @@
     "optimism"
    ],
    "requires_knowledge_of": [
-    "Delta_L",
-    "Delta_kappa"
+    "T",
+    "K",
+    "loss_range"
    ]
   },
   {
@@ -81,8 +118,9 @@
     "ftrl_or_mirror_descent"
    ],
    "requires_knowledge_of": [
-    "Delta_L",
-    "Delta_kappa"
+    "T",
+    "K",
+    "loss_range"
    ]
   },
   {
@@ -95,9 +133,9 @@
     "elimination"
    ],
    "requires_knowledge_of": [
-    "Delta_L",
-    "Delta_kappa",
-    "lambda"
+    "T",
+    "K",
+    "loss_range"
    ]
   }
  ],
@@ -112,7 +150,7 @@
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
-   "horizon": "anytime",
+   "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
@@ -121,13 +159,13 @@
     "regime": null
    },
    "symbols": {
-    "Delta_L": "sensitivity of the loss, 2*Delta_kappa + Delta_f (ranges of kappa and f)",
+    "Delta_L": "sensitivity 2*Delta_kappa + Delta_f, where Delta_kappa, Delta_f are the ranges of kappa and f",
     "beta_ucb": "confidence parameter beta of Mixture-UCB-CAB"
    },
    "conditions": [
-    "K >= 2",
+    "K = m >= 2",
     "T >= 2",
-    "kappa positive semidefinite and bounded, f bounded"
+    "kappa: X^2 -> [kappa_0, kappa_1] positive semidefinite and f: X -> [f_0, f_1] bounded"
    ],
    "tuning": [
     "beta >= 4"
@@ -136,10 +174,10 @@
    "source": {
     "label": "thm:alg_converge",
     "number": "Theorem 2",
-    "quote": "Suppose $m \\ge 2$, $\\beta\\ge4$. Consider bounded quadratic loss function (\\ref{eq:general_loss}) with $\\kappa$ being positive semidefinite. Let $\\hat{P}^{(T)}$ be the empirical distribution of the first $T\\ge2$ samples $\\mathbf{x}^{(T)}$ given by Mixture-UCB-CAB. Then the gap between the expected loss and the optimal loss is bounded by $\\mathbb{E}[L(\\hat{P}^{(T)})]-\\min_{\\boldsymbol{\\alpha}}L(\\boldsymbol{\\alpha}) \\le4\\Delta_{L}\\sqrt{\\frac{\\beta m\\log T}{T}}$."
+    "quote": "Suppose $m \\ge 2$, $\\beta\\ge4$. Consider bounded quadratic loss function (\\ref{eq:general_loss}) with $\\kappa$ being positive semidefinite. Let $\\hat{P}^{(T)}$ be the empirical distribution of the first $T\\ge2$ samples $\\mathbf{x}^{(T)}$ given by Mixture-UCB-CAB. Then the gap between the expected loss and the optimal loss is bounded by \\mathbb{E}\\big[L(\\hat{P}^{(T)})\\big]-\\min_{\\boldsymbol{\\alpha}}L(\\boldsymbol{\\alpha}) \\le4\\Delta_{L}\\sqrt{\\frac{\\beta m\\log T}{T}}."
    },
    "confidence": "medium",
-   "notes": "Paper's bound is on the average per-round (quadratic) regret; multiplied by T here. Paper's m = number of arms K. Quantity is a quadratic generalisation of regret against best mixture (reduces to pseudo-regret when kappa=0), hence 'other'. Proof gives improved constant 3.382. Algorithm's confidence widths use log t, not T, so recorded as anytime."
+   "notes": "Paper bounds the average regret per round (quadratic generalization); multiplied by T here. Comparator is the optimal mixture alpha* (best fixed mixed action), reduces to standard pseudo-regret when kappa=0. Paper's m = number of arms K. Proof gives improved constant 3.382."
   }
  ],
  "cited_results": [
@@ -152,7 +190,7 @@
    "algorithm_name": "UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic K-armed bandit, distribution-free regret of conventional UCB (stated per round as O(sqrt(m log T / T)); multiplied by T)",
+   "setting_description": "Stochastic K-armed bandit, distribution-free regret (per round O(sqrt(m log T / T)), multiplied by T)",
    "bound": {
     "notation": "O",
     "expression": "sqrt(K*T*log(T))",
@@ -170,7 +208,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Stochastic K-armed bandit minimax lower bound (Theorem 3.4 of Bubeck & Cesa-Bianchi), stated per round as Omega(sqrt(m/T)); multiplied by T",
+   "setting_description": "Stochastic K-armed bandit minimax lower bound (per round Omega(sqrt(m/T)), multiplied by T), Theorem 3.4",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(K*T)",
@@ -186,16 +224,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-21T09:59:53",
+  "date": "2026-10-21T18:40:57",
   "source_chars": 127869,
-  "input_tokens": 98175,
-  "output_tokens": 3660,
-  "cost_usd_equiv": 0.6410187999999999,
+  "input_tokens": 104771,
+  "output_tokens": 3519,
+  "cost_usd_equiv": 0.6395179999999999,
   "status": "extracted"
  }
 }

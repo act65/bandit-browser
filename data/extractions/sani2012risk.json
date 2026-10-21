@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Risk-Aversion in Multi-armed Bandits",
   "arxiv_id": "1301.1936",
@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Mean-variance multi-arm bandit",
+   "name_in_paper": "Mean-Variance Multi-arm Bandit",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -25,7 +25,8 @@
    "context": "none",
    "noise": "bounded_01",
    "learner_knows": [
-    "T"
+    "T",
+    "K"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -35,27 +36,60 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_unknown"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Risk-averse objective: the best arm minimizes the mean-variance MV_i = sigma_i^2 - rho*mu_i, with a known risk-tolerance rho",
-    "Regret is the per-round difference between the empirical mean-variance of the algorithm's reward sequence and that of the best arm; it includes an 'exploration risk' term from pulling arms with different means"
+    "Risk-averse objective: best arm minimizes mean-variance MV_i = sigma_i^2 - rho*mu_i with known risk tolerance rho; regret is the difference in empirical mean-variance of the algorithm's reward sequence vs. the best arm (includes an exploration-risk term from pulling arms with different means)",
+    "Learner knows the risk tolerance coefficient rho"
    ],
-   "definition_quote": "The mean--variance of an arm $i$ with mean $\\mu_i$, variance $\\var_i$ and coefficient of absolute risk tolerance $\\rho$ is defined as $\\MV_i = \\var_i - \\rho\\mu_i$. ... The pseudo regret ... $\\tR_n(\\A) = \\frac{1}{n}\\sum_{i\\neq i^*} T_{i,n} \\Delta_i + \\frac{2}{n^2}\\sum_{i=1}^K\\sum_{j\\neq i} T_{i,n}T_{j,n} \\Gamma_{i,j}^2$"
+   "definition_quote": "The mean--variance of an arm $i$ with mean $\\mu_i$, variance $\\var_i$ and coefficient of absolute risk tolerance $\\rho$ is defined as $\\MV_i =  \\var_i - \\rho\\mu_i$. ... The pseudo regret for a learning algorithm $\\A$ over $n$ rounds is defined as $\\tR_n(\\A) = \\frac{1}{n}\\sum_{i\\neq i^*} T_{i,n} \\Delta_i + \\frac{2}{n^2}\\sum_{i=1}^K\\sum_{j\\neq i} T_{i,n}T_{j,n} \\Gamma_{i,j}^2$, where $\\Delta_i = \\MV_i - \\MV_{i^*}$ and $\\Gamma_{i,j} = \\mu_i - \\mu_j$."
   }
  ],
  "algorithms": [
@@ -68,8 +102,8 @@
     "optimism"
    ],
    "requires_knowledge_of": [
-    "delta",
-    "rho"
+    "rho",
+    "delta"
    ]
   },
   {
@@ -98,35 +132,36 @@
    "dependence": "instance_dependent",
    "comparator": "best_fixed_action",
    "probability": "high_probability",
-   "horizon": "known",
+   "horizon": "anytime",
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "b**2*log(1/delta)/T*(sum_subopt(1/Delta_mv_i) + 4*sum_subopt(Gamma_istar_i**2/Delta_mv_i**2) + 2*b**2*log(1/delta)/T*G2) + 5*K/T",
-    "expression_latex": "\\frac{b^2 \\log 1/\\delta}{n}\\bigg(\\sum_{i\\neq i^*}\\frac{1}{\\Delta_i} + 4\\sum_{i\\neq i^*}\\frac{\\Gamma_{i^*,i}^2}{\\Delta_i^2} + \\frac{2b^2 \\log 1/\\delta}{n}\\sum_{i\\neq i^*}\\sum_{j\\neq i, j\\neq i^*}\\frac{\\Gamma_{i,j}^2}{\\Delta_i^2 \\Delta_j^2}\\bigg) + \\frac{5K}{n}",
+    "expression": "(2*(5+rho))**2*log(1/delta)*(sum_subopt(1/Delta_MV_i) + 4*sum_subopt(Gamma_i**2/Delta_MV_i**2) + 2*(2*(5+rho))**2*log(1/delta)/T*S_Gamma) + 5*K",
+    "expression_latex": "\\tR_n(\\A) \\leq \\frac{b^2 \\log 1/\\delta}{n}\\bigg(\\sum_{i\\neq i^*}\\frac{1}{\\Delta_i} + 4\\sum_{i\\neq i^*}\\frac{\\Gamma_{i^*,i}^2}{\\Delta_i^2} + \\frac{2b^2 \\log 1/\\delta}{n}\\sum_{i\\neq i^*}\\sum_{j\\neq i, j\\neq i^*}\\frac{\\Gamma_{i,j}^2}{\\Delta_i^2 \\Delta_j^2}\\bigg) + \\frac{5K}{n}",
     "regime": null
    },
    "symbols": {
     "rho": "risk tolerance coefficient",
-    "b": "2*(5+rho)",
-    "Delta_mv_i": "mean-variance gap MV_i - MV_{i*}",
-    "Gamma_istar_i": "mu_{i*} - mu_i",
-    "G2": "sum over i != i*, j != i, j != i* of Gamma_{i,j}^2/(Delta_mv_i^2 Delta_mv_j^2), Gamma_{i,j} = mu_i - mu_j"
+    "Delta_MV_i": "mean-variance gap MV_i - MV_{i*}",
+    "Gamma_i": "mean difference mu_{i*} - mu_i",
+    "S_Gamma": "sum over i != i*, j != i, j != i* of Gamma_{i,j}^2/(Delta_MV_i^2 Delta_MV_j^2)"
    },
    "conditions": [
-    "optimal (minimum mean-variance) arm is unique"
+    "optimal arm (w.r.t. mean-variance) is unique",
+    "regret measured by mean-variance pseudo-regret (Definition 3)",
+    "holds with probability at least 1-6TK*delta"
    ],
    "tuning": [
-    "confidence parameter delta; holds with probability at least 1-6nK*delta"
+    "confidence parameter delta"
    ],
    "is_new": true,
    "source": {
     "label": "thm:mvlcb.regret",
     "number": "Theorem 1",
-    "quote": "Let the optimal arm $i^*$ be unique and $b = 2(5+\\rho)$, the \\textsl{MV-LCB} algorithm achieves a pseudo--regret bounded as ... with probability at least $1-6nK\\delta$."
+    "quote": "Let the optimal arm $i^*$ be unique and $b = 2(5+\\rho)$, the \\textsl{MV-LCB} algorithm achieves a pseudo--regret bounded as ... + \\frac{5K}{n}, with probability at least $1-6nK\\delta$."
    },
    "confidence": "medium",
-   "notes": "The regret is the mean-variance pseudo-regret, defined per round (normalized by 1/n), so quantity is 'other'. The bound is kept as stated and not multiplied by T, because the regret definition itself is inherently per-round. The probability is 1-6nK delta."
+   "notes": "Paper's regret is normalized by n (per-round); expression multiplied by T. Failure probability 6nK*delta grows with n. Quantity 'other' since this is the mean-variance pseudo-regret, not standard regret."
   },
   {
    "id": "r2",
@@ -142,31 +177,31 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "2*b**2*log(T)/T*(sum_subopt(1/Delta_mv_i) + 4*sum_subopt(Gamma_istar_i**2/Delta_mv_i**2) + 4*b**2*log(T)/T*G2) + (17 + 6*rho)*K/T",
-    "expression_latex": "\\frac{2b^2 \\log n}{n}\\bigg(\\sum_{i\\neq i^*}\\frac{1}{\\Delta_i} + 4\\sum_{i\\neq i^*}\\frac{\\Gamma_{i^*,i}^2}{\\Delta_i^2} + \\frac{4b^2 \\log n}{n}\\sum_{i\\neq i^*}\\sum_{j\\neq i, j\\neq i^*}\\frac{\\Gamma_{i,j}^2}{\\Delta_i^2 \\Delta_j^2}\\bigg) + (17 + 6\\rho)\\frac{K}{n}",
+    "expression": "2*(2*(5+rho))**2*log(T)*(sum_subopt(1/Delta_MV_i) + 4*sum_subopt(Gamma_i**2/Delta_MV_i**2) + 4*(2*(5+rho))**2*log(T)/T*S_Gamma) + (17+6*rho)*K",
+    "expression_latex": "\\E[\\tR_n(\\A)] \\leq \\frac{2b^2 \\log n}{n}\\bigg(\\sum_{i\\neq i^*}\\frac{1}{\\Delta_i} + 4\\sum_{i\\neq i^*}\\frac{\\Gamma_{i^*,i}^2}{\\Delta_i^2} + \\frac{4b^2 \\log n}{n}\\sum_{i\\neq i^*}\\sum_{j\\neq i, j\\neq i^*}\\frac{\\Gamma_{i,j}^2}{\\Delta_i^2 \\Delta_j^2}\\bigg) + (17 + 6\\rho)\\frac{K}{n}",
     "regime": null
    },
    "symbols": {
     "rho": "risk tolerance coefficient",
-    "b": "2*(5+rho)",
-    "Delta_mv_i": "mean-variance gap MV_i - MV_{i*}",
-    "Gamma_istar_i": "mu_{i*} - mu_i",
-    "G2": "sum over i != i*, j != i, j != i* of Gamma_{i,j}^2/(Delta_mv_i^2 Delta_mv_j^2)"
+    "Delta_MV_i": "mean-variance gap MV_i - MV_{i*}",
+    "Gamma_i": "mean difference mu_{i*} - mu_i",
+    "S_Gamma": "sum over i != i*, j != i, j != i* of Gamma_{i,j}^2/(Delta_MV_i^2 Delta_MV_j^2)"
    },
    "conditions": [
-    "optimal (minimum mean-variance) arm is unique"
+    "optimal arm (w.r.t. mean-variance) is unique",
+    "regret measured by mean-variance pseudo-regret (Definition 3)"
    ],
    "tuning": [
-    "delta = 1/n^2"
+    "delta = 1/T^2"
    ],
    "is_new": true,
    "source": {
     "label": "thm:mvlcb.regret",
     "number": "Theorem 1",
-    "quote": "Similarly, if \\textsl{MV-LCB} is run with $\\delta = 1/n^2$ then $\\E[\\tR_n(\\A)] \\leq \\frac{2b^2 \\log n}{n}\\bigg(...\\bigg) + (17 + 6\\rho)\\frac{K}{n}$."
+    "quote": "Similarly, if \\textsl{MV-LCB} is run with $\\delta = 1/n^2$ then \\E[\\tR_n(\\A)] \\leq \\frac{2b^2 \\log n}{n}\\bigg(...\\bigg) + (17 + 6\\rho)\\frac{K}{n}."
    },
    "confidence": "medium",
-   "notes": "Expected per-round mean-variance pseudo-regret, kept as stated. The remark simplifies it to O(K log n/(n Delta_min) + K^2 Gamma_max^2 log^2 n/(n Delta_min^4))."
+   "notes": "Per-round (normalized) regret multiplied by T. Paper remarks MV-LCB can suffer constant per-round regret (linear total) when mean-variance gaps are zero."
   },
   {
    "id": "r3",
@@ -182,14 +217,16 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "2*K/T**(1/3)",
-    "expression_latex": "2\\frac{K}{n^{1/3}}",
+    "expression": "2*K*T**(2/3)",
+    "expression_latex": "\\E[\\tR_n(\\A)] \\leq 2\\frac{K}{n^{1/3}}",
     "regime": null
    },
    "symbols": {},
-   "conditions": [],
+   "conditions": [
+    "regret measured by mean-variance pseudo-regret (Definition 3)"
+   ],
    "tuning": [
-    "tau = K(n/14)^{2/3}"
+    "tau = K*(T/14)^(2/3)"
    ],
    "is_new": true,
    "source": {
@@ -198,7 +235,7 @@
     "quote": "Let \\textsl{ExpExp} be run with $\\tau = K(n/14)^{2/3}$, then for any choice of distributions $\\{\\nu_i\\}$ the expected regret is $\\E[\\tR_n(\\A)] \\leq 2\\frac{K}{n^{1/3}}.$"
    },
    "confidence": "medium",
-   "notes": "Expected per-round mean-variance pseudo-regret, kept as stated. The appendix proof instead derives tau=(n/4)^{2/3}K with bound 3K/n^{1/3}, which is inconsistent with the theorem; the theorem's version is recorded."
+   "notes": "Per-round bound 2K/n^{1/3} multiplied by T. Appendix proof derives tau=(n/4)^{2/3}K and constant 3 instead, inconsistent with theorem statement; recorded the theorem as stated. Rounding effects ignored."
   }
  ],
  "cited_results": [],
@@ -208,16 +245,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-21T10:04:13",
+  "date": "2026-10-21T18:45:44",
   "source_chars": 70679,
-  "input_tokens": 63157,
-  "output_tokens": 5375,
-  "cost_usd_equiv": 0.3951748,
+  "input_tokens": 69753,
+  "output_tokens": 5415,
+  "cost_usd_equiv": 0.397294,
   "status": "extracted"
  }
 }

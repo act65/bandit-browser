@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Stochastic Multi-Objective Multi-Armed Bandits: Regret Definition and Algorithm",
   "arxiv_id": "2506.13125",
@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Stochastic multi-objective multi-armed bandit (MO-MAB)",
+   "name_in_paper": "Stochastic multi-objective multi-armed bandits (MO-MAB) with coverage / cumulative adjustment regret",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -35,26 +35,58 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
-   "in_scope": true,
-   "out_of_scope_reason": null,
+   "in_scope": false,
+   "out_of_scope_reason": "Multi-objective (vector-valued) rewards with Pareto-based regret notions.",
    "unmapped": [
-    "Vector-valued rewards with D objectives; regret measured against the Pareto-optimal set (coverage-regret and cumulative adjustment-regret, new definitions)",
-    "Learner may pull a set of arms A^t per round",
-    "Reward range [0,1] not explicitly stated; Hoeffding's inequality is used in the analysis and experiments use Bernoulli rewards"
+    "D-dimensional vector rewards; regret measured against Pareto-optimal (or efficient Pareto-optimal) arms in all objectives simultaneously (coverage-regret and cumulative adjustment-regret)",
+    "learner may pull a set of arms A^t per round in the exploitation phase"
    ],
    "definition_quote": "Given an instance of a MO-MAB problem with \\( n \\) arms, denoted by \\(\\mathcal{A}=\\{a_1,a_2,...,a_n \\}\\), and $D$ (maximization) objectives ... In the stochastic setting of the problem \\sum_{t=1}^T \\mathbf{r}^t(a) = (T \\mu_{1}(a), ..., T\\mu_{D}(a))"
   }
@@ -62,7 +94,7 @@
  "algorithms": [
   {
    "id": "a1",
-   "name": "A Simple MO-MAB Algorithm (Algorithm 1), exact minimum set cover",
+   "name": "A Simple MO-MAB Algorithm (exact minimum set cover)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -75,7 +107,7 @@
   },
   {
    "id": "a2",
-   "name": "A Simple MO-MAB Algorithm (Algorithm 1), greedy O(log n)-approximate set cover",
+   "name": "A Simple MO-MAB Algorithm with O(log n)-approximate set cover",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -134,7 +166,7 @@
     "quote": "The coverage-regret of algorithm \\ref{SMOMABA} is \\(R = O\\left( T^\\frac{2}{3} (n\\log T)^\\frac{1}{3}\\right)\\)."
    },
    "confidence": "medium",
-   "notes": "Coverage-regret (new multi-objective regret notion): for every Pareto-optimal arm, per-objective expected cumulative shortfall. Proof gives 4 T^{2/3}(2 n log T)^{1/3} + small term. By Theorem 4 also valid for efficient PO arms."
+   "notes": "Coverage-regret: for every PO arm a*, max over objectives of T mu_d(a*) - E[sum r_d(a^t)] for a constructed sequence. Proof gives 4T^{2/3}(2n log T)^{1/3} + 2. Theorem 4 states it also holds for EPO arms. Reward range not explicitly stated (Hoeffding used); bounded_01 assumed."
   },
   {
    "id": "r2",
@@ -150,16 +182,17 @@
    "compute": "exponential",
    "bound": {
     "notation": "O",
-    "expression": "n_PO*T**(2/3)*(K*log(T))**(1/3)",
+    "expression": "n_star*T**(2/3)*(K*log(T))**(1/3)",
     "expression_latex": "|\\mathcal{A}^*| O \\left( T^{\\frac{2}{3}} \\left( n \\log T \\right)^{\\frac{1}{3}} \\right)",
     "regime": null
    },
    "symbols": {
-    "n_PO": "number of Pareto-optimal arms |A^*|"
+    "n_star": "number of Pareto-optimal arms |A*|"
    },
    "conditions": [],
    "tuning": [
-    "T' = (T/n)^{2/3}(2 log T)^{1/3}"
+    "T' = (T/n)^{2/3}(2 log T)^{1/3}",
+    "r = sqrt(2 log T / T')"
    ],
    "is_new": true,
    "source": {
@@ -168,7 +201,7 @@
     "quote": "The cumulative adjustment-regret is hold for algorithm \\ref{SMOMABA} with the regret \\(R = O\\left( T^\\frac{2}{3} (n\\log T)^\\frac{1}{3}\\right)\\)."
    },
    "confidence": "medium",
-   "notes": "Cumulative adjustment-regret is bounded by |A*| R by definition. Also extended to efficient PO arms in Theorem 4."
+   "notes": "Cumulative adjustment-regret is bounded by |A*| R. Theorem 4 extends to EPO arms."
   },
   {
    "id": "r3",
@@ -177,20 +210,23 @@
    "algorithm": "a2",
    "algorithm_class": null,
    "quantity": "other",
-   "dependence": "worst_case",
+   "dependence": "instance_dependent",
    "comparator": "not_applicable",
    "probability": "expectation",
    "horizon": "known",
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "log(K)*T**(2/3)*(K*log(T))**(1/3)",
+    "expression": "n_star*log(K)*T**(2/3)*(K*log(T))**(1/3)",
     "expression_latex": "O\\left( \\log n \\cdot T^{\\frac{2}{3}} (n \\log T)^{\\frac{1}{3}} \\right)",
     "regime": null
    },
-   "symbols": {},
+   "symbols": {
+    "n_star": "number of Pareto-optimal arms |A*|"
+   },
    "conditions": [],
    "tuning": [
+    "greedy O(log n)-approximate set cover",
     "T' = (T/n)^{2/3}(2 log T)^{1/3}"
    ],
    "is_new": true,
@@ -200,7 +236,7 @@
     "quote": "we note that the polynomial-time approximation for the minimum covering set satisfies $|B| \\leq \\log n \\cdot |\\mathcal{A}^*|$. Consequently, the polynomial-time algorithm achieves the regret bound of $O\\left( \\log n \\cdot T^{\\frac{2}{3}} (n \\log T)^{\\frac{1}{3}} \\right)$ while maintaining correctness."
    },
    "confidence": "low",
-   "notes": "Stated in the proof of Theorem 3 and in the intro; the regret R parameter for the polynomial-time variant (adjustment-regret scaled by |A*|)."
+   "notes": "Remark inside the proof of Theorem 3; R = O(log n T^{2/3}(n log T)^{1/3}) so cumulative adjustment-regret is |A*| times that."
   },
   {
    "id": "r4",
@@ -231,8 +267,8 @@
     "number": "Theorem 5",
     "quote": "The regret of the single arm pulling version of Algorithm \\ref{SMOMABA} compared to the average best arm $b^*$ is \\(R = O\\left( T^\\frac{2}{3} (n\\log T)^\\frac{1}{3}\\right)\\)."
    },
-   "confidence": "medium",
-   "notes": "Regret against a virtual arm b* equal to the average of a diverse set of Pareto-optimal arms; measured as adjustment needed to weakly dominate b*."
+   "confidence": "low",
+   "notes": "Regret against a virtual arm b* equal to the mean of a maximal diverse set of PO arms with radius r; nonstandard comparator."
   }
  ],
  "cited_results": [
@@ -248,11 +284,11 @@
    "setting_description": "Stochastic multi-objective MAB with D objectives, Pareto regret",
    "bound": {
     "notation": "exact",
-    "expression": "sum_subopt(8*log(T*(D_obj*n_PO)**(1/4))/Delta_i)",
+    "expression": "sum_subopt(8*log(T*(D_obj*n_star)**(1/4))/Delta_i)",
     "expression_latex": "\\sum_{a \\notin A^*} \\frac{8 \\cdot \\log \\left( T \\sqrt[4]{D |A^*|} \\right)} {\\Delta_a}",
     "regime": null
    },
-   "where": "Section 3 (Analysis of Pareto Regret Used in the Literature)"
+   "where": "Section 3"
   }
  ],
  "_run": {
@@ -261,16 +297,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-21T09:58:40",
+  "date": "2026-10-21T18:39:41",
   "source_chars": 90370,
-  "input_tokens": 72103,
-  "output_tokens": 4006,
-  "cost_usd_equiv": 0.4393628,
+  "input_tokens": 78699,
+  "output_tokens": 4654,
+  "cost_usd_equiv": 0.453642,
   "status": "extracted"
  }
 }

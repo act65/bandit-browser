@@ -169,8 +169,8 @@ def main() -> None:
     live = {f"{c['setting_id']}|{c['regime']}" for c in cells}
     stale = [k for k in triage if k not in live]
     if stale:
-        print(f"warning: {len(stale)} triage verdicts refer to settings/regimes that no longer exist "
-              "(setting ids change with the ontology); re-run pipeline/triage.py")
+        print(f"note: {len(stale)} triage verdicts match no current setting/regime (ids change with the ontology); "
+              "`pipeline/triage.py --remap` re-attaches those whose key still matches, the rest are kept unused")
     print(f"{len(out_bounds)} bounds ({n_js} plottable), {len(cells)} cells, {len(transfer)} transfer suggestions, "
           f"{len(unstudied)} unstudied neighbours, {len(redundant)} redundant")
 

@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Designing Decision Support Systems Using Counterfactual Prediction Sets",
   "arxiv_id": "2306.03928",
@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Finding the optimal conformal predictor (arms = alpha values) with counterfactual prediction sets",
+   "name_in_paper": "Finding the optimal conformal predictor (arms = alpha values in A) with counterfactual monotonicity",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -28,34 +28,65 @@
     "K"
    ],
    "instance_assumptions": [],
-   "extras": [
-    "causal"
-   ],
+   "extras": [],
    "action_set": {
     "shape": "not_applicable",
     "time_varying": "not_applicable",
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Arms are m nested conformal prediction sets (alpha_i = 1 - i/(m+1)); the learner observes feature x_t and true label y_t after each round, which together with the nested structure and the counterfactual monotonicity assumption reveals rewards of other arms (counterfactual side information)",
-    "Counterfactual monotonicity assumption (Assumption 2) on the expert's SCM"
+    "Arms are m nested conformal prediction sets (K = m = calibration set size); the feature x_t and label y_t are observed each round, allowing counterfactual inference of rewards of other arms",
+    "Counterfactual monotonicity assumption on the expert's predictions (structural causal model): success with a set implies success with any smaller set still containing the label"
    ],
    "definition_quote": "In our problem, each arm corresponds to a different parameter value $\\alpha$ and, at each round $t$, a (potentially different) human expert receives a sample with feature vector $x_t$, picks a label value $\\hat{y}_t$ from the prediction set $\\Ccal_{\\alpha_t}(x_t)$ provided by the conformal predictor with $\\alpha_t \\in \\Acal$, and obtains a reward $\\II\\{ \\hat{y}_t = y_t \\} \\in \\{0, 1\\}$. Here, we observe $x_t$ at the beginning of each round and $y_t$ and $\\II\\{ \\hat{y}_t = y_t \\}$ at the end of each round."
   }
@@ -89,20 +120,20 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(t_round*log(K)*log(T))",
-    "expression_latex": "O \\left( \\sqrt{t \\log m \\log T} \\right)",
-    "regime": "for any t <= T"
+    "expression": "sqrt(t*log(K)*log(T))",
+    "expression_latex": "\\EE[R(t)] \\leq O \\left( \\sqrt{t \\log m \\log T} \\right)",
+    "regime": "any t <= T"
    },
    "symbols": {
-    "t_round": "current round t <= T at which the regret is evaluated"
+    "t": "current round, t <= T"
    },
    "conditions": [
-    "T >= sqrt(K) (paper: T >= sqrt(m), m = calibration set size = number of arms)",
+    "T >= sqrt(m) where m = K is the calibration set size / number of arms",
     "counterfactual monotonicity assumption (Assumption 2) holds",
-    "ground truth label y_t observed at end of each round"
+    "nested prediction sets from a conformal predictor"
    ],
    "tuning": [
-    "epsilon_t(alpha) = sqrt(2 log T / nu_t(alpha))"
+    "confidence radius sqrt(2 log T / nu(alpha))"
    ],
    "is_new": true,
    "source": {
@@ -111,7 +142,7 @@
     "quote": "Given a calibration set $\\Dcal_{\\text{cal}} = \\{ (x_i, y_i) \\}_{i=1}^{m}$ and a maximum number of rounds $T \\geq \\sqrt{m}$, Counterfactual SE is guaranteed to achieve expected regret $\\EE[R(t)] \\leq O \\left( \\sqrt{t \\log m \\log T} \\right)$ for any $t \\leq T$."
    },
    "confidence": "medium",
-   "notes": "Number of arms m mapped to K. Regret R(T) defined via expected accuracies, so pseudo-regret. Feedback is bandit plus counterfactually inferred rewards (not expressible in vocabulary)."
+   "notes": "Paper's m (number of calibration points = number of arms) mapped to K. Regret defined via expected accuracies, so pseudo-regret. Holds under counterfactual monotonicity."
   }
  ],
  "cited_results": [
@@ -124,12 +155,12 @@
    "algorithm_name": "UCB1 / successive elimination",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic K-armed bandit (m arms) with rewards in {0,1}, vanilla bandit feedback",
+   "setting_description": "Stochastic K-armed bandit with m arms (vanilla, no counterfactual inference)",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(K*t_round*log(T))",
-    "expression_latex": "O( \\sqrt{m t \\log T})",
-    "regime": "for any t <= T"
+    "expression": "sqrt(K*t*log(T))",
+    "expression_latex": "\\EE[R(t)] \\leq O( \\sqrt{m t \\log T})",
+    "regime": "any t <= T"
    },
    "where": "Section 4"
   }
@@ -137,19 +168,19 @@
  "_run": {
   "backend": "claude_cli",
   "models": [
-   "claude-opus-5-5[1m]"
+   "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-20T14:53:54",
+  "date": "2026-10-21T18:22:11",
   "source_chars": 98197,
-  "input_tokens": 70896,
-  "output_tokens": 2394,
-  "cost_usd_equiv": 0.39746679999999995,
+  "input_tokens": 77483,
+  "output_tokens": 2607,
+  "cost_usd_equiv": 0.402974,
   "status": "extracted"
  }
 }

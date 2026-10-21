@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Best Arm Identification in Restless Markov Multi-Armed Bandits",
   "arxiv_id": "2203.15236",
@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Best arm identification in restless Markov multi-armed bandits (TPMs known up to permutation)",
+   "name_in_paper": "Best arm identification in restless Markov multi-armed bandits (fixed confidence, known TPMs up to permutation)",
    "objective": "bai_fixed_confidence",
    "feedback": "bandit",
    "environment": "markovian",
@@ -40,31 +40,63 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
-   "in_scope": true,
-   "out_of_scope_reason": null,
+   "in_scope": false,
+   "out_of_scope_reason": "Arms are restless ergodic Markov chains (environment = markovian, out of scope from ontology v0.5).",
    "unmapped": [
-    "Each arm is a time-homogeneous ergodic Markov chain on a common finite state space; unselected arms keep evolving (restless)",
-    "The learner knows the set of TPMs P_1..P_K but not their assignment to arms (finite hypothesis set of permutations)",
-    "Best arm = arm with largest stationary mean of a known function f",
-    "Rows of the TPMs are mutually absolutely continuous across arms",
-    "Initial states drawn from a distribution phi independent of the assignment",
-    "Learner observes the full state of the selected arm"
+    "each arm is an ergodic finite-state Markov chain evolving whether or not it is selected (restless)",
+    "learner knows the set of arm transition probability matrices but not their assignment to arms (permutation unknown)",
+    "best arm defined by largest stationary mean of a known function f on the state space",
+    "rows of different arms' TPMs are mutually absolutely continuous",
+    "learner observes the state of the selected arm"
    ],
-   "definition_quote": "A decision entity that knows $P_1, \\ldots, P_K$ only up to a permutation wishes to find the index of the best arm (i.e., the arm whose TPM is $P_1$) as quickly as possible, subject to an upper bound on the error probability."
+   "definition_quote": "Consider a multi-armed bandit with $K\\geq 2$ arms in which each arm is associated with a time-homogeneous and ergodic discrete-time Markov process evolving on a common, finite state space... A decision entity that has knowledge of the set of TPMs of the arms, but does not know the exact mapping of the TPMs to the arms, wishes to find the index of the best arm as quickly as possible, subject to an upper bound on the error probability."
   }
  ],
  "algorithms": [
@@ -79,10 +111,8 @@
    ],
    "requires_knowledge_of": [
     "K",
-    "reward_family",
-    "R (max delay parameter)",
-    "eta (mixing parameter)",
-    "L (threshold, =1/epsilon)"
+    "set of arm TPMs (up to permutation)",
+    "error probability epsilon (L = 1/epsilon)"
    ]
   }
  ],
@@ -101,62 +131,29 @@
    "compute": "not_stated",
    "bound": {
     "notation": "liminf",
-    "expression": "log(1/delta)/T_star",
+    "expression": "log(1/delta)/T_star_C",
     "expression_latex": "\\liminf_{\\epsilon\\downarrow 0}\\inf_{\\pi\\in\\Pi(\\epsilon)}\\frac{\\mathbb{E}_{C}^\\pi[\\tau(\\pi)]}{\\log(1/\\epsilon)}\\geq \\frac{1}{T^{\\star}(C)}",
-    "regime": "error probability epsilon -> 0"
+    "regime": "as delta -> 0"
    },
    "symbols": {
-    "T_star": "T*(C): sup over state-action occupancy measures nu on (delays, last observed states, arm) of min over alternatives C' of sum nu * KL between d-step transition rows"
+    "T_star_C": "paper's T^*(C): sup over state-action occupancy measures nu on (delays, last observed states, arm) of min over alternatives of sum nu * KL between d-step transition rows (inverse characteristic time)"
    },
    "conditions": [
-    "policies in Pi(epsilon): error probability <= epsilon for all assignments"
+    "unique best arm",
+    "rows of TPMs mutually absolutely continuous across arms"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "prop:lower_bound",
     "number": "Proposition 1",
-    "quote": "Suppose $C\\in \\mathcal{C}$ is the underlying assignment of the TPMs. Then, \\liminf_{\\epsilon\\downarrow 0}\\inf_{\\pi\\in\\Pi(\\epsilon)}\\frac{\\mathbb{E}_{C}^\\pi[\\tau(\\pi)]}{\\log(1/\\epsilon)}\\geq \\frac{1}{T^{\\star}(C)}"
+    "quote": "Suppose $C\\in \\mathcal{C}$ is the underlying assignment of the TPMs. Then, \\liminf_{\\epsilon\\downarrow 0}\\inf_{\\pi\\in\\Pi(\\epsilon)}\\frac{\\mathbb{E}_{C}^\\pi[\\tau(\\pi)]}{\\log(1/\\epsilon)}\\geq \\frac{1}{T^{\\star}(C)}, where $T^{\\star}(C)$ is given by ..."
    },
    "confidence": "high",
-   "notes": "Paper's epsilon is the error probability (delta). Restated as first part of Theorem 4."
+   "notes": "Paper's epsilon is the error probability (delta). Holds over all epsilon-correct policies Pi(epsilon). Restated as part of Theorem 4. In the i.i.d.-like case (TPMs with identical rows) it reduces to the Garivier-Kaufmann bound (Lemma 7)."
   },
   {
    "id": "r2",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "error_probability",
-   "dependence": "worst_case",
-   "comparator": "not_applicable",
-   "probability": "high_probability",
-   "horizon": "not_applicable",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "exact",
-    "expression": "delta",
-    "expression_latex": "\\pi^\\star(L,\\eta,R)\\in\\Pi(\\epsilon)",
-    "regime": null
-   },
-   "symbols": {},
-   "conditions": [],
-   "tuning": [
-    "L = 1/epsilon",
-    "eta in (0,1]",
-    "R integer > K"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "lem:pi_star(L)_in_Pi(epsilon)",
-    "number": "Lemma 3",
-    "quote": "Fix an error probability threshold $\\epsilon>0$. If $L=1/\\epsilon$, then $\\pi^\\star(L,\\eta,R)\\in\\Pi(\\epsilon)$ for all $\\eta\\in (0,1]$ and $R\\in \\mathbb{N}\\cap (K, \\infty)$."
-   },
-   "confidence": "medium",
-   "notes": "delta-correctness of the policy: error probability at most epsilon. Compute: paper calls it practically implementable (finite state space S_R) but per-round cost involves enumerating permutations."
-  },
-  {
-   "id": "r3",
    "setting": "s1",
    "side": "upper",
    "algorithm": "a1",
@@ -169,19 +166,25 @@
    "compute": "polynomial",
    "bound": {
     "notation": "limsup",
-    "expression": "log(1/delta)/(eta_mix*T_R_unif + (1 - eta_mix)*T_R_star)",
-    "expression_latex": "\\limsup_{L\\to\\infty}\\, \\frac{\\tau(\\pi)}{\\log L} \\leq \\frac{1}{\\eta\\,T_{R}^{\\textsf{unif}}(C) + (1-\\eta)\\ T_{R}^{\\star}(C)}",
-    "regime": "L = 1/delta -> infinity"
+    "expression": "log(1/delta)/(eta*T_R_unif + (1 - eta)*T_R_star)",
+    "expression_latex": "\\limsup_{L\\to\\infty}\\, \\frac{\\tau(\\pi)}{\\log L}\\leq \\frac{1}{\\eta\\,T_{R}^{\\textsf{unif}}(C) + (1-\\eta)\\ T_{R}^{\\star}(C)}",
+    "regime": "as L = 1/delta -> infinity"
    },
    "symbols": {
-    "eta_mix": "mixing weight eta in (0,1] between uniform and optimal occupancy measures",
-    "T_R_unif": "min over alternatives of KL-weighted sum under the uniform delay-constrained occupancy measure",
-    "T_R_star": "optimal value of the finite LP with maximum delay R"
+    "T_R_unif": "T_R^unif(C): min over alternatives of KL drift under the uniform delay-constrained occupancy measure",
+    "T_R_star": "T_R^*(C): optimal value of the finite LP with max-delay R constraint",
+    "eta": "mixing parameter of the policy in (0,1]",
+    "R": "maximum allowed arm delay, integer > K"
    },
-   "conditions": [],
+   "conditions": [
+    "unique best arm",
+    "rows of TPMs mutually absolutely continuous across arms",
+    "initial states drawn from a distribution phi independent of the assignment"
+   ],
    "tuning": [
     "eta in (0,1]",
-    "R integer > K"
+    "R integer > K",
+    "L = 1/delta"
    ],
    "is_new": true,
    "source": {
@@ -190,7 +193,50 @@
     "quote": "Fix $\\eta\\in (0,1]$, $R\\in \\mathbb{N}\\cap(K, \\infty)$, and $C\\in \\mathcal{C}$. Under the assignment of the TPMs $C$ and under the policy $\\pi=\\pi^*(L,\\eta, R)$, \\limsup_{L\\to\\infty}\\, \\frac{\\tau(\\pi)}{\\log L} \\leq ... \\leq \\frac{1}{\\eta\\,T_{R}^{\\textsf{unif}}(C) + (1-\\eta)\\ T_{R}^{\\star}(C)} almost surely"
    },
    "confidence": "medium",
-   "notes": "Almost-sure bound on stopping time, expressed with log L = log(1/delta)."
+   "notes": "Almost-sure bound on the stopping time itself; L plays role of 1/delta (Lemma 3: L=1/epsilon gives epsilon-correctness). Compute: the policy solves a finite LP and operates on finite S_R; paper calls it easy to implement, though state space is exponential in K."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "log(1/delta)/(eta*T_R_unif + (1 - eta)*T_R_star)",
+    "expression_latex": "\\limsup_{L\\to\\infty}\\frac{\\mathbb{E}_{C}^{\\pi}[\\tau(\\pi)]}{\\log L}\\leq \\frac{1}{\\eta\\,T_{R}^{\\textsf{unif}}(C) + (1-\\eta)\\ T_{R}^{\\star}(C)}",
+    "regime": "as L = 1/delta -> infinity"
+   },
+   "symbols": {
+    "T_R_unif": "T_R^unif(C): min over alternatives of KL drift under the uniform delay-constrained occupancy measure",
+    "T_R_star": "T_R^*(C): optimal value of the finite LP with max-delay R constraint",
+    "eta": "mixing parameter of the policy in (0,1]",
+    "R": "maximum allowed arm delay, integer > K"
+   },
+   "conditions": [
+    "unique best arm",
+    "rows of TPMs mutually absolutely continuous across arms",
+    "initial states drawn from a distribution phi independent of the assignment"
+   ],
+   "tuning": [
+    "eta in (0,1]",
+    "R integer > K",
+    "L = 1/delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:upper_bound",
+    "number": "Proposition 3",
+    "quote": "Fix $\\eta\\in (0,1]$, $R\\in \\mathbb{N}\\cap (K, \\infty)$, and $C\\in \\mathcal{C}$. Under the assignment of the TPMs $C$, the policy {\\sc $R$-DCR-BAI} satisfies \\limsup_{L\\to\\infty}\\frac{\\mathbb{E}_{C}^{\\pi}[\\tau(\\pi)]}{\\log L}\\leq \\frac{1}{\\eta\\,T_{R}^{\\textsf{unif}}(C) + (1-\\eta)\\ T_{R}^{\\star}(C)}."
+   },
+   "confidence": "high",
+   "notes": "Policy is delta-correct with L=1/delta (Lemma 3). Letting eta -> 0 gives 1/T_R^*(C)."
   },
   {
    "id": "r4",
@@ -206,53 +252,19 @@
    "compute": "polynomial",
    "bound": {
     "notation": "limsup",
-    "expression": "log(1/delta)/(eta_mix*T_R_unif + (1 - eta_mix)*T_R_star)",
-    "expression_latex": "\\limsup_{L\\to\\infty}\\frac{\\mathbb{E}_{C}^{\\pi}[\\tau(\\pi)]}{\\log L}\\leq \\frac{1}{\\eta\\,T_{R}^{\\textsf{unif}}(C) + (1-\\eta)\\ T_{R}^{\\star}(C)}",
-    "regime": "L = 1/delta -> infinity"
-   },
-   "symbols": {
-    "eta_mix": "mixing weight eta in (0,1]",
-    "T_R_unif": "min over alternatives of KL-weighted sum under the uniform delay-constrained occupancy measure",
-    "T_R_star": "optimal value of the finite LP with maximum delay R"
-   },
-   "conditions": [],
-   "tuning": [
-    "eta in (0,1]",
-    "R integer > K"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "prop:upper_bound",
-    "number": "Proposition 3",
-    "quote": "Fix $\\eta\\in (0,1]$, $R\\in \\mathbb{N}\\cap (K, \\infty)$, and $C\\in \\mathcal{C}$. Under the assignment of the TPMs $C$, the policy {\\sc $R$-DCR-BAI} satisfies \\limsup_{L\\to\\infty}\\frac{\\mathbb{E}_{C}^{\\pi}[\\tau(\\pi)]}{\\log L}\\leq \\frac{1}{\\eta\\,T_{R}^{\\textsf{unif}}(C) + (1-\\eta)\\ T_{R}^{\\star}(C)}."
-   },
-   "confidence": "high",
-   "notes": "With L = 1/epsilon the policy is epsilon-correct (Lemma 3)."
-  },
-  {
-   "id": "r5",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "sample_complexity",
-   "dependence": "instance_dependent",
-   "comparator": "not_applicable",
-   "probability": "expectation",
-   "horizon": "not_applicable",
-   "compute": "polynomial",
-   "bound": {
-    "notation": "limsup",
-    "expression": "log(1/delta)/T_R_inf",
+    "expression": "log(1/delta)/T_inf_star",
     "expression_latex": "\\limsup_{R\\to\\infty}\\ \\limsup_{\\eta \\downarrow 0} \\ \\limsup_{L\\to\\infty}\\ \\frac{\\mathbb{E}_{C}^{\\pi^\\star(L, \\eta, R)}[\\tau(\\pi^\\star(L, \\eta, R))]}{\\log L}\\leq \\frac{1}{\\lim_{R\\to\\infty}\\ T_{R}^{\\star}(C)}",
-    "regime": "L -> infinity, then eta -> 0, then R -> infinity"
+    "regime": "L = 1/delta -> infinity, then eta -> 0, then R -> infinity"
    },
    "symbols": {
-    "T_R_inf": "lim_{R->infinity} T_R*(C), which is <= T*(C)"
+    "T_inf_star": "lim_{R->infinity} T_R^*(C) (exists by monotonicity, <= T^*(C))"
    },
-   "conditions": [],
+   "conditions": [
+    "unique best arm",
+    "rows of TPMs mutually absolutely continuous across arms"
+   ],
    "tuning": [
-    "L = 1/epsilon",
+    "L = 1/delta",
     "eta -> 0",
     "R -> infinity"
    ],
@@ -263,7 +275,7 @@
     "quote": "Further, given any $\\epsilon>0$, the policy $\\pi^{\\star}(1/\\epsilon, \\eta, R) \\in \\Pi(\\epsilon)$ for all $\\eta\\in (0,1]$ and $R\\in \\mathbb{N}\\cap (K, \\infty)$. Additionally, \\limsup_{R\\to\\infty}\\ \\limsup_{\\eta \\downarrow 0} \\ \\limsup_{L\\to\\infty}\\ \\frac{\\mathbb{E}_{C}^{\\pi^\\star(L, \\eta, R)}[\\tau(\\pi^\\star(L, \\eta, R))]}{\\log L}\\leq \\frac{1}{\\lim_{R\\to\\infty}\\ T_{R}^{\\star}(C)}"
    },
    "confidence": "medium",
-   "notes": "Theorem 4 also restates the lower bound of Proposition 1 (r1). By Lemma 7, when each TPM has identical rows (i.i.d. case) T_R*(C)=T*(C) for all R, so upper and lower bounds match. For fixed R, the bound with eta->0 is 1/T_R*(C)."
+   "notes": "Theorem 4 also restates the lower bound of Proposition 1 (not duplicated). Matching with the lower bound is shown only when every TPM has identical rows (Lemma 7: T_R^* = T^*), recovering the i.i.d. Garivier-Kaufmann results."
   }
  ],
  "cited_results": [],
@@ -273,16 +285,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-21T09:51:38",
+  "date": "2026-10-21T18:32:39",
   "source_chars": 172779,
-  "input_tokens": 124181,
-  "output_tokens": 5462,
-  "cost_usd_equiv": 0.8851068,
+  "input_tokens": 130777,
+  "output_tokens": 5726,
+  "cost_usd_equiv": 0.891706,
   "status": "extracted"
  }
 }

@@ -1,6 +1,6 @@
 {
- "schema_version": "0.4",
- "ontology_version": "bandits-0.3",
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
  "paper": {
   "title": "Regret Analysis of the Anytime Optimally Confident UCB Algorithm",
   "arxiv_id": "1511.06014",
@@ -13,7 +13,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Finite-horizon stochastic multi-armed bandit with Gaussian rewards N(mu_i,1)",
+   "name_in_paper": "Finite-horizon Gaussian multi-armed bandit (unit-variance Gaussian rewards)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -35,24 +35,57 @@
     "access": "not_applicable",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
-    "loss_set": "not_applicable"
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
    },
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
     "structure": "not_applicable",
-    "regret_reference": "not_applicable"
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
    },
    "feedback_graph": {
     "observability": "not_applicable",
     "time_varying": "not_applicable",
-    "knowledge": "not_applicable"
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [],
-   "definition_quote": "In each round the learner chooses an arm $I_t \\in \\set{1,\\ldots,d}$ based on past observations and receives a Gaussian reward $X_t \\sim \\mathcal N(\\mu_{I_t}, 1)$ where $\\mu \\in \\R^d$ is the vector of unknown means. ... $R^\\pi_\\mu(n) = \\E\\left[\\sum_{t=1}^n (\\mu^* - \\mu_{I_t})\\right]$"
+   "definition_quote": "In each round the learner chooses an arm $I_t \\in \\set{1,\\ldots,d}$ based on past observations and receives a Gaussian reward $X_t \\sim \\mathcal N(\\mu_{I_t}, 1)$ where $\\mu \\in \\R^d$ is the vector of unknown means. ... the expected regret up to horizon $n$ is defined by R^\\pi_\\mu(n) = \\E[\\sum_{t=1}^n (\\mu^* - \\mu_{I_t})]"
   }
  ],
  "algorithms": [
@@ -60,26 +93,28 @@
    "id": "a1",
    "name": "Gittins strategy with flat Gaussian prior (Algorithm 1)",
    "registry_id": null,
-   "is_new": false,
+   "is_new": true,
    "techniques": [
     "gittins_or_bayes_optimal"
    ],
    "requires_knowledge_of": [
     "T",
-    "K"
+    "K",
+    "sigma"
    ]
   },
   {
    "id": "a2",
-   "name": "Finite-horizon Gittins index strategy with Gaussian prior",
+   "name": "Finite-horizon Gittins index strategy with Gaussian prior (eq. nonflat)",
    "registry_id": null,
-   "is_new": false,
+   "is_new": true,
    "techniques": [
     "gittins_or_bayes_optimal"
    ],
    "requires_knowledge_of": [
     "T",
-    "K"
+    "K",
+    "sigma"
    ]
   }
  ],
@@ -99,22 +134,22 @@
    "bound": {
     "notation": "O",
     "expression": "sum_subopt(log(T)/Delta_i + Delta_i)",
-    "expression_latex": "c \\sum_{i: \\Delta_i > 0} \\left(\\frac{\\log(n)}{\\Delta_i} + \\Delta_i \\right)",
+    "expression_latex": "R^\\pi_\\mu(n) \\leq c \\sum_{i: \\Delta_i > 0} \\left(\\frac{\\log(n)}{\\Delta_i} + \\Delta_i \\right)",
     "regime": null
    },
    "symbols": {},
    "conditions": [
-    "unit-variance Gaussian rewards"
+    "unit-variance Gaussian noise (sigma = 1)"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:finite",
     "number": "Theorem (thm:finite)",
-    "quote": "Let $\\pi$ be the strategy given in \\cref{alg:flat}. Then there exist universal constants $c, c' > 0$ such that $R^\\pi_\\mu(n) \\leq c \\sum_{i: \\Delta_i > 0} \\left(\\frac{\\log(n)}{\\Delta_i} + \\Delta_i \\right)$ and $R^\\pi_\\mu(n) \\leq c' \\left(\\sqrt{dn \\log(n)} + \\sum_{i=1}^d \\Delta_i\\right)$"
+    "quote": "Let $\\pi$ be the strategy given in \\cref{alg:flat}. Then there exist universal constants $c, c' > 0$ such that R^\\pi_\\mu(n) \\leq c \\sum_{i: \\Delta_i > 0} (\\frac{\\log(n)}{\\Delta_i} + \\Delta_i ) and R^\\pi_\\mu(n) \\leq c' (\\sqrt{dn \\log(n)} + \\sum_{i=1}^d \\Delta_i)"
    },
    "confidence": "high",
-   "notes": "Universal unspecified constant c, recorded as O. d is number of arms (K). The appendix claims, without a formal statement, that the same bounds hold for the fully Bayesian strategy when d=2 and for the approximate Gittins index. Compute: the index is computed by a lookup table in O(n^2 N) time; marked polynomial with some uncertainty. Metadata title differs from the paper source (Gittins index paper)."
+   "notes": "Paper's d is K, n is T. Universal constant c. Paper's manifest title does not match the content (content is the finite-horizon Gittins index paper). Compute: index computed by numerical DP via lookup table O(n^2 N); marked polynomial with some uncertainty. Paper also claims (informally, appendix) the same holds for the Bayes-optimal strategy when d=2."
   },
   {
    "id": "r2",
@@ -131,22 +166,22 @@
    "bound": {
     "notation": "O",
     "expression": "sqrt(K*T*log(T)) + sum_arms(Delta_i)",
-    "expression_latex": "c' \\left(\\sqrt{dn \\log(n)} + \\sum_{i=1}^d \\Delta_i\\right)",
+    "expression_latex": "R^\\pi_\\mu(n) \\leq c' \\left(\\sqrt{dn \\log(n)} + \\sum_{i=1}^d \\Delta_i\\right)",
     "regime": null
    },
    "symbols": {},
    "conditions": [
-    "unit-variance Gaussian rewards"
+    "unit-variance Gaussian noise (sigma = 1)"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:finite",
     "number": "Theorem (thm:finite)",
-    "quote": "Then there exist universal constants $c, c' > 0$ such that ... $R^\\pi_\\mu(n) \\leq c' \\left(\\sqrt{dn \\log(n)} + \\sum_{i=1}^d \\Delta_i\\right)$"
+    "quote": "R^\\pi_\\mu(n) \\leq c' \\left(\\sqrt{dn \\log(n)} + \\sum_{i=1}^d \\Delta_i\\right)"
    },
    "confidence": "high",
-   "notes": "Problem-independent bound; the constant c' is universal."
+   "notes": "Second bound of the same theorem; universal constant c'."
   },
   {
    "id": "r3",
@@ -159,22 +194,22 @@
    "comparator": "best_fixed_action",
    "probability": "asymptotic",
    "horizon": "known",
-   "compute": "not_stated",
+   "compute": "polynomial",
    "bound": {
     "notation": "limsup",
-    "expression": "c_univ*sum_subopt(1/Delta_i)*log(T)",
+    "expression": "c_alg*sum_subopt(1/Delta_i)*log(T)",
     "expression_latex": "\\limsup_{n\\to\\infty} R^{\\pi_n}_\\mu(n) / \\log n \\leq c \\sum_{i : \\Delta_i > 0} \\Delta_i^{-1}",
-    "regime": "n -> infinity"
+    "regime": "T -> infinity"
    },
    "symbols": {
-    "c_univ": "unspecified universal constant"
+    "c_alg": "universal constant c > 0 (not a tuning parameter)"
    },
    "conditions": [
-    "unit-variance Gaussian rewards"
+    "prior variances sigma_i^2 > 0 for all arms (non-degenerate Gaussian prior, arbitrary prior means)",
+    "unit-variance Gaussian noise",
+    "frequentist regret for any fixed mu in R^d"
    ],
-   "tuning": [
-    "Gaussian prior with prior variances sigma_i^2 > 0 for all arms (arbitrary prior means)"
-   ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:asymptotic",
@@ -182,7 +217,7 @@
     "quote": "Assume that $\\sigma_i^2 > 0$ for all $i$. Let $\\pi_n$ be the strategy given in \\cref{eq:nonflat}, then there exists a universal $c > 0$ such that for $\\mu \\in \\R^d$, \\, $\\limsup_{n\\to\\infty} R^{\\pi_n}_\\mu(n) / \\log n \\leq c \\sum_{i : \\Delta_i > 0} \\Delta_i^{-1}$."
    },
    "confidence": "medium",
-   "notes": "Frequentist regret for a fixed mean vector; the limit is over a sequence of horizon-dependent strategies. The prior is an algorithm input, not an assumption on the instance."
+   "notes": "Limit is over a sequence of horizon-dependent strategies. Algorithm uses a (possibly mis-specified) Gaussian prior as input, not an assumption on the instance. c is a universal constant, recorded as c_alg."
   }
  ],
  "cited_results": [
@@ -195,7 +230,7 @@
    "algorithm_name": "UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic finite-armed bandit, Gaussian rewards; UCB with alpha > 2",
+   "setting_description": "Stochastic finite-armed bandit (Gaussian rewards), UCB with exploration alpha log t, alpha > 2",
    "bound": {
     "notation": "O",
     "expression": "sum_subopt(log(T)/Delta_i + Delta_i)",
@@ -213,7 +248,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Finite-armed stochastic bandit, minimax lower bound",
+   "setting_description": "Finite-armed bandit, minimax lower bound",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(K*T)",
@@ -231,29 +266,29 @@
    "algorithm_name": "MOSS",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Finite-armed stochastic bandit, minimax regret",
+   "setting_description": "Stochastic finite-armed bandit, minimax regret",
    "bound": {
     "notation": "O",
     "expression": "sqrt(K*T)",
-    "expression_latex": "\\sqrt{dn}",
+    "expression_latex": "matching the lower bound of \\Omega(\\sqrt{dn})",
     "regime": null
    },
    "where": "Section 3, after Theorem thm:finite"
   },
   {
    "cited_key": "Lat15-ucb",
-   "cited_title": "Optimally confident UCB : Improved regret for finite-armed bandits",
+   "cited_title": "Optimally confident UCB: Improved regret for finite-armed bandits",
    "cited_first_author": "Tor Lattimore",
    "cited_year": 2015,
    "cited_arxiv_id": "1507.07880",
    "algorithm_name": "OCUCB",
    "algorithm_registry_id": "oc_ucb",
    "side": "upper",
-   "setting_description": "Finite-armed stochastic bandit, minimax regret",
+   "setting_description": "Stochastic finite-armed bandit, minimax regret",
    "bound": {
     "notation": "O",
     "expression": "sqrt(K*T)",
-    "expression_latex": "\\sqrt{dn}",
+    "expression_latex": "matching the lower bound of \\Omega(\\sqrt{dn})",
     "regime": null
    },
    "where": "Section 3, after Theorem thm:finite"
@@ -265,16 +300,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5fab7281a4a2",
-  "schema_version": "0.4",
-  "ontology_version": "bandits-0.4",
-  "variables_version": "0.3",
+  "prompt_sha": "00a106c81dc8",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
   "algorithm_registry_size": 132,
-  "date": "2026-10-21T10:02:58",
+  "date": "2026-10-21T18:44:32",
   "source_chars": 94981,
-  "input_tokens": 78590,
-  "output_tokens": 4488,
-  "cost_usd_equiv": 0.5008988,
+  "input_tokens": 85186,
+  "output_tokens": 4613,
+  "cost_usd_equiv": 0.504718,
   "status": "extracted"
  }
 }
