@@ -12,7 +12,6 @@ Inputs (all optional; missing files/dirs are treated as empty):
                                                          if absent, settings are grouped from
     data/extractions/<paper_id>.json                     the raw extractions instead
     data/algorithms.yaml                                 algorithm registry (raw mode)
-    data/ground_truth/{bco,pilot-facts}.yaml
     ontology/bandits-<highest version>.yaml, ontology/variables.yaml
 
     data/canonical/inferred.json                         bounds propagated by pipeline/infer.py
@@ -42,6 +41,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(1, str(REPO / "pipeline"))
 
 import analysis  # noqa: E402
+import layout  # noqa: E402
 import bounds  # noqa: E402
 from order import Order  # noqa: E402  (pipeline/order.py: the specialisation order, D1)
 from ontology import (QUANTITY_LABEL, Ontology, dim_label, is_default, value_label)  # noqa: E402
@@ -262,8 +262,6 @@ class Site:
         self.manifest_list = load_manifest(root)
         self.manifest = {p["id"]: p for p in self.manifest_list}
         self.extractions = load_extractions(root)
-        self.bco = load_yaml(root / "data" / "ground_truth" / "bco.yaml")
-        self.facts = load_yaml(root / "data" / "ground_truth" / "pilot-facts.yaml")
         canon = root / "data" / "canonical"
         self.canonical = (canon / "settings.json").is_file() and (canon / "results.json").is_file()
         algs = listify(load_json(canon / "algorithms.json"), "algorithms") or \
@@ -531,8 +529,6 @@ NAV = [
     ("papers/index.html", "Papers", "papers"),
     ("gaps.html", "Gaps", "gaps"),
     ("search.html", "Search", "search"),
-    ("ground-truth.html", "Ground truth", "gt"),
-    ("pilot-facts.html", "Pilot facts", "facts"),
 ]
 
 
@@ -986,8 +982,8 @@ Arrows point from a special case to its generalisation.</p></a>
 <a class="card" href="settings/index.html"><h2>Settings →</h2><p>Browse settings by environment or action space, with counts of upper and lower bounds.</p></a>
 <a class="card" href="papers/index.html"><h2>Papers →</h2><p>The corpus: what each paper proves, theorem by theorem.</p></a>
 {analysis_cards}
-<a class="card" href="ground-truth.html"><h2>Ground truth →</h2><p>Hand-curated bandit convex optimisation reference{"" if site.bco else " (not yet available)"},
-and the pilot facts the graph should rediscover.</p></a>
+<a class="card" href="{REPO_URL}/tree/main/notes"><h2>Notes →</h2><p>Technical articles in the repository: the bandit convex
+optimisation ground truth and the pilot facts the graph should rediscover.</p></a>
 </div>
 <p class="muted small">Ontology {e(site.onto.version)}{" · canonical layer (data/canonical)" if site.canonical else " · grouped from raw extractions"}.
 Bounds are shown in canonical notation; the paper's own LaTeX is under each result's <em>details</em>.
@@ -1268,401 +1264,8 @@ def paper_page(site: Site, pid: str) -> str:
     return page(pid, body, "../", "papers")
 
 
-# ---------------------------------------------------------------- ground truth (data/ground_truth/bco.yaml)
-
-# The book's LaTeX macros (cvx.tex), so KaTeX can render its notation, compute column and quotes.
-BCO_MACROS = {
-    r"\cF": r"\mathcal{F}", r"\sF": r"\mathscr{F}", r"\pb": r"\mathtt{b}", r"\pl": r"\mathtt{l}",
-    r"\psm": r"\mathtt{sm}", r"\psc": r"\mathtt{sc}", r"\plin": r"\mathtt{lin}", r"\pquad": r"\mathtt{quad}",
-    r"\ps": r"\mathtt{s}", r"\pu": r"\mathtt{i}", r"\R": r"\mathbb{R}", r"\E": r"\mathbb{E}",
-    r"\eps": r"\varepsilon", r"\ball": r"\mathbb{B}", r"\conv": r"\operatorname{conv}",
-    r"\diam": r"\operatorname{diam}", r"\poly": r"\operatorname{poly}", r"\Reg": r"\mathrm{Reg}",
-    r"\sReg": r"\mathrm{sReg}", r"\norm": r"\left\|#1\right\|", r"\ISO": r"\textsf{iso}", r"\iso": r"\textsf{iso}",
-    r"\optsc": r"\textsf{optsc}", r"\svd": r"\textsf{svd}", r"\ellipsoid": r"\textsf{ellipsoid}",
-    r"\cog": r"\textsf{cog}", r"\inscribed": r"\textsf{inscribed}", r"\low": r"\textsf{lowner}",
-}
-GT_DIMS = ["environment", "domain", "feedback", "dimension", "noise"]
-GT_HORIZON = re.compile(r"(?<![A-Za-z_])n(?![A-Za-z_0-9])")  # the book's horizon n is canonical T
-GT_WRAPPED = re.compile(r"^\s*(O_tilde|Omega_tilde|Theta_tilde|O|Omega|Theta)\((.*)\)\s*$")
-
-
-def gt_n_to_t(expr) -> str:
-    return GT_HORIZON.sub("T", str(expr))
-
-
-def gt_bound(r: dict) -> str:
-    """bound.expression (n -> T) via bounds.py; the book's expression_latex if that fails."""
-    b = dict(r.get("bound") or {})
-    if b.get("expression"):
-        b["expression"] = gt_n_to_t(b["expression"])
-    return bound_html({**r, "bound": b})
-
-
-def gt_formula(s, side: str) -> str:
-    """A free-form bound string from open_problems: 'Omega(d*sqrt(n))' -> formula, anything else -> text."""
-    if s in (None, ""):
-        return NONE
-    m = GT_WRAPPED.match(str(s))
-    if m:  # 'Omega(...) simple regret': the balanced wrapper is the bound, the rest a note
-        depth, end = 0, None
-        for i, ch in enumerate(s, start=0):
-            if ch == "(":
-                depth += 1
-            elif ch == ")":
-                depth -= 1
-                if depth == 0:
-                    end = i
-                    break
-        inner, rest = s[s.index("(") + 1:end], s[end + 1:].strip() if end else ""
-        tex, ok = bounds.bound_tex({"expression": gt_n_to_t(inner), "notation": m.group(1)}, side, None)
-        if ok and end:
-            note = f'<span class="muted small">{e(rest)}</span>' if rest else ""
-            return f'<div class="formula">{math(tex)}</div>{note}'
-    return f'<span class="small">{e(str(s))}</span>'
-
-
-def gt_nota(s: dict) -> str:
-    """The book's class notation, or the plain-text name when the LaTeX field is really prose."""
-    tex = str(s.get("notation_latex") or "")
-    if not tex or re.search(r"(?<![\\A-Za-z])[A-Za-z]{4,}", tex):
-        return f'<span class="nota-plain">{e(str(s.get("notation_plain") or s.get("id")))}</span>'
-    return math(tex)
-
-
-def gt_setting_link(sid, sets: dict) -> str:
-    s = sets.get(sid)
-    if not s:
-        return e(str(sid))
-    return (f'<a class="gt-set" href="#s-{slugify(sid)}" title="{e(str(s.get("notation_plain") or sid), quote=True)}">'
-            f'{gt_nota(s)}</a> <code class="small muted">{e(sid)}</code>')
-
-
-def gt_chips(av: dict, params=None) -> str:
-    chips = []
-    fc = av.get("function_class")
-    if isinstance(fc, dict):
-        on = [label(k) for k, v in fc.items() if v is True and k != "convex"]
-        chips.append(f'<span class="chip"><b>class</b> convex{", " + e(", ".join(on)) if on else ""}</span>')
-    for d in GT_DIMS + [k for k in av if k not in GT_DIMS and k != "function_class"]:
-        v = av.get(d)
-        if v in (None, "", [], {}):
-            continue
-        shown = ", ".join(map(str, v)) if isinstance(v, list) else str(v)
-        chips.append(f'<span class="chip"><b>{e(label(d))}</b> {e(label(shown))}</span>')
-    if params:
-        chips.append(f'<span class="chip"><b>parameters</b> {e(", ".join(map(str, as_list(params))))}</span>')
-    return '<div class="chips">' + "".join(chips) + "</div>"
-
-
-def gt_settings(settings: list[dict]) -> str:
-    cards = []
-    for s in settings:
-        sid = str(s.get("id"))
-        extra = []
-        if s.get("definition_quote"):
-            extra.append(("Definition", f'<blockquote>{e(str(s["definition_quote"]))}</blockquote>'))
-        if isinstance(s.get("ontology_v0_1_mapping"), dict):
-            extra.append(("Ontology v0.1", text(s["ontology_v0_1_mapping"])))
-        if s.get("unmapped"):
-            extra.append(("Unmapped", '<ul class="tight">' + "".join(f"<li>{e(str(u))}</li>" for u in as_list(s["unmapped"])) + "</ul>"))
-        for k in ("definition_source", "notes"):
-            if s.get(k):
-                extra.append((label(k).capitalize(), text(s[k])))
-        used = " ".join(f'<a href="#r-{slugify(u)}">{e(str(u))}</a>' for u in as_list(s.get("used_in")))
-        conf = s.get("confidence")
-        cards.append(f"""<article class="fact gt-setting" id="s-{slugify(sid)}">
-<header><span class="gt-nota">{gt_nota(s)}</span> <code class="small muted">{e(sid)}</code>
-{badge(f"{conf} confidence", f"conf-{conf}") if conf in ("low", "medium") else ""}
-{badge("not in tables", "muted-badge") if s.get("in_tables") is False else ""}</header>
-{f'<p class="small muted">{e(str(s["name_in_book"]))}</p>' if s.get("name_in_book") else ""}
-{gt_chips(s.get("assumption_vector") or {}, s.get("parameters"))}
-{f'<p class="small">Results: {used}</p>' if used else ""}
-<details class="more"><summary>definition and mapping</summary>{dl(extra, "kv")}</details>
-</article>""")
-    return filter_box("Filter settings…") + '<div class="facts gt-open filterable-cards">' + "".join(cards) + "</div>"
-
-
-def gt_citation(r: dict) -> str:
-    c = r.get("original_citation") or {}
-    authors = as_list(c.get("authors"))
-    who = (surname(authors[0]) + (" et al." if len(authors) > 2 else f" and {surname(authors[1])}" if len(authors) == 2 else "")
-           ) if authors else ""
-    year = f" ({c['year']})" if c.get("year") else ""
-    tip = e(str(c.get("title") or ""), quote=True)
-    if not who:
-        return f'<span class="muted small" title="{tip}">{e(short(str(c.get("title") or "–"), 40))}</span>'
-    key = f'<code class="raw">{e(str(c["bib_key"]))}</code>' if c.get("bib_key") else ""
-    return f'<span title="{tip}">{e(who)}{e(year)}</span>{key}'
-
-
-def gt_book(r: dict) -> str:
-    t = r.get("book_theorem")
-    ch = f'<span class="muted small">Ch. {e(str(r["book_chapter"]))}</span>' if r.get("book_chapter") else ""
-    if not isinstance(t, dict):
-        return ch or NONE
-    quote = "\n".join(x for x in (t.get("statement_summary"), f"Assumptions: {t['assumptions']}" if t.get("assumptions") else "") if x)
-    num = e(str(t.get("number") or "theorem"))
-    head = f'<details class="pop"><summary>{num}</summary><blockquote>{e(quote)}</blockquote></details>' if quote else num
-    return head + ch
-
-
-def gt_details(r: dict) -> str:
-    b = r.get("bound") or {}
-    pairs = []
-    if b.get("regime"):
-        pairs.append(("Regime", text(b["regime"])))
-    if r.get("constraint_set"):
-        pairs.append(("Constraint set", math(r["constraint_set"])))
-    if r.get("extra_assumptions"):
-        pairs.append(("Assumptions", '<ul class="tight">' + "".join(f"<li>{e(str(x))}</li>" for x in as_list(r["extra_assumptions"])) + "</ul>"))
-    pairs.append(("Quantity", text(label(r.get("quantity")))))
-    if r.get("probability"):
-        pairs.append(("Probability", text(label(r["probability"]))))
-    if b.get("expression"):
-        pairs.append(("Canonical", f'<code>{e(str(b["expression"]))}</code> <span class="muted">(n = T)</span>'))
-    if b.get("expression_latex"):
-        pairs.append(("Book's LaTeX", math(b["expression_latex"], "paper") + f'<code class="raw">{e(str(b["expression_latex"]))}</code>'))
-    if r.get("symbols"):
-        pairs.append(("Symbols", '<ul class="tight">' + "".join(f"<li><code>{e(str(k))}</code>: {e(str(v))}</li>" for k, v in r["symbols"].items()) + "</ul>"))
-    for k in ("erratum", "derivation", "notes"):
-        if r.get(k):
-            pairs.append((k.capitalize(), text(r[k])))
-    for c in as_list(r.get("conflicts")):
-        if isinstance(c, dict):
-            pairs.append((f"Conflict ({c.get('where', '')})", f'<blockquote>{e(str(c.get("quote") or c))}</blockquote>'))
-    return f'<details class="more"><summary>details</summary>{dl(pairs, "kv")}</details>'
-
-
-def gt_results(results: list[dict], side: str, sets: dict) -> str:
-    rows = [r for r in results if (r.get("side") or "").lower() == side]
-    if not rows:
-        return '<p class="muted">None.</p>'
-    cols = ["Setting", "Bound", "Algorithm", "Original", "Compute", "Book", "Source"]
-    if not any(r.get("compute") for r in rows):
-        cols.remove("Compute")
-    if not any(r.get("book_theorem") or r.get("book_chapter") for r in rows):
-        cols.remove("Book")
-    # Table rows first (book order), then bounds quoted from the text; grouped by quantity.
-    qs = list(dict.fromkeys(r.get("quantity") for r in rows))
-    body = []
-    for q in qs:
-        body.append(group_row(q, len(cols)) if q in QUANTITY_LABEL else
-                    f'<tr class="group"><th colspan="{len(cols)}">{e(label(q).capitalize())}</th></tr>')
-        for r in sorted((r for r in rows if r.get("quantity") == q), key=lambda r: r.get("in_tables") is False):
-            extra = []
-            if r.get("in_tables") is False:
-                extra.append(badge("text, not table", "muted-badge", str((r.get("source") or {}).get("number") or "")))
-            if r.get("non_constructive"):
-                extra.append(badge("non-constructive", "muted-badge"))
-            if r.get("erratum"):
-                extra.append(badge("erratum", "conf-medium", str(r["erratum"])))
-            if r.get("conflicts"):
-                extra.append(badge("conflict", "conf-low"))
-            if r.get("derived"):
-                extra.append(badge("derived", "inh"))
-            lead = badge(str(r.get("id")), "nota")
-            alg = (f'<span class="alg" title="{e(str(r["algorithm"]), quote=True)}">{e(short(str(r["algorithm"]), 48))}</span>'
-                   if r.get("algorithm") else alg_html({"r": r}))
-            comp = r.get("compute")
-            cells = {
-                "Setting": gt_setting_link(r.get("setting"), sets),
-                "Bound": gt_bound(r) + result_badges(r, "".join(extra) + gt_details(r), lead=lead),
-                "Algorithm": alg,
-                "Original": gt_citation(r),
-                "Compute": ", ".join(math(x) for x in re.split(r",\s*(?![^()]*\))", str(comp))) if comp else NONE,
-                "Book": gt_book(r),
-                "Source": source_html(r),
-            }
-            tds = "".join(f'<td class="c-{slugify(h)}" data-label="{h}">{cells[h]}</td>' for h in cols)
-            body.append(f'<tr id="r-{slugify(str(r.get("id")))}">{tds}</tr>')
-    th = "".join(f'<th class="c-{slugify(h)}">{h}</th>' for h in cols)
-    return (filter_box("Filter by setting, algorithm, citation…") +
-            f'<div class="scroll"><table class="results gt filterable">'
-            f'<thead><tr>{th}</tr></thead><tbody>\n' + "\n".join(body) + "\n</tbody></table></div>")
-
-
-def gt_side_spec(v) -> str:
-    if isinstance(v, dict):
-        return ", ".join(f"{label(k)}: {', '.join(map(str, x)) if isinstance(x, list) else x}" for k, x in v.items())
-    return "" if v is None else str(v)
-
-
-def gt_rules(rules: list[dict]) -> str:
-    shown = {"id", "kind", "from_setting", "to_setting", "transfers", "reverse_transfers", "statement", "quote",
-             "supporting_quote", "quote_source", "section", "confidence", "order"}
-    items = []
-    for t in rules:
-        tr = str(t.get("transfers") or "")
-        head = tr.split(" ", 1)[0]
-        cls = {"lower": "worst", "upper": "inst"}.get(head, "")
-        pairs = [(label(k).capitalize(), text(v))
-                 for k, v in t.items() if k not in shown and v not in (None, "")]
-        if t.get("reverse_transfers"):
-            pairs.insert(0, ("Reverse", text(t["reverse_transfers"])))
-        if " " in tr:
-            pairs.insert(0, ("Transfers", text(tr)))
-        q = "".join(f'<p class="small muted">{e(lbl)}</p><blockquote>{e(str(t[k]))}</blockquote>'
-                    for k, lbl in (("quote", "Quote"), ("supporting_quote", "Supporting quote")) if t.get(k))
-        conf = t.get("confidence")
-        items.append(f"""<li class="rule" id="t-{slugify(str(t.get("id")))}">
-<div class="rule-head"><code>{e(str(t.get("id")))}</code> {badge(label(t.get("kind")))} {badge(head + " bounds" if head in ("lower", "upper", "both") else head, cls)}
-{badge(f"{conf} confidence", f"conf-{conf}") if conf in ("low", "medium") else ""}
-<span class="muted small">{e(str(t.get("section") or ""))}</span></div>
-<div class="rule-ft"><span class="from">{e(gt_side_spec(t.get("from_setting")))}</span> <span class="arrow">→</span> <span class="to">{e(gt_side_spec(t.get("to_setting")))}</span>
-{f'<span class="muted small">({e(str(t["order"]))})</span>' if t.get("order") else ""}</div>
-<p>{e(str(t.get("statement") or ""))}</p>
-{f'<details class="more"><summary>scope and parameters</summary>{dl(pairs, "kv")}</details>' if pairs else ""}
-{f'<details class="more"><summary>quote{"s" if t.get("supporting_quote") else ""}</summary>{q}</details>' if q else ""}
-</li>""")
-    return filter_box("Filter rules…") + '<ul class="rules filterable-cards">' + "".join(items) + "</ul>"
-
-
-def gt_known(v, side: str, sets: dict) -> str:
-    if isinstance(v, dict):
-        return "".join(f'<div class="kb"><a class="small" href="#s-{slugify(k)}">{gt_nota(sets[k]) if k in sets else e(k)}</a>'
-                       f'{gt_formula(x, side)}</div>' for k, x in v.items())
-    return gt_formula(v, side)
-
-
-def gt_open(problems: list[dict], sets: dict) -> str:
-    cards = []
-    for o in problems:
-        ss = o.get("settings")
-        if ss == "all":
-            slinks = '<span class="chip">all settings</span>'
-        else:
-            slinks = "".join(f'<a class="chip" href="#s-{slugify(s)}">{gt_nota(sets[s]) if s in sets else e(s)}</a>'
-                             for s in as_list(ss))
-        lo, up = o.get("known_lower_bound"), o.get("known_upper_bound")
-        bnds = (f'<div class="ul2"><div><span class="side">Known lower</span>{gt_known(lo, "lower", sets)}</div>'
-                f'<div><span class="side">Known upper</span>{gt_known(up, "upper", sets)}</div></div>') if lo or up else ""
-        rel = " ".join(f'<a href="#r-{slugify(x)}">{e(str(x))}</a>' for x in as_list(o.get("related_results")))
-        conf = o.get("confidence")
-        quote = "".join(f'<blockquote>{e(str(o[k]))}</blockquote>' for k in ("context_quote", "quote") if o.get(k))
-        cards.append(f"""<article class="fact" id="op-{slugify(str(o.get("id")))}">
-<header><b>{e(str(o.get("id")))}</b> {badge(label(o.get("kind")), "status")}
-{badge(f"{conf} confidence", f"conf-{conf}") if conf in ("low", "medium") else ""}
-{f'<span class="muted small">{e(str(o["gap_label"]))}</span>' if o.get("gap_label") else ""}</header>
-<p>{e(str(o.get("statement") or ""))}</p>
-{f'<div class="chips">{slinks}</div>' if slinks else ""}
-{bnds}
-{f'<p class="small">Related: {rel}</p>' if rel else ""}
-{f'<p class="small muted">{e(str(o["notes"]))}</p>' if o.get("notes") else ""}
-{f'<details class="more"><summary>quote{" · " + e(str(o["section"])) if o.get("section") else ""}</summary>{quote}</details>' if quote else ""}
-</article>""")
-    return filter_box("Filter open problems…") + '<div class="facts gt-open filterable-cards">' + "".join(cards) + "</div>"
-
-
-def gt_source(src: dict) -> str:
-    pairs = []
-    if src.get("title"):
-        pairs.append(("Book", f'<em>{e(str(src["title"]))}</em>, {e(", ".join(map(str, as_list(src.get("authors")))))}'))
-    if src.get("arxiv_id"):
-        aid = str(src["arxiv_id"])
-        pairs.append(("arXiv", f'<a href="https://arxiv.org/abs/{e(aid, quote=True)}{e(str(src.get("arxiv_version") or ""), quote=True)}">'
-                               f'{e(aid)}{e(str(src.get("arxiv_version") or ""))}</a> <span class="muted">({e(str(src.get("arxiv_version_date") or ""))})</span>'))
-    ex_ = src.get("extraction") or {}
-    if ex_:
-        pairs.append(("Extraction", f'{e(str(ex_.get("produced_by") or ""))} · status {e(str(ex_.get("status")))} · '
-                                    f'human verified: {text(ex_.get("human_verified"))}'))
-    conv = src.get("conventions") or {}
-    cpairs = []
-    for k, v in conv.items():
-        if isinstance(v, dict):
-            cpairs.append((label(k), dl([(label(a), text(b)) for a, b in v.items()], "kv")))
-        elif k.endswith("_quote"):
-            cpairs.append((label(k.removesuffix("_quote")), f"<blockquote>{e(str(v))}</blockquote>"))
-        else:
-            cpairs.append((label(k), text(v)))
-    ga = "".join(f'<li><b>{e(str(a.get("number") or a.get("id")))}</b><blockquote>{e(str(a.get("quote") or ""))}</blockquote>'
-                 + (f'<p class="small">{e(str(a["note"]))}</p>' if a.get("note") else "") + "</li>"
-                 for a in as_list(src.get("global_assumptions")) if isinstance(a, dict))
-    tc = src.get("table_conventions") or {}
-    tcs = "".join(f'<p><b>{e(label(k))}</b>{": " + e(str(v.get("caption"))) if isinstance(v, dict) and v.get("caption") else ""}</p>'
-                  + (f'<blockquote>{e(str(v.get("quote")))}</blockquote>' if isinstance(v, dict) else f"<p>{e(str(v))}</p>")
-                  for k, v in tc.items())
-    out = dl(pairs)
-    if cpairs:
-        out += f'<details class="more"><summary>conventions</summary>{dl(cpairs, "kv")}</details>'
-    if ga:
-        out += f'<details class="more"><summary>global assumptions</summary><ul class="tight gt-ga">{ga}</ul></details>'
-    if tcs:
-        out += f'<details class="more"><summary>table conventions</summary>{tcs}</details>'
-    return out
-
-
-def ground_truth_page(site: Site) -> str:
-    bco = site.bco
-    body = "<h1>Ground truth: bandit convex optimisation</h1>"
-    if not isinstance(bco, dict):
-        body += '<p class="notice">No ground-truth file yet (<code>data/ground_truth/bco.yaml</code>).</p>'
-        return page("Ground truth", body, "", "gt")
-    sets = {str(s.get("id")): s for s in listify(bco, "settings") if isinstance(s, dict)}
-    results = [r for r in listify(bco, "results") if isinstance(r, dict)]
-    rules = [t for t in listify(bco, "transfer_rules") if isinstance(t, dict)]
-    probs = [o for o in listify(bco, "open_problems") if isinstance(o, dict)]
-    nlo = sum(1 for r in results if r.get("side") == "lower")
-    body += ('<p class="lede">Hand-curated reference data from Lattimore\'s <em>Bandit Convex Optimisation</em> '
-             '(LLM-assisted, not yet human-verified). Bounds are rendered from the canonical expression with the '
-             'book\'s horizon <i>n</i> written as <i>T</i>; the book\'s own LaTeX is under each row\'s <i>details</i>.</p>')
-    toc = [("source", "Source"), ("settings", f"Settings ({len(sets)})"), ("lower", f"Lower bounds ({nlo})"),
-           ("upper", f"Upper bounds ({len(results) - nlo})"), ("transfer-rules", f"Transfer rules ({len(rules)})"),
-           ("open-problems", f"Open problems ({len(probs)})")]
-    body += '<p class="crumbs">' + " · ".join(f'<a href="#{a}">{e(t)}</a>' for a, t in toc) + "</p>"
-    if isinstance(bco.get("source"), dict):
-        body += '<h2 id="source">Source</h2>' + gt_source(bco["source"])
-    body += ('<h2 id="settings">Settings</h2><p class="hint muted small">Function classes of Definition 1.1 with '
-             'their assumption vectors. Notation as in the book: superscript s = stochastic, i = improper.</p>' + gt_settings(list(sets.values())))
-    body += ('<h2 id="lower">Lower bounds <span class="muted">(Table 2.1)</span></h2>' + gt_results(results, "lower", sets))
-    body += ('<h2 id="upper">Upper bounds <span class="muted">(Table 2.2)</span></h2>'
-             '<p class="muted small">Compute is the per-round complexity (∞ = non-constructive).</p>' + gt_results(results, "upper", sets))
-    body += ('<h2 id="transfer-rules">Transfer rules</h2><p class="muted small">How bounds move between settings: '
-             'from → to, and which side of the bound transfers.</p>' + gt_rules(rules))
-    body += '<h2 id="open-problems">Open problems</h2>' + gt_open(probs, sets)
-    head = f"<script>window.BB_MACROS = {json.dumps(BCO_MACROS)};</script>"
-    return page("Ground truth", body, "", "gt", head=head, wide=True)
-
-
-def fact_bound(side: str, spec) -> str:
-    if not isinstance(spec, dict):
-        return text(spec)
-    tex, ok = bounds.bound_tex({"expression": spec.get("bound"), "notation": spec.get("notation")}, side, None)
-    f = math(tex) if ok else f"<code>{text(spec.get('bound'))}</code>"
-    papers = " ".join(f'<a href="papers/{slugify(p)}.html">{e(p)}</a>' for p in as_list(spec.get("papers")))
-    return f'<div class="formula">{f}</div><div class="muted small">{papers}</div>'
-
-
-def facts_page(site: Site) -> str:
-    facts = site.facts
-    body = "<h1>Pilot acceptance facts</h1>"
-    if not isinstance(facts, dict):
-        body += '<p class="notice">No file yet (<code>data/ground_truth/pilot-facts.yaml</code>).</p>'
-        return page("Pilot facts", body, "", "facts")
-    body += ('<p class="lede">Known results in the K-armed and linear pilot slice that the graph should rediscover '
-             "(plan.md Phase 3 acceptance tests). Written from domain knowledge; not yet verified line by line.</p>")
-    by_key = {}
-    for n in site.nodes.values():
-        by_key.setdefault(tuple(n["key"].get(d, "") for d in site.onto.dims), n)
-    cards = []
-    for f in listify(facts, "facts"):
-        s = f.get("setting") or {}
-        n = by_key.get(tuple(flat_value(s.get(d)) for d in site.onto.dims)) if isinstance(s, dict) else None
-        sname = setting_name(flat_key(s, site.onto.dims)) if isinstance(s, dict) else str(s)
-        slink = f'<a href="settings/{n["slug"]}.html">{e(n["name"])}</a>' if n else f'{e(sname)} <span class="muted small">(no extracted node)</span>'
-        tests = "".join(f"<li>{e(str(t))}</li>" for t in as_list(f.get("tests")))
-        cards.append(f"""<article class="fact">
-<header><b>{e(str(f.get("id", "")))}</b> {badge(label(f.get("status")), "status")} {badge(str(f.get("confidence", "")) + " confidence", "muted-badge")}</header>
-<p class="small">{slink} · <span class="muted">{text(f.get("regime"))}</span></p>
-<div class="ul2"><div><span class="side">Upper</span>{fact_bound("upper", f.get("upper"))}</div>
-<div><span class="side">Lower</span>{fact_bound("lower", f.get("lower"))}</div></div>
-{f'<p class="small">{e(str(f["history"]))}</p>' if f.get("history") else ""}
-{f'<details class="more"><summary>tests</summary><ul class="tight">{tests}</ul></details>' if tests else ""}
-</article>""")
-    body += filter_box("Filter facts…") + '<div class="facts filterable-cards">' + "".join(cards) + "</div>"
-    return page("Pilot facts", body, "", "facts")
-
-
 def graph_page(site: Site) -> str:
+    from collections import Counter
     act_slots = colour_slots([n["key"].get("action_space", "") for n in site.nodes.values()])
     env_slots = colour_slots([n["key"].get("environment", "") for n in site.nodes.values()])
     nodes = []
@@ -1696,6 +1299,16 @@ def graph_page(site: Site) -> str:
             seen.add(lbl)
             out.append(f'<li><span class="dot s{s}"></span>{e(lbl)}</li>')
         return "".join(out)
+
+    def filters(slots, dim, key):
+        """Checkbox list (one per colour slot) for hiding settings; counts are numbers of settings."""
+        counts = Counter(x[key] for x in nodes)
+        labels = {}
+        for v, s in slots.items():
+            labels.setdefault(s, "other" if s == 0 else (value_label(dim, v) if v else "unspecified"))
+        rows = sorted(labels.items(), key=lambda t: (t[0] == 0, -counts[t[0]]))
+        return "".join(f'<li><label><input type="checkbox" data-f="{key}" value="{s}" checked> {e(lbl)} '
+                       f'<span class="muted">{counts[s]}</span></label></li>' for s, lbl in rows if counts[s])
 
     # Overview: group settings by their main problem axes; one node per group, with
     # specialisation arrows between groups (transitively reduced). The full graph of 1000+
@@ -1731,9 +1344,20 @@ def graph_page(site: Site) -> str:
         return False
     gedges = [{"s": a, "t": b} for a, b in sorted(gpairs) if not reach(a, b, (a, b))]
     gnodes = [{**g, "n": len(g["members"])} for g in groups.values()]
+    # Layouts are computed here, not in the browser (a force layout of 1000+ nodes froze the page)
+    ids = [x["id"] for x in nodes]
+    directed = [(x["s"], x["t"]) for x in edges if x["kind"] != "neighbour"]
+    hier = layout.hierarchy(ids, directed, weight={x["id"]: x["up"] + x["lo"] for x in nodes})
+    frc = layout.force(ids, [(x["s"], x["t"]) for x in edges])
+    for x in nodes:
+        x["hx"], x["hy"] = (round(v, 1) for v in hier[x["id"]])
+        x["fx"], x["fy"] = (round(v, 1) for v in frc[x["id"]])
+    ghier = layout.hierarchy([g["id"] for g in gnodes], [(x["s"], x["t"]) for x in gedges], gap=230, rank_gap=150,
+                             weight={g["id"]: g["n"] for g in gnodes})
+    for g in gnodes:
+        g["x"], g["y"] = (round(v, 1) for v in ghier[g["id"]])
     data = json.dumps({"nodes": nodes, "edges": edges, "groups": gnodes, "gedges": gedges},
                       ensure_ascii=False).replace("</", "<\\/")
-    from collections import Counter
     stc = Counter(x["st"] for x in nodes)
     st_legend = "".join(f'<li><span class="dot st-{k}"></span>{e(analysis.STATUS[k][0])} <span class="muted">&nbsp;{stc[k]}</span></li>'
                         for k in analysis.STATUS_RANK if stc[k])
@@ -1771,11 +1395,17 @@ Node size ∝ number of results. Click a node to open it.</p>
 <ul id="legend-sa">{legend(act_slots, "action_space")}</ul>
 <ul id="legend-se" hidden>{legend(env_slots, "environment")}</ul>
 <ul id="legend-st" hidden>{st_legend}</ul>
+<h3>Show</h3>
+<details class="gfilter" open><summary>Action space <span class="gf-links">(<a href="#" data-all="sa">all</a> · <a href="#" data-none="sa">none</a>)</span></summary>
+<ul>{filters(act_slots, "action_space", "sa")}</ul></details>
+<details class="gfilter"><summary>Environment <span class="gf-links">(<a href="#" data-all="se">all</a> · <a href="#" data-none="se">none</a>)</span></summary>
+<ul>{filters(env_slots, "environment", "se")}</ul></details>
+<p class="muted small" id="gf-count"></p>
 <h3>Edges</h3>
 <ul class="edge-key"><li><span class="ek order"></span>specialisation</li>
 <li><span class="ek reduction"></span>reduction</li><li><span class="ek neighbour"></span>other neighbour</li></ul>
-<p class="muted small">In the hierarchy, settings with no specialisation edge sit in the grid on the right.
-Table view: <a href="settings/index.html">settings index</a>.</p>
+<p class="muted small">Layouts are computed when the site is built. In the hierarchy, settings with no
+specialisation edge sit in the grid on the right. Table view: <a href="settings/index.html">settings index</a>.</p>
 </aside>
 <div id="cy-tip" role="tooltip" hidden></div>
 </div>
@@ -1817,8 +1447,6 @@ def build(root: Path, out: Path) -> None:
 
     w("index.html", home_page(site))
     w("graph.html", graph_page(site))
-    w("ground-truth.html", ground_truth_page(site))
-    w("pilot-facts.html", facts_page(site))
     w("settings/index.html", settings_index(site))
     for n in site.nodes.values():
         w(f"settings/{n['slug']}.html", setting_page(site, n))
@@ -1838,8 +1466,7 @@ def build(root: Path, out: Path) -> None:
     bust_caches(out)
     print(f"built {out}: {len(site.paper_ids())} papers, {len(site.extractions)} extractions, "
           f"{len(site.nodes)} settings, {n_res} results, {len(site.edges)} edges, "
-          f"{'canonical layer' if site.canonical else 'raw extractions'}, ontology {site.onto.version}, "
-          f"ground truth {'yes' if site.bco else 'no'}")
+          f"{'canonical layer' if site.canonical else 'raw extractions'}, ontology {site.onto.version}")
 
 
 def main() -> None:

@@ -11,7 +11,7 @@ Theory papers state results of a regular shape: *in setting S, algorithm X achie
 
 Bandits are the test domain; the goal is a domain-agnostic engine for ML, CS and maths theory.
 
-**Status:** Phase 1 (pilot). 59-paper corpus; 53 papers extracted by an LLM (354 results across 60 canonical settings, not yet human-verified); ground truth from Lattimore's *Bandit Convex Optimisation*. Browse at <https://act65.github.io/bandit-browser/>.
+**Status:** Phase 4 (scaling). 559-paper corpus (58 pilot papers plus a 500-paper breadth batch) extracted by an LLM with ontology v0.5: 2,466 results across 1,117 canonical settings, not yet human-verified. Reference material (Lattimore's *Bandit Convex Optimisation*, the pilot facts) is written up in [`notes/`](notes/). Browse at <https://act65.github.io/bandit-browser/>.
 
 ## Documents
 

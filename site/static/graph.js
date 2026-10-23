@@ -1,4 +1,6 @@
-// Settings graph (graph.html): Cytoscape.js + dagre, data embedded as JSON in the page.
+// Settings graph (graph.html): Cytoscape.js, data embedded as JSON in the page.
+// Node positions for the hierarchy and force layouts are computed when the site is built
+// (site/layout.py); the browser only runs a layout for the small ?focus= neighbourhood view.
 document.addEventListener("DOMContentLoaded", function () {
   var holder = document.getElementById("cy");
   var raw = document.getElementById("graph-data");
@@ -20,7 +22,7 @@ document.addEventListener("DOMContentLoaded", function () {
   var elements = [];
   data.nodes.forEach(function (n) {
     var total = n.up + n.lo;
-    elements.push({ group: "nodes", data: Object.assign({}, n, {
+    elements.push({ group: "nodes", position: { x: n.hx, y: n.hy }, data: Object.assign({}, n, {
       size: 14 + 7 * Math.sqrt(total), total: total,
       short: n.name.length > 52 ? n.name.slice(0, 51) + "…" : n.name
     }) });
@@ -30,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
   // Overview: groups of settings (environment x action space)
   (data.groups || []).forEach(function (g) {
-    elements.push({ group: "nodes", classes: "grp", data: Object.assign({}, g, {
+    elements.push({ group: "nodes", classes: "grp", position: { x: g.x, y: g.y }, data: Object.assign({}, g, {
       size: 18 + 6 * Math.sqrt(g.results), total: g.results, short: g.name }) });
   });
   (data.gedges || []).forEach(function (e, i) {
@@ -70,84 +72,111 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
   var cy = cytoscape({ container: holder, elements: elements, style: style(), wheelSensitivity: 0.25,
-                       minZoom: 0.15, maxZoom: 3 });
+                       minZoom: 0.05, maxZoom: 3, layout: { name: "preset" } });
   var groupEls = cy.elements(".grp, .gedge");
   var settingEls = cy.elements().not(groupEls);
+  var esc = function (s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; };
 
-  var layoutName = hasDagre ? "dagre" : "cose";
   var qv = new URLSearchParams(window.location.search);
-  var view = (qv.get("focus") || qv.get("view") === "all" || qv.get("layout")) ? "all" : "overview";
-  var qs = new URLSearchParams(window.location.search);
-  if (qs.get("layout") === "cose" || qs.get("layout") === "dagre") layoutName = qs.get("layout");
+  var focusSlug = qv.get("focus");
+  var layoutName = qv.get("layout") === "cose" ? "cose" : "dagre";
+  var view = (focusSlug || qv.get("view") === "all" || qv.get("layout")) ? "all" : "overview";
   var nbBox = document.getElementById("show-nb");
+
+  // ---- state: filters (which settings are shown) and a selection (highlighted, survives hover)
+  var hidden = { sa: {}, se: {} };
+  var selection = null;
+  var passes = function (n) { return !hidden.sa[n.data("sa")] && !hidden.se[n.data("se")]; };
   var showNb = function (on) {
     nbBox.checked = on;
     if (view === "all") cy.edges(".neighbour").style("display", on ? "element" : "none");
   };
+  var countNote = document.getElementById("gf-count");
+  var applyVisibility = function () {
+    cy.batch(function () {
+      if (view === "overview") {
+        settingEls.style("display", "none");
+        groupEls.nodes().forEach(function (g) { g.style("display", passes(g) ? "element" : "none"); });
+        groupEls.edges().style("display", "element");
+      } else {
+        groupEls.style("display", "none");
+        settingEls.nodes().forEach(function (n) { n.style("display", passes(n) ? "element" : "none"); });
+        settingEls.edges().not(".neighbour").style("display", "element");
+        showNb(nbBox.checked);
+      }
+    });
+    if (countNote) {
+      var all = view === "overview" ? groupEls.nodes() : settingEls.nodes();
+      countNote.textContent = all.filter(":visible").length + " of " + all.length +
+        (view === "overview" ? " groups shown" : " settings shown");
+    }
+  };
+  var applyBase = function () {  // the resting highlight state: the selection, or nothing
+    cy.batch(function () {
+      cy.elements().removeClass("faded hl");
+      if (selection && selection.length) {
+        cy.elements().addClass("faded");
+        var inner = selection.edgesWith(selection);
+        selection.union(inner).removeClass("faded");
+        selection.addClass("hl");
+      }
+    });
+  };
+  var select = function (nodes) { selection = nodes && nodes.length ? nodes : null; applyBase(); };
+  var fitVisible = function (pad) {
+    var vis = cy.elements(":visible");
+    if (vis.length) cy.fit(vis, pad || 30);
+  };
+
   var runLayout = function (name) {
     layoutName = name;
     showNb(name !== "dagre");  // the hierarchy reads best without the unordered links
-    var opts;
-    if (name === "dagre" && hasDagre) {
-      // Rank by specialisation edges only; neighbour edges just come along for the ride.
-      // Settings with no specialisation edge go in a grid beside the hierarchy.
-      var directed = settingEls.edges().not(".neighbour");
-      var ranked = directed.connectedNodes();
-      var loose = settingEls.nodes().not(ranked);
-      opts = { name: "dagre", rankDir: "BT", nodeSep: 22, rankSep: 64, edgeSep: 8, ranker: "network-simplex",
-               fit: false, animate: false };
-      ranked.union(directed).layout(opts).run();
-      var bb = ranked.boundingBox();
-      var cols = Math.max(2, Math.ceil(Math.sqrt(loose.length * 0.6)));
-      var cell = 70;
-      loose.sort(function (a, b) { return b.data("total") - a.data("total"); }).forEach(function (n, i) {
-        n.position({ x: bb.x2 + 90 + (i % cols) * cell, y: bb.y1 + Math.floor(i / cols) * cell });
+    cy.batch(function () {
+      settingEls.nodes().forEach(function (n) {
+        var d = n.data();
+        n.position(name === "dagre" ? { x: d.hx, y: d.hy } : { x: d.fx, y: d.fy });
       });
-      cy.fit(settingEls, 24);
-    } else {
-      settingEls.layout({ name: "cose", animate: false, nodeRepulsion: function () { return 9000; },
-                  idealEdgeLength: function (e) { return e.hasClass("neighbour") ? 90 : 60; },
-                  edgeElasticity: function (e) { return e.hasClass("neighbour") ? 60 : 160; },
-                  gravity: 0.6, numIter: 2500, padding: 24, randomize: true }).run();
-    }
-  };
-  runLayout(layoutName);
-  // Overview layout (computed once): dagre over the group graph, labels counted in spacing
-  if (groupEls.length) {
-    // groups joined by specialisation arrows in a hierarchy; the rest in a grid beside it
-    var gRanked = groupEls.edges().connectedNodes();
-    var gLoose = groupEls.nodes().not(gRanked);
-    gRanked.union(groupEls.edges()).layout(hasDagre
-      ? { name: "dagre", rankDir: "BT", nodeSep: 30, rankSep: 90, edgeSep: 10, fit: false, animate: false,
-          nodeDimensionsIncludeLabels: true }
-      : { name: "cose", animate: false, fit: false }).run();
-    var gbb = gRanked.length ? gRanked.boundingBox() : { x2: 0, y1: 0 };
-    var gcols = Math.max(2, Math.ceil(Math.sqrt(gLoose.length * 0.5)));
-    gLoose.sort(function (a, b) { return b.data("n") - a.data("n"); }).forEach(function (n, i) {
-      n.position({ x: gbb.x2 + 200 + (i % gcols) * 230, y: gbb.y1 + Math.floor(i / gcols) * 130 });
     });
-  }
+    if (view === "all") fitVisible(24);
+  };
   var setView = function (v) {
     view = v;
     document.querySelectorAll("button[data-view]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.view === v)); });
     document.querySelectorAll("button[data-layout], #show-nb").forEach(function (b) { b.disabled = v === "overview"; });
-    if (v === "overview") {
-      settingEls.style("display", "none");
-      groupEls.style("display", "element");
-      cy.fit(groupEls, 30);
-    } else {
-      groupEls.style("display", "none");
-      settingEls.style("display", "element");
-      showNb(nbBox.checked);
-      cy.fit(settingEls, 24);
-    }
+    applyVisibility();
+    applyBase();
+    fitVisible(v === "overview" ? 30 : 24);
   };
-  window.addEventListener("load", function () {
-    cy.resize();
-    cy.fit(cy.elements(":visible"), focused ? 50 : 30);
-  });
 
-  // Hover tooltip
+  // ---- filter checkboxes
+  var boxes = document.querySelectorAll("input[data-f]");
+  var syncBoxes = function () {
+    boxes.forEach(function (b) { b.checked = !hidden[b.dataset.f][b.value]; });
+  };
+  boxes.forEach(function (b) {
+    b.addEventListener("change", function () {
+      hidden[b.dataset.f][b.value] = !b.checked;
+      applyVisibility(); applyBase(); fitVisible();
+    });
+  });
+  var setAll = function (key, on) {
+    boxes.forEach(function (b) { if (b.dataset.f === key) hidden[key][b.value] = !on; });
+    syncBoxes(); applyVisibility(); applyBase(); fitVisible();
+  };
+  document.querySelectorAll("a[data-all], a[data-none]").forEach(function (a) {
+    a.addEventListener("click", function (ev) {
+      ev.preventDefault();
+      setAll(a.dataset.all || a.dataset.none, !!a.dataset.all);
+    });
+  });
+  var onlyGroup = function (g) {  // show just a group's action space and environment
+    ["sa", "se"].forEach(function (key) {
+      boxes.forEach(function (b) { if (b.dataset.f === key) hidden[key][b.value] = String(g[key]) !== b.value; });
+    });
+    syncBoxes();
+  };
+
+  // ---- hover tooltip and transient highlight (on top of the selection)
   var tip = document.getElementById("cy-tip");
   var wrap = holder.parentElement;
   var showTip = function (html, pos) {
@@ -161,9 +190,16 @@ document.addEventListener("DOMContentLoaded", function () {
   };
   var STATUS_LABEL = { tight: "tight", log_gap: "log gap", poly_gap: "poly gap", no_lower: "no comparable lower bound",
                        no_upper: "no comparable upper bound", conflict: "conflict", none: "no comparable bounds" };
-  var esc = function (s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; };
+  var hoverHl = function (node) {
+    var hood = node.closedNeighborhood();
+    cy.batch(function () {
+      if (!selection) cy.elements().addClass("faded");
+      hood.removeClass("faded").addClass("hl");
+    });
+  };
   cy.on("mouseover", "node", function (ev) {
     var d = ev.target.data();
+    holder.style.cursor = "pointer";
     if (ev.target.hasClass("grp")) {
       showTip("<b>" + esc(d.name) + "</b>" + d.n + " setting" + (d.n === 1 ? "" : "s") + " · " + d.results +
               " results<div class=\"muted\">click to show its settings</div>", ev.renderedPosition);
@@ -174,52 +210,37 @@ document.addEventListener("DOMContentLoaded", function () {
             '<div class="muted">' + esc(d.action_space) + " · " + esc(d.environment) + "</div>" +
             (d.streg !== undefined && d.st ? '<div><span class="dot st-' + esc(d.st) + '"></span>' + esc(STATUS_LABEL[d.st] || d.st) +
              (d.streg ? ' <span class="muted">(' + esc(d.streg) + ")</span>" : "") + "</div>" : ""), ev.renderedPosition);
-    highlight(ev.target);
+    if (!focusSlug) hoverHl(ev.target);
   });
   cy.on("mouseover", "edge", function (ev) {
     var d = ev.target.data();
+    if (!d.dim) return;
     var kind = d.kind === "neighbour" ? "neighbours" : d.kind === "reduction" ? "reduction (special → general)" : "specialisation (special → general)";
     showTip("<b>" + esc(d.dim) + ": " + esc(d.from) + " → " + esc(d.to) + "</b>" + kind, ev.renderedPosition);
   });
   cy.on("mouseout", "node, edge", function () {
     tip.hidden = true;
-    if (!focused) clearHl();
-    else { cy.elements().removeClass("faded"); focused.addClass("hl"); }
+    holder.style.cursor = "";
+    if (!focusSlug) applyBase();
   });
   cy.on("tap", "node", function (ev) {
     var d = ev.target.data();
-    if (ev.target.hasClass("grp")) {  // open the group: all settings, its members highlighted
+    if (ev.target.hasClass("grp")) {  // open the group: its settings, selected, other groups filtered out
+      onlyGroup(d);
       setView("all");
       var hits = cy.nodes().filter(function (x) { return d.members.indexOf(x.id()) !== -1; });
-      cy.elements().addClass("faded");
-      hits.removeClass("faded").addClass("hl");
-      focused = hits;
-      cy.fit(hits, 60);
+      select(hits);
+      if (hits.length) cy.fit(hits, 60);
       return;
     }
     window.location.href = d.url;
   });
-  cy.on("mouseover", "node", function () { holder.style.cursor = "pointer"; });
-  cy.on("mouseout", "node", function () { holder.style.cursor = ""; });
+  cy.on("tap", function (ev) { if (ev.target === cy && !focusSlug) select(null); });  // background clears
 
-  var focused = null;
-  var visibleHood = function (n) { return n.union(n.connectedEdges(":visible").connectedNodes()); };
-  var clearHl = function () { cy.elements().removeClass("faded hl"); };
-  var highlight = function (node) {
-    var hood = node.closedNeighborhood();
-    cy.elements().addClass("faded");
-    hood.removeClass("faded").addClass("hl");
-  };
-
-  // ?focus=<slug> from a setting page
-  var params = new URLSearchParams(window.location.search);
-  var focusSlug = params.get("focus");
+  // ---- ?focus=<slug> from a setting page: its neighbourhood only, laid out on its own
   if (focusSlug) {
     var n = cy.nodes().filter(function (x) { return x.data("slug") === focusSlug; });
     if (n.length) {
-      // Neighbourhood view: only the setting and its immediate covers / neighbours, laid out
-      // on their own so that every label is readable. The full graph is one click away.
-      focused = n;
       var hood = n.closedNeighborhood();
       cy.elements().not(hood).style("display", "none");
       hood.style("display", "element");
@@ -236,11 +257,13 @@ document.addEventListener("DOMContentLoaded", function () {
       note.innerHTML = "Neighbourhood of <b>" + esc(n.data("name")) + "</b>: arrows point from special cases up to " +
         "more general settings. <a href=\"graph.html\">Show the full graph →</a>";
       holder.parentElement.parentElement.insertBefore(note, holder.parentElement);
-      document.querySelectorAll("button[data-layout]").forEach(function (b) { b.disabled = true; });
+      document.querySelectorAll("button[data-layout], button[data-view], input[data-f]").forEach(function (b) { b.disabled = true; });
+    } else {
+      focusSlug = null;
     }
   }
 
-  // Controls
+  // ---- controls
   var bind = function (sel, attr, fn) {
     var btns = document.querySelectorAll(sel);
     btns.forEach(function (b) {
@@ -269,19 +292,23 @@ document.addEventListener("DOMContentLoaded", function () {
   });
   nbBox.addEventListener("change", function (ev) { showNb(ev.target.checked); });
   bind("button[data-view]", "data-view", setView);
-  if (!focusSlug) setView(view);
-  else document.querySelectorAll("button[data-view]").forEach(function (b) {
-    b.setAttribute("aria-pressed", String(b.dataset.view === "all"));
+  if (!focusSlug) {
+    runLayout(layoutName);
+    setView(view);
+  } else {
+    document.querySelectorAll("button[data-view]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.view === "all"));
+    });
+  }
+  window.addEventListener("load", function () {
+    cy.resize();
+    if (focusSlug) cy.fit(cy.elements(":visible"), 50); else fitVisible();
   });
   document.getElementById("graph-search").addEventListener("input", function (ev) {
     var q = ev.target.value.toLowerCase().trim();
-    focused = null;
-    clearHl();
-    if (!q) return;
-    var hits = cy.nodes().filter(function (x) { return x.data("name").toLowerCase().indexOf(q) !== -1; });
-    cy.elements().addClass("faded");
-    hits.removeClass("faded").addClass("hl");
-    if (hits.length) focused = hits;
+    if (!q) { select(null); return; }
+    var pool = view === "overview" ? groupEls.nodes() : settingEls.nodes();
+    select(pool.filter(function (x) { return x.visible() && x.data("name").toLowerCase().indexOf(q) !== -1; }));
   });
 
   // Follow the colour scheme

@@ -23,7 +23,7 @@ Staged so that each phase ends with a **go / no-go check**. We do not scale extr
 - [x] Per-dimension orders with justification, caveats, comparator scope and value maps (`order_notes`, `value_maps` in the ontology), used by `pipeline/order.py` along the chain of edges.
 - [x] Write down 5–10 **known facts the system should rediscover** ([`data/ground_truth/pilot-facts.yaml`](data/ground_truth/pilot-facts.yaml), 14 facts, still to be verified by hand) (e.g. which settings are tight up to constants, up to logs, or open; historic gaps and the papers that closed them). These are the Phase 3 acceptance tests.
 - [ ] Ready-made ground truth from related work:
-  - [x] Lattimore's *Bandit Convex Optimisation* → [`data/ground_truth/bco.yaml`](data/ground_truth/bco.yaml) (19 settings, 40 results, 20 transfer rules, 27 open problems; v5): Tables 2.1 and 2.2 (bounds), §2.4 (transfer rules) and Chapter 14 (open problems).
+  - [x] Lattimore's *Bandit Convex Optimisation* → [`data/ground_truth/bco.yaml`](data/ground_truth/bco.yaml) (19 settings, 40 results, 19 transfer rules, 27 open problems; v5): Tables 2.1 and 2.2 (bounds), §2.4 (transfer rules) and Chapter 14 (open problems).
   - Slivkins' problem-space axes, as a check on the ontology dimensions.
   - COLT open problems in the pilot slice.
   - **Decision:** K-armed and linear bandits stay the primary pilot, because the gold set must be checked by hand and this slice is familiar. Bandit convex optimisation becomes the *second* slice in Phase 4. Its clean ground truth (the BCO tables) then serves as a test of generalisation: can the pipeline reproduce a published table of bounds in a setting family it was not tuned on?
@@ -66,7 +66,7 @@ Staged so that each phase ends with a **go / no-go check**. We do not scale extr
 
 **Exit check:** the acceptance tests from Phase 1 pass, i.e. known gaps and tight results are rediscovered from extracted data alone.
 
-- Status (`pipeline/acceptance.py` → `data/acceptance-report.md`): **4 PASS** (F01 Θ(√KT) stochastic; F02 Lai–Robbins tight; F05 Θ(√KT) adversarial; F06 high-probability log gap), **2 PASS_STATUS** (F09 linear log gap via Dani et al.'s bounds; F13), **4 PARTIAL** (missing lower bounds in matching settings), **4 MANUAL** (algorithm-specific facts), **0 FAIL**.
+- Status at the pilot (`pipeline/acceptance.py` → `data/acceptance-report.md`; the latest is under Phase 4 and in [`notes/pilot-facts.md`](notes/pilot-facts.md)): **4 PASS** (F01 Θ(√KT) stochastic; F02 Lai–Robbins tight; F05 Θ(√KT) adversarial; F06 high-probability log gap), **2 PASS_STATUS** (F09 linear log gap via Dani et al.'s bounds; F13), **4 PARTIAL** (missing lower bounds in matching settings), **4 MANUAL** (algorithm-specific facts), **0 FAIL**.
 
 ## Phase 3b: Tools for the motivation (requested 2026-10-19)
 
