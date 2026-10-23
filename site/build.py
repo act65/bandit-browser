@@ -28,6 +28,7 @@ import argparse
 import hashlib
 import html
 import json
+import posixpath
 import re
 import shutil
 import sys
@@ -41,6 +42,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(1, str(REPO / "pipeline"))
 
 import analysis  # noqa: E402
+import export_db  # noqa: E402
 import layout  # noqa: E402
 import bounds  # noqa: E402
 from order import Order  # noqa: E402  (pipeline/order.py: the specialisation order, D1)
@@ -492,6 +494,10 @@ class Site:
         keep = [x for x in directed if not reachable(x["source"], x["target"], (x["source"], x["target"]))]
         return keep + [x for x in self.edges if x["kind"] == "neighbour"]
 
+    @staticmethod
+    def slug_of_paper(pid: str) -> str:
+        return slugify(pid)
+
     def paper_ids(self) -> list[str]:
         ids = [p["id"] for p in self.manifest_list]
         return ids + [pid for pid in self.extractions if pid not in self.manifest]
@@ -522,27 +528,36 @@ class Site:
 
 # ---------------------------------------------------------------- page shell
 
+DB_VERSION = ""  # set by build() once the database is written; pages name the version they expect
+
 NAV = [
     ("index.html", "Home", "home"),
     ("graph.html", "Graph", "graph"),
-    ("settings/index.html", "Settings", "settings"),
-    ("papers/index.html", "Papers", "papers"),
-    ("gaps.html", "Gaps", "gaps"),
-    ("search.html", "Search", "search"),
+    ("explore.html", "Explore", "explore"),
 ]
 
+# Runs a page script once its content is in place: on DOMContentLoaded for static pages, and on
+# the "bb:doc" event for shell pages (setting.html, paper.html), which load their content from
+# the database after the page itself has loaded.
+BB_READY = ("<script>window.bbReady=function(f){if(document.documentElement.dataset.shell)"
+            "{document.addEventListener('bb:doc',f)}else if(document.readyState==='loading')"
+            "{document.addEventListener('DOMContentLoaded',f)}else{f()}};</script>")
 
-def page(title: str, body: str, root: str, active: str = "", head: str = "", wide: bool = False) -> str:
+
+def page(title: str, body: str, root: str, active: str = "", head: str = "", wide: bool = False,
+         shell: bool = False) -> str:
     links = "".join(
         f'<a href="{root}{href}"{" aria-current=page" if key == active else ""}>{lbl}</a>'
         for href, lbl, key in NAV
     )
     return f"""<!doctype html>
-<html lang="en">
+<html lang="en"{' data-shell="1"' if shell else ''}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{e(title)} · bandit-browser</title>
+{f'<meta name="bb-db" content="{DB_VERSION}">' if DB_VERSION else ""}
+{BB_READY}
 <link rel="stylesheet" href="{KATEX}/katex.min.css">
 <link rel="stylesheet" href="{root}static/style.css">
 <script defer src="{KATEX}/katex.min.js"></script>
@@ -963,8 +978,8 @@ def home_page(site: Site) -> str:
                        + "".join(f'<a class="tile an" href="{h}"><b>{n}</b><span>{lbl}</span><small>{sub}</small></a>'
                                  for h, n, lbl, sub in atiles))
     analysis_cards = """
-<a class="card" href="gaps.html"><h2>Gaps →</h2><p>Settings where the best upper and lower bounds don't match, with triage verdicts and transfer suggestions.</p></a>
-<a class="card" href="search.html"><h2>Search →</h2><p>Faceted search over settings and bounds, with saved queries.</p></a>
+<a class="card" href="explore.html#tab=gaps"><h2>Gaps →</h2><p>Setting × regime cells where the best upper and lower bounds don't match, with triage verdicts.</p></a>
+<a class="card" href="explore.html#tab=bounds"><h2>Bounds →</h2><p>Every upper and lower bound, own or inherited, filtered by regime, algorithm family, paper and setting.</p></a>
 <a class="card" href="neighbours.html"><h2>Unstudied neighbours →</h2><p>Settings one assumption away from well-studied ones, with no results yet.</p></a>
 <a class="card" href="transfer.html"><h2>Technique transfer →</h2><p>Algorithm families that close the rate next door but are not tried here.</p></a>
 <a class="card" href="redundant.html"><h2>Redundancy →</h2><p>Results whose rate an earlier, more general result already implied.</p></a>""" if A.ok else ""
@@ -979,8 +994,8 @@ are linked; where the ontology orders the two values, the link is a <em>speciali
 <div class="cards">
 <a class="card" href="graph.html"><h2>Settings graph →</h2><p>Every canonical setting as a node, sized by number of results.
 Arrows point from a special case to its generalisation.</p></a>
-<a class="card" href="settings/index.html"><h2>Settings →</h2><p>Browse settings by environment or action space, with counts of upper and lower bounds.</p></a>
-<a class="card" href="papers/index.html"><h2>Papers →</h2><p>The corpus: what each paper proves, theorem by theorem.</p></a>
+<a class="card" href="explore.html#tab=settings"><h2>Settings →</h2><p>Query the canonical settings by any assumption, with counts of upper and lower bounds and their tightness status.</p></a>
+<a class="card" href="explore.html#tab=papers"><h2>Papers →</h2><p>The corpus: what each paper proves, theorem by theorem.</p></a>
 {analysis_cards}
 <a class="card" href="{REPO_URL}/tree/main/notes"><h2>Notes →</h2><p>Technical articles in the repository: the bandit convex
 optimisation ground truth and the pilot facts the graph should rediscover.</p></a>
@@ -1004,63 +1019,6 @@ def colour_slots(values: list[str]) -> dict[str, int]:
     ranked = [v for v, _ in c.most_common()]
     return {v: (i + 1 if i < PALETTE_SLOTS else 0) for i, v in enumerate(ranked)}
 
-
-def count_cell(own: int, inh: int) -> str:
-    """'33 +12' with the inherited part muted; own count first."""
-    o = str(own) if own else NONE
-    return o + (f' <span class="inh-n" title="{inh} inherited along the specialisation order">+{inh}</span>' if inh else "")
-
-
-def settings_index(site: Site) -> str:
-    act_slots = colour_slots([n["key"].get("action_space", "") for n in site.nodes.values()])
-    A = site.analysis
-    rows = []
-    for n in sorted(site.nodes.values(), key=lambda n: (-len(n["results"]), n["name"])):
-        up, lo = site.counts(n)
-        iu, il = site.counts(n, "inherited")
-        k = n["key"]
-        env, act = k.get("environment", ""), k.get("action_space", "")
-        st, reg = A.setting_status(n["id"])
-        st_cell = (f'<td data-label="Status">{analysis.status_badge(sys.modules[__name__], st, analysis.regime_label(reg) if reg else "")}</td>'
-                   if A.ok else "")
-        rows.append(
-            f'<tr data-status="{st}" data-environment="{e(value_label("environment", env) if env else "unspecified")}" '
-            f'data-action_space="{e(value_label("action_space", act) if act else "unspecified")}" data-n="{len(n["results"])}">'
-            f'<td data-label="Setting"><span class="dot s{act_slots.get(act, 0)}" aria-hidden="true"></span>'
-            f'<a href="{n["slug"]}.html">{e(n["name"])}</a></td>{st_cell}'
-            f'<td class="num" data-label="Upper">{count_cell(up, iu)}</td><td class="num" data-label="Lower">{count_cell(lo, il)}</td>'
-            f'<td class="num" data-label="Papers">{len(n["papers"])}</td></tr>'
-        )
-    status_select = ""
-    if A.ok:
-        from collections import Counter
-        cnt = Counter(A.setting_status(n["id"])[0] for n in site.nodes.values())
-        opts = "".join(f'<option value="{k}">{e(analysis.STATUS[k][0])} ({cnt[k]})</option>' for k in analysis.STATUS_RANK if cnt[k])
-        status_select = (f'<label class="fsel"><span>Status</span><select id="status-filter" title="Status in the regret · '
-                         f'worst-case regime, else the most relevant regime"><option value="">all</option>{opts}</select></label>')
-    body = f"""
-<h1>Settings</h1>
-<p class="lede">{len(site.nodes)} canonical settings. A name lists only the assumptions that differ from the plain
-stochastic-regret defaults (bandit feedback, no context, no extras). Also see the <a href="../graph.html">graph</a>.</p>
-{'<p class="small muted">Counts are bounds extracted for the setting itself; <span class="inh-n">+n</span> are inherited along the specialisation order (upper bounds from more general settings, lower bounds from special cases).</p>' if site.canonical else ""}
-<div class="toolbar">
-{filter_box("Filter settings…")}
-<div class="seg" role="group" aria-label="Group by">
-<span>Group by</span>
-<button type="button" data-group="action_space" aria-pressed="true">Action space</button>
-<button type="button" data-group="environment" aria-pressed="false">Environment</button>
-<button type="button" data-group="" aria-pressed="false">None</button>
-</div>
-{status_select}
-</div>
-<div class="scroll"><table class="settings filterable groupable">
-<thead><tr><th>Setting</th>{'<th>Status</th>' if A.ok else ""}<th class="num">Upper</th><th class="num">Lower</th><th class="num">Papers</th></tr></thead>
-<tbody>
-{"".join(rows)}
-</tbody></table></div>
-{'<p class="small muted">Status: tightness in the regret · worst-case regime when the setting has one, else its most relevant regime; see <a href="../gaps.html">Gaps</a>.</p>' if A.ok else ""}
-"""
-    return page("Settings", body, "../", "settings", head='<script defer src="../static/analysis.js"></script>' if A.ok else "")
 
 
 def change_html(x: dict) -> str:
@@ -1193,24 +1151,6 @@ def rates_section(site: Site, n: dict) -> str:
 <script type="application/json" id="plot-data">{blob}</script>"""
 
 
-def papers_index(site: Site) -> str:
-    rows = []
-    for pid in site.paper_ids():
-        info = site.paper_info(pid)
-        ex = site.extractions.get(pid)
-        nres = sum(1 for n in site.nodes.values() for it in n["results"] if it["paper"] == pid)
-        status = f"{nres}" if ex else '<span class="muted">not extracted</span>'
-        authors = as_list(info.get("authors"))
-        auth = ", ".join(surname(a) for a in authors[:3]) + (" et al." if len(authors) > 3 else "")
-        rows.append([
-            f'<a href="{slugify(pid)}.html">{e(site.title(pid))}</a>',
-            e(auth) or NONE, text(info.get("year")), e(label(info.get("slice"))) or NONE, status,
-        ])
-    body = (f'<h1>Papers</h1><p class="lede">{len(rows)} papers in the pilot corpus.</p>'
-            + table(["Title", "Authors", "Year", "Slice", "Results"], rows, "papers", filterable=True))
-    return page("Papers", body, "../", "papers")
-
-
 def paper_page(site: Site, pid: str) -> str:
     info = site.paper_info(pid)
     ex = site.extractions.get(pid)
@@ -1273,7 +1213,7 @@ def graph_page(site: Site) -> str:
         up, lo = site.counts(n)
         iu, il = site.counts(n, "inherited")
         act, env = n["key"].get("action_space", ""), n["key"].get("environment", "")
-        nodes.append({"id": n["id"], "url": f'settings/{n["slug"]}.html', "slug": n["slug"], "name": n["name"],
+        nodes.append({"id": n["id"], "url": f'setting.html?s={n["slug"]}', "slug": n["slug"], "name": n["name"],
                       "up": up, "lo": lo, "iu": iu, "il": il, "papers": len(n["papers"]),
                       "action_space": value_label("action_space", act) if act else "unspecified",
                       "environment": value_label("environment", env) if env else "unspecified",
@@ -1416,6 +1356,67 @@ specialisation edge sit in the grid on the right. Table view: <a href="settings/
     return page("Graph", body, "", "graph", head=head, wide=True)
 
 
+# ---------------------------------------------------------------- database-backed pages
+
+LINK = re.compile(r'(href|src)="([^"#?]*)([^"]*)"')
+REWRITE = {  # old static paths -> database-backed pages (all at the site root)
+    "settings/index.html": "explore.html#tab=settings", "papers/index.html": "explore.html#tab=papers",
+    "search.html": "explore.html", "gaps.html": "explore.html#tab=gaps",
+}
+
+
+def rewrite_links(html_text: str, base: str) -> str:
+    """Point links at the database-backed pages. `base` is the directory the page was written for
+    ("settings/", "papers/" or ""); the result is valid from the site root, where shells live."""
+    def fix(m):
+        attr, path, rest = m.groups()
+        if not path or re.match(r"^[a-z]+:|^//|^/", path):
+            return m.group(0)
+        norm = posixpath.normpath(posixpath.join(base, path))
+        if norm in REWRITE:
+            target = REWRITE[norm]
+            return f'{attr}="{target}{rest if "#" not in target else ""}"'
+        mm = re.match(r"^(settings|papers)/([\w.-]+)\.html$", norm)
+        if mm:
+            q = "setting.html?s=" if mm.group(1) == "settings" else "paper.html?p="
+            return f'{attr}="{q}{mm.group(2)}{rest.replace("?", "&", 1) if rest.startswith("?") else rest}"'
+        return f'{attr}="{norm}{rest}"'
+    return LINK.sub(fix, html_text)
+
+
+def main_html(full: str) -> str:
+    """The inside of <main> of a generated page (what a shell page injects)."""
+    a = full.index(">", full.index("<main")) + 1
+    return full[a:full.rindex("</main>")]
+
+
+def explore_page(site: Site) -> str:
+    """explore.html: the corpus as queries over the database (tabs Settings, Papers, Bounds, Gaps)."""
+    body = """
+<h1>Explore</h1>
+<p class="lede small">Every list here is a query over the atlas database, run in your browser: pick a tab, narrow it
+with the filters, and open any setting or paper. Filters live in the address, so a view can be bookmarked or shared.
+More analyses: <a href="neighbours.html">unstudied neighbours</a> · <a href="transfer.html">technique transfer</a> ·
+<a href="redundant.html">redundancy</a>.</p>
+<nav class="subnav" id="ex-tabs" aria-label="Query"></nav>
+<div id="explore" class="explore"><p class="muted">Loading the database…</p></div>
+<noscript><p class="notice">Explore runs SQL queries in the browser and needs JavaScript.</p></noscript>
+"""
+    head = ('<script defer src="static/vendor/sqljs-httpvfs/index.js"></script>\n'
+            '<script defer src="static/db.js"></script>\n<script defer src="static/explore.js"></script>')
+    return page("Explore", body, "", "explore", head=head, wide=True)
+
+
+def shell_page(kind: str) -> str:
+    """setting.html / paper.html: fetch the page's HTML from the database and inject it."""
+    body = (f'<div id="doc" data-kind="{kind}"><p class="muted">Loading from the database…</p></div>'
+            '<noscript><p class="notice">This page reads the atlas database in the browser and needs JavaScript.</p></noscript>')
+    head = ('<script defer src="static/vendor/sqljs-httpvfs/index.js"></script>\n'
+            '<script defer src="static/db.js"></script>\n<script defer src="static/plots.js"></script>\n'
+            '<script defer src="static/analysis.js"></script>\n<script defer src="static/doc.js"></script>')
+    return page("Setting" if kind == "setting" else "Paper", body, "", "explore", head=head, shell=True)
+
+
 # ---------------------------------------------------------------- main
 
 
@@ -1437,33 +1438,39 @@ def build(root: Path, out: Path) -> None:
     site.analysis = analysis.Analysis(root, site)
     if out.exists():
         shutil.rmtree(out)
-    (out / "settings").mkdir(parents=True)
-    (out / "papers").mkdir()
+    out.mkdir(parents=True)
     shutil.copytree(HERE / "static", out / "static")
     (out / ".nojekyll").write_text("")
 
     def w(rel: str, content: str) -> None:
-        (out / rel).write_text(content, encoding="utf-8")
+        (out / rel).write_text(rewrite_links(content, ""), encoding="utf-8")
+
+    # the database first: pages carry its version
+    docs = {}
+    for n in site.nodes.values():
+        docs[("setting", n["slug"])] = (n["name"], rewrite_links(main_html(setting_page(site, n)), "settings/"))
+    for pid in site.paper_ids():
+        docs[("paper", slugify(pid))] = (site.title(pid), rewrite_links(main_html(paper_page(site, pid)), "papers/"))
+    triage_path = root / "data" / "reports" / "triage.yaml"
+    triage = (load_yaml(triage_path) or {}).get("triage", {}) if triage_path.exists() else {}
+    stats = export_db.export(site, site.analysis, docs, out / "data", value_label, analysis.regime_label,
+                             {k: v[0] for k, v in analysis.STATUS.items()}, triage)
+    global DB_VERSION
+    DB_VERSION = stats["version"]
 
     w("index.html", home_page(site))
     w("graph.html", graph_page(site))
-    w("settings/index.html", settings_index(site))
-    for n in site.nodes.values():
-        w(f"settings/{n['slug']}.html", setting_page(site, n))
     pages = analysis.Pages(site, site.analysis, sys.modules[__name__])
-    w("gaps.html", pages.gaps_page())
     w("neighbours.html", pages.neighbours_page())
     w("transfer.html", pages.transfer_page())
     w("redundant.html", pages.redundant_page())
-    w("search.html", pages.search_page())
-    if site.analysis.ok:
-        blob = json.dumps(site.analysis.search_data(), ensure_ascii=False, separators=(",", ":"))
-        w("static/search-data.js", f"window.BB_SEARCH = {blob};\n")
-    w("papers/index.html", papers_index(site))
-    for pid in site.paper_ids():
-        w(f"papers/{slugify(pid)}.html", paper_page(site, pid))
+    w("explore.html", explore_page(site))
+    w("setting.html", shell_page("setting"))
+    w("paper.html", shell_page("paper"))
     n_res = sum(len(n["results"]) for n in site.nodes.values())
     bust_caches(out)
+    print(f"database: {stats['bytes'] / 1e6:.1f} MB in {stats['chunks']} chunk(s); {stats['docs']} documents, "
+          f"{stats['bounds']} bounds, {stats['cells']} cells")
     print(f"built {out}: {len(site.paper_ids())} papers, {len(site.extractions)} extractions, "
           f"{len(site.nodes)} settings, {n_res} results, {len(site.edges)} edges, "
           f"{'canonical layer' if site.canonical else 'raw extractions'}, ontology {site.onto.version}")

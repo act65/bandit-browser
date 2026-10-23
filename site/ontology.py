@@ -55,7 +55,7 @@ VALUE_LABEL = {
 # Values that are the "unremarkable" default for a dimension and so are left out of names.
 DEFAULTS = {"objective": {"cumulative_regret"}, "feedback": {"bandit"},
             "action_set.time_varying": {"fixed"}, "action_set.shape": {"unspecified"},
-            "action_set.access": {"explicit"}}
+            "action_set.access": {"explicit"}, "noise_detail.variance": {"homoscedastic"}}
 EMPTY = {"", "none", "null", "not_applicable", "no-extras"}
 
 DIM_LABEL = {"action_space": "action space", "function_class": "function class", "learner_knows": "learner knows"}
@@ -87,6 +87,8 @@ def is_default(dim: str, v) -> bool:
     if isinstance(v, (list, tuple)):
         return not v
     v = "" if v is None else str(v)
+    if "." in dim and v == "unspecified":  # an unstated node field (e.g. feedback_graph.directedness) says nothing
+        return True
     return v in EMPTY or v in DEFAULTS.get(dim, set())
 
 

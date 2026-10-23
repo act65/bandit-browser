@@ -1,5 +1,5 @@
 // KaTeX rendering, filter boxes, settings grouping and source popovers. No framework.
-document.addEventListener("DOMContentLoaded", function () {
+window.bbReady(function () {
   if (window.katex) {
     document.querySelectorAll(".math[data-tex]").forEach(function (el) {
       try {

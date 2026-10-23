@@ -1,58 +1,80 @@
 # Site
 
-A static browser over the data. `build.py` reads the data files and writes plain HTML to `_site/` (gitignored). Display only: no bound comparison or inference happens here; inherited bounds are read from `data/canonical/inferred.json` (written by `pipeline/infer.py`) and shown separately from extracted ones.
+A static browser over the data, backed by a SQLite database that is queried in the browser. `build.py` reads the data files and writes `_site/` (gitignored). Display only: no bound comparison or inference happens here. Inherited bounds come from `data/canonical/inferred.json` (`pipeline/infer.py`) and the analysis from `data/canonical/site_index.json` (`pipeline/site_index.py`).
 
-## Build locally
+## Architecture
+
+The site stays static, so GitHub Pages can host it. Most content now lives in one database instead of thousands of HTML files.
+
+- **`_site/data/atlas-<hash>.db.NNN` + `config.json`** (`export_db.py`): one SQLite database, split into 10 MB chunks because GitHub limits files to 100 MB. Chunks are named by a hash of the content, so a browser never mixes chunks from two builds; every page names the version it expects in `<meta name="bb-db">`. It contains:
+  - tables `settings`, `papers`, `setting_papers`, `bounds` (own and inherited), `cells` (setting × regime status, rates, best bounds, triage), `triage`, `labels`;
+  - FTS5 indexes `settings_fts` and `papers_fts`;
+  - `docs`: the gzip-compressed HTML of every setting and paper page.
+- **In the browser**: [sql.js-httpvfs](https://github.com/phiresky/sql.js-httpvfs), vendored in `static/vendor/` because a Web Worker must come from the page's own origin, runs SQLite in a worker. It reads the database with HTTP range requests, so a query downloads only the database pages it touches: opening a setting page costs about a dozen 4 KB reads, not the whole file. `static/db.js` wraps it as `bbQuery(sql, params)`.
+- **Pages**:
+  - `explore.html` (`static/explore.js`): the corpus as queries. Tabs Settings, Papers, Bounds and Gaps, each a query spec (FROM clause, facet columns, text search, sorts, row renderer). Facet counts are computed under all the other filters; results are paged 50 at a time; state lives in the URL hash (`explore.html#tab=gaps&status=poly_gap&q=linear`).
+  - `setting.html?s=<id>` and `paper.html?p=<id>` (`static/doc.js`): shells that fetch the page's HTML from `docs`, inject it and fire `bb:doc`. Page scripts start through `window.bbReady`, which runs them on `DOMContentLoaded` on static pages and on `bb:doc` in shells.
+  - Static: `index.html`, `graph.html` (layouts precomputed by `layout.py`), and the analysis pages `neighbours.html`, `transfer.html`, `redundant.html`.
+- **Links**: pages are still generated with the old relative links (`../settings/<id>.html`). `rewrite_links()` maps them to the database-backed URLs, so the renderers did not change.
+
+Sizes at 559 papers: the database is 33 MB (the site was 175 MB of static HTML before). A setting page transfers about 0.3 MB plus a few database pages. The WebAssembly SQLite (1.2 MB) is cached after the first page.
+
+## Build and preview locally
 
 ```bash
 uv run python site/build.py              # real data -> _site/
 uv run python site/build.py --fixtures   # site/fixtures/ test data
-python3 -m http.server -d _site 8000     # then open http://localhost:8000
+uv run python site/serve.py --port 8000  # then open http://127.0.0.1:8000
 ```
+
+Use `serve.py`, not `python -m http.server`: the database is read with HTTP range requests, which the standard library server does not support (GitHub Pages does).
 
 Inputs (any may be missing; the build still succeeds):
 
 - `corpus/manifest.yaml`: paper list
-- `data/canonical/{settings,results,algorithms}.json`: canonical layer from `pipeline/resolve.py`. Preferred when present: setting pages are `settings/<S-id>.html`, results use `algorithm_id` names and `bound.expression_normalised`. Settings with `in_scope: false` are skipped.
-- `data/extractions/<paper_id>.json`: raw extractions (format in `schema.md`). Used for paper pages, and for grouping settings when there is no canonical layer (e.g. `--fixtures`).
+- `data/canonical/{settings,results,algorithms}.json`: canonical layer from `pipeline/resolve.py`. Settings with `in_scope: false` are skipped.
+- `data/extractions/<paper_id>.json`: raw extractions (format in `schema.md`), used for paper pages and, with no canonical layer (`--fixtures`), for grouping settings
 - `data/algorithms.yaml`: algorithm registry (raw mode)
-- `data/ground_truth/{bco,pilot-facts}.yaml`
-- `ontology/bandits-<highest version>.yaml`: dimensions and their `order` pairs; `ontology/variables.yaml`: LaTeX for symbols
-- `data/canonical/site_index.json`: analysis index from `pipeline/site_index.py` (bound profiles and JS plot functions, per setting × regime tightness cells with fronts and triage verdicts, technique-transfer suggestions, unstudied neighbours, redundancy). Without it (e.g. `--fixtures`) the analysis pages say "no data" and setting pages have no Rates section.
+- `data/reports/triage.yaml`: gap-triage verdicts
+- `ontology/bandits-<highest version>.yaml` and `ontology/variables.yaml`: dimensions, orders, labels and LaTeX for symbols
+- `data/canonical/site_index.json`: the analysis index (bound profiles and JS plot functions, tightness cells, technique-transfer suggestions, unstudied neighbours, redundancy). Without it the analysis pages say "no data" and setting pages have no Rates section.
+
+Reference material (Lattimore's *Bandit Convex Optimisation*, the pilot facts) is written up in [`notes/`](../notes/), not on the site.
 
 ## Layout
 
-- `build.py`: pages and the data model (stdlib + PyYAML)
-- `ontology.py`: dimension list, readable value labels and setting names
+- `build.py`: the data model and page renderers (setting and paper pages, home, graph, analysis pages, the Explore and shell pages), link rewriting, and the build
+- `export_db.py`: the database
+- `layout.py`: graph layouts computed at build time (layered hierarchy; networkx spring layout)
+- `serve.py`: local preview server with HTTP Range support
+- `ontology.py`: readable value labels, defaults and setting names
 - `pipeline/order.py` (imported via `sys.path`): the specialisation order `Order.leq`, the single source of truth for directed edges
-- `bounds.py`: canonical SymPy bound string -> LaTeX (`sympy.latex` with `sum_subopt`/`sum_arms`, symbol names from `variables.yaml`, notation wrappers O/Õ/Ω/Θ, lim inf/lim sup as ratios to log T). If parsing fails the paper's `expression_latex` is shown instead, muted. The paper's LaTeX is always under a result's *details*.
-- `static/style.css`, `static/site.js`: styling (light and dark), KaTeX rendering (with page-level `window.BB_MACROS`, used for the book's macros on the ground-truth page), filter boxes, settings grouping, and compact long bounds (a formula wider than its column is clipped with a fade and a "show full" toggle; re-measured after fonts load, on resize and when a `<details>` opens)
-- `static/graph.js`: the settings graph (`graph.html`)
-- `analysis.py`: the Phase 3b analysis layer over `site_index.json` (class `Analysis`: lookups, per-setting status, plot data, search index) and its pages (class `Pages`, given build.py's helpers as `h` to avoid an import cycle)
-- `static/plots.js`: rate plot and rate plane on setting pages (hand-rolled SVG); `static/search.js`: faceted search; `static/analysis.js`: facet filters on `gaps.html` and the status filter on the settings index
+- `bounds.py`: canonical SymPy bound string → LaTeX. If parsing fails the paper's `expression_latex` is shown instead, muted; the paper's LaTeX is always under a result's *details*.
+- `analysis.py`: the analysis layer over `site_index.json` (class `Analysis`: lookups, per-setting status, plot data) and the analysis pages (class `Pages`)
+- `static/`:
+  - `style.css`, `site.js`: styling (light and dark), KaTeX rendering, filter boxes, compact long bounds;
+  - `graph.js`: the settings graph;
+  - `plots.js`: rate plot and rate plane on setting pages (hand-rolled SVG);
+  - `analysis.js`: facet filters on the analysis pages;
+  - `db.js`, `doc.js`, `explore.js`: the database-backed pages;
+  - `vendor/sqljs-httpvfs/`: sql.js-httpvfs 0.8.12 (Apache-2.0).
 - `fixtures/`: tiny fake dataset (titles marked `[FIXTURE]`), used only with `--fixtures`
 
-Charts are hand-rolled SVG (no charting library). External scripts, all pinned: KaTeX 0.16.11 (jsdelivr), Cytoscape.js 3.30.2 and dagre 0.8.5 (cdnjs), cytoscape-dagre 2.5.0 (jsdelivr).
+External scripts, all pinned: KaTeX 0.16.11 (jsdelivr), Cytoscape.js 3.30.2 and dagre 0.8.5 (cdnjs), cytoscape-dagre 2.5.0 (jsdelivr).
 
-## Ground-truth page
+## Analysis
 
-`ground-truth.html` renders `data/ground_truth/bco.yaml`: settings as cards with assumption-vector chips, lower (Table 2.1) and upper (Table 2.2) bounds as result tables (bound from `bound.expression` via `bounds.py` with the book's horizon `n` written as `T`, falling back to `expression_latex`; algorithm, original citation, compute, book theorem, source quote), transfer rules as a list (from → to, kind, side, quotes under *details*) and open problems as cards with known lower/upper bounds.
+A *cell* is a setting × regime, where regime = quantity family × dependence (`regret|worst_case`, `hp_regret|instance_dependent`, …; bounds in `L_star`, `Q_T` or `Lambda_T` form the `data_dependent` regime, as in `pipeline/compare.py`). Status: tight / log gap / poly gap / no lower / no upper / conflict. Status colours are fixed tokens (`--st-*` in `style.css`) and always come with a text label.
 
-## Analysis pages (plan.md Phase 3b)
-
-All read `data/canonical/site_index.json`; nothing is compared here. A *cell* is a setting × regime, where regime = quantity family × dependence (`regret|worst_case`, `hp_regret|instance_dependent`, …; bounds mentioning `L_star`, `Q_T` or `Lambda_T` form the `data_dependent` regime, as in `pipeline/compare.py`). Status: tight / log gap / poly gap / no lower / no upper / conflict. Status colours are fixed tokens (`--st-*` in `style.css`) and always come with a text label.
-
-- **Setting pages, "Rates"**: one line per cell (status, per-variable ↑upper/↓lower exponents, triage badge), then
-  - a *rate plot*: every bound in the chosen regime (own and inherited) evaluated client-side from its `js` body (`new Function(args, "return " + body)`, generated by our pipeline) on the uniform-gap instance, against a chosen x-variable (T by default) on log-log axes; sliders (log scale, `slider_defaults`) for the other variables in that regime. Upper bounds solid blue, lower dashed orange; best bounds (the cell's fronts) thick, others faint; O/Θ/Ω bounds (`shape_only`, constant 1) fainter and marked ∝. High-probability fronts read in expectation (`…@delta=1/T`) are added to the regret regime with δ = 1/T. Non-finite or ≤ 0 values are skipped; a dotted "trivial: T" reference line is drawn for regret quantities. Crosshair tooltip lists every series at that x; legend checkboxes toggle bounds (all / best only / none); hovering a legend row highlights its line.
-  - a *rate plane*: each bound with a profile as a point (exponent of T, exponent of K, d or 1/Δ), sized by count, upper blue / lower orange, fronts ringed; extra log factors shift a point by 0.07 per log. The dashed segment joins the best upper and best lower rates (the gap).
-- `gaps.html`: every non-tight cell, sorted by number of papers in the setting, then gap size (conflict > poly > log > no lower > no upper; a Sort control flips the order), with per-variable rates, the best upper/lower bounds (deduplicated, first two shown), the triage verdict (summary and papers under *details*) and technique-transfer suggestions. Filters: status, regime, action space, environment, triage verdict, free text; filter state goes into the URL hash (`gaps.html#status=poly_gap`).
-- `neighbours.html` (unstudied neighbours), `transfer.html` (suggestions grouped by algorithm family, with evidence bounds from neighbouring cells), `redundant.html` (the redundancy report, setting labels and paper ids linked, backticked expressions rendered with KaTeX).
-- `search.html`: client-side faceted search. Setting facets (dimensions, per-regime status, own/inherited-only/no upper or lower bounds) and bound facets (side, regime, notation, own/inherited, algorithm family, confidence, restricted, paper, year range) with live counts; results as settings or as bounds (100 at a time). State is in the URL hash, so queries can be shared; a few saved queries are links. The index is `static/search-data.js` (`window.BB_SEARCH`, written at build time; a script rather than JSON so it also works from `file://`).
-- Graph: "Colour: Status" (regret · worst-case cell, else the most relevant regime: conflict > poly gap > log gap > no lower > no upper > tight). Settings index: Status column and filter. Home page: analysis tiles with counts.
+- **Setting pages, "Rates"**: one line per cell (status, per-variable ↑upper/↓lower exponents, triage badge), then:
+  - a *rate plot*: every bound in the regime evaluated client-side on the uniform-gap instance against a chosen variable, with sliders for the others; best bounds thick.
+  - a *rate plane*: the bounds used in the rate comparison, on ordinal axes listing the rates that occur ("log T", "√T·log T", "T^2/3").
+- **Gaps** (Explore tab): every cell, by default only conflicts and polynomial or log gaps, with per-variable rates, the best bound on each side and the triage verdict.
+- `neighbours.html` (unstudied neighbours), `transfer.html` (technique-transfer suggestions), `redundant.html` (the redundancy report).
 
 ## Neighbours and the graph
 
-Directed edges come from `pipeline/order.py`: S → S′ whenever `Order.leq(S, S′)` holds (product order over all dimensions, including subset `order_rule`s, action-space `reduction`s and fixed `parameters`), so upper bounds flow against the arrow, lower bounds along it. Settings that differ in exactly one dimension with no order are undirected "other neighbours". Each setting page has collapsed "Inherited upper/lower bounds" sections built from `inferred.json` (deduplicated, sorted by quantity, dependence, then hops along covering edges), each row showing its source setting, changed dimensions, substitutions and caveats; rows whose caveats say "holds for <param> = <value> only" (a bound proved for a pinned value such as K = 2) get a "pinned K = 2" badge and go into a collapsed "Weak transfers" sub-list at the end of the section; they are skipped when `data/canonical` is absent (fixtures). The graph draws the transitive reduction of the directed edges with a dagre layout (or a force layout), colours nodes by action space or environment, and sizes them by number of results. `graph.html?focus=<setting id>` highlights one setting; each setting page links there and lists its more general, more special and other neighbours.
+Directed edges come from `pipeline/order.py`: S → S′ whenever `Order.leq(S, S′)` holds, so upper bounds flow against the arrow and lower bounds along it. Settings that differ in exactly one unordered dimension are "other neighbours". The graph has an overview of groups (environment × action space) and the full graph, with filters by action space and environment. Clicking a group shows its settings and keeps them highlighted until you click the background. Both layouts are precomputed, so switching layout is instant. `graph.html?focus=<slug>` shows one setting's neighbourhood.
 
 All links are relative, so the site works under `https://act65.github.io/bandit-browser/`.
 

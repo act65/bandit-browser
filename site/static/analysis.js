@@ -1,5 +1,5 @@
 // Facet filters for the analysis pages (gaps.html) and the status filter on the settings index.
-document.addEventListener("DOMContentLoaded", function () {
+window.bbReady(function () {
   // .facetbar[data-target]: <select data-facet="x"> filters children of #target by data-x; text box by content.
   document.querySelectorAll(".facetbar[data-target]").forEach(function (bar) {
     var list = document.getElementById(bar.dataset.target);

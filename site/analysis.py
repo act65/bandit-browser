@@ -40,9 +40,6 @@ FAMILY_LABEL = {"regret": "regret", "hp_regret": "high-prob. regret", "bayesian_
 DEP_LABEL = {"worst_case": "worst-case", "instance_dependent": "instance-dependent", "data_dependent": "data-dependent"}
 # As in pipeline/compare.py: small-loss / variation bounds form their own regime.
 DATA_DEPENDENT = re.compile(r"\b(L_star|Q_T|Lambda_T)\b")
-SEARCH_DIMS = ["environment", "action_space", "feedback", "context", "noise", "objective", "function_class",
-               "instance_assumptions", "extras"]
-
 
 def regime_label(reg: str) -> str:
     fam, _, dep = reg.partition("|")
@@ -162,41 +159,6 @@ class Analysis:
             "bounds": out,
         }
 
-    # -- search index (static/search-data.js)
-    def search_data(self) -> dict:
-        site = self.site
-        settings, idx, labels = [], {}, {}
-        for i, n in enumerate(sorted(site.nodes.values(), key=lambda n: (-len(n["papers"]), n["name"]))):
-            idx[n["id"]] = i
-            raw = n.get("raw") or {}
-            facets = {}
-            for d in SEARCH_DIMS:
-                v = raw.get(d, n["key"].get(d))
-                vals = [x for x in (v if isinstance(v, list) else [v]) if x not in (None, "")]
-                facets[d] = [str(x) for x in vals] or ["none"]
-                for x in facets[d]:
-                    labels.setdefault(d, {})[x] = value_label(d, x)
-            own = collections.Counter((it["r"].get("side") or "").lower() for it in n["results"])
-            inh = {b["side"] for b in self.by_setting.get(n["id"]) or [] if b.get("inherited")}
-            src = {s: ("own" if own.get(s) else "inherited" if s in inh else "none") for s in ("upper", "lower")}
-            settings.append({"id": n["id"], "slug": n["slug"], "name": n["name"], "papers": len(n["papers"]),
-                             "f": facets, "cells": {c["regime"]: c["status"] for c in self.cells_by_setting.get(n["id"]) or []},
-                             "upSrc": src["upper"], "loSrc": src["lower"]})
-        out_b = []
-        for b in self.bounds.values():
-            tex, ok = self.tex(b)
-            alg = (site.algorithms.get(b.get("algorithm_id") or "") or {}).get("name") or b.get("algorithm_id")
-            out_b.append({"s": idx[b["setting_id"]], "id": b["id"], "side": b["side"], "reg": self.regime(b),
-                          "nota": b.get("notation") or "exact", "inh": bool(b.get("inherited")),
-                          "p": b.get("paper"), "c": site.cite(b.get("paper")), "y": b.get("year"),
-                          "af": b.get("algorithm_family") or "none", "a": alg, "conf": b.get("confidence") or "unknown",
-                          "rs": bool(b.get("restricted")), "t": tex if ok else None, "e": None if ok else b.get("expression")})
-        out_b.sort(key=lambda x: (x["s"], x["reg"], x["side"] != "upper", x["inh"], x["c"]))
-        return {"settings": settings, "bounds": out_b, "labels": labels,
-                "regimes": {r: regime_label(r) for r in sorted({x["reg"] for x in out_b} | {c["regime"] for c in self.cells})},
-                "status": {k: v[0] for k, v in STATUS.items()}}
-
-
 # ---------------------------------------------------------------- shared html
 
 
@@ -213,9 +175,9 @@ def triage_badge(h, tri: dict | None) -> str:
     return h.badge(v.replace("_", " "), f"tri tri-{v}", TRIAGE.get(v, ""))
 
 
-ANALYSIS_TABS = [("gaps.html", "Gaps", "gaps"), ("neighbours.html", "Unstudied neighbours", "neighbours"),
+ANALYSIS_TABS = [("explore.html#tab=gaps", "Gaps", "gaps"), ("neighbours.html", "Unstudied neighbours", "neighbours"),
                  ("transfer.html", "Technique transfer", "transfer"), ("redundant.html", "Redundancy", "redundant"),
-                 ("search.html", "Search", "search")]
+                 ("explore.html", "Explore", "explore")]
 
 
 def tabs(active: str) -> str:
@@ -259,21 +221,6 @@ class Pages:
                         f'title="{h.e(src["name"], quote=True)}">{h.e(nm)}</a></span>')
         return f'<div class="bl">{f}<div class="small bl-meta">{" · ".join(bits)}</div></div>'
 
-    def front_html(self, ids: list[str], root: str = "", keep: int = 2) -> str:
-        if not ids:
-            return '<span class="muted small">none</span>'
-        # One line per distinct (paper, expression): fronts often list the same bound via several sources.
-        seen, uniq = set(), []
-        for bid in ids:
-            b = self.A.bound(bid) or {}
-            k = (b.get("paper"), b.get("expression"), "@" in bid)
-            if k not in seen:
-                seen.add(k)
-                uniq.append(bid)
-        head = "".join(self.bound_line(x, root) for x in uniq[:keep])
-        if len(uniq) > keep:
-            head += f'<div class="small muted">+{len(uniq) - keep} more with the same rate (see the setting page)</div>'
-        return head
 
     def per_var_html(self, per_var: dict) -> str:
         h = self.h
@@ -287,90 +234,7 @@ class Pages:
                        f'<b>{h.e(sym)}</b> ↑{h.e(rate_str(x.get("upper")))} ↓{h.e(rate_str(x.get("lower")))}</span>')
         return '<div class="pvs">' + "".join(out) + "</div>"
 
-    # ------------------------------------------------------------ gaps.html
-    def gaps_page(self) -> str:
-        h, A, site = self.h, self.A, self.site
-        if not A.ok:
-            return no_data(h, "Gaps", "gaps", "gaps")
-        cells = [c for c in A.cells if c["status"] in GAP_STATUSES]
-        sev = {"conflict": 0, "poly_gap": 1, "log_gap": 2, "no_lower": 3, "no_upper": 4}
-        # default: real gaps first (poly, log, conflicts), then missing bounds; papers break ties
-        cells.sort(key=lambda c: (sev[c["status"]], -len(site.nodes[c["setting_id"]]["papers"]), c["regime"]))
-        counts = collections.Counter(c["status"] for c in cells)
-        regimes = collections.Counter(c["regime"] for c in cells)
-        acts = collections.Counter(self._dimval(c["setting_id"], "action_space") for c in cells)
-        envs = collections.Counter(self._dimval(c["setting_id"], "environment") for c in cells)
-        tris = collections.Counter(((c.get("triage") or {}).get("verdict") or "untriaged") for c in cells)
 
-        def sel(name, label, counter, labels=None):
-            opts = "".join(f'<option value="{h.e(k, quote=True)}">{h.e((labels or {}).get(k, k))} ({v})</option>'
-                           for k, v in sorted(counter.items(), key=lambda t: -t[1]))
-            return (f'<label class="fsel"><span>{h.e(label)}</span><select data-facet="{name}">'
-                    f'<option value="">all</option>{opts}</select></label>')
-
-        cards = []
-        for c in cells:
-            sid, n = c["setting_id"], site.nodes[c["setting_id"]]
-            tri = c.get("triage")
-            tr = A.transfer_of.get((sid, c["regime"]))
-            tr_html = ""
-            if tr:
-                items = []
-                for s in tr["suggestions"]:
-                    ev = s["evidence"][0]
-                    more = f' <span class="muted">+{len(s["evidence"]) - 1}</span>' if len(s["evidence"]) > 1 else ""
-                    items.append(f'<li><b>{h.e(h.label(s["family"]))}</b> <span class="muted">reaches the best upper bound in</span> '
-                                 f'{self.setting_link(ev["neighbour"])} {status_badge(h, ev["neighbour_status"])}{more}</li>')
-                tr_html = f'<div class="tr"><span class="side">Try (technique transfer)</span><ul class="tight">{"".join(items)}</ul></div>'
-            tri_html = ""
-            if tri:
-                papers = "".join(
-                    f'<li><b>{h.e(str(p.get("title") or ""))}</b> ({h.e(str(p.get("year") or ""))})'
-                    + (f' <a href="https://arxiv.org/abs/{h.e(str(p["arxiv_id"]), quote=True)}">arXiv:{h.e(str(p["arxiv_id"]))}</a>' if p.get("arxiv_id") else "")
-                    + (f'<div class="small muted">{h.e(str(p.get("claim") or ""))}</div>' if p.get("claim") else "") + "</li>"
-                    for p in tri.get("papers") or [])
-                tri_html = (f'<details class="more tri-d"><summary>triage: {h.e(TRIAGE.get(tri.get("verdict"), ""))}</summary>'
-                            f'<p class="small">{h.e(str(tri.get("summary") or ""))}</p>'
-                            + (f'<ul class="tight small">{papers}</ul>' if papers else "") + "</details>")
-            inh = h.badge("relies on inherited", "inh", "a best bound here is inherited, not proved for this setting") if c.get("relies_on_inherited") else ""
-            cards.append(f"""<article class="gap" data-status="{c['status']}" data-papers="{len(n['papers'])}" data-sev="{sev[c['status']]}" data-regime="{h.e(c['regime'], quote=True)}"
- data-action="{h.e(self._dimval(sid, 'action_space'), quote=True)}" data-env="{h.e(self._dimval(sid, 'environment'), quote=True)}"
- data-triage="{h.e((tri or {}).get('verdict') or 'untriaged', quote=True)}">
-<header>{status_badge(h, c['status'])} {h.badge(regime_label(c['regime']), 'reg')} {triage_badge(h, tri)} {inh}
-<span class="muted small gap-n">{len(n['papers'])} paper{'s' if len(n['papers']) != 1 else ''} · {c['n_upper']}↑ {c['n_lower']}↓</span></header>
-<h3><a href="settings/{n['slug']}.html#rates">{h.e(n['name'])}</a></h3>
-{self.per_var_html(c.get('per_var') or {})}
-<div class="ul2"><div><span class="side">Best upper</span>{self.front_html(c['upper_front'])}</div>
-<div><span class="side">Best lower</span>{self.front_html(c['lower_front'])}</div></div>
-{tr_html}{tri_html}
-</article>""")
-        chips = " ".join(f'<button type="button" class="stchip" data-set-facet="status" data-value="{s}">{status_badge(h, s)} {counts[s]}</button>'
-                         for s in GAP_STATUSES if counts[s])
-        n_tri = sum(1 for c in cells if c.get("triage"))
-        body = f"""{tabs("gaps")}
-<h1>Gaps</h1>
-<p class="lede">Per setting and regime (quantity family × dependence), the best upper and best lower bounds are compared by
-their growth exponents in T, K, d and 1/Δ (<code>pipeline/compare.py</code>). Cells that are not tight are listed here,
-most-studied settings first, then by gap size. <b>Rates</b> read ↑ upper / ↓ lower exponent, so <i>T</i> ↑0.5 ↓0.5 is √T
-on both sides. A gap is only called open after gap triage; {n_tri} of {len(cells)} cells have a verdict.</p>
-<p class="stchips">{chips} <button type="button" class="stchip" data-set-facet="status" data-value="">show all</button></p>
-<div class="facetbar" data-target="gap-list">
-{sel("status", "Status", counts, {k: v[0] for k, v in STATUS.items()})}
-{sel("regime", "Regime", regimes, {k: regime_label(k) for k in regimes})}
-{sel("action", "Action space", acts)}
-{sel("env", "Environment", envs)}
-{sel("triage", "Triage", tris)}
-<label class="fsel"><span>Sort</span><select data-sort><option value="sev">gap size, then papers</option>
-<option value="papers">papers, then gap size</option></select></label>
-<input class="filter" type="search" data-facet-text placeholder="Filter by setting, paper…" aria-label="Filter">
-<span class="muted small" data-count></span>
-</div>
-<div class="gaps" id="gap-list">{"".join(cards)}</div>"""
-        return h.page("Gaps", body, "", "gaps", head='<script defer src="static/analysis.js"></script>', wide=True)
-
-    def _dimval(self, sid: str, dim: str) -> str:
-        v = self.site.nodes[sid]["key"].get(dim, "")
-        return value_label(dim, v) if v else "unspecified"
 
     # ------------------------------------------------------------ neighbours.html
     def neighbours_page(self) -> str:
@@ -481,30 +345,3 @@ on both sides. A gap is only called open after gap triage; {n_tri} of {len(cells
                 t = t.replace(" — already implied by ", '<br><span class="muted">already implied by</span> ')
                 out.append(t)
         return "".join(out)
-
-    # ------------------------------------------------------------ search.html
-    def search_page(self) -> str:
-        h, A = self.h, self.A
-        if not A.ok:
-            return no_data(h, "Search", "search", "search")
-        saved = [
-            ("Adversarial settings with no lower bound",
-             "mode=settings&environment=adversarial_unspecified,adversarial_oblivious,adversarial_adaptive,"
-             "adversarial_self_bounding,adversarial_restricted&cell=no_lower&regime=regret|worst_case"),
-            ("Tight results", "mode=settings&cell=tight"),
-            ("Log gaps in linear bandits", "mode=settings&cell=log_gap&action_space=linear_finite,linear_infinite,generalized_linear"),
-            ("Settings whose lower bounds are all inherited", "mode=settings&loSrc=inherited"),
-            ("Inherited lower bounds", "mode=bounds&side=lower&origin=inherited"),
-            ("Low-confidence own upper bounds", "mode=bounds&side=upper&origin=own&conf=low"),
-            ("Thompson sampling, since 2015", "mode=bounds&af=thompson_sampling&ymin=2015"),
-        ]
-        links = "".join(f'<li><a href="#{q}">{h.e(t)}</a></li>' for t, q in saved)
-        body = f"""{tabs("search")}
-<h1>Search</h1>
-<p class="lede small">Faceted search over settings (assumption dimensions, per-regime status) and bounds (side, regime,
-notation, algorithm family, paper, year, own/inherited, confidence). Facets combine with AND, values within a facet with OR;
-the query lives in the URL, so it can be shared.</p>
-<div class="saved"><span class="muted small">Saved queries:</span><ul>{links}</ul></div>
-<div class="search" id="search"><p class="muted">Loading…</p></div>"""
-        head = '<script defer src="static/search-data.js"></script>\n<script defer src="static/search.js"></script>'
-        return h.page("Search", body, "", "search", head=head, wide=True)
