@@ -22,6 +22,11 @@ uv run python pipeline/derive.py            # resolve -> infer -> compare -> rep
 uv run python pipeline/verify.py            # second-reading verification -> data/extractions_verified/ (never edits extractions)
 uv run python pipeline/triage.py            # web search per candidate gap -> data/reports/triage.yaml
 uv run python pipeline/review_unmapped.py   # themes of unmapped setting features -> ontology/review-v<version>.md
+uv run python pipeline/audit.py --n 200     # second-model audit of random results -> data/reports/audit.md
+uv run python pipeline/goldcheck.py         # textbook gold set (ls-book.yaml) vs the atlas -> data/reports/goldcheck.md
+uv run python pipeline/crosscheck.py        # our extractions vs how other papers cite them -> data/reports/crosscheck.md
+uv run python pipeline/open_problems.py     # COLT open problems + web-searched status -> data/reports/open_problems.yaml
+uv run python pipeline/review_algorithms.py # registry vs extraction evidence -> data/reports/algorithm-registry-review.md
 uv run python site/build.py && python3 -m http.server -d _site 8000
 ```
 

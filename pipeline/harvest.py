@@ -154,7 +154,8 @@ def pmlr_abstract(url: str) -> str | None:
 
 def harvest_pmlr(since: int) -> list[dict]:
     index = get("https://proceedings.mlr.press/").decode("utf-8", "replace")
-    vols = re.findall(r'<a href="(v\d+)"><b>Volume \d+</b></a>\s*Proceedings of ([A-Za-z]+) (\d{4})', index)
+    # volume titles vary: "Proceedings of COLT 2018", "COLT 2017 Proceedings", "COLT 2019"
+    vols = re.findall(r'<a href="(v\d+)"><b>Volume \d+</b></a>\s*(?:Proceedings of )?([A-Za-z]+) (\d{4})', index)
     vols = [(v, conf, int(y)) for v, conf, y in vols if conf in PMLR_VENUES and int(y) >= since]
     print(f"  pmlr: {len(vols)} volumes ({', '.join(sorted({c for _, c, _ in vols}))})", flush=True)
     out = []

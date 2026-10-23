@@ -136,6 +136,14 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `Min(sqrt(K*T), N_exp + sqrt(T))` (Omega_tilde; erez2024real Theorem 2)
 - relies on inherited bounds: True
 
+## stochastic · K-armed · Gaussian · knows mu_star, sigma · K=2 (`S-40047484`, 1 papers): regret, instance_dependent — **poly gap**
+- Delta: upper 1·log^1 vs lower 1 (log_gap)
+- K: upper 1 vs lower 0 (poly_gap)
+- T: upper 0 vs lower 0 (tight)
+- best upper: `sum_subopt(3*Delta_i + 36*log(17/Delta_i)/Delta_i)` (exact; inherited from garivier2019explore Theorem (th:finiteRegret:mus:known))
+- best lower: `Min(Delta_min*T/2, 2*Delta_min*log(2)/(Delta_min**2 + 2*log(4*T)/T))` (exact; garivier2019explore Theorem (th:LB-BPR))
+- relies on inherited bounds: True
+
 ## adversarial (oblivious) · linear · bounded_pm1 · convex body (`S-2385d0e3`, 1 papers): regret, worst_case — **poly gap**
 - T: upper 0.5·log^0.5 vs lower 0.5 (log_gap)
 - d: upper 1 vs lower 0.5 (poly_gap)
@@ -263,6 +271,14 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - d: upper 0.5 vs lower 1 (poly_gap)
 - best upper: `C*T**(1/4)*d**(3/2) + T**(3/4)*sqrt(d)*(C + 1)` (O_tilde; inherited from ding2021robust Remark 1)
 - best lower: `K**(1/4)*sqrt(T*d)` (Omega; inherited from jin2026nearly Theorem 1); `d*sqrt(T*log(T))` (Omega; inherited from li2019nearlyminimax Theorem 10)
+- relies on inherited bounds: True
+
+## stochastic · K-armed · Gaussian · knows mu_star, reward_family, sigma · K=2 (`S-d66b7845`, 1 papers): regret, instance_dependent — **poly gap**
+- Delta: upper 1·log^1 vs lower 1 (log_gap)
+- K: upper 1 vs lower 0 (poly_gap)
+- T: upper 0 vs lower 0 (tight)
+- best upper: `sum_subopt(3*Delta_i + 36*log(17/Delta_i)/Delta_i)` (exact; inherited from garivier2019explore Theorem (th:finiteRegret:mus:known))
+- best lower: `Min(Delta_min*T/2, 2*Delta_min*log(2)/(Delta_min**2 + 2*log(4*T)/T))` (exact; inherited from garivier2019explore Theorem (th:LB-BPR))
 - relies on inherited bounds: True
 
 ## stochastic · K-armed · adversarial contexts · conditionally_subgaussian · knows S, d_eff, sigma (`S-cd1e913b`, 1 papers): regret, worst_case — **poly gap**

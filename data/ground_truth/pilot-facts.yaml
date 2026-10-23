@@ -9,6 +9,10 @@
 # Status vocabulary: tight_constants | tight_logs | log_gap | poly_gap |
 #                    algorithm_specific (a lower bound for one algorithm class) | impossibility
 # `papers` are ids in corpus/manifest.yaml. `user_verified` is for the human reviewer.
+#
+# Rechecked 2026-10-23 (assistant, not human-verified) against the textbook gold set
+# data/ground_truth/ls-book.yaml (Lattimore & Szepesvari, `checked_against` ids) and the source papers:
+# F06 and F08 changed status, F10 and F13 changed setting, F14 became a manual check; see each `review`.
 
 base_settings:
   stoch_k: &stoch_k {objective: cumulative_regret, feedback: bandit, environment: stochastic_iid,
@@ -36,6 +40,7 @@ facts:
     lower: {bound: "sqrt(K*T)", notation: Omega, papers: [auer2002exp3]}
     history: "UCB1 gives O(sqrt(K T log T)); MOSS (2009) removed the sqrt(log T). The Omega(sqrt(KT)) construction in Auer et al. 2002 uses stochastic (Bernoulli) arms, so it applies here."
     tests: ["lower bound transfers stochastic -> adversarial (F05)", "log-gap closure detected over time"]
+    checked_against: [LS-9.1, LS-15.2]
     confidence: high
 
   - id: F02
@@ -45,7 +50,8 @@ facts:
     upper: {bound: "sum_subopt(Delta_i/KL_i)*log(T)", notation: limsup, papers: [cappe2013klucb, kaufmann2012thompson, agrawal2013further]}
     lower: {bound: "sum_subopt(Delta_i/KL_i)*log(T)", notation: liminf, papers: [lai1985asymptotically]}
     history: "Lai & Robbins (1985) for one-parameter families; matched by KL-UCB and by Thompson sampling (Bernoulli). UCB1 matches only up to constants (Delta_i/KL_i vs 1/Delta_i)."
-    notes: "Exact optimality depends on the reward family (Bernoulli, exponential family, bounded); the noise dimension matters here."
+    notes: "Exact optimality depends on the reward family (Bernoulli, exponential family, bounded); the noise dimension matters here. The constants match exactly; pipeline/acceptance.py only checks rates, so a PASS confirms the rate, not the constant."
+    checked_against: [LS-10.6a, LS-16.2a, LS-16.2c]
     confidence: high
 
   - id: F03
@@ -79,10 +85,12 @@ facts:
   - id: F06
     setting: *adv_k
     regime: "high probability"
-    status: tight_logs
+    status: log_gap
     upper: {bound: "sqrt(K*T*log(K/delta))", notation: O, papers: [neu2015explore]}
-    notes: "Gerchinovitz & Lattimore (2016) give impossibility results for some first-order and high-probability refinements; check what exactly they rule out."
-    papers_related: [gerchinovitz2016refined]
+    lower: {bound: "sqrt(K*T*log(1/delta))", notation: Omega, papers: [gerchinovitz2016refined]}
+    notes: "Exp3-IX gives O(sqrt(KT log(K/delta))); the high-probability lower bound is Omega(sqrt(KT log(1/delta))) (stochastic construction, so it holds against oblivious adversaries). The sqrt(log K) gap is, to our knowledge, open for oblivious adversaries."
+    review: "2026-10-23: was tight_logs with no lower bound; the bounds above differ by sqrt(log K), a log gap."
+    checked_against: [LS-12.1a, LS-17.2]
     confidence: medium
 
   - id: F07
@@ -96,9 +104,11 @@ facts:
     confidence: high
 
   - id: F08
+    check: manual   # the gap is in the corruption budget C, which pipeline/compare.py does not scan (T, K, d, 1/Delta only)
     setting: {<<: *stoch_k, environment: stochastic_corrupted}
     regime: "instance-dependent with corruption budget C"
-    status: log_gap
+    status: poly_gap
+    review: "2026-10-23: was log_gap; Gupta et al.'s K*C term against the Omega(C) lower bound is a factor-K (polynomial) gap in the corruption term. Later bounds (e.g. Tsallis-INF under corruption, Zimmert & Seldin 2021: O(sum log T/Delta + sqrt(C sum log T/Delta))) shrink it; the matching lower bound needs checking."
     upper: {bound: "K*C + sum_subopt(log(T)/Delta_i)", notation: O_tilde, papers: [gupta2019corruption]}
     lower: {papers: [lykouris2018corruption, gupta2019corruption], claim: "Omega(C)-type additive dependence is necessary"}
     notes: "Check the exact log factors and the lower-bound form."
@@ -121,7 +131,9 @@ facts:
     status: log_gap
     upper: {bound: "sqrt(d*T*log(K))", notation: O_tilde, papers: [chu2011suplinucb]}
     lower: {bound: "sqrt(d*T)", notation: Omega, papers: [chu2011suplinucb]}
-    notes: "SupLinUCB is for the contextual version (adversarial contexts, finite arms per round); the non-contextual finite-arm rate is O(sqrt(dT log K)). The setting should be linear_contextual / adversarial_contexts; check the mapping."
+    notes: "Non-contextual finite-armed linear bandit: phased elimination with G-optimal design gives O(sqrt(dT log(K T))) (L&S Theorem 22.1). Chu et al. (SupLinUCB) prove the contextual analogue (adversarial contexts, K arms per round) with an Omega(sqrt(dT)) lower bound. For K >= 2^d the hypercube gives Omega(d sqrt T), so the gap closes there; for small K the log K factor is the open part."
+    review: "2026-10-23: the fact now states the non-contextual setting its anchor (*stoch_lin_fin) describes, with the textbook upper bound."
+    checked_against: [LS-22.1a, LS-24.1]
     tests: ["K-armed -> linear reduction with d = K: sqrt(dT log K) -> sqrt(KT log K), dominated by F01's sqrt(KT)"]
     confidence: medium
 
@@ -144,19 +156,23 @@ facts:
     confidence: high
 
   - id: F13
-    setting: *adv_lin_fin
+    setting: {<<: *adv_lin_fin, action_set: {shape: hypercube}}
     regime: "worst case, N actions"
-    status: tight_logs
+    status: tight_constants
     upper: {bound: "sqrt(d*T*log(N))", notation: O, papers: [bubeck2012minimax]}
     lower: {bound: "d*sqrt(T)", notation: Omega, papers: [dani2008stochastic, shamir2015complexity]}
+    review: "2026-10-23: restricted to the hypercube (N = 2^d, so sqrt(dT log N) = Theta(d sqrt T)), where the d sqrt(T) lower bound holds; for general N the lower bound does not apply (it needs log N ~ d). Was tight_logs on all finite action sets."
+    checked_against: [LS-27.1a, LS-24.1]
     notes: "For |A| = N with log N ~ d (e.g. the hypercube), sqrt(dT log N) ~ d sqrt(T) matches. Exp2 is not computationally efficient; Hazan & Karnin (2016) give an efficient O~(d sqrt(T)) high-probability algorithm. Tests the D2 'efficient vs not' regime (the compute field)."
     related: [hazan2016volumetric]
     confidence: medium
 
   - id: F14
-    setting: {<<: *stoch_k, objective: cumulative_regret, learner_knows: [mu_star]}
-    regime: "known optimal mean and gap lower bound"
+    check: manual
+    setting: {<<: *stoch_k, objective: cumulative_regret, learner_knows: [mu_star, Delta_lower_bound]}
+    regime: "instance-dependent, known optimal mean and gap lower bound"
     status: tight_constants
-    upper: {papers: [bubeck2013bounded], claim: "bounded regret, independent of T"}
+    upper: {papers: [bubeck2013bounded, garivier2016explore], claim: "bounded regret, independent of T"}
+    review: "2026-10-23: the setting now records the known gap lower bound and the regime is instance-dependent. Bubeck, Perchet & Rigollet's Theorem 8 is a sup over Delta, not a per-instance log T lower bound (see data/corrections.yaml); whether the best bounded-regret constant (with its log(1/Delta) factor) is tight is unclear to us, so this is a manual check until an expert confirms it."
     tests: ["learner_knows (mu_star, Delta_min) changes the rate: knowledge must be part of the setting comparison"]
-    confidence: medium
+    confidence: low

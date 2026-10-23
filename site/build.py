@@ -42,6 +42,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(1, str(REPO / "pipeline"))
 
 import analysis  # noqa: E402
+import compare  # noqa: E402  (pipeline/compare.py: which bounds set a setting's rate)
 import export_db  # noqa: E402
 import layout  # noqa: E402
 import bounds  # noqa: E402
@@ -53,6 +54,16 @@ CYTOSCAPE = "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.m
 DAGRE = "https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"
 CY_DAGRE = "https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js"
 REPO_URL = "https://github.com/act65/bandit-browser"
+SITE_URL = "https://act65.github.io/bandit-browser/"
+
+
+def report_link(page_url: str, item: str = "", what: str = "", label_text: str = "Report a problem") -> str:
+    """A link to a pre-filled correction issue (.github/ISSUE_TEMPLATE/correction.yml)."""
+    from urllib.parse import urlencode
+    q = urlencode({"template": "correction.yml", "title": f"Correction: {what or item}"[:120], "page": page_url,
+                   "item": item})
+    return (f'<a class="report" href="{REPO_URL}/issues/new?{html.escape(q, quote=True)}" target="_blank" rel="noopener" '
+            f'title="Open a GitHub issue to correct this">{html.escape(label_text)}</a>')
 
 # Order of dimensions in human-readable setting names (others follow in ontology order).
 NAME_ORDER = ["objective", "environment", "action_space", "feedback", "context", "function_class", "domain",
@@ -534,6 +545,7 @@ NAV = [
     ("index.html", "Home", "home"),
     ("graph.html", "Graph", "graph"),
     ("explore.html", "Explore", "explore"),
+    ("open-problems.html", "Open problems", "open"),
 ]
 
 # Runs a page script once its content is in place: on DOMContentLoaded for static pages, and on
@@ -695,6 +707,10 @@ def result_details(it: dict) -> str:
         pairs.append(("Notes", text(r["notes"])))
     if r.get("compute") and r.get("compute") != "not_stated":
         pairs.append(("Compute", text(label(r["compute"]))))
+    rid = r.get("id") if ":" in str(r.get("id") or "") else (f'{r.get("paper")}:{r.get("id")}' if r.get("paper") else r.get("id"))
+    if rid:
+        pid = str(rid).split(":")[0]
+        pairs.append(("Wrong?", report_link(f"{SITE_URL}paper.html?p={slugify(pid)}", str(rid), str(rid), "Report a problem with this result")))
     return f'<details class="more"><summary>details</summary>{dl(pairs, "kv")}</details>'
 
 
@@ -714,6 +730,16 @@ def result_badges(r: dict, extra: str = "", lead: str = "") -> str:
         out.append(badge(f"{conf} confidence", f"conf-{conf}", str(r.get("notes") or "")))
     if r.get("is_new") is False:
         out.append(badge("restated", "muted-badge", "result restated from earlier work"))
+    # bounds the rate comparison sets aside (pipeline/compare.py), marked so they are not misread
+    conds = r.get("conditions") or []
+    tip = "; ".join(str(c) for c in conds)[:300]
+    if compare.changes_model(conds):
+        out.append(badge("not comparable", "muted-badge", "kept out of the setting's rate (different protocol or form): " + tip))
+    elif (r.get("side") or "").lower() == "lower" and (r.get("algorithm_class") == "other" or compare.restricts_algorithms(conds)):
+        out.append(badge("specific algorithms", "muted-badge",
+                         "holds only for a class of algorithms, so it does not set the setting's rate. " + tip))
+    elif (r.get("side") or "").lower() == "upper" and conds and compare.restricts_instances(conds):
+        out.append(badge("restricted instances", "muted-badge", "proved on a restricted instance class: " + tip))
     return '<div class="badges">' + "".join(out) + extra + "</div>"
 
 
@@ -1108,7 +1134,7 @@ def setting_page(site: Site, n: dict) -> str:
     inh = f' · inherited: <a href="#inherited-upper"><b>{len(iup)}</b> upper</a> · <a href="#inherited-lower"><b>{len(ilo)}</b> lower</a>' if iup or ilo else ""
     canon_id = f' / <code class="small">{e(n["id"])}</code>' if site.canonical else ""
     body = f"""
-<p class="crumbs"><a href="index.html">Settings</a>{canon_id}</p>
+<p class="crumbs"><a href="index.html">Settings</a>{canon_id}<span class="crumb-report">{report_link(f"{SITE_URL}setting.html?s={n['slug']}", n["id"], n["name"])}</span></p>
 <h1>{e(n["name"])}</h1>
 <div class="chips">{"".join(chips)}</div>
 <p class="summary"><b>{len(up)}</b> upper · <b>{len(lo)}</b> lower bounds from <b>{len(n["papers"])}</b> paper{"s" if len(n["papers"]) != 1 else ""}{inh}.</p>
@@ -1160,7 +1186,9 @@ def paper_page(site: Site, pid: str) -> str:
         meta.append(("link", f'<a href="{e(url, quote=True)}">{e(url)}</a>'))
     if info.get("why"):
         meta.append(("why in corpus", text(info.get("why"))))
-    body = f'<p class="crumbs"><a href="index.html">Papers</a> / <code class="small">{e(pid)}</code></p><h1>{e(site.title(pid))}</h1>{dl(meta, "meta")}'
+    body = (f'<p class="crumbs"><a href="index.html">Papers</a> / <code class="small">{e(pid)}</code>'
+            f'<span class="crumb-report">{report_link(f"{SITE_URL}paper.html?p={slugify(pid)}", pid, site.title(pid))}</span></p>'
+            f'<h1>{e(site.title(pid))}</h1>{dl(meta, "meta")}')
     items = [it for n in site.nodes.values() for it in n["results"] if it["paper"] == pid]
     if not ex and not items:
         body += '<p class="notice">Not yet extracted.</p>'
@@ -1390,6 +1418,105 @@ def main_html(full: str) -> str:
     return full[a:full.rindex("</main>")]
 
 
+def first_sentence(text: str, limit: int = 320) -> str:
+    """The first sentence of a summary (cut at a word boundary if very long)."""
+    m = re.match(r"(.+?[.!?])(\s|$)", text.strip(), re.S)
+    out = m.group(1) if m else text.strip()
+    return out if len(out) <= limit else out[:limit].rsplit(" ", 1)[0] + "…"
+
+
+def paper_ref(p: dict) -> str:
+    """'Title (2021) · arXiv:2101.01234' for a paper found by a web-search pass."""
+    out = e(p.get("title") or "")
+    if p.get("year"):
+        out += f" ({p['year']})"
+    if p.get("arxiv_id"):
+        a = e(p["arxiv_id"])
+        out += f' · <a href="https://arxiv.org/abs/{a}">arXiv:{a}</a>'
+    return out
+
+
+def open_problems_page(site: Site, root: Path) -> str:
+    """open-problems.html: gaps known to be open, unexplained gaps, and the COLT open-problem tracker."""
+    from collections import Counter
+    A = site.analysis
+    tri_path = root / "data" / "reports" / "triage.yaml"
+    triage = (load_yaml(tri_path) or {}).get("triage", {}) if tri_path.exists() else {}
+    op_path = root / "data" / "reports" / "open_problems.yaml"
+    colt = (load_yaml(op_path) or {}).get("problems", {}) if op_path.exists() else {}
+
+    def cell_row(c, tri):
+        n = site.nodes[c["setting_id"]]
+        pv = A and analysis.Pages(site, A, sys.modules[__name__]).per_var_html(c.get("per_var") or {})
+        papers = "".join(f"<li>{paper_ref(p)}</li>" for p in (tri or {}).get("papers") or [])
+        return (f'<article class="op"><h3><a href="settings/{n["slug"]}.html#rates">{e(n["name"])}</a></h3>'
+                f'<p class="muted small">{e(analysis.regime_label(c["regime"]))} · {len(n["papers"])} paper{"s" if len(n["papers"]) != 1 else ""} · '
+                f'{e(analysis.STATUS.get(c["status"], (c["status"],))[0])}</p>{pv or ""}'
+                + (f'<p class="small">{e(first_sentence((tri or {}).get("summary") or ""))}</p>'
+                   f'<details class="small"><summary>triage summary and sources</summary><p>{e(tri.get("summary") or "")}</p>'
+                   + (f"<ul>{papers}</ul>" if papers else "") + "</details>" if tri else "")
+                + "</article>")
+
+    known, candidates = [], []
+    for c in (A.cells if A and A.ok else []):
+        tri = triage.get(f'{c["setting_id"]}|{c["regime"]}')
+        if tri and tri.get("verdict") == "open_known" and c["status"] in ("poly_gap", "log_gap", "conflict"):
+            known.append((c, tri))  # a verdict on a cell that is no longer a gap is left out
+        elif c["status"] in ("poly_gap", "log_gap") and (not tri or tri.get("verdict") == "blank") \
+                and len(site.nodes[c["setting_id"]]["papers"]) >= 2:
+            candidates.append((c, tri))
+    known.sort(key=lambda ct: -len(site.nodes[ct[0]["setting_id"]]["papers"]))
+    candidates.sort(key=lambda ct: (ct[0]["status"] != "poly_gap", -len(site.nodes[ct[0]["setting_id"]]["papers"])))
+
+    STATUS_LBL = {"open": "open", "partially_resolved": "partially resolved", "resolved": "resolved", "unclear": "unclear"}
+    rows = []
+    for pid, p in sorted(colt.items(), key=lambda kv: (-kv[1]["year"], kv[1]["title"])):
+        res = "".join(f"<li>{paper_ref(x)}: {e(x.get('claim') or '')}</li>" for x in p.get("papers") or [])
+        rows.append(f'<tr data-bandits="{e(p.get("bandits") or "no")}" data-status="{e(p.get("status") or "unclear")}">'
+                    f'<td>{p["year"]}</td><td><a href="{e(p["url"])}">{e(p["title"])}</a>'
+                    f'<div class="muted small">{e(", ".join(p.get("authors") or []))}</div>'
+                    f'<div class="small">{e(p.get("statement") or "")}</div></td>'
+                    f'<td><span class="badge op-{e(p.get("status") or "unclear")}">{e(STATUS_LBL.get(p.get("status"), "unclear"))}</span></td>'
+                    f'<td class="small">{e(p.get("summary") or "")}'
+                    + (f'<details><summary>papers</summary><ul>{res}</ul></details>' if res else "") + "</td></tr>")
+    sc = Counter(p.get("status") for p in colt.values() if p.get("bandits") in ("yes", "adjacent"))
+    body = f"""
+<h1>Open problems</h1>
+<p class="lede small">Three lists, all generated and none human-verified: gaps in the atlas that the literature
+states are open (found by gap triage, a web search per gap); gaps in well-studied settings where triage found
+nothing either way (candidates); and the open problems posed at COLT with their current status (a web search
+per problem, <code>pipeline/open_problems.py</code>). If you know better, please
+{report_link(SITE_URL + "open-problems.html", "open-problems", "open problems page", "report it")}.</p>
+<h2 id="known">Gaps the literature calls open <span class="muted">({len(known)})</span></h2>
+<div class="ops">{"".join(cell_row(c, t) for c, t in known) or '<p class="muted">None yet.</p>'}</div>
+<h2 id="candidates">Unexplained gaps in well-studied settings <span class="muted">({len(candidates)})</span></h2>
+<p class="small muted">Polynomial or logarithmic gaps between the best upper and lower bounds in settings with at
+least two papers, where gap triage found no paper closing them and no statement that they are open. Some are
+artefacts of the atlas (a missing paper, a mis-scoped extraction); some may be genuinely open.</p>
+<div class="ops">{"".join(cell_row(c, t) for c, t in candidates[:60]) or '<p class="muted">None.</p>'}</div>
+<h2 id="colt">COLT open problems <span class="muted">({len(colt)})</span></h2>
+<p class="small muted">Every “Open Problem:” paper in the COLT proceedings (PMLR), with a status from a web search
+for later work{": among those about bandits or close to them, " + ", ".join(f"{n} {STATUS_LBL.get(k, k)}" for k, n in sc.most_common()) if sc else ""}.
+A status is a lead to check, not a verdict.</p>
+<div class="toolbar"><label class="small">Show <select id="op-filter">
+<option value="bandits">bandits and adjacent</option><option value="all">all</option></select></label></div>
+<div class="scroll"><table class="colt-ops"><thead><tr><th>Year</th><th>Problem</th><th>Status</th><th>Evidence</th></tr></thead>
+<tbody>{"".join(rows)}</tbody></table></div>
+<script>
+(function () {{
+  var sel = document.getElementById("op-filter");
+  var apply = function () {{
+    document.querySelectorAll("table.colt-ops tbody tr").forEach(function (tr) {{
+      tr.hidden = sel.value === "bandits" && tr.dataset.bandits === "no";
+    }});
+  }};
+  sel.addEventListener("change", apply); apply();
+}})();
+</script>
+"""
+    return page("Open problems", body, "", "open", wide=True)
+
+
 def explore_page(site: Site) -> str:
     """explore.html: the corpus as queries over the database (tabs Settings, Papers, Bounds, Gaps)."""
     body = """
@@ -1465,6 +1592,7 @@ def build(root: Path, out: Path) -> None:
     w("transfer.html", pages.transfer_page())
     w("redundant.html", pages.redundant_page())
     w("explore.html", explore_page(site))
+    w("open-problems.html", open_problems_page(site, root))
     w("setting.html", shell_page("setting"))
     w("paper.html", shell_page("paper"))
     n_res = sum(len(n["results"]) for n in site.nodes.values())

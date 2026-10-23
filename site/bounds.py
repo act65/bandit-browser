@@ -252,7 +252,13 @@ def bound_tex(bound: dict, side: str | None, quantity: str | None) -> tuple[str,
         op = r"\liminf_{T\to\infty}" if notation == "liminf" else r"\limsup_{T\to\infty}"
         try:
             e = parse(expr)
-            T = sympy.Symbol("T")
+            T, dl = sympy.Symbol("T"), sympy.Symbol("delta")
+            if _has(e, dl) and not _has(e, T):  # asymptotic in the confidence: delta -> 0 (fixed-confidence BAI)
+                dop = r"\liminf_{\delta\to 0}" if notation == "liminf" else r"\limsup_{\delta\to 0}"
+                ratio = sympy.simplify(e / sympy.log(1 / dl))
+                if not _has(ratio, dl):
+                    return dop + r"\frac{" + lhs + r"}{\log(1/\delta)} " + rel + " " + to_tex(ratio), True
+                return dop + r"\frac{" + lhs + "}{" + tex + "} " + rel + " 1", True
             norm = sympy.simplify(e / sympy.log(T)) if _has(e, T) else e
             if _has(norm, T):  # not of the form c * log T: state the ratio to the whole bound
                 return op + r"\frac{" + lhs + "}{" + tex + "} " + rel + " 1", True

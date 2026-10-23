@@ -101,7 +101,9 @@ CONSTRUCTED = re.compile(r"\bconstruct", re.I)
 T_CAPPED = re.compile(r"^\s*(T|n)\s*(<|<=|≤)")  # a condition bounding the horizon from above
 # consistency / uniform-goodness assumptions: the standard admissible class of asymptotic lower
 # bounds (Lai & Robbins), handled through algorithm_class, not a restriction of the learner
-CONSISTENCY = re.compile(r"o\(\s*[nT]\s*\^\s*\(?\s*a|for (every|all) a\s*>\s*0|uniformly (good|efficient|fast)|consisten", re.I)
+CONSISTENCY = re.compile(r"o\(\s*[nT]\s*\^\s*\(?\s*a|for (every|all) a\s*>\s*0|uniformly (good|efficient|fast)|consisten"
+                         r"|(delta|δ)[- ]?(correct|PAC)|\(\s*(epsilon|ε)\s*,\s*(delta|δ)\s*\)[- ]?PAC", re.I)
+# ... and for fixed-confidence identification, delta-correct / (epsilon, delta)-PAC algorithms
 
 
 def restricts_algorithms(conditions: list[str]) -> bool:
@@ -125,6 +127,7 @@ def instance_expr(expr: str, notation: str | None):
     rep.update({sympy.Symbol(k): Delta**2 for k in KL_LIKE})
     rep.update({sympy.Symbol(k): sympy.Symbol("T") for k in WORST_CASE_T})
     rep[sympy.Symbol("H_1")] = (K - 1) / Delta**2
+    rep[sympy.Symbol("T_star")] = (K - 1) / Delta**2  # BAI characteristic time: between H_1 and 2 H_1
     e = e.subs(rep)
     # sum over suboptimal arms -> (K-1) * summand; sum over all arms -> K * summand
     e = e.replace(lambda x: isinstance(x, sympy.Function) and x.func.__name__ == "sum_subopt",
@@ -133,8 +136,9 @@ def instance_expr(expr: str, notation: str | None):
                   lambda x: K * x.args[0])
     e = e.replace(lambda x: isinstance(x, sympy.Function) and x.func.__name__ == "kl",
                   lambda x: Delta**2)  # kl(mu_i, mu_star) on the uniform-gap instance
-    if notation in ("liminf", "limsup") and sympy.Symbol("T") not in e.free_symbols:
+    if notation in ("liminf", "limsup") and not ({sympy.Symbol("T"), sympy.Symbol("delta")} & e.free_symbols):
         e = e * sympy.log(sympy.Symbol("T"))  # "lim R_T / log T <= c" written as c
+    # an expression in delta (e.g. T_star * log(1/delta)) is asymptotic as delta -> 0, not in T
     return e
 
 
@@ -311,6 +315,8 @@ def main() -> None:
             continue  # holds only on a restricted instance class: shown, but not the setting's rate
         if side == "upper" and any(T_CAPPED.match(c) for c in conditions_of(eid)):
             continue  # holds only for small horizons (e.g. T < (K log K)^2): says nothing about the rate
+        if side == "lower" and cls == "other" and any(CONSISTENCY.search(c) for c in conditions_of(eid)):
+            cls = "consistent"  # the admissible class of the lower bound (consistent, uniformly good, delta-correct)
         if side == "lower" and (cls not in MINIMAX_LOWER_CLASSES or any(c.startswith("holds for") for c in cav)
                                 or (cls in (None, "all") and restricts_algorithms(conditions_of(eid)))):
             continue  # algorithm-specific or fixed-parameter lower bounds don't define the setting's rate

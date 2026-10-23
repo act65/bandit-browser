@@ -2,12 +2,33 @@
 
 Staged so that each phase ends with a **go / no-go check**. We do not scale extraction until the schema and accuracy are proven on a small, hand-checked set ([desiderata.md](desiderata.md) D6).
 
+## Status (2026-10-23) and next steps
+
+A working prototype: 558 papers extracted with ontology v0.5 (2,466 results, 1,117 settings, 67 tight cells, 7 conflict
+cells), a static database-backed site (act65.github.io/bandit-browser), and three automated accuracy checks
+([notes/validation.md](notes/validation.md)): a second-model audit (5% major errors, 95% CI 2–9%; bounds themselves 0–2%),
+a textbook gold set (0 contradictions, 62% of checkable theorems recovered) and a citation cross-check (67% agree).
+
+Next, in order:
+1. **Outreach**: email drafts for five researchers are outside the repo (`../outreach/bandit-browser-emails.md`); send
+   them one at a time, log replies in `data/corrections.yaml`.
+2. **Extraction quality**, from the audit: settings are the weak point (35% minor, 3% major errors): missing
+   knowledge requirements, over-general noise models, algorithm classes of lower bounds (e.g. "consistent and
+   uniform-sampling"). Tighten the prompt guidance on these, then re-audit. The audit could not locate 31 of 200
+   statements in the source (quote matching); improve the excerpt locator.
+3. **Corpus recall**: the PMLR harvester missed half the COLT/ICML/AISTATS/ALT volumes (titles "COLT 2017
+   Proceedings" etc.; fixed 2026-10-23): re-run `harvest.py pmlr`, `dedupe.py`, `screen.py`.
+4. **Scale** to the remaining ~6,000 screened core papers in batches (~$350 per 500 at API prices), with an
+   ontology review, a conflict review, triage, crosscheck and goldcheck after each batch.
+5. **Workshop paper** (e.g. NeurIPS MATH-AI / ICML AI4Math) once the corrected extraction is re-audited; main venue
+   (TMLR, NeurIPS D&B) with a second domain.
+
 ## Phase 0: Foundations (now)
 
 - [x] Repository and docs: README, motivation, desiderata, related work, schema draft.
 - [x] Literature sweep. No existing system does this; ISGCI, π-Base and the Equational Theories Project are the precedents to position against ([related-work.md](related-work.md)).
 - [x] License: MIT for code, CC-BY-4.0 for data (as π-Base).
-- [ ] Reach out (optional, once there is a demo): Lean Machine Learning / Degenne (closest potential overlap), π-Base (engineering, valued properties).
+- [ ] Reach out: drafts for five researchers (Garivier, Cesa-Bianchi, Lattimore, Zimmert, Degenne) are written, outside the repo; π-Base (engineering, valued properties) later.
 
 ## Phase 1: Ontology v0 and gold set (pilot slice)
 
@@ -17,15 +38,16 @@ Staged so that each phase ends with a **go / no-go check**. We do not scale extr
 - [x] Extract all 53 arXiv papers with the pipeline (Phase 2 tooling, built early): 166 settings → 60 canonical nodes, 354 results, 282 cited results. 48/53 files pass all automatic checks ([`data/validation-report.md`](data/validation-report.md)). About $34 at API prices, run on the subscription through `claude -p`.
 - [x] Non-arXiv classics: `pipeline/fetch_pdf.py` (pdftotext, with two-column detection) → 5 of 6 extracted from PDF text (UCB1, EXP3, MOSS, Dani et al., SupLinUCB).
 - [x] Lai & Robbins 1985: PDF saved by hand (2026-10-20), converted and extracted. Earlier, all automated legal routes had failed. The Elsevier open archive serves a bot check, the Rutgers academic copy's server is retired, and the Internet Archive has no copy. Its main result is in the graph via the Bubeck & Cesa-Bianchi survey's restatement (Thm 2.2), so F02 passes; only first-hand provenance is missing. Needs a manual browser download: Save the PDF by hand to `corpus/src/lai1985asymptotically/paper.pdf`, then run `fetch_pdf.py --only lai1985asymptotically` and extract.
-- [ ] Gold set: **human-verify** 15–20 of the LLM extractions instead of annotating from scratch (cheaper), and record corrections. Suggested first: OFUL, KL-UCB, Tsallis-INF, Lattimore & Szepesvári 2017, Li et al. 2019, Garivier et al. 2016.
+- [ ] Gold set: **human-verify** 15–20 of the LLM extractions instead of annotating from scratch (cheaper), and record corrections. (Partly replaced by the automated checks in [notes/validation.md](notes/validation.md); expert spot checks are still wanted.) Suggested first: OFUL, KL-UCB, Tsallis-INF, Lattimore & Szepesvári 2017, Li et al. 2019, Garivier et al. 2016.
 - [x] Ontology v0.2 ([`ontology/bandits-0.2.yaml`](ontology/bandits-0.2.yaml)): function_class and domain dimensions, new noise/feedback/objective/quantity values, node parameters, `compute` field.
 - [x] Ontology v0.3 ([`ontology/bandits-0.3.yaml`](ontology/bandits-0.3.yaml)): applies [`ontology/review-v0.2.md`](ontology/review-v0.2.md) (action_set, instance_assumptions, learner knowledge, adversary refinements, comparator, in_scope), plus registries in the prompt. Corpus re-extracted.
 - [x] Per-dimension orders with justification, caveats, comparator scope and value maps (`order_notes`, `value_maps` in the ontology), used by `pipeline/order.py` along the chain of edges.
 - [x] Write down 5–10 **known facts the system should rediscover** ([`data/ground_truth/pilot-facts.yaml`](data/ground_truth/pilot-facts.yaml), 14 facts, still to be verified by hand) (e.g. which settings are tight up to constants, up to logs, or open; historic gaps and the papers that closed them). These are the Phase 3 acceptance tests.
 - [ ] Ready-made ground truth from related work:
   - [x] Lattimore's *Bandit Convex Optimisation* → [`data/ground_truth/bco.yaml`](data/ground_truth/bco.yaml) (19 settings, 40 results, 19 transfer rules, 27 open problems; v5): Tables 2.1 and 2.2 (bounds), §2.4 (transfer rules) and Chapter 14 (open problems).
+  - [x] Lattimore & Szepesvári, *Bandit Algorithms* → [`data/ground_truth/ls-book.yaml`](data/ground_truth/ls-book.yaml) (71 theorems from chapters 6–37, verbatim quotes; LLM-transcribed 2026-10-23), checked by `pipeline/goldcheck.py`.
+  - [x] COLT open problems: all "Open Problem:" papers in the COLT proceedings with a web-searched status (`pipeline/open_problems.py` → `data/reports/open_problems.yaml`, site page `open-problems.html`).
   - Slivkins' problem-space axes, as a check on the ontology dimensions.
-  - COLT open problems in the pilot slice.
   - **Decision:** K-armed and linear bandits stay the primary pilot, because the gold set must be checked by hand and this slice is familiar. Bandit convex optimisation becomes the *second* slice in Phase 4. Its clean ground truth (the BCO tables) then serves as a test of generalisation: can the pipeline reproduce a published table of bounds in a setting family it was not tuned on?
 
 **Exit check:** the schema can express every result in the gold set without abuse of the `unmapped` field.
@@ -40,9 +62,9 @@ Staged so that each phase ends with a **go / no-go check**. We do not scale extr
 - [x] Re-extracted the corpus with the improved prompt (schema 0.4, about $38 equivalent): theorem numbers match the counter emulation 268/270 (was about 73%). `verify.py` run over all 58 papers → `data/extractions_verified/` (review queue, never auto-applied to `data/extractions/`). Re-run after v0.4: 38 corrections (13 major or critical) and 7 missing flags across 59 papers; 12 papers form the human-review queue (`data/extraction-tests.md` §6).
 - [ ] Not adopted (for now): two-pass extraction, 2-of-3 voting (it outvoted the one correct run in the tests). Original item: compare single-pass and two-pass designs. Add ChatExtract-style follow-up questions for bound expressions, and use self-consistency across repeated runs.
 - [x] Validator: JSON schema (pydantic), vocabulary checks, SymPy parse of every expression, and checks that every quote occurs in the source (shingle overlap ≥ 0.5, tolerant of LaTeX reflow). Bound values are the known weak point of extraction (related-work §3), so most checking effort goes there.
-- [ ] Evaluation harness against the gold set: per-field precision and recall for settings, bounds (expression equivalence via SymPy) and assumptions.
+- [x] Evaluation harness (2026-10-23, [notes/validation.md](notes/validation.md)): `pipeline/audit.py` (per-field grades of 200 random results by a second model, Wilson intervals), `pipeline/goldcheck.py` (textbook gold set: recovered / contradicted via the specialisation order), `pipeline/crosscheck.py` (agreement with how other papers cite each result).
 
-**Exit check:** accuracy on the gold set reaches the agreed bar (to be set, e.g. ≥ 90% of bounds exactly right and ≥ 95% of settings right), and every error type is understood.
+**Exit check:** accuracy on the gold set reaches the agreed bar (to be set, e.g. ≥ 90% of bounds exactly right and ≥ 95% of settings right), and every error type is understood. *2026-10-23 (automated audit, not human): bounds 99% right (0% major, 1% minor); settings 97% without major errors but only 62% fully right.*
 
 ## Phase 3: Graph and inference engine
 
@@ -62,7 +84,7 @@ Staged so that each phase ends with a **go / no-go check**. We do not scale extr
   - Bayesian regret in linear bandits: d√(T log T) vs d√T (closed only under stronger noise assumptions);
   - high-probability adversarial K-armed regret: √(log K) gap.
 
-  Triage verdicts are keyed by setting id, and ids change with the ontology, so `site_index.py` warns about stale verdicts; re-run `triage.py` after ontology changes. Original item: run a targeted retrieval search for each candidate gap before labelling it open; mark it open vs blank; log negative searches.
+  Triage verdicts are keyed by setting id, and ids change with the ontology; verdicts now store their setting key and `triage.py --remap` re-attaches them after a rename (unmatched ones are kept). Original item: run a targeted retrieval search for each candidate gap before labelling it open; mark it open vs blank; log negative searches.
 
 **Exit check:** the acceptance tests from Phase 1 pass, i.e. known gaps and tight results are rediscovered from extracted data alone.
 
@@ -82,8 +104,8 @@ Everything here builds on one piece of machinery: **D2 bound comparison**. Each 
 - [x] **Consistency check**: `data/reports/conflicts.md` (0 conflicts), plus a vacuous-upper-bound check (regret ≥ linear in T, with δ = 1/T and case-split branches excluded; currently none): an extracted upper bound below an extracted lower bound in the same setting and regime is an extraction error or a genuine conflict (D5). Flag it.
 
 ### e) Search and filtering for motivation 1–4
-- [x] **Faceted search** (`search.html`, state in the URL hash, 7 saved queries): over settings (dimension facets) and results (quantity, regime, algorithm, technique family, paper, year, own/inherited, confidence), client-side from a JSON index. Saved queries such as "adversarial settings with no lower bound".
-- [x] **1. Gap finder**: `gaps.html` (real gaps first, with filters and triage badges), graph colouring by status, status column and filter on the settings index: a per-setting, per-regime tightness status (tight / log gap / poly gap / no lower bound / no upper bound). It feeds a "Gaps" page sorted by importance (number of papers, gap size), a graph colouring by status, and a filter on the settings index. Before a gap is called open it goes through gap triage (open vs blank).
+- [x] **Faceted search** (now the Explore page, `explore.html`, SQL over the site database; originally `search.html`): over settings (dimension facets) and results (quantity, regime, algorithm, technique family, paper, year, own/inherited, confidence), client-side from a JSON index. Saved queries such as "adversarial settings with no lower bound".
+- [x] **1. Gap finder**: the Gaps tab of Explore (originally `gaps.html`; real gaps first, with filters and triage badges), graph colouring by status, status column and filter on the settings index: a per-setting, per-regime tightness status (tight / log gap / poly gap / no lower bound / no upper bound). It feeds a "Gaps" page sorted by importance (number of papers, gap size), a graph colouring by status, and a filter on the settings index. Before a gap is called open it goes through gap triage (open vs blank).
 - [x] **2. Unstudied neighbours** (`neighbours.html`, 139 candidates, ill-posed adversarial × non-additive combinations removed): enumerate keys one order step away from well-studied settings (change one dimension to an adjacent value) that have no extracted results, ranked by how studied the source is. Skip combinations flagged ill-posed (e.g. an adversarial environment with a non-additive function class).
 - [x] **3. Technique transfer** (`transfer.html`, 35 suggestions, also shown on gap cards): for a setting with a gap, list algorithm families (registry `family` / techniques) that achieve the best bound in neighbouring settings but don't appear here.
 - [x] **4. Redundancy** (`redundant.html`, 49 findings): an own result that is dominated by an inherited result from an *earlier* paper is "implied by prior work". List these with the derivation path.
@@ -119,29 +141,30 @@ Everything here builds on one piece of machinery: **D2 bound comparison**. Each 
     - Corrections (`data/corrections.yaml`, now with paper-wide `paper:*` targets and `add_condition`): ConjunctionBandit (noiseless), starved bandit, quantum bandits, positive externalities.
   - **Fragmentation:** 999 of 1,102 canonical settings come from a single paper. No single field explains it (dropping `learner_knows` merges 154, `noise` 127, `extras` 100; dropping eight fine-grained fields still leaves 456): it is mostly breadth. Inheritance leaves only 17 settings without any bound.
   - **Unmapped features:** 3,731 items in 1,497 of 1,625 settings → [`ontology/review-v0.4.md`](ontology/review-v0.4.md) (`pipeline/review_unmapped.py`, one Opus pass): 40 themes; 26 ontology changes covering 2,497 items (open `learner_knows` vocabulary, noise models, action-set geometry, feedback structures, combinatorial rewards, multi-agent, constraints, …), 7 already expressible (742), 3 result fields (295), 4 out of scope (195). **Proposed, not applied.**
-- [ ] Triage of the 95 new gaps (101 verdicts in all): 71 closed by papers outside the corpus, 10 open_known, 20 blank. Several "open" log-T gaps are artefacts of reading high-probability bounds with δ = 1/T when no expected-regret bound exists; flag those cells instead of calling them gaps. One open gap (S-922664e0) rests on a lower bound retracted by its authors: worth surfacing as such.
-- [ ] Remaining conflicts (35): mostly need the proposed ontology fields (feedback-graph self-loops; loss scale within combinatorial settings) or a human look (Brukhim et al. 2025 constructed classes, Malik et al. 2022, Tang et al. 2020).
+- [x] Triage of the 95 new gaps (101 verdicts in all): 71 closed by papers outside the corpus, 10 open_known, 20 blank. Several "open" log-T gaps are artefacts of reading high-probability bounds with δ = 1/T when no expected-regret bound exists; flag those cells instead of calling them gaps. One open gap (S-922664e0) rests on a lower bound retracted by its authors: worth surfacing as such.
+- [x] ~~Remaining conflicts (35)~~ → 7 conflict cells after v0.5 and the corrections; see the v0.5 item. Original: mostly need the proposed ontology fields (feedback-graph self-loops; loss scale within combinatorial settings) or a human look (Brukhim et al. 2025 constructed classes, Malik et al. 2022, Tang et al. 2020).
 - [ ] Extraction at scale: choose the model, tiering and budget (see the open decision).
-- [ ] **Ontology v0.5** (2026-10-21, from `ontology/review-v0.4.md`), applied and re-extracting all papers (Opus):
+- [x] **Ontology v0.5** (2026-10-21, from `ontology/review-v0.4.md`), applied and re-extracting all papers (Opus):
   - **Scope decision (user):** multi-agent / federated, state-dependent reward dynamics (Markov, restless, rotting/rising, mortal), multi-objective and quantum are out of the atlas: too close to game theory, MARL and RL. Privacy, causal, offline data and risk functionals are not expanded (coarse extras or conditions). Out-of-scope settings are still extracted, then dropped by `resolve.py` (`scope.out_of_scope_when`), so the cut is reversible.
   - **Added:** open `learner_knows` over the variable registry (+13 promoted symbols); feedback multi-point, first-order, triggered semi-bandit, cascade, limited advice; bounded-memory and smoothed adversaries; convex / Hölder / unimodal function classes (implications now closed in `resolve.py`); node parameters `noise_detail`, `combinatorial` (incl. `loss_scale`), `reward_model`, `constraints`, `preference`, `partial_monitoring`, `delay`; feedback-graph `self_loops` (graph feedback ⊑ bandit requires them).
   - **Triage verdicts survive renames:** verdicts store the setting key; `triage.py --remap` re-attaches them to renamed settings.
   - **Result (2026-10-22, all 558 papers re-extracted, ~$353 API-equivalent):** 137 settings out of scope (112 multi-agent, 25 state-dependent); 1,117 canonical settings, 2,466 results; 1,504 cells: **66 tight** (v0.4.1: 52), 66 log gap, 52 poly gap, **9 conflict cells / 11 per-variable conflicts** (v0.4.1: 35); acceptance **6 PASS**, 2 PASS_STATUS, 2 PARTIAL, 4 MANUAL. Triage: 154 live verdicts (109 closed, 13 open_known, 32 blank), 57 stale kept. Unmapped items 3,731 → 3,006.
   - **Fixes found on the way:** `noise_detail.variance` gets `unspecified_means: homoscedastic` (455 vs 221 settings split the core cells); lower bounds now also hold for learners with more *class-level* knowledge (problem parameters, reward family, kernel, ...; not gaps or priors), which restored the core K-armed tight cells; `bandit ⊑ partial_monitoring` `requires_general` a class of games; corrections for semi-transparent auctions (cesabianchi2024role:r3) and incentive-aware recommendation (dai2022incentive).
-  - **Remaining conflicts:** profiler artefacts where bounds hold only for K ≤ d (jin2026nearly, li2019nearlyminimax: the scan takes K → ∞); garivier2019explore r14 vs bubeck2013bounded r7 (known μ*, K = 2); bubeck2017sparsity r6; song2025outcome r2. Feedback mechanisms that map to partial_monitoring (transparent vs semi-transparent) need a field in the next review.
+  - **Remaining conflicts (7 cells):** profiler artefacts where bounds hold only for K ≤ d (jin2026nearly, li2019nearlyminimax: the scan takes K → ∞; respect side conditions in `compare.profile`); bubeck2017sparsity r6; song2025outcome r2. Fixed 2026-10-23: bubeck2013bounded r7 is a sup over Δ (correction), cesabianchi2024role r2 semi-transparent (correction), fixed-confidence identification (δ → 0 asymptotics now profiled, δ-correct lower bounds admissible; Degenne & Koolen's cell is tight). Feedback mechanisms that map to partial_monitoring (transparent vs semi-transparent) need a field in the next review.
 - [ ] Extend the ontology module by module (contextual, combinatorial, non-stationary, pure exploration, partial monitoring, …), each with a small gold set.
-- [ ] Cross-check with `cited_results` to flag conflicts, and run a human verification queue that prioritises results that drive gap reports.
+- [x] Cross-check with `cited_results` (`pipeline/crosscheck.py` → `data/reports/crosscheck.md`): 67% agree; 26 "consensus disagreements" (a rate cited by ≥ 2 papers that our extraction lacks) are the review queue.
+- [ ] Human verification queue prioritising results that drive gap reports (the audit's 8 major errors and the 26 consensus disagreements first).
 - [ ] Cost tracking: order of 10⁷–10⁸ tokens in total, so cheap; the real constraint is human review time.
 
 ## Phase 5: Browsing and outputs
 
 - [x] Minimal static site ([`site/`](site/)), deployed by GitHub Actions to act65.github.io/bandit-browser.
 - [x] Graph view: Hasse diagram of the product order over settings (Cytoscape), redesigned tables with canonical bound rendering (SymPy → LaTeX), neighbourhood panels.
-- [ ] Full website: one page per setting with bound tables (filter by regime), the Hasse-diagram neighbourhood view, provenance links and gap badges.
+- [x] Full website: one page per setting with bound tables (filter by regime), the Hasse-diagram neighbourhood view, provenance links and gap badges.
 - [x] **Static database site** (2026-10-23): the site is static but database-backed. `site/export_db.py` writes one SQLite file (settings, papers, bounds, cells, triage, FTS5 indexes, gzip-compressed setting/paper pages), split into hash-named 10 MB chunks; the browser queries it with sql.js-httpvfs over HTTP range requests (vendored, Apache-2.0). Explore (`explore.html`) replaces the Settings, Papers, Gaps and Search pages with query tabs (Settings, Papers, Bounds, Gaps) with live facet counts and paging; `setting.html?s=` / `paper.html?p=` load their page from the database. Site size 175 MB → 36 MB (database 33 MB); no file over 10 MB. Graph layouts are precomputed (`site/layout.py`). Local preview needs `site/serve.py` (range requests).
 - [ ] Scaling checks for ~5k papers: graph.html embeds all nodes and edges (0.8 MB now; consider loading it from the database too); facet counts on the Bounds tab scan the whole table (fine at 26k rows, consider pre-aggregated counts at ~250k).
-- [ ] Published open-problems list generated from the gap reports, plus a status tracker for COLT open problems (none exists today).
-- [ ] Contribution workflow: corrections via PR or an issue template.
+- [x] Open-problems page (`open-problems.html`, 2026-10-23): gaps the literature calls open (triage), unexplained gaps in well-studied settings, and every COLT "Open Problem:" paper with a web-searched status (`pipeline/open_problems.py`). Statuses are LLM leads, not verdicts.
+- [x] Contribution workflow (2026-10-23): GitHub issue form (`.github/ISSUE_TEMPLATE/correction.yml`), a pre-filled "Report a problem" link on every setting, paper and result, and [CONTRIBUTING.md](CONTRIBUTING.md) (how a report becomes a `data/corrections.yaml` entry).
 - [ ] Later: natural-language query interface answered from the graph, with citations.
 
 ## Phase 6: Generalise beyond bandits
@@ -170,9 +193,11 @@ Found while building and reviewing the pilot (2026-10-19). Inference issues are 
   Both are currently caveated as "symbols defined only in the source setting".
 - [x] **Instance-dependent lower bounds via reductions** are no longer transferred: per-arm bounds hold only on the embedded instances.
 - [x] **Bayesian ↔ frequentist:** a Bayesian lower bound sent to a setting without a prior becomes a worst-case lower bound (sup ≥ average).
+- [ ] **Rate profiles ignore side conditions:** `compare.profile` scans K → ∞ even for bounds stated for K ≤ d (four of the remaining conflicts); scan along paths that respect a bound's conditions.
+- [ ] **Unscanned variables:** the corruption budget C, the number of experts N and similar parameters are not scanned, so gaps in them are invisible (pilot fact F08); the acceptance checker also ignores node parameters such as the action-set shape (F13).
 
 ### Ontology and setting resolution
-- [ ] **Fragmentation:** 175 extracted settings → 124 canonical ones, many with a single paper. Inheritance mitigates this. Revisit whether some key fields (e.g. `learner_knows: sigma`) are too fine-grained.
+- [ ] **Fragmentation:** 1,404 in-scope extracted settings → 1,117 canonical ones (v0.5), most with a single paper; inheritance leaves 17 with no bound. Earlier: 175 extracted settings → 124 canonical ones, many with a single paper. Inheritance mitigates this. Revisit whether some key fields (e.g. `learner_knows: sigma`) are too fine-grained.
 - [x] **Learner knowledge in lower-bound papers**: rule 17 applied in the schema-0.4 re-extraction (22 of 40 lower-bound settings now record knowledge). Lower bounds usually allow the learner to know everything, but extractions often leave `learner_knows` empty, which blocks valid transfers. Add a prompt rule, or default lower-bound settings to "knows all".
 - [x] **Isolated settings: 36 → 15 of 141** after adding orders for `unspecified` values (oblivious ⊑ unspecified ⊑ adaptive; unspecified shape ⊑ arbitrary compact). The remaining 15 are genuinely different problems (expert advice, dueling, games). Original: 36 settings have no specialisation edge, mostly through deliberately unordered values (`unspecified` shapes, `adversarial_unspecified`, expert advice, dueling). Revisit once there are more papers.
 - [x] `noise: not_applicable` on stochastic settings was a vocabulary gap (arbitrary model classes, e.g. Garivier et al. 2019): added `general_model_class` and normalised in `resolve.py`.
@@ -188,14 +213,14 @@ Found while building and reviewing the pilot (2026-10-19). Inference issues are 
   - **Condition classes:** `pipeline/classify_conditions.py` (one cached LLM pass) splits the 290 distinct conditions into restatement / normalisation / side condition / instance restriction / unclear. Only upper bounds with instance restrictions (83 of 313) are kept out of tightness verdicts.
 
   Result: 0 conflicts, 23 tight cells; acceptance 4 PASS, 2 PASS_STATUS (F13 recovered), 4 PARTIAL, 4 MANUAL, 0 FAIL.
-- [ ] **The algorithm registry** (`data/algorithms.yaml`, 132 entries) was seeded by an LLM and has not been reviewed.
-- [ ] **The pilot facts** (`data/ground_truth/pilot-facts.yaml`) were written from memory and need checking.
+- [x] **The algorithm registry** (`data/algorithms.yaml`) reviewed against the extractions (`pipeline/review_algorithms.py` → `data/reports/algorithm-registry-review.md`, 2026-10-23): 12 missing introducing papers filled from evidence, 0 contradicted, CascadeUCB1 added; one mis-registration (cesabianchi2024role's "Poly INF" marked as INF); 3 unused entries. Not human-reviewed.
+- [x] **The pilot facts** rechecked 2026-10-23 against the textbook gold set and the papers (F06, F08 status; F10, F13 setting; F08, F14 manual): acceptance 5 PASS, 1 PASS_STATUS, 2 PARTIAL, 6 MANUAL, 0 FAIL. Not human-verified.
 - [x] **5 of the 6 non-arXiv classics** extracted from PDF; Lai & Robbins needs a manual PDF save (see Phase 1). Original: (Lai & Robbins, UCB1, EXP3, MOSS/INF, Dani et al., SupLinUCB) are not extracted. They hold the key lower bounds for acceptance facts F01 and F05.
 - [ ] **Paper identity:** `alt_titles` is maintained by hand. 49 cited papers outside the corpus are listed in `data/canonical/candidates.yaml` for the next snowball round.
 
 ### Site
-- [ ] GitHub Pages must be enabled (Settings → Pages → Source: GitHub Actions); a private repo needs a paid plan.
-- [x] BCO ground-truth page: settings, results tables, transfer rules and open-problem cards.
+- [x] GitHub Pages enabled (2026-10-23): act65.github.io/bandit-browser.
+- [x] BCO ground truth and pilot facts moved from the site to technical articles in [notes/](notes/).
 - [x] Long bounds: clipped with a 'show full' toggle.
 
 ## Open decisions

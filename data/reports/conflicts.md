@@ -2,15 +2,9 @@
 
 An upper bound grows more slowly than a lower bound in the same setting and regime. Usually an extraction error (a dropped term, a missing assumption in the setting) — occasionally a genuine contradiction.
 
-- stochastic · K-armed · Gaussian · knows mu_star, reward_family, sigma · K=2 (`S-d66b7845`, 1 papers), regret / instance_dependent, variable T: upper 0 < lower 0·log^1
-  - upper: `sum_subopt(3*Delta_i + 36*log(17/Delta_i)/Delta_i)` (exact; inherited from garivier2019explore Theorem (th:finiteRegret:mus:known)) — conditions: each arm is 1-sub-Gaussian (sigma = 1)
-  - lower: `log(T/139)/(2*Delta_min)` (exact; bubeck2013bounded Theorem 8)
 - adversarial (oblivious) · linear · bounded_pm1 · l1 ball · p_norm=1 (`S-95105bc3`, 1 papers), regret / worst_case, variable T: upper 0.5·log^0.5 < lower 0.666667
   - upper: `d*sqrt(T*log(T))` (O; inherited from hazan2016volumetric Corollary 7.1) — conditions: K equipped with a membership oracle; losses satisfy |L^T x| <= 1 for all x in K
   - lower: `T**(2/3)*d**(1/3)/20` (exact; bubeck2017sparsity Theorem 5)
-- stochastic · K-armed · Gaussian · knows mu_star, sigma · K=2 (`S-40047484`, 1 papers), regret / instance_dependent, variable T: upper 0 < lower 0·log^1
-  - upper: `sum_subopt(3*Delta_i + 36*log(17/Delta_i)/Delta_i)` (exact; inherited from garivier2019explore Theorem (th:finiteRegret:mus:known)) — conditions: each arm is 1-sub-Gaussian (sigma = 1)
-  - lower: `log(T/139)/(2*Delta_min)` (exact; inherited from bubeck2013bounded Theorem 8)
 - stochastic · linear (finite actions) · adversarial contexts · Gaussian · time_varying_action_sets · knows L_feat, S, sigma · finite (`S-e7387680`, 1 papers), regret / worst_case, variable K: upper 0 < lower 0.25
   - upper: `sqrt(T*d)*log(2*T*d)*Min(sqrt(d), (d*log(K))**(1/4))` (O; inherited from jin2026nearly Theorem 4) — conditions: K >= d >= 2; T >= d; noise N(0,1); ||theta||_2 <= 1, ||x_{t,i}||_2 <= 1
   - lower: `K**(1/4)*sqrt(T*d)` (Omega; jin2026nearly Theorem 1)
