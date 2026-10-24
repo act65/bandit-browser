@@ -14,8 +14,9 @@ Next, in order:
    them one at a time, log replies in `data/corrections.yaml`.
 2. **Extraction quality**, from the audit: settings are the weak point (35% minor, 3% major errors): missing
    knowledge requirements, over-general noise models, algorithm classes of lower bounds (e.g. "consistent and
-   uniform-sampling"). Tighten the prompt guidance on these, then re-audit. The audit could not locate 31 of 200
-   statements in the source (quote matching); improve the excerpt locator.
+   uniform-sampling"). Tighten the prompt guidance on these, then re-audit. Make quotes verbatim: 8% are abridged
+   or paraphrased (all 215 such statements were checked and are in their papers, `data/reports/audit-quotes.md`);
+   retry the extraction of a result when `validate.py` rejects its quote, so provenance is checkable mechanically.
 3. **Corpus recall**: the PMLR harvester missed half the COLT/ICML/AISTATS/ALT volumes (titles "COLT 2017
    Proceedings" etc.; fixed 2026-10-23): re-run `harvest.py pmlr`, `dedupe.py`, `screen.py`.
 4. **Scale** to the remaining ~6,000 screened core papers in batches (~$350 per 500 at API prices), with an
