@@ -2,6 +2,14 @@
 
 Staged so that each phase ends with a **go / no-go check**. We do not scale extraction until the schema and accuracy are proven on a small, hand-checked set ([desiderata.md](desiderata.md) D6).
 
+## Status (2026-10-26)
+
+Since 2026-10-23: a test suite (69 tests, 20 of 20 injected bugs caught) and CI that re-derives the data; an inference
+audit (invalid inherited bounds 18% → 4% after the fixes it found, notes/validation.md §5); a front bug fixed (tight
+cells 77, conflict cells 6, acceptance 6 PASS / 2 PARTIAL / 6 MANUAL / 0 FAIL); COLT open problems linked to settings
+(16 of 41 bandit-related ones; most disagreements are bounds the atlas lacks). Remaining from the audit: an unstated
+linear `parameter_structure` is still compatible with `sparse` (treat it as dense); 33 transfers need a recorded caveat.
+
 ## Status (2026-10-23) and next steps
 
 A working prototype: 558 papers extracted with ontology v0.5 (2,466 results, 1,117 settings, 67 tight cells, 7 conflict
@@ -48,7 +56,6 @@ Next, in order:
   - [x] Lattimore's *Bandit Convex Optimisation* → [`data/ground_truth/bco.yaml`](data/ground_truth/bco.yaml) (19 settings, 40 results, 19 transfer rules, 27 open problems; v5): Tables 2.1 and 2.2 (bounds), §2.4 (transfer rules) and Chapter 14 (open problems).
   - [x] Lattimore & Szepesvári, *Bandit Algorithms* → [`data/ground_truth/ls-book.yaml`](data/ground_truth/ls-book.yaml) (71 theorems from chapters 6–37, verbatim quotes; LLM-transcribed 2026-10-23), checked by `pipeline/goldcheck.py`.
   - [x] COLT open problems: all "Open Problem:" papers in the COLT proceedings with a web-searched status (`pipeline/open_problems.py` → `data/reports/open_problems.yaml`, site page `open-problems.html`).
-  - Slivkins' problem-space axes, as a check on the ontology dimensions.
   - **Decision:** K-armed and linear bandits stay the primary pilot, because the gold set must be checked by hand and this slice is familiar. Bandit convex optimisation becomes the *second* slice in Phase 4. Its clean ground truth (the BCO tables) then serves as a test of generalisation: can the pipeline reproduce a published table of bounds in a setting family it was not tuned on?
 
 **Exit check:** the schema can express every result in the gold set without abuse of the `unmapped` field.
@@ -61,7 +68,7 @@ Next, in order:
 - [x] Extraction tests (`data/extraction-tests.md`): self-consistency on 6 papers × 3 runs, and the `pipeline/verify.py` verification pass (planted-error recall 12/12; on real data 6 right / 2 debatable / 3 wrong corrections, the wrong ones low-confidence).
 - [x] Improvements adopted: printed theorem numbers computed in preprocessing; prompt rules 5–6 and 17–20 (case splits, corollary policy, upper/lower-bound knowledge, instance assumptions, quantity by definition, symbol naming); quantity definitions in the ontology; algorithm knowledge merged into upper-bound settings in `resolve.py`.
 - [x] Re-extracted the corpus with the improved prompt (schema 0.4, about $38 equivalent): theorem numbers match the counter emulation 268/270 (was about 73%). `verify.py` run over all 58 papers → `data/extractions_verified/` (review queue, never auto-applied to `data/extractions/`). Re-run after v0.4: 38 corrections (13 major or critical) and 7 missing flags across 59 papers; 12 papers form the human-review queue (`data/extraction-tests.md` §6).
-- [ ] Not adopted (for now): two-pass extraction, 2-of-3 voting (it outvoted the one correct run in the tests). Original item: compare single-pass and two-pass designs. Add ChatExtract-style follow-up questions for bound expressions, and use self-consistency across repeated runs.
+- [x] ~~Two-pass extraction, 2-of-3 voting~~: not planned (voting outvoted the one correct run in the tests; the second-model audits replace it).
 - [x] Validator: JSON schema (pydantic), vocabulary checks, SymPy parse of every expression, and checks that every quote occurs in the source (shingle overlap ≥ 0.5, tolerant of LaTeX reflow). Bound values are the known weak point of extraction (related-work §3), so most checking effort goes there.
 - [x] Evaluation harness (2026-10-23, [notes/validation.md](notes/validation.md)): `pipeline/audit.py` (per-field grades of 200 random results by a second model, Wilson intervals), `pipeline/goldcheck.py` (textbook gold set: recovered / contradicted via the specialisation order), `pipeline/crosscheck.py` (agreement with how other papers cite each result).
 
@@ -144,7 +151,7 @@ Everything here builds on one piece of machinery: **D2 bound comparison**. Each 
   - **Unmapped features:** 3,731 items in 1,497 of 1,625 settings → [`ontology/review-v0.4.md`](ontology/review-v0.4.md) (`pipeline/review_unmapped.py`, one Opus pass): 40 themes; 26 ontology changes covering 2,497 items (open `learner_knows` vocabulary, noise models, action-set geometry, feedback structures, combinatorial rewards, multi-agent, constraints, …), 7 already expressible (742), 3 result fields (295), 4 out of scope (195). **Proposed, not applied.**
 - [x] Triage of the 95 new gaps (101 verdicts in all): 71 closed by papers outside the corpus, 10 open_known, 20 blank. Several "open" log-T gaps are artefacts of reading high-probability bounds with δ = 1/T when no expected-regret bound exists; flag those cells instead of calling them gaps. One open gap (S-922664e0) rests on a lower bound retracted by its authors: worth surfacing as such.
 - [x] ~~Remaining conflicts (35)~~ → 7 conflict cells after v0.5 and the corrections; see the v0.5 item. Original: mostly need the proposed ontology fields (feedback-graph self-loops; loss scale within combinatorial settings) or a human look (Brukhim et al. 2025 constructed classes, Malik et al. 2022, Tang et al. 2020).
-- [ ] Extraction at scale: choose the model, tiering and budget (see the open decision).
+- [x] Extraction at scale: **Opus 5.5 for all papers** (decision 2026-10-26; no model tiering), on the subscription through `claude -p`.
 - [x] **Ontology v0.5** (2026-10-21, from `ontology/review-v0.4.md`), applied and re-extracting all papers (Opus):
   - **Scope decision (user):** multi-agent / federated, state-dependent reward dynamics (Markov, restless, rotting/rising, mortal), multi-objective and quantum are out of the atlas: too close to game theory, MARL and RL. Privacy, causal, offline data and risk functionals are not expanded (coarse extras or conditions). Out-of-scope settings are still extracted, then dropped by `resolve.py` (`scope.out_of_scope_when`), so the cut is reversible.
   - **Added:** open `learner_knows` over the variable registry (+13 promoted symbols); feedback multi-point, first-order, triggered semi-bandit, cascade, limited advice; bounded-memory and smoothed adversaries; convex / Hölder / unimodal function classes (implications now closed in `resolve.py`); node parameters `noise_detail`, `combinatorial` (incl. `loss_scale`), `reward_model`, `constraints`, `preference`, `partial_monitoring`, `delay`; feedback-graph `self_loops` (graph feedback ⊑ bandit requires them).
@@ -166,7 +173,25 @@ Everything here builds on one piece of machinery: **D2 bound comparison**. Each 
 - [ ] Scaling checks for ~5k papers: graph.html embeds all nodes and edges (0.8 MB now; consider loading it from the database too); facet counts on the Bounds tab scan the whole table (fine at 26k rows, consider pre-aggregated counts at ~250k).
 - [x] Open-problems page (`open-problems.html`, 2026-10-23): gaps the literature calls open (triage), unexplained gaps in well-studied settings, and every COLT "Open Problem:" paper with a web-searched status (`pipeline/open_problems.py`). Statuses are LLM leads, not verdicts.
 - [x] Contribution workflow (2026-10-23): GitHub issue form (`.github/ISSUE_TEMPLATE/correction.yml`), a pre-filled "Report a problem" link on every setting, paper and result, and [CONTRIBUTING.md](CONTRIBUTING.md) (how a report becomes a `data/corrections.yaml` entry).
-- [ ] Later: natural-language query interface answered from the graph, with citations.
+- [x] ~~Natural-language query interface~~: not planned.
+
+## Phase 5b: Keeping the atlas current (after the scale-up)
+
+Proposal (2026-10-26), not built yet. A monthly job, `pipeline/update.py --since <last run>`:
+1. **Find new papers:** arXiv listing API for the harvest keywords since the last run, plus OpenAlex works that cite
+   corpus papers (`harvest.py arxiv|openalex --since`); dedupe against the pool.
+2. **Screen** the new records (`screen.py`, Sonnet, ~$0.003/paper) and keep the core ones.
+3. **Extract** with Opus 5.5 (`fetch.py`, `preprocess.py`, `extract.py`, `validate.py`), retrying non-verbatim quotes.
+4. **Derive and check:** `derive.py`, the test suite, crosscheck, goldcheck; triage only the *new* gap cells.
+5. **Report what changed:** a diff of the atlas, not just of files: cells that became tight ("gap closed by X"),
+   new gaps and conflicts, new lower bounds, which papers drove each change.
+6. **Open a pull request** with the data and that report; a human reads the report and merges (CI runs the tests and
+   the re-derive check). Nothing goes live without a merge.
+
+Expected volume: ~40–60 core bandit-theory papers a month (6.5k core over ~20 years, more recently), ~$25–35 of
+extraction at API prices. Ways to run it: a local systemd timer / cron on this machine (uses the `claude -p`
+subscription that extraction already uses; simplest), a scheduled GitHub Action (needs an API key as a secret and
+API billing), or a scheduled Claude Code cloud agent. Start local and monthly.
 
 ## Phase 6: Generalise beyond bandits
 
@@ -226,8 +251,14 @@ Found while building and reviewing the pilot (2026-10-19). Inference issues are 
 
 ## Open decisions
 
-1. The accuracy bar for Phase 2 to Phase 3.
-2. Whether lemmas are extracted in v0 (proposal: no).
+1. ~~The accuracy bar~~: decided 2026-10-26 from the measured rates (automated audits, 95% CIs): bound fields ≥ 98%
+   right, settings ≥ 95% without a major error, inherited bounds that set a verdict ≥ 95% valid. Re-measured after each batch.
+2. ~~Lemmas~~: not extracted.
 3. Representation of "T large enough" and hidden problem-dependent constants.
 4. The human verification process: who verifies, and how much is verified before publishing.
 5. Project name: "bandit-browser" fits the pilot; the general system may need a broader name later.
+
+## Not planned
+
+Considered and dropped (2026-10-26): Slivkins' problem-space axes as an ontology check; two-pass extraction and
+2-of-3 voting; a natural-language query interface; model tiering for extraction (Opus 5.5 throughout).

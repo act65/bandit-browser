@@ -1,0 +1,32 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.9"
+      - name: Unit and data tests
+        run: uv run pytest tests -q
+
+  derive:
+    # The committed derived data must be what the code produces from data/extractions/:
+    # a change to the order, inference or comparison has to ship with its regenerated data.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.9"
+      - name: Re-derive
+        run: uv run python pipeline/derive.py
+      - name: Derived data unchanged
+        run: git diff --stat --exit-code data/canonical data/acceptance-report.md data/reports

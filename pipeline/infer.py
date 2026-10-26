@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import collections
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -38,6 +39,10 @@ OUT = schema.ROOT / "data" / "canonical"
 # Results that must not propagate: pull-count and other non-performance quantities,
 # and realised-regret lower bounds (they hold only with constant probability).
 SKIP_QUANTITIES = {"other"}
+# Action spaces with a number of arms K. A lower bound in K sent to an action space without K (finite menus ->
+# compact sets) holds for every admissible menu size: at K = d when the bound needs K <= d, else it is dropped.
+K_SPACES = {"finite_K", "linear_finite", "combinatorial"}
+K_AT_MOST_D = re.compile(r"K\s*(<=|≤|\\le)\s*d\b")
 SKIP_LOWER_QUANTITIES = {"realized_regret"}
 
 
@@ -134,12 +139,10 @@ def class_level_knowledge(ont: dict) -> set[str]:
     return ({k for k, v in variables.items() if v["kind"] == "problem_parameter"} | CLASS_LEVEL_NAMED) & knowable
 
 
-def main() -> None:
-    ont = schema.load_ontology()
+def infer(settings: dict, results: list[dict], ont: dict, canonical: set[str]) -> tuple[list[dict], int]:
+    """Inferred bounds for canonical settings {id: {"key": ...}} and their results; also the
+    number of ordered pairs."""
     order = Order(ont)
-    canonical = set(schema.load_variables()["variables"])
-    settings = {s["id"]: s for s in json.loads((OUT / "settings.json").read_text())}
-    results = json.loads((OUT / "results.json").read_text())
     by_setting = collections.defaultdict(list)
     for r in results:
         by_setting[r["setting_id"]].append(r)
@@ -219,9 +222,15 @@ def main() -> None:
                 continue  # per-arm bounds hold only on the embedded instances (e.g. K = d basis arms)
             if any(ch.up_map for ch in changes) and not mentions(r, {k for ch in changes for k in (ch.up_map or {})}):
                 continue  # e.g. Omega(T) for non-observable graphs: not a statement about every graph, so no alpha_G = K
-            expr, subs = substitute(r["bound"].get("expression_normalised") or r["bound"]["expression"], up_map)
+            lb_map, k_note = up_map, []
+            if keys[special].get("action_space") in K_SPACES and keys[general].get("action_space") not in K_SPACES \
+                    and mentions(r, {"K"}) and "K" not in up_map:
+                if not any(K_AT_MOST_D.search(c) for c in r.get("conditions") or []):
+                    continue  # K is not a parameter of the target and the bound gives no admissible value
+                lb_map, k_note = {**up_map, "K": "d"}, ["menus of K = d actions (the bound needs K <= d)"]
+            expr, subs = substitute(r["bound"].get("expression_normalised") or r["bound"]["expression"], lb_map)
             foreign = foreign_symbols(expr, canonical)
-            note = [f"holds for {k} = {v} only" if pinned(v) else f"holds when {k}: {v}" for k, v in fixed.items()]
+            note = k_note + [f"holds for {k} = {v} only" if pinned(v) else f"holds when {k}: {v}" for k, v in fixed.items()]
             note += [f"uses symbols defined only in the source setting: {', '.join(foreign)}"] if foreign else []
             rec = {"id": f"{r['id']}>{general}", "rule": "lower_bound_to_generalisation",
                    "setting_id": general, "from_setting": special, "from_result": r["id"],
@@ -232,12 +241,24 @@ def main() -> None:
                 rec["caveats"] = rec["caveats"] + ["Bayesian lower bound read as a worst-case lower bound (sup >= average)"]
             inferred.append(rec)
 
+    return inferred, len(pairs)
+
+
+def main() -> None:
+    ont = schema.load_ontology()
+    canonical = set(schema.load_variables()["variables"])
+    settings = {s["id"]: s for s in json.loads((OUT / "settings.json").read_text())}
+    results = json.loads((OUT / "results.json").read_text())
+    inferred, n_pairs = infer(settings, results, ont, canonical)
+    by_setting = collections.defaultdict(list)
+    for r in results:
+        by_setting[r["setting_id"]].append(r)
     (OUT / "inferred.json").write_text(json.dumps(inferred, indent=1, ensure_ascii=False))
     got = collections.Counter(x["setting_id"] for x in inferred)
     own = {k: len(v) for k, v in by_setting.items()}
     empty_before = sum(1 for s in settings if not own.get(s))
     empty_after = sum(1 for s in settings if not own.get(s) and not got.get(s))
-    print(f"{len(pairs)} ordered pairs; {len(inferred)} inferred results "
+    print(f"{n_pairs} ordered pairs; {len(inferred)} inferred results "
           f"({sum(x['rule'].startswith('upper') for x in inferred)} upper, "
           f"{sum(x['rule'].startswith('lower') for x in inferred)} lower)")
     print(f"settings with any lower bound: own {sum(1 for s in settings if any(r['side'] == 'lower' for r in by_setting.get(s, [])))}"

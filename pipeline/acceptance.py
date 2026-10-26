@@ -82,12 +82,18 @@ def main() -> None:
             if not cells:
                 verdict, detail = "MISSING", f"{len(matches)} matching settings, none with `{fam}|{dep}` bounds"
             else:
-                s, c = min(cells, key=lambda sc: (STATUS_RANK[sc[1]["status"]], -sc[1]["n_upper"] - sc[1]["n_lower"]))
                 rates = fact_rates(f, canonical)
-                got_u = {v: pv["upper"] for v, pv in c["per_var"].items()}
-                got_l = {v: pv["lower"] for v, pv in c["per_var"].items()}
-                rate_ok = all(got_u.get(v) == r for v, r in rates.get("upper", {}).items()) and \
-                          all(got_l.get(v) == r for v, r in rates.get("lower", {}).items())
+
+                def rates_match(c: dict) -> bool:
+                    got_u = {v: pv["upper"] for v, pv in c["per_var"].items()}
+                    got_l = {v: pv["lower"] for v, pv in c["per_var"].items()}
+                    return all(got_u.get(v) == r for v, r in rates.get("upper", {}).items()) and \
+                        all(got_l.get(v) == r for v, r in rates.get("lower", {}).items())
+                # best status first; among equals, a cell with the fact's rates (not, e.g., a K = 2 special case
+                # without a K rate), then the best-studied
+                s, c = min(cells, key=lambda sc: (STATUS_RANK[sc[1]["status"]], not rates_match(sc[1]),
+                                                  -sc[1]["n_upper"] - sc[1]["n_lower"]))
+                rate_ok = rates_match(c)
                 if c["status"] in EXPECTED[exp] and rate_ok:
                     verdict = "PASS"
                 elif c["status"] in EXPECTED[exp]:

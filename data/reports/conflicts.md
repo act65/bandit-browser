@@ -26,9 +26,6 @@ An upper bound grows more slowly than a lower bound in the same setting and regi
 - stochastic · linear (finite actions) · adversarial contexts · conditionally_subgaussian · time_varying_action_sets · knows sigma · finite (`S-f887286f`, 1 papers), regret / worst_case, variable K: upper 0 < lower 0.25
   - upper: `sqrt(T)*d**(3/2)*(sqrt(log(T)*log(1/delta)) + log(T))` (O; agrawal2013lints Theorem 1) [delta=1/T] — conditions: ||b_i(t)|| <= 1, ||mu|| <= 1, Delta_i(t) <= 1; noise conditionally R-sub-Gaussian (R = sigma)
   - lower: `K**(1/4)*sqrt(T*d)` (Omega; inherited from jin2026nearly Theorem 1)
-- stochastic · linear · adversarial contexts · conditionally_subgaussian · time_varying_action_sets · knows S, function_class, sigma · arbitrary compact (`S-22d6e1e6`, 1 papers), regret / worst_case, variable K: upper 0 < lower 0.25
-  - upper: `2*sqrt(2)*sqrt(T*d*log(L_feat**2*T/(d*lam) + 1))*Max(1, sqrt(S**2*lam + d*sigma**2*log(L_feat**2*T/(d*lam) + 1) + 2*sigma**2*log(1/delta)))` (exact; baumgrtner2026gray Corollary 2) [delta=1/T] — conditions: V = 1, Lambda_0 = lambda_0 I, mu_0 = 0; ||theta*||_2 <= c_S (S); ||u||_2 <= c_L (L_feat); u^T theta* in [-1,1]; noise c_v-subgaussian (sigma = c_v)
-  - lower: `K**(1/4)*sqrt(T*d)` (Omega; inherited from jin2026nearly Theorem 1)
 
 ## Vacuous upper bounds (regret growing at least linearly in T)
 

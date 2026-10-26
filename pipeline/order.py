@@ -14,7 +14,8 @@ ontology's dimensions:
     values in the general one (bandit ⊑ partial monitoring only for a class of games; strict);
   - node parameters (action_set, corruption, feedback_graph fields): per-field orders and
     value maps; computational-only fields are ignored; `not_applicable` on one side defers
-    to the governing dimension; `unspecified` is compatible with a caveat;
+    to the governing dimension; `unspecified` is compatible with a caveat, except that a
+    field's most general value is never below `unspecified`;
   - `parameters`: fixing a parameter is a special case (P ⊑ Q iff Q ⊆ P as items).
 """
 
@@ -59,6 +60,7 @@ class Order:
         self.orders: dict[str, set] = {}
         self.reductions: dict[str, dict] = {}  # dim -> {(a, b): composed param map}
         self.implies: dict[tuple, dict] = {}   # (dim, from, to) -> values implied in the special setting
+        self.reduction_when: dict[str, list] = {}
         for d, spec in self.dims.items():
             self.orders[d] = _closure(tuple(p) for p in spec.get("order") or [])
             direct = {(r["from"], r["to"]): dict(r.get("map") or {}) for r in spec.get("reductions") or []}
@@ -66,15 +68,24 @@ class Order:
                 if r.get("implies"):
                     self.implies[(d, r["from"], r["to"])] = r["implies"]
             self.reductions[d] = self._compose(direct, self.orders[d])
+            # conditions on the special setting for a reduction to apply (e.g. K-armed -> linear only
+            # without contexts): (from, to, {dim: allowed values})
+            self.reduction_when.setdefault(d, []).extend(
+                (r["from"], r["to"], r.get("when") or {}) for r in spec.get("reductions") or [])
         self.value_maps = {d: spec.get("value_maps") or {} for d, spec in self.dims.items()}
         self.value_maps_up = {d: spec.get("value_maps_up") or {} for d, spec in self.dims.items()}
         self.notes = {d: {tuple(n["pair"]): n for n in spec.get("order_notes") or []}
                       for d, spec in self.dims.items()}
         self.node_fields = {}  # node parameter -> fields that take part in the order
+        self.tops: dict[str, set] = {}
         for name, spec in (ontology.get("node_parameters") or {}).items():
             self.node_fields[name] = [f for f, fs in spec["fields"].items() if not fs.get("computational_only")]
             for f, fspec in spec["fields"].items():
                 self.orders[f"{name}.{f}"] = _closure(tuple(p) for p in fspec.get("order") or [])
+                pairs = fspec.get("order") or []
+                # the most general values of a field (any_graph, any_game, arbitrary, ...) cover whatever an
+                # unstated value is: unspecified ⊑ top with a caveat, but never top ⊑ unspecified
+                self.tops[f"{name}.{f}"] = {b for _, b in pairs} - {a for a, _ in pairs}
                 self.value_maps[f"{name}.{f}"] = fspec.get("value_maps") or {}
 
     @staticmethod
@@ -150,7 +161,7 @@ class Order:
                     continue
                 return None
             ch = self._scalar(dim, va, vb)
-            if ch is None:
+            if ch is None or (ch.kind == "reduction" and not self._reduction_applies(dim, va, vb, ka)):
                 return None
             ch.param_map = {**ch.param_map, **self.value_maps.get(dim, {}).get(va, {})}
             ch.up_map = dict(self.value_maps_up.get(dim, {}).get(vb, {}))
@@ -164,10 +175,16 @@ class Order:
                 dim = f"{name}.{f}"
                 if (va, vb) in self.orders.get(dim, set()):
                     changes.append(Change(dim, va, vb, "order", dict(self.value_maps.get(dim, {}).get(va, {}))))
+                elif "not_applicable" in (va, vb) and any("not_applicable" in p for p in self.orders.get(dim, ())):
+                    # the ontology places not_applicable in this field's order (K-armed actions are a
+                    # finite set): it does not defer, e.g. K-armed is not a special case of the unit ball
+                    return None
                 elif "not_applicable" in (va, vb):
                     # irrelevant on one side: the governing dimension (environment for corruption,
                     # feedback for feedback_graph, action_space for action_set) carries the order
                     continue
+                elif vb == "unspecified" and va in self.tops.get(dim, ()):
+                    return None
                 elif "unspecified" in (va, vb):
                     # the paper did not say: compatible only if its unstated convention matches
                     changes.append(Change(dim, va, vb, "order",
@@ -197,6 +214,15 @@ class Order:
             changes.append(Change("parameters", fixed, {}, "parameter", dict(fixed)))
         return changes or None
 
+    def _reduction_applies(self, dim: str, a, b, ka: dict) -> bool:
+        """Some first reduction step from a towards b has its `when` conditions met by the special setting."""
+        red, order = self.reductions.get(dim, {}), self.orders.get(dim, set())
+        for frm, to, when in self.reduction_when.get(dim, []):
+            if frm == a and (to == b or (to, b) in order or (to, b) in red):
+                if all(ka.get(d2) in allowed for d2, allowed in when.items()):
+                    return True
+        return False
+
     def _with_implied(self, ka: dict, kb: dict) -> dict:
         """Add values a reduction implies in the special setting (e.g. K-armed embedded as
         basis vectors satisfies arms_span_Rd) before comparing the remaining dimensions."""
@@ -204,7 +230,12 @@ class Order:
             if ka.get(dim) == a and (a, kb.get(dim)) in self.reductions.get(dim, {}):
                 ka = dict(ka)
                 for d2, vals in implied.items():
-                    ka[d2] = sorted(set(ka.get(d2) or []) | set(vals))
+                    if "." in d2:  # a node field the embedding fixes (e.g. action_set.parameter_structure: dense)
+                        name, f = d2.split(".")
+                        if (ka.get(name) or {}).get(f, "not_applicable") == "not_applicable":
+                            ka[name] = {**(ka.get(name) or {}), f: vals}
+                    else:
+                        ka[d2] = sorted(set(ka.get(d2) or []) | set(vals))
         return ka
 
     def comparable_pairs(self, keys: dict[str, dict]):

@@ -104,13 +104,32 @@ the paper states the gap-dependent bound), specialise, or cite another theorem. 
 rates cited by two or more papers that our extraction lacks; several are genuine gaps in the extraction (e.g.
 Flaxman et al.'s T^{3/4} for bandit convex optimisation, Zoghi et al.'s relative UCB).
 
+## 5. Inference audit (are inherited bounds valid?)
+
+`pipeline/audit_inference.py` → [`data/reports/audit-inference.md`](../data/reports/audit-inference.md)
+
+200 random inherited bounds that set a verdict (on the best-upper or best-lower front of a tight / gap / conflict
+cell), each judged by a second model from the source theorem, both settings and the derivation.
+
+- **Round 1 (2026-10-26): 18% invalid** (13–24%; [round-1 report](../data/reports/audit-inference-round1.md)). Causes,
+  all fixed: K-armed embedded into unit-ball / ellipsoid / permutahedron linear settings (an order rule let
+  `not_applicable` defer); `top ⊑ unspecified` in node fields; adversarial bounds sent to uncorrupted-reference
+  corruption settings; d = K applied to contextual K-armed settings; switching-comparator results pooled with
+  static regret; lower bounds in K sent to settings without K; an ETC-only lower bound (correction).
+- The same work found an older bug: equal-rate bounds removed each other from the front, leaving 49 cells with no
+  best upper bound (tight cells 66 → 77 after the fix).
+- **Round 2 (fresh sample, after the fixes): 4% invalid** (2–7%). 4 of the 7 dispute static regret in switching
+  settings (valid as stated: Θ(√KT) against the best fixed arm), 2 are a linear `parameter_structure` left unstated
+  being read as compatible with sparse (open), 1 a range-adaptivity lower bound. 33 more are valid but need a
+  caveat the derivation does not record (mostly: the lower-bound instances must lie in the target class).
+
 ## What this does and does not show
 
 - The audit and the cross-check measure transcription: is what we stored what the paper says? Bounds are very
   reliable; settings are the weak point.
 - The gold set measures coverage and consistency at the level of rates: the atlas never contradicts the
   textbook, and holds about 60% of its results in the right place.
-- None of the three checks the *inference*: whether a bound inherited along the order is valid. That is what the
+- Section 5 checks the *inference*; before it, none did: whether a bound inherited along the order is valid. That is what the
   conflict check is for (an upper bound below a lower bound in the same cell; 7 conflict cells remain, each
   explained in `plan.md`), and what expert review should target.
 

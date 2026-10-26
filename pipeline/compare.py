@@ -72,6 +72,10 @@ FAMILY = {"pseudo_regret": "regret", "expected_regret": "regret", "regret_unspec
           "simple_regret": "simple_regret", "sample_complexity": "sample_complexity",
           "error_probability": "error_probability", "dynamic_regret": "dynamic_regret",
           "switching_regret": "switching_regret"}
+# Regret against a switching comparator is switching regret, whatever quantity the paper names: pooling it with
+# regret against the best fixed action would compare a static upper bound with a switching lower bound.
+COMPARATOR_FAMILY = {("regret", "best_switching_sequence"): "switching_regret",
+                     ("hp_regret", "best_switching_sequence"): "switching_regret"}
 MINIMAX_LOWER_CLASSES = {None, "all", "consistent", "uniformly_good"}
 # A condition is a benign side condition if it only constrains the scanned problem sizes
 # (e.g. "K >= 2", "T >= max{55, K}"); anything else restricts the instance class.
@@ -243,9 +247,9 @@ def fmt(ab) -> str:
     return f"{a:g}" + (f"·log^{b:g}" if b else "")
 
 
-def main() -> None:
-    results = {r["id"]: r for r in json.loads((OUT / "results.json").read_text())}
-    inferred = json.loads((OUT / "inferred.json").read_text())
+def compare(results: dict, inferred: list[dict], canonical: set[str]) -> dict:
+    """Profiles, per-cell status, conflicts and rate regimes for results {id: result} and the
+    inferred bounds (the content of comparison.json, plus counters under "_stats")."""
     entries = []  # (id, setting_id, side, quantity, dependence, algorithm_class, notation, expr, inherited, caveats)
     for r in results.values():
         entries.append((r["id"], r["setting_id"], r["side"], r.get("quantity"), r.get("dependence"),
@@ -258,7 +262,6 @@ def main() -> None:
                         src.get("algorithm_class"), src["bound"].get("notation"), x["expression"], True,
                         x["caveats"]))
 
-    canonical = set(schema.load_variables()["variables"]) | {"Delta"}
     # A high-probability upper bound B(delta) gives an expected-regret bound B(1/T) + O(1)
     # (failure event of probability 1/T costs at most T * 1/T): add it to the regret family.
     for e in list(entries):
@@ -295,15 +298,18 @@ def main() -> None:
 
     inferred_by_id = {x["id"]: x for x in inferred}
 
-    def conditions_of(eid: str) -> list[str]:
+    def source_of(eid: str) -> dict:
         eid = eid.partition("@")[0]
-        r = results.get(eid) or results[inferred_by_id[eid]["from_result"]]
-        return r.get("conditions") or []
+        return results.get(eid) or results[inferred_by_id[eid]["from_result"]]
+
+    def conditions_of(eid: str) -> list[str]:
+        return source_of(eid).get("conditions") or []
 
     regimes = collections.defaultdict(lambda: {"upper": [], "lower": []})
     rate_regime = {}  # bound id -> "family|dependence" of the cell whose rate it takes part in
     for eid, sid, side, q, dep, cls, nota, expr, inh, cav in entries:
         fam = FAMILY.get(q)
+        fam = COMPARATOR_FAMILY.get((fam, source_of(eid).get("comparator")), fam)
         if set(resolve.IDENT_RE.findall(expr)) & WORST_CASE_T:
             dep = "data_dependent"  # small-loss / variation bounds: not comparable with gap-based ones
         p = profiles.get(eid)
@@ -331,8 +337,12 @@ def main() -> None:
     for (sid, fam, dep), sides in regimes.items():
         ups = [u for u in sides["upper"]]
         los = [l for l in sides["lower"]]
-        up_front = [u for u in ups if not any(leq(v["profile"], u["profile"]) and v["profile"] != u["profile"] for v in ups)]
-        lo_front = [l for l in los if not any(leq(l["profile"], v["profile"]) and v["profile"] != l["profile"] for v in los)]
+        # strict dominance: bounds with the same rate (e.g. sqrt(KT) and sqrt(KT) + sum Delta_i, whose profiles
+        # differ only in a Delta entry) all stay on the front instead of removing each other
+        up_front = [u for u in ups if not any(leq(v["profile"], u["profile"]) and not leq(u["profile"], v["profile"])
+                                              for v in ups)]
+        lo_front = [l for l in los if not any(leq(l["profile"], v["profile"]) and not leq(v["profile"], l["profile"])
+                                              for v in los)]
         vars_ = sorted({v for x in up_front + lo_front for v in x["profile"]["_path"]})
         per_var, status = {}, None
         if not up_front:
@@ -372,13 +382,24 @@ def main() -> None:
             "relies_on_inherited": any(x["inherited"] for x in up_front + lo_front),
             "n_upper": len(ups), "n_lower": len(los)}
 
+    return {"profiles": profiles, "settings": settings_out, "conflicts": conflicts, "rate_regime": rate_regime,
+            "_stats": {"entries": len(entries), "no_profile": failures["no_profile"], "cells": len(regimes),
+                       "status": status_count}}
+
+
+def main() -> None:
+    results = {r["id"]: r for r in json.loads((OUT / "results.json").read_text())}
+    inferred = json.loads((OUT / "inferred.json").read_text())
+    canonical = set(schema.load_variables()["variables"]) | {"Delta"}
+    out = compare(results, inferred, canonical)
+    profiles, conflicts, st = out["profiles"], out["conflicts"], out["_stats"]
     (OUT / "comparison.json").write_text(json.dumps(
         {"profiles": {k: ({v: (sorted(ab) if v == "_unknown" else ab if v == "_path" else list(ab))
                             for v, ab in p.items()} if p is not None else None) for k, p in profiles.items()},
-         "settings": settings_out, "conflicts": conflicts, "rate_regime": rate_regime}, indent=1, ensure_ascii=False))
+         "settings": out["settings"], "conflicts": conflicts, "rate_regime": out["rate_regime"]}, indent=1, ensure_ascii=False))
     n_prof = sum(1 for p in profiles.values() if p is not None)
-    print(f"{len(entries)} bounds; profiled {n_prof} ({n_prof / len(entries):.0%}); {failures['no_profile']} without profile")
-    print(f"{len(regimes)} (setting, regime) cells: " + ", ".join(f"{k} {v}" for k, v in status_count.most_common()))
+    print(f"{st['entries']} bounds; profiled {n_prof} ({n_prof / st['entries']:.0%}); {st['no_profile']} without profile")
+    print(f"{st['cells']} (setting, regime) cells: " + ", ".join(f"{k} {v}" for k, v in st["status"].most_common()))
     print(f"{len(conflicts)} per-variable conflicts (upper below lower)")
 
 

@@ -93,7 +93,8 @@ dimensions:
       - {pair: [nonstationary_switching, adversarial_oblivious], justification: "a switching stochastic environment is one oblivious adversary (randomised)", valid_for_comparator: [best_fixed_action, best_switching_sequence]}
       - {pair: [adversarial_oblivious, adversarial_adaptive], justification: "an oblivious adversary is an adaptive one that ignores the history"}
       - {pair: [stochastic_iid, adversarial_self_bounding], justification: "i.i.d. losses satisfy the self-bounding constraint with C = 0"}
-      - {pair: [stochastic_corrupted, adversarial_self_bounding], justification: "corrupted stochastic satisfies the self-bounding constraint with C_sb = 2C"}
+      - {pair: [stochastic_corrupted, adversarial_self_bounding], justification: "corrupted stochastic satisfies the self-bounding constraint with C_sb = 2C",
+         requires: {corruption.regret_reference: [corrupted]}, caveat: "regret on the corrupted (realised) rewards; against uncorrupted means it differs by up to C"}
       - {pair: [adversarial_self_bounding, adversarial_oblivious], justification: "a constrained adversary"}
       - {pair: [adversarial_restricted, adversarial_oblivious], justification: "a restricted loss sequence is a particular oblivious sequence"}
       - {pair: [adversarial_oblivious, adversarial_unspecified], justification: "an unstated adversary is oblivious or adaptive, so at least as general as oblivious"}
@@ -157,8 +158,9 @@ dimensions:
       linear_finite: {k_mu: 1, c_mu: 1}
       linear_infinite: {k_mu: 1, c_mu: 1}
     reductions:
-      - {from: finite_K, to: linear_finite, map: {d: K}, note: "canonical basis actions",
-         implies: {instance_assumptions: [arms_span_Rd]}}   # the K basis vectors span R^K
+      - {from: finite_K, to: linear_finite, map: {d: K}, note: "canonical basis actions", when: {context: [none]},
+         implies: {instance_assumptions: [arms_span_Rd], action_set.parameter_structure: dense,
+                   action_set.parameter_set: polytope}}   # basis vectors span R^K; theta = the mean vector in [0,1]^K
       - {from: linear_finite, to: generalized_linear, map: {}, note: "identity link"}
       - {from: linear_infinite, to: generalized_linear, map: {}, note: "identity link"}
       - {from: finite_K, to: structured_general, map: {}, note: "unstructured arms are trivially structured"}
@@ -604,3 +606,9 @@ vocabularies:
 #   455 unspecified vs 221 homoscedastic settings for the same standard model, which split core K-armed cells.
 #   bandit ⊑ partial_monitoring now `requires_general` a class of games (observability locally / globally / any):
 #   specific feedback mechanisms mapped to partial_monitoring (e.g. transparent auctions) are richer than bandit.
+#   2026-10-26 (from the inference audit, pipeline/audit_inference.py): stochastic_corrupted ⊑ adversarial_self_bounding
+#   requires corruption.regret_reference = corrupted (uncorrupted-mean regret differs by up to C); the reduction
+#   finite_K -> linear_finite (d = K) applies only `when` context = none (contextual K-armed bandits with M_ctx
+#   contexts need d = K * M_ctx, or are not linear at all under a general function class).
+#   The finite_K -> linear_finite reduction also implies action_set.parameter_structure = dense and parameter_set = polytope
+#   (theta is the mean vector in [0,1]^K): K-armed instances are not sparse, and not in an l2 ball.

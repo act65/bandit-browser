@@ -25,10 +25,19 @@ uv run python pipeline/review_unmapped.py   # themes of unmapped setting feature
 uv run python pipeline/audit.py --n 200     # second-model audit of random results -> data/reports/audit.md
 uv run python pipeline/goldcheck.py         # textbook gold set (ls-book.yaml) vs the atlas -> data/reports/goldcheck.md
 uv run python pipeline/crosscheck.py        # our extractions vs how other papers cite them -> data/reports/crosscheck.md
+uv run python pipeline/audit_inference.py   # second-model check of inherited bounds that set a verdict -> data/reports/audit-inference.md
 uv run python pipeline/open_problems.py     # COLT open problems + web-searched status -> data/reports/open_problems.yaml
+uv run python pipeline/link_open_problems.py # place them in the atlas, compare statuses -> data/reports/open_problems_links.yaml
 uv run python pipeline/review_algorithms.py # registry vs extraction evidence -> data/reports/algorithm-registry-review.md
-uv run python site/build.py && python3 -m http.server -d _site 8000
+uv run python site/build.py && uv run python site/serve.py   # local preview (needs range requests)
+uv run pytest tests -q                      # order / inference / comparison tests + checks on the committed data
 ```
+
+Tests (`tests/`) build settings by hand on the real ontology, at fixtures where a known past bug changes
+the answer; each of 16 injected bugs (reversed order rules, unmapped symbols, dropped rate exclusions, ...)
+fails at least one test. CI (`.github/workflows/tests.yml`) runs them and re-runs `derive.py`, failing if the
+committed derived data differs from what the code produces. Thresholds for the data checks (conflict and
+tight cells, acceptance) are in `tests/baseline.yaml`; change them only on purpose.
 
 All commands take `--only ID ...`. `extract.py` skips papers that already have an extraction unless you pass `--force`.
 

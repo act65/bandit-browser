@@ -1140,6 +1140,7 @@ def setting_page(site: Site, n: dict) -> str:
 <p class="summary"><b>{len(up)}</b> upper · <b>{len(lo)}</b> lower bounds from <b>{len(n["papers"])}</b> paper{"s" if len(n["papers"]) != 1 else ""}{inh}.</p>
 <h2 id="neighbours">Neighbourhood</h2>{neighbourhood(site, n)}
 {rates_section(site, n)}
+{colt_section(site, n)}
 <h2 id="upper">Upper bounds <span class="muted">({len(up)})</span></h2>{results_table(up, site, "../")}
 <h2 id="lower">Lower bounds <span class="muted">({len(lo)})</span></h2>{results_table(lo, site, "../")}
 {inherited_section(site, iup, "upper", "inherited-upper")}
@@ -1436,6 +1437,70 @@ def paper_ref(p: dict) -> str:
     return out
 
 
+def load_colt_links(root: Path) -> dict:
+    """COLT open problems placed in the atlas (pipeline/link_open_problems.py): setting id ->
+    [(problem id, problem, link)]."""
+    op, lk = root / "data" / "reports" / "open_problems.yaml", root / "data" / "reports" / "open_problems_links.yaml"
+    if not (op.exists() and lk.exists()):
+        return {}
+    problems = (load_yaml(op) or {}).get("problems", {})
+    cmp_path = root / "data" / "canonical" / "comparison.json"
+    cells = (load_json(cmp_path) or {}).get("settings", {}) if cmp_path.exists() else {}
+    out = {}
+    for pid, v in ((load_yaml(lk) or {}).get("links") or {}).items():
+        for l in v.get("links") or []:
+            if pid in problems:
+                # the atlas status as of this build, and agreement recomputed from it (the linker's
+                # not_comparable judgement is kept: the problem is not about that cell's rate)
+                st = ((cells.get(l["setting_id"]) or {}).get(l.get("regime") or "") or {}).get("status")
+                l = {**l, "atlas_status": st,
+                     "agreement": l["agreement"] if l["agreement"] == "not_comparable" or st is None
+                     else agreement(problems[pid].get("status"), st)}
+                out.setdefault(l["setting_id"], []).append((pid, problems[pid], l))
+    return out
+
+
+def agreement(literature: str | None, atlas: str) -> str:
+    """Does the atlas cell's status match the literature's status of the open problem?"""
+    if atlas in ("no_lower", "no_upper", "conflict"):
+        return "disagrees"
+    if literature == "resolved":
+        return "agrees" if atlas == "tight" else "disagrees"
+    if literature in ("open", "partially_resolved"):
+        return "agrees" if atlas in ("log_gap", "poly_gap") else "disagrees"
+    return "not_comparable"
+
+
+def colt_agreement(link: dict) -> str:
+    """Badge comparing the literature's status of an open problem with the atlas cell."""
+    a, st = link.get("agreement"), link.get("atlas_status")
+    if a == "agrees":
+        return badge("atlas agrees", "op-resolved", "the atlas's status for this cell matches the literature")
+    if a == "disagrees" and st in ("no_lower", "no_upper", "log_gap", "poly_gap"):
+        return badge("atlas lacks a bound", "op-partially_resolved",
+                     "the literature has a bound the atlas does not: a missing paper or result")
+    if a == "disagrees":
+        return badge("atlas disagrees", "op-open", "the atlas's status contradicts the literature: check the bounds")
+    return ""
+
+
+def colt_section(site: Site, n: dict) -> str:
+    """COLT open problems linked to a setting, on its page."""
+    items = (getattr(site, "colt_links", None) or {}).get(n["id"]) or []
+    if not items:
+        return ""
+    lis = []
+    for _, p, l in items:
+        reg = f' · {e(analysis.regime_label(l["regime"]))}' if l.get("regime") else ""
+        lis.append(f'<li><a href="{e(p["url"])}">{e(p["title"])}</a> ({p["year"]}) '
+                   f'<span class="badge op-{e(p.get("status") or "unclear")}">{e((p.get("status") or "unclear").replace("_", " "))}</span> '
+                   f'{colt_agreement(l)}<div class="muted small">{e(l["relation"].replace("_", " "))}{reg}: {e(l.get("reason") or "")}</div></li>')
+    return (f'<h2 id="colt">COLT open problems <span class="muted">({len(items)})</span></h2>'
+            '<p class="hint muted small">Open problems posed at COLT that concern this setting, with their status from a web '
+            'search (<a href="../open-problems.html#colt">all</a>). LLM-placed, not verified.</p>'
+            f'<ul class="colt-links">{"".join(lis)}</ul>')
+
+
 def open_problems_page(site: Site, root: Path) -> str:
     """open-problems.html: gaps known to be open, unexplained gaps, and the COLT open-problem tracker."""
     from collections import Counter
@@ -1472,14 +1537,19 @@ def open_problems_page(site: Site, root: Path) -> str:
     rows = []
     for pid, p in sorted(colt.items(), key=lambda kv: (-kv[1]["year"], kv[1]["title"])):
         res = "".join(f"<li>{paper_ref(x)}: {e(x.get('claim') or '')}</li>" for x in p.get("papers") or [])
+        placed = "".join(f'<li><a href="settings/{site.nodes[sid]["slug"]}.html#colt">{e(site.nodes[sid]["name"])}</a> '
+                         f'{colt_agreement(l)}</li>' for sid, xs in (site.colt_links or {}).items() if sid in site.nodes
+                         for q, _, l in xs if q == pid)
         rows.append(f'<tr data-bandits="{e(p.get("bandits") or "no")}" data-status="{e(p.get("status") or "unclear")}">'
                     f'<td>{p["year"]}</td><td><a href="{e(p["url"])}">{e(p["title"])}</a>'
                     f'<div class="muted small">{e(", ".join(p.get("authors") or []))}</div>'
                     f'<div class="small">{e(p.get("statement") or "")}</div></td>'
                     f'<td><span class="badge op-{e(p.get("status") or "unclear")}">{e(STATUS_LBL.get(p.get("status"), "unclear"))}</span></td>'
                     f'<td class="small">{e(p.get("summary") or "")}'
-                    + (f'<details><summary>papers</summary><ul>{res}</ul></details>' if res else "") + "</td></tr>")
+                    + (f'<details><summary>papers</summary><ul>{res}</ul></details>' if res else "") + "</td>"
+                    f'<td class="small">{f"<ul class=tight>{placed}</ul>" if placed else NONE}</td></tr>')
     sc = Counter(p.get("status") for p in colt.values() if p.get("bandits") in ("yes", "adjacent"))
+    n_linked = len({q for xs in (site.colt_links or {}).values() for q, _, _ in xs})
     body = f"""
 <h1>Open problems</h1>
 <p class="lede small">Three lists, all generated and none human-verified: gaps in the atlas that the literature
@@ -1497,10 +1567,12 @@ artefacts of the atlas (a missing paper, a mis-scoped extraction); some may be g
 <h2 id="colt">COLT open problems <span class="muted">({len(colt)})</span></h2>
 <p class="small muted">Every “Open Problem:” paper in the COLT proceedings (PMLR), with a status from a web search
 for later work{": among those about bandits or close to them, " + ", ".join(f"{n} {STATUS_LBL.get(k, k)}" for k, n in sc.most_common()) if sc else ""}.
-A status is a lead to check, not a verdict.</p>
+A status is a lead to check, not a verdict. {n_linked} problems are about a rate in a setting the atlas tracks
+and are linked to it (<code>pipeline/link_open_problems.py</code>): “atlas lacks a bound” marks a resolved problem whose
+resolving bound the atlas does not have yet.</p>
 <div class="toolbar"><label class="small">Show <select id="op-filter">
 <option value="bandits">bandits and adjacent</option><option value="all">all</option></select></label></div>
-<div class="scroll"><table class="colt-ops"><thead><tr><th>Year</th><th>Problem</th><th>Status</th><th>Evidence</th></tr></thead>
+<div class="scroll"><table class="colt-ops"><thead><tr><th>Year</th><th>Problem</th><th>Status</th><th>Evidence</th><th>In the atlas</th></tr></thead>
 <tbody>{"".join(rows)}</tbody></table></div>
 <script>
 (function () {{
@@ -1563,6 +1635,7 @@ def bust_caches(out: Path) -> None:
 def build(root: Path, out: Path) -> None:
     site = Site(root)
     site.analysis = analysis.Analysis(root, site)
+    site.colt_links = load_colt_links(root)
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
