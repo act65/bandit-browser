@@ -119,8 +119,9 @@ cell), each judged by a second model from the source theorem, both settings and 
 - The same work found an older bug: equal-rate bounds removed each other from the front, leaving 49 cells with no
   best upper bound (tight cells 66 → 77 after the fix).
 - **Round 2 (fresh sample, after the fixes): 4% invalid** (2–7%). 4 of the 7 dispute static regret in switching
-  settings (valid as stated: Θ(√KT) against the best fixed arm), 2 are a linear `parameter_structure` left unstated
-  being read as compatible with sparse (open), 1 a range-adaptivity lower bound. 33 more are valid but need a
+  settings (valid as stated: Θ(√KT) against the best fixed arm), 2 had an unstated parameter structure read as
+  compatible with sparse (fixed since: the K-armed embedding implies dense parameters in a box, and an unstated
+  structure in a linear or kernel setting means dense), 1 is a range-adaptivity lower bound (open lead). 33 more are valid but need a
   caveat the derivation does not record (mostly: the lower-bound instances must lie in the target class).
 
 ## What this does and does not show

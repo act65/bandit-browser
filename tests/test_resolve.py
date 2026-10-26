@@ -64,3 +64,14 @@ def test_base_fixture_is_valid_vocabulary():
         vals = ONT["dimensions"][dim].get("values") or {}
         for x in v if isinstance(v, list) else [v]:
             assert x in vals, (dim, x)
+
+
+def test_unstated_linear_parameter_structure_is_dense():
+    """Inference audit round 2: an unstated parameter structure in a linear setting (not_applicable or
+    unspecified) means no structure, i.e. dense; read as 'compatible', it let unrestricted lower bounds reach
+    sparse settings. In a K-armed setting the field stays not_applicable."""
+    lin = dict(action_space="linear_infinite", noise="subgaussian")
+    assert key(**lin)["action_set"]["parameter_structure"] == "dense"
+    assert key(**lin, action_set={"parameter_structure": "unspecified"})["action_set"]["parameter_structure"] == "dense"
+    assert key(**lin, action_set={"parameter_structure": "sparse"})["action_set"]["parameter_structure"] == "sparse"
+    assert key()["action_set"]["parameter_structure"] == "not_applicable"

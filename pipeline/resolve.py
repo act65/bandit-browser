@@ -100,7 +100,10 @@ def setting_key(s: dict, ont: dict) -> dict:
         key[name] = {f: given.get(f, "not_applicable") for f, fs in spec["fields"].items()
                      if not fs.get("computational_only")}
         for f, fs in spec["fields"].items():  # field defaults, e.g. unstated noise variance = homoscedastic
-            if fs.get("unspecified_means") and key[name].get(f) == "unspecified":
+            v = key[name].get(f)
+            unstated = v == "unspecified" or (v == "not_applicable" and any(
+                key.get(d) in vals for d, vals in (fs.get("unstated_when") or {}).items()))
+            if fs.get("unspecified_means") and unstated:
                 key[name][f] = fs["unspecified_means"]
     key["parameters"] = dict(sorted((s.get("parameters") or {}).items()))
     return key

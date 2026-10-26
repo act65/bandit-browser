@@ -2,7 +2,7 @@
 
 An upper bound grows more slowly than a lower bound in the same setting and regime. Usually an extraction error (a dropped term, a missing assumption in the setting) — occasionally a genuine contradiction.
 
-- adversarial (oblivious) · linear · bounded_pm1 · l1 ball · p_norm=1 (`S-95105bc3`, 1 papers), regret / worst_case, variable T: upper 0.5·log^0.5 < lower 0.666667
+- adversarial (oblivious) · linear · bounded_pm1 · l1 ball · p_norm=1 (`S-0236e5b9`, 1 papers), regret / worst_case, variable T: upper 0.5·log^0.5 < lower 0.666667
   - upper: `d*sqrt(T*log(T))` (O; inherited from hazan2016volumetric Corollary 7.1) — conditions: K equipped with a membership oracle; losses satisfy |L^T x| <= 1 for all x in K
   - lower: `T**(2/3)*d**(1/3)/20` (exact; bubeck2017sparsity Theorem 5)
 - stochastic · linear (finite actions) · adversarial contexts · Gaussian · time_varying_action_sets · knows L_feat, S, sigma · finite (`S-e7387680`, 1 papers), regret / worst_case, variable K: upper 0 < lower 0.25

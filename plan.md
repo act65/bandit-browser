@@ -7,8 +7,9 @@ Staged so that each phase ends with a **go / no-go check**. We do not scale extr
 Since 2026-10-23: a test suite (69 tests, 20 of 20 injected bugs caught) and CI that re-derives the data; an inference
 audit (invalid inherited bounds 18% → 4% after the fixes it found, notes/validation.md §5); a front bug fixed (tight
 cells 77, conflict cells 6, acceptance 6 PASS / 2 PARTIAL / 6 MANUAL / 0 FAIL); COLT open problems linked to settings
-(16 of 41 bandit-related ones; most disagreements are bounds the atlas lacks). Remaining from the audit: an unstated
-linear `parameter_structure` is still compatible with `sparse` (treat it as dense); 33 transfers need a recorded caveat.
+(16 of 41 bandit-related ones; most disagreements are bounds the atlas lacks). Remaining from the audit: 33 transfers are
+valid but need a recorded caveat (mostly: the lower-bound instances must lie in the target class); one
+range-adaptivity lower bound reaches learners that know the loss range.
 
 ## Status (2026-10-23) and next steps
 
