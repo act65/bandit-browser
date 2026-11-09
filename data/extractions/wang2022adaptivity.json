@@ -1,0 +1,248 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "On Adaptivity in Non-stationary Stochastic Optimization With Bandit Feedback",
+  "arxiv_id": "2210.05584",
+  "arxiv_version": null,
+  "year": 2022,
+  "authors": [
+   "Yining Wang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Non-stationary stochastic optimization with bandit feedback (unknown change budget V_T)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "nonstationary_drifting",
+   "action_space": "convex_body",
+   "function_class": [
+    "bounded",
+    "convex",
+    "strongly_convex",
+    "smooth",
+    "lipschitz"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "T",
+    "d",
+    "L_lip",
+    "beta",
+    "alpha",
+    "diam_K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "reward maximisation of strongly concave functions (mapped as strongly convex losses)",
+    "interior maximizer: each x_t^* is at distance >= c_0 from the boundary; the learner knows c_0",
+    "the learner does not know the variation budget V_T"
+   ],
+   "definition_quote": "an unknown adversarial sequence of functions $f_1,\\cdots,f_T:\\mathcal X\\to\\mathbb R$ is selected by nature and the feedback $y_t$ received at time $t$ satisfies $\\mathbb E[y_t|x_t] = f_t(x_t)$ ... $\\sum_{t=1}^{T-1}\\|f_{t+1}-f_t\\|_{\\infty} \\leq V_T$ almost surely"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Multi-scale sampling framework (Wei & Luo) with fixed-step estimating gradient ascent (Algorithm 1 + Algorithm 2)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "restarts_or_sliding_window",
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d",
+    "L_lip",
+    "beta",
+    "alpha",
+    "diam_K",
+    "c_0"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**2*V_T**(1/3)*T**(2/3) + d**(3/2)*sqrt(T)",
+    "expression_latex": "\\tilde O(d^2V_T^{1/3}T^{2/3} + d^{3/2}\\sqrt{T})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "|f_t(x)| <= 1 and |y_t| <= 1 almost surely",
+    "domain compact with diameter <= B_X",
+    "f_t twice continuously differentiable with ||grad f_t|| <= L and ||Hess f_t||_op <= L",
+    "f_t sigma-strongly concave",
+    "interior maximizer at distance >= c_0 from the boundary"
+   ],
+   "tuning": [
+    "eta_0 = 1/L",
+    "gamma = sigma/L",
+    "N_0 = ceil(c_0^-2)+1",
+    "kappa_0 as in Lemma inexact-prox",
+    "rho(t) = 6 kappa_0/sqrt(t)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:dynamic-regret",
+    "number": "Theorem (thm:dynamic-regret)",
+    "quote": "Suppose Algorithm \\ref{alg:sampling} is executed with the weakly non-stationary algorithm specified in Algorithm \\ref{alg:inexact-prox} and $\\rho(t)=6\\kappa_0/\\sqrt{t}$, with $\\kappa_0$ and other algorithm parameters being specified in Lemma \\ref{lem:inexact-prox}. Then the dynamic regret of the algorithm can be upper bounded by $\\mathbb E\\left[\\sum_{t=1}^T f_t(x_t^*)-f_t(x_t)\\right]\\leq \\tilde O(d^2V_T^{1/3}T^{2/3} + d^{3/2}\\sqrt{T})$, where in the $\\tilde O(\\cdot)$ notation we drop polynomial dependency on other problem parameters ($\\sigma,L,B_X,c_0$)..."
+   },
+   "confidence": "medium",
+   "notes": "V_T is unknown to the learner. Õ hides polynomial dependence on sigma, L, B_X and c_0. The domain is stated only as compact; the projection definitions imply convexity. Dynamic regret is defined through f_t, i.e. through means. The learner needs T because the framework and kappa_0 use it."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "besbes2015non",
+   "cited_title": "Non-stationary stochastic optimization",
+   "cited_first_author": "Besbes",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Restarting algorithm (known V_T)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Non-stationary stochastic optimization with bandit feedback, smooth strongly concave functions, known variation budget V_T",
+   "bound": {
+    "notation": "O",
+    "expression": "V_T**(1/3)*T**(2/3)",
+    "expression_latex": "C_1\\times V_T^{1/3}T^{2/3}",
+    "regime": null
+   },
+   "where": "Introduction, Eq. (dreg-scaling)"
+  },
+  {
+   "cited_key": "besbes2015non",
+   "cited_title": "Non-stationary stochastic optimization",
+   "cited_first_author": "Besbes",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Non-stationary stochastic optimization with bandit feedback, variation budget V_T (information-theoretic lower bound)",
+   "bound": {
+    "notation": "Omega",
+    "expression": "V_T**(1/3)*T**(2/3)",
+    "expression_latex": "V_T^{1/3}T^{2/3}",
+    "regime": null
+   },
+   "where": "Introduction and Concluding remarks"
+  },
+  {
+   "cited_key": "wei2021non",
+   "cited_title": "Non-stationary reinforcement learning without prior knowledge: An optimal black-box approach",
+   "cited_first_author": "Wei",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Multi-scale sampling framework (MASTER)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Non-stationary bandit optimization with an unknown change budget, using a weakly non-stationary base algorithm with C(t)=c_1 sqrt(t)+c_2",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "C_1*V_T**(1/3)*T**(2/3) + C_2*sqrt(T)",
+    "expression_latex": "\\widetilde O\\left(C_1V_T^{1/3}T^{2/3} + C_2\\sqrt{T}\\right)",
+    "regime": null
+   },
+   "where": "Lemma (lem:multi-scale)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T13:16:36",
+  "source_chars": 52329,
+  "input_tokens": 64148,
+  "output_tokens": 4444,
+  "cost_usd_equiv": 0.32375200000000004,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

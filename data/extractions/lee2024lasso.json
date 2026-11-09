@@ -1,0 +1,856 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Lasso Bandit with Compatibility Condition on Optimal Arm",
+  "arxiv_id": "2406.00823",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Harin Lee",
+   "Taehyun Hwang",
+   "Min-hwan Oh"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Sparse linear contextual bandit (single-parameter) with compatibility condition on the optimal arm and margin condition",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "K",
+    "d",
+    "s_sparse",
+    "sigma"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "oblivious_sequence",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "l1_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "sparse"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "K feature vectors per round drawn i.i.d. across rounds from unknown joint distribution (dependence across arms allowed)",
+    "features bounded in l_inf norm by x_max",
+    "alpha-margin condition P(Delta_t <= h) <= (h/Delta_star)^alpha",
+    "compatibility condition on the expected Gram matrix of the optimal arm with constant phi_star",
+    "the learner's tuning uses x_max, phi_star, Delta_star, the margin exponent alpha and the compatibility ratio rho"
+   ],
+   "definition_quote": "In each round $t \\in [T]$, the learning agent observes a set of context features for all arms $\\{ \\xb_{t,i} \\in \\Xcal : i \\in [K] \\} \\subset \\RR^d$ drawn i.i.d. from an unknown joint distribution, chooses an arm $a_t \\in [K]$, and receives a reward $r_{t, a_t}$. We assume that $r_{t,a_t} = \\xb_{t,a_t}^\\top \\betab^* + \\eta_t$ ... $\\eta_t$ is an independent $\\sigma$-sub-Gaussian random variable"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "FS-WLasso (Forced Sampling then Weighted Loss Lasso)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "s_sparse",
+    "sigma",
+    "d",
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "FS-Lasso (Forced Sampling with Lasso)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "s_sparse",
+    "sigma",
+    "d",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "2*x_max*S*M_0 + sigma**2/Delta_star*(x_max**2*s_sparse/phi_star**2)**(1+1/alpha_m)*log(d/delta) + (sigma*x_max**2*s_sparse/phi_star**2)**(1+alpha_m)/(Delta_star**alpha_m*(1-alpha_m))*T**((1-alpha_m)/2)*(log(d)+log(log(T)/delta))**((1+alpha_m)/2)",
+    "expression_latex": "2 x_{\\max} b M_0 + I_\\tau + \\Ocal\\left( \\frac{(\\sigma x_{\\max}^2 s_0/\\phi_*^2)^{1+\\alpha}}{\\Delta_*^{\\alpha}(1-\\alpha)} T^{\\frac{1-\\alpha}{2}} (\\log d + \\log\\frac{\\log T}{\\delta})^{\\frac{1+\\alpha}{2}}\\right)",
+    "regime": "alpha in (0,1)"
+   },
+   "symbols": {
+    "x_max": "l_inf bound on features",
+    "S": "l1 bound b on beta*",
+    "M_0": "length of forced sampling stage",
+    "alpha_m": "margin condition exponent",
+    "Delta_star": "margin constant",
+    "phi_star": "compatibility constant of optimal-arm Gram matrix"
+   },
+   "conditions": [
+    "Assumption 1: ||x||_inf <= x_max, ||beta*||_1 <= b",
+    "alpha-margin condition (Assumption 2) with exponent alpha_m in (0,1)",
+    "compatibility condition on the optimal arm with phi_star (Assumption 3)",
+    "K >= 3"
+   ],
+   "tuning": [
+    "M_0 = C1 max{rho^2 x_max^4 s0^2 phi^-4 log(d/delta), rho^2 sigma^2 x_max^(4+4/alpha) s0^(2+2/alpha) Delta^-2 phi^(-4-4/alpha)(loglog tau + log(d/delta))}",
+    "lambda_t = C2 sigma x_max (sqrt((t-M0) log(d (log(t-M0))^2/delta)) + sqrt(w^2 M0 log(d/delta)))",
+    "w = sqrt(tau/M_0)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:etc Lasso",
+    "number": "Theorem 2",
+    "quote": "Suppose Assumptions~\\ref{assm:feature & parameter}-\\ref{assm:compatibility for optimal arm} hold. ... then with probability at least $1 - \\delta$, Algorithm~\\ref{alg:etc Lasso} achieves the following cumulative regret: $R(T) \\leq 2 x_{\\max} b M_0 + I_\\tau + I_T$ ..."
+   },
+   "confidence": "medium",
+   "notes": "I_tau = O(sigma^2 Delta^-1 (x_max^2 s0/phi^2)^(1+1/alpha) log(d/delta)). Formal appendix version states probability 1-5delta. Regret is per-round mean regret along realized contexts. Algorithm parameters do not depend on T, hence anytime."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "2*x_max*S*M_0 + sigma**2/Delta_star*(x_max**2*s_sparse/phi_star**2)**2*log(d/delta) + (sigma*x_max**2*s_sparse/phi_star**2)**2/Delta_star*log(T)*(log(d)+log(log(T)/delta))",
+    "expression_latex": "2 x_{\\max} b M_0 + I_\\tau + \\Ocal\\left( \\frac{(\\sigma x_{\\max}^2 s_0/\\phi_*^2)^{2}}{\\Delta_*} \\log T (\\log d + \\log\\frac{\\log T}{\\delta})\\right)",
+    "regime": "alpha = 1"
+   },
+   "symbols": {
+    "x_max": "l_inf bound on features",
+    "S": "l1 bound b on beta*",
+    "M_0": "length of forced sampling stage",
+    "Delta_star": "margin constant",
+    "phi_star": "compatibility constant of optimal-arm Gram matrix"
+   },
+   "conditions": [
+    "Assumption 1",
+    "1-margin condition",
+    "compatibility condition on the optimal arm",
+    "K >= 3"
+   ],
+   "tuning": [
+    "M_0, lambda_t, w as in Theorem 2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:etc Lasso",
+    "number": "Theorem 2",
+    "quote": "$I_T = \\Ocal\\left( \\frac{\\left( \\sigma x_{\\max}^2 s_0 / \\phi_*^2 \\right)^{2}}{\\Delta_*}  \\log{T} \\left( \\log d + \\log \\frac{\\log T}{\\delta} \\right) \\right)$ for $\\alpha = 1$"
+   },
+   "confidence": "medium",
+   "notes": "Gives O(s0^2 log T (log d + log log T)). Formal version: probability 1-5delta."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "2*x_max*S*M_0 + sigma**2/Delta_star*(x_max**2*s_sparse/phi_star**2)**(1+1/alpha_m)*log(d/delta) + alpha_m/(alpha_m-1)**2*sigma**2/Delta_star*(x_max**2*s_sparse/phi_star**2)**(1+1/alpha_m)*(log(d)+log(1/delta))",
+    "expression_latex": "2 x_{\\max} b M_0 + I_\\tau + \\Ocal\\left( \\frac{\\alpha}{(\\alpha-1)^2} \\frac{\\sigma^2 (x_{\\max}^2 s_0/\\phi_*^2)^{1+\\frac{1}{\\alpha}}}{\\Delta_*} (\\log d + \\log\\frac{1}{\\delta})\\right)",
+    "regime": "1 < alpha <= infinity"
+   },
+   "symbols": {
+    "x_max": "l_inf bound on features",
+    "S": "l1 bound b on beta*",
+    "M_0": "length of forced sampling stage",
+    "alpha_m": "margin condition exponent",
+    "Delta_star": "margin constant",
+    "phi_star": "compatibility constant of optimal-arm Gram matrix"
+   },
+   "conditions": [
+    "Assumption 1",
+    "alpha-margin condition with alpha_m > 1",
+    "compatibility condition on the optimal arm",
+    "K >= 3"
+   ],
+   "tuning": [
+    "M_0, lambda_t, w as in Theorem 2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:etc Lasso",
+    "number": "Theorem 2",
+    "quote": "$I_T = \\Ocal \\left( \\frac{\\alpha}{(\\alpha-1)^2} \\cdot \\frac{\\sigma^2 \\left( x_{\\max}^2 s_0 / \\phi_*^2 \\right)^{1+\\frac{1}{\\alpha}}}{\\Delta_*} \\left( \\log d + \\log \\frac{1}{\\delta} \\right) \\right)$ for $1 < \\alpha \\le \\infty$"
+   },
+   "confidence": "medium",
+   "notes": "Constant (T-independent) regret with high probability. Formal version: probability 1-5delta."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "x_max**5*S*s_sparse**2/phi_G**4*(log(x_max*s_sparse/phi_G)+log(d)-log(delta)) + (sigma*x_max**2*s_sparse/phi_G**2)**(1+alpha_m)/(Delta_star**alpha_m*(1-alpha_m))*T**((1-alpha_m)/2)*(log(d)+log(log(T)/delta))**((1+alpha_m)/2)",
+    "expression_latex": "I_b + I_2(T)",
+    "regime": "T <= tau, alpha in [0,1)"
+   },
+   "symbols": {
+    "x_max": "l_inf bound on features",
+    "S": "l1 bound b on beta*",
+    "phi_G": "greedy-diversity compatibility constant",
+    "alpha_m": "margin exponent",
+    "Delta_star": "margin constant",
+    "tau": "problem-dependent constant"
+   },
+   "conditions": [
+    "Assumptions 1-3",
+    "anti-concentration (Assumption 4) or compatibility on averaged arm + relaxed symmetry + balanced covariance (Assumptions 6-8)"
+   ],
+   "tuning": [
+    "M_0 = 0",
+    "lambda_t = C2 sigma x_max sqrt(t log(d (log t)^2/delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret with diversity assumption",
+    "number": "Theorem 3",
+    "quote": "Suppose that Assumptions~\\ref{assm:feature & parameter}-\\ref{assm:compatibility for optimal arm} hold, and further assume either the anti-concentration ... or relaxed symmetry \\& balanced covariance ... If we set ... $M_0 = 0$ ... $R(T) \\le I_b + I_2(T)$ for $T \\le \\tau$"
+   },
+   "confidence": "medium",
+   "notes": "Formal version holds w.p. 1-5delta and uses T <= tau+1."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "x_max**5*S*s_sparse**2/phi_G**4*(log(x_max*s_sparse/phi_G)+log(d)-log(delta)) + (sigma*x_max**2*s_sparse/phi_G**2)**2/Delta_star*log(T)*(log(d)+log(log(T)/delta))",
+    "expression_latex": "I_b + I_2(T)",
+    "regime": "T <= tau, alpha = 1"
+   },
+   "symbols": {
+    "x_max": "l_inf bound on features",
+    "S": "l1 bound b on beta*",
+    "phi_G": "greedy-diversity compatibility constant",
+    "Delta_star": "margin constant",
+    "tau": "problem-dependent constant"
+   },
+   "conditions": [
+    "Assumptions 1-3",
+    "anti-concentration or relaxed symmetry & balanced covariance"
+   ],
+   "tuning": [
+    "M_0 = 0",
+    "lambda_t = C2 sigma x_max sqrt(t log(d (log t)^2/delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret with diversity assumption",
+    "number": "Theorem 3",
+    "quote": "$I_2(T) = \\Ocal\\left( \\frac{\\left( \\sigma x_{\\max}^2 s_0 / \\phi_{\\text{G}}^2 \\right)^{2}}{\\Delta_*}  \\log{T} \\left( \\log d + \\log \\frac{\\log T}{\\delta} \\right) \\right)$ for $\\alpha = 1$"
+   },
+   "confidence": "medium",
+   "notes": ""
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "x_max**5*S*s_sparse**2/phi_G**4*(log(x_max*s_sparse/phi_G)+log(d)-log(delta)) + alpha_m**2/(alpha_m-1)**2*(sigma*x_max**2*s_sparse/phi_G**2)**2/Delta_star*(log(d)+log(1/delta))",
+    "expression_latex": "I_b + I_2(T)",
+    "regime": "T <= tau, 1 < alpha <= infinity"
+   },
+   "symbols": {
+    "x_max": "l_inf bound on features",
+    "S": "l1 bound b on beta*",
+    "phi_G": "greedy-diversity compatibility constant",
+    "alpha_m": "margin exponent",
+    "Delta_star": "margin constant",
+    "tau": "problem-dependent constant"
+   },
+   "conditions": [
+    "Assumptions 1-3",
+    "anti-concentration or relaxed symmetry & balanced covariance"
+   ],
+   "tuning": [
+    "M_0 = 0",
+    "lambda_t = C2 sigma x_max sqrt(t log(d (log t)^2/delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret with diversity assumption",
+    "number": "Theorem 3",
+    "quote": "$I_2(T) = \\Ocal \\left( \\frac{\\alpha^2}{(\\alpha-1)^2} \\cdot \\frac{ \\left( \\sigma x_{\\max}^2 s_0 / \\phi_{\\text{G}}^2 \\right)^{2}}{\\Delta_*} \\left( \\log d + \\log \\frac{1}{\\delta} \\right) \\right)$ for $1 < \\alpha \\le \\infty$"
+   },
+   "confidence": "medium",
+   "notes": ""
+  },
+  {
+   "id": "r7",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "x_max**5*S*s_sparse**2/phi_G**4*(log(x_max*s_sparse/phi_G)+log(d)-log(delta)) + (sigma*x_max**2*s_sparse/phi_G**2)**(1+alpha_m)/(Delta_star**alpha_m*(1-alpha_m))*tau**((1-alpha_m)/2)*(log(d)+log(log(tau)/delta))**((1+alpha_m)/2) + (sigma*x_max**2*s_sparse/phi_star**2)**(1+alpha_m)/(Delta_star**alpha_m*(1-alpha_m))*T**((1-alpha_m)/2)*(log(d)+log(log(T)/delta))**((1+alpha_m)/2)",
+    "expression_latex": "I_b + I_2(\\tau) + I_T",
+    "regime": "T > tau, alpha in (0,1)"
+   },
+   "symbols": {
+    "x_max": "l_inf bound on features",
+    "S": "l1 bound b on beta*",
+    "phi_G": "greedy-diversity compatibility constant",
+    "phi_star": "optimal-arm compatibility constant",
+    "alpha_m": "margin exponent",
+    "Delta_star": "margin constant",
+    "tau": "problem-dependent constant"
+   },
+   "conditions": [
+    "Assumptions 1-3",
+    "anti-concentration or relaxed symmetry & balanced covariance"
+   ],
+   "tuning": [
+    "M_0 = 0",
+    "lambda_t = C2 sigma x_max sqrt(t log(d (log t)^2/delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret with diversity assumption",
+    "number": "Theorem 3",
+    "quote": "$R(T) \\le I_b + I_2(\\tau) + I_T$ for $T > \\tau$ ... and $I_T$ takes the same value as in Theorem~\\ref{thm:etc Lasso}."
+   },
+   "confidence": "medium",
+   "notes": ""
+  },
+  {
+   "id": "r8",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "x_max**5*S*s_sparse**2/phi_G**4*(log(x_max*s_sparse/phi_G)+log(d)-log(delta)) + (sigma*x_max**2*s_sparse/phi_G**2)**2/Delta_star*log(tau)*(log(d)+log(log(tau)/delta)) + (sigma*x_max**2*s_sparse/phi_star**2)**2/Delta_star*log(T)*(log(d)+log(log(T)/delta))",
+    "expression_latex": "I_b + I_2(\\tau) + I_T",
+    "regime": "T > tau, alpha = 1"
+   },
+   "symbols": {
+    "x_max": "l_inf bound on features",
+    "S": "l1 bound b on beta*",
+    "phi_G": "greedy-diversity compatibility constant",
+    "phi_star": "optimal-arm compatibility constant",
+    "Delta_star": "margin constant",
+    "tau": "problem-dependent constant"
+   },
+   "conditions": [
+    "Assumptions 1-3",
+    "anti-concentration or relaxed symmetry & balanced covariance"
+   ],
+   "tuning": [
+    "M_0 = 0",
+    "lambda_t = C2 sigma x_max sqrt(t log(d (log t)^2/delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret with diversity assumption",
+    "number": "Theorem 3",
+    "quote": "Suppose that Assumptions~\\ref{assm:feature & parameter}-\\ref{assm:compatibility for optimal arm} hold,\n    and further assume either the anti-concentration (Assumption~\\ref{assm:anti-concentration}) or relaxed symmetry \\& balanced covariance (Assumption~\\ref{assm:Compatibility on all arms}-\\ref{assm:balanced covariance}) assumptions.\n    Let $\\phi_{\\text{G}}$ be an appropriate constant that is determined by the employed assumptions, and $\\tau$ be a constant that depends on $\\sigma$, $x_{\\max}$, $s_0$, $\\Delta_*$, $\\phi_*$, $\\phi_{\\text{G}}$, $\\alpha$, $\\log d$, and $\\log \\delta$."
+   },
+   "confidence": "medium",
+   "notes": ""
+  },
+  {
+   "id": "r9",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "x_max**5*S*s_sparse**2/phi_G**4*(log(x_max*s_sparse/phi_G)+log(d)-log(delta)) + alpha_m**2/(alpha_m-1)**2*(sigma*x_max**2*s_sparse/phi_G**2)**2/Delta_star*(log(d)+log(1/delta)) + alpha_m/(alpha_m-1)**2*sigma**2/Delta_star*(x_max**2*s_sparse/phi_star**2)**(1+1/alpha_m)*(log(d)+log(1/delta))",
+    "expression_latex": "I_b + I_2(\\tau) + I_T",
+    "regime": "T > tau, 1 < alpha <= infinity"
+   },
+   "symbols": {
+    "x_max": "l_inf bound on features",
+    "S": "l1 bound b on beta*",
+    "phi_G": "greedy-diversity compatibility constant",
+    "phi_star": "optimal-arm compatibility constant",
+    "alpha_m": "margin exponent",
+    "Delta_star": "margin constant",
+    "tau": "problem-dependent constant"
+   },
+   "conditions": [
+    "Assumptions 1-3",
+    "anti-concentration or relaxed symmetry & balanced covariance"
+   ],
+   "tuning": [
+    "M_0 = 0",
+    "lambda_t = C2 sigma x_max sqrt(t log(d (log t)^2/delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret with diversity assumption",
+    "number": "Theorem 3",
+    "quote": "Suppose that Assumptions~\\ref{assm:feature & parameter}-\\ref{assm:compatibility for optimal arm} hold,\n    and further assume either the anti-concentration (Assumption~\\ref{assm:anti-concentration}) or relaxed symmetry \\& balanced covariance (Assumption~\\ref{assm:Compatibility on all arms}-\\ref{assm:balanced covariance}) assumptions.\n    Let $\\phi_{\\text{G}}$ be an appropriate constant that is determined by the employed assumptions, and $\\tau$ be a constant that depends on $\\sigma$, $x_{\\max}$, $s_0$, $\\Delta_*$, $\\phi_*$, $\\phi_{\\text{G}}$, $\\alpha$, $\\log d$, and $\\log \\delta$."
+   },
+   "confidence": "medium",
+   "notes": ""
+  },
+  {
+   "id": "r10",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "2*x_max*S*(q_T + x_max**4*s_sparse**2/phi_star**4*log(d)) + (sigma*x_max**2*s_sparse/phi_star**2)**(1+alpha_m)/((1-alpha_m)*Delta_star**alpha_m)*T**((1-alpha_m)/2)*(log(d)+log(T))**((1+alpha_m)/2)",
+    "expression_latex": "2 x_{\\max} b I_0 + I_T",
+    "regime": "alpha in (0,1)"
+   },
+   "symbols": {
+    "x_max": "l_inf bound on features",
+    "S": "l1 bound b on beta*",
+    "q_T": "forced sampling function q evaluated at T, O(rho^2 x_max^4 s0^2 phi^-4 log(dT) max{4, sigma^2 Delta^-2 (128 x_max^2 s0/phi^2)^(2/alpha)})",
+    "phi_star": "optimal-arm compatibility constant",
+    "alpha_m": "margin exponent",
+    "Delta_star": "margin constant"
+   },
+   "conditions": [
+    "Assumptions 1-3"
+   ],
+   "tuning": [
+    "q(n), h, lambda_1, lambda_{2,t} as in Theorem 4"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:fs lasso",
+    "number": "Theorem 4",
+    "quote": "Suppose Assumptions~\\ref{assm:feature & parameter}-\\ref{assm:compatibility for optimal arm} hold. If the agent runs Algorithm~\\ref{alg:fs lasso} ... then, the expected cumulative regret is bounded as follows: $\\EE [ \\sum_{t = 1}^T \\text{reg}_t ] \\le 2 \\xmax b I_0 +  I_T$"
+   },
+   "confidence": "medium",
+   "notes": "T-agnostic algorithm."
+  },
+  {
+   "id": "r11",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "2*x_max*S*(q_T + x_max**4*s_sparse**2/phi_star**4*log(d)) + (sigma*x_max**2*s_sparse/phi_star**2)/Delta_star*log(T)*(log(d)+log(T))",
+    "expression_latex": "2 x_{\\max} b I_0 + \\Ocal\\left(\\frac{1}{\\Delta_*}\\frac{\\sigma x_{\\max}^2 s_0}{\\phi_*^2}(\\log T)(\\log d + \\log T)\\right)",
+    "regime": "alpha = 1"
+   },
+   "symbols": {
+    "x_max": "l_inf bound on features",
+    "S": "l1 bound b on beta*",
+    "q_T": "forced sampling function q evaluated at T",
+    "phi_star": "optimal-arm compatibility constant",
+    "Delta_star": "margin constant"
+   },
+   "conditions": [
+    "Assumptions 1-3"
+   ],
+   "tuning": [
+    "q(n), h, lambda_1, lambda_{2,t} as in Theorem 4"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:fs lasso",
+    "number": "Theorem 4",
+    "quote": "$\\Ocal \\left( \\frac{1}{\\Delta_*} \\left( \\frac{ \\sigma \\xmax^2 s_0}{\\phi_*^2} \\right) ( \\log T) ( \\log d + \\log T) \\right)$ for $\\alpha = 1$"
+   },
+   "confidence": "low",
+   "notes": "Power on (sigma x^2 s0/phi^2) is 1 as written; likely typo (should be 2 per proof)."
+  },
+  {
+   "id": "r12",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "2*x_max*S*(q_T + x_max**4*s_sparse**2/phi_star**4*log(d)) + (sigma*x_max**2*s_sparse/phi_star**2)**2/((alpha_m-1)*Delta_star)*(log(d)+log(T))",
+    "expression_latex": "2 x_{\\max} b I_0 + \\Ocal\\left(\\frac{1}{(\\alpha-1)\\Delta_*}\\left(\\frac{\\sigma x_{\\max}^2 s_0}{\\phi_*^2}\\right)^2(\\log d + \\log T)\\right)",
+    "regime": "alpha > 1"
+   },
+   "symbols": {
+    "x_max": "l_inf bound on features",
+    "S": "l1 bound b on beta*",
+    "q_T": "forced sampling function q evaluated at T",
+    "phi_star": "optimal-arm compatibility constant",
+    "alpha_m": "margin exponent",
+    "Delta_star": "margin constant"
+   },
+   "conditions": [
+    "Assumptions 1-3"
+   ],
+   "tuning": [
+    "q(n), h, lambda_1, lambda_{2,t} as in Theorem 4"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:fs lasso",
+    "number": "Theorem 4",
+    "quote": "$\\Ocal \\left( \\frac{1}{(\\alpha - 1) \\Delta_*} \\left( \\frac{ \\sigma \\xmax^2 s_0}{\\phi_*^2} \\right)^2 ( \\log d + \\log T) \\right)$ for $\\alpha > 1$"
+   },
+   "confidence": "medium",
+   "notes": ""
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "kim2019doubly",
+   "cited_title": "Doubly-robust lasso bandit",
+   "cited_first_author": "Gi-Soo Kim",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "DR Lasso Bandit",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "sparse linear contextual bandit, compatibility on averaged-arm Gram matrix, no margin",
+   "bound": {
+    "notation": "O",
+    "expression": "s_sparse*sqrt(T)*log(d*T)",
+    "expression_latex": "\\Ocal(s_0 \\sqrt{T} \\log(dT))",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "hao2020high",
+   "cited_title": "High-dimensional sparse linear bandits",
+   "cited_first_author": "Botao Hao",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "ESTC",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "sparse linear bandit, minimum eigenvalue of Sigma, fixed arm set",
+   "bound": {
+    "notation": "O",
+    "expression": "(s_sparse*T*log(d))**(2/3)",
+    "expression_latex": "\\Ocal((s_0 T \\log d)^{\\frac{2}{3}})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "oh2021sparsity",
+   "cited_title": "Sparsity-agnostic lasso bandit",
+   "cited_first_author": "Min-hwan Oh",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SA LASSO BANDIT",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "sparse linear contextual bandit, compatibility on Sigma, relaxed symmetry and balanced covariance",
+   "bound": {
+    "notation": "O",
+    "expression": "s_sparse*sqrt(T*log(d*T))",
+    "expression_latex": "\\Ocal(s_0 \\sqrt{T \\log(dT)})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "li2021regret",
+   "cited_title": "Regret lower bound and optimal algorithm for high-dimensional contextual linear bandit",
+   "cited_first_author": "Ke Li",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "L1-confidence ball based algorithm",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "sparse linear contextual bandit with 1-margin, sparse eigenvalue and anti-concentration",
+   "bound": {
+    "notation": "O",
+    "expression": "s_sparse**2*log(d*T)*log(T)",
+    "expression_latex": "\\Ocal(s_0^2(\\log (dT)) \\log T)",
+    "regime": "alpha = 1"
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "li2021regret",
+   "cited_title": "Regret lower bound and optimal algorithm for high-dimensional contextual linear bandit",
+   "cited_first_author": "Ke Li",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "sparse linear contextual bandit with alpha-margin condition, alpha in [0,1]",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T**((1-alpha_m)/2)*log(d)**((alpha_m+1)/2) + log(T)",
+    "expression_latex": "T^{\\frac{1 - \\alpha}{2}} \\left( \\log d \\right)^{\\frac{\\alpha + 1}{2}} + \\log T",
+    "regime": "alpha in [0,1]"
+   },
+   "where": "Discussion of Theorem 2"
+  },
+  {
+   "cited_key": "ariu2022thresholded",
+   "cited_title": "Thresholded lasso bandit",
+   "cited_first_author": "Kaito Ariu",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "TH Lasso Bandit",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "sparse linear contextual bandit with 1-margin, compatibility on Sigma, relaxed symmetry & balanced covariance",
+   "bound": {
+    "notation": "O",
+    "expression": "s_sparse**2*log(d*T)",
+    "expression_latex": "\\Ocal(s_0^2 \\log d T )",
+    "regime": "alpha = 1"
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "chakraborty2023thompson",
+   "cited_title": "Thompson sampling for high-dimensional sparse linear contextual bandits",
+   "cited_first_author": "Sunrit Chakraborty",
+   "cited_year": 2023,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson sampling with sparsity-inducing prior",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "sparse linear contextual bandit with 1-margin, max sparse eigenvalue, anti-concentration",
+   "bound": {
+    "notation": "O",
+    "expression": "s_sparse**2*log(d*T)*log(T)",
+    "expression_latex": "\\Ocal(s_0^2 (\\log (dT)) \\log T)",
+    "regime": "alpha = 1"
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "bastani2020online",
+   "cited_title": "Online decision making with high-dimensional covariates",
+   "cited_first_author": "Hamsa Bastani",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Lasso Bandit",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "multiple-parameter sparse contextual bandit with margin condition",
+   "bound": {
+    "notation": "O",
+    "expression": "K*s_sparse**2*log(d*T)**2",
+    "expression_latex": "\\Ocal(K s_0^2 (\\log d T)^2)",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "wang2018minimax",
+   "cited_title": "Minimax concave penalized multi-armed bandit model with high-dimensional covariates",
+   "cited_first_author": "Xue Wang",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "MCP-Bandit",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "multiple-parameter sparse contextual bandit with margin condition",
+   "bound": {
+    "notation": "O",
+    "expression": "s_sparse**2*(log(d)+s_sparse)*log(T)",
+    "expression_latex": "\\Ocal(s_0^2 (\\log d + s_0) \\log T)",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "li2022simple",
+   "cited_title": "A simple unified framework for high dimensional bandit problems",
+   "cited_first_author": "Wenjie Li",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Explore-the-Structure-Then-Commit",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Lasso bandit problem",
+   "bound": {
+    "notation": "O",
+    "expression": "s_sparse**(1/3)*T**(2/3)*sqrt(log(d*T))",
+    "expression_latex": "\\Ocal(s_0^{\\frac{1}{3}} T^{\\frac{2}{3}} \\sqrt{\\log(dT)})",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:55:25",
+  "source_chars": 262312,
+  "input_tokens": 175252,
+  "output_tokens": 16358,
+  "cost_usd_equiv": 1.450864,
+  "quote_retry": {
+   "asked": 2,
+   "fixed": 2,
+   "cost_usd_equiv": 1.1306324
+  },
+  "status": "extracted"
+ }
+}

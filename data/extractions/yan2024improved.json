@@ -1,0 +1,261 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Improved Bound for Robust Causal Bandits with Linear Models",
+  "arxiv_id": "2405.07795",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Zirui Yan",
+   "Arpan Mukherjee",
+   "Burak Varıcı",
+   "Ali Tajer"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Robust causal bandits with linear SEMs under temporal model fluctuations (deviation budget C)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_corrupted",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "C",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "causal"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "unspecified",
+    "budget_measure": "per_path",
+    "structure": "arbitrary",
+    "regret_reference": "uncorrupted",
+    "model": "budget",
+    "target": "unspecified"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "unspecified"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Arms are the 2^N soft interventions on a known DAG with linear SEM X = B_a^T X + eps; reward is the leaf node X_N (non-linear in unknown weights B, B*)",
+    "Learner observes the full vector of node values X(t) after each intervention, not just the reward",
+    "Corruption is on the SEM weight matrices (model deviation D_a(t) - B_a(t)), not directly on rewards; C = max_i sum_t max_a ||[Delta_a(t)]_i||",
+    "Regret compares nominal optimal mean T*mu_{a*} with the actual (deviated) collected rewards E[X_N(t)]",
+    "Learner knows the graph structure and the mean of the exogenous noise nu",
+    "d is the maximum in-degree of the DAG and L the length of the longest causal path",
+    "Noise vector is 1-sub-Gaussian and bounded in norm by m_eps; columns of B_a have norm <= 1"
+   ],
+   "definition_quote": "We consider a {\\em linear} SEM ... $\\bX=\\bB^{\\top} \\bX+\\bepsilon$ ... The noise vector $\\bepsilon$ is $1$-sub-Gaussian, and its Euclidean norm is upper bounded ... $C \\triangleq \\max_{i\\in[N]} \\sum_{t=1}^T\\max_{a(t)\\in\\mathcal{A}}\\left\\|\\left[\\Delta_{a(t)}(t)\\right]_i\\right\\|$ ... We assume that the model deviation budgets specified by $C$ are known to the learner"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Robust-LCB (Robust Linear Causal Bandit)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "C",
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "2*m_X + d_in**(L - 1/2)*(sqrt(T) + C)",
+    "expression_latex": "2m+\\tilde{\\mathcal{O}}\\left(d^{L-\\frac{1}{2}}(\\sqrt{T} + C)\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "m_X": "upper bound on the norm of the node vector, ||X|| <= m",
+    "d_in": "maximum in-degree of the causal graph (paper's d)",
+    "L": "length of the longest directed causal path"
+   },
+   "conditions": [
+    "kappa_min > 0 (second-moment matrices of parents have positive effective smallest eigenvalue)",
+    "||[B_a]_i|| <= 1 for all a",
+    "noise 1-sub-Gaussian with ||eps|| <= m_eps",
+    "d >= 2"
+   ],
+   "tuning": [
+    "delta = 1/(2NT)",
+    "beta(t,delta) = sqrt(2 log(1/delta) + d log(1 + m^2 t/(d C^2))) + 1 + m",
+    "w_i(t) = min{1/C, 1/(C ||X_pa(i)(t)||_{tilde V^{-1}})}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:measure2",
+    "number": "Theorem 2",
+    "quote": "Under a deviation budget $C$, by setting $\\delta=\\frac{1}{2NT}$ and confidence radius $\\beta(t,\\delta)$ according to Lemma~\\ref{lem:beta(t)indeviation}, the average cumulative regret of \\algonameRWLinSEMUCB\\  is upper bounded by $\\E \\left[R(T)\\right]\\leq 2m+\\tilde{\\mathcal{O}}\\left(d^{L-\\frac{1}{2}}(\\sqrt{T} + C)\\right)$."
+   },
+   "confidence": "medium",
+   "notes": "Regret defined as T mu_{a*} - sum E[X_N(t)], a means-based regret, mapped to pseudo_regret. Hidden constants depend on kappa_min, kappa_max, m. Õ hides log factors including log N. The paper's 'average cumulative regret' is total expected regret. With C=1 and no deviation reduces to Õ(d^{L-1/2} sqrt T)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "yan2023robust",
+   "cited_title": "Robust causal bandits for linear models",
+   "cited_first_author": "Z. Yan",
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Robust causal bandits with linear SEMs, max in-degree d, longest causal path L, deviation budget C; for any algorithm there is an instance",
+   "bound": {
+    "notation": "Omega",
+    "expression": "d_in**(L/2 - 2)*Max(sqrt(T), d_in**2*C)",
+    "expression_latex": "\\Omega(d^{\\frac{L}{2}-2}\\max\\{\\sqrt{T}\\; , \\; d^2C\\})",
+    "regime": null
+   },
+   "where": "Theorem 3 (cites Corollary 9 of yan2023robust)"
+  },
+  {
+   "cited_key": "yan2023robust",
+   "cited_title": "Robust causal bandits for linear models",
+   "cited_first_author": "Z. Yan",
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Robust causal bandits with linear SEMs, N nodes, deviation budget C",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d_in**(L - 1/2)*sqrt(N_nodes*T) + N_nodes*C",
+    "expression_latex": "\\tilde \\mcO(d^{L-\\frac{1}{2}}\\sqrt{NT}+NC)",
+    "regime": null
+   },
+   "where": "Section 1, Contributions"
+  },
+  {
+   "cited_key": "varici2022causal",
+   "cited_title": "Causal bandits for linear structural equation models",
+   "cited_first_author": "B. Varici",
+   "cited_year": 2023,
+   "cited_arxiv_id": null,
+   "algorithm_name": "LinSEM-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Causal bandits with linear SEMs, time-invariant model, N nodes",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d_in**(L - 1/2)*sqrt(N_nodes*T)",
+    "expression_latex": "\\tilde\\mcO(d^{L-\\frac{1}{2}}\\sqrt{NT})",
+    "regime": null
+   },
+   "where": "Section 1 and Section 5 (implied: improved by a sqrt(N) factor)"
+  },
+  {
+   "cited_key": "abbasi2011improved",
+   "cited_title": "Improved algorithms for linear stochastic bandits",
+   "cited_first_author": "Y. Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "OFUL",
+   "algorithm_registry_id": "oful",
+   "side": "upper",
+   "setting_description": "Stochastic linear bandits, dimension d",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\tilde \\mcO (d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 5, after Theorem 3"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:38:04",
+  "source_chars": 72260,
+  "input_tokens": 74430,
+  "output_tokens": 4688,
+  "cost_usd_equiv": 0.410888,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

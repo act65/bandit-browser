@@ -1,0 +1,304 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Online Stochastic Linear Optimization under One-bit Feedback",
+  "arxiv_id": "1509.07728",
+  "arxiv_version": null,
+  "year": 2015,
+  "authors": [
+   "Lijun Zhang",
+   "Tianbao Yang",
+   "Rong Jin",
+   "Zhi-Hua Zhou"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online stochastic linear optimization under one-bit feedback (logit model)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "generalized_linear",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "S"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "arbitrary_compact",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "logistic (logit) link function; feedback y_t in {-1,+1} with Pr[y_t=±1|x_t]=1/(1+exp(-y_t x_t^T w_*))",
+    "main theorem bounds the linear regret T max x^T w_* - sum x_t^T w_*, which is within constant factors of the logistic regret"
+   ],
+   "definition_quote": "we assume the binary feedback is generated according to the logit model ... \\Pr[y_t= \\pm 1|\\x_t] = \\frac{1}{1+\\exp(-y_t \\x_t^\\top \\w_*)} ... we assume the decision space $\\D$ is contained in the unit ball ... We further assume the $\\ell_2$-norm of $\\w_*$ is upper bounded by some constant $R$, which is known to the learner."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Online Learning for Logit Model (OL^2M)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "S"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*sqrt(gamma_conf_T*T/(eta*beta_log)*log_det_ratio)",
+    "expression_latex": "4\\sqrt{\\frac{\\gamma_T  T}{\\eta \\beta} \\log\\frac{\\det(Z_{T+1})}{\\det(Z_1)}}",
+    "regime": null
+   },
+   "symbols": {
+    "gamma_conf_T": "confidence width gamma_T from Theorem 1: 2 eta[4R + (4/beta + 8R/3) tau_{T-1} + (1/beta) log det(Z_T)/det(Z_1)] + max(lambda, eta beta/2) R^2, with tau_t = log(2 ceil(2 log2 t) t^2/delta)",
+    "beta_log": "1/(2(1+exp(S))), S = R the norm bound on w_*",
+    "log_det_ratio": "log det(Z_{T+1})/det(Z_1) <= d log(1 + eta beta T/(2 lambda d))"
+   },
+   "conditions": [
+    "||x||_2 <= 1 for all x in D",
+    "||w_*||_2 <= R (= S), R known"
+   ],
+   "tuning": [
+    "step size eta > 0",
+    "regularization lambda > 0",
+    "confidence parameter delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:bound",
+    "number": "Theorem 3",
+    "quote": "With a probability at least $1-\\delta$, we have \\[ T \\max_{\\x \\in \\D} \\x^\\top\\w_* - \\sum_{t=1}^T \\x_t^\\top \\w_* \\leq 4\\sqrt{\\frac{\\gamma_T  T}{\\eta \\beta} \\log\\frac{\\det(Z_{T+1})}{\\det(Z_1)}} \\] holds for all $T >0$."
+   },
+   "confidence": "high",
+   "notes": "Bound on the linear regret; by Lemma 1 the logistic regret is at most 1/4 of it. Holds for all T simultaneously w.p. 1-delta. The argmax step is NP-hard in general, so compute not_stated."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\O(d\\sqrt{T})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "||x||_2 <= 1 for all x in D",
+    "||w_*||_2 <= R (= S), R known"
+   ],
+   "tuning": [
+    "step size eta > 0",
+    "regularization lambda > 0",
+    "confidence parameter delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:bound",
+    "number": "Theorem 3",
+    "quote": "Combining with the upper bound in Corollary~\\ref{cor:alpha:order}, the above theorem implies our algorithm achieves a regret bound of $\\O(d\\sqrt{T})$ which matches the bound for Stochastic Linear Bandits"
+   },
+   "confidence": "medium",
+   "notes": "Consequence of Theorem 3 with Corollary 2 stated in the text; O_tilde hides constants depending on R (including exp(R)) and polylog factors."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Linear:Bandit:08",
+   "cited_title": "Stochastic linear optimization under bandit feedback",
+   "cited_first_author": "Varsha Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": "ConfidenceBall_2",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "stochastic linear bandits, possibly infinite decision set",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\O(d \\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 2.2"
+  },
+  {
+   "cited_key": "Auer:UCB",
+   "cited_title": "Using confidence bounds for exploitation-exploration trade-offs",
+   "cited_first_author": "Peter Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "master algorithm using LinRel (SupLinRel)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "stochastic linear bandits with finite decision set D",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "log(K)**(3/2)*sqrt(T*d)",
+    "expression_latex": "\\O((\\log|\\D|)^{3/2}  \\sqrt{T d} )",
+    "regime": null
+   },
+   "where": "Section 2.2"
+  },
+  {
+   "cited_key": "NIPS2010",
+   "cited_title": "Parametric bandits: The generalized linear case",
+   "cited_first_author": "Sarah Filippi",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GLM-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "generalized linear bandits, finite arms",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\O(d \\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 2.4"
+  },
+  {
+   "cited_key": "Auer:2003:NMB",
+   "cited_title": "The nonstochastic multiarmed bandit problem",
+   "cited_first_author": "Peter Auer",
+   "cited_year": 2003,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Exp3",
+   "algorithm_registry_id": "exp3",
+   "side": "upper",
+   "setting_description": "adversarial K-armed bandits",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "\\O(\\sqrt{KT})",
+    "regime": null
+   },
+   "where": "Section 2.5"
+  },
+  {
+   "cited_key": "Lai1985",
+   "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_first_author": "T. L. Lai",
+   "cited_year": 1985,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "stochastic K-armed bandits, asymptotic lower bound with separated best and second-best arms",
+   "bound": {
+    "notation": "Omega",
+    "expression": "K*log(T)",
+    "expression_latex": "O(K \\log T)",
+    "regime": "asymptotic"
+   },
+   "where": "Section 2.1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T13:08:49",
+  "source_chars": 54984,
+  "input_tokens": 66069,
+  "output_tokens": 4579,
+  "cost_usd_equiv": 0.34182,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

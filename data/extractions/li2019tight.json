@@ -1,0 +1,304 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Tight Regret Bounds for Infinite-armed Linear Contextual Bandits",
+  "arxiv_id": "1905.01435",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Yingkai Li",
+   "Yining Wang",
+   "Xi Chen",
+   "Yuan Zhou"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Linear contextual bandit with (changing) infinite action sets",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "arbitrary_compact",
+    "time_varying": "oblivious_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "bounded_mean_reward",
+    "parameter_structure": "dense"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "action sets D_t are closed subsets of the unit l2 ball with |D_t| = infinity, chosen obliviously before the policy runs; D_t revealed at time t"
+   ],
+   "definition_quote": "At each time period $t$, an \\emph{action set} $D_t\\subseteq\\mathbb R^d$ is provided; the player selects an \\emph{action} $x_t\\in D_t$, and subsequently receives a \\emph{reward} $r_t = \\langle x_t, \\theta\\rangle + \\xi_t$, where $\\theta\\in\\mathbb R^d$, $\\|\\theta\\|_2\\leq 1$ is a fixed but unknown parameter vector, and $\\{\\xi_t\\}$ are independent centered sub-Gaussian noise variables with the variance proxy 1. ... The domains $D_1,\\cdots,D_T\\in\\mathcal S_d$ are chosen arbitrarily, \\emph{before} any policy $\\pi$ is executed."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "VCL-SupLinUCB",
+   "registry_id": "vcl_suplinucb",
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(T*log(T)*log(1/delta))*log(log(T/delta)) + delta*d*sqrt(T)",
+    "expression_latex": "\\E\\left[\\max\\left\\{R_T - C_1  d \\sqrt{ T \\log T \\log (1/\\delta)} \\cdot \\log \\log (T/\\delta), 0\\right\\}\\right] \\leq C_2 \\delta d\\sqrt{T}",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "||theta||_2 <= 1",
+    "D_t closed subsets of the unit l2 ball",
+    "noise sub-Gaussian with variance proxy 1"
+   ],
+   "tuning": [
+    "universal constant C sufficiently large",
+    "confidence parameter delta in (0,1)",
+    "zeta_0 = ceil(log2(sqrt(T/d)/delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 2",
+    "quote": "Suppose the universal constant $C>0$ in the input of Algorithm \\ref{alg:suplinucb} is sufficiently large. Then there exists constants $C_1, C_2 > 0$ that only depend on $C$ such that for all $\\|\\theta\\|_2\\leq 1$ and $\\{D_t\\subseteq\\{x\\in\\mathbb R^d:\\|x\\|_2\\leq 1\\} \\}$, the regret $R_T$ satisfies the following inequality {for any $\\delta\\in(0,1)$}, \\E[\\max\\{R_T - C_1 d \\sqrt{ T \\log T \\log (1/\\delta)} \\cdot \\log \\log (T/\\delta), 0\\}] \\leq C_2 \\delta d\\sqrt{T}."
+   },
+   "confidence": "medium",
+   "notes": "Theorem bounds E[(R_T - C1 d sqrt(T log T log(1/delta)) loglog(T/delta))_+]; recorded as the implied expected regret bound (statement i). With delta = Omega(1) this gives O(d sqrt(T log T) loglog T), matching informal Theorem 1 (O(sqrt(d^2 T log T)) poly(loglog T)). R_T is defined through means, so the expectation is pseudo-regret."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(T*log(T)*log(1/delta))*log(log(T/delta))",
+    "expression_latex": "R_T \\lesssim  d \\sqrt{ T \\log T \\log (1/\\delta)} \\cdot \\log \\log (T/\\delta)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "||theta||_2 <= 1",
+    "D_t closed subsets of the unit l2 ball",
+    "noise sub-Gaussian with variance proxy 1"
+   ],
+   "tuning": [
+    "universal constant C sufficiently large",
+    "confidence parameter delta in (0,1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 2",
+    "quote": "With probability at least $1 - \\delta$, it holds that $R_T \\lesssim  d \\sqrt{ T \\log T \\log (1/\\delta)} \\cdot \\log \\log (T/\\delta)$. This is because, by Markov's inequality, ..."
+   },
+   "confidence": "medium",
+   "notes": "Statement ii derived from Theorem 2 via Markov's inequality in the text following the theorem."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "dani2008stochastic",
+   "cited_title": "Stochastic linear optimization under bandit feedback",
+   "cited_first_author": "Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": "ConfidenceBall",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Linear (contextual) bandit with infinite action sets in the unit ball, theta in unit ball, worst-case expected regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(d**2*T*log(T)**3)",
+    "expression_latex": "O(\\sqrt{d^2 T\\log^3 T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "dani2008stochastic",
+   "cited_title": "Stochastic linear optimization under bandit feedback",
+   "cited_first_author": "Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Linear bandit with infinite action sets, worst-case expected regret, all policies",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(d**2*T)",
+    "expression_latex": "\\Omega(\\sqrt{d^2 T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "abbasi2011improved",
+   "cited_title": "Improved algorithms for linear stochastic bandits",
+   "cited_first_author": "Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "OFUL",
+   "algorithm_registry_id": "oful",
+   "side": "upper",
+   "setting_description": "Linear (contextual) bandit with infinite action sets in the unit ball, worst-case expected regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(d**2*T*log(T)**2)",
+    "expression_latex": "O(\\sqrt{d^2 T\\log^2 T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "abbasi2011improved",
+   "cited_title": "Improved algorithms for linear stochastic bandits",
+   "cited_first_author": "Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "OFUL",
+   "algorithm_registry_id": "oful",
+   "side": "upper",
+   "setting_description": "Linear (contextual) bandit, high-probability regret with probability at least 1-delta",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(T*log(T)*log(T/delta))",
+    "expression_latex": "O(d \\sqrt{T \\log T \\log (T/\\delta)})",
+    "regime": null
+   },
+   "where": "Section 2 (after Theorem 2)"
+  },
+  {
+   "cited_key": "li2019near",
+   "cited_title": "Nearly minimax-optimal regret for linearly parameterized bandits",
+   "cited_first_author": "Li",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Linear contextual bandit with infinite action sets (corollary of finite-armed lower bound), worst-case expected regret",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(d**2*T*log(T))",
+    "expression_latex": "\\Omega(\\sqrt{d^2 T\\log T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T13:06:10",
+  "source_chars": 56652,
+  "input_tokens": 69753,
+  "output_tokens": 5049,
+  "cost_usd_equiv": 0.380692,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

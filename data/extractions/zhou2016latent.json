@@ -1,0 +1,413 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Latent Contextual Bandits and their Application to Personalized Recommendations for New Users",
+  "arxiv_id": "1604.06743",
+  "arxiv_version": null,
+  "year": 2016,
+  "authors": [
+   "Li Zhou",
+   "Emma Brunskill"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Latent contextual bandits (sequence of users, each in one of N latent linear classes)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "gaussian_unknown_variance",
+   "learner_knows": [
+    "K",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "unspecified",
+    "loss_set": "unspecified",
+    "parameter_structure": "clustered"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_unknown"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Sequence of users (tasks), each user u interacts for T_u <= L steps; each user belongs to one of N unknown latent classes with parameter beta_h; regret summed over all users against each user's true policy",
+    "Learner knows the number of latent classes N and the bound L on per-user interactions (used to set J)",
+    "Context generation process not specified; Spectral Experts analysis requires i.i.d. samples obtained by uniform random arm selection",
+    "Noise variance depends on the latent class"
+   ],
+   "definition_quote": "Each user $u$ belongs to one of a finite set of $N$ latent classes... The reward of an arm $a \\in \\mathcal{A}_{t_u}$ is given by $r_{t_u, a} = \\beta_{c_u}^\\top x_{t_u, a} + \\epsilon_{c_u}$ where $\\epsilon_{c_u}$ follows a Gaussian distribution with zero mean and bounded variance."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "LCB with EXP4.P (Latent Contextual Bandits, Spectral Experts + EXP4.P over learned policies)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "exponential_weights",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "N_cls",
+    "L_max",
+    "T_u"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "LCB with EXP3 over learned policies",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "exponential_weights",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "N_cls",
+    "L_max",
+    "T_u"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "LCB with Epoch-Greedy",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "epsilon_greedy",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "N_cls",
+    "L_max"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(J_users*S_ph1) + d*sqrt(J_users*S_ph1*log(1 + S_ph1)) + 3*sqrt(U_users*T_ph2) + sqrt(U_users*T_ph2*K*log(N_cls))",
+    "expression_latex": "O\\left(\\sqrt{JS} + d\\sqrt{JS\\ln (1+S)}\\right) + O\\left(3\\sqrt{UT} + \\sqrt{UTK\\ln N} \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "J_users": "number of users in phase 1",
+    "S_ph1": "total interactions in phase 1",
+    "U_users": "number of users in phase 2",
+    "T_ph2": "total interactions in phase 2",
+    "N_cls": "number of latent classes",
+    "L_max": "upper bound on per-user interactions T_u",
+    "T_u": "number of interactions of user u"
+   },
+   "conditions": [
+    "T_u <= L for all users",
+    "||x|| <= 1",
+    "realizability: each user belongs to one of N latent linear models"
+   ],
+   "tuning": [
+    "tau_u = sqrt(T_u)",
+    "J = sqrt(L)",
+    "deterministic policies",
+    "B = EXP4.P",
+    "separate LinUCB per user in phase 1",
+    "Spectral Experts used on i.i.d. uniform samples"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "Set $\\tau_u = \\sqrt{T_u}$ for all $u \\in [\\tilde{U}]$ and $J=\\sqrt{L}$. Assume $\\mathcal{P}$ constructs deterministic policies. If $\\mathcal{B}$ is a contextual bandits algorithm with optimal regret bound (e.g.\\ EXP4.P), then the problem-independent expected regret bound of LCB with respect to the true policy is ... = O(\\sqrt{JS} + d\\sqrt{JS\\ln (1+S)}) + O(3\\sqrt{UT} + \\sqrt{UTK\\ln N})"
+   },
+   "confidence": "medium",
+   "notes": "Regret defined via expected rewards beta^T x against per-user true policy, so pseudo-regret. Proof is heuristic (relies on Spectral Experts O(1/sqrt n) rate). Paper's S and T are phase-1 and phase-2 interaction totals, renamed."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(U_users*T_ph2*K*log(N_cls))",
+    "expression_latex": "O\\left(\\sqrt{UTK\\ln N} \\right)",
+    "regime": "UT >> max{1, d^2/K} JS (T and U grow large)"
+   },
+   "symbols": {
+    "J_users": "number of users in phase 1",
+    "S_ph1": "total interactions in phase 1",
+    "U_users": "number of users in phase 2",
+    "T_ph2": "total interactions in phase 2",
+    "N_cls": "number of latent classes"
+   },
+   "conditions": [
+    "T_u <= L for all users",
+    "||x|| <= 1",
+    "realizability: each user belongs to one of N latent linear models"
+   ],
+   "tuning": [
+    "tau_u = sqrt(T_u)",
+    "J = sqrt(L)",
+    "deterministic policies",
+    "B = EXP4.P"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "... = O\\left(\\sqrt{UTK\\ln N} \\right) as $UT \\gg \\max\\left\\{1, \\frac{d^2}{K}\\right\\}JS$, that is, as $T$ and $U$ grows large."
+   },
+   "confidence": "medium",
+   "notes": "Asymptotic simplification of r1."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(U_users*T_ph2*N_cls*log(N_cls))",
+    "expression_latex": "O\\left(\\sqrt{UTN\\ln N} \\right)",
+    "regime": "UT >> max{1, d^2/N} JS (T and U grow large)"
+   },
+   "symbols": {
+    "J_users": "number of users in phase 1",
+    "S_ph1": "total interactions in phase 1",
+    "U_users": "number of users in phase 2",
+    "T_ph2": "total interactions in phase 2",
+    "N_cls": "number of latent classes"
+   },
+   "conditions": [
+    "T_u <= L for all users",
+    "||x|| <= 1",
+    "realizability: each user belongs to one of N latent linear models"
+   ],
+   "tuning": [
+    "tau_u = sqrt(T_u)",
+    "J = sqrt(L)",
+    "deterministic policies",
+    "B = EXP3 treating each learned policy as an arm"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "Similarly, if $\\mathcal{B}$ is EXP3~\\cite{auer2002nonstochastic} which treats each learned policy as an arm, then the problem-independent expected regret bound of LCB with respect to the true policy is ... = O\\left(\\sqrt{UTN\\ln N} \\right) as $UT \\gg \\max\\left\\{1, \\frac{d^2}{N}\\right\\}JS$"
+   },
+   "confidence": "medium",
+   "notes": "Proof gives phase-2 regret O(3 sqrt(UT) + sqrt(UTN ln N))."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "3*L_max**2 + d*L_max*sqrt(S_ph1*log(L_max + 1)) + U_users*K/Delta_sep**2*(log(N_cls) + log(T_ph2 + 1))",
+    "expression_latex": "O\\left(3L^2+dL\\sqrt{S\\ln(L+1)} + \\frac{UK}{\\bigtriangleup^2} \\left(\\ln N + \\ln (T+1)\\right)\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "S_ph1": "total interactions in phase 1",
+    "U_users": "number of users in phase 2",
+    "T_ph2": "total interactions in phase 2",
+    "N_cls": "number of latent classes",
+    "L_max": "upper bound on per-user interactions T_u",
+    "Delta_sep": "minimum Euclidean distance between any two latent parameter vectors"
+   },
+   "conditions": [
+    "T_u <= L for all users",
+    "||beta_h - beta_h'|| >= Delta_sep for h != h'",
+    "||x|| <= 1",
+    "realizability: each user belongs to one of N latent linear models"
+   ],
+   "tuning": [
+    "tau_u = 3",
+    "J = L^2",
+    "deterministic policies",
+    "B = Epoch-Greedy"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 2",
+    "quote": "Set $\\tau_u = 3$ for all $u \\in [\\tilde{U}]$ and $J=L^2$. Assume $\\mathcal{P}$ constructs deterministic policies and $\\mathcal{B}$ is Epoch-Greedy, then the problem-dependent expected regret bound of LCB with respect to the true policy is O(3L^2+dL\\sqrt{S\\ln(L+1)} + \\frac{UK}{\\bigtriangleup^2} (\\ln N + \\ln (T+1)))"
+   },
+   "confidence": "medium",
+   "notes": "Delta here is a separation between latent models, not an arm gap; Epoch-Greedy's problem-dependent bound is used with this quantity loosely. Horizon labelled anytime is uncertain; requires L known."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "DBLP:journals/corr/Zhou15c",
+   "cited_title": "A survey on contextual multi-armed bandits",
+   "cited_first_author": "Li Zhou",
+   "cited_year": 2015,
+   "cited_arxiv_id": "1508.03326",
+   "algorithm_name": "LinUCB",
+   "algorithm_registry_id": "lin_ucb",
+   "side": "upper",
+   "setting_description": "Linear contextual bandit, single user, expected regret over T_u rounds",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(T*log(1 + T))",
+    "expression_latex": "O(d\\sqrt{T_u\\ln(1+T_u)})",
+    "regime": null
+   },
+   "where": "Proof of Theorem 1"
+  },
+  {
+   "cited_key": "gentile2014online",
+   "cited_title": "Online clustering of bandits",
+   "cited_first_author": "Claudio Gentile",
+   "cited_year": 2014,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CLUB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Clustered linear contextual bandits over U~ users with N clusters, total interactions T~, regret vs true policy of each user (problem-dependent, Delta = min distance between cluster parameters)",
+   "bound": {
+    "notation": "O",
+    "expression": "N_cls + U_tot*sqrt(N_cls*d) + U_tot*d/Delta_sep**2*log(T + 1) + d*N_cls*sqrt(T)",
+    "expression_latex": "O(N+\\tilde{U}\\sqrt{Nd}+\\frac{\\tilde{U}d}{\\bigtriangleup^2}\\ln (\\tilde{T}+1)+dN\\sqrt{\\tilde{T}})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "beygelzimer2011contextual",
+   "cited_title": "Contextual bandit algorithms with supervised learning guarantees",
+   "cited_first_author": "Alina Beygelzimer",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "EXP4.P (Population)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Contextual bandit with N policies, K arms, T~ total rounds, regret vs best policy in pre-defined set",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*K*log(N_exp))",
+    "expression_latex": "O(\\sqrt{\\tilde{T}K\\ln N})",
+    "regime": null
+   },
+   "where": "Table 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:20:02",
+  "source_chars": 51918,
+  "input_tokens": 60164,
+  "output_tokens": 6540,
+  "cost_usd_equiv": 0.3338,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

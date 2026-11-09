@@ -1,0 +1,410 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Nearly Dimension-Independent Sparse Linear Bandit over Small Action Spaces via Best Subset Selection",
+  "arxiv_id": "2009.02003",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Yining Wang",
+   "Yi Chen",
+   "Ethan X. Fang",
+   "Zhaoran Wang",
+   "Runze Li"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "High-dimensional sparse linear stochastic contextual bandit with finite random action spaces",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "K",
+    "d",
+    "s_sparse",
+    "S",
+    "sigma"
+   ],
+   "instance_assumptions": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "not_applicable",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "l2_ball",
+    "loss_set": "unspecified",
+    "parameter_structure": "sparse"
+   },
+   "extras": [],
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "each round has exactly k actions whose covariates X_{t,i} are drawn i.i.d. from an unknown distribution P_0 (fresh action set every round)",
+    "covariates are centered sub-Gaussian with parameter sigma_X^2 >= 1, have independent coordinates, and E[X_j^2] >= rho for every coordinate",
+    "the learner knows the covariate sub-Gaussian parameter sigma_X and the non-degeneracy constant rho (used in tuning n_0 and alpha)"
+   ],
+   "definition_quote": "We consider finite action spaces $\\{\\mathcal A_t\\}_{t=1}^T$ and assume that there exists some constant $k$ such that $|\\mathcal A_t|=k$. We also assume that for each period $t$, the covariates $\\{ X_{t,i}\\}_{i \\in \\cA_t}$ are sampled independently from an unknown distribution $P_0$. ... (B1) Sparsity ... $|\\supp(\\theta^*)|=s$. (B2) $\\|\\theta^*\\|\\leq r$. (C1) The random noises are independent, centered, and sub-Gaussian with parameter $\\nu^2\\geq 1$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Sparse-LinUCB (SLUCB)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "doubling_trick",
+    "explore_then_commit"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "d",
+    "s_sparse",
+    "S",
+    "sigma",
+    "sigma_X",
+    "rho"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Sparse-SupLinUCB (SSUCB)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "elimination",
+    "doubling_trick"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "d",
+    "s_sparse",
+    "S",
+    "sigma",
+    "sigma_X",
+    "rho"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "exponential",
+   "bound": {
+    "notation": "O",
+    "expression": "(n_0*beta_1 + alpha_1*sqrt(s_sparse*T*log(T)*(lam + log(sigma_X*d*T*K/delta))) + alpha_1*sigma_X*sqrt(T*log(K*T*d/delta)))*log(T)",
+    "expression_latex": "\\Big( n_0\\beta+ \\alpha  \\sqrt{sT\\log(T)\\cdot\\big(\\lambda+ \\log(\\sigma dTk/\\delta) \\big)} + \\alpha \\sigma \\sqrt{T\\log(kTd/\\delta)}   \\Big)\\cdot \\log(T)",
+    "regime": null
+   },
+   "symbols": {
+    "n_0": "pure-exploration length, n_0 ~ rho^-1 (nu sigma_X tau_tilde)^2 s^3 log^4(kTd/(delta lam))",
+    "alpha_1": "confidence parameter alpha = sigma_X*nu*sqrt(s*tau_tilde)*log(sigma_X rho^-1 d k T/delta)",
+    "beta_1": "reward upper estimate beta = sigma_X*r*sqrt(s*log(kTd/delta))",
+    "sigma_X": "sub-Gaussian parameter of covariates (paper's sigma)",
+    "rho": "lower bound on coordinate second moments of covariates",
+    "tau_tilde": "number of epochs ~ log T"
+   },
+   "conditions": [
+    "Assumptions 1-3: covariates centered sub-Gaussian(sigma_X^2>=1), independent coordinates, E[X_j^2]>=rho",
+    "|supp(theta*)| = s, ||theta*||_2 <= r with r >= 1",
+    "noise sub-Gaussian with parameter nu^2 >= 1 (nu mapped to sigma)",
+    "|A_t| = k for all t"
+   ],
+   "tuning": [
+    "n_0 ~ rho^-1 (nu sigma tau_tilde)^2 s^3 log^4(kTd/(delta lambda))",
+    "alpha = sigma nu sqrt(s tau_tilde) log(sigma rho^-1 dkT/delta)",
+    "beta = sigma r sqrt(s log(kTd/delta))",
+    "confidence delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem1",
+    "number": "Theorem 1",
+    "quote": "For any $\\delta\\in(0,1)$, let\n\\begin{align*} \nn_0 &\\asymp \\rho^{-1} \\cdot (\\nu \\sigma \\tilde{\\tau})^2\\cdot s^{3} \\cdot\\log^4\\big(kTd/(\\delta \\lambda)\\big),\\\\\n\\alpha &= \\sigma\\nu\\sqrt{s\\tilde \\tau}\\cdot\\log(\\sigma\\rho^{-1}dkT/\\delta), \\\n\\beta  = \\sigma r\\sqrt{s\\log(kTd/\\delta)}.\n\\end{align*}\nUnder Assumptions \\ref{ass1}-\\ref{ass3}, the regret of the actions sequence $\\{i_t\\}^T_{t=1} $ generated by the \\textsc{Sparse-LinUCB} algorithm is upper bounded by  \n\\begin{align*}\n    R_T\\big(\\{i_t\\},\\theta^*\\big) \\lesssim \\Big( n_0\\beta+ \\alpha  \\sqrt{sT\\log(T)\\cdot\\big(\\lambda+ \\log(\\sigma dTk/\\delta) \\big)} + \\alpha \\sigma \\sqrt{T\\log(kTd/\\delta)}   \\Big)\\cdot \\log(T),\n\\end{align*} \\label{thm:main-upper}\nwith probability at least $1-\\delta$."
+   },
+   "confidence": "medium",
+   "notes": "Paper summarizes the dominating term as O_tilde(s sqrt(T)). Probability 1-C*delta per paper's convention. Best subset selection is NP-hard, hence compute marked exponential. lam is ridge penalty."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "exponential",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T) + (n_0*beta_1 + gamma_1*sqrt(s_sparse*T*log(T)*(lam + log(sigma_X*d*T*K/delta))))*log(T)*log(beta_1*T)",
+    "expression_latex": "\\sqrt{T}+ \\Big(n_0\\beta+\\gamma\\sqrt{sT\\cdot \\log(T)\\big(\\lambda+ \\log(\\sigma dTk/\\delta) \\big)} \\Big)\\cdot  \\log(T)\\cdot \\log(\\beta T)",
+    "regime": null
+   },
+   "symbols": {
+    "n_0": "pure-exploration length, n_0 ~ rho^-1 (nu sigma_X tau_tilde)^2 s^3 log^4(kTd/(delta lam))",
+    "gamma_1": "confidence parameter gamma = sigma_X*(lam^(1/2)+nu+sigma_X)*log^(3/2)(kTd/delta)",
+    "beta_1": "reward upper estimate beta = sigma_X*r*sqrt(s*log(kTd/delta))",
+    "sigma_X": "sub-Gaussian parameter of covariates (paper's sigma)",
+    "rho": "lower bound on coordinate second moments of covariates",
+    "tau_tilde": "number of epochs ~ log T"
+   },
+   "conditions": [
+    "Assumptions 1-3: covariates centered sub-Gaussian(sigma_X^2>=1), independent coordinates, E[X_j^2]>=rho",
+    "|supp(theta*)| = s, ||theta*||_2 <= r with r >= 1",
+    "noise sub-Gaussian with parameter nu^2 >= 1",
+    "|A_t| = k for all t"
+   ],
+   "tuning": [
+    "n_0 ~ rho^-1 (nu sigma tau_tilde)^2 s^3 log^4(kTd/(delta lambda))",
+    "beta = sigma r sqrt(s log(kTd/delta))",
+    "gamma = sigma(lambda^{1/2}+nu+sigma) log^{3/2}(kTd/delta)",
+    "confidence delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem2",
+    "number": "Theorem 2",
+    "quote": "For any $\\delta\\in(0,1)$, let \n\\begin{align*} \n    n_0 &\\asymp \\rho^{-1} \\cdot (\\nu \\sigma \\tilde{\\tau})^2\\cdot s^{3} \\cdot\\log^4\\big(kTd/(\\delta \\lambda)\\big),\\\\\n\\beta & = \\sigma r \\sqrt{s\\log(kTd/\\delta)},\\ \\gamma =\\sigma(\\lambda^{1/2}+\\nu+\\sigma)\\log^{3/2}(kTd/\\delta).\n\\end{align*}\nThen under Assumptions \\ref{ass1}-\\ref{ass3}, the regret of actions sequence $\\{i_t\\}^T_{t=1} $ generated by the \\textsc{Sparse-SupLinUCB} algorithm \\vspace{4pt}\n is upper bounded by \n \\begin{align*}\n    R_T\\big(\\{ i_t\\},\\theta^*\\big) &\\lesssim  \\sqrt{T}+ \\Big(n_0\\beta+\\gamma\\sqrt{sT\\cdot \\log(T)\\big(\\lambda+ \\log(\\sigma dTk/\\delta) \\big)} \\Big)\\cdot  \\log(T)\\cdot \\log(\\beta T),\n    \\end{align*} \\label{thm:suplinucb}\nwith probability at least $1-\\delta$."
+   },
+   "confidence": "medium",
+   "notes": "Paper summarizes dominant term as O_tilde(sqrt(sT)). Note n_0*beta term scales as s^3.5 polylog, independent of T up to logs."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "exponential",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(s_sparse*T)",
+    "expression_latex": "\\sqrt{sT}\\cdot \\mathrm{polylog}(k,d,T,r)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "X_{t,i} i.i.d. N(0, I_d)",
+    "epsilon_t i.i.d. N(0,1)",
+    "|A_t| = k",
+    "||theta*||_0 <= s, ||theta*|| <= r"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "cor:main",
+    "number": "Corollary 1",
+    "quote": "We assume that $|\\mathcal A_t|=k$, $X_{t,i}\\overset{i.i.d.}{\\sim}\\mathcal N(0, I_d)$, and $\\varepsilon_t\\overset{i.i.d.}{\\sim}\\mathcal N(0,1)$, for each $1\\le t\\le T$. Then there exists a policy $\\pi$ such that with probability at least $1-\\delta$, for all $\\|\\theta^*\\|_0\\leq s$ and $\\|\\theta^*\\|\\leq r$, $R_T(\\{i_t\\};\\theta^*) \\lesssim \\sqrt{sT}\\cdot \\mathrm{polylog}(k,d,T,r)$"
+   },
+   "confidence": "medium",
+   "notes": "Simplified Gaussian special case of Theorem 2; polylog factors in k,d,T,r hidden. Stated as holding even if T << d (note: the s^3.5 polylog burn-in term is hidden in the paper's simplification)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "auer2002using",
+   "cited_title": "Using confidence bounds for exploitation-exploration trade-offs",
+   "cited_first_author": "P. Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SupLinRel",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Linear stochastic contextual bandit, at most N actions per round, |<X,theta*>| <= 1",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(d*T)",
+    "expression_latex": "\\widetilde \\cO(\\sqrt{dT})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "dani2008stochastic",
+   "cited_title": "Stochastic linear optimization under bandit feedback",
+   "cited_first_author": "V. Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Linear stochastic bandit with infinite action set in R^d, |<X,theta*>| <= 1",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\widetilde \\cO(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "lattimore2015linear",
+   "cited_title": "Linear multi-resource allocation with semi-bandit feedback",
+   "cited_first_author": "T. Lattimore",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SETC",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Sparse linear bandit on hypercube [-1,1]^d, ||theta*||_0 <= s, ||theta*||_1 <= 1",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "s_sparse*sqrt(T)",
+    "expression_latex": "\\widetilde \\cO(s\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "abbasi2012online",
+   "cited_title": "Online-to-confidence-set conversions and application to sparse stochastic bandits",
+   "cited_first_author": "Y. Abbasi-Yadkori",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Sparse linear stochastic bandit, general action sets in R^d, ||theta*||_0 <= s, |<X,theta*>| <= 1",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(s_sparse*d*T)",
+    "expression_latex": "\\widetilde \\cO(\\sqrt{sdT})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "carpentier2012bandit",
+   "cited_title": "Bandit theory meets compressed sensing for high dimensional stochastic linear bandit",
+   "cited_first_author": "A. Carpentier",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Sparse linear bandit on unit l2 ball, ||theta*||_0 <= s",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "S**2*s_sparse*sqrt(T)",
+    "expression_latex": "\\widetilde \\cO(\\|\\theta^*\\|_2^2s\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "dani2008stochastic",
+   "cited_title": "Stochastic linear optimization under bandit feedback",
+   "cited_first_author": "V. Dani",
+   "cited_year": 2008,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Sparse linear stochastic bandit with infinitely many feasible actions per round (also attributed to shamir2015complexity, szepesvari2016banditlog)",
+   "bound": {
+    "notation": "Omega_tilde",
+    "expression": "sqrt(s_sparse*d*T)",
+    "expression_latex": "\\tilde{\\mathcal{O}}(\\sqrt{sdT})",
+    "regime": null
+   },
+   "where": "Section 1 (Introduction)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T13:04:01",
+  "source_chars": 162424,
+  "input_tokens": 121177,
+  "output_tokens": 7661,
+  "cost_usd_equiv": 0.8443240000000001,
+  "quote_retry": {
+   "asked": 2,
+   "fixed": 2,
+   "cost_usd_equiv": 0.7103963999999999
+  },
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,201 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Polynomial Regret Concentration of UCB for Non-Deterministic State Transitions",
+  "arxiv_id": "2502.06900",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Can Cömer",
+   "Jannis Blüml",
+   "Cedric Derstroff",
+   "Kristian Kersting"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Non-deterministic non-stationary Multi-Armed Bandit Problem",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "nonstationary_drifting",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each arm i leads to one of K_i successor states sampled with fixed probabilities p^i_j; each successor state has its own reward sequence",
+    "Reward sequences are non-stationary (possibly history-dependent, as in MCTS subtrees) but their empirical means converge in expectation and satisfy polynomial concentration with constants beta>1, xi>0, 1/2<=eta<1",
+    "The learner knows the concentration constants beta, xi, eta (used to set the polynomial UCB bonus and alpha)",
+    "Motivated by MCTS/UCT in stochastic-transition planning problems"
+   ],
+   "definition_quote": "Let there be $K$ actions the agent can choose from. Each action $i \\in [K]$ is connected to $K_i \\geq 1$ possible successive states, which are chosen at random. The probability of sampling state $j \\in [K_i]$ after choosing action $i\\in [K]$ is denoted by $p^i_j\\in [0,1]$ ... we assume bounded reward sequences $X^{(i)}_{j,t} \\in [-R, R]$ ... we allow the reward sequences to be non-stationary"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "UCB with polynomial exploration bonus (UCT-style), with random transitions",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "beta_pp/z**(alpha_ucb - 1)",
+    "expression_latex": "\\mathbb{P}(n\\xbar_n - n\\mu_{i*} \\geq n^{\\eta''}z) \\leq \\frac{\\beta''}{z^{\\xi''}}, \\ \\mathbb{P}(n\\xbar_n - n\\mu_{i*} \\leq -n^{\\eta''}z) \\leq \\frac{\\beta''}{z^{\\xi''}}",
+    "regime": "for all n >= 1, z >= 1; deviation threshold n^{eta''} z with eta'' = alpha/(xi(1-eta))"
+   },
+   "symbols": {
+    "beta_pp": "constant beta'' depending on R, K, Delta_min, beta, xi, alpha, eta, K_1..K_K (eq. beta'')",
+    "z": "deviation level z >= 1",
+    "alpha_ucb": "exploration exponent alpha of the polynomial UCB bonus",
+    "xi_pp": "xi'' = alpha - 1",
+    "eta_pp": "eta'' = alpha/(xi(1-eta))"
+   },
+   "conditions": [
+    "rewards bounded in [-R, R]",
+    "leaf reward sequences satisfy convergence and polynomial concentration with constants beta>1, xi>0, 1/2<=eta<1",
+    "transition probabilities p^i_j are fixed",
+    "unique optimal arm (w.l.o.g.)"
+   ],
+   "tuning": [
+    "alpha > 2 with xi*eta*(1-eta) <= alpha < xi*(1-eta)",
+    "bonus B_{t,s} = beta^{1/xi} t^{alpha/xi} s^{eta-1}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1",
+    "quote": "For a non-deterministic, non-stationary MAB satisfying properties 1 (Convergence) and 2 (Concentration), the value $\\xbar_n=...$ obtained by applying the presented UCB algorithm with polynomial exploration bonus with appropriate parameter $\\alpha > 2$ such that $\\xi\\eta(1-\\eta) \\leq \\alpha < \\xi(1-\\eta)$ ... satisfies ... (Concentration): There exist constants $\\beta''>1, \\xi''>0, \\frac{1}{2} \\leq \\eta'' < 1$ such that ... $\\mathbb{P}(n\\xbar_n - n\\mu_{i*} \\geq n^{\\eta''}z) \\leq \\frac{\\beta''}{z^{\\xi''}}$ ... where $\\eta''=\\frac{\\alpha}{\\xi(1-\\eta)}$, $\\xi''=\\alpha-1$"
+   },
+   "confidence": "medium",
+   "notes": "Polynomial tail bound on deviation of n*Xbar_n from n*mu_{i*} (a 'regret concentration'); both tails have the same bound. Also states convergence E(Xbar_n) -> mu_{i*}. Quantity mapped to 'other' since it is a tail bound on the deviation of cumulative reward, not a standard regret bound. Environment mapped to nonstationary_drifting as rewards are non-stationary but convergent; no variation budget used."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "shah2020non",
+   "cited_title": "Nonasymptotic Analysis of Monte Carlo Tree Search",
+   "cited_first_author": "Shah",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB with polynomial exploration bonus (UCT)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Non-stationary K-armed bandit with deterministic transitions, rewards in [-R,R] whose empirical means converge and satisfy polynomial concentration (beta', xi', eta'); tail bound on n*Xbar_n - n*mu_{i*}",
+   "bound": {
+    "notation": "exact",
+    "expression": "beta_pp/z**(alpha_ucb - 1)",
+    "expression_latex": "\\mathbb{P}(n\\xbar_n - n\\mu_{i*} \\geq n^{\\eta''}z) \\leq \\frac{\\beta''}{z^{\\xi''}}, \\eta''=\\frac{\\alpha}{\\xi'(1-\\eta')}, \\xi''=\\alpha-1",
+    "regime": "n, z >= 1; xi'eta'(1-eta') <= alpha < xi'(1-eta'), alpha > 2"
+   },
+   "where": "Appendix, Theorem 2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T14:06:44",
+  "source_chars": 67654,
+  "input_tokens": 69264,
+  "output_tokens": 4138,
+  "cost_usd_equiv": 0.35856,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

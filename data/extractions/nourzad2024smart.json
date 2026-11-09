@@ -1,0 +1,307 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Smart Routing with Precise Link Estimation: DSEE-Based Anypath Routing for Reliable Wireless Networking",
+  "arxiv_id": "2405.10377",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Narjes Nourzad",
+   "Bhaskar Krishnamachari"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Shortest Anypath routing with unknown link delivery probabilities (DSEE-Anypath)",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "unspecified",
+    "reward": "unspecified",
+    "loss_scale": "unspecified"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Actions are anypath routes (forwarding sets per node) in a hypergraph network; cost is the nonlinear anypath cost determined by link delivery probabilities",
+    "Observations are joint reception vectors of broadcast transmissions (2^{N_max} outcomes per node); exploration sends dummy packets on all links",
+    "Regret measured in routing cost relative to a genie knowing the link probabilities",
+    "The learner knows the number of nodes N and max neighbor count N_max (used in exploration schedule)"
+   ],
+   "definition_quote": "The task is to route a sequence of packets $m = 1, 2, ..., M $ from source node \\textit{1} to destination node \\textit{N} without knowing the complete network topology. Each node $ n \\in \\mathcal{N}$ transmits the packets in a broadcast way to every node in its forwarding set $J$. The transmission between each node and its forwarding set is characterized by a delivery ratio $p_{nJ}$ and a hyperlink cost $d_{nJ}$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "DSEE-Anypath Routing",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "N_nodes",
+    "N_max"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "regret_unspecified",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "N_nodes*2**N_max*f_T*log(T)*Delta_path",
+    "expression_latex": "O(N2^{N_{max}}f(T)\\text{log}(T) \\Delta )",
+    "regime": null
+   },
+   "symbols": {
+    "N_nodes": "number of nodes in the network hypergraph",
+    "N_max": "maximum number of neighbors of a node",
+    "f_T": "exploration function f(T), positive, increasing to infinity",
+    "Delta_path": "cost difference between the best anypath and the path selected by the policy"
+   },
+   "conditions": [],
+   "tuning": [
+    "exploration sequence cardinality N 2^{N_max} ceil(f(t) log t)",
+    "f(t) positive monotonically increasing to infinity"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem (DSEE-Anypath routing)",
+    "quote": "Let $ \\mathcal{I}_t$ be set of times indexes from $1$ to $t-1$ where exploration has already happened. By choosing the cardinality of the exploration to be smaller than $N2^{N_{max}} \\lceil f(t)\\text{log}(t) \\rceil $ at any given $t$, the optimal policy will have regret: \\mathcal{R}_T = O(N2^{N_{max}}f(T)\\text{log}(T) \\Delta )"
+   },
+   "confidence": "low",
+   "notes": "Regret type not formally defined (difference of path costs vs genie); proof bounds expected exploitation regret. Proof is informal."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "regret_unspecified",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "N_nodes**2*2**N_max*log(T)**2",
+    "expression_latex": "\\mathcal{R}_T =O(N^22^{N_{max}}\\log^2 T )",
+    "regime": null
+   },
+   "symbols": {
+    "N_nodes": "number of nodes in the network hypergraph",
+    "N_max": "maximum number of neighbors of a node"
+   },
+   "conditions": [
+    "Delta = O(N)"
+   ],
+   "tuning": [
+    "f(t) = O(log t)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem (DSEE-Anypath routing)",
+    "quote": "The regret bound can be further simplified considering $f(t)=O(\\log{t})$, $\\Delta = O(N)$: \\mathcal{R}_T =O(N^22^{N_{max}}\\log^2 T )"
+   },
+   "confidence": "low",
+   "notes": "Simplification of r1."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "regret_unspecified",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "N_nodes*N_max*f_T*log(T)*Delta_path",
+    "expression_latex": "\\mathcal{R}_T = O(N{N_{max}}f(T)\\log T \\Delta)",
+    "regime": null
+   },
+   "symbols": {
+    "N_nodes": "number of nodes",
+    "N_max": "maximum number of neighbors of a node",
+    "f_T": "exploration function f(T)",
+    "Delta_path": "cost difference between best anypath and selected path"
+   },
+   "conditions": [
+    "wireless links between any two nodes are independent"
+   ],
+   "tuning": [
+    "f(t) positive monotonically increasing to infinity"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem (DSEE-Anypath routing)",
+    "quote": "Assuming the wireless links between any two nodes are independent, the exponential number of random variables requiring observation break into a linear form, making our regret bound $\\mathcal{R}_T = O(N{N_{max}}f(T)\\log T \\Delta) = O(N^2{N_{max}}\\log^2 T)$."
+   },
+   "confidence": "low",
+   "notes": "Stated as remark after theorem, no separate proof."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "regret_unspecified",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "N_nodes**2*N_max*log(T)**2",
+    "expression_latex": "O(N^2{N_{max}}\\log^2 T)",
+    "regime": null
+   },
+   "symbols": {
+    "N_nodes": "number of nodes",
+    "N_max": "maximum number of neighbors of a node"
+   },
+   "conditions": [
+    "wireless links between any two nodes are independent",
+    "Delta = O(N)"
+   ],
+   "tuning": [
+    "f(t) = O(log t)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem (DSEE-Anypath routing)",
+    "quote": "making our regret bound $\\mathcal{R}_T = O(N{N_{max}}f(T)\\log T \\Delta) = O(N^2{N_{max}}\\log^2 T)$."
+   },
+   "confidence": "low",
+   "notes": "Simplification of r3."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "huang2021tsor",
+   "cited_title": "TSOR: Thompson sampling-based opportunistic routing",
+   "cited_first_author": "Zhiming Huang",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "TSOR (Thompson Sampling-based Opportunistic Routing)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Opportunistic routing in wireless ad hoc networks with unknown link probabilities; M_pk packets, N nodes, N_max max neighbors, centralized (tau_max=0)",
+   "bound": {
+    "notation": "O",
+    "expression": "N_nodes**3*4**N_max*log(M_pk)",
+    "expression_latex": "\\mathcal{R}_M = O(N^34^{N{max}}\\log M)",
+    "regime": null
+   },
+   "where": "Section 5 (Performance Analysis)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T11:37:06",
+  "source_chars": 37519,
+  "input_tokens": 106695,
+  "output_tokens": 7780,
+  "cost_usd_equiv": 0.3308092,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

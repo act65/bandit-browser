@@ -1,0 +1,188 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "An Index-based Deterministic Asymptotically Optimal Algorithm for Constrained Multi-armed Bandit Problems",
+  "arxiv_id": "2007.14550",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Hyeong Soo Chang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Constrained multi-armed bandit (CMAB): identify an epsilon-optimal feasible set",
+   "objective": "general_identification",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K",
+    "mu_star"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each pull yields both a reward sample and an independent cost sample; arm a is feasible iff its mean cost C_a <= C, for a constant threshold C known to the learner",
+    "Goal: output an epsilon-optimal set (arms that are approximately feasible and approximately reward-optimal among feasible arms), with a fixed budget of T pulls",
+    "The learner knows the optimal feasible mean mu* = max_{a feasible} mu_a (CAPT)"
+   ],
+   "definition_quote": "We define the feasible set A_f of arms such that A_f := { a in A | C_a <= C } for a constant C known to the player and assume that A_f \\neq \\emptyset. Our goal is to find an optimal feasible arm that achieves the optimal value mu^*:=max_{a in A_f} mu_a."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Constrained Anytime Parameter-free Thresholding (CAPT)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "mu_star",
+    "T"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "CAPT with Estimation (CAPT-E)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*K*T*exp(-T/(16*H_eps))",
+    "expression_latex": "2|A|T e^{-T/16H(\\epsilon)}",
+    "regime": "T >= 2K, epsilon > 0"
+   },
+   "symbols": {
+    "H_eps": "complexity H(epsilon) = sum_a min(Delta_a^eps, Phi_a^eps)^{-2}, where Delta_a^eps = |mu_a - mu*| + eps and Phi_a^eps = |C_a - C| + eps",
+    "eps_tol": "tolerance epsilon > 0 used by the algorithm and in the definition of epsilon-optimal set"
+   },
+   "conditions": [
+    "reward and cost distributions supported in [0,1]",
+    "T >= 2|A|",
+    "epsilon > 0",
+    "mu* known to the algorithm",
+    "cost threshold C known"
+   ],
+   "tuning": [
+    "epsilon > 0 is the algorithm's tolerance parameter"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm1",
+    "number": "Theorem 3.1",
+    "quote": "Assume that the reward and the cost distributions associated with all arms in $A$ have the support in $[0,1]$. Then for any $\\epsilon > 0$ and $T\\geq 2|A|$, the output $A_T^*(\\epsilon) \\cap A_T^f(\\epsilon)$ by CAPT at $T$ satisfies \\[ \\Pr\\{ A^{\\epsilon}_* \\cap A^{-\\epsilon}_f \\subseteq  A_T^*(\\epsilon)  \\cap A_T^f(\\epsilon)  \\subseteq A^{-\\epsilon}_* \\cap A^{\\epsilon}_f \\} \\geq 1 - 2|A|T e^{-T/16H(\\epsilon)}.\\]"
+   },
+   "confidence": "medium",
+   "notes": "The bound is on the probability that the output is not an epsilon-optimal set, which is 1 minus the stated success probability. The final line of the proof gives exp(-2T/16H), which is tighter; the expression recorded here is the one in the theorem statement. Section 4 only argues informally that CAPT-E converges asymptotically, so no result is recorded for CAPT-E."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T11:56:30",
+  "source_chars": 48657,
+  "input_tokens": 61520,
+  "output_tokens": 3133,
+  "cost_usd_equiv": 0.276508,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

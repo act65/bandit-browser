@@ -47,11 +47,16 @@ PMLR_ABS = re.compile(r"^https://proceedings\.mlr\.press/(v\d+)/([^/]+)\.html$")
 
 
 def pmlr_pdf(p: dict) -> str | None:
-    """Open PDF of a PMLR paper, from its abstract page URL."""
+    """Open PDF of a PMLR paper, linked from its abstract page (the path varies by volume: v48/lif16.pdf,
+    or a GitHub-hosted asset for recent volumes)."""
     for u in p.get("urls") or []:
-        m = PMLR_ABS.match(u)
-        if m:
-            return f"https://proceedings.mlr.press/{m.group(1)}/{m.group(2)}/{m.group(2)}.pdf"
+        if PMLR_ABS.match(u):
+            try:
+                page = get(u).decode("utf-8", "replace")
+            except Exception:  # missing page: not a candidate
+                return None
+            m = re.search(r'href="https?://([^"]+?(?<!-supp)\.pdf)"', page)
+            return "https://" + m.group(1) if m else None
     return None
 
 
@@ -110,7 +115,7 @@ def main() -> None:
     core = [{**pool[i], "slice": r["slice"], "reason": r["reason"], "confidence": r["confidence"]}
             for i, r in scr.items() if r["label"] == "core" and i in pool]
     for p in core:
-        p["pdf_url"] = None if p.get("arxiv_id") else pmlr_pdf(p)
+        p["pdf_url"] = None if p.get("arxiv_id") or p.get("in_corpus") else pmlr_pdf(p)
     cand = [p for p in core if (p.get("arxiv_id") or p["pdf_url"]) and not p.get("in_corpus")
             and (p.get("arxiv_id") or p["id"]) not in have and p["id"] not in have
             and p["confidence"] != "low" and p["slice"] not in args.skip_slices]
@@ -194,7 +199,8 @@ def main() -> None:
     out = []
     for p in sorted(sel, key=lambda p: (p["slice"], -(p["year"] or 0))):
         out.append({"id": p["id"], "arxiv_id": p.get("arxiv_id"), "doi": p.get("doi"),
-                    "url": f"https://arxiv.org/abs/{p['arxiv_id']}" if p.get("arxiv_id") else p["pdf_url"][:-4].rsplit("/", 1)[0] + ".html",
+                    "url": f"https://arxiv.org/abs/{p['arxiv_id']}" if p.get("arxiv_id") else
+                    next(u for u in p["urls"] if PMLR_ABS.match(u)),
                     **({"pdf_url": p["pdf_url"]} if p["pdf_url"] else {}), "title": p["title"], "authors": p["authors"][:30],
                     "year": p["year"], "venue": "; ".join(p.get("venues") or []) or None, "slice": p["slice"],
                     "selected_for": sorted(chosen[p["id"]]), "citations": cites.get(p["id"], 0),

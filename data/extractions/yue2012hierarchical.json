@@ -1,0 +1,201 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Hierarchical Exploration for Accelerating Contextual Bandits",
+  "arxiv_id": "1206.6454",
+  "arxiv_version": null,
+  "year": 2012,
+  "authors": [
+   "Yisong Yue",
+   "Sue Ann Hong",
+   "Carlos Guestrin"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Linear stochastic bandit with a coarse-to-fine feature hierarchy",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "arbitrary_compact",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "arbitrary_bounded",
+    "loss_set": "not_applicable",
+    "parameter_structure": "low_rank"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "the learner is given a projection matrix U in R^{D x K} defining a K-dimensional coarse subspace; w* = U w~* + w_perp*",
+    "the learner knows the norms S~ = ||w~*|| and S_perp = ||w_perp*|| (used in confidence widths)",
+    "parameter_structure 'low_rank' is approximate: w* is not assumed exactly in the subspace"
+   ],
+   "definition_quote": "The system recommends an item (i.e., performs an action) associated with feature vector x_t in X_t subset R^D ... Rewards y_t are modeled as a linear function of actions x such that E[y_t|x] = w*^T x ... We assume feedback to be independently sampled and bounded within [0, 1], and that ||x|| <= 1 holds for all x. ... R_T(w*) = sum_t w*^T x*_t - w*^T x_t, where x*_t = argmax_{x in X_t} w*^T x."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "CoFineUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "d",
+    "U (subspace projection matrix)",
+    "S_tilde",
+    "S_perp",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "((sqrt(d*log((1 + T/lam)/delta)) + sqrt(2*lam)*S_perp)*sqrt(d) + (sqrt(K_sub*log((1 + T/lam_tilde)/delta)) + lam_tilde*S_tilde)*sqrt(K_sub))*sqrt(2*T*log(1 + T))",
+    "expression_latex": "R_T(w^*) \\le (\\beta_T \\sqrt{D} + \\tilde\\beta_T \\sqrt{K})\\sqrt{2T\\log(1+T)},\\ \\beta_T = \\sqrt{D\\log((1+T/\\lambda)/\\delta)} + \\sqrt{2\\lambda}S_\\perp,\\ \\tilde\\beta_T = \\sqrt{K\\log((1+T/\\tilde\\lambda)/\\delta)} + \\tilde\\lambda\\tilde S",
+    "regime": null
+   },
+   "symbols": {
+    "K_sub": "dimension K of the coarse subspace (paper's K)",
+    "S_tilde": "norm of the projected user profile ||w~*||",
+    "S_perp": "norm of the residual ||w_perp*||",
+    "lam_tilde": "ridge regularisation parameter on the coarse level"
+   },
+   "conditions": [
+    "||x|| <= 1 for all actions",
+    "rewards in [0,1], independent with mean w*^T x"
+   ],
+   "tuning": [
+    "lam >= max_x ||x||^2",
+    "lam_tilde >= max_x ||U^T x||^2",
+    "confidence widths c_t, c~_t as in (7), (8) and Lemma 1 with confidence delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "Define c̃t(·) and ct(·) as in (7), (8) and Lemma 1. For λ ≥ max_x ‖x‖^2 and λ̃ ≥ max_x ‖x̃‖^2, with probability 1 − δ, CoFineUCB achieves regret R_T(w*) ≤ (β_T √D + β̃_T √K) √(2T log(1 + T)), where β_T = √(D log((1 + T/λ)/δ)) + √(2λ) S⊥, β̃_T = √(K log((1 + T/λ̃)/δ)) + λ̃ S̃."
+   },
+   "confidence": "medium",
+   "notes": "Source converted from PDF; exact form of the S terms in beta (sqrt(2 lambda) S_perp and lambda_tilde S_tilde) is lossy and may be sqrt(lambda_tilde) S_tilde. Paper's D is d, K is subspace dimension (renamed K_sub). Footnote says it also holds under sub-Gaussian noise. Regret is defined via means but holds w.p. 1-delta. Algorithm does not need T, so recorded as anytime."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Abbasi-Yadkori2011",
+   "cited_title": "Improved algorithms for linear stochastic bandits",
+   "cited_first_author": "Yasin Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "LinUCB",
+   "algorithm_registry_id": "oful",
+   "side": "upper",
+   "setting_description": "Linear stochastic bandit in R^D with time-varying action sets, rewards in [0,1], ||x||<=1",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(lam)*S*d*sqrt(T)",
+    "expression_latex": "R_T(w^*) = O(\\sqrt{\\lambda}\\|w^*\\| D \\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 4, eq. (12)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:20:37",
+  "source_chars": 33032,
+  "input_tokens": 51008,
+  "output_tokens": 3566,
+  "cost_usd_equiv": 0.201072,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

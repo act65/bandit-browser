@@ -1,0 +1,253 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Stochastic Linear Bandits with Hidden Low Rank Structure",
+  "arxiv_id": "1901.09490",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Sahin Lale",
+   "Kamyar Azizzadenesheli",
+   "Anima Anandkumar",
+   "Babak Hassibi"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Stochastic linear bandit (SLB) with hidden low-dimensional subspace structure in the actions",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "K",
+    "d",
+    "S",
+    "L_feat",
+    "sigma"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "not_applicable",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "l2_ball",
+    "loss_set": "bounded_mean_reward",
+    "parameter_structure": "low_rank"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each round's decision set has K random actions x_hat = x + psi where the true actions x lie in an unknown m-dimensional subspace span(V) (m <= d) and psi is isotropic zero-mean perturbation with covariance sigma_pert^2 I_d, uncorrelated with x; decision sets are random (stochastic), not adversarial",
+    "theta_* lies in span(V)",
+    "Bounded action and perturbation vectors: ||x||^2 <= d_x lambda_+, ||psi||^2 <= d_psi sigma_pert^2 (Assumption 1)",
+    "The learner knows the subspace dimension m, lambda_+ and lambda_- (largest/m-th eigenvalue of Sigma_x), the perturbation variance sigma^2, and alpha = max(d_x, d_psi)",
+    "Unlabelled actions in the decision sets are used for PCA subspace recovery"
+   ],
+   "definition_quote": "At each round $t \\in [T]$, the agent is given a decision set $D_t$ with $K$ actions, $\\hat{x}_{t,1}, \\ldots, \\hat{x}_{t,K} \\in \\mathbb{R}^d$. Let $V$ be an $d \\times m$ orthonormal matrix with $m \\leq d$ ... $\\hat{x}_{t,i} = x_{t,i} + \\psi_{t,i}$ ... $r_t = (P\\hat{X}_t)^T \\theta_* + \\eta_t$ ... $\\theta_* \\in \\spn(V)$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "PSLB (Projected Stochastic Linear Bandit)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "explore_then_commit"
+   ],
+   "requires_knowledge_of": [
+    "m_sub",
+    "lambda_plus",
+    "lambda_minus",
+    "sigma_pert",
+    "alpha_eff",
+    "delta",
+    "S",
+    "L_feat",
+    "sigma"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "Min(Upsilon*sqrt(T), d*sqrt(T))",
+    "expression_latex": "R_t \\leq \\min \\Big \\lbrace \\wt\\OO\\left(\\Upsilon \\sqrt{t}\\right) , \\wt\\OO\\left(d \\sqrt{t}\\right)\\Big\\rbrace",
+    "regime": null
+   },
+   "symbols": {
+    "Upsilon": "subspace-recovery difficulty, Upsilon = O(alpha_eff*Gamma^2*sqrt(m_sub)/(K*(lambda_minus + sigma_pert^2)))",
+    "alpha_eff": "max(d_x, d_psi), effective dimensions of true actions and perturbations",
+    "Gamma": "2 g_psi + 4 sqrt(g_x g_psi), with g_x = lambda_plus/lambda_minus, g_psi = sigma_pert^2/lambda_minus",
+    "m_sub": "dimension of the hidden subspace",
+    "lambda_plus": "largest eigenvalue of the true-action covariance",
+    "lambda_minus": "m-th eigenvalue of the true-action covariance",
+    "sigma_pert": "standard deviation of the isotropic action perturbation"
+   },
+   "conditions": [
+    "Assumption 1 (bounded action and perturbation vectors)",
+    "Assumption 2 (conditionally R-sub-Gaussian noise)",
+    "x_hat^T theta_* in [-1,1] for all actions",
+    "||theta_*||_2 <= S and ||x_hat||_2 <= L"
+   ],
+   "tuning": [
+    "delta in (0, 1/6)",
+    "warm-up t_w = n_delta/K"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "RegretAnalysis",
+    "number": "Theorem 1",
+    "quote": "Fix any $\\delta \\in (0,1/6)$. Assume that Assumptions 1 and 2 hold. Also assume that for all $\\hat{x}_{t,i} \\in D_t$, $\\hat{x}_{t,i}^T \\theta_* \\in [-1,1]$. Then, $\\forall t \\geq 1$ with probability at least $1-6\\delta$, the regret of \\alg satisfies $R_t \\leq \\min \\Big \\lbrace \\wt\\OO\\left(\\Upsilon \\sqrt{t}\\right) , \\wt\\OO\\left(d \\sqrt{t}\\right)\\Big\\rbrace.$"
+   },
+   "confidence": "medium",
+   "notes": "Holds with prob. >= 1-6delta for all t. The proof yields O(Upsilon sqrt(t) log t) for the projected part; the d sqrt(t) part comes from intersecting with OFUL's confidence set. Regret is the realized sum of (X*_t - X_t)^T theta_* against the per-round best action. Optimistic step requires a joint argmax over confidence sets (computationally hard per the paper)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "abbasi2011improved",
+   "cited_title": "Improved algorithms for linear stochastic bandits",
+   "cited_first_author": "Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "OFUL",
+   "algorithm_registry_id": "oful",
+   "side": "upper",
+   "setting_description": "d-dimensional stochastic linear bandit",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\wt\\OO\\left(d\\sqrt{T}\\right)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "abbasi2012online",
+   "cited_title": "Online-to-confidence-set conversions and application to sparse stochastic bandits",
+   "cited_first_author": "Abbasi-Yadkori",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "sparse stochastic linear bandit with sparsity s",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(s_sparse*d*T)",
+    "expression_latex": "\\wt\\OO\\left(\\sqrt{sdT}\\right)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "carpentier2012bandit",
+   "cited_title": "Bandit theory meets compressed sensing for high dimensional stochastic linear bandit",
+   "cited_first_author": "Carpentier",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "sparse stochastic linear bandit under slightly stronger assumptions (compressed sensing)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "s_sparse*sqrt(T)",
+    "expression_latex": "\\wt\\OO\\left(s\\sqrt{T}\\right)",
+    "regime": null
+   },
+   "where": "Introduction"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T13:06:46",
+  "source_chars": 131296,
+  "input_tokens": 106748,
+  "output_tokens": 4557,
+  "cost_usd_equiv": 0.6668120000000001,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

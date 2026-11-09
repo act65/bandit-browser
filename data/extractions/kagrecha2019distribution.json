@@ -1,0 +1,250 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Distribution oblivious, risk-aware algorithms for multi-armed bandits with unbounded rewards",
+  "arxiv_id": "1906.00569",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Anmol Kagrecha",
+   "Jayakrishnan Nair",
+   "Krishna Jagannathan"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Risk-aware, distribution oblivious fixed-budget best arm identification (mean + CVaR)",
+   "objective": "bai_fixed_budget",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "heavy_tailed",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Arm quality is the risk-aware metric xi_1*E[X(i)] + xi_2*CVaR_alpha(X(i)) (loss minimisation), not the mean",
+    "Learner knows the weights xi_1, xi_2 and the CVaR level alpha, but is distribution oblivious: does not know moment bound B, moment order p, or gaps",
+    "Arm distributions are continuous with strictly increasing CDF (condition C1)",
+    "Moment condition C2: E|X|^p < B for some p > 1 (not necessarily p <= 2)"
+   ],
+   "definition_quote": "Consider a multi-armed bandit problem with $K$ arms ... The loss (or cost) associated with arm~$i$ is distributed as $X(i),$ where it is assumed that there exists $p > 1$ and $B < \\infty$ such that $\\Exp{|X(i)|^p} < B$ for all $i.$ ... Given a fixed budget of $T$ arm pulls in total, our goal is to identify the arm that minimizes $\\xi_{1} \\Exp{X(i)} + \\xi_{2}\\calp(X(i)),$ ... the algorithm does not have any prior information about the arm distributions, including the values of $p$ and $B.$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Uniform exploration with truncated mean and truncated CVaR estimators (oblivious GSR special case)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Successive rejects with truncated mean and truncated CVaR estimators (oblivious)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*K*exp(-(T/K)**(1 - q_m)*Delta_min/(16*xi_1)) + 6*K*exp(-(T/K)**(1 - 2*q_c)*beta_c*Delta_min**2/(768*xi_2**2))",
+    "expression_latex": "2K\\text{exp}\\Big(-(T/K)^{1-q_m}\\frac{\\Delta[2]}{16\\xi_{1}}\\Big) + 6K \\text{exp} \\Big(-(T/K)^{1-2q_c} \\frac{\\beta \\Delta[2]^{2}}{768 \\xi_{2}^{2}}\\Big)",
+    "regime": "T > K*n_star, n_star = max((12 xi_1 B/Delta[2])^(1/(q_m min(p-1,1))), (8 xi_2 B/(beta Delta[2]))^(1/(q_c (p-1))), (B/min(alpha,beta))^(1/(q_c p)), (Delta[2]/(8 xi_2))^(1/q_c))"
+   },
+   "symbols": {
+    "Delta_min": "Delta[2], smallest suboptimality gap in the metric xi_1 E[X] + xi_2 CVaR_alpha(X)",
+    "xi_1": "weight on the mean",
+    "xi_2": "weight on the CVaR",
+    "q_m": "truncation exponent for mean estimator, b_m(n)=n^q_m",
+    "q_c": "truncation exponent for CVaR estimator, b_c(n)=n^q_c, q_c in (0,1/2)",
+    "beta_c": "1 - alpha, where alpha is the CVaR confidence level",
+    "n_star": "threshold defined in the theorem depending on B, p, alpha, Delta[2], xi_1, xi_2, q_m, q_c"
+   },
+   "conditions": [
+    "arm distributions satisfy C1 (continuous, strictly increasing CDF)",
+    "arm distributions satisfy C2: E|X(i)|^p < B for some p > 1",
+    "unique optimal arm",
+    "T > K*n_star"
+   ],
+   "tuning": [
+    "b_m(n) = n^q_m with q_m in (0,1)",
+    "b_c(n) = n^q_c with q_c in (0,1/2)",
+    "n_1 = ... = n_{K-1} = floor(T/K)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "ue-prob-of-error",
+    "number": "Theorem 3",
+    "quote": "Suppose that the arm distributions satisfy the conditions C1 and C2. Under the uniform exploration algorithm, the probability of incorrect arm identification $p_e$ is bounded as $p_{e} \\leq 2K\\text{exp}\\Big(-(T/K)^{1-q_m}\\frac{\\Delta[2]}{16\\xi_{1}}\\Big) + 6K \\text{exp} \\Big(-(T/K)^{1-2q_c} \\frac{\\beta \\Delta[2]^{2}}{768 \\xi_{2}^{2}}\\Big)$ for $T> Kn^{*},$ where ..."
+   },
+   "confidence": "high",
+   "notes": "Paper's B, p, alpha, beta renamed implicitly inside n_star (beta_c = 1-alpha). Probability classified as 'expectation' since it bounds P(error)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "Sum(2*(K + 1 - i)*exp(-((T - K)/logbar_K)**(1 - q_m)*Delta_ord(i)/(16*xi_1*i**(1 - q_m))) + 6*(K + 1 - i)*exp(-beta_c*((T - K)/logbar_K)**(1 - 2*q_c)*Delta_ord(i)**2/(768*xi_2**2*i**(1 - 2*q_c))), (i, 2, K))",
+    "expression_latex": "\\sum_{i=2}^{K} (K+1-i) 2\\text{exp}\\bigg(-\\frac{1}{16\\xi_{1}}\\Big(\\frac{T-K}{\\overline{\\log}(K)}\\Big)^{1-q_m} \\frac{\\Delta[i]}{i^{1-q_m}}\\bigg) +\\sum_{i=2}^{K} (K+1-i) 6\\text{exp} \\bigg(-\\frac{\\beta}{768 \\xi_{2}^{2}}\\Big(\\frac{T-K}{\\overline{\\log}(K)}\\Big)^{1-2q_c} \\frac{\\Delta[i]^{2}}{i^{1-2q_c}} \\bigg)",
+    "regime": "T > K + K*logbar_K*n_star (n_star as in Theorem 3)"
+   },
+   "symbols": {
+    "Delta_ord": "Delta_ord(i) = Delta[i], i-th smallest suboptimality gap in metric xi_1 E[X] + xi_2 CVaR_alpha(X), 0<Delta[2]<=...<=Delta[K]",
+    "i": "summation index over ordered arms",
+    "logbar_K": "1/2 + sum_{i=2}^K 1/i",
+    "xi_1": "weight on the mean",
+    "xi_2": "weight on the CVaR",
+    "q_m": "truncation exponent for mean estimator",
+    "q_c": "truncation exponent for CVaR estimator",
+    "beta_c": "1 - alpha",
+    "n_star": "threshold defined in the theorem depending on B, p, alpha, Delta[2], xi_1, xi_2, q_m, q_c"
+   },
+   "conditions": [
+    "arm distributions satisfy C1 (continuous, strictly increasing CDF)",
+    "arm distributions satisfy C2: E|X(i)|^p < B for some p > 1",
+    "unique optimal arm",
+    "T > K + K*logbar_K*n_star"
+   ],
+   "tuning": [
+    "b_m(n) = n^q_m with q_m in (0,1)",
+    "b_c(n) = n^q_c with q_c in (0,1/2)",
+    "n_k proportional to (T-K)/(K+1-k) as in Audibert-Bubeck successive rejects"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "sr-prob-of-error",
+    "number": "Theorem 4",
+    "quote": "Let the arms satisfy the conditions C1 and C2. The probability of incorrect arm identification for the successive rejects algorithm is bounded as follows. p_e \\leq \\sum_{i=2}^{K} (K+1-i) 2\\text{exp}(...) + \\sum_{i=2}^{K} (K+1-i) 6\\text{exp}(...) for $T> K+K\\overline{\\log}(K)n^{*}$"
+   },
+   "confidence": "high",
+   "notes": "Taking q_m=q, q_c=q/2 gives O(exp(-gamma T^{1-q})). Non-oblivious variant (exponential decay) is only sketched in Appendix D via lemmas, not recorded."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T13:55:48",
+  "source_chars": 78276,
+  "input_tokens": 78747,
+  "output_tokens": 5258,
+  "cost_usd_equiv": 0.456824,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

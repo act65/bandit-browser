@@ -1,0 +1,416 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Nonstochastic Bandits with Composite Anonymous Feedback",
+  "arxiv_id": "2112.02866",
+  "arxiv_version": null,
+  "year": 2018,
+  "authors": [
+   "Nicolò Cesa-Bianchi",
+   "Tommaso Cesari",
+   "Roberto Colomboni",
+   "Claudio Gentile",
+   "Yishay Mansour"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Nonstochastic K-armed bandits with d-delayed composite anonymous feedback",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_oblivious",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K",
+    "D"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "delayed_feedback"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "adversarial"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Composite anonymous feedback: the loss of the action played at time t is adversarially split into d+1 nonnegative components charged at times t,...,t+d; the learner observes only the sum of components arriving at each round, not the individual components or which action they belong to",
+    "D (paper's d) is a known upper bound on the maximum delay/spread",
+    "Regret is defined on composite losses against playing a fixed action in all rounds"
+   ],
+   "definition_quote": "the loss $\\loss_t(i) \\in [0,1]$ at time $t$ of an action $i \\in [K]$ is defined by the sum $\\loss_t(i) \\coloneqq \\sum_{s=0}^{d} \\loss_t^{(s)}(i)$ of $(d+1)$-many components ... what the player observes at the end of each round $t$ is only the composite loss $\\lcomp_t(I_{t-d},\\dots,I_t)$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "CoLoWrapper (Composite Loss Wrapper) with generic xi-stable base algorithm",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "D",
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "CoLoWrapper with FTRL with 1/2-Tsallis entropy",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "D"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "FTRL with 1/2-Tsallis entropy (Algorithm 2)",
+   "registry_id": "gbpa_tsallis",
+   "is_new": false,
+   "techniques": [
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*D + (2*D + 1)/(D + 1)*(3*D + 2*D*beta_b*(1 - beta_b)**(2*D)*xi*T + R_base/(beta_b*(1 - beta_b)**(2*D)))",
+    "expression_latex": "2d + \\frac{2d+1}{d+1} \\lrb{ 3d + 2d\\beta(1-\\beta)^{2d} \\xi T + \\frac{1}{\\beta(1-\\beta)^{2d}} \\cR_{\\lfl{ T/(2d+1) }} }",
+    "regime": "T >= 2*D + 1"
+   },
+   "symbols": {
+    "beta_b": "bias of the i.i.d. Bernoulli sequence B driving block endpoints",
+    "xi": "stability parameter of the base algorithm (expected positive-part change of its distribution per update)",
+    "R_base": "worst-case regret of the base algorithm after floor(T/(2D+1)) rounds on [0,1]-valued adversarial losses"
+   },
+   "conditions": [
+    "T >= 2d+1",
+    "base algorithm is xi-stable"
+   ],
+   "tuning": [
+    "B i.i.d. Bernoulli(beta) independent of base algorithm randomization, beta in (0,1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "t:regret-CoLoWr",
+    "number": "Theorem 4",
+    "quote": "If we run \\colowr{} with a $\\xi$-stable base $K$-armed bandit algorithm $\\alpha$ and an i.i.d.\\ sequence $\\bb = (B_t)_{t\\in \\N}$ of Bernoulli random variables with bias $\\beta\\in (0,1)$ (independent of the randomization of $\\alpha$), then, for any time horizon $T \\ge 2d + 1$, the regret $R_T$ satisfies R_T <= 2d + \\frac{2d+1}{d+1} ( 3d + 2d\\beta(1-\\beta)^{2d} \\xi T + \\frac{1}{\\beta(1-\\beta)^{2d}} \\cR_{\\lfl{ T/(2d+1) }} )"
+   },
+   "confidence": "medium",
+   "notes": "Reduction bound; paper's d mapped to D (delay). Horizon marked anytime since wrapper does not use T, but base regret term may depend on tuning. Text also states (informally) an O(sqrt((d+1)KT log K)) bound with Exp3 base (eta-stable, Lemma 14)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "28*sqrt((D + 1)*K*T)",
+    "expression_latex": "c \\sqrt{(d+1)KT}, \\; c = 28",
+    "regime": "D >= 1"
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [
+    "eta = sqrt(floor(T/(2d+1))/2)",
+    "beta = 1/(2d+1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "c:main-result",
+    "number": "Corollary 7",
+    "quote": "For any time horizon $T\\in \\N$, if we run \\colowr{} using: As $\\alpha$, \\Cref{a:jake} with learning rate $\\eta = \\sqrt{\\frac 1 2 \\lfl{\\fracc T {(2d+1)}}}$; As $\\bb$, an i.i.d.\\ sequence of Bernoulli random variables with bias $\\beta = \\frac 1 {2d+1}$ ... then, its regret satisfies R_T \\le c \\sqrt{(d+1)KT} where $c = 2\\sqrt{2}$ if $d=0$, and $c = 28$ otherwise."
+   },
+   "confidence": "high",
+   "notes": "Paper's d is the delay, mapped to D."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*sqrt(2)*sqrt((D + 1)*K*T)",
+    "expression_latex": "c \\sqrt{(d+1)KT}, \\; c = 2\\sqrt{2}",
+    "regime": "D = 0"
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [
+    "eta = sqrt(T/2)",
+    "beta = 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "c:main-result",
+    "number": "Corollary 7",
+    "quote": "... then, its regret satisfies R_T \\le c \\sqrt{(d+1)KT} where $c = 2\\sqrt{2}$ if $d=0$, and $c = 28$ otherwise."
+   },
+   "confidence": "high",
+   "notes": "d=0 case reduces to standard bandit with FTRL-Tsallis (Abernethy et al. bound)."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega_tilde",
+    "expression": "sqrt((D + 1)*K*T)",
+    "expression_latex": "\\cR_T(A_d,K,d)=\\widetilde{\\Omega}\\big(\\sqrt{(d+1)KT}\\big)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "Omega_tilde hides a sqrt(log T) denominator",
+    "T multiple of d+1 (otherwise additive O(d+1))"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "t:lower",
+    "number": "Theorem 10",
+    "quote": "For any algorithm $A_d$ for $K$-armed bandits with $d$-delayed composite anonymous feedback, $\\cR_T(A_d,K,d)=\\widetilde{\\Omega}\\big(\\sqrt{(d+1)KT}\\big)$."
+   },
+   "confidence": "high",
+   "notes": "Via reduction from linear bandits on the simplex (Lemma 8) and Shamir (2015) lower bound (Lemma 9). Worst-case over oblivious loss components."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "AuerCeFrSc02",
+   "cited_title": "The nonstochastic multiarmed bandit problem",
+   "cited_first_author": "P. Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Nonstochastic K-armed bandits, no delay (minimax rate, optimal up to logs)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "\\sqrt{KT}",
+    "regime": null
+   },
+   "where": "Introduction table"
+  },
+  {
+   "cited_key": "cgmm16",
+   "cited_title": "Delay and cooperation in nonstochastic bandits",
+   "cited_first_author": "N. Cesa-Bianchi",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Nonstochastic K-armed bandits with delayed (non-anonymous) feedback, delay d (minimax rate)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt((D + K)*T)",
+    "expression_latex": "\\sqrt{(d+K)T}",
+    "regime": null
+   },
+   "where": "Introduction table"
+  },
+  {
+   "cited_key": "pike2018bandits",
+   "cited_title": "Bandits with delayed, aggregated anonymous feedback",
+   "cited_first_author": "C. Pike-Burke",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic K-armed bandits with delayed aggregated anonymous feedback, known expected delay mu_tau, gap Delta",
+   "bound": {
+    "notation": "O",
+    "expression": "K*(log(T)/Delta + mu_tau)",
+    "expression_latex": "K\\big((\\ln T)/\\Delta + \\mu_{\\tau}\\big)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "wang2021adaptive",
+   "cited_title": "Adaptive algorithms for multi-armed bandit with composite and anonymous feedback",
+   "cited_first_author": "S. Wang",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Nonstochastic bandits with composite anonymous feedback, unknown delay d",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(2/3)",
+    "expression_latex": "T^{2/3}",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "abernethy2015fighting",
+   "cited_title": "Fighting bandits with a new kind of smoothness",
+   "cited_first_author": "J. D. Abernethy",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": "FTRL with 1/2-Tsallis entropy",
+   "algorithm_registry_id": "gbpa_tsallis",
+   "side": "upper",
+   "setting_description": "Adversarial K-armed bandits with [0,1] losses, N rounds, eta = sqrt(N/2)",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*sqrt(2*K*T)",
+    "expression_latex": "\\cR_N \\le 2 \\sqrt { 2 K N }",
+    "regime": null
+   },
+   "where": "Theorem 6"
+  },
+  {
+   "cited_key": "shamir2015complexity",
+   "cited_title": "On the complexity of bandit linear optimization",
+   "cited_first_author": "O. Shamir",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Linear bandits on the probability simplex with losses in [0,1]^K (oblivious), any algorithm; Omega_tilde hides sqrt(log T)",
+   "bound": {
+    "notation": "Omega_tilde",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "\\cRlin_T(A,\\Delta_K) = \\widetilde{\\Omega}\\big(\\sqrt{KT}\\big)",
+    "regime": null
+   },
+   "where": "Lemma 9"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T11:19:20",
+  "source_chars": 82464,
+  "input_tokens": 81407,
+  "output_tokens": 6772,
+  "cost_usd_equiv": 0.5083840000000001,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

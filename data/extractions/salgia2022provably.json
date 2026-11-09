@@ -1,0 +1,261 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Provably and Practically Efficient Neural Contextual Bandits",
+  "arxiv_id": "2206.00099",
+  "arxiv_version": null,
+  "year": 2022,
+  "authors": [
+   "Sudeep Salgia",
+   "Sattar Vakili",
+   "Qing Zhao"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Neural contextual bandit with smooth activations (reward in NTK RKHS)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [
+    "bounded"
+   ],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "K",
+    "S",
+    "sigma",
+    "kernel"
+   ],
+   "instance_assumptions": [],
+   "action_set": {
+    "shape": "sphere",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "arbitrary_bounded",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "neural_ntk"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Reward function lies in the RKHS of the neural tangent kernel of a fully connected net with activation sigma_s(u)=max(0,u)^s; the smoothness s of the activation determines the kernel",
+    "Contexts x_{t,a} for each of K arms revealed each round, chosen arbitrarily"
+   ],
+   "definition_quote": "In the stochastic contextual bandit problem, at each discrete sequential step $t=1,2,\\dots, T$, for each action $a\\in[K]$, a context vector $\\bfx_{t}\\in \\cX$ is revealed... receives the corresponding reward $r_{t} = h(\\bfx_{t, a_t})+\\xi_t$... (i) The input space is the $d$ dimensional hypersphere... (ii) The reward function $h$ belongs to the RKHS induced by the NT kernel, and $h(\\bfx)\\in [0, 1]$... (iii) $\\xi_t$ are assumed to be conditionally $\\nu$-sub-Gaussian"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "NeuralGCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "S",
+    "sigma",
+    "kernel"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T*gamma_T) + sqrt(T*gamma_T*log(1/delta)) + q_max*gamma_T",
+    "expression_latex": "\\Oct\\left( \\sqrt{T \\Gamma_k(T)} +  \\sqrt{T \\Gamma_k(T) \\log(1/\\delta)} +\\max_rq_r\\Gamma_k(T)\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "q_max": "maximum batch size max_r q_r used for retraining the neural nets"
+   },
+   "conditions": [
+    "Assumption 1: contexts on unit hypersphere S^{d-1}, h in NTK RKHS with h in [0,1], conditionally nu-sub-Gaussian noise",
+    "Assumption 2: NTK Gram matrix H >= lambda_0 I on all context-action pairs; f(x;W_0)=0",
+    "network width m >= poly(T, L, K, 1/lambda, 1/lambda_0, 1/S, log(1/delta))"
+   ],
+   "tuning": [
+    "fixed batch size q_r per group",
+    "number of training epochs J = Omega~(T), learning rate eta = O(1/T)",
+    "R = ceil(log2 T) neural nets",
+    "alpha_0 = O(Gamma_k(T))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:regret_guarantees",
+    "number": "Theorem 3",
+    "quote": "Suppose Assumptions~\\ref{ass1} and \\ref{ass2} hold. Consider NeuralGCB given in Algorithm~\\ref{alg:NeuralGCB}, with $R$ neural nets, as defined in~\\eqref{eq:nn} with $L$ hidden layers each of width $m \\geq \\text{poly}(T, L, K, \\lambda^{-1}, \\lambda_0^{-1}, S^{-1}, \\log(1/\\delta))$. Suppose NeuralGCB is run with a fixed batch size for each group, then the regret~defined in~\\eqref{eq:regret_def} satisfies R(T) =\\Oct( \\sqrt{T \\Gamma_k(T)} +  \\sqrt{T \\Gamma_k(T) \\log(1/\\delta)} +\\max_rq_r\\Gamma_k(T))"
+   },
+   "confidence": "medium",
+   "notes": "Gamma_k(T) is the maximal information gain of the NT kernel (gamma_T). The theorem does not say 'with probability 1-delta' explicitly, but the bound depends on delta and the proof relies on high-probability confidence intervals, so it is recorded as high probability. The appendix also states an adaptive-batch bound O(sqrt(T Gamma log(1/delta)) max_r sqrt(q_r)) in prose only."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**((2*d + 2*s_act - 3)/(2*d + 4*s_act - 4))",
+    "expression_latex": "\\Oct(T^{\\frac{2d+2s-3}{2d+4s-4}})",
+    "regime": null
+   },
+   "symbols": {
+    "s_act": "smoothness parameter s of the activation sigma_s(u)=max(0,u)^s (s=1 is ReLU)"
+   },
+   "conditions": [
+    "Assumptions 1 and 2",
+    "activation sigma_s with integer s >= 1",
+    "uses information gain bounds of Vakili et al. (2021) for the NTK of sigma_s"
+   ],
+   "tuning": [
+    "batch size term does not dominate"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:regret_guarantees",
+    "number": "Theorem 3",
+    "quote": "In particular, in Theorem~\\ref{theorem:regret_guarantees}, we prove an $\\Oct(T^{\\frac{2d+2s-3}{2d+4s-4}})$ upper bound on regret, where $s$ is the smoothness parameter of the activation functions"
+   },
+   "confidence": "low",
+   "notes": "Explicit rate stated in the introduction as a consequence of Theorem 3 combined with the bound Gamma_k(T) = O~(T^{(d-1)/(d+2s-2)}). Not a formal statement itself."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "kassraie2021neural",
+   "cited_title": "Neural contextual bandits without regret",
+   "cited_first_author": "P. Kassraie",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SupNeuralUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Neural contextual bandits with ReLU activations (NTK RKHS reward)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(gamma_T*T)",
+    "expression_latex": "\\Oct(\\sqrt{\\Gamma_k(T)T})",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "zhou2020neuralUCB",
+   "cited_title": "Neural contextual bandits with UCB-based exploration",
+   "cited_first_author": "D. Zhou",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "NeuralUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Neural contextual bandits with ReLU activations",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "gamma_T*sqrt(T)",
+    "expression_latex": "\\Oct(\\Gamma_k(T)\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:08:31",
+  "source_chars": 184545,
+  "input_tokens": 142618,
+  "output_tokens": 4834,
+  "cost_usd_equiv": 0.959312,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

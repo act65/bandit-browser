@@ -1,0 +1,204 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Towards Domain Adaptive Neural Contextual Bandits",
+  "arxiv_id": "2406.09564",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Ziyan Wang",
+   "Xiaoming Huo",
+   "Hao Wang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Cross-domain contextual bandit setting (zero-shot target regret)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "realizable_general_class"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Two domains (source and target) with distribution shift; feedback is only collected in the source domain, target-domain contexts are observed without rewards",
+    "Regret measured in the target domain with a fixed policy learned from the source domain (zero-shot regret over N hypothetical rounds)",
+    "Reward = <theta*, phi*(x)> with unknown ground-truth neural encoder phi* (domain-specific)"
+   ],
+   "definition_quote": "one can only collect feedback (reward) from the source domain, but not from the target domain... The goal in our cross-domain contextual bandits is to learn a policy of choosing actions $\\hat{a}_{i}$ in the target domain to minimize the target-domain \\textbf{zero-shot regret} for $N$ (hypothetical) future rounds"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "DABand",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": []
+  },
+  {
+   "id": "a2",
+   "name": "Neural-LinUCB",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "realized_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "almost_sure",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "R_S + 2*eps_S + T*d_HdH + psi + C_const + P_pred",
+    "expression_latex": "R_S + 2\\epsilon_S(h) + N \\hat{d}_{H\\Delta H}(S,T) + \\psi + C + \\sum_i |\\langle\\hat\\theta,\\hat\\phi(x^T_{i,\\hat a_i})\\rangle| + \\sum_i 1[a_i^*\\neq\\hat a_i]|\\langle\\hat\\theta,\\hat\\phi(x^S_{i,\\hat a_i})\\rangle|",
+    "regime": null
+   },
+   "symbols": {
+    "R_S": "source-domain regret over N rounds",
+    "eps_S": "source-domain regression error epsilon_S(h) (sum of absolute reward prediction errors on chosen actions)",
+    "d_HdH": "empirical H-Delta-H divergence for regression between source and target",
+    "psi": "combined source+target error of the optimal joint hypothesis h*",
+    "C_const": "sum_i alpha*kappa_i^T + 1[a_i* != a_hat_i] sum_i alpha*kappa_i^S (exploration-bonus terms claimed negligible)",
+    "P_pred": "predicted-reward term: sum_i |<theta_hat, phi_hat(x^T_{i,a_hat_i})>| + sum_i 1[a_i* != a_hat_i] |<theta_hat, phi_hat(x^S_{i,a_hat_i})>|"
+   },
+   "conditions": [
+    "rewards in [0,1]",
+    "||theta_hat|| = 1 and ||phi_hat(x)|| = 1 (normalized predictions)",
+    "target actions chosen by the UCB rule using the source-trained model"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:target_regret_bound",
+    "number": "Theorem 1",
+    "quote": "{Denoting the contexts from the source domain $\\SM$ as $\\{ \\x_{t, a}^{\\mathcal{S}} \\}_{i \\in [N], a \\in [K]}$, the associated ground-truth action as $\\{ a_{i}^{*} \\}_{i=1}^{N}$, and the contexts from the target domain $\\TM$ as $\\{ \\x_{t, a}^{\\mathcal{T}} \\}_{i \\in [N], a \\in [K]}$, the upper bound for our target regret $R_{\\TM}$ is }\n\n\\begingroup\\makeatletter\\def\\f@size{9}\\check@mathfonts\n\\def\\maketag@@@#1{\\hbox{\\m@th\\normalsize\\normalfont#1}}\n\\begin{align}\n    \\mathit{R}_{\\mathcal{T}} &\\triangleq \\sum_{i=1}^{N} \\Bigg( \\Big| \\langle \\theta_{\\mathcal{T}}^{*}, \\phi_{\\mathcal{T}}^{*} (\\x_{i, a_i^{*}}^{\\mathcal{T}}) \\rangle - \\langle \\theta_{\\mathcal{T}}^{*}, \\phi_{\\mathcal{T}}^{*} (\\x_{i, \\hat{a}_i} ^{\\mathcal{T}}) \\rangle \\Big| \\Bigg) \\nonumber \\\\"
+   },
+   "confidence": "low",
+   "notes": "Data-dependent decomposition bound, not an explicit rate; N is the horizon (mapped to T). Restated as Theorem 2 in appendix. Paper informally argues C vanishes and the bound is sublinear (via Neural-LinUCB O(sqrt N) source regret and Adam), but no explicit rate is proved. Regret defined with absolute values on noiseless means; recorded as pathwise realized regret."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "xu2020neural",
+   "cited_title": "Neural contextual bandits with deep representation and shallow exploration",
+   "cited_first_author": "Pan Xu",
+   "cited_year": 2020,
+   "cited_arxiv_id": "2012.01780",
+   "algorithm_name": "Neural-LinUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Single-domain neural contextual bandit with deep representation and shallow (LinUCB) exploration; cumulative source regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)",
+    "expression_latex": "O(\\sqrt{N})",
+    "regime": null
+   },
+   "where": "Appendix, Sublinearity for the Target Regret Bound"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:05:20",
+  "source_chars": 132424,
+  "input_tokens": 105071,
+  "output_tokens": 4031,
+  "cost_usd_equiv": 0.642876,
+  "quote_retry": {
+   "asked": 1,
+   "fixed": 1,
+   "cost_usd_equiv": 0.5681124000000001
+  },
+  "status": "extracted"
+ }
+}

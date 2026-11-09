@@ -1,0 +1,370 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Bandit Quickest Changepoint Detection",
+  "arxiv_id": "2107.10492",
+  "arxiv_version": null,
+  "year": 2021,
+  "authors": [
+   "Aditya Gopalan",
+   "Venkatesh Saligrama",
+   "Braghadeesh Lakshminarayanan"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Bandit quickest changepoint detection (BQCD)",
+   "objective": "other_pure_exploration",
+   "feedback": "bandit",
+   "environment": "nonstationary_switching",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "reward_family",
+    "function_class"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "realizable_general_class"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Objective is quickest change detection: minimise expected detection delay E[(tau-nu)^+] subject to a false-alarm constraint P^infty[tau < m] <= alpha; the learner chooses both a sensing action and a stopping time",
+    "Single abrupt change at unknown time nu from a known pre-change parameter theta_0 to an unknown post-change parameter theta* in a known set Theta^(1)",
+    "The learner knows theta_0, Theta^(1) and the observation distributions P_theta(.|a) for every action"
+   ],
+   "definition_quote": "At each decision round $t$, the parameter $\\theta_t$ governs the distribution of the observation taken in that round. Let $\\nu$ denote the round at which the change in behavior occurs, so that $\\theta_t = \\theta_0$ for $t < \\nu$ and $\\theta_t = \\theta^* \\in \\ThetaOne$ for $t \\geq \\nu$. At each round $t$, a learner decides to either (1) stop and output that a change has taken place, ... or (2) continue ... and play an action or sensing decision $A_t$ from an action set $\\mathcal{A}$. ... The learner is aware, a priori, of the pre-change parameter $\\theta_0$, the post-change parameter set $\\ThetaOne$ and the observation distribution structure"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "epsilon-Greedy Change Detector (epsilon-GCD)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "epsilon_greedy",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "reward_family",
+    "function_class"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "Min(log(1/alpha_fa)/(20*D_star), m_fa/2)",
+    "expression_latex": "\\min \\left\\{ \\frac{\\frac{1}{20} \\log \\frac{1}{\\alpha}}{\\max_{a \\in \\mathcal{A}} \\kl{\\theta^*(a)}{\\theta^{(0)}(a)}}, \\frac{m}{2} \\right\\}",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_fa": "false alarm probability level alpha",
+    "m_fa": "false alarm time horizon m (P^infty[tau < m] <= alpha)",
+    "D_star": "max_a KL(theta*(a) || theta_0(a)), divergence of the most informative action"
+   },
+   "conditions": [
+    "0 < alpha <= 1/10",
+    "m >= 1",
+    "change occurs at time nu = 1",
+    "algorithm satisfies P^infty[tau < m] <= alpha"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lowerbound",
+    "number": "Theorem 2",
+    "quote": "Let $0 < \\alpha \\leq \\frac{1}{10}$ and $m \\geq 1$. For any bandit changepoint algorithm satisfying $\\probSup{(\\infty)}{\\tau < m} \\leq \\alpha$, we have $\\mathbb{E}^{(1, \\theta^*)}\\left[\\tau \\right] \\geq \\min \\left\\{ \\frac{\\frac{1}{20} \\log \\frac{1}{\\alpha}}{\\max_{a \\in \\mathcal{A}} \\kl{\\theta^*(a)}{\\theta^{(0)}(a)}}, \\frac{m}{2} \\right\\} \\quad \\forall \\theta^* \\in \\ThetaOne$."
+   },
+   "confidence": "high",
+   "notes": "Bound on expected stopping time (detection delay with nu=1). Algorithm class: all detectors satisfying the (m,alpha) false alarm constraint."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "Min(log(1/alpha_fa)/(20*D_star), m_fa/2)",
+    "expression_latex": "\\expectSup{(\\nu, \\theta^*)}{\\tau - \\nu \\given \\tau \\geq \\nu} \\geq \\min \\left\\{ \\frac{\\frac{1}{20} \\log \\frac{1}{\\alpha}}{ \\max_{a} \\kl{\\theta^*(a)}{\\theta_0(a)} }, \\frac{m}{2} \\right\\}",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_fa": "false alarm probability level alpha",
+    "m_fa": "false alarm window m",
+    "D_star": "max_a KL(theta*(a) || theta_0(a))"
+   },
+   "conditions": [
+    "0 < alpha <= 1/10",
+    "m >= 1",
+    "arbitrary changepoint nu in N",
+    "algorithm satisfies P^infty[tau < nu + m | nu <= tau] <= alpha"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lowerboundanytime",
+    "number": "Theorem 5",
+    "quote": "Let $0 < \\alpha \\leq \\frac{1}{10}$, $m \\geq 1$ and $\\nu \\in \\mathbb{N}$. If a bandit changepoint algorithm satisfies $\\probSup{(\\infty)}{\\tau < \\nu + m \\given \\nu \\leq \\tau} \\leq \\alpha$, then for any $\\theta^* \\in \\ThetaOne$, \\[ \\expectSup{(\\nu, \\theta^*)}{\\tau - \\nu \\given \\tau \\geq \\nu} \\geq \\min \\left\\{ ... , \\frac{m}{2} \\right\\}. \\]"
+   },
+   "confidence": "high",
+   "notes": "Conditional expected detection delay given no stop before nu; generalises Theorem 2."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "alpha_fa",
+    "expression_latex": "\\probInf{\\tau < m} \\leq \\alpha",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_fa": "false alarm probability level alpha"
+   },
+   "conditions": [
+    "Assumptions 1-4: finite Theta^(1), identifiability, bounded marginal KL divergences D_max, r-subgaussian log-likelihood ratios",
+    "no change (nu = infinity)"
+   ],
+   "tuning": [
+    "stopping threshold beta >= m |Theta^(1)| / alpha",
+    "g_theta = log-likelihood ratio"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:epsgreedygenchange",
+    "number": "Theorem 4",
+    "quote": "(Time to false alarm) Let $\\alpha \\in (0,1)$ and $m \\in \\mathbb{N}$. If the stopping threshold $\\beta$ is set as $\\beta \\geq \\frac{m \\SizeThetaOne}{\\alpha}$, then the stopping time satisfies $\\probInf{\\tau < m} \\leq \\alpha$."
+   },
+   "confidence": "medium",
+   "notes": "False-alarm guarantee: probability of stopping before m under no change is at most alpha (proof gives m|Theta^(1)|/beta). Quantity mapped to error_probability."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "8*log(beta_thr)/((1 - eps_alg)*D_star) + C_add",
+    "expression_latex": "\\frac{8 \\log \\beta}{ (1-\\epsilon)\\max_{a} \\kl{\\theta^*(a)}{\\theta^{(0)}(a)} } + O\\left( \\text{poly}\\left(\\frac{1}{\\epsilon} \\right), \\expectInf{\\ExploreQueue_\\nu}, \\mathcal{P} \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "beta_thr": "stopping threshold beta of the algorithm",
+    "D_star": "max_a KL(theta*(a) || theta_0(a))",
+    "C_add": "additive term O(poly(1/epsilon), E^infty[Q^(1)_nu], P) independent of beta; appendix: 21 + sum_{theta: a*_theta != a*_theta*} (4 E[Q_nu(theta)]/(eps Delta_theta) + 2 exp(-eps^2 Delta_theta^2 log beta/(4 gamma mu*(1-eps)))/(1-exp(-eps^2 Delta_theta^2/(8 gamma))))"
+   },
+   "conditions": [
+    "Assumptions 1-4: finite Theta^(1), identifiability, bounded marginal KL divergences D_max, r-subgaussian log-likelihood ratios",
+    "change from theta_0 to theta* at arbitrary time nu",
+    "pi(a*_{theta*}) > 0"
+   ],
+   "tuning": [
+    "eps_alg = forced exploration rate epsilon (proof assumes epsilon <= 1/2)",
+    "g_theta = log-likelihood ratio",
+    "exploration distribution pi"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:epsgreedygenchange",
+    "number": "Theorem 4",
+    "quote": "(Detection delay) For a change from $\\theta_0$ to $\\theta^* \\in \\ThetaOne$ occurring at time $\\nu \\in \\mathbb{N}$, \\expectSup{(\\nu,\\theta^*)}{(\\tau - \\nu)^+} \\leq \\frac{8 \\log \\beta}{ (1-\\epsilon)\\max_{a} \\kl{\\theta^*(a)}{\\theta^{(0)}(a)} } + O\\left( \\text{poly}\\left(\\frac{1}{\\epsilon} \\right), \\expectInf{\\ExploreQueue_\\nu}, \\mathcal{P} \\right), provided $\\pi(a^*_{\\theta^*}) > 0$"
+   },
+   "confidence": "medium",
+   "notes": "Expected detection delay. The second term is only given in O-form in the theorem; explicit form in appendix recorded in symbols. With beta = m|Theta|/alpha this gives O(log(1/alpha)/((1-eps)D_star)) for small alpha."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "log(1/alpha_fa)/D_star",
+    "expression_latex": "\\liminf_{\\alpha \\to 0} \\frac{\\mathbb{E}^{(\\nu,\\theta^*)}[(\\tau-\\nu)^+]}{ \\log\\frac{1}{\\alpha}} \\geq \\frac{1}{\\max_{a} D({\\theta^*(a)}||{\\theta^{(0)}(a)})}",
+    "regime": "alpha -> 0, m = omega(log(1/alpha))"
+   },
+   "symbols": {
+    "alpha_fa": "false alarm level alpha",
+    "D_star": "max_a KL(theta*(a) || theta_0(a))"
+   },
+   "conditions": [
+    "any admissible change detector in D_{m,alpha}",
+    "alpha -> 0 and m = omega(log(1/alpha))"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "Consider the limiting situation as $\\alpha \\rightarrow 0$ and $m = \\omega\\left(\\log \\frac{1}{\\alpha} \\right) \\to \\infty$. Then, any admissible change detector in ${\\cal D}_{m,\\alpha}$ must suffer $$\\liminf_{\\alpha \\to 0} \\frac{\\mathbb{E}^{(\\nu,\\theta^*)}[(\\tau-\\nu)^+]}{ \\log\\frac{1}{\\alpha}} \\geq \\frac{1}{\\max_{a} D({\\theta^*(a)}||{\\theta^{(0)}(a)})}.$$"
+   },
+   "confidence": "low",
+   "notes": "Informal theorem; the constant 1 differs from the 1/20 in the formal Theorem 2, so it is stated informally and may not exactly follow from the formal results."
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "8*log(1/alpha_fa)/((1 - eps_alg)*D_star)",
+    "expression_latex": "\\limsup_{\\alpha \\to 0} \\frac{\\mathbb{E}^{(\\nu,\\theta^*)}[(\\tau-\\nu)^+]}{ \\log\\frac{1}{\\alpha}} \\leq \\frac{8}{(1-\\epsilon)} \\frac{1}{\\max_{a} D({\\theta^*(a)}||{\\theta^{(0)}(a)}) }",
+    "regime": "alpha -> 0, m = omega(log(1/alpha))"
+   },
+   "symbols": {
+    "alpha_fa": "false alarm level alpha",
+    "D_star": "max_a KL(theta*(a) || theta_0(a))"
+   },
+   "conditions": [
+    "Assumptions 1-4",
+    "alpha -> 0, m = omega(log(1/alpha)), log m = o(log(1/alpha))",
+    "pi(a*_{theta*}) > 0"
+   ],
+   "tuning": [
+    "epsilon-GCD suitably tuned to be in D_{m,alpha} (beta = m|Theta^(1)|/alpha)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "On the other hand, the $\\epsilon$-GCD algorithm, suitably tuned to be in ${\\cal D}_{m,\\alpha}$, achieves $$\\limsup_{\\alpha \\to 0} \\frac{\\mathbb{E}^{(\\nu,\\theta^*)}[(\\tau-\\nu)^+]}{ \\log\\frac{1}{\\alpha}} \\leq \\frac{8}{(1-\\epsilon)} \\frac{1}{\\max_{a} D({\\theta^*(a)}||{\\theta^{(0)}(a)}) }.$$"
+   },
+   "confidence": "medium",
+   "notes": "Informal theorem; asymptotic consequence of Theorem 4. Expression written as c*log(1/alpha) per convention."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T13:27:08",
+  "source_chars": 212022,
+  "input_tokens": 138306,
+  "output_tokens": 7644,
+  "cost_usd_equiv": 0.9810160000000001,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

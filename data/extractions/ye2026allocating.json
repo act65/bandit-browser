@@ -1,0 +1,232 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Allocating Human Oversight in AI-Enabled Analytics",
+  "arxiv_id": "2604.12497",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Zikun Ye",
+   "Jiameng Lyu",
+   "Rui Tao"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online human-validation allocation under PPI++ (adaptive Neyman allocation with unknown rectification difficulties)",
+   "objective": "mean_estimation",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "B",
+    "K",
+    "loss_range"
+   ],
+   "instance_assumptions": [
+    "bounded_variance"
+   ],
+   "extras": [
+    "budgeted_exploration"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_unknown"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each pull of unit q yields a paired observation (human label Y_q, LLM prediction Y_q^LLM); the objective is the terminal weighted variance sum_q w_q A_q / n_q of tuned PPI++ estimators, where A_q = Var(Y_q - lambda_q^* Y_q^LLM) is unknown",
+    "Per-unit sampling costs c_q and importance weights w_q are known to the learner; total cost budget B",
+    "Regret is the gap to the Neyman oracle allocation's terminal objective, not cumulative reward",
+    "Learner needs the ranges of Y and Y^LLM (R) and constants (V_min^LLM, M_Y, M_Y^LLM) to set the initialization K_0",
+    "Synthetic-data-rich regime: LLM-only pool size m_q -> infinity"
+   ],
+   "definition_quote": "We model data collection as a sequential allocation process. At each step $t$, a policy selects a question $q_t\\in\\mathcal T$ based on past observations, collects one additional human response for that question (paying cost $c_{q_t}$), queries the LLM on the same covariates, and obtains one paired observation ... $\\mathcal R(B):=\\bE_{\\pi}[\\sum_{q=1}^Q w_q\\frac{A_q}{n_{q,B}}]-\\sum_{q=1}^Q w_q\\frac{A_q}{n_q^*}$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "UCB-Based Online Human-Validation Allocation with PPI++",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "B",
+    "K",
+    "loss_range",
+    "delta",
+    "costs c_q",
+    "weights w_q",
+    "V_min^LLM (for initialization K_0)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "log(K*T_max/delta)/B**2 + delta*V_max",
+    "expression_latex": "\\mathcal{R}(B)\\le O\\left(\\frac{\\ln(QT_{\\max}/\\delta)}{B^2}\\right)+\\delta V_{\\max}",
+    "regime": "for all sufficiently large B"
+   },
+   "symbols": {
+    "B": "total human-validation budget",
+    "T_max": "floor(B / c_min), max number of labels",
+    "V_max": "sum_q w_q A_q / K_init, worst-case terminal objective",
+    "K": "number of allocation units Q"
+   },
+   "conditions": [
+    "Y_q and Y_q^LLM bounded almost surely (Assumption 1)",
+    "A_min = min_q A_q > 0",
+    "Var(Y_q^LLM) >= V_min^LLM > 0 for all q",
+    "w_q > 0, c_q > 0",
+    "B >= sum_q c_q K_init"
+   ],
+   "tuning": [
+    "initialization K_init = ceil(K_0 ln(Q T_max/delta)) with K_0 depending on the assumption constants"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem (thm:regret)",
+    "quote": "Suppose Assumptions~\\ref{ass:boundedpp}--\\ref{ass:nondeg_ppipp} hold. Run Algorithm~\\ref{alg:ucb-time-indexed} with $K=\\lceil K_0\\ln(QT_{\\max}/\\delta)\\rceil$ ... Then for all sufficiently large $B$, \\mathcal{R}(B)\\le O\\left(\\frac{\\ln(QT_{\\max}/\\delta)}{B^2}\\right)+\\delta V_{\\max}."
+   },
+   "confidence": "medium",
+   "notes": "Regret is terminal weighted-MSE gap to Neyman oracle allocation (quantity 'other'). Paper's Q (number of units) mapped to K; the paper's K (initialization) renamed K_init. The delta*V_max term is additive exact; O applies to first term. Constants depend on weights, costs, A_q."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "log(B)/B**2",
+    "expression_latex": "\\mathcal{R}(B)=O\\!\\left(\\frac{\\ln B}{B^2}\\right)",
+    "regime": "for all sufficiently large B"
+   },
+   "symbols": {
+    "B": "total human-validation budget"
+   },
+   "conditions": [
+    "Y_q and Y_q^LLM bounded almost surely (Assumption 1)",
+    "A_min = min_q A_q > 0",
+    "Var(Y_q^LLM) >= V_min^LLM > 0 for all q",
+    "w_q > 0, c_q > 0",
+    "B >= sum_q c_q K_init"
+   ],
+   "tuning": [
+    "delta = B^{-2}",
+    "initialization K_init = ceil(K_0 ln(Q T_max/delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem (thm:regret)",
+    "quote": "In particular, choosing $\\delta=B^{-2}$ yields $\\mathcal{R}(B)=O\\!\\left(\\frac{\\ln B}{B^2}\\right)$."
+   },
+   "confidence": "medium",
+   "notes": "Corollary part of the main theorem; Q, costs, weights and A_q treated as constants."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T14:05:33",
+  "source_chars": 133164,
+  "input_tokens": 102932,
+  "output_tokens": 3526,
+  "cost_usd_equiv": 0.615664,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

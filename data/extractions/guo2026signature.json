@@ -1,0 +1,295 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Signature Approach for Contextual Bandits with Nonlinear and Path-dependent Rewards",
+  "arxiv_id": "2605.10313",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Xin Guo",
+   "Grace He",
+   "Xinyu Li"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Contextual bandit with nonlinear and path-dependent rewards",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "K",
+    "d",
+    "S",
+    "L_feat"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "misspecified"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Contexts are windows X_[t-L,t] of a continuous-time stochastic process with finite p-variation (non-i.i.d., non-stationary, path-dependent)",
+    "Each arm has its own unknown continuous path functional f_a; rewards are approximated by linear functionals of truncated signature features (disjoint linear model with approximation error)",
+    "The learner knows the signature depth N and window length L and a bound on the contextual signature feature norm"
+   ],
+   "definition_quote": "the learner selects an action $A_t \\in \\cF_t$ and immediately receives a reward $r_t = f_{A_t}(X_{[t-L,t]}) + \\eta_t$, where, for each action $a \\in [K]$, the unknown function $f_a : \\pathspaceL \\to \\mathbb{R}$ is a continuous (not necessarily linear) path-dependent functional. ... The noise sequence $(\\eta_t)_{t=1}^T$ is conditionally $1$-subgaussian"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "DisSigUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "d",
+    "S",
+    "L_feat",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "L_feat/sqrt(rho)*(sqrt(d + m_sig) + S)*sqrt(K*T*log(K*T/delta)) + eps_approx",
+    "expression_latex": "C \\,\\frac{B}{\\sqrt{\\rho}}\\Bigl(\\sqrt{d+m} + S \\Bigr)\\sqrt{KT \\log(KT/\\delta)} + \\vep",
+    "regime": "T sufficiently large so that T_0 <= T (used in the proof)"
+   },
+   "symbols": {
+    "m_sig": "signature feature dimension m = (d+1)^N after pruning",
+    "rho": "lower bound on the minimum eigenvalue of the averaged conditional feature covariance (Assumption 5.1(ii))",
+    "eps_approx": "total signature approximation error epsilon (uniform approximation error eps/(2T) per round)"
+   },
+   "conditions": [
+    "context windows lie in a compact set K of finite p-variation paths and ||X||_inf <= H with high probability",
+    "(1/t) sum_s E[x_s x_s^T | F_{s-1}] >= rho I for all t (non-degeneracy)",
+    "contextual signature features bounded |x_t| <= B (Lemma 5.1)",
+    "S = max_a |beta_a^*| where beta_a^* achieves approximation error eps/(2T)",
+    "noise conditionally 1-sub-Gaussian"
+   ],
+   "tuning": [
+    "lambda = 1",
+    "gamma = sqrt((d+m) log(K(1+T B^2)/delta)) + S"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:sigUCB_regret",
+    "number": "Theorem 5.2",
+    "quote": "Take the assumption as in Proposition~\\ref{prop:universal_nonlinear} and Outstanding Assumption \\ref{assum:unified}. Denote $S := \\max_{a\\in[K]}|\\beta_a^*|$. Let $\\delta \\in (0,1)$. Then, with probability at least $1 - 2\\delta$, the regret $R(T)$ of \\texttt{DisSigUCB}$(\\lambda,\\gamma,N)$ in Algorithm~\\ref{alg:dissigucb} satisfies $R(T) \\leq C \\,\\frac{B}{\\sqrt{\\rho}}(\\sqrt{d+m} + S )\\sqrt{KT \\log(KT/\\delta)} + \\vep.$ Here, Algorithm adopts the regularizer $\\lambda = 1$ and the exploration coefficient $\\gamma = \\sqrt{(d+m)\\log(K(1 + TB^2)/\\delta)} + S$."
+   },
+   "confidence": "medium",
+   "notes": "Probability 1-2delta. B is the feature norm bound mapped to L_feat; generic constant C so notation O. Regret is against the per-round best arm under the true functionals f_a (no noise), i.e. a pseudo-regret type quantity holding w.h.p. Proof drops lower-order terms for T large enough, so the stated bound with a generic constant implicitly requires T large. Context-generating process is a general adapted stochastic process; mapped to adversarial_contexts since it is non-i.i.d."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "APSLSB:11",
+   "cited_title": null,
+   "cited_first_author": "Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "LinUCB",
+   "algorithm_registry_id": "lin_ucb",
+   "side": "upper",
+   "setting_description": "Linear contextual bandit",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\tilde{\\mathcal O}(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "DSLCB:24",
+   "cited_title": null,
+   "cited_first_author": null,
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": "LinUCB",
+   "algorithm_registry_id": "lin_ucb",
+   "side": "upper",
+   "setting_description": "Linear contextual bandit under feature diversity assumption",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(d*T)",
+    "expression_latex": "\\tilde{\\mathcal O}(\\sqrt{dT})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "AG:13",
+   "cited_title": null,
+   "cited_first_author": "Agrawal",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "LinTS",
+   "algorithm_registry_id": "lin_ts",
+   "side": "upper",
+   "setting_description": "Linear contextual bandit",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**(3/2)*sqrt(T)",
+    "expression_latex": "\\tilde{\\mathcal O}(d^{3/2}\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "FCGS:10",
+   "cited_title": null,
+   "cited_first_author": "Filippi",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GLM-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Generalized linear contextual bandit",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\tilde{\\mathcal O}(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "LLZGLCB:17",
+   "cited_title": null,
+   "cited_first_author": "Li",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GLM-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Generalized linear contextual bandit under feature diversity assumption",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(d*T)",
+    "expression_latex": "\\tilde{\\mathcal O}(\\sqrt{dT})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "VKMFCKCB:13",
+   "cited_title": null,
+   "cited_first_author": "Valko",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "KernelUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Kernelized contextual bandit (reward in RKHS)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(d_eff*T)",
+    "expression_latex": "\\tilde{\\mathcal O}(\\sqrt{\\tilde{d}T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:00:37",
+  "source_chars": 94079,
+  "input_tokens": 170712,
+  "output_tokens": 8302,
+  "cost_usd_equiv": 0.5953534,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

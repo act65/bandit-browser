@@ -68,7 +68,8 @@ def main() -> None:
     themes.sort(key=lambda t: (DECISIONS.index(t["decision"]), -len(t["papers"])))
     covered = {i for t in themes for i in t["items"]}
     version = ont_path.stem.split("-")[1]
-    lines = [f"# Ontology review after batch 1 (ontology v{version})", "",
+    last = max((q.get("batch") or 0) for q in yaml.safe_load((ROOT / "corpus" / "manifest.yaml").read_text())["papers"])
+    lines = [f"# Ontology review after batch {last} (ontology v{version})", "",
              f"Input: the {len(items)} `unmapped` items in {len(list((ROOT / 'data' / 'extractions').glob('*.json')))} "
              f"extractions, grouped into themes by one LLM pass with the ontology in context "
              f"(`pipeline/review_unmapped.py`, {args.model}). **Status: proposed, not applied.** "

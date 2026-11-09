@@ -1,0 +1,199 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Action Centered Contextual Bandits",
+  "arxiv_id": "1711.03596",
+  "arxiv_version": null,
+  "year": 2017,
+  "authors": [
+   "Kristjan Greenewald",
+   "Ambuj Tewari",
+   "Predrag Klasnja",
+   "Susan Murphy"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Action-centered contextual bandit with probability constraints",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_restricted",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "d",
+    "sigma"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "unspecified",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Reward = arbitrary time-varying, nonlinear baseline g_t(context) (no assumptions, may change abruptly) plus a fixed linear treatment effect s_{t,a}^T theta for nonzero actions; the baseline action 0 has zero treatment effect",
+    "Learner's policy must play a nonzero action with probability in [pi_min, pi_max] (0<pi_min<=pi_max<1), and regret is measured against the optimal probability-constrained policy",
+    "Contexts chosen by an adversary based on the history"
+   ],
+   "definition_quote": "E[r_t(\\bar{s}_t,a_t) | \\bar{s}_t,a_t] =\\bar{f}_t(\\bar{s}_t,a_t) = f(s_{t,a_t}) I(a_t > 0) + g_t(\\bar{s}_t) ... r_t(a_t) - r_t(0) = s_{t,a_t}^T \\theta I(a_t > 0) + n_t where n_t is zero-mean sub-Gaussian noise with variance \\sigma^2 ... We constrain 0< \\pi_{\\min} \\leq 1-\\mathbb{P}(a_t = 0|\\bar{s}_t) \\leq \\pi_{\\max} < 1"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Action-Centered Thompson Sampling",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_feasible_policy",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_thm*(d**2/eps_alg)*sqrt(T**(1 + eps_alg))*log(T*d)*log(1/delta)",
+    "expression_latex": "C \\left(\\frac{d^2}{\\epsilon} \\sqrt{T^{1+\\epsilon}}(\\log(Td) \\log \\frac{1}{\\delta})\\right)",
+    "regime": "for any 0 < eps_alg < 1, 0 < delta < 1; holds with probability at least 1 - 3*delta/2"
+   },
+   "symbols": {
+    "C_thm": "constant given in the proof (depends on noise level R and on C_pi = sqrt(min(pi_min(1-pi_max), pi_max(1-pi_min))))"
+   },
+   "conditions": [
+    "baseline and interaction rewards bounded (by one)",
+    "context feature vectors satisfy ||s_{t,a}||_2 <= 1",
+    "||theta|| bounded (proof uses ||theta||_{M^{-1}} <= 1)",
+    "nonzero-action probability constrained to [pi_min, pi_max] with pi_min, pi_max bounded away from 0 and 1",
+    "baseline g_t arbitrary and time-varying; contexts chosen adversarially given history"
+   ],
+   "tuning": [
+    "v = R*sqrt(24/epsilon * d * log(1/delta))",
+    "pi_t = max(pi_min, min(pi_max, P(s^T theta_tilde > 0)))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "Consider the action-centered contextual bandit problem, where $g_t$ is potentially time varying, and $\\bar{s}_t$ at time $t$ given $\\mathcal{H}_{t-1}$ is chosen by an adversary. Under this regime, the total regret at time $T$ for the action-centered Thompson sampling contextual bandit (Algorithm 1) satisfies \\[ \\mathcal{R}(T) \\leq C \\left(\\frac{d^2}{\\epsilon} \\sqrt{T^{1+\\epsilon}}(\\log(Td) \\log \\frac{1}{\\delta})\\right) \\] with probability at least $1-3\\delta/2$, for any $0< \\epsilon < 1$, $0< \\delta < 1$. The constant $C$ is in the proof."
+   },
+   "confidence": "medium",
+   "notes": "Regret is sum_t (pi*_t s_{t,a*}^T theta - pi_t s_{t,abar_t}^T theta), against the optimal probability-constrained policy; bound holds w.p. >= 1-3delta/2. Paper remarks that epsilon = 1/log T gives O(d^2 sqrt(T)) and the bound is independent of N. Theorem epsilon is an analysis/tuning parameter (enters v), mapped to eps_alg. Environment mapped to adversarial_restricted due to arbitrary time-varying baseline; horizon recorded as anytime since the algorithm does not take T as input (but eps=1/log T tuning would require T)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "agrawal2013thompson",
+   "cited_title": "Thompson sampling for contextual bandits with linear payoffs",
+   "cited_first_author": "Agrawal, Shipra",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson Sampling for contextual bandits (linear payoffs)",
+   "algorithm_registry_id": "lin_ts",
+   "side": "upper",
+   "setting_description": "Linear contextual bandit with adversarial contexts, baseline identically zero",
+   "bound": {
+    "notation": "O",
+    "expression": "d**2*sqrt(T)",
+    "expression_latex": "O(d^2 \\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 4.1, discussion after Theorem 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:19:13",
+  "source_chars": 64426,
+  "input_tokens": 69195,
+  "output_tokens": 4371,
+  "cost_usd_equiv": 0.362668,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

@@ -2,6 +2,24 @@
 
 Staged so that each phase ends with a **go / no-go check**. We do not scale extraction until the schema and accuracy are proven on a small, hand-checked set ([desiderata.md](desiderata.md) D6).
 
+## Status (2026-11-09)
+
+Batch 2 is in: **1,057 papers**, 4,700 results, 2,037 canonical settings, 2,108 cells (**115 tight**, 107 log gap,
+57 poly gap, **7 conflict**); acceptance 5 PASS / 1 PASS_STATUS / 2 PARTIAL / 6 MANUAL / 0 FAIL; gold set 34/53
+recovered, 0 contradicted; citation cross-check 62% agree (61 consensus disagreements queued).
+- **Extraction quality:** prompt rules 22–27 from the audit's recurring setting errors, and a verbatim-quote retry
+  (rejected quotes 226 → 1 on batch 1 after the backfill; 13 of 2,617 in batch 2). Batch-2 audit (200 results):
+  major errors 5% → 2% (1–4%), lower bounds 11% → 2%, action-space contradictions 5% → 0%; minor setting errors
+  unchanged (37% → 36%): missing knowledge and over-general noise models persist.
+- **Corpus recall:** the PMLR re-harvest found 907 records (was 694) but only 5 new papers: OpenAlex had the rest.
+- **Conflict review:** 57 → 7 cells. Engine: side conditions (K ≤ d, m = d/2, N ≥ K) block the scan of the bounded
+  variable; Õ bounds cannot make a cell tight; γ_T is opaque. 15 corrections (model changes the ontology cannot
+  express, an Exp4 typo in the Bubeck–Cesa-Bianchi survey). Remaining: 3 combinatorial cells (d vs K for base arms),
+  2 dynamic-regret cells (S_T fixed by the scan), and cesari2026action vs arora2019bandits (√T for strongly
+  revealing graphs with switching costs vs a T^{2/3} bound claimed for every non-complete graph: possibly genuine).
+- **Ontology review:** [ontology/review-v0.5.md](ontology/review-v0.5.md), with a ranked synthesis; not applied.
+- Not yet done for batch 2: gap triage of the new gap cells (164 gaps), the inference audit.
+
 ## Status (2026-10-26)
 
 Since 2026-10-23: a test suite (69 tests, 20 of 20 injected bugs caught) and CI that re-derives the data; an inference
@@ -160,6 +178,10 @@ Everything here builds on one piece of machinery: **D2 bound comparison**. Each 
   - **Result (2026-10-22, all 558 papers re-extracted, ~$353 API-equivalent):** 137 settings out of scope (112 multi-agent, 25 state-dependent); 1,117 canonical settings, 2,466 results; 1,504 cells: **66 tight** (v0.4.1: 52), 66 log gap, 52 poly gap, **9 conflict cells / 11 per-variable conflicts** (v0.4.1: 35); acceptance **6 PASS**, 2 PASS_STATUS, 2 PARTIAL, 4 MANUAL. Triage: 154 live verdicts (109 closed, 13 open_known, 32 blank), 57 stale kept. Unmapped items 3,731 → 3,006.
   - **Fixes found on the way:** `noise_detail.variance` gets `unspecified_means: homoscedastic` (455 vs 221 settings split the core cells); lower bounds now also hold for learners with more *class-level* knowledge (problem parameters, reward family, kernel, ...; not gaps or priors), which restored the core K-armed tight cells; `bandit ⊑ partial_monitoring` `requires_general` a class of games; corrections for semi-transparent auctions (cesabianchi2024role:r3) and incentive-aware recommendation (dai2022incentive).
   - **Remaining conflicts (7 cells):** profiler artefacts where bounds hold only for K ≤ d (jin2026nearly, li2019nearlyminimax: the scan takes K → ∞; respect side conditions in `compare.profile`); bubeck2017sparsity r6; song2025outcome r2. Fixed 2026-10-23: bubeck2013bounded r7 is a sup over Δ (correction), cesabianchi2024role r2 semi-transparent (correction), fixed-confidence identification (δ → 0 asymptotics now profiled, δ-correct lower bounds admissible; Degenne & Koolen's cell is tight). Feedback mechanisms that map to partial_monitoring (transparent vs semi-transparent) need a field in the next review.
+- [x] **Batch 2** (`corpus/batch-2.yaml`, 2026-11-09): 500 papers (multi_agent slice skipped as out of scope;
+  18 PMLR-only from open PDFs; 499 extracted, one withdrawn duplicate), Opus 5.5 with prompt rules 22–27 and the quote
+  retry, ~$394 API-equivalent, no quota stop. Then: conflict review (57 → 7 cells), condition classes for 3,235 new
+  strings, batch-2 audit, ontology review (`ontology/review-v0.5.md`). See the status at the top.
 - [ ] Extend the ontology module by module (contextual, combinatorial, non-stationary, pure exploration, partial monitoring, …), each with a small gold set.
 - [x] Cross-check with `cited_results` (`pipeline/crosscheck.py` → `data/reports/crosscheck.md`): 67% agree; 26 "consensus disagreements" (a rate cited by ≥ 2 papers that our extraction lacks) are the review queue.
 - [ ] Human verification queue prioritising results that drive gap reports (the audit's 8 major errors and the 26 consensus disagreements first).

@@ -1,0 +1,189 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Learning Neural Contextual Bandits Through Perturbed Rewards",
+  "arxiv_id": "2201.09910",
+  "arxiv_version": null,
+  "year": 2022,
+  "authors": [
+   "Yiling Jia",
+   "Weitong Zhang",
+   "Dongruo Zhou",
+   "Quanquan Gu",
+   "Hongning Wang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Contextual bandit with finite K arms and neural (NTK) reward mapping",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [
+    "bounded"
+   ],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "K",
+    "sigma",
+    "S"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "neural_ntk"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each of the K arms has a fixed d-dimensional context vector x_i (unit norm, symmetric halves); unknown reward function h with 0<=h<=1 approximated by a ReLU network of width m and depth L",
+    "NTK matrix H on the context set satisfies H >= lambda_0 I",
+    "Reward norm bound S upper-bounds sqrt(2 h^T H^{-1} h) (RKHS norm of h in the NTK space)",
+    "Perturbation scale is set using lambda_K(A_K), the K-th largest eigenvalue of the covariance matrix after the initial K pulls"
+   ],
+   "definition_quote": "We study the problem of contextual bandit with finite $K$ arms, where each arm is associated with a $d$-dimensional context vector: $\\xb_i \\in \\RR^d$ for $i \\in [K]$. At each round $t \\in [T]$, the agent needs to select one of the arms, denoted as $a_t$, and receives its reward $r_{a_t, t}$, which is generated as $r_{a_t, t} = h(\\xb_{a_t}) + \\eta_{t}$. In particular, $h(\\xb)$ represents the unknown underlying reward mapping function satisfying $0 \\leq h(\\xb) \\leq 1$ for any $\\xb$, and $\\eta_{t}$ is an $R$-sub-Gaussian random variable"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "NPR (Neural bandit with Perturbed Rewards)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "sigma",
+    "S"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "44*E*sqrt(pi)*(1 + sqrt((4*log(T) + 2*log(K))/(1 - lam/lam_KA)))*(sigma*sqrt(d_eff*log(1 + T*K/lam) + 2 - 2*log(delta)) + sqrt(lam)*S)*sqrt(2*d_eff*T*log(1 + T*K/lam) + 2) + 7 + K",
+    "expression_latex": "R_T \\leq \\Gamma \\Big(R\\sqrt{\\tilde{d}\\log(1 + TK/\\lambda) +2 - 2\\log \\delta} + \\sqrt{\\lambda}S\\Big)\\cdot\\sqrt{2\\tilde dT\\log(1+TK/\\lambda) +2} + 7 + K, \\Gamma = 44\\eb \\sqrt{\\pi} (1 + \\sqrt{(4\\log T + 2\\log K) / (1 - \\lambda \\lambda_K^{-1}(\\Ab_K))})",
+    "regime": null
+   },
+   "symbols": {
+    "lam_KA": "K-th largest eigenvalue of the covariance matrix A_K built after the initial K pulls"
+   },
+   "conditions": [
+    "h(x) in [0,1]",
+    "R-sub-Gaussian observation noise (paper's R = sigma)",
+    "Assumption 9: NTK matrix H >= lambda_0 I, ||x_i||_2 = 1, [x_i]_j = [x_i]_{j+d/2}",
+    "sqrt(2 h^T H^{-1} h) <= S",
+    "d_eff is the effective dimension of the NTK matrix: log det(I + T H/lambda)/log(1+TK/lambda)"
+   ],
+   "tuning": [
+    "m >= poly(T, L, K, 1/lambda, 1/S, log(1/delta))",
+    "eta = C_1 (m T L + m lambda)^{-1}",
+    "lambda >= max{1, S^{-2}}",
+    "perturbation sigma = alpha_t (1 - lambda/lambda_K(A_K))^{-1/2}",
+    "number of GD steps J chosen as in the proof"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem 7",
+    "quote": "Let $\\tilde d$ be the effective dimension of the NTK kernel matrix $\\Hb$. There exist positive constants $C_1$ and $C_r$, such that for any $\\delta \\in(0, 1)$, when network structure and the step size for model update satisfy $m \\geq \\text{poly}(T, L, K, \\lambda^{-1}, S^{-1}, \\log(1/\\delta))$, $\\eta = C_1( mTL +  m \\lambda)^{-1}$ and $\\lambda \\geq \\max\\{1, S^{-2}\\}$, with probability at least $1-\\delta$, the cumulative regret of \\model{} satisfies R_T \\leq \\Gamma (R\\sqrt{\\tilde{d}\\log(1 + TK/\\lambda) +2 - 2\\log \\delta} + \\sqrt{\\lambda}S)\\cdot\\sqrt{2\\tilde dT\\log(1+TK/\\lambda) +2} + 7 + K"
+   },
+   "confidence": "medium",
+   "notes": "R_T is defined as E[sum (r_{a*} - r_{a_t})], i.e. through expected rewards, so it is recorded as pseudo-regret; the 1-delta probability is over network initialization and the confidence events. The paper's R (sub-Gaussian parameter) is mapped to sigma. The paper's perturbation std (also called sigma/nu) is an algorithm parameter and is described in tuning. The abstract summarises this bound as O~(d_eff sqrt(T)). Setting choices are judgement calls: the contexts are a fixed set of K vectors in the theory, so context=none; NTK reward modelling is mapped to kernel_rkhs with reward_model neural_ntk."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:08:15",
+  "source_chars": 81619,
+  "input_tokens": 77411,
+  "output_tokens": 4399,
+  "cost_usd_equiv": 0.428956,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

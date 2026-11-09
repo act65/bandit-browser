@@ -1,0 +1,215 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Flexible and Efficient Contextual Bandits with Heterogeneous Treatment Effect Oracles",
+  "arxiv_id": "2203.16668",
+  "arxiv_version": null,
+  "year": 2022,
+  "authors": [
+   "Aldo Gael Carranza",
+   "Sanath Kumar Krishnamurthy",
+   "Susan Athey"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Stochastic contextual bandit with treatment effect model class (R-loss oracle, possibly misspecified)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K",
+    "function_class"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "misspecified"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Learner has a treatment-effect model class G and an R-loss oracle with known excess-risk estimation rate xi(n, zeta) (Assumption 1)",
+    "Misspecification measured by R-loss average misspecification B = max_p min_{g in G} E_p(g), unknown to the learner"
+   ],
+   "definition_quote": "At each round $t$, nature randomly samples a context-reward pair $(x_t, r_t)$ from a fixed but unknown probability distribution $D$ over the joint space of contexts and reward vectors $\\calX\\times[0,1]^K$. The learner observes $x_t$, chooses an action $a_t\\in\\calA$, and receives the reward $r_t(a_t)\\in[0,1]$ for the chosen action."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "HTE-IGW (Heterogeneous Treatment Effect Inverse Gap Weighting)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "function_class",
+    "delta",
+    "xi (R-loss oracle estimation rate)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K)*Xi_sum + sqrt(K*B_mis)*T",
+    "expression_latex": "\\sum_{t=\\tau_1+1}^{T}\\sqrt{K\\xi\\left(\\tau_{m(t)-1}-\\tau_{m(t)-2},\\frac{\\delta'}{m(t)^2}\\right)} + \\sqrt{KB}T",
+    "regime": null
+   },
+   "symbols": {
+    "Xi_sum": "sum_{t=tau_1+1}^T sqrt(xi(tau_{m(t)-1}-tau_{m(t)-2}, delta'/m(t)^2)), where xi is the R-loss oracle estimation rate and m(t) the epoch of round t",
+    "B_mis": "R-loss average misspecification B = max_p min_{g in G} E_p(g)"
+   },
+   "conditions": [
+    "R-loss oracle satisfies Assumption 1 (excess risk <= xi(n,zeta) + C_0 B w.p. 1-zeta)",
+    "misspecification test satisfies Assumptions 2 and 3 (e.g. safety check of Krishnamurthy et al. 2021)"
+   ],
+   "tuning": [
+    "gamma_m = c*sqrt(K/xi(tau_{m-1}-tau_{m-2}, delta'/m^2)), c = sqrt(1/8)",
+    "delta' = delta/2",
+    "any epoch schedule tau_m"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main-theorem",
+    "number": "Theorem (thm:main-theorem)",
+    "quote": "Suppose the $R$-loss oracle satisfies Assumption \\ref{ass:main-assumption}. Then, with probability at least $1-\\delta$, $\\HIGW$ attains the following regret guarantee: \\text{Reg}(T)\\leq\\ordO\\Bigg(\\sum_{t=\\tau_1+1}^{T}\\sqrt{K\\xi\\left(\\tau_{m(t)-1}-\\tau_{m(t)-2},\\frac{\\delta'}{m(t)^2}\\right)} +\\sqrt{KB}T\\Bigg)."
+   },
+   "confidence": "medium",
+   "notes": "Regret is realized regret sum_t r_t(pi*(x_t)) - r_t(a_t) bounded w.p. 1-delta. With tau_m = 2^m the text states Reg(T) <= O(sqrt(K xi(T, delta'/log T)) T + sqrt(KB) T). B is not known to the learner. Proof relies on assumed safety-check properties."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*(d + log(T))) + sqrt(K*B_mis)*T",
+    "expression_latex": "\\calO(\\sqrt{KT(d+\\log T)} + \\sqrt{KB}T)",
+    "regime": null
+   },
+   "symbols": {
+    "B_mis": "R-loss average misspecification B = max_p min_{g in G} E_p(g)"
+   },
+   "conditions": [
+    "linear treatment effect class G = {(x,a) -> <theta, x_a> : ||theta||_2 <= 1}, ||x_a||_2 <= 1",
+    "R-loss oracle (R-learner) with least-squares excess risk rates as in Simchi-Levi and Xu (2021)"
+   ],
+   "tuning": [
+    "epoch schedule tau_m = 2^m (implied)",
+    "gamma_m as in eq. (gamma)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Example 1",
+    "quote": "Consider the following class of linear treatment effects \\calG=\\{g:(x,a)\\mapsto \\langle\\theta, x_a\\rangle\\mid\\theta\\in\\R^d,||\\theta||_2\\le1\\} ... In particular, we have $\\text{Reg}(T)\\le\\calO(\\sqrt{KT(d+\\log T)} + \\sqrt{KB}T)$."
+   },
+   "confidence": "low",
+   "notes": "Stated in an Example environment, not a theorem; dependence on delta suppressed. Specialization of Theorem 1 to linear treatment effects."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:07:39",
+  "source_chars": 108516,
+  "input_tokens": 87179,
+  "output_tokens": 3943,
+  "cost_usd_equiv": 0.49798000000000003,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

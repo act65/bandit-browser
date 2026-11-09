@@ -1,0 +1,181 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Drift Plus Optimistic Penalty: A Learning Framework for Stochastic Network Optimization with Improved Regret Bounds",
+  "arxiv_id": "2509.03762",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Sathwik Chadaga",
+   "Eytan Modiano"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Joint routing and scheduling in multi-commodity queueing networks with unknown edge transmission costs",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "markovian",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "sigma"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "polytope",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "arbitrary_bounded",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Stochastic network control with queue dynamics: queue backlogs (and terminal backlog cost) depend on past routing/scheduling actions, i.e. a state-dependent (MDP-like) control problem rather than an i.i.d. bandit; cost learning part is a stochastic semi-bandit.",
+   "unmapped": [
+    "Multi-hop queueing network with stochastic bounded arrivals at unknown rates strictly inside the stability region (epsilon-interior)",
+    "Actions are per-edge per-commodity transmission rates in a capacity polytope; cost linear in planned transmissions with unknown edge costs c_ij in [0, C_max]",
+    "Total cost includes a terminal backlog cost C_B per undelivered packet at time T",
+    "Noisy cost observed for each edge with positive planned transmission (semi-bandit on edges)",
+    "Learner does not know arrival rates or costs; observes queue backlogs"
+   ],
+   "definition_quote": "We consider a multi-hop network $G = (\\mc{N},\\mc{E})$ ... At each $t$, the policy receives a \\emph{noisy observation} $ \\widetilde{c}_{ij} (t)$ for each edge on which it transmitted any packets ... $\\eta_{ij}(t)$'s are zero mean $\\sigma$-sub-Gaussian ... $R^\\pi(T) := \\Ex [C^\\pi(T)] - \\inf_{\\pi^*\\in\\Pi^*} \\Ex[ C^{\\pi^*}(T)]$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Drift Plus Optimistic Penalty (DPOP)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)*log(T)",
+    "expression_latex": "R^{\\pi_D}(T) = O\\left(\\sqrt{T}\\log T\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "C_B": "terminal backlog cost per undelivered packet",
+    "C_L": "finite constant depending on topology and costs (Theorem 1)"
+   },
+   "conditions": [
+    "C_B >= C_L",
+    "arrival rates strictly inside the stability region (epsilon > 0 slack)",
+    "arrivals independent and bounded",
+    "edge costs in [0, C_max]",
+    "noise independent zero-mean sigma-sub-Gaussian"
+   ],
+   "tuning": [
+    "beta > 4*sigma^2",
+    "delta = T^(-2*sigma^2/beta)",
+    "nu = sqrt(T)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret_theorem",
+    "number": "Theorem 2",
+    "quote": "\\emph{(DPOP Regret)} For $C_B \\geq C_L$, the DPOP policy $\\pi_D$ achieves a sub-linear regret of $R^{\\pi_D}(T) = O\\left(\\sqrt{T}\\log T\\right)$ with parameters $\\beta > 4\\sigma^2$, $\\delta = T^{-{2\\sigma^2}/{\\beta}}$, and $\\nu = \\sqrt{T}$."
+   },
+   "confidence": "medium",
+   "notes": "Regret = E[C^pi(T)] - inf over all policies (with knowledge of costs and future arrivals) of E[C^{pi*}(T)]; recorded as pseudo_regret vs best_policy. Constants depend on network size, capacities, C_max, C_B, epsilon. The proof combines Propositions 1-4: R1 = O(sqrt(T) log T), R2 = O(1), R3 = O(sqrt(T)) and R4 = O(sqrt(T log T)). The text also says nu = O(sqrt(T/max(C_B,1))) gives O(min(sqrt(C_B), C_B) sqrt(T) log T). Parameters depend on T, so the horizon is known."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T11:48:37",
+  "source_chars": 108205,
+  "input_tokens": 91656,
+  "output_tokens": 4001,
+  "cost_usd_equiv": 0.534956,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

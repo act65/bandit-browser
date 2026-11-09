@@ -1,0 +1,208 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "An Experimental Design for Anytime-Valid Causal Inference on Multi-Armed Bandits",
+  "arxiv_id": "2311.05794",
+  "arxiv_version": null,
+  "year": 2023,
+  "authors": [
+   "Biyonka Liang",
+   "Iavor Bojinov"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Mixture Adaptive Design: anytime-valid design-based ATE inference in two-armed bandit experiments",
+   "objective": "mean_estimation",
+   "feedback": "bandit",
+   "environment": "adversarial_oblivious",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "not_applicable",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {
+    "K": "2"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "design-based (finite-population) model: potential outcomes are fixed, non-random; randomness only from treatment assignment",
+    "goal is an anytime-valid asymptotic confidence sequence for the running average treatment effect, not regret minimization",
+    "potential outcomes eventually bounded by an unknown constant M (limsup |Y_t(w)| <= M)",
+    "the design mixes an arbitrary bandit algorithm with a Bernoulli design with weight delta_t"
+   ],
+   "definition_quote": "For any treatment assignment algorithm $\\mathcal{A}$ and a real-valued sequence $\\delta_i \\in (0, 1]$, ... $p^{\\text{MAD}}_{t}(w) = \\delta_t (1/2)+ (1-\\delta_t)p_{t}^{\\mathcal{A}}(w)$. ... Our objective is to generate a confidence sequence for $\\bar{\\tau}_t$ in MAB experiments with anytime-valid Type I error control."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Mixture Adaptive Design (MAD)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "epsilon_greedy",
+    "other"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "asymptotic",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(2*(S_hat*eta**2 + 1)/(t**2*eta**2)*log(sqrt(S_hat*eta**2 + 1)/alpha_cs))",
+    "expression_latex": "\\hat{V}_t = \\sqrt{\\frac{2(\\hat{S}_{t}\\eta^2 + 1)}{t^2\\eta^2}\\log\\left(\\frac{\\sqrt{\\hat{S}_{t}\\eta^2 + 1}}{\\alpha} \\right)}",
+    "regime": "delta_t = omega(t^{-1/4})"
+   },
+   "symbols": {
+    "S_hat": "sum over i<=t of estimated variance bounds sigma_hat_i^2",
+    "t": "current time",
+    "alpha_cs": "confidence-sequence level alpha"
+   },
+   "conditions": [
+    "Assumption 1: limsup |Y_t(w)| <= M < infinity",
+    "Assumption 2: cumulative conditional variances of the IPW estimator grow at least linearly, Omega(t)"
+   ],
+   "tuning": [
+    "delta_t = omega(1/t^{1/4})",
+    "eta > 0 free CS parameter"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thrm1",
+    "number": "Theorem 1",
+    "quote": "Then, under Assumptions~\\ref{a_bound} and~\\ref{a_var2} and setting $\\delta_t = \\omega\\left(\\frac{1}{t^{1/4}}\\right)$, $(\\hat{\\bar{{\\tau}}}_{t} \\pm \\hat{V}_t)$ is a valid $(1-\\alpha)$ asymptotic CS for $\\bar{\\tau}_t$ and $\\hat{V}_t \\stackrel{a.s.}{\\to} 0$."
+   },
+   "confidence": "low",
+   "notes": "Not a regret bound: the guarantee is that the half-width V_hat_t yields an asymptotically valid (1-alpha) confidence sequence for the running ATE and V_hat_t -> 0 a.s. The expression recorded is the CS half-width. The analogous statements for K arms (Theorem 1*) and batched designs (Theorem 1†) are in the appendix."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "almost_sure",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "1",
+    "expression_latex": "\\mathbb{P}\\left(T_{MAD} < \\infty\\right) = 1",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "conditions of Theorem 1 (Assumptions 1 and 2)",
+    "running ATE converges to a nonzero constant c"
+   ],
+   "tuning": [
+    "delta_t = omega(1/t^{1/4})"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thrm2",
+    "number": "Theorem 2",
+    "quote": "Under the conditions of Theorem \\ref{thrm1}, if $\\bar{\\tau}_t \\to c$ for some $|c| > 0$ as $t \\to \\infty$, then $$\\mathbb{P}\\left(T_{MAD} < \\infty\\right) = 1.$$"
+   },
+   "confidence": "low",
+   "notes": "The expression is the probability that the stopping time (first time the CS excludes 0) is finite. Theorem 3 gives the same for the underlying exact CS, and Lemma 3.1 gives it for the Howard et al. CS. K-arm and batched versions are in the appendix."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T14:08:07",
+  "source_chars": 164927,
+  "input_tokens": 114704,
+  "output_tokens": 3551,
+  "cost_usd_equiv": 0.71034,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

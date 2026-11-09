@@ -1,0 +1,281 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Policy-Aware Design of Large-Scale Factorial Experiments",
+  "arxiv_id": "2604.08804",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Xin Li Wen",
+   "Xi Chen",
+   "Will Wei Sun",
+   "Yichen Zhang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Fixed-budget policy selection in large-scale factorial experiments with low-rank (Tucker) effect tensor",
+   "objective": "simple_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "r_rank"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "low_rank"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "unspecified"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Arms are the K=d^m cells of an order-m tensor (m factors with d levels each); mean rewards form a tensor with Tucker multilinear rank (r,...,r) and mu_0-incoherence",
+    "Stage-I sampling is uniform over the active Cartesian design set; algorithm relies on a tensor-completion estimator with an entrywise sup-norm tail bound (Assumption 4/9)"
+   ],
+   "definition_quote": "Let $\\mu^\\star := \\max_{\\bidx} \\mathcal{T}_{\\bidx}^\\star$ ... The Simple Regret is defined as the expected optimality gap of the recommendation: \\SR_N := \\mathbb{E}_\\pi[\\mu_\\star - \\mu_{J_N}] ... We assume the noise terms $\\xi_{\\bidx}$ are independent sub-Gaussian random variables with mean zero and variance bounded by $\\sigma^2$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Two-stage algorithm (tensor stage + vector stage Sequential Halving)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "r_rank"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Sequential Halving (SH)",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sigma*(sqrt(df*L_I**2*log(d)/p_min*log(L_I))*Tinf/lambda_min + sqrt(K_II*L_II/N_II*log(L_II)))",
+    "expression_latex": "\\sigma\\left[\\sqrt{\\tfrac{\\df\\,\\Lsw^2\\,\\log d}{p_{\\min}}\\,\\log \\Lsw} \\; \\frac{\\infnorm{\\cT^\\star}}{\\lambda_{\\min}} + \\sqrt{\\tfrac{\\Kps\\,\\Lps}{\\Nps}\\,\\log \\Lps}\\right]",
+    "regime": null
+   },
+   "symbols": {
+    "df": "degrees of freedom m(dr - r^2) + r^m of the low-rank tensor",
+    "L_I": "number of Stage-I tensor rounds (switch round)",
+    "p_min": "minimum roundwise Stage-I sampling rate N_l/|A^(l)|",
+    "Tinf": "max absolute entry of the true tensor",
+    "lambda_min": "lower bound on smallest nonzero singular value across matricizations of active sub-tensors",
+    "K_II": "number of arms surviving Stage I, (d/2^L_I)^m",
+    "L_II": "number of Sequential Halving rounds, ceil(log2 K_II)",
+    "N_II": "Stage-II budget"
+   },
+   "conditions": [
+    "Tucker low-rank structure with mu_0-incoherence (Assumption 2), d_1=...=d_m=d, r_1=...=r_m=r",
+    "uniform sampling over active set with sigma^2-sub-Gaussian noise (Assumption 3)",
+    "tensor completion estimator satisfies sup-norm tail bound on every restricted active sub-tensor with uniform lambda_min (Assumptions 4 and 9)",
+    "r, kappa, mu_0 = O(1)",
+    "L_I <= floor(log2(d/r))",
+    "d is a power of two (WLOG)"
+   ],
+   "tuning": [
+    "switch round L_I fixed in advance",
+    "Stage-II budget N_II = N - sum of Stage-I budgets"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:TwoStage-gapind",
+    "number": "Theorem 6",
+    "quote": "Then the simple regret satisfies: \\mathrm{SReg}_N = O\\!\\left(\\sigma\\,\\left[\\sqrt{\\tfrac{\\df\\,\\Lsw^2\\,\\log d}{p_{\\min}}\\,\\log \\Lsw} \\; \\frac{\\infnorm{\\cT^\\star}}{\\lambda_{\\min}} + \\sqrt{\\tfrac{\\Kps\\,\\Lps}{\\Nps}\\,\\log \\Lps}\\right]\\right), where $\\df = m(dr-r^2)+r^m$ is the degrees of freedom of the low-rank tensor model."
+   },
+   "confidence": "high",
+   "notes": "Budget N is the horizon T. Compute marked polynomial assuming a polynomial-time tensor-completion routine (e.g. RGD), as the paper suggests."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "C_m*L_I*exp(-p_min*lambda_min**2/(sigma**2*Tinf*H_2I)) + exp(-N_II/H_row)",
+    "expression_latex": "C_m\\,\\Lsw\\,\\exp\\!\\Bigg(-\\widetilde{\\Theta}\\!\\Big(\\frac{p_{\\min}\\,\\lambda_{\\min}^{\\,2}}{\\sigma^2\\,\\infnorm{\\cT^\\star}\\,H_{2,\\mathrm{I}}}\\Big)\\Bigg) + \\exp\\!\\Bigg(-\\widetilde{\\Theta}\\!\\Big(\\frac{\\Nps}{H_{\\mathrm{row}}(\\eps)}\\Big)\\Bigg)",
+    "regime": "p_min >= K_0 (sigma/lambda_min)^2 log(d) ||T*||_inf H_2I (m r + r^m/d_min) and N_II >= C_0 M_row(eps)"
+   },
+   "symbols": {
+    "L_I": "number of Stage-I tensor rounds",
+    "p_min": "minimum roundwise Stage-I sampling rate",
+    "lambda_min": "uniform lower bound on smallest nonzero singular value of active sub-tensors",
+    "Tinf": "max absolute entry of the true tensor",
+    "H_2I": "Stage-I row-gap hardness max_{2<=t<=d} t/Delta_t^2 with Delta_t = min_k (mu_{k,(1)} - mu_{k,(t)})",
+    "H_row": "Stage-II row-based hardness M_row(eps)/g_max(eps/2)",
+    "N_II": "Stage-II budget",
+    "C_m": "absolute constant from tensor completion tail bound"
+   },
+   "conditions": [
+    "all assumptions of Theorem 6",
+    "1 <= L_I <= min{l'(eps), floor(log2(d/r))} where l'(eps) is the mode-wise pivot round",
+    "p_min >= K_0 (sigma/lambda_min)^2 log(d) ||T*||_inf H_2I (m r + r^m/d_min)",
+    "N_II >= C_0 M_row(eps)"
+   ],
+   "tuning": [
+    "switch round L_I chosen satisfying the pivot-round constraint"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:gap-dep",
+    "number": "Theorem 7",
+    "quote": "the output $J_N$ of the two-stage algorithm satisfies the gap-dependent tail bound \\Pr(\\mu_\\star-\\mu_{J_N}>\\eps) \\le C_m\\,\\Lsw\\,\\exp(-\\widetilde{\\Theta}(\\frac{p_{\\min}\\,\\lambda_{\\min}^{\\,2}}{\\sigma^2\\,\\infnorm{\\cT^\\star}\\,H_{2,\\mathrm{I}}})) + \\exp(-\\widetilde{\\Theta}(\\frac{\\Nps}{H_{\\mathrm{row}}(\\eps)})) ... The notation $\\widetilde{\\Theta}(\\cdot)$ hides only absolute constants and logarithmic factors in $d$."
+   },
+   "confidence": "medium",
+   "notes": "Bound on probability of selecting an eps-suboptimal arm (PAC-style tail), recorded as quantity 'other'. The Theta-tilde inside the exponents (hiding constants and log d factors) cannot be expressed; expression drops those constants and is marked O_tilde. Theorem statement uses ||T*||_inf (not squared) though the proof has the square."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "zhao2023revisiting",
+   "cited_title": null,
+   "cited_first_author": "Zhao",
+   "cited_year": 2023,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Sequential Halving",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Fixed-budget K-armed stochastic bandit with sigma^2-sub-Gaussian noise; tail of simple regret of Sequential Halving with budget N over L=ceil(log2 K) rounds: P(mu* - mu_J > x) <= 3 L exp(-x^2 N/(32 sigma^2 K L))",
+   "bound": {
+    "notation": "exact",
+    "expression": "3*log(K)/log(2)*exp(-x**2*T/(32*sigma**2*K*log(K)/log(2)))",
+    "expression_latex": "3\\,\\Lps\\,\\exp\\!\\left\\{-\\,x^2\\frac{\\Nps}{32\\,\\sigma^2\\,\\Kps\\,\\Lps}\\right\\}",
+    "regime": "x > 0; L = log2 K rounds"
+   },
+   "where": "Proof of Lemma 11 (Theorem 7 of zhao2023revisiting)"
+  },
+  {
+   "cited_key": "lattimore2020bandit",
+   "cited_title": null,
+   "cited_first_author": "Lattimore",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Unstructured K=d^m-armed fixed-budget simple regret (pure vector baseline)",
+   "bound": {
+    "notation": "Theta",
+    "expression": "sqrt(K/T)",
+    "expression_latex": "\\Theta\\big(\\sqrt{d^m/N}\\big)",
+    "regime": null
+   },
+   "where": "Discussion after Theorem 6"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T13:37:25",
+  "source_chars": 158854,
+  "input_tokens": 112815,
+  "output_tokens": 6495,
+  "cost_usd_equiv": 0.754108,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

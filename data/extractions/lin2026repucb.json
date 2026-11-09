@@ -1,0 +1,204 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "RepUCB: Representation Learning-Based UCB for Heterogeneous Multi-Task Linear Bandits",
+  "arxiv_id": "2604.00531",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Jiabin Lin",
+   "Shana Moothedath"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Multi-task linear bandits with shared low-rank representation",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "r_rank",
+    "sigma",
+    "L_feat"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "unspecified",
+    "loss_set": "not_applicable",
+    "parameter_structure": "low_rank"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Multi-task: n_tasks concurrent linear bandit tasks played in parallel, parameter matrix Theta* = B* W* of rank r shared across tasks; regret summed over tasks",
+    "Incoherence assumption: l <= ||w_t*|| <= u for all tasks",
+    "The learner (confidence set radius / truncation multiplier) uses incoherence mu, sigma_max*, kappa"
+   ],
+   "definition_quote": "We consider a scenario with $T$ different tasks... In each round $n$, each task $t \\in [T]$ independently chooses an action $x_\\nt \\in \\X$. The task $t$ receives a noisy reward $y_\\nt = x_\\nt^\\top \\theta_t^\\star + \\eta_\\nt$... Noise $\\eta_\\nt$s are independent $1$-sub-Gaussian random variables and $\\|\\pxtc\\|\\leqslant L$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "RepUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "r_rank",
+    "sigma",
+    "L_feat"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sigma_min_star*sqrt(d*r_rank*T*n_tasks)*(sqrt(NSR) + (sqrt(lam) + sqrt(lam/(T - N_1)) + 1)*kappa)",
+    "expression_latex": "\\widetilde{O}\\big(\\sigma_{\\min}^\\star\\sqrt{drNT}\\big(\\sqrt{\\NSR}+(\\sqrt{\\lambda}+\\sqrt{\\frac{\\lambda}{N-N_1}}+1)\\kappa\\big)\\big)",
+    "regime": "N_1 T > C mu^2 kappa^2 L^2 d (N-N_1)(r kappa^2 + NSR)"
+   },
+   "symbols": {
+    "n_tasks": "number of tasks (paper's T)",
+    "sigma_min_star": "minimum singular value of Theta*",
+    "kappa": "condition number sigma_max*/sigma_min*",
+    "NSR": "noise-to-signal ratio n_tasks*sigma^2/sigma_min_star^2",
+    "N_1": "number of exploration rounds",
+    "mu": "incoherence parameter"
+   },
+   "conditions": [
+    "Assumptions 1-3: Theta* = B* W* rank r; 1-sub-Gaussian independent noise; ||x|| <= L; l <= ||w_t*|| <= u",
+    "N_1 n_tasks > C mu^2 kappa^2 L^2 d (T - N_1)(r kappa^2 + NSR)",
+    "delta_0 < 0.1"
+   ],
+   "tuning": [
+    "exploration length N_1",
+    "regularisation lambda > 0",
+    "truncation multiplier C_tilde = 9 kappa^2 mu^2 (estimated)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "t1",
+    "number": "Theorem 5",
+    "quote": "Suppose Assumptions~\\ref{assume:B}, \\ref{assume:Distribution} and \\ref{assume:incoherence} hold. Pick $\\delta_0 < 0.1$ and $\\NSR := \\frac{T \\sigma^2}{\\sigma_{\\min}^{\\star^2}}$ is the noise-to-signal ratio. If $N_1 T > C \\mu^2 \\kappa^2 L^2 d(N-N_1)\\left(r\\kappa^2+\\NSR\\right)$, then with probability at least $1-2\\delta-\\exp(-c(d+T))$, the cumulative regret of our proposed algorithm is bounded by $\\pR_\\NT=\\widetilde{O}(\\sigma_{\\min}^\\star\\sqrt{drNT}(\\sqrt{\\NSR}+(\\sqrt{\\lambda}+\\sqrt{\\frac{\\lambda}{N-N_1}}+1)\\kappa))$."
+   },
+   "confidence": "medium",
+   "notes": "Paper's N (rounds) mapped to canonical T; paper's T (tasks) declared as n_tasks. Regret is pseudo-regret summed over tasks, holding w.p. 1-2delta-exp(-c(d+T)). Comparator is per-task optimal action. Theorem 4 (confidence set) not recorded as a performance guarantee."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "abbasi2011improved",
+   "cited_title": null,
+   "cited_first_author": "Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "OFUL (independently on each task)",
+   "algorithm_registry_id": "oful",
+   "side": "upper",
+   "setting_description": "Multi-task linear bandits solved independently per task with OFUL; n_tasks tasks, T rounds, dimension d",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*n_tasks*sqrt(T)",
+    "expression_latex": "\\widetilde{O}(dT\\sqrt{N})",
+    "regime": null
+   },
+   "where": "Remark after Theorem 5 / Introduction"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:52:21",
+  "source_chars": 41686,
+  "input_tokens": 58683,
+  "output_tokens": 3570,
+  "cost_usd_equiv": 0.262552,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,366 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Improved Optimistic Algorithms for Logistic Bandits",
+  "arxiv_id": "2002.07530",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Louis Faury",
+   "Marc Abeille",
+   "Clément Calauzènes",
+   "Olivier Fercoq"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Logistic bandit (stochastic contextual bandit with Bernoulli rewards and sigmoid link)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "generalized_linear",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "S",
+    "k_mu",
+    "c_mu"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "arbitrary_bounded",
+    "loss_set": "not_applicable",
+    "parameter_structure": "unspecified"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_unknown"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "link function is the sigmoid (logistic model)",
+    "the learner knows kappa = sup_{x in X, theta in Theta} 1/mu'(x^T theta) (used in the bonus and design matrix V_t)",
+    "the learner knows the parameter set Theta (projection onto Theta)"
+   ],
+   "definition_quote": "we assume that conditionally on the filtration $\\mathcal{F}_t$, the reward $r_{t+1}$ is binary, and is drawn from a Bernoulli distribution with parameter $\\mu(x_t^\\transp\\theta_*)$. ... $\\theta_* \\in \\Theta$ where $\\Theta$ is a compact subset of $\\mbb{R}^d$. Further, $S\\defeq \\max_{\\theta\\in\\Theta}\\ltwo{\\theta}$ is known. ... For all $x\\in\\mcal{X}$, $\\ltwo{x}\\leq 1$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Logistic-UCB-1 (improved GLM-UCB)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "S",
+    "kappa",
+    "delta",
+    "lam"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Logistic-UCB-2",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "S",
+    "kappa",
+    "delta",
+    "lam"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(32*d*(1+2*S)*Max(1, 1/(kappa*lam))*log(1 + T/(kappa*lam*d)))*(1/4)*sqrt(kappa)*gamma_T*sqrt(T)",
+    "expression_latex": "R_T^{(1)}\\leq C_1 L \\sqrt{\\kappa}\\gamma_{T}(\\delta)\\sqrt{T}, \\; C_1 = \\sqrt{32d(1+2S)\\max(1,1/(\\kappa\\lambda))\\log(1+\\frac{T}{\\kappa \\lambda d})}",
+    "regime": null
+   },
+   "symbols": {
+    "kappa": "sup_{x in X, theta in Theta} 1/mu'(x^T theta), non-linearity constant of the sigmoid over the decision set",
+    "gamma_T": "sqrt(lam)*(S+1/2) + (2/sqrt(lam))*log((2**d/delta)*(1 + T/(4*d*lam))**(d/2))"
+   },
+   "conditions": [
+    "||x|| <= 1 for all arms",
+    "theta_* in compact Theta with max norm S",
+    "L = 1/4 bound on sigmoid derivative"
+   ],
+   "tuning": [
+    "regularization lambda > 0",
+    "confidence delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regretofglmimproved",
+    "number": "Theorem (thm:regretofglmimproved)",
+    "quote": "With probability at least $1-\\delta$: $R_T^{(1)}\\leq C_1 L \\sqrt{\\kappa}\\gamma_{T}(\\delta)\\sqrt{T}$ with $C_1 = \\sqrt{32d(1+2S)\\max(1,1/(\\kappa\\lambda))\\log\\left(1+\\frac{ T}{\\kappa \\lambda d}\\right)}$."
+   },
+   "confidence": "medium",
+   "notes": "L = 1/4 substituted. Regret is pseudo-regret summed, bound holds w.p. 1-delta. Projection step is non-convex, compute not stated."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(kappa)*d*sqrt(T)*log(T)",
+    "expression_latex": "R_T^{(1)} = \\mcal{O}\\left(\\sqrt{\\kappa}\\cdot d \\cdot \\sqrt{T}\\log(T)\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "kappa": "sup_{x in X, theta in Theta} 1/mu'(x^T theta)"
+   },
+   "conditions": [
+    "||x|| <= 1",
+    "theta_* in compact Theta with norm bound S"
+   ],
+   "tuning": [
+    "lambda = d*log(T)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regretofglmimproved",
+    "number": "Theorem (thm:regretofglmimproved)",
+    "quote": "Furthermore, if $\\lambda = d\\log(T)$ then: $R_T^{(1)} = \\mcal{O}\\left(\\sqrt{\\kappa}\\cdot d \\cdot \\sqrt{T}\\log(T)\\right)$."
+   },
+   "confidence": "high",
+   "notes": "S treated as constant in O."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "(4+8*S)*sqrt(2*d*(1/4)*Max(1, 1/(4*lam))*log(1 + T/(4*d*lam)))*gamma_T*sqrt(T) + (1/4)*d*Max(1, 1/(kappa*lam))*log(1 + T/(kappa*d*lam))*(8+16*S)*(2+2*sqrt(1+2*S))*gamma_T**2*kappa",
+    "expression_latex": "R_T^{(2)} \\leq C_2\\gamma_{T}(\\delta)\\sqrt{T} + C_3\\gamma_{T}^2(\\delta)\\kappa",
+    "regime": null
+   },
+   "symbols": {
+    "kappa": "sup_{x in X, theta in Theta} 1/mu'(x^T theta)",
+    "gamma_T": "sqrt(lam)*(S+1/2) + (2/sqrt(lam))*log((2**d/delta)*(1 + T/(4*d*lam))**(d/2))"
+   },
+   "conditions": [
+    "||x|| <= 1",
+    "theta_* in compact Theta with norm bound S",
+    "L = M = 1/4"
+   ],
+   "tuning": [
+    "regularization lambda > 0",
+    "confidence delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regretourbandit",
+    "number": "Theorem (thm:regretourbandit)",
+    "quote": "With probability at least $1-\\delta$: $R_T^{(2)} \\leq C_2\\gamma_{T}(\\delta)\\sqrt{T} + C_3\\gamma_{T}^2(\\delta)\\kappa$ with $C_2=(4+8S)\\sqrt{2dL\\max(1,L/\\lambda)\\log(1+\\frac{LT}{d\\lambda})}$, $C_3 = Md\\max(1,1/(\\kappa\\lambda))\\log(1+\\frac{T}{\\kappa d\\lambda})(8+16S)(2+2\\sqrt{1+2S})$"
+   },
+   "confidence": "medium",
+   "notes": "L = M = 1/4 substituted."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(T)*log(T) + kappa*d**2*log(T)**2",
+    "expression_latex": "R_T^{(2)} = \\mcal{O}\\left(d\\cdot \\sqrt{T}\\log(T) + \\kappa \\cdot d^2 \\cdot \\log(T)^2\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "kappa": "sup_{x in X, theta in Theta} 1/mu'(x^T theta)"
+   },
+   "conditions": [
+    "||x|| <= 1",
+    "theta_* in compact Theta with norm bound S"
+   ],
+   "tuning": [
+    "lambda = d*log(T)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regretourbandit",
+    "number": "Theorem (thm:regretourbandit)",
+    "quote": "Furthermore if $\\lambda = d\\log(T)$ then: $R_T^{(2)} = \\mcal{O}\\left(d\\cdot \\sqrt{T}\\log(T) + \\kappa \\cdot d^2 \\cdot \\log(T)^2\\right)$"
+   },
+   "confidence": "high",
+   "notes": "S treated as constant in O."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "filippi2010parametric",
+   "cited_title": "Parametric Bandits: The Generalized Linear Case",
+   "cited_first_author": "Filippi",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GLM-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Generalized linear bandit (GLM), frequentist regret; kappa = sup 1/mu'",
+   "bound": {
+    "notation": "O",
+    "expression": "kappa*d*sqrt(T)*log(T)**(3/2)",
+    "expression_latex": "\\mcal{O}(\\kappa\\cdot d \\cdot T^{1/2}\\cdot \\log(T)^{3/2})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "abeille2017linear",
+   "cited_title": "Linear thompson sampling revisited",
+   "cited_first_author": "Abeille",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson Sampling",
+   "algorithm_registry_id": "glm_ts",
+   "side": "upper",
+   "setting_description": "Generalized linear bandit (GLM), frequentist regret",
+   "bound": {
+    "notation": "O",
+    "expression": "kappa*d**(3/2)*sqrt(T)*log(T)",
+    "expression_latex": "\\mcal{O}(\\kappa\\cdot d^{3/2} \\cdot T^{1/2} \\log(T))",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "li2017provably",
+   "cited_title": "Provably optimal algorithms for generalized linear contextual bandits",
+   "cited_first_author": "Li",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SupCB-GLM",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Generalized linear contextual bandit with K actions",
+   "bound": {
+    "notation": "O",
+    "expression": "kappa*sqrt(d*log(K))*sqrt(T)*log(T)",
+    "expression_latex": "\\mcal{O}(\\kappa\\cdot (d\\log K)^{1/2} \\cdot T^{1/2} \\log(T))",
+    "regime": null
+   },
+   "where": "Table 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T13:01:15",
+  "source_chars": 107924,
+  "input_tokens": 94978,
+  "output_tokens": 6196,
+  "cost_usd_equiv": 0.605432,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

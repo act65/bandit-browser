@@ -1,0 +1,240 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Multi-task Representation Learning with Stochastic Linear Bandits",
+  "arxiv_id": "2202.10066",
+  "arxiv_version": null,
+  "year": 2022,
+  "authors": [
+   "Leonardo Cella",
+   "Karim Lounici",
+   "Grégoire Pacreau",
+   "Massimiliano Pontil"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Low-Rank (multi-task) Linear Contextual Bandits",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "sigma",
+    "T",
+    "K",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "not_applicable",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "arbitrary_bounded",
+    "loss_set": "not_applicable",
+    "parameter_structure": "low_rank"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Multi-task: M_tasks linear contextual bandit tasks played in parallel for T rounds each; regret is summed over tasks",
+    "Task parameter matrix W = [w_1..w_T] (d x M_tasks) has rank r (shared low-dimensional linear representation); rank unknown to learner",
+    "Decision sets of K arms drawn i.i.d. from a zero-mean sub-Gaussian joint distribution on R^{Kd} (arms unbounded, x_k = Sigma_k^{1/2} z_k)",
+    "Arm distribution regularity (Assumption 2): skewness bound nu and omega_X condition; RSC condition on population covariance",
+    "Learner knows (an upper bound on) the noise variance sigma^2 and constants needed to set lambda_n (max ||Sigma_k||_op, C depending on c_eta, C_z)"
+   ],
+   "definition_quote": "In this paper, we address the problem of simultaneously solving $T$ linear contextual bandit tasks. Each task $t\\in[T]$ lasts for $N$ rounds and is associated with a regression vector $\\w_t \\in \\reals^d$. ... The matrix $\\W\\in\\reals^{d\\times T}$ has rank $\\rho(\\W)=r$, with $r\\ll \\min(d,T)$. ... Our principal objective is to minimize the multi-task pseudo-regret $\\Rbar(T,N) = \\sum_{t=1}^T \\sum_{n=1}^N (\\x_{t,n}^* - \\x_{t,n})^\\top \\w_t$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Trace-Norm Bandit",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "T",
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "M_tasks*sqrt(r_rank*T) + sqrt(r_rank*d*M_tasks*T)",
+    "expression_latex": "\\bigO\\bigg( (T\\sqrt{rN}+\\sqrt{rdTN})\\bigg)",
+    "regime": "N >= N_0(delta) ~ C max_k||Sigma_k||^2 (r log d log(4TN/delta))^2"
+   },
+   "symbols": {
+    "M_tasks": "number of tasks (paper's T)",
+    "r_rank": "rank of task matrix W (paper's r)"
+   },
+   "conditions": [
+    "Assumptions 1-4: i.i.d. sub-Gaussian zero-mean arm distributions, arm distribution regularity (nu, omega_X), rank(W)=r, conditionally sub-Gaussian noise independent across tasks",
+    "Population multi-task covariance satisfies the RSC condition with kappa > 0",
+    "max_t ||w_t||_2 <= L",
+    "N >= N_0(delta)"
+   ],
+   "tuning": [
+    "lambda_n set as in Eq. (Eq:RegParameter) (Proposition 1)",
+    "confidence delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "Th:MTLRegretBound",
+    "number": "Theorem 1",
+    "quote": "Let Assumptions 1, 2, 3, 4 be satisfied. Assume that $\\max_{t\\in [T]}\\norm{\\w_t}_2{\\leq}L$, for some constant $L>0$ and that $N\\geq N_0(\\delta)$ for some $\\delta\\in (0,1)$. Then, with probability at least $1-\\delta$, the multi-task regret of Algorithm 1 is upper bounded (up to logarithmic factors) by $\\bigO( (T\\sqrt{rN}+\\sqrt{rdTN}))$."
+   },
+   "confidence": "medium",
+   "notes": "Paper's N (rounds per task) mapped to canonical T; paper's T (tasks) declared M_tasks. Regret is the realized multi-task pseudo-regret (sum of mean gaps with per-round optimal arm) holding w.p. 1-delta. Constants depend on L, sigma, C_z, kappa, max||Sigma_k||. Lambda_n uses log N so horizon treated as known."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "yang2020impact",
+   "cited_title": "Impact of representation learning in linear bandits",
+   "cited_first_author": "Jiaqi Yang",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "MLinGreedy",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Multi-task low-rank linear contextual bandits, finitely many Gaussian arms with nonsingular covariance, known rank r, K,T <= poly(d), N >= d^2; expected regret",
+   "bound": {
+    "notation": "O",
+    "expression": "(M_tasks*sqrt(r_rank*T) + sqrt(r_rank*d*M_tasks*T))*sqrt(log(T*K*M_tasks)*log(T*M_tasks*d*r_rank))*log(log(T))",
+    "expression_latex": "O\\Big( \\left(  T\\sqrt{rN} + \\sqrt{rdTN} \\right)\\cdot\\sqrt{\\log(NKT)\\log(NTdr)}\\log \\log N\\Big)",
+    "regime": "N >= d^2"
+   },
+   "where": "Section 5.2, Comparison to SOTA Approaches"
+  },
+  {
+   "cited_key": "hu2021near",
+   "cited_title": "Near-optimal representation learning for linear bandits and linear rl",
+   "cited_first_author": "Jiachen Hu",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "MTLR-OFUL",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Multi-task low-rank linear bandits with infinitely many arms, known rank r",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "M_tasks*sqrt(d*r_rank*T) + d*sqrt(r_rank*M_tasks*T)",
+    "expression_latex": "O(T\\sqrt{drN} + d\\sqrt{rTN})",
+    "regime": null
+   },
+   "where": "Section 5.2, Comparison to SOTA Approaches"
+  },
+  {
+   "cited_key": "lattimore2020bandit",
+   "cited_title": "Bandit algorithms",
+   "cited_first_author": "Tor Lattimore",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Independent task learning (any T independent linear contextual bandit policies)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Multi-task linear contextual bandits solved independently per task",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "M_tasks*sqrt(d*T)",
+    "expression_latex": "T \\sqrt{dN}",
+    "regime": null
+   },
+   "where": "Section 5.2, Advantage over ITL"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:58:48",
+  "source_chars": 124330,
+  "input_tokens": 103829,
+  "output_tokens": 4561,
+  "cost_usd_equiv": 0.64354,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

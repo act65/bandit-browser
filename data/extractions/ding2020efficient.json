@@ -1,0 +1,306 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "An Efficient Algorithm For Generalized Linear Bandit: Online Stochastic Gradient Descent and Thompson Sampling",
+  "arxiv_id": "2006.04012",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Qin Ding",
+   "Cho-Jui Hsieh",
+   "James Sharpnack"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "K-armed stochastic generalized linear bandit (GLB)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "generalized_linear",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K",
+    "d",
+    "sigma",
+    "c_mu"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "not_applicable",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "unspecified",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "The set of K context vectors A_t is drawn i.i.d. each round from an unknown distribution (action set changes every round via i.i.d. contexts)",
+    "Noise is additionally sub-Gaussian with parameter R (rewards in [0,1])",
+    "Regularity: lambda_min(E[(1/K) sum_a x x^T]) >= sigma_0^2",
+    "Diversity assumption (Assumption 3): lambda_f = inf_theta lambda_min(E[X_theta X_theta^T]) > 0 for the theta-greedy arm",
+    "The learner knows c_1, c_3 (lower bounds on mu' near theta*), sigma_0, lambda_f and R (used to set tau, alpha, g_1)"
+   ],
+   "definition_quote": "We consider the $K$-armed stochastic generalized linear bandit (GLB) setting. ... At each round $t \\in [T]$, the player observes a set of contexts including $K$ feature vectors $\\mathcal{A}_t := \\{x_{t,a} | a\\in [K]\\} \\subset \\mathbbm{R}^d$. $\\mathcal{A}_t$ is drawn IID from an unknown distribution with $\\|x_{t,a}\\| \\leq 1$ ... $\\mathbbm{E}[y_{t,a}|x_{t,a}] = \\mu(x_{t,a}^T \\theta^*)$ ... we assume $\\mu(x) \\in [0,1]$ and $y_{t,a} \\in [0,1]$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "SGD-TS (Online stochastic gradient descent with Thompson Sampling)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling",
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "d",
+    "sigma",
+    "c_mu"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "tau + 7/T + k_mu*p_c*sqrt(tau*T)*(2*sqrt(c_3/alpha_sgd)*g_1J + 2*g_2J) + k_mu*p_c*sqrt(tau*T)*u*sqrt(2*c_3*g_1J**2/alpha_sgd + 2*g_2J**2)*sqrt(1 + log(J))",
+    "expression_latex": "\\tau + \\frac{7}{T} + L_{\\mu} p \\sqrt{\\tau T} \\left[2\\sqrt{\\frac{c_3}{\\alpha}} g_1(J) + 2 g_2(J)\\right] + L_{\\mu} p \\sqrt{\\tau T} u \\sqrt{ \\frac{2c_3 g_1(J)^2}{\\alpha} + 2g_2(J)^2} \\sqrt{1+\\log \\lfloor \\frac{T}{\\tau} \\rfloor}",
+    "regime": null
+   },
+   "symbols": {
+    "tau": "aggregation/exploration length, ceil(max{tau_1,tau_2}) from Eq. (tau), depends on d, log T, sigma_0, lambda_f, R, c_1, c_3, alpha",
+    "c_3": "inf of mu'(x^T theta) over ||x||<=1, ||theta-theta*||<=3",
+    "alpha_sgd": "strong-convexity parameter alpha = max{c_3, d, log T}/lambda_f",
+    "p_c": "1 + 2/(1/(4 sqrt(pi e)) - 1/T^2)",
+    "u": "sqrt(2 log(K tau T^2))",
+    "J": "floor(T/tau)",
+    "g_1J": "g_1(J) = (R/c_1) sqrt((d/2) log(1+2 J tau/d) + 2 log T)",
+    "g_2J": "g_2(J) = (tau/alpha) sqrt(1+log J)",
+    "c_1": "inf of mu' over the radius-1 neighbourhood of theta*"
+   },
+   "conditions": [
+    "|mu'| <= L_mu (Assumption 1)",
+    "c_3 > 0 (Assumption 2)",
+    "lambda_f > 0 (diversity Assumption 3)",
+    "lambda_min(E[(1/K) sum_a x_{t,a} x_{t,a}^T]) >= sigma_0^2",
+    "||x_{t,a}|| <= 1",
+    "rewards in [0,1] and sub-Gaussian noise with parameter R",
+    "contexts A_t drawn i.i.d."
+   ],
+   "tuning": [
+    "alpha = max{c_3, d, log T}/lambda_f",
+    "tau = ceil(max{tau_1, tau_2}) as in Eq. (tau)",
+    "eta_j = 1/(alpha j)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "main_thm",
+    "number": "Theorem 1",
+    "quote": "When Algorithm \\ref{sgd_ts} runs with $\\alpha = \\max\\{c_3, d, \\log T\\} / \\lambda_f$, and $\\tau$ defined in Equation \\ref{tau}, the expected total regret satisfies the following inequality $\\mathbbm E [R(T)] \\leq  \\tau + \\frac{7}{T} + L_{\\mu} p \\sqrt{\\tau T} \\left[2\\sqrt{\\frac{c_3}{\\alpha}} g_1(J) + 2 g_2(J)\\right] + L_{\\mu} p \\sqrt{\\tau T} u \\sqrt{ \\frac{2c_3 g_1(J)^2}{\\alpha} + 2g_2(J)^2} \\sqrt{1+\\log \\lfloor \\frac{T}{\\tau} \\rfloor}$"
+   },
+   "confidence": "medium",
+   "notes": "L_mu mapped to k_mu (upper bound on link derivative). R(T) defined via means of the per-round best arm, so pseudo-regret. Regret is the GLM-mean regret. Per remark this is O~(sqrt(T))."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\tilde O(\\sqrt{T})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "Assumptions 1-3 (lambda_f > 0, c_3 > 0, |mu'| <= L_mu)",
+    "sigma_0^2 and lambda_f treated as constants (O(1))"
+   ],
+   "tuning": [
+    "alpha = max{c_3, d, log T}/lambda_f",
+    "tau as in Eq. (tau)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Remark 2",
+    "quote": "Combining the choices of $\\tau, \\alpha$ and the definition of $g_1(J), g_2(J)$ in Equation \\ref{g1}, \\ref{g2}, we have $ \\mathbbm{E} [R(T)] \\sim \\tilde O(\\sqrt{T})$."
+   },
+   "confidence": "medium",
+   "notes": "Order statement from a remark summarizing Theorem 1; dependence on d hidden. Appendix discussion states O~(d^{5/2} sqrt(T)) if sigma_0^2, lambda_f ~ 1/d."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "li2017provably",
+   "cited_title": "Provably optimal algorithms for generalized linear contextual bandits",
+   "cited_first_author": "Lihong Li",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB-GLM",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Generalized linear contextual bandit, under sigma_0^2 ~ O(1/d)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**3 + d*sqrt(T)",
+    "expression_latex": "\\tilde O(d^3 + d \\sqrt{T})",
+    "regime": null
+   },
+   "where": "Appendix Discussion"
+  },
+  {
+   "cited_key": "filippi2010parametric",
+   "cited_title": "Parametric bandits: The generalized linear case",
+   "cited_first_author": "Sarah Filippi",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GLM-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Generalized linear bandit",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\tilde O(\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 2 (Related work)"
+  },
+  {
+   "cited_key": "jun2017scalable",
+   "cited_title": "Scalable generalized linear bandits: Online computation and hashing",
+   "cited_first_author": "Kwang-Sung Jun",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GLOC",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Generalized linear bandit",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\tilde O(\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 2 (Related work)"
+  },
+  {
+   "cited_key": "kveton2020randomized",
+   "cited_title": "Randomized exploration in generalized linear bandits",
+   "cited_first_author": "Branislav Kveton",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GLM-TSL",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Generalized linear bandit",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\tilde O(\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 2 (Related work)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T13:03:16",
+  "source_chars": 78322,
+  "input_tokens": 76673,
+  "output_tokens": 5556,
+  "cost_usd_equiv": 0.446192,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

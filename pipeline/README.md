@@ -23,6 +23,8 @@ uv run python pipeline/verify.py            # second-reading verification -> dat
 uv run python pipeline/triage.py            # web search per candidate gap -> data/reports/triage.yaml
 uv run python pipeline/review_unmapped.py   # themes of unmapped setting features -> ontology/review-v<version>.md
 uv run python pipeline/audit.py --n 200     # second-model audit of random results -> data/reports/audit.md
+uv run python pipeline/audit.py --batch 2   # the same for one extraction batch -> data/reports/audit-batch2.md
+uv run python pipeline/extract.py --fix-quotes  # re-ask quotes validate.py rejects (also run after every extraction)
 uv run python pipeline/goldcheck.py         # textbook gold set (ls-book.yaml) vs the atlas -> data/reports/goldcheck.md
 uv run python pipeline/crosscheck.py        # our extractions vs how other papers cite them -> data/reports/crosscheck.md
 uv run python pipeline/audit_inference.py   # second-model check of inherited bounds that set a verdict -> data/reports/audit-inference.md
@@ -92,6 +94,9 @@ Each record carries its derivation and caveats. Inferred results never feed furt
 
 `compare.py` reduces every bound (extracted and inferred) to a profile, a growth rate v^a (log v)^b per variable:
 - T is scanned alone. K, d, 1/Δ and 1/ε are scanned in the regime "T large" (along T = v⁴), and the bound's own T-profile is subtracted, so √(KT) has K-exponent ½.
+- A bound's side conditions between scanned variables (K ≤ d, m = d/2, N_exp ≥ K) make its exponent in the
+  bounded variable unknown: the scan would leave the range the bound is stated for.
+- Õ / Ω̃ bounds hide log factors: a cell whose best bounds are Õ is at best a log gap, never tight.
 - Profiles are fitted numerically: a high-precision, exact 3-point solve at v = 10^500…10^2000, so additive lower-order terms vanish.
 - Instance-dependent bounds are evaluated on a uniform-gap instance, and KL-type divergences are taken as ~Δ².
 - Data-dependent bounds (L*, Q_T, Λ_T) form their own regime, `data_dependent`.

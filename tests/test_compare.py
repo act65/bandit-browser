@@ -158,3 +158,39 @@ def test_equal_rates_do_not_empty_the_front():
     (the core stochastic K-armed one among them) with no best upper bound."""
     c = cells([U("a", "sqrt(K*T)"), U("b", "sqrt(K*T) + sum_subopt(Delta_i)"), L("l", "sqrt(K*T)")])["regret|worst_case"]
     assert c["status"] == "tight" and set(c["upper_front"]) == {"p:a", "p:b"}
+
+
+def test_side_condition_blocks_scan_of_the_bounded_variable():
+    """Regression (batch 2): a lower bound stated for 2 <= K <= d (jin2026nearly) or under a coupling such as
+    n_act = 2^(d/2) (li2019nearlyminimax) says nothing about K (resp. d) -> infinity with the other fixed; read as
+    a rate it 'beat' sqrt(d T log K) upper bounds. The other variables keep their exponents."""
+    c = cells([U("u", "sqrt(d*T*log(K))"), L("l", "K**(1/4)*sqrt(d*T)", conditions=["2 <= K <= d"])])
+    cell = c["regret|worst_case"]
+    assert cell["status"] != "conflict" and "K" not in cell["per_var"] and cell["per_var"]["d"]["status"] == "tight"
+    c = cells([U("u", "sqrt(d*T*log(K))"), L("l", "d*sqrt(T)", conditions=["n_act = 2^(d/2)"])])
+    assert c["regret|worst_case"]["status"] != "conflict"
+    # the same bounds without the condition are a conflict: the condition, not the expression, decides
+    assert cells([U("u", "sqrt(d*T*log(K))"), L("l", "K**(1/4)*sqrt(d*T)")])["regret|worst_case"]["status"] == "conflict"
+
+
+def test_side_conditions_parsed_conservatively():
+    can = CAN | {"m", "N_exp", "n_act"}
+    assert compare.side_condition_unknowns(["2 <= K <= d"], can) == {"K"}
+    assert compare.side_condition_unknowns(["d >= K"], can) == {"K"}
+    assert compare.side_condition_unknowns(["m = d/2"], can) == {"d"}
+    assert compare.side_condition_unknowns(["T >= d^2", "K >= 2", "n >= d", "losses in [0,1]"], can) == set()
+
+
+def test_O_tilde_upper_hides_logs_not_rates():
+    """O~(sqrt(alpha T)) against Omega(sqrt(T log K)) differs only in a log factor the O~ hides: a log gap, not a
+    conflict (wen2025adversarial). A polynomial difference stays a conflict."""
+    c = cells([U("u", "sqrt(T)", notation="O_tilde"), L("l", "sqrt(T*log(K))")])
+    assert c["regret|worst_case"]["status"] == "log_gap"
+    assert cells([U("u", "sqrt(T)", notation="O_tilde"), L("l", "T**(2/3)")])["regret|worst_case"]["status"] == "conflict"
+
+
+def test_O_tilde_upper_cannot_make_a_cell_tight():
+    """Regression (batch 2, pilot fact F06): O~(sqrt(KT log(1/delta))) at delta = 1/T matched an Omega(sqrt(KT))
+    lower bound and the cell read 'tight', though the O~ hides log factors. A plain O bound with the same rate is tight."""
+    assert cells([U("u", "sqrt(K*T)", notation="O_tilde"), L("l", "sqrt(K*T)")])["regret|worst_case"]["status"] == "log_gap"
+    assert cells([U("u", "sqrt(K*T)"), L("l", "sqrt(K*T)")])["regret|worst_case"]["status"] == "tight"

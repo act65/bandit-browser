@@ -1,0 +1,236 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Steering Frozen LLMs: Adaptive Social Alignment via Online Prompt Routing",
+  "arxiv_id": "2603.15647",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Zeyu Zhang",
+   "Xiangxiang Dai",
+   "Ziyi Han",
+   "Xutong Liu",
+   "John C. S. Lui"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Contextual multi-objective (utility/safety) clustered linear bandit over a fixed system-prompt pool",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "d",
+    "sigma",
+    "L_feat"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "l2_ball",
+    "loss_set": "unspecified",
+    "parameter_structure": "clustered"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Two objectives (utility and safety) are observed each round; regret is on the scalarization w_t*u + (1-w_t)*s with an exogenous observed preference weight w_t in [0,1]",
+    "Contexts are N prototypes arriving i.i.d. with probabilities p_i, p_min > 0; prototypes are partitioned into M unknown latent clusters sharing parameters (theta^u_j, theta^s_j), separated by gamma in concatenated parameter space",
+    "Uniform-arm feature covariance has minimum eigenvalue >= lambda_x",
+    "The learner knows p_min, gamma, lambda_x and the number of prototypes N (used to set the exploration prefix T_0 and confidence radii)",
+    "Noise is conditionally sigma-sub-Gaussian; rewards in [0,1]"
+   ],
+   "definition_quote": "At each round $t$, a prototype $i_t\\in\\Uset$ arrives i.i.d.\\ with $\\Pr(i_t=i)=p_i$ ... For each objective $o\\in\\{u,s\\}$, the observed feedback is $y_{t,o} = \\mathbf{x}_{a_t}^\\top \\theta^{o}_{j(i_t)} + \\eta_{t,o}$, where $\\theta^{o}_{j}\\in\\R^d$ is an unknown cluster parameter and $(\\eta_{t,o})$ is conditionally $\\sigma$-sub-Gaussian. Assume $\\norm{\\mathbf{x}_a}_2\\le L$ for all $a$ and $\\norm{\\theta^{o}_{j}}_2\\le 1$ for all $j,o$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "CCLUB (Consensus Clustering LinUCB Bandit)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "explore_then_commit",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d",
+    "sigma",
+    "L_feat",
+    "p_min",
+    "gamma",
+    "lambda_x",
+    "N_proto"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "d*log(T)/(p_min*gamma_sep**2*lambda_x) + d*sqrt(M_clust*T)*log(T)",
+    "expression_latex": "O\\Bigl(\\frac{d}{p_{\\min}\\gamma^2\\lambda_x}\\log T + d\\sqrt{MT}\\log T\\Bigr)",
+    "regime": null
+   },
+   "symbols": {
+    "p_min": "minimum prototype arrival probability",
+    "gamma_sep": "separation margin between latent cluster parameters (concatenated utility/safety)",
+    "lambda_x": "lower bound on min eigenvalue of uniform-arm feature covariance",
+    "M_clust": "number of latent clusters of prototypes"
+   },
+   "conditions": [
+    "Assumptions 4.1-4.3: finite fixed arm set with ||x_a|| <= L and lambda_min(E_unif[x x^T]) >= lambda_x; prototypes i.i.d. with p_min > 0; clustered linear realizability with separation gamma",
+    "||theta_j^o||_2 <= 1",
+    "rewards in [0,1] so sigma <= 1"
+   ],
+   "tuning": [
+    "uniform-exploration prefix of length T_0 as in Lemma H.12",
+    "delta = 1/T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:rccb-main",
+    "number": "Theorem 4.4",
+    "quote": "Suppose Assumptions~\\ref{assump:finite_arm}, \\ref{assump:prototype_process}, and \\ref{assump:clustered_linear} hold. Then the cumulative regret of CCLUB satisfies \\E[R_T] = O\\Bigl(\\frac{d}{p_{\\min}\\gamma^2\\lambda_x}\\log T + d\\sqrt{MT}\\log T\\Bigr), where the first term captures the cost of cluster identification and the second matches the cluster-level regret."
+   },
+   "confidence": "medium",
+   "notes": "Formal version is Theorem H.15 (same bound; proof shows sigma^2 factor on first term before setting sigma<=1). Regret defined via means mu_t, hence pseudo-regret against per-round best arm. T used in delta=1/T and T_0, so horizon known."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "Max(2048*sigma**2*d*log(2*N_proto/delta)/(p_min*gamma_sep**2*lambda_x), 8*log(N_proto/delta)/p_min) + 4*(sigma*sqrt(2*log(2*N_proto/delta) + d*log(1 + T*L_feat**2/(lam*d))) + sqrt(lam))*sqrt(d*M_clust*T*log(1 + T*L_feat**2/(lam*d)))",
+    "expression_latex": "R_T \\le T_0 + 4\\beta_T\\sqrt{dMT\\log\\!\\bigl(1+TL^2/(\\lambda d)\\bigr)}",
+    "regime": null
+   },
+   "symbols": {
+    "p_min": "minimum prototype arrival probability",
+    "gamma_sep": "cluster separation margin",
+    "lambda_x": "lower bound on min eigenvalue of uniform-arm feature covariance",
+    "M_clust": "number of latent clusters",
+    "N_proto": "number of prototypes"
+   },
+   "conditions": [
+    "2N/delta >= 512 sigma^2 L^2/(gamma^2 lambda lambda_x)",
+    "Delta_max <= 1",
+    "||theta_j^o||_2 <= 1",
+    "Assumptions 4.1-4.3"
+   ],
+   "tuning": [
+    "uniform-exploration prefix of length T_0 = max{2048 sigma^2 d/(p_min gamma^2 lambda_x) log(2N/delta), 8/p_min log(N/delta)}",
+    "beta_T = sigma*sqrt(2 log(2N/delta) + d log(1+T L^2/(lambda d))) + sqrt(lambda)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:rccb-regret-hp",
+    "number": "Theorem H.14",
+    "quote": "Fix $\\delta\\in(0,1)$. Under the assumptions above, choose $T_0$ as in Lemma~\\ref{lem:rccb-stabilize} and run CCLUB with a uniform-exploration prefix of length $T_0$. Recall $\\beta_t \\triangleq \\beta(t)$. Then with probability at least $1-4\\delta$, the cumulative regret is bounded by R_T \\le T_0 + 4\\beta_T\\sqrt{dMT\\log\\!\\bigl(1+TL^2/(\\lambda d)\\bigr)}."
+   },
+   "confidence": "medium",
+   "notes": "Holds with probability at least 1-4*delta. T_0 and beta_T expanded from Lemma H.12 and the beta(n) definition. Lemma H.6 eigenvalue condition is used implicitly (H.15 proof takes T_0 with an additional 8L^2/lambda_x log(2NdT) term)."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:00:29",
+  "source_chars": 141775,
+  "input_tokens": 105934,
+  "output_tokens": 5240,
+  "cost_usd_equiv": 0.67396,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

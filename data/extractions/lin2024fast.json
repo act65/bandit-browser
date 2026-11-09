@@ -1,0 +1,303 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Fast and Sample Efficient Multi-Task Representation Learning in Stochastic Contextual Bandits",
+  "arxiv_id": "2410.02068",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Jiabin Lin",
+   "Shana Moothedath",
+   "Namrata Vaswani"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Multi-task representation learning in linear contextual bandits with low-rank structure",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "T",
+    "r_rank"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "oblivious_sequence",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "unspecified",
+    "loss_set": "not_applicable",
+    "parameter_structure": "low_rank"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Multi-task: N_tasks linear contextual bandit tasks played simultaneously for T rounds; parameter matrix Theta* = B* W* of rank r shared across tasks",
+    "Feature vectors phi(x_{n,t}, c_{n,t}) assumed i.i.d. standard Gaussian (Gaussian design)",
+    "Incoherence of right singular vectors: ||w_t*||^2 <= mu^2 (r/N_tasks) sigma_max^2",
+    "The learner uses knowledge of kappa, mu and sigma_max (step size gamma = 0.4/sigma_max^2, truncation constant 9 kappa^2 mu^2)"
+   ],
+   "definition_quote": "For every round $n \\in [N]$, each task $t$ observes a context $c_\\nt \\in \\pC_\\nt$ and chooses an action $\\xnt \\in \\pA_\\nt$. After an action is chosen for each task $t$ at round $n$, the environment provides a reward $y_\\nt$, where $y_\\nt:= \\langle \\pxtc, \\thetats \\rangle + \\eta_\\nt$ ... We assume that $\\Theta^\\star = [\\theta_1^\\star \\cdots \\theta_T^\\star]$ is a rank-$r$ matrix where $r \\ll \\min\\{d, T\\}$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "LRRL-AltGDMin",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "r_rank",
+    "sigma_max",
+    "kappa",
+    "mu_inc"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*mu_inc*sigma_max*sqrt(r_rank*T*N_tasks*log(1/delta))*(1 + log(log(T)))",
+    "expression_latex": "\\pR_{N, T} \\leqslant 2 \\mu \\sigma_{\\max}^\\star \\sqrt{rNT \\log{\\frac{1}{\\delta}}} (1 + \\log \\log N)",
+    "regime": null
+   },
+   "symbols": {
+    "N_tasks": "number of tasks (paper's T)",
+    "mu_inc": "incoherence constant mu >= 1 of right singular vectors",
+    "sigma_max": "largest singular value of Theta*",
+    "r_rank": "rank r of the shared representation"
+   },
+   "conditions": [
+    "Assumption 2.1: feature vectors i.i.d. standard Gaussian, noise i.i.d. N(0, sigma_eta^2)",
+    "Assumption 2.2: incoherence ||w_t*||^2 <= mu^2 (r/T_tasks) sigma_max^2",
+    "sigma_eta^2 <= c ||theta_t*||^2 / (mu r^3 kappa^6 G_1)",
+    "(G_m - G_{m-1}) N_tasks >= C mu^2 kappa^6 d r^2 (mu^2 kappa^2 r + log(1/max(eps, eps_noise)))",
+    "G_m - G_{m-1} >= C kappa^2 (r + log N_tasks + log d) log(1/max(eps, eps_noise))",
+    "probability at least 1 - delta - L d^{-10}"
+   ],
+   "tuning": [
+    "epoch grid G_m = N^{1-2^{-m}}, M = ceil(log2 log2 N)",
+    "gamma = 0.4/sigma_max^2",
+    "L = C kappa^2 log(1/max(eps, eps_noise))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm-reg",
+    "number": "Theorem 5.4",
+    "quote": "Assume that Assumptions~\\ref{assume:iid} and~\\ref{assume:incoherence} hold and $\\sigma_\\eta^2 \\leqslant \\frac{c \\| \\thetats \\|^2}{\\mu r^3 \\kappa^6 \\pG_1}$, If ... then with probability at least $1 - \\delta - L d^{-10}$, the upper bound of cumulative regret for Algorithm~\\ref{alg1} is $\\pR_{N, T} \\leqslant 2 \\mu \\sigma_{\\max}^\\star \\sqrt{rNT \\log{\\frac{1}{\\delta}}} (1 + \\log \\log N).$"
+   },
+   "confidence": "medium",
+   "notes": "Paper's N (rounds) mapped to canonical T; paper's T (tasks) declared as N_tasks. Regret is defined through expected rewards (pseudo-regret) but the bound holds with probability 1-delta-Ld^{-10}, hence high_probability_regret. Per-epoch Lemma C.1 (with an extra max(eps,eps_noise) factor) not recorded separately. Proof's correctness is questionable (uses Gaussian design for greedy-selected features)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "Max(eps_alg, eps_noise)",
+    "expression_latex": "\\SE(B, B^\\star) \\leqslant \\max(\\epsilon, \\epsilon_{noise}), \\quad \\| \\thetahatt - \\thetats \\| \\leqslant \\max(\\epsilon, \\epsilon_{noise}) \\| \\thetats \\|",
+    "regime": null
+   },
+   "symbols": {
+    "eps_noise": "C kappa^2 sqrt(NSR), NSR = sigma_eta^2 / min_t ||theta_t*||^2",
+    "eps_alg": "target accuracy epsilon of the estimator"
+   },
+   "conditions": [
+    "Assumptions 2.1 and 2.2",
+    "sigma_eta^2 <= c ||theta_t*||^2 / (mu r^3 kappa^6 G_1)",
+    "(G_m - G_{m-1}) N_tasks >= C mu^2 kappa^6 d r^2 (mu^2 kappa^2 r + log(1/max(eps, eps_noise)))",
+    "G_m - G_{m-1} >= C kappa^2 (r + log N_tasks + log d) log(1/max(eps, eps_noise))",
+    "probability at least 1 - L d^{-10}"
+   ],
+   "tuning": [
+    "gamma = 0.4/sigma_max^2",
+    "L = C kappa^2 log(1/max(eps, eps_noise))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "new_5",
+    "number": "Theorem 5.3",
+    "quote": "Assume that Assumptions~\\ref{assume:iid} and~\\ref{assume:incoherence} hold and $\\sigma_\\eta^2 \\leqslant \\frac{c \\| \\thetats \\|^2}{\\mu r^3 \\kappa^6 \\pG_1}$. Set $\\gamma = \\frac{0.4}{{\\sigma_{\\max}^\\star}^2}$ and $L = C \\kappa^2 \\log(\\frac{1}{\\max(\\epsilon, \\epsilon_{noise})})$. If $$\\scalemath{0.9}{(\\pG_m - \\pG_{m-1}) T \\geqslant C \\mu^2 \\kappa^6 d r^2 (\\mu^2 \\kappa^2 r + \\log(\\frac{1}{\\max(\\epsilon, \\epsilon_{noise})}))}$$ and $$\\pG_m - \\pG_{m-1} \\geqslant C \\kappa^2 (r + \\log T + \\log d) \\log(\\frac{1}{\\max(\\epsilon, \\epsilon_{noise})}),$$ then with probability at least $1 - L d^{-10}$, \n\\begin{align*}\n\\SE(B, B^\\star) &\\leqslant \\max(\\epsilon, \\epsilon_{noise}) \\quad \\text{and}\\\\\n\\| \\thetahatt - \\thetats \\| &\\leqslant \\max(\\epsilon, \\epsilon_{noise}) \\| \\thetats \\| \\quad \\text{for all} \\quad t \\in [T], \n\\end{align*}"
+   },
+   "confidence": "medium",
+   "notes": "Estimation-error guarantee (subspace distance, and relative parameter error) for the AltGDMin estimator per epoch; quantity 'other'. Time complexity C kappa^2 (G_m - G_{m-1}) T d r log(1/max(eps,eps_noise)). Theorems 5.1 (initialization) and 5.2 (one-step contraction) are intermediate and not recorded."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "hu2021near",
+   "cited_title": "Near-optimal representation learning for linear bandits and linear rl",
+   "cited_first_author": "Hu",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "multi-task OFUL with shared representation",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Multi-task linear bandits: N_tasks d-dimensional tasks sharing r-dim representation, T rounds per task",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "N_tasks*sqrt(d*r_rank*T) + d*sqrt(r_rank*T*N_tasks)",
+    "expression_latex": "\\Ot(T\\sqrt{drN}+d\\sqrt{rNT})",
+    "regime": null
+   },
+   "where": "Section 3 (Related Work)"
+  },
+  {
+   "cited_key": "yang2020impact",
+   "cited_title": "Impact of representation learning in linear bandits",
+   "cited_first_author": "Yang",
+   "cited_year": 2020,
+   "cited_arxiv_id": "2010.06531",
+   "algorithm_name": "explore-then-commit with MoM estimator",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Multi-task linear bandits, infinite action case, shared r-dim representation",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "N_tasks*r_rank*sqrt(T) + d**1.5*r_rank*sqrt(T*N_tasks)",
+    "expression_latex": "\\Ot(Tr\\sqrt{N}+d^{1.5}r\\sqrt{NT})",
+    "regime": null
+   },
+   "where": "Section 3 (Related Work)"
+  },
+  {
+   "cited_key": "cella2023multi",
+   "cited_title": "Multi-task representation learning with stochastic linear bandits",
+   "cited_first_author": "Cella",
+   "cited_year": 2023,
+   "cited_arxiv_id": null,
+   "algorithm_name": "trace-norm regularized low-rank estimation",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Multi-task linear bandits with unknown rank under restricted strong convexity",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "N_tasks*sqrt(r_rank*T) + sqrt(r_rank*T*N_tasks*d)",
+    "expression_latex": "\\Ot(T\\sqrt{rN}+\\sqrt{rNTd})",
+    "regime": null
+   },
+   "where": "Section 3 (Related Work)"
+  },
+  {
+   "cited_key": "abbasi2011improved",
+   "cited_title": "Improved algorithms for linear stochastic bandits",
+   "cited_first_author": "Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "OFUL (applied independently per task)",
+   "algorithm_registry_id": "oful",
+   "side": "upper",
+   "setting_description": "N_tasks d-dimensional linear bandits solved independently, T rounds each",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "N_tasks*d*sqrt(T)",
+    "expression_latex": "\\Ot(Td\\sqrt{N})",
+    "regime": null
+   },
+   "where": "Section 1 (Introduction)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:55:16",
+  "source_chars": 118966,
+  "input_tokens": 100064,
+  "output_tokens": 5984,
+  "cost_usd_equiv": 0.64188,
+  "quote_retry": {
+   "asked": 1,
+   "fixed": 1,
+   "cost_usd_equiv": 0.5416884
+  },
+  "status": "extracted"
+ }
+}

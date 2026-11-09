@@ -1,0 +1,229 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Instance-dependent Regret Bounds for Dueling Bandits",
+  "arxiv_id": null,
+  "arxiv_version": null,
+  "year": 2016,
+  "authors": [
+   "Akshay Balsubramani",
+   "Zohar Karnin",
+   "Robert E. Schapire",
+   "Masrour Zoghi"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "multi-armed dueling bandit problem with von Neumann winner",
+   "objective": "cumulative_regret",
+   "feedback": "dueling",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "general",
+    "winner": "von_neumann",
+    "comparison": "pair"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Preference matrix P is only assumed skew-symmetric (no Condorcet winner or transitivity assumptions)"
+   ],
+   "definition_quote": "On each round t = 1, . . . , T , the learner must select two of these actions i and j. A duel is then held between these actions, with an outcome of +1 if i wins the duel, and −1 if j wins. We assume the outcome of each duel is independent, and that the probability of i beating j is fixed but unknown. ... we define the regret ... max_{k∈[K]} sum_t (P_{k,i(t)} + P_{k,j(t)})/2"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Sparse Sparring (SPAR2)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination",
+    "exponential_weights"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(s*T*log(s/delta)) + C_P*log(1/delta)**2",
+    "expression_latex": "\\tilde O(\\sqrt{sT\\log(s/\\delta)} + C(P)\\log(1/\\delta)^2)",
+    "regime": null
+   },
+   "symbols": {
+    "s": "sparsity (support size) of the unique von Neumann winner",
+    "C_P": "instance-dependent constant C(P) = O~(K s^2 min{min_{i<=s} w_i, min_{i>s}(w^T P)_i, sigma(P_S), Delta(P)}^{-4}) (Corollary 18)"
+   },
+   "conditions": [
+    "preference matrix P has a unique von Neumann winner with support size s"
+   ],
+   "tuning": [
+    "exploration parameter alpha > 1/2",
+    "failure probability delta given as input"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "Suppose we are given a multi-armed dueling bandit problem, whose preference matrix P has a unique von Neumann winner that puts nonzero weight on s actions, a time horizon T and a probability of failure δ. Then, applying Algorithm 1 to this problem leads to a regret that is bounded by the minimum of Õ( sqrt(sT log(s/δ)) + C(P) log(1/δ)^2 ) and Õ( sqrt(KT log(K/δ))) with probability at least 1 − δ for some constant C(P)."
+   },
+   "confidence": "medium",
+   "notes": "Exponent 2 on log(1/δ) reconstructed from lossy PDF text, consistent with Corollary 18 which restates the result with explicit C(P). Regret is max over arms k of sum of P_{k,i(t)}+P_{k,j(t)} over 2 (relative to von Neumann winner); mapped to best_fixed_action. Polynomial compute claimed (efficient Algorithm 2 replaces intractable check)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(K*T*log(K/delta))",
+    "expression_latex": "\\tilde O(\\sqrt{KT\\log(K/\\delta)})",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "preference matrix P has a unique von Neumann winner"
+   ],
+   "tuning": [
+    "exploration parameter alpha > 1/2",
+    "failure probability delta given as input"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1",
+    "quote": "Theorem 1 Suppose we are given a multi-armed dueling bandit problem, whose preference matrix\nP has a unique von Neumann winner that puts nonzero weight on s actions, a time horizon T and a\nprobability of failure δ.pThen, applying Algorithm 1 to this problem\n                                                                   pleads to a regret that is bounded\n                                                         2\nby the minimum of O( sT log(s/δ) + C(P) log(1/δ) ) and O( KT log(K/δ)) with probability\n                     e\nat least 1 − δ for some constant C(P)."
+   },
+   "confidence": "medium",
+   "notes": "Second branch of the minimum in Theorem 1 (also in Corollary 18)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Dudik2015",
+   "cited_title": "Contextual dueling bandits",
+   "cited_first_author": "Miroslav Dudík",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Sparring Exp3 / Exp3.P",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "K-armed dueling bandits, regret against von Neumann winner, general skew-symmetric preference matrix",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "\\tilde O(\\sqrt{KT})",
+    "regime": null
+   },
+   "where": "Section 1 (Introduction)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:49:04",
+  "source_chars": 78972,
+  "input_tokens": 63912,
+  "output_tokens": 3365,
+  "cost_usd_equiv": 0.300284,
+  "quote_retry": {
+   "asked": 1,
+   "fixed": 1,
+   "cost_usd_equiv": 0.2435764
+  },
+  "status": "extracted"
+ }
+}

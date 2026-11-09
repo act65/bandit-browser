@@ -1,0 +1,270 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Multi-User Contextual Cascading Bandits for Personalized Recommendation",
+  "arxiv_id": "2508.13981",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Jiho Park",
+   "Huiwen Jia"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Multi-User Cascading Contextual Bandit (MCCB)",
+   "objective": "cumulative_regret",
+   "feedback": "cascade",
+   "environment": "stochastic_iid",
+   "action_space": "generalized_linear",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "H",
+    "K",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "oblivious_sequence",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "unspecified",
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_unknown"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Episodic: in each of T episodes, N users (contexts) arrive simultaneously and each is served a session of up to H sequential arm displays (with replacement) from K arms; session ends at the first click (absorbing)",
+    "Click probability is logistic sigma([x; onehot(k)]^T theta) with shared parameter in R^{d+K}",
+    "Heterogeneous known per-arm click rewards e_k > 0; the learner knows e_k",
+    "Regret is against the optimal backward-planning (finite-horizon MDP) policy per context",
+    "Parameter updated only at the end of each episode (batch of N users)"
+   ],
+   "definition_quote": "In MCCB, the learner operates over $T$ episodes, and in each episode, the learner interacts with \\( N \\) contexts and selects from a fixed set of $K$ arms. The interaction with each context unfolds over an $H$-step session, during which the learner presents a personalized, ordered slate of up to H candidates (with replacement) from the global arm set $[K]$... We assume that the probability of an absorption is modeled using a logistic function: P(r_{t,n,k} = e_k | x_{t,n}, k) = sigma(z_{t,n,k}^T theta)"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "UCBBP (UCB with Backward Planning)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "explore_then_commit",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "H",
+    "K",
+    "e_k (per-arm rewards)",
+    "T_0",
+    "beta_t confidence radius"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "AUCBBP (Active UCB with Backward Planning)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "explore_then_commit",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "H",
+    "K",
+    "e_k (per-arm rewards)",
+    "T_0",
+    "beta_t confidence radius"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "N_ctx*T_0*e_max + 4*e_max*k_mu/(c_mu*sigma_hat_min)*beta_Tt*sqrt(N_ctx*T)*(sqrt(V_Tt) + beta_Tt*sqrt(T_tilde*V_Tt))",
+    "expression_latex": "N\\,T_{0}\\,e_{\\max} + \\frac{4\\,e_{\\max}\\,k_{\\mu}}{c_{\\mu}\\,\\hat\\sigma_{\\min}}\\; \\beta_{\\widetilde T}\\, \\sqrt{N\\,T}\\times \\Big[ \\sqrt{\\mathcal{V}_{\\widetilde{T}}} + \\beta_{\\widetilde T}\\, \\sqrt{\\widetilde T\\,\\mathcal{V}_{\\widetilde{T}}} \\Big]",
+    "regime": null
+   },
+   "symbols": {
+    "N_ctx": "number of users/contexts per episode",
+    "T_0": "number of warm-up (round-robin) episodes",
+    "e_max": "maximum per-click arm reward max_k e_k",
+    "sigma_hat_min": "min_k sigma(z^T theta_hat_t), minimum estimated click probability",
+    "beta_Tt": "confidence radius kappa*e_max*c_z*sqrt(2(d+K) log(T_tilde) log((d+K)/delta))",
+    "V_Tt": "4 c_z^2/(w_min p_min) * log(1 + w_min p_min T_tilde/(2 lam))",
+    "T_tilde": "total number of observations sum_t sum_n h*_{t,n} <= N T H",
+    "c_z": "bound on joint feature norm",
+    "w_min": "minimum IRLS weight",
+    "p_min": "minimum per-arm selection probability"
+   },
+   "conditions": [
+    "(A1) ||z_{t,n,k}||_2 <= c_z",
+    "(A2) contexts i.i.d. N(0, I_d)",
+    "(A3) positive margin: every arm is Delta_0-margin optimal with probability >= gamma_0 over contexts",
+    "(A4) sigma_min = sigma(-c_z) > sup_{t>T_0} (1/4) beta_t sqrt(z^T A_t^{-1} z)",
+    "(A5) warm-start contraction guarantee after T_0 episodes",
+    "c_mu = min_{|u|<=B} sigma'(u) > 0",
+    "rewards e_k > 0 known"
+   ],
+   "tuning": [
+    "warm-up T_0 episodes of round-robin",
+    "confidence radius beta_t as defined",
+    "regularization lambda (lambda >= c_z^2 used in proof)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:UCBBP",
+    "number": "Theorem (thm:UCBBP)",
+    "quote": "Suppose Assumptions \\textnormal{(A1)}–\\textnormal{(A5)} hold. Then for all \\(T \\ge 1\\),\n\\begin{flalign*}\n\\mathbb{P}\\Bigg(\n\\text{Regret}(NT)\n&\\;\\le\\;\nN\\,T_{0}\\,e_{\\max}\n\\;+\\;\n\\frac{4\\,e_{\\max}\\,k_{\\mu}}{c_{\\mu}\\,\\hat\\sigma_{\\min}}\\;\n\\beta_{\\widetilde T}\\,\n\\sqrt{N\\,T}\\times\n\\Big[\n\\sqrt{\\mathcal{V}_{\\widetilde{T}}}\n+\n\\beta_{\\widetilde T}\\,\n\\sqrt{\\widetilde T\\,\\mathcal{V}_{\\widetilde{T}}}\n\\Big]\n\\Bigg)\n\\;\\ge\\;\n1 - \\delta.\n\\end{flalign*}"
+   },
+   "confidence": "medium",
+   "notes": "Paper claims O~(sqrt((d+K)HNT)) in the contributions, but the explicit bound contains beta^2 sqrt(NT * T_tilde) with T_tilde up to NTH, which does not obviously yield that rate; recorded the explicit statement. sigma_hat_min and p_min are data-/algorithm-dependent quantities. Regret is over T episodes with N users each."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "T_0*N_ctx*e_max + 4*e_max*k_mu/(c_mu*sigma_hat_min)*beta_Tt*sqrt(S_M*V_Tt) + 2*beta_Tt*sqrt(H*S_M*V_Tt) + 4*e_max*c_z/(c_mu*sigma_hat_min*sqrt(w_min*p_min/2))*sqrt(T)*beta_Tt",
+    "expression_latex": "T_0 N e_{\\max} + \\frac{4\\,e_{\\max}\\,k_{\\mu}}{c_{\\mu}\\,\\hat\\sigma_{\\min}}\\, \\beta_{\\widetilde T}\\, \\sqrt{\\sum_{t=1}^{T} M_t \\cdot \\mathcal{V}_{\\widetilde{T}}} + 2\\,\\beta_{\\widetilde T}\\, \\sqrt{H \\sum_{t=1}^{T} M_t \\cdot \\mathcal{V}_{\\widetilde{T}}} + \\frac{4e_{\\max} \\,c_z}{c_\\mu \\hat\\sigma_{\\min} \\sqrt{\\tfrac12 w_{\\min}p_{\\min}}} \\cdot \\sqrt{T} \\cdot \\beta_{\\widetilde T}",
+    "regime": null
+   },
+   "symbols": {
+    "N_ctx": "number of users/contexts per episode",
+    "T_0": "number of warm-up episodes",
+    "e_max": "maximum per-click arm reward",
+    "sigma_hat_min": "minimum estimated click probability",
+    "beta_Tt": "confidence radius kappa*e_max*c_z*sqrt(2(d+K) log(T_tilde) log((d+K)/delta))",
+    "V_Tt": "4 c_z^2/(w_min p_min) * log(1 + w_min p_min T_tilde/(2 lam))",
+    "S_M": "sum_{t=1}^T M_t with M_t = max(1, floor(N exp(-t/ln T))); O(N log^2 T)",
+    "T_tilde": "total number of observations",
+    "c_z": "bound on joint feature norm",
+    "w_min": "minimum IRLS weight",
+    "p_min": "minimum per-arm selection probability"
+   },
+   "conditions": [
+    "(A1) ||z_{t,n,k}||_2 <= c_z",
+    "(A2) contexts i.i.d. N(0, I_d)",
+    "(A3) positive margin condition with (Delta_0, gamma_0)",
+    "(A4) strictly positive absorbing probability with margin",
+    "(A5) warm-start contraction guarantee"
+   ],
+   "tuning": [
+    "M_t = max(1, floor(N exp(-t/ln T))) contexts explored by UCB, rest greedy",
+    "warm-up T_0 episodes",
+    "confidence radius beta_t as defined"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:AUCBBP",
+    "number": "Theorem (thm:AUCBBP)",
+    "quote": "Suppose Assumptions \\textnormal{(A1)}–\\textnormal{(A5)} hold. Then for all \\(T \\ge 1\\),\n\\begin{align*}\n\\mathbb{P}\\Bigg(\n&\\operatorname{Regret}(NT)\n\\;\\le\\;\\,\nT_0 N e_{\\max} \n+ \n\\frac{4\\,e_{\\max}\\,k_{\\mu}}{c_{\\mu}\\,\\hat\\sigma_{\\min}}\\,\n\\beta_{\\widetilde T}\\,\n\\sqrt{\\sum_{t=1}^{T} M_t \\cdot \\mathcal{V}_{\\widetilde{T}}}  \\\\\n&+ 2\\,\\beta_{\\widetilde T}\\,\n\\sqrt{H \\sum_{t=1}^{T} M_t \\cdot \\mathcal{V}_{\\widetilde{T}}} + \n\\frac{4e_{\\max} \\,c_z}\n     {c_\\mu \\hat\\sigma_{\\min} \\sqrt{\\tfrac12 w_{\\min}p_{\\min}}}\n\\cdot \\sqrt{T} \\cdot  \\beta_{\\widetilde T}\n\\Bigg)\\\\\n&\\;\\ge\\;\n1 - \\delta.\n\\end{align*}"
+   },
+   "confidence": "medium",
+   "notes": "Proof concludes Regret = O~(sqrt((d+K)(HN + T))) using sum M_t = O(N log^2 T) and beta = O~(sqrt(d+K)) (the step from beta*sqrt(...) to that rate appears to drop a beta factor). Recorded the explicit theorem expression."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T11:35:51",
+  "source_chars": 98401,
+  "input_tokens": 89892,
+  "output_tokens": 5707,
+  "cost_usd_equiv": 0.554964,
+  "quote_retry": {
+   "asked": 2,
+   "fixed": 2,
+   "cost_usd_equiv": 0.45670839999999996
+  },
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,377 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Pure Exploration for a Good Policy in Reinforcement Learning with Bandit Feedback",
+  "arxiv_id": "2605.23182",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Zitian Li",
+   "Wang Chi Cheung"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Good Policy Identification (GPI) in episodic MDPs, fixed confidence",
+   "objective": "thresholding",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "H"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Episodic MDP / reinforcement learning (tabular finite-horizon MDP with unknown transitions); pure exploration over deterministic policies.",
+   "unmapped": [
+    "Tabular episodic MDP with S states, A actions, horizon H; unknown transition kernels and initial distribution; deterministic known rewards r_h(s,a) in [0,1]",
+    "Arms are deterministic policies; each episode the learner executes a policy and observes the full trajectory",
+    "Goal: output a policy with value >= threshold mu_0 if V* > mu_0, else declare None if V* < mu_0 (delta-PAC); instances with V* = mu_0 excluded",
+    "Learner knows state and action spaces, the reward function R, threshold mu_0 and delta"
+   ],
+   "definition_quote": "An instance of the Good Policy Identification (GPI) problem is specified by the tuple $\\nu = ( \\mathcal{S}, \\mathcal{A},\\mu_0, \\delta, H, R, P, \\mathsf{p})$... We assume $\\mathcal{S}, \\mathcal{A}, \\mu_0, \\delta, H, R$ are known to the agent, while $P, \\mathsf{p}$ are not known."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "BEE-GPI (Balanced Exploration-Exploitation for Good Policy Identification)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "doubling_trick",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "H"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "ES-BPI-UCRL (Early-Stopping BPI-UCRL exploration oracle)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "H"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "H**2*log(1/delta)/Delta_V**2 + ((H+1)**4*S_st*A_act*log(S_st*A_act*H/Delta_V**2) + (H+1)**4*S_st**2*A_act*log(H*S_st*A_act))/Delta_V**2",
+    "expression_latex": "O\\left(\\frac{H^2\\log\\frac{1}{\\delta}}{(V_0^*(s_0)-\\mu_0)^2}\\right) + O\\left(\\frac{ (H+1)^4SA\\log\\frac{SAH}{(V_0^*(s_0)-\\mu_0)^2} + (H+1)^4S^2A\\log\\left(HSA\\right)}{(V_0^*(s_0)-\\mu_0)^2}\\right)",
+    "regime": "positive instance V* > mu_0"
+   },
+   "symbols": {
+    "S_st": "number of states |S|",
+    "A_act": "number of actions |A|",
+    "Delta_V": "V*_0(s_0) - mu_0 (gap of optimal value to threshold)"
+   },
+   "conditions": [
+    "positive instance: V*_0(s_0) > mu_0",
+    "rewards deterministic in [0,1]"
+   ],
+   "tuning": [
+    "epsilon_k = 2^-k, delta_k = 3^-k, alpha_k = 5^k, C = 1.01"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:upper-bound-of-Etau-recycling-pos",
+    "number": "Theorem 2",
+    "quote": "On a positive instance $\\nu$ where $V^*_0(s_0) > \\mu_0$, BEE-GPI (Algorithm 1) satisfies \\mathbb{E}[\\tau] \\leq O\\left(\\frac{H^2\\log\\frac{1}{\\delta}}{(V_0^*(s_0)-\\mu_0)^2}\\right) + O\\left(\\frac{ (H+1)^4SA\\log\\frac{SAH}{(V_0^*(s_0)-\\mu_0)^2} + (H+1)^4S^2A\\log\\left(HSA\\right)}{(V_0^*(s_0)-\\mu_0)^2}\\right)."
+   },
+   "confidence": "high",
+   "notes": "Algorithm is delta-PAC (Theorem 1). Expected stopping time (number of episodes). Per-round computation solves KL-constrained optimistic planning; polynomial assumed."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "(H+1)**4*(S_st*A_act*log(1/delta) + S_st**2*A_act*log(log(1/delta)))/Delta_V**2 + (H+1)**4*S_st*A_act*log(H**2/Delta_V**2)/Delta_V**2 + (H+1)**4*S_st**2*A_act*log(log(H**3*S_st*A_act/Delta_V**2))/Delta_V**2",
+    "expression_latex": "O\\left( \\frac{(H+1)^4[SA\\log\\frac{1}{\\delta}+S^2 A \\log\\log\\frac{1}{\\delta}]}{(V^{*}_0(s_0)-\\mu_0)^2}\\right) + O\\left(\\frac{(H+1)^4SA\\log\\frac{H^2}{(V^{*}_0(s_0)-\\mu_0)^2}}{(V^{*}_0(s_0)-\\mu_0)^2}+ \\frac{(H+1)^4S^2A\\log\\log\\left(\\frac{H^3SA}{(V^{*}_0(s_0)-\\mu_0)^2}\\right)}{(V^{*}_0(s_0)-\\mu_0)^2}\\right)",
+    "regime": "negative instance V* < mu_0"
+   },
+   "symbols": {
+    "S_st": "number of states |S|",
+    "A_act": "number of actions |A|",
+    "Delta_V": "|V*_0(s_0) - mu_0| = mu_0 - V*_0(s_0) for negative instances"
+   },
+   "conditions": [
+    "negative instance: V*_0(s_0) < mu_0",
+    "rewards deterministic in [0,1]"
+   ],
+   "tuning": [
+    "epsilon_k = 2^-k, delta_k = 3^-k, alpha_k = 5^k, C = 1.01"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:upper-bound-of-Etau-recycling-neg",
+    "number": "Theorem 3",
+    "quote": "On a negative instance $\\nu$ where $V^*_0(s_0) < \\mu_0$, BEE-GPI (Algorithm 1) satisfies \\mathbb{E}[\\tau] \\leq O\\left( \\frac{(H+1)^4[SA\\log\\frac{1}{\\delta}+S^2 A \\log\\log\\frac{1}{\\delta}]}{(V^{*}_0(s_0)-\\mu_0)^2}\\right) + O(...)"
+   },
+   "confidence": "medium",
+   "notes": "Main-text statement recorded; appendix restatement has a slightly different log-log form (log(log(SAH)+log(1/delta)+log(H^2/gap^2)))."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "sample_complexity",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "H*log(1/delta)/Delta_V**2 + H**2*S_st*A_act/Delta_V**2",
+    "expression_latex": "\\Omega\\left(\\frac{H\\log\\frac{1}{\\delta}}{(V^*_0(s_0~|~\\nu_{\\sigma})-\\mu_0)^2}+\\frac{H^2 SA}{(V^*_0(s_0~|~\\nu_{\\sigma})-\\mu_0)^2}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "S_st": "number of states |S|",
+    "A_act": "number of actions |A|",
+    "Delta_V": "V*_0(s_0) - mu_0"
+   },
+   "conditions": [
+    "any delta-PAC algorithm",
+    "max over action permutations of a Uniform Instance (S,A,H,r,epsilon)",
+    "3H(r+eps)/8 + Hr/8 > mu_0 > Hr/2",
+    "S >= 100, H >= 10, A >= 100, (S-2)H divisible by 16, 0 < epsilon < 1/(200 sqrt 5)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "theorem:symmetric-positive-lower-bound-simplified",
+    "number": "Theorem 4",
+    "quote": "Consider any $\\delta$-PAC alg and any Uniform Instance $\\nu$ specified by $(S,A,H,r,\\epsilon)$, with $\\mu_0$ satisfying ... it holds that \\max_{\\sigma\\in\\Gamma} \\mathbb{E}_{\\nu_{\\sigma},\\text{alg}}[\\tau] \\geq\\Omega\\left(\\frac{H\\log\\frac{1}{\\delta}}{(V^*_0(s_0~|~\\nu_{\\sigma})-\\mu_0)^2}+\\frac{H^2 SA}{(V^*_0(s_0~|~\\nu_{\\sigma})-\\mu_0)^2}\\right)."
+   },
+   "confidence": "high",
+   "notes": "Positive instances; minimax over permutations of a hard instance family. Algorithm class: delta-PAC."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "H*S_st*A_act*log(1/delta)/Delta_V**2",
+    "expression_latex": "\\Omega\\left(\\frac{HSA\\log\\frac{1}{\\delta}}{(\\mu_0 - V^*_0(s_0~|~\\nu))^2}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "S_st": "number of states |S|",
+    "A_act": "number of actions |A|",
+    "Delta_V": "mu_0 - V*_0(s_0)"
+   },
+   "conditions": [
+    "any delta-PAC algorithm",
+    "Tree instance (S,A,H,r) (negative instance)",
+    "S, A, H >= 4",
+    "3/4 (H - log2(S-3)) > mu_0 > (H-1) r"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "theorem:lower-bound-negative",
+    "number": "Theorem 5",
+    "quote": "Apply any $\\delta$-PAC algorithm to a Tree instance $\\nu$ specified by $(S,A,H,r)$ with $S,A,H\\geq 4$ and $ \\frac{3}{4}(H-\\log_2 (S-3))> \\mu_0 > (H-1)r$, we have \\mathbb{E}_{\\nu}\\tau \\geq \\Omega\\left(\\frac{HSA\\log\\frac{1}{\\delta}}{(\\mu_0 - V^*_0(s_0~|~\\nu))^2}\\right)."
+   },
+   "confidence": "high",
+   "notes": "Lower bound on a specific negative hard instance (Tree instance)."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "H*log(1/(2.4*delta))/Delta_V**2",
+    "expression_latex": "\\Omega\\left(\\frac{H\\log\\frac{1}{2.4\\delta}}{(V^*_0(s_0|\\nu)-\\mu_0)^2}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "Delta_V": "V*_0(s_0) - mu_0"
+   },
+   "conditions": [
+    "any delta-PAC algorithm",
+    "Uniform Instance with H(r+eps)/2 >= mu_0 > Hr/2"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "theorem:delta-dependent-lower-bound-pos-meaningless-instance",
+    "number": "Theorem 27",
+    "quote": "Given a Uniform Instance $\\nu$ with $\\mu_0$ satisfying that $\\frac{H(r+\\epsilon)}{2}\\geq \\mu_0>\\frac{Hr}{2}$, for any $\\delta$-PAC alg, we have \\mathbb{E}_{\\nu}\\tau\\geq \\Omega\\left(\\frac{H\\log\\frac{1}{2.4\\delta}}{(V^*_0(s_0|\\nu)-\\mu_0)^2}\\right)."
+   },
+   "confidence": "medium",
+   "notes": "Intermediate result for Theorem 4 (delta-dependent part), on the uniform instance itself."
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "S_st*A_act/eps_U**2",
+    "expression_latex": "\\frac{\\Omega(SA)}{\\epsilon^2}",
+    "regime": null
+   },
+   "symbols": {
+    "S_st": "number of states |S|",
+    "A_act": "number of actions |A|",
+    "eps_U": "transition-probability gap epsilon of the Uniform Instance"
+   },
+   "conditions": [
+    "any delta-PAC and symmetric algorithm",
+    "Uniform Instance (S,A,H,r,epsilon) with H(r+eps)/2 > mu_0 >= H(r+eps)/4 + Hr/4",
+    "0 < delta < 1/2"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "theorem:delta-independent-lower-bound-pos-meaningless-instance",
+    "number": "Theorem 28",
+    "quote": "Given a Uniform Instance $\\nu$ with $(S,A,H, r,\\epsilon)$, $\\mu_0$ satisfying that $\\frac{H(r+\\epsilon)}{2}> \\mu_0\\geq \\frac{H(r+\\epsilon)}{4}+\\frac{Hr}{4}$, $0<\\delta < \\frac{1}{2}$, for any $\\delta$-PAC and symmetric algorithm, we have \\mathbb{E}\\tau\\geq \\frac{\\Omega(SA)}{\\epsilon^2}."
+   },
+   "confidence": "medium",
+   "notes": "Intermediate result restricted to symmetric delta-PAC algorithms; combined via Theorem 25 to give Theorem 4."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T13:39:11",
+  "source_chars": 196459,
+  "input_tokens": 152343,
+  "output_tokens": 7493,
+  "cost_usd_equiv": 1.090292,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

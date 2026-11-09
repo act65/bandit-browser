@@ -1,0 +1,490 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "An Efficient Algorithm for Thresholding Monte Carlo Tree Search",
+  "arxiv_id": "2601.22600",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Shoma Nameki",
+   "Atsuyoshi Nakamura",
+   "Junpei Komiyama",
+   "Koji Tabata"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Thresholding Monte Carlo Tree Search problem (fixed confidence)",
+   "objective": "general_identification",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "exponential_family",
+   "learner_knows": [
+    "reward_family"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Arms are the leaves of a known MAX/MIN-labelled game tree; the answer is whether the minimax value of the root is at least a known threshold theta",
+    "The learner knows the tree structure, node labels and the threshold theta"
+   ],
+   "definition_quote": "Given a question tree $\\mathcal{T}$ and its internal node label function $L$, at each round $t=1,2,\\dots$, the player selects one leaf node $I(t) \\in \\mathcal{L}(\\mathcal{T})$, and observes a reward $r(t)$ drawn from an unknown distribution with mean $\\mu_{I(t)}$. In this paper, we assume that the distributions belong to a one-parameter exponential family... The player's task is to determine whether the root node $s_0$ is a winning or losing node."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Good action identification (GAI) problem on a MAX-rooted tree",
+   "objective": "general_identification",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "exponential_family",
+   "learner_knows": [
+    "reward_family"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Arms are leaves of a known MAX/MIN game tree with MAX root; answer is any child of the root with minimax value >= theta, or 'no good action'",
+    "The learner knows the tree structure, node labels and the threshold theta"
+   ],
+   "definition_quote": "A natural question is to ask whether our framework can be applied to find a good action at the root node $s_0$ with $L(s_0) = \\text{`MAX'}$, i.e., the child node whose value is at least $\\theta$. We call this problem the good action identification (GAI) problem"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "RD-Tracking-TMCTS (Ratio-based D-Tracking for Thresholding MCTS)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "track_and_stop"
+   ],
+   "requires_knowledge_of": [
+    "reward_family",
+    "delta"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Any GLR-stopping algorithm whose sampling proportions converge a.s. to the optimal weights (e.g. D-Tracking, C-Tracking)",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "track_and_stop"
+   ],
+   "requires_knowledge_of": [
+    "reward_family",
+    "delta"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "RD-Tracking-TMCTS with GAI stopping rule",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "track_and_stop"
+   ],
+   "requires_knowledge_of": [
+    "reward_family",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "delta",
+    "expression_latex": "\\mathbb{P}(\\tau_{\\delta}<\\infty,a_{s_0}(\\hat{\\bm{\\mu}}(\\tau_{\\delta}))\\neq a_{s_0}(\\bm{\\mu}))\\le \\delta",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [],
+   "tuning": [
+    "GLR stopping rule with threshold beta(t,delta) of Eq. (betadef)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:kaufmann_prop15",
+    "number": "Corollary 4.2",
+    "quote": "Any algorithm for Problem~\\ref{prob:def} using the GLR stopping rule with the sequence of thresholds $(\\beta(t,\\delta))_{t\\in \\mathbb{N}}$ defined by Eq.~(\\ref{eq:betadef}) ensures \\[ \\mathbb{P}(\\tau_{\\delta}<\\infty,a_{s_0}(\\hat{\\bm{\\mu}}(\\tau_{\\delta}))\\neq a_{s_0}(\\bm{\\mu}))\\le \\delta. \\]"
+   },
+   "confidence": "medium",
+   "notes": "delta-correctness; stated as corollary of Kaufmann & Koolen 2021 Prop. 15 applied to this problem. Holds for any sampling rule, including RD-Tracking-TMCTS."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "almost_sure",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "limsup",
+    "expression": "log(1/delta)/d_s0",
+    "expression_latex": "\\mathbb{P}_{\\bm{\\mu}} \\left( \\limsup_{\\delta \\to 0} \\frac{\\tau_\\delta}{\\log(1 / \\delta)} \\leq \\frac{1}{d_{s_0}(\\bm{\\mu})} \\right) = 1",
+    "regime": "delta -> 0"
+   },
+   "symbols": {
+    "d_s0": "optimal value max_w inf_{lambda in Alt(mu)} sum_l w_l d(mu_l, lambda_l), computed recursively over the tree"
+   },
+   "conditions": [
+    "V_{s_0}(mu) != theta (Assumption 5.1)",
+    "sampling rule ensures N_l(t)/t -> w^{s_0}_l(mu) almost surely for every leaf"
+   ],
+   "tuning": [
+    "GLR stopping rule with threshold beta(t,delta) of Eq. (betadef)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:as_upper_bound",
+    "number": "Theorem 5.3",
+    "quote": "Using GLR stopping rule with the threshold $\\beta(t,\\delta)$ defined by Eq.~(\\ref{eq:betadef}), and any sampling rule ensuring that for every leaf $\\ell \\in \\mathcal{L}(T)$, $N_\\ell(t) / t$ converges almost surely to $w^{s_0}_\\ell(\\bm{\\mu})$, any algorithm for Problem~\\ref{prob:def} guarantees that for all $\\delta \\in (0,1)$, $\\mathbb{P}(\\tau_\\delta < +\\infty) = 1$ and \\[ \\mathbb{P}_{\\bm{\\mu}} \\left( \\limsup_{\\delta \\to 0} \\frac{\\tau_\\delta}{\\log(1 / \\delta)} \\leq \\frac{1}{d_{s_0}(\\bm{\\mu})} \\right) = 1. \\]"
+   },
+   "confidence": "high",
+   "notes": "Also states tau_delta finite a.s."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "almost_sure",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "log(1/delta)/d_s0",
+    "expression_latex": "\\mathbb{P}_{\\bm{\\mu}} \\left( \\limsup_{\\delta \\to 0} \\frac{\\tau_\\delta}{\\log(1 / \\delta)} \\leq \\frac{1}{d_{s_0}(\\bm{\\mu})} \\right) = 1",
+    "regime": "delta -> 0"
+   },
+   "symbols": {
+    "d_s0": "optimal value max_w inf_{lambda in Alt(mu)} sum_l w_l d(mu_l, lambda_l), computed recursively over the tree"
+   },
+   "conditions": [
+    "V_{s_0}(mu) != theta (Assumption 5.1)",
+    "optimal proportion w^{s_0}(mu) is unique (Assumption 5.2)"
+   ],
+   "tuning": [
+    "GLR stopping rule with threshold beta(t,delta) of Eq. (betadef)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Corollary 5.5",
+    "quote": "Using the threshold sequence $(\\beta(t,\\delta))_{t\\in \\mathbb{N}}$ defined by Eq.~(\\ref{eq:betadef}), RD-Tracking-TMCTS guarantees that for all $\\delta \\in (0,1)$, $\\mathbb{P}(\\tau_\\delta < +\\infty) = 1$ and \\[ \\mathbb{P}_{\\bm{\\mu}} \\left( \\limsup_{\\delta \\to 0} \\frac{\\tau_\\delta}{\\log(1 / \\delta)} \\leq \\frac{1}{d_{s_0}(\\bm{\\mu})} \\right) = 1. \\]"
+   },
+   "confidence": "high",
+   "notes": "Per-round time O(D log K) (Theorem 5.8), D tree depth, K max branching."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "log(1/delta)/d_s0",
+    "expression_latex": "\\limsup_{\\delta \\to +0} \\frac{\\mathbb{E}_{\\bm{\\mu}}[\\tau_\\delta]}{\\log(1 / \\delta)} \\leq \\frac{1}{ d_{s_0}(\\bm{\\mu})}",
+    "regime": "delta -> 0"
+   },
+   "symbols": {
+    "d_s0": "optimal value max_w inf_{lambda in Alt(mu)} sum_l w_l d(mu_l, lambda_l), computed recursively over the tree"
+   },
+   "conditions": [
+    "V_{s_0}(mu) != theta (Assumption 5.1)",
+    "optimal proportion w^{s_0}(mu) is unique (Assumption 5.2)"
+   ],
+   "tuning": [
+    "GLR stopping rule with threshold beta(t,delta) of Eq. (betadef)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:sample_complexity",
+    "number": "Theorem 5.6",
+    "quote": "For RD-Tracking-TMCTS with the threshold sequence $(\\beta(t,\\delta))_{t\\in \\mathbb{N}}$ defined by Eq.~(\\ref{eq:betadef}), expected stopping time $\\mathbb{E}_{\\bm{\\mu}}[\\tau_\\delta]$ is asymptotically upper-bounded by \\[ \\limsup_{\\delta \\to +0} \\frac{\\mathbb{E}_{\\bm{\\mu}}[\\tau_\\delta]}{\\log(1 / \\delta)} \\leq \\frac{1}{ d_{s_0}(\\bm{\\mu})}. \\]"
+   },
+   "confidence": "high",
+   "notes": "Matches the Garivier-Kaufmann lower bound (asymptotically optimal). Per-round time O(D log K) (Theorem 5.8)."
+  },
+  {
+   "id": "r5",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "log(1/delta)/d_s0",
+    "expression_latex": "\\limsup_{\\delta \\to +0} \\frac{ \\mathbb{E}[\\tau_\\delta] }{\\log(1 / \\delta)} \\leq \\frac{1}{d_{s_0}(\\bm{\\mu})}",
+    "regime": "delta -> 0"
+   },
+   "symbols": {
+    "d_s0": "optimal value of the thresholding (decision) problem characteristic, max_w inf_{lambda in Alt(mu)} sum_l w_l d(mu_l, lambda_l)"
+   },
+   "conditions": [
+    "root node is a MAX node",
+    "V_{s_0}(mu) != theta (Assumption 5.1)",
+    "optimal proportion w^{s_0}(mu) is unique (Assumption 5.2)"
+   ],
+   "tuning": [
+    "GAI GLR stopping rule Z^GAI_{s_0}(t) >= beta(t,delta)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:sample_complexity_GAI",
+    "number": "Theorem 7.1",
+    "quote": "The algorithm obtained by replacing the stopping condition of Algorithm~\\ref{alg:proposed} (line~\\ref{line:stopping_condition}) with $Z^\\mathrm{GAI}_{s_0}(t) \\geq \\beta(t,\\delta)$ satisfies \\[\\limsup_{\\delta \\to +0} \\frac{ \\mathbb{E}[\\tau_\\delta] }{\\log(1 / \\delta)} \\leq \\frac{1}{d_{s_0}(\\bm{\\mu})}.\\]"
+   },
+   "confidence": "medium",
+   "notes": "Paper claims the GAI lower bound (Degenne & Koolen) is lower bounded by d_s0^{-1}, making this optimal."
+  },
+  {
+   "id": "r6",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "delta",
+    "expression_latex": "\\mathbb{P}(\\tau_\\delta < \\infty, \\hat{a}^\\mathrm{GAI}(\\tau_\\delta) \\text{ is not a correct answer}) \\leq \\delta",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "root node is a MAX node"
+   ],
+   "tuning": [
+    "threshold beta(t,delta) of Eq. (betadef)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem G.1",
+    "quote": "The algorithm obtained by replacing the stopping rule of Algorithm~\\ref{alg:proposed} (line~\\ref{line:stopping_condition}) with $Z^\\mathrm{GAI}_{s_0}(t) \\geq \\beta(t,\\delta)$ satisfies \\[ \\mathbb{P}(\\tau_\\delta < \\infty, \\hat{a}^\\mathrm{GAI}(\\tau_\\delta) \\text{ is not a correct answer}) \\leq \\delta\\]"
+   },
+   "confidence": "high",
+   "notes": "delta-correctness for GAI."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "pmlr-v49-garivier16a",
+   "cited_title": null,
+   "cited_first_author": "Garivier",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Fixed-confidence identification (here thresholding MCTS) with one-parameter exponential family arms; any delta-correct algorithm",
+   "bound": {
+    "notation": "liminf",
+    "expression": "T_star*log(1/delta)",
+    "expression_latex": "\\liminf_{\\delta \\to 0} \\frac{\\mathbb{E}_{\\bm{\\mu}}[\\tau_\\delta]}{\\log(1 / \\delta)} \\geq \\left( \\max_{\\bm{w} \\in \\Delta} \\inf_{\\bm{\\lambda} \\in \\mathrm{Alt}(\\bm{\\mu})} \\sum_{\\ell} w_{\\ell} d(\\mu_{\\ell},\\lambda_{\\ell}) \\right)^{-1}",
+    "regime": "delta -> 0"
+   },
+   "where": "Theorem 3.1 (also attributed to DBLP:conf/nips/DegenneK19)"
+  },
+  {
+   "cited_key": "DBLP:conf/nips/DegenneK19",
+   "cited_title": null,
+   "cited_first_author": "Degenne",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Good action identification (multiple correct answers) on a MAX-rooted tree; delta-correct algorithms",
+   "bound": {
+    "notation": "liminf",
+    "expression": "T_star*log(1/delta)",
+    "expression_latex": "\\left(\\max_{c\\in A_{s_0}(\\bm{\\mu})}\\max_{\\bm{w}\\in\\Delta}\\inf_{\\bm{\\lambda}\\in {\\mathrm{Alt}^{\\mathrm{GAI}}(c)}}\\sum_{\\ell}w_{\\ell}d(\\mu_{\\ell},\\lambda_{\\ell})\\right)^{-1}",
+    "regime": "delta -> 0"
+   },
+   "where": "Section 7, Eq. (GAI:LB)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T13:39:38",
+  "source_chars": 145711,
+  "input_tokens": 124576,
+  "output_tokens": 8653,
+  "cost_usd_equiv": 0.891356,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

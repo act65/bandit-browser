@@ -1,7 +1,8 @@
 """Download and convert PDFs for non-arXiv papers in corpus/manifest.yaml.
 
 For every manifest entry with `arxiv_id: null` and a `pdf_url`, this downloads the PDF to
-corpus/src/<id>/paper.pdf and converts it with `pdftotext -layout` (or pdftotext's reading-order mode when a
+corpus/src/<id>/paper.pdf (arXiv papers whose authors withheld the LaTeX: fetch.py already saved
+corpus/src/<arxiv_id>/paper.pdf, which is converted the same way) and converts it with `pdftotext -layout` (or pdftotext's reading-order mode when a
 two-column layout is detected) into corpus/pre/<id>.tex,
 so the LLM extractor can read it like the preprocessed arXiv sources. Both directories are
 gitignored (copyright).
@@ -111,12 +112,15 @@ def main() -> None:
 
     papers = yaml.safe_load(MANIFEST.read_text())["papers"]
     todo = [p for p in papers if p.get("arxiv_id") is None and p.get("pdf_url")]
+    todo += [{**p, "id": p["arxiv_id"].replace("/", "_"), "pdf_url": None} for p in papers if p.get("arxiv_id")
+             and (SRC / p["arxiv_id"].replace("/", "_") / "paper.pdf").exists()
+             and not (PRE / f"{p['arxiv_id'].replace('/', '_')}.tex").exists()]
     if args.only:
         todo = [p for p in todo if p["id"] in set(args.only)]
     for i, p in enumerate(todo):
         tag = f"[{i + 1}/{len(todo)}] {p['id']}"
         try:
-            status = download(p["id"], p["pdf_url"], args.force)
+            status = download(p["id"], p["pdf_url"], args.force) if p["pdf_url"] else "cached (arXiv PDF)"
         except Exception as e:  # keep going; report per paper
             print(f"{tag}: download ERROR {e}", flush=True)
             if (SRC / p["id"] / "paper.pdf").exists():

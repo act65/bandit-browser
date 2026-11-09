@@ -59,7 +59,7 @@ BASE = {"T": 10**6, "K": 10, "d": 10, "Delta": sympy.Rational(1, 10), "epsilon":
 GAP_ALIASES = {"Delta_i": "Delta", "Delta_min": "Delta", "Delta_max": "Delta", "Delta_lin": "Delta"}
 KL_LIKE = {"KL_i", "kl_i", "Kinf_i"}
 WORST_CASE_T = {"L_star", "Q_T", "Lambda_T"}   # data-dependent, at most ~T
-OPAQUE = {"C_lin"}                              # instance constants with unknown scaling
+OPAQUE = {"C_lin", "gamma_T"}                   # unknown scaling: instance constants; gamma_T (information gain) grows with T at a kernel-dependent rate
 PATH_POWER = 4                                  # regime T = v^4 when scanning K, d, 1/Delta, 1/eps
 INSTANCE_TIED_PARAMS = {"eps_alg"}              # free analysis parameters usually required to be < Delta
 
@@ -179,6 +179,44 @@ def _fit(f, args: list, base: dict, path) -> tuple[float, float] | None:
     M = mpmath.matrix([[l, mpmath.log(l), 1] for l, _ in pts])
     a, b, _ = mpmath.lu_solve(M, mpmath.matrix([y for _, y in pts]))
     return _round(float(a)), _round(float(b))
+
+
+RELATION = re.compile(r"(<=|>=|≤|≥|==|=|<|>)")
+FUNCTION_NAMES = {"log", "sqrt", "exp", "min", "max", "Min", "Max", "O", "Omega", "Theta", "poly", "polylog"}
+
+
+def side_condition_unknowns(texts: list[str], canonical: set[str]) -> set[str]:
+    """Scanned variables whose scan path violates a side condition of the bound.
+
+    The profile sends one variable to infinity (K, d up; Delta, epsilon down) with the others fixed. A bound
+    stated for "2 <= K <= d" says nothing about K -> infinity at fixed d, and one stated for "n_act = 2^(d/2)"
+    or "m = d/2" nothing about d alone: its exponent in that variable is unknown (else such bounds show as
+    conflicts, e.g. jin2026nearly, li2019nearlyminimax). Only relations between canonical symbols are read;
+    relations involving T are left to the horizon rules (the scan raises T with the variable)."""
+    out = set()
+    for text in texts:
+        for piece in re.split(r"[,;]| and |\bfor\b|\bwith\b", text or ""):
+            parts = RELATION.split(piece)
+            for i in range(0, len(parts) - 2, 2):
+                lhs, op, rhs = parts[i], parts[i + 1], parts[i + 2]
+                ids = []
+                for side in (lhs, rhs):
+                    names = {m.group(0) for m in resolve.IDENT_RE.finditer(side)
+                             if side[m.end():m.end() + 1] != "(" and m.group(0) not in FUNCTION_NAMES}
+                    ids.append(names)
+                (a, b) = ids
+                if not a or not b or (a | b) - canonical or "T" in a | b:
+                    continue  # numbers only, a foreign symbol, or the horizon
+                if op in ("=", "=="):
+                    out |= {v for v in (a ^ b) if v in SCAN and v != "T"}
+                    continue
+                small, big = (a, b) if op in ("<", "<=", "≤") else (b, a)
+                for v, (_, direction) in SCAN.items():
+                    if v == "T":
+                        continue
+                    if direction == "up" and v in small - big or direction == "down" and v in big - small:
+                        out.add(v)
+    return out
 
 
 def profile(e, canonical: set[str]) -> dict | None:
@@ -305,6 +343,14 @@ def compare(results: dict, inferred: list[dict], canonical: set[str]) -> dict:
     def conditions_of(eid: str) -> list[str]:
         return source_of(eid).get("conditions") or []
 
+    for eid, p in profiles.items():
+        if p is not None:
+            src = source_of(eid)
+            unk = side_condition_unknowns(conditions_of(eid) + [src["bound"].get("regime") or ""], canonical | set(SCAN))
+            if unk & set(p["_path"]):
+                profiles[eid] = {**p, "_unknown": set(p.get("_unknown", ())) | unk}
+    notation = {e[0]: e[6] for e in entries}
+
     regimes = collections.defaultdict(lambda: {"upper": [], "lower": []})
     rate_regime = {}  # bound id -> "family|dependence" of the cell whose rate it takes part in
     for eid, sid, side, q, dep, cls, nota, expr, inh, cav in entries:
@@ -360,7 +406,13 @@ def compare(results: dict, inferred: list[dict], canonical: set[str]) -> dict:
                 bl = max(path_exp(x["profile"], v) for x in ls)
                 du = min(tuple(x["profile"].get(v, (0, 0))) for x in us)
                 dl = max(tuple(x["profile"].get(v, (0, 0))) for x in ls)
-                if bu < bl:
+                # O~ / Omega~ hide log factors: if every best upper (or every best lower) bound is stated with
+                # them, only the polynomial rates are known, so equal polynomial rates are a log gap at best
+                hidden_logs = all(notation.get(x["id"]) == "O_tilde" for x in us if path_exp(x["profile"], v) == bu) \
+                    or all(notation.get(x["id"]) == "Omega_tilde" for x in ls if path_exp(x["profile"], v) == bl)
+                if bu[0] == bl[0] and bu <= bl and hidden_logs:
+                    s, lvl = "log_gap", 1
+                elif bu < bl:
                     s, lvl = "conflict", 3
                     conflicts.append({"setting_id": sid, "family": fam, "dependence": dep, "var": v,
                                       "upper": [x["id"] for x in us if path_exp(x["profile"], v) == bu],

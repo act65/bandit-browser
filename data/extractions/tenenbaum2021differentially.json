@@ -1,0 +1,548 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Differentially Private Multi-Armed Bandits in the Shuffle Model",
+  "arxiv_id": "2106.02900",
+  "arxiv_version": null,
+  "year": 2021,
+  "authors": [
+   "Jay Tenenbaum",
+   "Haim Kaplan",
+   "Yishay Mansour",
+   "Uri Stemmer"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Shuffle-model MAB with (eps,delta)-shuffle differential privacy",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "K",
+    "eps_dp"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "differential_privacy",
+    "batched"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Privacy is shuffle-model (eps,delta)-DP: each batch of users' rewards is aggregated via an (eps,delta)-SDP shuffle mechanism; the learner knows the privacy parameter delta_dp as well as eps_dp",
+    "Batch sizes are chosen adaptively by the server on the fly (not a fixed predetermined number of batches); the server only observes privatized batch sums",
+    "Each user participates in exactly one batch with a single round of communication"
+   ],
+   "definition_quote": "The \\textit{shuffle-model MAB} setting involves repeating the following process until the $T$'th player pulls its arm: The server selects a batch size $m$, a \\textit{batch} of $m$ random fresh new users, and an $m$-user single-round SDP mechanism $M$. It then picks an arm $a\\in [k]$ that all $m$ users of the batch pull. ... Each user $i$ determines binary reward from pulling the arm $a$. ... The server computes $M(\\{r_i\\}_{i\\in batch})$ using the rewards $r_i$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "SDP-AE (Shuffle Differentially Private Arm Elimination)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "eps_dp",
+    "delta_dp",
+    "batch size m"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "VB-SDP-AE (Variable Batch Shuffle Differentially Private Arm Elimination)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "eps_dp",
+    "delta_dp"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(log(T)/Delta_i + sigma_ed**2*log(T)/(m_b*Delta_i) + m_b*Delta_i)",
+    "expression_latex": "O\\left(\\sum_{a\\in [k]:\\Delta_a>0}\\left(\\frac{\\log T}{\\Delta_a}+\\frac{\\sigma_{\\eps,\\delta}^2\\log T}{m\\Delta_a}+m\\Delta_a\\right)\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "sigma_ed": "sub-Gaussian std parameter of the SDP binary summation mechanism's error, sigma^2 = O(log(1/delta_dp)/eps_dp^2)",
+    "m_b": "batch size of SDP-AE"
+   },
+   "conditions": [
+    "k <= T (used in union bound)",
+    "binary rewards"
+   ],
+   "tuning": [
+    "fixed batch size m_b"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:batchAERegret",
+    "number": "Theorem 3.1",
+    "quote": "The algorithm \\SDPAE is $(\\eps,\\delta)$-SDP, and has a distribution-dependent regret of $O\\left(\\sum_{a\\in [k]:\\Delta_a>0}\\left(\\frac{\\log T}{\\Delta_a}+\\frac{\\sigma_{\\eps,\\delta}^2\\log T}{m\\Delta_a}+m\\Delta_a\\right)\\right)$, and a distribution-independent regret of $O\\left(\\sqrt{\\left(1+\\frac{\\sigma_{\\eps,\\delta}^2}{m}\\right)kT\\log T}+mk\\right)$."
+   },
+   "confidence": "high",
+   "notes": "Regret defined as T mu* - E[sum r] = E[sum N_a Delta_a], i.e. pseudo-regret. Proof gives explicit constants 128 and 512."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt((1 + sigma_ed**2/m_b)*K*T*log(T)) + m_b*K",
+    "expression_latex": "O\\left(\\sqrt{\\left(1+\\frac{\\sigma_{\\eps,\\delta}^2}{m}\\right)kT\\log T}+mk\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "sigma_ed": "sub-Gaussian std parameter of the SDP binary summation mechanism's error, sigma^2 = O(log(1/delta_dp)/eps_dp^2)",
+    "m_b": "batch size of SDP-AE"
+   },
+   "conditions": [
+    "k <= T",
+    "binary rewards"
+   ],
+   "tuning": [
+    "fixed batch size m_b"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:batchAERegret",
+    "number": "Theorem 3.1",
+    "quote": "and a distribution-independent regret of $O\\left(\\sqrt{\\left(1+\\frac{\\sigma_{\\eps,\\delta}^2}{m}\\right)kT\\log T}+mk\\right)$."
+   },
+   "confidence": "high",
+   "notes": "Distribution-independent part of Theorem 3.1."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(log(T)/Delta_i) + K*log(1/delta_dp)/eps_dp**2",
+    "expression_latex": "O\\left(\\left(\\sum_{a\\in [k]:\\Delta_a>0}\\frac{\\log T}{\\Delta_a}\\right)+\\frac{k\\log\\frac{1}{\\delta}}{\\eps^2}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "delta_dp": "privacy parameter delta of (eps,delta)-SDP"
+   },
+   "conditions": [
+    "k <= T",
+    "binary rewards"
+   ],
+   "tuning": [
+    "batch size m = ceil(sigma_{eps,delta}) = Theta(log(1/delta)/eps^2) as stated"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:batchedAESDPRegret",
+    "number": "Corollary 3.2",
+    "quote": "\\SDPAE with a batch size of $m=\\ceil{\\sigma_{\\eps,\\delta}}=\\Theta\\left(\\frac{\\log\\frac{1}{\\delta}}{\\eps^2}\\right)$ is $(\\eps,\\delta)$-SDP and has a distribution-dependent regret of $O\\left(\\sum_{a\\in [k]:\\Delta_a>0}\\left(\\frac{\\log T}{\\Delta_a}+\\frac{\\Delta_a\\log\\frac{1}{\\delta}}{\\eps^2}\\right)\\right)=O\\left(\\left(\\sum_{a\\in [k]:\\Delta_a>0}\\frac{\\log T}{\\Delta_a}\\right)+\\frac{k\\log\\frac{1}{\\delta}}{\\eps^2}\\right)$"
+   },
+   "confidence": "medium",
+   "notes": "Paper writes m = ceil(sigma) but equates it to Theta(log(1/delta)/eps^2), which is sigma^2; the intended choice is presumably ceil(sigma^2). Uses Delta_i <= 1."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(T)) + K*log(1/delta_dp)/eps_dp**2",
+    "expression_latex": "O\\left(\\sqrt{kT\\log T}+\\frac{k\\log\\frac{1}{\\delta}}{\\eps^2}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "delta_dp": "privacy parameter delta of (eps,delta)-SDP"
+   },
+   "conditions": [
+    "k <= T",
+    "binary rewards"
+   ],
+   "tuning": [
+    "batch size m = Theta(log(1/delta)/eps^2)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:batchedAESDPRegret",
+    "number": "Corollary 3.2",
+    "quote": "and a distribution-independent regret of $O\\left(\\sqrt{kT\\log T}+\\frac{k\\log\\frac{1}{\\delta}}{\\eps^2}\\right)$."
+   },
+   "confidence": "high",
+   "notes": ""
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(log(T)/Delta_i) + K*sigma_ed*log(T)",
+    "expression_latex": "O\\left(\\left(\\sum_{a\\in [k]:\\Delta_a>0}\\frac{\\log T}{\\Delta_a}\\right)+k\\sigma_{\\eps,\\delta}\\log T\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "sigma_ed": "sub-Gaussian std parameter of the SDP binary summation mechanism's error, sigma^2 = O(log(1/delta_dp)/eps_dp^2)"
+   },
+   "conditions": [
+    "k <= T",
+    "binary rewards"
+   ],
+   "tuning": [
+    "batch size m^t = 2^t in phase t"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:variablebatchAERegret",
+    "number": "Theorem 3.3",
+    "quote": "The algorithm \\VBSDPAE is $(\\eps,\\delta)$-SDP, and has a distribution-dependent regret of $O\\left(\\left(\\sum_{a\\in [k]:\\Delta_a>0}\\frac{\\log T}{\\Delta_a}\\right)+k\\sigma_{\\eps,\\delta}\\log T\\right)$, and a distribution-independent regret of $O\\left(\\sqrt{kT\\log T}+k\\sigma_{\\eps,\\delta}\\log T\\right)$."
+   },
+   "confidence": "high",
+   "notes": "Constants 512 and 64*sqrt(2) in the proof."
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(T)) + K*sigma_ed*log(T)",
+    "expression_latex": "O\\left(\\sqrt{kT\\log T}+k\\sigma_{\\eps,\\delta}\\log T\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "sigma_ed": "sub-Gaussian std parameter of the SDP binary summation mechanism's error"
+   },
+   "conditions": [
+    "k <= T",
+    "binary rewards"
+   ],
+   "tuning": [
+    "batch size m^t = 2^t in phase t"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:variablebatchAERegret",
+    "number": "Theorem 3.3",
+    "quote": "and a distribution-independent regret of $O\\left(\\sqrt{kT\\log T}+k\\sigma_{\\eps,\\delta}\\log T\\right)$."
+   },
+   "confidence": "high",
+   "notes": ""
+  },
+  {
+   "id": "r7",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(log(T)/Delta_i) + K*sqrt(log(1/delta_dp))*log(T)/eps_dp",
+    "expression_latex": "O\\left(\\left(\\sum_{a\\in [k]:\\Delta_a>0}\\frac{\\log T}{\\Delta_a}\\right)+\\frac{k\\sqrt{\\log\\frac{1}{\\delta}}\\log T}{\\eps}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "delta_dp": "privacy parameter delta of (eps,delta)-SDP"
+   },
+   "conditions": [
+    "k <= T",
+    "binary rewards",
+    "eps_dp < 1"
+   ],
+   "tuning": [
+    "batch size m^t = 2^t in phase t"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:variablebatchedAESDPRegret",
+    "number": "Corollary 3.4",
+    "quote": "\\VBSDPAE is $(\\eps,\\delta)$-SDP and has a distribution-dependent regret of $O\\left(\\left(\\sum_{a\\in [k]:\\Delta_a>0}\\frac{\\log T}{\\Delta_a}\\right)+\\frac{k\\sqrt{\\log\\frac{1}{\\delta}}\\log T}{\\eps}\\right)$, and a distribution-independent regret of $O\\left(\\sqrt{kT\\log T}+\\frac{k\\sqrt{\\log\\frac{1}{\\delta}}\\log T}{\\eps}\\right)$."
+   },
+   "confidence": "high",
+   "notes": "eps<1 from the summation mechanism's theorem (Theorem A.1)."
+  },
+  {
+   "id": "r8",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(T)) + K*sqrt(log(1/delta_dp))*log(T)/eps_dp",
+    "expression_latex": "O\\left(\\sqrt{kT\\log T}+\\frac{k\\sqrt{\\log\\frac{1}{\\delta}}\\log T}{\\eps}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "delta_dp": "privacy parameter delta of (eps,delta)-SDP"
+   },
+   "conditions": [
+    "k <= T",
+    "binary rewards",
+    "eps_dp < 1"
+   ],
+   "tuning": [
+    "batch size m^t = 2^t in phase t"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:variablebatchedAESDPRegret",
+    "number": "Corollary 3.4",
+    "quote": "and a distribution-independent regret of $O\\left(\\sqrt{kT\\log T}+\\frac{k\\sqrt{\\log\\frac{1}{\\delta}}\\log T}{\\eps}\\right)$."
+   },
+   "confidence": "high",
+   "notes": ""
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "sajed2019optimal",
+   "cited_title": "An optimal private stochastic-mab algorithm based on optimal private stopping rule",
+   "cited_first_author": "T. Sajed",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic K-armed bandit, centralized (eps,0)-DP",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(log(T)/Delta_i) + K*log(T)/eps_dp",
+    "expression_latex": "\\Theta\\left(\\left(\\sum_{a\\in [k]:\\Delta_a>0} \\frac{\\log T}{\\Delta_a}\\right)+\\frac{k\\log T}{\\eps}\\right)",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "shariff2018differentially",
+   "cited_title": "Differentially private contextual linear bandits",
+   "cited_first_author": "R. Shariff",
+   "cited_year": 2018,
+   "cited_arxiv_id": "1810.00068",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Stochastic K-armed bandit, centralized (eps,0)-DP",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sum_subopt(log(T)/Delta_i) + K*log(T)/eps_dp",
+    "expression_latex": "\\Theta\\left(\\left(\\sum_{a\\in [k]:\\Delta_a>0} \\frac{\\log T}{\\Delta_a}\\right)+\\frac{k\\log T}{\\eps}\\right)",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "tossou2016algorithms",
+   "cited_title": "Algorithms for differentially private multi-armed bandits",
+   "cited_first_author": "A. Tossou",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic K-armed bandit, centralized (eps,delta)-DP",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(log(T)/Delta_i) + K/eps_dp",
+    "expression_latex": "O\\left(\\left(\\sum_{a\\in [k]:\\Delta_a>0} \\frac{\\log T}{\\Delta_a}\\right)+\\frac{k}{\\eps}\\right)",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "ren2020multi",
+   "cited_title": "Multi-armed bandits with local differential privacy",
+   "cited_first_author": "W. Ren",
+   "cited_year": 2020,
+   "cited_arxiv_id": "2007.03121",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic K-armed bandit, local (eps,0)-DP",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(log(T)/Delta_i)/eps_dp**2",
+    "expression_latex": "\\Theta\\left(\\frac{1}{\\eps^2}\\sum_{a\\in [k]:\\Delta_a>0}\\frac{\\log T}{\\Delta_a}\\right)",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "ren2020multi",
+   "cited_title": "Multi-armed bandits with local differential privacy",
+   "cited_first_author": "W. Ren",
+   "cited_year": 2020,
+   "cited_arxiv_id": "2007.03121",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Stochastic K-armed bandit, local (eps,0)-DP",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sum_subopt(log(T)/Delta_i)/eps_dp**2",
+    "expression_latex": "\\Theta\\left(\\frac{1}{\\eps^2}\\sum_{a\\in [k]:\\Delta_a>0}\\frac{\\log T}{\\Delta_a}\\right)",
+    "regime": null
+   },
+   "where": "Table 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T14:10:19",
+  "source_chars": 68426,
+  "input_tokens": 69923,
+  "output_tokens": 8744,
+  "cost_usd_equiv": 0.455952,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

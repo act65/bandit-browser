@@ -1,0 +1,327 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Stochastic Conservative Contextual Linear Bandits",
+  "arxiv_id": "2203.15629",
+  "arxiv_version": null,
+  "year": 2022,
+  "authors": [
+   "Jiabin Lin",
+   "Xian Yeow Lee",
+   "Talukder Jubery",
+   "Shana Moothedath",
+   "Soumik Sarkar",
+   "Baskar Ganapathysubramanian"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Conservative stochastic contextual linear bandit with context distribution (unknown contexts)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "d",
+    "S",
+    "L_feat",
+    "sigma"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "safety_constraints",
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "l2_ball",
+    "loss_set": "bounded_mean_reward",
+    "parameter_structure": "unspecified"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "conservative_baseline",
+    "violation": "never"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Environment (adversary) chooses a context distribution mu_t each round; the context c_t ~ mu_t is never observed, only mu_t; learner uses expected features E_{c~mu_t}[phi_{x,c}]",
+    "The learner knows the expected rewards r(b_t,c_t) of the baseline policy's actions",
+    "The learner knows the conservative constraint level alpha in (0,1)",
+    "Mean rewards in [0,1]; baseline reward in [r_l, r_h] and baseline gap in [Delta_l, Delta_h] (Assumption 3)"
+   ],
+   "definition_quote": "At round $t$, the environment chooses a distribution $\\mu_t \\in \\P(\\C)$ over the context set and samples a context realization $c_t \\sim \\mu_t$. The learner observes only $\\mu_t$ and not  $c_t$ and chooses an action ... the difference between the performances of the baseline and the learner's policies should remain above a pre-defined fraction $\\alpha \\in (0, 1)$ of the baseline performance."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Conservative linear UCB for stochastic bandits with context distribution (Algorithm 1)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "d",
+    "S",
+    "L_feat",
+    "sigma",
+    "alpha (constraint level)",
+    "baseline rewards r(b_t,c_t)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "R_UCB_ST + 4*sqrt(2*m_T*log(1/delta)) + n_T*Delta_h",
+    "expression_latex": "\\R_{S_T}^{UCB} + 4\\sqrt{2m_T\\log\\dfrac{1}{\\delta}}+ n_{T} \\Delta_h",
+    "regime": null
+   },
+   "symbols": {
+    "R_UCB_ST": "cumulative pseudo-regret of linear UCB on rounds in S_T",
+    "m_T": "number of rounds the learner's optimistic action was played",
+    "n_T": "number of rounds the baseline action was played",
+    "Delta_h": "upper bound on the baseline gap"
+   },
+   "conditions": [
+    "Assumptions 1-3"
+   ],
+   "tuning": [
+    "confidence parameter delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "lem:one",
+    "number": "Lemma 1",
+    "quote": "The regret of Algorithm~\\ref{alg:UCB} with expected feature set $\\Psi_t$ is bounded in time $T$ with probability at least $1-\\delta$, $$\\R_T \\leq   \\R_{S_T}^{UCB} + 4\\sqrt{2m_T\\log\\dfrac{1}{\\delta}}+ n_{T} \\Delta_h,$$"
+   },
+   "confidence": "medium",
+   "notes": "Decomposition in terms of random quantities m_T, n_T."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": "a1",
+   "algorithm_class": "other",
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "d**2*(S*sqrt(lam)+sigma)**2/(alpha_c*r_h*(Delta_h+alpha_c*r_h))*log(10*d*(S*sqrt(lam)+sigma)/(sqrt(delta)*(Delta_h+alpha_c*r_h)))**2",
+    "expression_latex": "n_T \\geqslant \\dfrac{d^2 (A\\sqrt{\\lambda}+\\sigma)^2}{\\alpha r_h(\\Delta_h +\\alpha r_h)}\\Big[ \\log \\Big(\\dfrac{10d(A\\sqrt{\\lambda}+\\sigma)}{\\sqrt{\\delta}(\\Delta_h +\\alpha r_h)} \\Big) \\Big]^2",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_c": "conservative constraint level alpha in (0,1)",
+    "r_h": "upper bound on baseline reward",
+    "Delta_h": "upper bound on baseline gap"
+   },
+   "conditions": [
+    "specific algorithm: Algorithm 1",
+    "on event that theta* in B_t for all t (prob >= 1-delta)",
+    "Assumptions 1-3"
+   ],
+   "tuning": [
+    "lambda >= D^2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:lower",
+    "number": "Theorem 1",
+    "quote": "Assume that $\\lambda \\geqslant D^2$. On event $\\varepsilon$, for any horizon $T \\in \\mathbb{N}$, the following holds $$ n_T \\geqslant \\dfrac{d^2 (A\\sqrt{\\lambda}+\\sigma)^2}{\\alpha r_h(\\Delta_h +\\alpha r_h)}\\Big[ \\log \\Big(\\dfrac{10d(A\\sqrt{\\lambda}+\\sigma)}{\\sqrt{\\delta}(\\Delta_h +\\alpha r_h)} \\Big) \\Big]^2.$$"
+   },
+   "confidence": "low",
+   "notes": "Lower bound on the number of baseline plays n_T by Algorithm 1, not a regret lower bound. A=S, D=L_feat. Proof appears questionable (e.g. Lemma 2 sign issues)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "d*log(L_feat*T/(lam*delta))*sqrt(T) + K_h*Delta_h/(alpha_c*r_l) + K_l*sqrt(log(1/delta))/sqrt(alpha_c*r_h*(Delta_h+alpha_c*r_h))",
+    "expression_latex": "O\\Big( d\\log (\\dfrac{D}{\\lambda\\delta}T)\\sqrt{T} +\\dfrac{K_{h}\\Delta_h}{\\alpha r_{\\ell}} + \\dfrac{K_{\\ell}\\sqrt{\\log(1/\\delta)}}{\\sqrt{\\alpha r_h(\\Delta_h +\\alpha r_h)}}  \\Big)",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_c": "conservative constraint level alpha in (0,1)",
+    "r_l": "lower bound on baseline reward",
+    "r_h": "upper bound on baseline reward",
+    "Delta_h": "upper bound on baseline gap",
+    "Delta_l": "lower bound on baseline gap",
+    "K_h": "1+114*d**2*(S*sqrt(lam)+sigma)**2/(Delta_l+alpha_c*r_l)*log(62*d*(S*sqrt(lam)+sigma)/(sqrt(delta)*(Delta_l+alpha_c*r_l)))**2",
+    "K_l": "d*(S*sqrt(lam)+sigma)*log(10*d*(S*sqrt(lam)+sigma)/(sqrt(delta)*(Delta_h+alpha_c*r_h)))"
+   },
+   "conditions": [
+    "Assumptions 1-3 (conditionally sigma-subGaussian noise, ||theta*||<=A, ||phi||<=D, mean rewards in [0,1], baseline reward in [r_l,r_h], baseline gap in [Delta_l,Delta_h])",
+    "baseline expected rewards known"
+   ],
+   "tuning": [
+    "confidence parameter delta",
+    "lambda >= max{1, D^2} (from Proposition 4 / Theorem 1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th:regret",
+    "number": "Theorem 2",
+    "quote": "With probability at least $1-\\delta$, Algorithm~\\ref{alg:UCB} satisfies the performace constraint in Eq.~\\eqref{eq:constraint} for all $t \\in \\mathbb{N}$, and satisfies the following regret bound $$\\R_T \\leq  O\\Big( d\\log (\\dfrac{D}{\\lambda\\delta}T)\\sqrt{T} +\\dfrac{K_{h}\\Delta_h}{\\alpha r_{\\ell}} + \\dfrac{K_{\\ell}\\sqrt{\\log(1/\\delta)}}{\\sqrt{\\alpha r_h(\\Delta_h +\\alpha r_h)}}  \\Big),$$"
+   },
+   "confidence": "medium",
+   "notes": "A mapped to S, D to L_feat. Paper sets Delta_h=r_h=1, Delta_l=0. Constraint satisfied at all rounds w.p. 1-delta."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "kirschner2019stochastic",
+   "cited_title": "Stochastic bandits with context distributions",
+   "cited_first_author": "J. Kirschner",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB for linear stochastic bandits with context distributions",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Linear stochastic bandits with context distributions (expected feature set), high-probability regret",
+   "bound": {
+    "notation": "exact",
+    "expression": "R_UCB_T + 4*sqrt(2*T*log(1/delta))",
+    "expression_latex": "\\R_T^{UCB}+4\\sqrt{2T\\log\\dfrac{1}{\\delta}}",
+    "regime": null
+   },
+   "where": "Proposition 2"
+  },
+  {
+   "cited_key": "kazerouni2016conservative",
+   "cited_title": "Conservative contextual linear bandits",
+   "cited_first_author": "A. Kazerouni",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "linear UCB (OFUL)",
+   "algorithm_registry_id": "oful",
+   "side": "upper",
+   "setting_description": "Linear stochastic bandit, regret of linear UCB on rounds S_T, on event theta* in confidence sets",
+   "bound": {
+    "notation": "O",
+    "expression": "d*log(L_feat*T/(lam*delta))*sqrt(T)",
+    "expression_latex": "O\\Big( d\\log (\\dfrac{D}{\\lambda\\delta}T)\\sqrt{T} \\Big)",
+    "regime": null
+   },
+   "where": "Proposition 3"
+  },
+  {
+   "cited_key": "kazerouni2016conservative",
+   "cited_title": "Conservative contextual linear bandits",
+   "cited_first_author": "A. Kazerouni",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CLUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Conservative contextual linear bandit: upper bound on number of baseline plays n_T, lambda >= max{1,D^2}",
+   "bound": {
+    "notation": "exact",
+    "expression": "1+114*d**2*(S*sqrt(lam)+sigma)**2/(alpha_c*r_l*(Delta_l+alpha_c*r_l))*log(62*d*(S*sqrt(lam)+sigma)/(sqrt(delta)*(Delta_l+alpha_c*r_l)))**2",
+    "expression_latex": "n_T \\leqslant 1+114d^2 \\dfrac{(A\\sqrt{\\lambda}+\\sigma)^2}{\\alpha r_{\\ell}(\\Delta_{\\ell}+\\alpha r_{\\ell})}\\Big[ \\log \\Big ( \\dfrac{62d(A\\sqrt{\\lambda}+\\sigma)}{\\sqrt{\\delta}(\\Delta_{\\ell}+\\alpha r_{\\ell})}\\Big) \\Big]^2",
+    "regime": null
+   },
+   "where": "Proposition 4"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T11:54:16",
+  "source_chars": 57438,
+  "input_tokens": 66112,
+  "output_tokens": 6614,
+  "cost_usd_equiv": 0.382864,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

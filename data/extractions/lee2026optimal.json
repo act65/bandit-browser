@@ -1,0 +1,428 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Optimal Design for Multinomial Logit Model with Applications to Best Assortment Identification",
+  "arxiv_id": "2605.25592",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Joongkyu Lee",
+   "Min-hwan Oh"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Best assortment identification (BSI) in MNL bandits with linear utilities",
+   "objective": "bai_fixed_confidence",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "K",
+    "m",
+    "d",
+    "S"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "at_most_m",
+    "reward": "unspecified",
+    "loss_scale": "unspecified"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "comparison": "not_applicable",
+    "winner": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Multinomial logit (MNL) choice feedback with outside option: learner offers an assortment of at most m items and observes a single chosen item (or no-purchase), probabilities exp(a_i^T theta)/(1+sum_j exp(a_j^T theta))",
+    "Expected revenue objective R(S,theta)=sum_i p(i|S,theta) r_i with known item revenues r_i in [0,1] (non-uniform)",
+    "The learner knows the problem-dependent constant kappa = min_S min_{i in S} p(i|S,theta*) p(0|S,theta*) (algorithm input)",
+    "Item features a_i in R^d with ||a_i||_2<=1 known; ||theta*||_2 <= B (paper's B = canonical S)"
+   ],
+   "definition_quote": "we adopt the MNL choice model with an outside option ... p(i| S,\\thetab^\\star):=\\frac{\\exp(\\ab_i^\\top\\thetab^\\star)}{1+\\sum_{j\\in S}\\exp(\\ab_j^\\top\\thetab^\\star)} ... Let $S^\\star\\in\\argmax_{S \\in \\Scal}R(S,\\thetab^\\star)$ denote the optimal assortment and assume the maximizer is unique. Given a failure probability $\\delta>0$, our goal is to interact with the environment until a (possibly random) stopping time $\\tau$ and return an assortment $\\hat S$ such that $\\PP(\\hat{S} = S^\\star \\wedge \\tau < \\infty ) \\geq 1-\\delta$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "BSI-MNL (Best Assortment Identification in MNL bandits) with MILP-based Frank-Wolfe G-optimal design",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "kappa",
+    "S",
+    "d",
+    "K",
+    "m",
+    "delta"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "BSI-MNL with lifted (Schur-complement) G-optimal design",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "kappa",
+    "S",
+    "d",
+    "K",
+    "m",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*log(K/delta)*(1/Delta_min**2 + 1/(kappa*Delta_min)) + T_0",
+    "expression_latex": "\\BigOTilde\\!\\left( d \\log\\!\\left(N/\\delta\\right) \\left( \\frac{1}{\\Gap^2} + \\frac{1}{\\kappa\\,\\Gap} \\right) + \\WarmupRounds \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "kappa": "min over nonempty assortments S and i in S of p(i|S,theta*) p(0|S,theta*)",
+    "T_0": "number of warm-up rounds (bounded in Lemma C.3)"
+   },
+   "conditions": [
+    "||a_i||_2 <= 1 for all items, ||theta*||_2 <= B (Assumption 4.1)",
+    "unique optimal assortment",
+    "revenues r_i in [0,1], possibly non-uniform",
+    "B treated as fixed and N >= 2 (with B explicit, log(N/delta) replaced by log((N+1)/delta)+B^2)"
+   ],
+   "tuning": [
+    "lambda = 1",
+    "design accuracy epsilon in (0,1]",
+    "0 <= eps_LMO <= epsilon d/2",
+    "warm-up threshold as in Step 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:BSI_MNL",
+    "number": "Theorem 4.4",
+    "quote": "Let $\\delta\\in(0,1)$, $\\lambda=1$, and fix the design accuracy $\\epsilon\\in(0,1]$ with $0\\le\\ErrorLMO\\le\\epsilon d/2$. ... Then, with probability at least $1-\\delta$, Algorithm~\\ref{alg:MNL_BAI}, when implemented with the MILP solver ..., returns the optimal assortment $S^\\star$, and the stopping round $\\tau$ satisfies $\\tau = \\BigOTilde(d \\log(N/\\delta)(\\frac{1}{\\Gap^2} + \\frac{1}{\\kappa\\,\\Gap}) + \\WarmupRounds)$."
+   },
+   "confidence": "high",
+   "notes": "Paper's N (number of items) mapped to K; paper's K (max assortment size) mapped to m; paper's Delta (minimum revenue gap between best and second-best assortment) mapped to Delta_min. Also restated as non-uniform case of Theorem C.1. Total observations at most 2*tau. MILP LMO is NP-hard in general, so compute not_stated."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*log(K/delta)*(Min(1, exp(S)/m)/Delta_min**2 + 1/(kappa*Delta_min)) + T_0",
+    "expression_latex": "\\BigOTilde\\!\\left( d \\log(N/\\delta) \\left( \\min \\left\\{ 1, \\frac{e^{B}}{K} \\right\\}\\frac{1}{\\Gap^2} + \\frac{1}{\\kappa \\Gap} \\right) + \\WarmupRounds \\right)",
+    "regime": "uniform revenues r_i = 1"
+   },
+   "symbols": {
+    "kappa": "min over nonempty assortments S and i in S of p(i|S,theta*) p(0|S,theta*)",
+    "T_0": "number of warm-up rounds"
+   },
+   "conditions": [
+    "uniform revenues: r_i = 1 for all items",
+    "||a_i||_2 <= 1, ||theta*||_2 <= B",
+    "unique optimal assortment",
+    "B treated as fixed, N >= 2"
+   ],
+   "tuning": [
+    "lambda = 1",
+    "epsilon in (0,1]",
+    "0 <= eps_LMO <= epsilon d/2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:BSI_MNL_extended",
+    "number": "Theorem C.1",
+    "quote": "\\tau = \\BigOTilde\\!\\left( d \\log(N/\\delta) \\left( \\min \\left\\{ 1, \\frac{e^{B}}{K} \\right\\}\\frac{1}{\\Gap^2} + \\frac{1}{\\kappa \\Gap} \\right) + \\WarmupRounds \\right), (Uniform $r_i$, MILP solver )"
+   },
+   "confidence": "high",
+   "notes": "Paper's B is the norm bound (canonical S); paper's K is assortment size (m)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "(1 + eps_lift)*d*log(K/delta)*(1/Delta_min**2 + 1/(kappa*Delta_min)) + T_0",
+    "expression_latex": "\\BigOTilde\\!\\left( (1+ \\ErrorLift) d \\log\\!\\left(N/\\delta\\right) \\left( \\frac{1}{\\Gap^2} + \\frac{1}{\\kappa\\,\\Gap} \\right) + \\WarmupRounds \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "kappa": "min over nonempty assortments S and i in S of p(i|S,theta*) p(0|S,theta*)",
+    "T_0": "number of warm-up rounds",
+    "eps_lift": "lifting approximation error of the lifted G-optimal design (Theorem 3.5), at most m*exp(B)"
+   },
+   "conditions": [
+    "||a_i||_2 <= 1, ||theta*||_2 <= B",
+    "unique optimal assortment",
+    "revenues in [0,1], possibly non-uniform",
+    "B fixed, N >= 2"
+   ],
+   "tuning": [
+    "lambda = 1",
+    "epsilon in (0,1]"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:BSI_MNL_lifted",
+    "number": "Corollary 4.5",
+    "quote": "Under the setting as in Theorem~\\ref{thm:BSI_MNL}, suppose we employ the lifted G-optimal design ... Then, with probability at least $1-\\delta$, we have $\\tau = \\BigOTilde( (1+ \\ErrorLift) d \\log(N/\\delta) ( \\frac{1}{\\Gap^2} + \\frac{1}{\\kappa\\,\\Gap} ) + \\WarmupRounds )$"
+   },
+   "confidence": "high",
+   "notes": "Polynomial-time via lifted LMO (ratio-of-sums assortment optimization)."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "(1 + eps_lift)*d*log(K/delta)*(Min(1, exp(S)/m)/Delta_min**2 + 1/(kappa*Delta_min)) + T_0",
+    "expression_latex": "\\BigOTilde\\!\\left( (1 + \\ErrorLift) d \\log(N/\\delta) \\left( \\min \\left\\{ 1, \\frac{e^{B}}{K} \\right\\} \\frac{1}{\\Gap^2} + \\frac{1}{\\kappa \\Gap} \\right) + \\WarmupRounds \\right)",
+    "regime": "uniform revenues r_i = 1"
+   },
+   "symbols": {
+    "kappa": "min over nonempty assortments S and i in S of p(i|S,theta*) p(0|S,theta*)",
+    "T_0": "number of warm-up rounds",
+    "eps_lift": "lifting approximation error of the lifted G-optimal design"
+   },
+   "conditions": [
+    "uniform revenues r_i = 1",
+    "||a_i||_2 <= 1, ||theta*||_2 <= B",
+    "unique optimal assortment",
+    "B fixed, N >= 2"
+   ],
+   "tuning": [
+    "lambda = 1",
+    "epsilon in (0,1]"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:BSI_MNL_lifted_extended",
+    "number": "Corollary C.8",
+    "quote": "\\BigOTilde\\!\\left( (1 + \\ErrorLift) d \\log(N/\\delta) \\left( \\min \\left\\{ 1, \\frac{e^{B}}{K} \\right\\} \\frac{1}{\\Gap^2} + \\frac{1}{\\kappa \\Gap} \\right) + \\WarmupRounds \\right), (Uniform $r_i$, Lifted G-optimal)"
+   },
+   "confidence": "high",
+   "notes": "Uniform-revenue branch of Corollary C.8."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "c_0*d/kappa*Max(d*log(16*(K+1)**2/delta), S**2)*log(1 + m/kappa*Max(d*log(16*(K+1)**2/delta), S**2))",
+    "expression_latex": "c_0\\kappa^{-1}d \\left(d\\log\\frac{16(N+1)^2}{\\delta}\\vee B^2\\right) \\log\\!\\left(1+\\frac{K}{\\kappa} \\left[d\\log\\frac{16(N+1)^2}{\\delta}\\vee B^2\\right]\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "kappa": "min over nonempty assortments S and i in S of p(i|S,theta*) p(0|S,theta*)",
+    "c_0": "absolute constant"
+   },
+   "conditions": [
+    "||a_i||_2 <= 1, ||theta*||_2 <= B"
+   ],
+   "tuning": [
+    "lambda = 1",
+    "warm-up threshold as in Step 1",
+    "warm-up assortments chosen without using feedback"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "lemma:exploration_phase_length",
+    "number": "Lemma C.3",
+    "quote": "There is an absolute constant $c_0>0$ such that \\WarmupRounds\\le c_0\\kappa^{-1}d \\left(d\\log\\frac{16(N+1)^2}{\\delta}\\vee B^2\\right) \\log\\!\\left(1+\\frac{K}{\\kappa} \\left[d\\log\\frac{16(N+1)^2}{\\delta}\\vee B^2\\right]\\right). Moreover, $\\PP(\\Ecal)\\ge1-\\delta/2$."
+   },
+   "confidence": "medium",
+   "notes": "Bound on number of warm-up rounds T_0 (deterministic bound from the elliptical potential argument; the probability statement concerns the confidence event). Quantity 'other' since it bounds only the warm-up phase length."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "gupta2021pure",
+   "cited_title": null,
+   "cited_first_author": "Gupta",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Best assortment / pure exploration lower bound (Theorem 3 of gupta2021pure), compared with MNL best assortment identification",
+   "bound": {
+    "notation": "Omega",
+    "expression": "d/Delta_min**2",
+    "expression_latex": "\\Omega \\big(\\frac{d}{\\Gap^2}\\big)",
+    "regime": null
+   },
+   "where": "Discussion of Theorem 4.4"
+  },
+  {
+   "cited_key": "gupta2021pure",
+   "cited_title": null,
+   "cited_first_author": "Gupta",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Naive optimal design based on V_t (ignoring local Fisher information)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Best assortment identification in MNL bandits with linear utilities, naive design",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*log(K)/(kappa**2*Delta_min**2)",
+    "expression_latex": "\\BigOTilde\\big( \\frac{d \\log N}{\\kappa^2 \\Gap^2} \\big)",
+    "regime": null
+   },
+   "where": "Discussion of Corollary 4.5"
+  },
+  {
+   "cited_key": "yang2021fully",
+   "cited_title": null,
+   "cited_first_author": "Yang",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Context-free MNL best assortment identification, item-level gaps Delta_i",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sum_arms(1/Delta_i**2)",
+    "expression_latex": "\\widetilde{O}(\\sum_{i=1}^N \\Delta_i^{-2})",
+    "regime": null
+   },
+   "where": "Remark 4.6"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T11:34:43",
+  "source_chars": 152532,
+  "input_tokens": 120054,
+  "output_tokens": 7962,
+  "cost_usd_equiv": 0.84136,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

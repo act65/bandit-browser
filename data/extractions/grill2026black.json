@@ -1,0 +1,232 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Black-box optimization of noisy functions with unknown smoothness",
+  "arxiv_id": "2605.02462",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Jean-Bastien Grill",
+   "Michal Valko",
+   "Rémi Munos"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Black-box optimization of a noisy function with unknown smoothness given a hierarchical partitioning",
+   "objective": "optimization_error",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "continuum_other",
+   "function_class": [],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Arbitrary measurable domain X with a known hierarchical partitioning (tree with at most K_children children per cell) given to the learner",
+    "Local smoothness w.r.t. the partitioning (Assumption 1): f(x) >= f(x*) - nu*rho^h on the depth-h cell containing a global optimum; (nu, rho) unknown to the learner",
+    "Learner knows upper bounds nu_max and rho_max on the smoothness parameters",
+    "Complexity measured by a partition-dependent near-optimality dimension d(nu, rho)"
+   ],
+   "definition_quote": "At each step $t$, an algorithm selects an action $x_t\\in\\mathcal{X}$ and receives a reward $r_t$, which is a noisy function evaluation such that $r_t =  f(x_t) + \\varepsilon_t$, where $\\varepsilon_t$ is a bounded noise with $\\EEc{\\varepsilon_t}{x_t} = 0$. After $n$ evaluations, the algorithm outputs its best guess $x(n)$ ... R_n \\eqdef \\sup_{x\\in \\mathcal{X}}f(x)  - f\\left(x\\left(n\\right)\\right)"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "POO (Parallel Optimistic Optimization)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "doubling_trick",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K_children (max number of children per cell)",
+    "hierarchical partitioning",
+    "nu_max",
+    "rho_max"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "HOO (modified, sampling at representative points)",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "nu",
+    "rho",
+    "hierarchical partitioning"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "alpha_c*D_max*(nu_max/nu_star)**D_max*(log(T)**2/T)**(1/(d_nr + 2))",
+    "expression_latex": "\\mathbb{E}[R_n] \\leq \\kappa\\cdot\\left(\\left(\\ln^2n\\right)/n\\right)^{1/(d(\\nu,\\rho) + 2)},\\ \\kappa = \\alpha \\cdot D_{\\max}{\\left(\\nu_{\\max}/\\nu_\\star\\right)}^{D_{\\max}}",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_c": "constant independent of rho_max and nu_max",
+    "D_max": "ln(K_children)/ln(1/rho_max), K_children = max number of children per cell",
+    "nu_max": "upper bound on nu given to POO",
+    "nu_star": "smoothness constant nu of the best parameters (nu_star, rho_star)",
+    "d_nr": "near-optimality dimension d(nu, rho) w.r.t. the partitioning"
+   },
+   "conditions": [
+    "(nu, rho) verifies Assumption 1 (local smoothness w.r.t. the partitioning)",
+    "nu <= nu_max and rho <= rho_max",
+    "noise bounded with zero conditional mean"
+   ],
+   "tuning": [
+    "number of HOO instances N >= (1/2) D_max ln(n/ln n), doubled when needed",
+    "rho_i = rho_max^(N/i) grid"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:poo",
+    "number": "Theorem 1",
+    "quote": "Let~$R_n$ be the simple regret of \\SHOO{} at step~$n$. For any~$(\\nu,\\rho)$ verifying Assumption~\\ref{ass:lashoo} such that $\\nu \\le \\nu_{\\max}$ and $\\rho \\le \\rho_{\\max}$ there exists $\\kappa$ such that for all $n$ \\[\\mathbb{E}[R_n] \\leq \\kappa\\cdot\\left(\\left(\\ln^2n\\right)/n\\right)^{1/(d(\\nu,\\rho) + 2)}.\\] Moreover, $\\kappa = \\alpha \\cdot D_{\\max}{\\left(\\nu_{\\max}/\\nu_\\star\\right)}^{D_{\\max}}$, where $\\alpha$ is a constant independent of $\\rho_\\text{max}$ and $\\nu_\\text{max}$."
+   },
+   "confidence": "medium",
+   "notes": "Noise range not precisely stated ('bounded noise'); proof uses Hoeffding with values in [0,1], mapped to bounded_pm1. alpha_c is an unspecified constant (may depend on the instance through C(nu_star,rho_star)). n is T. Anytime algorithm."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "bubeck2011x",
+   "cited_title": "X-armed bandits",
+   "cited_first_author": "Sébastien Bubeck",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "HOO",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Noisy black-box optimization with known smoothness (nu, rho); simple regret with best parameters, d = near-optimality dimension",
+   "bound": {
+    "notation": "O",
+    "expression": "(log(T)/T)**(1/(d_nr + 2))",
+    "expression_latex": "\\cO\\left(\\left(\\left(\\ln n\\right)/n\\right)^{1/(d(\\nu_\\star,\\rho_\\star) + 2)}\\right)",
+    "regime": null
+   },
+   "where": "Section 3.2"
+  },
+  {
+   "cited_key": "valko2013stochastic",
+   "cited_title": "Stochastic simultaneous optimistic optimization",
+   "cited_first_author": "Michal Valko",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "StoSOO",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Noisy black-box optimization with unknown smoothness, case d = 0; simple regret",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)/sqrt(T)",
+    "expression_latex": "\\mathbb{E}[R_n] = \\cO\\left(\\ln n/\\sqrt{n}\\right)",
+    "regime": "d(nu,rho) = 0"
+   },
+   "where": "Section 3.2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:21:43",
+  "source_chars": 72645,
+  "input_tokens": 71460,
+  "output_tokens": 4011,
+  "cost_usd_equiv": 0.373588,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

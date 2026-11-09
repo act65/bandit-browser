@@ -1,0 +1,216 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Fast mmwave Beam Alignment via Correlated Bandit Learning",
+  "arxiv_id": "1909.03313",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Wen Wu",
+   "Nan Cheng",
+   "Ning Zhang",
+   "Peng Yang",
+   "Weihua Zhuang",
+   "Xuemin Shen"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Beam alignment as a stochastic MAB with correlated (multimodal) reward function over the beam space",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "lipschitz_metric",
+   "function_class": [],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "sigma_std"
+   ],
+   "instance_assumptions": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "extras": [],
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {
+    "d": "1"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "N beams mapped to the region X=[0,1]; the analysis treats the normalized reward as a function f on [0,1] (X-armed / HOO-style)",
+    "weak Lipschitz condition only around the optimum: f* - f(x) <= c_H ||x* - x||^alpha",
+    "dissimilarity q(x,y)=w||x-y||^beta with bounded-diameter and well-shaped hierarchical partition (Assumption 2)",
+    "the learner knows the noise variance sigma^2 (prior knowledge of the channel fluctuation)"
+   ],
+   "definition_quote": "we assume that the reward follows a Gaussian distribution with a variance $\\sigma^2$. In other words, $\\sigma^2$ also represents the variance of the channel fluctuation, which is utilized as \\emph{prior knowledge} in the following algorithm design."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Hierarchical Beam Alignment (HBA)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "sigma_std"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "8*sigma_std**2*log(T)/(epsilon_hj - rho_1*gamma**h)**2 + c_alg",
+    "expression_latex": "\\frac{8\\sigma^2 \\log T}{\\left(\\epsilon_{h,j} -\\rho_1 \\gamma^h\\right)^2}+c",
+    "regime": "epsilon_hj > rho_1*gamma**h"
+   },
+   "symbols": {
+    "epsilon_hj": "suboptimality of node (h,j)",
+    "rho_1": "diameter constant of the partition",
+    "gamma": "partition shrinkage factor in (0,1)",
+    "h": "depth of the node"
+   },
+   "conditions": [
+    "Assumption 1 (weak Lipschitz around optimum)",
+    "Assumption 2 (bounded diameter, well-shaped regions)"
+   ],
+   "tuning": [
+    "E-value confidence margin sqrt(2 sigma^2 log t / N) + rho_1 gamma^h"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "lemma:expected_N_bound",
+    "number": "Lemma 1",
+    "quote": "For any node $(h,j)$ whose suboptimality is larger than $\\rho_1 \\gamma^h$, the expected number of times that $(h,j)$ has been visited until time slot $T$, is upper bounded by $\\mathbb{E}\\left[N_{h,j}(T)\\right] \\leq\\frac{8\\sigma^2 \\log T}{\\left(\\epsilon_{h,j} -\\rho_1 \\gamma^h\\right)^2}+c$ where $c$ is a constant."
+   },
+   "confidence": "medium",
+   "notes": "Bound on expected number of visits of a suboptimal node, not regret. c is an unspecified constant (mapped to c_alg)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*log(T))",
+    "expression_latex": "R^\\pi\\left({T}\\right)=O\\left(\\sqrt{T\\log T}\\right)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "Assumption 1 (weak Lipschitz around optimum with exponent alpha)",
+    "Assumption 2 (bounded diameter, well-shaped regions)",
+    "alpha = beta so that kappa = 1/beta - 1/alpha = 0 (smoothness known); general case gives O(T^((kappa+1)/(kappa+2)) (log T)^(1/(kappa+2)))"
+   ],
+   "tuning": [
+    "rho_1 > 0, gamma in (0,1) matching the bounded-diameter assumption"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem: regret_bound",
+    "number": "Theorem 2",
+    "quote": "The upper bound on the cumulative regret of HBA is $R^\\pi\\left({T}\\right)=O\\left(\\sqrt{T\\log T}\\right).$"
+   },
+   "confidence": "medium",
+   "notes": "Regret defined via expected rewards (pseudo-regret). Proof gives O(T^{(kappa+1)/(kappa+2)} (log T)^{1/(kappa+2)}) and sets kappa=0. Constants hidden; regret analysis follows HOO (Bubeck et al.). Algorithm uses log t, so treated as anytime though the proof uses T."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T14:15:04",
+  "source_chars": 95033,
+  "input_tokens": 80529,
+  "output_tokens": 3488,
+  "cost_usd_equiv": 0.43567999999999996,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,370 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Efficient Distributionally Robust Assortment Optimization in MNL Bandits",
+  "arxiv_id": null,
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Yunfan Zhang",
+   "Yuxuan Han",
+   "Zhengyuan Zhou"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Data-driven distributionally robust assortment optimization under linear contextual MNL (offline)",
+   "objective": "simple_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "K",
+    "S"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "at_most_m",
+    "reward": "unspecified",
+    "loss_scale": "unspecified"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Offline (non-interactive) policy learning from a fixed historical dataset; no online interaction.",
+   "unmapped": [
+    "MNL choice feedback: one choice among offered assortment plus no-purchase observed per data point",
+    "Linear contextual MNL attractions v_i = exp(x_i^T theta*), revenues r_i in [0,1]",
+    "Objective is distributionally robust (worst-case over TV/KL/chi-square ambiguity set of radius delta) revenue",
+    "Offline dataset of T logged assortments/choices; the learner knows the ambiguity radius delta and the norm bound W"
+   ],
+   "definition_quote": "The seller observes\na historical dataset {(ct , Xt , St )}Tt=1 , where at round t an\nassortment St ∈ SK is offered under features Xt , and\nthe realized choice is ct ∈ (St )+ . Given a target feature\nmatrix X and a revenue vector r = (r0 , r1 , ..., rN ) (typically r0 = 0), the worst-case revenue under the ambiguity\nset PD (θ ⋆ , δ, S) := {q ∈ ∆(S+ ), D(q, p(·|S, θ ⋆ )) ≤ δ}\nis defined as\nδ\nRD\n(S|θ ⋆ ) :=\n\nmin\n\nq∈PD (θ ⋆ ,δ,S)\n\n(4)\n\nS∈SK\n\nThis objective can be equivalently analyzed by minimizing\nthe sub-optimality gap, defined for any S ∈ SK as"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "LCB + TV-Robust MNL (Algorithm 1)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "S",
+    "delta_r",
+    "lam"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "LCB + KL-Robust MNL (Algorithm 2 with EVAL-G)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "S",
+    "delta_r",
+    "lam"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "LCB + Chi-square-Robust MNL (Algorithm 5, Golden Section Search)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "S",
+    "delta_r",
+    "lam"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "A_TV + M_TV**2",
+    "expression_latex": "\\sum_{i\\in S^*_{TV}} p(i|S^*_{TV},\\theta^*)\\|x_i\\|_{H_T^\\lambda(\\theta^*)^{-1}} + \\max_{i\\in S^*_{TV}}\\|x_i\\|^2_{H_T^\\lambda(\\theta^*)^{-1}}",
+    "regime": null
+   },
+   "symbols": {
+    "A_TV": "sum over i in S*_TV of p(i|S*_TV,theta*) ||x_i||_{H_T^lambda(theta*)^{-1}}",
+    "M_TV": "max over i in S*_TV of ||x_i||_{H_T^lambda(theta*)^{-1}}",
+    "zeta": "failure probability",
+    "delta_r": "ambiguity radius"
+   },
+   "conditions": [
+    "Assumption 2.1: ||x_i||_2 <= 1, ||theta*||_2 <= W",
+    "Assumption 4.1: choices conditionally independent given assortments/contexts",
+    "Assumption 4.2: burn-in condition on the dataset",
+    "holds with probability at least 1 - zeta"
+   ],
+   "tuning": [
+    "lambda-regularized MLE",
+    "LCB attractions with xi_i = 16||x_i||_{H^{-1}}(sqrt(log(N/zeta)) + sqrt(lambda) W)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 4.5",
+    "quote": "Theorem 4.5 (TV Sub-optimality). Under Assumptions 2.1, 4.1 and 4.2, with probability at least 1 − ζ, SubOpt^δ_TV(Ŝ_TV|θ*) ≲ Σ_{i∈S*_TV} p(i|S*_TV, θ*)∥x_i∥_{H^λ_T(θ*)^{-1}} + max_{i∈S*_TV} ∥x_i∥^2_{H^λ_T(θ*)^{-1}}."
+   },
+   "confidence": "medium",
+   "notes": "≲ hides universal constants, log(N/zeta) and sqrt(lambda)W factors. Appendix gives explicit: 32 A (sqrt(log(N/zeta))+sqrt(lambda)W) + 1536 M^2 (sqrt(log(N/zeta))+sqrt(lambda)W)^2. Simple regret = robust sub-optimality gap."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "Min(1/log(3/2), 1/delta_r)*A_KL",
+    "expression_latex": "\\min\\{\\frac{1}{\\log(3/2)},\\frac{1}{\\delta}\\}\\sum_{i\\in S^*_{KL}} p(i|S^*_{KL},\\theta^*)\\|x_i\\|_{H_T^\\lambda(\\theta^*)^{-1}}",
+    "regime": null
+   },
+   "symbols": {
+    "A_KL": "sum over i in S*_KL of p(i|S*_KL,theta*) ||x_i||_{H_T^lambda(theta*)^{-1}}",
+    "delta_r": "ambiguity radius (paper's delta)",
+    "zeta": "failure probability"
+   },
+   "conditions": [
+    "Assumption 2.1: ||x_i||_2 <= 1, ||theta*||_2 <= W",
+    "Assumption 4.1: conditional independence of choices",
+    "Assumption 4.2: burn-in condition",
+    "small-gap condition: max_i 32||x_i||_{H^{-1}}(sqrt(log(N/zeta)) + sqrt(lambda)W) <= 1",
+    "holds with probability at least 1 - zeta"
+   ],
+   "tuning": [
+    "lambda-regularized MLE with LCB attractions"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 4.6",
+    "quote": "Theorem 4.6 (KL Sub-optimality). Under Assumptions that demand global, assortment-wise exploration of\ntions 2.1, 4.1, 4.2 and the small-gap condition\nthe action space (e.g., Dong et al., 2023).\np\n\n√\n⋆\nFinally, retaining the choice-probability weights p(i|SD\n, θ⋆ )\nmax 32∥xi ∥H λ (θ⋆ )−1\nlog(N/ζ) + λW ≤ 1,\nT\ni∈[N ]\navoids the looseness associated with worst-case relaxations.\nAs\ndiscussed in Han et al. (2025a), replacing HTλ (θ ⋆ ) by\nwith probability at least 1 − ζ,\nVT can introduce multiplicative constants that may scale exponentially with the maximum utility. Keeping probabilitySubOptδKL (ŜKL |θ ⋆ )"
+   },
+   "confidence": "medium",
+   "notes": "Analysis for exact optimizer; computed eps-optimal solution adds eps. Appendix explicit constant 32e times (sqrt(log(N/zeta))+sqrt(lambda)W)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "(1 + delta_r)/(sqrt(1 + delta_r) - 1)*sqrt(A_chi + M_chi**2)",
+    "expression_latex": "\\frac{1+\\delta}{\\sqrt{1+\\delta}-1}\\sqrt{\\sum_{i\\in S^*_{\\chi^2}} p(i|S^*_{\\chi^2},\\theta^*)\\|x_i\\|_{H_T^\\lambda(\\theta^*)^{-1}} + \\max_{i\\in S^*_{\\chi^2}}\\|x_i\\|^2_{H_T^\\lambda(\\theta^*)^{-1}}}",
+    "regime": null
+   },
+   "symbols": {
+    "A_chi": "sum over i in S*_chi2 of p(i|S*_chi2,theta*) ||x_i||_{H_T^lambda(theta*)^{-1}}",
+    "M_chi": "max over i in S*_chi2 of ||x_i||_{H_T^lambda(theta*)^{-1}}",
+    "delta_r": "ambiguity radius (paper's delta)",
+    "zeta": "failure probability"
+   },
+   "conditions": [
+    "Assumption 2.1: ||x_i||_2 <= 1, ||theta*||_2 <= W",
+    "Assumption 4.1: conditional independence of choices",
+    "Assumption 4.2: burn-in condition",
+    "holds with probability at least 1 - zeta"
+   ],
+   "tuning": [
+    "lambda-regularized MLE with LCB attractions"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 4.7",
+    "quote": "Theorem 4.7 (χ2 Sub-optimality). Under Assumptions 2.1, 4.1 and 4.2, with probability at least 1 − ζ, SubOpt^δ_χ2(Ŝ_χ2|θ*) ≲ (1+δ)/(√(1+δ)−1) · sqrt( Σ_{i∈S*_χ2} p(i|S*_χ2, θ*)∥x_i∥_{H^λ_T(θ*)^{-1}} + max_{i∈S*_χ2} ∥x_i∥^2_{H^λ_T(θ*)^{-1}} )."
+   },
+   "confidence": "medium",
+   "notes": "For exact optimizer of (13); GSS solver is a heuristic relying on unimodality. Appendix constants 64 and 3072 inside sqrt."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Han et al. (2025b)",
+   "cited_title": "Learning an optimal assortment policy under observational data",
+   "cited_first_author": "Han",
+   "cited_year": 2025,
+   "cited_arxiv_id": "2502.06777",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Offline non-contextual, non-robust MNL assortment optimization",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(K/n_min)",
+    "expression_latex": "\\tilde O(\\sqrt{K/\\min_{i\\in S^*} n_i})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "Lu et al. (2026)",
+   "cited_title": "Robustifying assortment optimization from observational data with near-optimal sample complexity",
+   "cited_first_author": "Lu",
+   "cited_year": 2026,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Offline non-contextual KL-robust MNL assortment optimization",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "K/sqrt(n_min)",
+    "expression_latex": "\\tilde O_\\delta(K/\\sqrt{\\min_{i\\in S^*_{KL}} n_i})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "Dong et al. (2023)",
+   "cited_title": "PASTA: Pessimistic assortment optimization",
+   "cited_first_author": "Dong",
+   "cited_year": 2023,
+   "cited_arxiv_id": null,
+   "algorithm_name": "PASTA",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Offline contextual non-robust MNL assortment optimization",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(N_items/(n_S*p_min))",
+    "expression_latex": "\\tilde O(\\sqrt{N/(n_{S^*}\\min_{i,|S|=K} p(i|S))})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "Han et al. (2025a)",
+   "cited_title": "Improved confidence regions and optimal algorithms for online and offline linear MNL bandits",
+   "cited_first_author": "Han",
+   "cited_year": 2025,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Offline linear contextual non-robust MNL assortment optimization",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(B_H)",
+    "expression_latex": "\\tilde O(\\sqrt{\\sum_{i\\in S^*} p(i|S^*)p(0|S^*)\\|x_i\\|^2_{H_T^{-1}(\\theta^*)}})",
+    "regime": null
+   },
+   "where": "Table 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:01:28",
+  "source_chars": 83156,
+  "input_tokens": 84184,
+  "output_tokens": 6825,
+  "cost_usd_equiv": 0.53166,
+  "quote_retry": {
+   "asked": 2,
+   "fixed": 2,
+   "cost_usd_equiv": 0.42847240000000003
+  },
+  "status": "extracted"
+ }
+}

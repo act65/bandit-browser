@@ -1,0 +1,272 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "The Impact of the Geometric Properties of the Constraint Set in Safe Optimization with Bandit Feedback",
+  "arxiv_id": "2305.00889",
+  "arxiv_version": null,
+  "year": 2023,
+  "authors": [
+   "Spencer Hutchinson",
+   "Berkay Turan",
+   "Mahnoosh Alizadeh"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Safe optimization with bandit feedback (vector response y_t = Theta_* x_t + eps_t, known reward f, stage-wise safety constraint Theta_* x_t in E)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "S",
+    "L_feat",
+    "sigma"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "safety_constraints"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "unspecified"
+   },
+   "constraints": {
+    "kind": "per_round_high_prob",
+    "violation": "never"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Response is vector-valued: y_t = Theta_* x_t + eps_t with unknown full-rank Theta_* in R^{n x d}, n <= d",
+    "Reward f(Theta_* x) is an arbitrary known M-Lipschitz function of the expected response",
+    "Compact action set A in R^d with ||x||_2 <= L; rows of Theta_* have norm <= S",
+    "Safety: expected response must lie in a known arbitrary compact set E with nonempty interior every round",
+    "The learner knows the reward function f, the sets A and E, and a lower bound on the maximum shrinkage H_Y of the feasible response set (to choose T')",
+    "Initial conservative safe set G^0 has nonempty interior"
+   ],
+   "definition_quote": "In each round $t \\in [T]$, an agent chooses an action $x_t$ from the compact action set $\\mathcal{A} \\subset \\mathbb{R}^d$ and then observes the noisy response $y_t := \\Theta_* x_t + \\epsilon_t$. ... the agent earns the reward $f(\\Theta_* x_t)$, where the reward function $f:\\mathbb{R}^n\\rightarrow \\mathbb{R}$ is known. The agent needs to ensure that ... the response $\\Theta_* x_t$ lies within the known compact safety set $\\mathcal{E}$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Algorithm 1 (pure exploration on G^0 followed by optimistic safe exploration-exploitation)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "explore_then_commit"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "S",
+    "L_feat",
+    "sigma",
+    "H_Y lower bound",
+    "lambda_minus"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_feasible_policy",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*L_lip*sqrt(n_resp)*L_feat*S*T_p + L_lip*(T - T_p)*Sharp_Y + L_lip*Max(H_Y, 1)*sqrt(8*n_resp*beta_T*(T - T_p)*d*log((1 + T*L_feat**2)/(d*nu)))",
+    "expression_latex": "2 M \\sqrt{n} LS T' + M (T - T') \\mathrm{Sharp}_{\\mathcal{Y}}^{\\infty} \\left( \\frac{2 \\sqrt{2 \\beta_T} L }{\\sqrt{2 \\nu + \\lambda_- T'}} \\right) + M \\max (H_{\\mathcal{Y}}^\\infty,1) \\sqrt{n 8 \\beta_T (T - T') d \\log \\left( \\frac{1 + T L^2}{d \\nu} \\right) }",
+    "regime": "T' >= max(t_delta, t_h)"
+   },
+   "symbols": {
+    "n_resp": "dimension n of the response vector",
+    "T_p": "length T' of the pure exploration phase",
+    "Sharp_Y": "infinity-norm sharpness of Y = Theta_* A ∩ E evaluated at 2 sqrt(2 beta_T) L / sqrt(2 nu + lambda_minus T')",
+    "H_Y": "infinity-norm maximum shrinkage of Y",
+    "beta_T": "confidence radius squared: (sigma*sqrt(d*log((1+T L^2/nu)/(delta/n))) + sqrt(nu) S)^2",
+    "nu": "ridge regularization parameter",
+    "lambda_minus": "min eigenvalue of E[x_t x_t^T] under the exploration sampling",
+    "t_delta": "8 L^2/lambda_minus log(d/delta)",
+    "t_h": "8 beta_T L^2/(lambda_minus H_Y^2) - 2 nu/lambda_minus"
+   },
+   "conditions": [
+    "Assumptions 1-4: ||x||_2 <= L on A, rows of Theta_* bounded by S; element-wise conditionally R-subgaussian noise; f is M-Lipschitz on E; G^0 has nonempty interior",
+    "Theta_* full rank, n <= d"
+   ],
+   "tuning": [
+    "T' >= max(t_delta, t_h)",
+    "exploration samples from G^0 with lambda_minus > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 12",
+    "quote": "Let Assumptions ... hold. With probability at least $1 - 2 \\delta$, we have that the regret of Algorithm \\ref{alg:main_alg} is bounded as R_T \\leq 2 M \\sqrt{n} LS T' + M (T - T') \\mathrm{Sharp}_{\\mathcal{Y}}^{\\infty} (...) + M \\max (H_{\\mathcal{Y}}^\\infty,1) \\sqrt{n 8 \\beta_T (T - T') d \\log ( \\frac{1 + T L^2}{d \\nu} ) } for any $T' \\geq \\max( t_{\\delta}, t_h)$"
+   },
+   "confidence": "medium",
+   "notes": "Probability 1-2delta. M mapped to L_lip, R to sigma, L to L_feat. Regret defined through noiseless rewards f(Theta_* x). Proof additionally assumes beta_T >= 1 (T large enough). Comparator is best safe action."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_feasible_policy",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*L_lip*sqrt(n_resp)*L_feat*S*T_p + 2*n_resp*sqrt(2*beta_T)*Gamma_Y*L_feat*L_lip*(T - T_p)/sqrt(2*nu + lambda_minus*T_p) + L_lip*Max(H_Y, 1)*sqrt(8*n_resp*beta_T*(T - T_p)*d*log((1 + T*L_feat**2)/(d*nu)))",
+    "expression_latex": "2 M \\sqrt{n} LS T' + \\frac{2 n \\sqrt{2 \\beta_T} \\Gamma_{\\mathcal{Y}} L M (T - T') }{\\sqrt{2 \\nu + \\lambda_- T'}} + M \\max (H_{\\mathcal{Y}}^\\infty,1) \\sqrt{n 8 \\beta_T (T - T') d \\log( \\frac{1 + T L^2}{d \\nu})}",
+    "regime": "T' >= max(t_delta, t_h)"
+   },
+   "symbols": {
+    "n_resp": "dimension n of the response vector",
+    "T_p": "exploration length T'",
+    "Gamma_Y": "polytope-sharpness constant of Y from Proposition 10",
+    "H_Y": "infinity-norm maximum shrinkage of Y",
+    "beta_T": "confidence radius squared",
+    "nu": "ridge parameter",
+    "lambda_minus": "min eigenvalue of exploration covariance"
+   },
+   "conditions": [
+    "Y = Theta_* A ∩ E is polytope-sharp (e.g. convex)",
+    "Assumptions 1-4 hold"
+   ],
+   "tuning": [
+    "T' >= max(t_delta, t_h)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:main",
+    "number": "Corollary 13",
+    "quote": "If $\\mathcal{Y}$ is polytope-sharp, then the regret of Algorithm~\\ref{alg:main_alg} satisfies R_T \\leq 2 M \\sqrt{n} LS T' + \\frac{2 n \\sqrt{2 \\beta_T} \\Gamma_{\\mathcal{Y}} L M (T - T') }{\\sqrt{2 \\nu + \\lambda_- T'}} + ... with probability at least $1 - 2 \\delta$ when $T' \\geq \\max( t_{\\delta}, t_h)$."
+   },
+   "confidence": "medium",
+   "notes": "Probability 1-2delta."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_feasible_policy",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(2/3)",
+    "expression_latex": "R_T = \\tilde{\\mathcal{O}} \\left(T^{2/3} \\right)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "Y is polytope-sharp",
+    "Assumptions 1-4 hold"
+   ],
+   "tuning": [
+    "T' = max(T^{2/3}, t_delta, t_h)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:main",
+    "number": "Corollary 13",
+    "quote": "In particular, choosing $T' = \\max(T^{2/3},t_{\\delta}, t_h)$ ensures that $R_T = \\tilde{\\mathcal{O}} \\left(T^{2/3} \\right)$."
+   },
+   "confidence": "medium",
+   "notes": "Hides dependence on d, n, M, L, S, Gamma_Y, H_Y, lambda_minus. Holds w.p. 1-2delta."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T11:51:44",
+  "source_chars": 82962,
+  "input_tokens": 78604,
+  "output_tokens": 5165,
+  "cost_usd_equiv": 0.45382,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

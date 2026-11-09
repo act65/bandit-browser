@@ -1,0 +1,289 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Multinomial Logit Bandit with Linear Utility Functions",
+  "arxiv_id": "1805.02971",
+  "arxiv_version": null,
+  "year": 2018,
+  "authors": [
+   "Mingdong Ou",
+   "Nan Li",
+   "Shenghuo Zhu",
+   "Rong Jin"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "MNL-Bandit with linear utility functions (linear utility MNL choice model)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "T",
+    "d",
+    "m",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "at_most_m",
+    "reward": "unspecified",
+    "loss_scale": "unspecified"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Feedback is the user's choice c_t among the offered assortment (or no-purchase) drawn from a multinomial logit model with item utilities v_i = theta*^T x_i; reward is the known price r_i of the chosen item, expected reward R(S,v) = sum v_i r_i / (1 + sum v_i) (non-monotone)",
+    "Learner knows item features x_i and item rewards r_i",
+    "Assortment of cardinality at most K (paper's K, canonical m) chosen from N items (paper's N, canonical K)"
+   ],
+   "definition_quote": "In MNL-Bandit, at each time step $t$, the player selects a subset $\\overline{S}_t\\in\\mathcal{C}\\left(\\mathcal{S}\\right)=\\{S|S\\subseteq\\mathcal{S},|S|\\leq K\\}$ and observes the user choice $c_t\\in \\overline{S}_t\\cup \\{0\\}$ ... linear item utility is introduced where item utility is a linear function of item feature, $v_i=\\bm{\\theta}^{*\\top}\\mathbf{x}_i$. Assumption 1: $\\forall i\\in\\mathcal{S}, r_i\\leq 1, \\|\\mathbf{x}_i\\|\\leq 1, \\|\\bm{\\theta}^*\\|\\leq 1$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "LUMB (Linear Utility MNL-Bandit)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d",
+    "m"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "d*m*sqrt(T)*log(T)**2",
+    "expression_latex": "O\\left(dK\\sqrt{T}\\left(\\log{T}\\right)^2\\right)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "r_i <= 1, ||x_i|| <= 1, ||theta*|| <= 1 (Assumption 1)",
+    "v_i = theta*^T x_i (linear utility MNL model)"
+   ],
+   "tuning": [
+    "lambda = 1",
+    "beta = 2 log_2 T",
+    "alpha = beta*sqrt(2 log(2 sqrt(T) (1+T/d)^{d/2}))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem 1",
+    "quote": "Following the process in Algorithm~\\ref{alg:LUMB}, let \\beta=2\\log_2{T}, \\alpha=\\beta\\sqrt{2\\log{\\left(2\\sqrt{T}\\left(1+\\dfrac{T}{d}\\right)^{d/2}\\right)}}, then the upper bound of $Reg\\left(T,\\mathbf{v}\\right)$ is O\\left(dK\\sqrt{T}\\left(\\log{T}\\right)^2\\right)."
+   },
+   "confidence": "medium",
+   "notes": "Paper's K (assortment size) mapped to canonical m; bound independent of number of items N. Regret defined via expected rewards R(S,v), so pseudo-regret. LP-based assortment optimisation is polynomial. Proof relies on Lemma 3 whose proof is deferred to a longer version."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*T*m*(1 + T/d)**(d/2)*exp(-alpha_p**2/(2*beta_p**2)) + T**2*m/2**(beta_p + 2) + 2*(sqrt(2) + alpha_p)*m*sqrt(70*d*T*log(T))",
+    "expression_latex": "2TK\\left(1+\\dfrac{T}{d}\\right)^{d/2}\\exp{\\left(-\\dfrac{\\alpha^2}{2\\beta^2}\\right)}+\\dfrac{T^2K}{2^{\\beta+2}}+2\\left(\\sqrt{2}+\\alpha\\right)K\\sqrt{70dT\\log T}",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_p": "confidence-width parameter alpha of LUMB",
+    "beta_p": "truncation level beta for the geometric estimates, beta >= 2 log_2 T"
+   },
+   "conditions": [
+    "r_i <= 1, ||x_i|| <= 1, ||theta*|| <= 1 (Assumption 1)"
+   ],
+   "tuning": [
+    "lambda = 1",
+    "beta >= 2 log_2 T",
+    "alpha > 0 free"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "lem:genregret",
+    "number": "Lemma 7",
+    "quote": "Following the process in Algorithm~\\ref{alg:LUMB}, if $\\beta\\geq 2\\log_2{T}$, the cumulative regret, defined in Eq.~(\\ref{equ:regret}), can be bounded, Reg\\left(T,\\mathbf{v}\\right)\\leq 2TK\\left(1+\\dfrac{T}{d}\\right)^{d/2}\\exp{\\left(-\\dfrac{\\alpha^2}{2\\beta^2}\\right)}+\\dfrac{T^2K}{2^{\\beta+2}}+2\\left(\\sqrt{2}+\\alpha\\right)K\\sqrt{70dT\\log T}."
+   },
+   "confidence": "medium",
+   "notes": "General version of Theorem 1; paper's K mapped to m."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "agrawal2017mnl",
+   "cited_title": "Mnl-bandit: A dynamic learning approach to assortment selection",
+   "cited_first_author": "Shipra Agrawal",
+   "cited_year": 2017,
+   "cited_arxiv_id": "1706.03880",
+   "algorithm_name": "UCB-MNL",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "MNL-Bandit (assortment selection, N items, separate utility per item)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "\\tilde{O}\\big(\\sqrt{NT}\\big)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "agrawal2017mnl",
+   "cited_title": "Mnl-bandit: A dynamic learning approach to assortment selection",
+   "cited_first_author": "Shipra Agrawal",
+   "cited_year": 2017,
+   "cited_arxiv_id": "1706.03880",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "MNL-Bandit, N items, assortments of size K (canonical m)",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(K*T/m)",
+    "expression_latex": "\\Omega\\big(\\sqrt{NT/K}\\big)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "agrawal2017thompson",
+   "cited_title": "Thompson sampling for the mnl-bandit",
+   "cited_first_author": "Shipra Agrawal",
+   "cited_year": 2017,
+   "cited_arxiv_id": "1706.00977",
+   "algorithm_name": "Thompson sampling for MNL-Bandit",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "MNL-Bandit (assortment selection, N items)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "\\tilde{O}\\big(\\sqrt{NT}\\big)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "rusmevichientong2010dynamic",
+   "cited_title": "Dynamic assortment optimization with a multinomial logit choice model and capacity constraint",
+   "cited_first_author": "Paat Rusmevichientong",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "MNL-Bandit, instance-dependent bound",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)",
+    "expression_latex": "O\\left(logT\\right)",
+    "regime": null
+   },
+   "where": "Section 2 (Related Work)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T13:07:26",
+  "source_chars": 52437,
+  "input_tokens": 64623,
+  "output_tokens": 4633,
+  "cost_usd_equiv": 0.331332,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

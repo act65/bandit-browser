@@ -1,0 +1,183 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Valid Best-Model Identification for LLM Evaluation via Low-Rank Factorization",
+  "arxiv_id": "2605.10405",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Elad Tolochinsky",
+   "Yaniv Tenzer",
+   "Yaniv Romano"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Best-model identification over a finite benchmark with a budget of T LLM calls (finite-population, sampling without replacement)",
+   "objective": "bai_fixed_budget",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K",
+    "H_1"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each arm's rewards are a finite population of n binary scores (row of score matrix S) sampled uniformly WITHOUT replacement, so observations are not i.i.d.; arm mean is the finite-population mean",
+    "Learner has access to predicted scores from a low-rank factorization fitted on side-information score matrix of other models and on observed entries",
+    "Learner knows the dataset size n"
+   ],
+   "definition_quote": "We let $\\mathcal{X} = \\{x_1,\\ldots,x_n\\}$ be a fixed dataset of examples, $\\mathcal{M} = \\{f_1,\\ldots,f_m\\}$ be a set of LLMs. ... $\\mu_i = \\mathbb{E}[S_i] = \\frac{1}{n}\\sum_{j =1}^{n}S_{i,j}$ ... Given a budget of \\(T\\) LLM calls ... Our goal is to maximize the probability of correctly identifying the best model \\(i^* = \\arg\\max_{i\\in[m]} \\mu_i\\), which we assume is unique."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "PULSE (Prediction-Powered Unbiased Low-Rank Sequential Evaluation)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "H_1"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "K*Sum(2*exp(-(sqrt(a_exp/k_pull)/5)**2/(2*(v_var/(k_pull*n_ex**2) + 2*(sqrt(a_exp/k_pull)/5)/(3*k_pull)))), (k_pull, 1, T))",
+    "expression_latex": "\\sum_{i=1}^m\\sum_{K=1}^T 2\\exp\\left(-\\frac{\\epsilon_K^2}{2\\left(\\frac{v}{K n^2}+\\frac{2\\epsilon_K}{3K}\\right)}\\right), \\quad \\epsilon_K=\\frac{1}{5}\\sqrt{\\frac{a}{K}}",
+    "regime": null
+   },
+   "symbols": {
+    "k_pull": "pull count K of an arm (summation index)",
+    "a_exp": "exploration parameter a of the UCB-E-style index",
+    "v_var": "uniform upper bound v on the average conditional variance of the residual correction Z_i",
+    "n_ex": "number of examples in the benchmark (n)"
+   },
+   "conditions": [
+    "unique best model",
+    "the constant v of Theorem 1 can be chosen uniformly over all models and all pull counts K <= T",
+    "binary scores in {0,1}",
+    "pi, lambda and predicted scores are F_{t-1}-measurable (satisfied by construction)"
+   ],
+   "tuning": [
+    "0 <= a <= 25(T-m)/(36 H_1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:bandits",
+    "number": "Theorem 2",
+    "quote": "Let $i^*=\\arg\\max_{i\\in[m]}\\mu_i$ be the unique best model, ... Suppose the exploration parameter $a$ satisfies $0\\le a\\le \\frac{25(T-m)}{36H_1}$, and assume the constant $v$ in Theorem~\\ref{thm:concentration_ineq} can be chosen uniformly over all models $i\\in[m]$ and all pull counts $K\\le T$. Then \\[ \\mathbb P(\\hat i_T=i^*) \\ge 1-\\sum_{i=1}^m\\sum_{K=1}^T 2\\exp(...) \\]"
+   },
+   "confidence": "medium",
+   "notes": "Stated as P(correct) >= 1 - sum; recorded as an upper bound on error probability. Paper's m (models) mapped to K; the paper's K (pull count) renamed k_pull. Summand independent of i so the sum over i gives factor K. H_1 = sum_i Delta_i^{-2} including Delta_{i*} = min gap. Restated as Theorem 4 in the appendix. Environment marked stochastic_iid only approximately: sampling is without replacement from a finite population."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T13:38:35",
+  "source_chars": 83741,
+  "input_tokens": 79551,
+  "output_tokens": 3322,
+  "cost_usd_equiv": 0.42453599999999997,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

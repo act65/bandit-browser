@@ -1,0 +1,287 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Adversarial Attacks on Gaussian Process Bandits",
+  "arxiv_id": "2110.08449",
+  "arxiv_version": null,
+  "year": 2021,
+  "authors": [
+   "Eric Han",
+   "Jonathan Scarlett"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Targeted adversarial attacks on GP bandits (corrupted observations y_t = f(x_t) + c_t + z_t), attacker's perspective",
+   "objective": "other_pure_exploration",
+   "feedback": "bandit",
+   "environment": "stochastic_corrupted",
+   "action_space": "kernel_rkhs",
+   "function_class": [
+    "bounded"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "S",
+    "sigma",
+    "kernel"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "arbitrary_compact",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "adaptive",
+    "budget_measure": "per_path",
+    "structure": "arbitrary",
+    "regret_reference": "uncorrupted",
+    "model": "budget",
+    "target": "rewards"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Guarantees are for the attacker (attack budget needed to force target-region pulls), not for the learner.",
+   "unmapped": [
+    "Objective is the attacker's: force T(1-o(1)) plays in a target region R_target using small corruption budget",
+    "Attacker knows x_t (deterministic learner) and may or may not know f",
+    "Matern kernel; f has RKHS norm at most B (S)"
+   ],
+   "definition_quote": "In the presence of adversarial noise, we consider corrupted observations taking the form y_t = f(x_t) + c_t + z_t, where z_t ~ N(0,sigma^2), and c_t is adversarial noise injected at time t. ... we constrain \\sum_{t=1}^n |c_t| \\le C for some total corruption budget C."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Function-shifting targeted attack (generic, Theorem 1; includes Subtraction and Aggressive Subtraction attacks)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": []
+  },
+  {
+   "id": "a2",
+   "name": "GP-UCB",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "S",
+    "sigma",
+    "kernel"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "MaxVar + Elimination",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "S",
+    "sigma",
+    "kernel"
+   ]
+  },
+  {
+   "id": "a4",
+   "name": "Clipping Attack",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "B_0*N_0",
+    "expression_latex": "B_0 N_0",
+    "regime": null
+   },
+   "symbols": {
+    "B_0": "uniform bound on |f(x) - f_tilde(x)|",
+    "N_0": "number of Delta-suboptimal actions the attacked algorithm plays w.p. >= 1-delta in the uncorrupted setting"
+   },
+   "conditions": [
+    "Delta-optimal points of f_tilde lie in R_target and f_tilde = f there",
+    "|f - f_tilde| <= B_0 everywhere",
+    "||f_tilde||_k <= B",
+    "attacked algorithm plays at most N_0 Delta-suboptimal actions w.p. >= 1-delta absent an adversary"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1",
+    "quote": "Then, in the presence of the adversary, with probability at least $1-\\delta$, the attack succeeds in forcing $T(1-o(1))$ actions to be played from $\\targetr$, while using an attack budget $C$ of at most $B_0 N_0$."
+   },
+   "confidence": "medium",
+   "notes": "Bound is on the attack budget C needed (attacker-side guarantee) while forcing T(1-o(1)) target-region plays."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "B_0*N_max",
+    "expression_latex": "B_0 N_{\\max}(\\Delta,T)",
+    "regime": null
+   },
+   "symbols": {
+    "B_0": "uniform bound on |f - f_tilde|",
+    "N_max": "max{N : N <= C_1 gamma_N beta_T / Delta^2}, C_1 = 8/lambda / log(1+1/lambda)"
+   },
+   "conditions": [
+    "attacked algorithm is GP-UCB",
+    "conditions (i)-(iii) of Theorem 1 hold"
+   ],
+   "tuning": [
+    "beta_t^{1/2} = B + sigma lambda^{-1/2} sqrt(2(gamma_{t-1} + ln(1/delta)))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:main",
+    "number": "Corollary 1",
+    "quote": "the attack succeeds in forcing $T(1-o(1))$ actions to be played from $\\targetr$ against GP-UCB (respectively, the elimination algorithm) using an attack budget $C$ of at most $B_0 N_{\\max}(\\Delta,T)$"
+   },
+   "confidence": "medium",
+   "notes": "Attack budget against GP-UCB."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "B_0*N_max_prime",
+    "expression_latex": "B_0 N'_{\\max}(\\Delta)",
+    "regime": null
+   },
+   "symbols": {
+    "B_0": "uniform bound on |f - f_tilde|",
+    "N_max_prime": "max{N : N <= 4 C_1 gamma_N beta_N / Delta^2}, C_1 = 8/lambda / log(1+1/lambda)"
+   },
+   "conditions": [
+    "attacked algorithm is MaxVar + Elimination",
+    "conditions (i)-(iii) of Theorem 1 hold"
+   ],
+   "tuning": [
+    "beta_t^{1/2} = B + sigma lambda^{-1/2} sqrt(2(gamma_{t-1} + ln(1/delta)))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:main",
+    "number": "Corollary 1",
+    "quote": "(respectively, $B_0 N'_{\\max}(\\Delta)$), where ... $N'_{\\max}(\\Delta) = \\max \\{ N : N\\leq \\frac{4C_1\\gamma_N\\beta_N}{\\Delta^2} \\}$"
+   },
+   "confidence": "medium",
+   "notes": "Attack budget against elimination; independent of T."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:38:34",
+  "source_chars": 141565,
+  "input_tokens": 109133,
+  "output_tokens": 3769,
+  "cost_usd_equiv": 0.6701320000000001,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

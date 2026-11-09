@@ -1,0 +1,325 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Model-Independent Online Learning for Influence Maximization",
+  "arxiv_id": "1703.00557",
+  "arxiv_version": null,
+  "year": 2017,
+  "authors": [
+   "Sharan Vaswani",
+   "Branislav Kveton",
+   "Zheng Wen",
+   "Mohammad Ghavamzadeh",
+   "Laks Lakshmanan",
+   "Mark Schmidt"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Influence maximization semi-bandit with pairwise influence feedback and linear generalization",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "d",
+    "m",
+    "S"
+   ],
+   "instance_assumptions": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "linear_optimization_oracle",
+    "norm_bound": "unit_l2",
+    "parameter_set": "arbitrary_bounded",
+    "loss_set": "not_applicable",
+    "parameter_structure": "unspecified"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "at_most_m",
+    "reward": "unspecified",
+    "loss_scale": "unspecified"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "extras": [],
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Actions are seed sets of at most K nodes (canonical m) in a known graph with n nodes, possibly with extra combinatorial constraints; reward is the number of influenced nodes (0 to n) under an unknown diffusion model satisfying a monotonicity assumption",
+    "Pairwise influence feedback: for each chosen seed u and every node v the learner observes whether v would be influenced by {u} alone under the round's diffusion realization",
+    "Pairwise reachability p*_{u,v} = <theta*_u, x_v> with known target features x_v (one unknown d-dim parameter per source node)",
+    "Regret is scaled by rho*alpha where rho is the surrogate approximation factor and alpha the oracle approximation factor",
+    "Learner has access to an alpha-approximation oracle for maximizing the surrogate f(S,p)",
+    "Learner knows the graph G and feature matrix X"
+   ],
+   "definition_quote": "In an influence maximization semi-bandit problem, the agent (marketer) knows both $\\cG$ and $\\cC$, but does not know the diffusion model $\\cD$. ... Under this feedback model, at the end of each round $t$, the agent observes $\\mathds{1} \\big(\\{ u\\}, v, \\cD(\\bw_t)\\big)$ for all $u \\in \\cS_t$ and all $v \\in \\cV$. ... $R^{\\kappa}(T) = T \\cdot \\spr(\\cS^*) - \\frac{1}{\\kappa} \\E [ \\sum_{t = 1}^{T} \\spr( \\cS_{t} ) ]$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Diffusion-Independent LinUCB (DILinUCB)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d",
+    "S"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "alpha_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*c_alg/(rho*alpha_apx)*n_nodes**(3/2)*sqrt(d*m*T*log(1 + n_nodes*T/(d*lam*sigma_alg**2))/(lam*log(1 + 1/(lam*sigma_alg**2)))) + 1/rho",
+    "expression_latex": "\\frac{2c}{\\rho \\alpha} n^{\\frac{3}{2}} \\sqrt{\\frac{d K T \\log ( 1 + \\frac{n T}{d \\lambda \\sigma^2} )}{ \\lambda \\log (1+\\frac{1}{\\lambda \\sigma^2} )}}+ \\frac{1}{\\rho}",
+    "regime": null
+   },
+   "symbols": {
+    "n_nodes": "number of nodes in the graph",
+    "rho": "surrogate approximation factor f(S~,p*)/F(S*)",
+    "sigma_alg": "algorithm parameter sigma > 0 (noise scale / learning rate)"
+   },
+   "conditions": [
+    "diffusion model satisfies monotonicity Assumption 1",
+    "perfect linear generalization p*_{u,v} = <theta*_u, x_v>",
+    "||x_v||_2 <= 1 for all v",
+    "oracle is an alpha-approximation algorithm"
+   ],
+   "tuning": [
+    "c >= (1/sigma) sqrt(dn log(1 + nT/(sigma^2 lambda d)) + 2 log(n^2 T)) + sqrt(lambda) max_u ||theta*_u||_2",
+    "any lambda, sigma > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 2",
+    "quote": "For any $\\lambda, \\sigma>0$, any feature matrix $X$, any $\\alpha$-approximation oracle $\\oracle$, and any $c$ satisfying ... if we apply $\\dilinucb$ with input $( \\oracle, X, c, \\lambda, \\sigma )$, then its $\\rho \\alpha$-scaled cumulative regret is upper-bounded as $R^{\\rho \\alpha}(T) \\leq \\frac{2c}{\\rho \\alpha} n^{\\frac{3}{2}} \\sqrt{\\frac{d K T \\log ( 1 + \\frac{n T}{d \\lambda \\sigma^2} )}{ \\lambda \\log (1+\\frac{1}{\\lambda \\sigma^2} )}}+ \\frac{1}{\\rho}."
+   },
+   "confidence": "medium",
+   "notes": "Paper's K (seed set size) mapped to m; paper's n (nodes) declared n_nodes; alpha (oracle factor) mapped to alpha_apx. Regret is rho*alpha-scaled regret, recorded as alpha_regret. c depends on T and max ||theta*_u||."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "alpha_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*c_alg/(rho*alpha_apx)*n_nodes**(3/2)*sqrt(m*T*log(1 + T/(lam*sigma_alg**2))/(lam*log(1 + 1/(lam*sigma_alg**2)))) + 1/rho",
+    "expression_latex": "\\frac{2c}{\\rho \\alpha} n^{\\frac{3}{2}} \\sqrt{\\frac{ K T \\log ( 1 + \\frac{T}{\\lambda \\sigma^2} )}{ \\lambda \\log (1+\\frac{1}{\\lambda \\sigma^2} )}}+ \\frac{1}{\\rho}",
+    "regime": "tabular case X = I (d = n)"
+   },
+   "symbols": {
+    "n_nodes": "number of nodes in the graph",
+    "rho": "surrogate approximation factor",
+    "sigma_alg": "algorithm parameter sigma > 0"
+   },
+   "conditions": [
+    "diffusion model satisfies monotonicity Assumption 1",
+    "tabular features X = I",
+    "oracle is an alpha-approximation algorithm"
+   ],
+   "tuning": [
+    "c >= (1/sigma) sqrt(dn log(1 + nT/(sigma^2 lambda d)) + 2 log(n^2 T)) + sqrt(lambda) max_u ||theta*_u||_2 with d = n"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 2",
+    "quote": "For the tabular case $X=I$, we obtain a tighter bound $R^{\\rho \\alpha}(T) \\leq \\frac{2c}{\\rho \\alpha} n^{\\frac{3}{2}} \\sqrt{\\frac{ K T \\log ( 1 + \\frac{T}{\\lambda \\sigma^2} )}{ \\lambda \\log (1+\\frac{1}{\\lambda \\sigma^2} )}}+ \\frac{1}{\\rho} ."
+   },
+   "confidence": "medium",
+   "notes": "Tabular case of Theorem 2."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "alpha_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "n_nodes**2*d*sqrt(m*T)/(alpha_apx*rho)",
+    "expression_latex": "\\tilde{O}(n^2 d \\sqrt{KT}/(\\alpha \\rho))",
+    "regime": "general feature matrix X"
+   },
+   "symbols": {
+    "n_nodes": "number of nodes",
+    "rho": "surrogate approximation factor"
+   },
+   "conditions": [
+    "Assumption 1",
+    "perfect linear generalization",
+    "||x_v||_2 <= 1"
+   ],
+   "tuning": [
+    "lambda = sigma = 1",
+    "c chosen so Inequality (ineq:c) is tight"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 2",
+    "quote": "Notice that if we choose $\\lambda=\\sigma=1$, and choose $c$ s.t. Inequality~\\ref{ineq:c} is tight, then our regret bound is $\\tilde{O}(n^2 d \\sqrt{KT}/(\\alpha \\rho))$ for general feature matrix $X$"
+   },
+   "confidence": "medium",
+   "notes": "Simplified form stated in text after Theorem 2."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "alpha_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "n_nodes**(5/2)*sqrt(m*T)/(alpha_apx*rho)",
+    "expression_latex": "\\tilde{O}(n^{2.5} \\sqrt{KT}/(\\alpha \\rho) )",
+    "regime": "tabular case X = I"
+   },
+   "symbols": {
+    "n_nodes": "number of nodes",
+    "rho": "surrogate approximation factor"
+   },
+   "conditions": [
+    "Assumption 1",
+    "tabular features X = I"
+   ],
+   "tuning": [
+    "lambda = sigma = 1",
+    "c chosen so Inequality (ineq:c) is tight"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 2",
+    "quote": "and $\\tilde{O}(n^{2.5} \\sqrt{KT}/(\\alpha \\rho) )$ in the tabular case."
+   },
+   "confidence": "medium",
+   "notes": "Simplified form stated in text after Theorem 2."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "chen2016combinatorial",
+   "cited_title": "Combinatorial multi-armed bandit and its extension to probabilistically triggered arms",
+   "cited_first_author": "Chen",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "IM semi-bandit under IC diffusion model with edge-level feedback, tabular case; bound also depends on reciprocal of minimum edge observation probability p",
+   "bound": {
+    "notation": "O",
+    "expression": "n_nodes**3",
+    "expression_latex": "O(n^3)",
+    "regime": null
+   },
+   "where": "Section 9 (Related Work)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T11:44:23",
+  "source_chars": 126428,
+  "input_tokens": 208985,
+  "output_tokens": 10382,
+  "cost_usd_equiv": 0.8086342,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

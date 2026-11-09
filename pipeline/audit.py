@@ -12,6 +12,7 @@ error rates below estimate the corpus-wide rates. Each rate comes with a 95% Wil
 
 Writes data/reports/audit.jsonl (one graded record per line, resumable) and audit.md.
 Usage: uv run python pipeline/audit.py [--n 200] [--model fable] [--workers 6] [--seed 1]
+       uv run python pipeline/audit.py --batch 2   # one extraction batch only -> audit-batch2.{jsonl,md}
 """
 
 from __future__ import annotations
@@ -114,12 +115,14 @@ def wilson(k: int, n: int) -> tuple[float, float]:
     return (max(0.0, c - h), min(1.0, c + h))
 
 
-def sample(n: int, seed: int) -> list[dict]:
+def sample(n: int, seed: int, batch: int | None = None) -> list[dict]:
     manifest = {p["id"]: p for p in yaml.safe_load((ROOT / "corpus" / "manifest.yaml").read_text())["papers"]}
     pool = collections.defaultdict(list)
     for f in sorted((ROOT / "data" / "extractions").glob("*.json")):
         pid = f.stem
         if pid not in manifest or not pre_path(manifest[pid]).exists():
+            continue
+        if batch is not None and manifest[pid].get("batch") != batch:
             continue
         ex = json.loads(f.read_text())
         settings = {s["id"]: s for s in ex["settings"]}
@@ -147,6 +150,8 @@ def quote_failed(manifest: dict) -> list[dict]:
     for f in sorted((ROOT / "data" / "extractions").glob("*.json")):
         pid = f.stem
         if pid not in manifest or not pre_path(manifest[pid]).exists():
+            continue
+        if batch is not None and manifest[pid].get("batch") != batch:
             continue
         src = pre_path(manifest[pid]).read_text(encoding="utf-8", errors="replace")
         thr = validate.PDF_QUOTE_THRESHOLD if "converted from PDF" in src[:300] else validate.QUOTE_THRESHOLD
@@ -245,9 +250,13 @@ def main() -> None:
                          "the verbatim check (are the statements in the papers?)")
     ap.add_argument("--regrade-cannot-tell", action="store_true",
                     help="grade again the sampled results previously graded 'cannot tell' (e.g. after a locator fix)")
+    ap.add_argument("--batch", type=int, default=None,
+                    help="sample only this extraction batch (e.g. to measure a prompt change)")
     args = ap.parse_args()
-    items, manifest = sample(args.n, args.seed)
+    items, manifest = sample(args.n, args.seed, args.batch)
     path, md = OUT / "audit.jsonl", OUT / "audit.md"
+    if args.batch is not None:
+        path, md = OUT / f"audit-batch{args.batch}.jsonl", OUT / f"audit-batch{args.batch}.md"
     if args.population == "quote_failed":
         items = quote_failed(manifest)
         path, md = OUT / "audit-quotes.jsonl", OUT / "audit-quotes.md"

@@ -1,0 +1,261 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Stochastic simultaneous optimistic optimization",
+  "arxiv_id": "2604.24537",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Michal Valko",
+   "Alexandra Carpentier",
+   "Rémi Munos"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Global maximization of a function with noisy evaluations, locally smooth w.r.t. an unknown semi-metric",
+   "objective": "optimization_error",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "continuum_other",
+   "function_class": [],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "f is locally smooth around a global maximizer w.r.t. an unknown semi-metric ell: f(x*)-f(x) <= ell(x,x*) (A1); the semi-metric is not known to the learner",
+    "a hierarchical K-ary partition of X with cell diameters w(h) and well-shaped cells (A2) is given to the algorithm",
+    "loss is f* - f(x(n)) of the returned point after n evaluations (simple regret)"
+   ],
+   "definition_quote": "We consider a function maximization problem of an unknown function $f: \\cal X \\to \\mathbb{R}$. ... the evaluation of $f$ at a point $x_t\\in {\\cal X}$ returns a noisy evaluation $r_t$, assumed to be independent from the previous ones, such that: $\\E[r_t|x_t]=f(x_t)$. ... After $n$ function evaluations the algorithm outputs a point $x(n)$ and its performance is measured with the loss: $R_n = \\sup_{x \\in {\\cal X}}(f(x)) - f(x(n))$. ... We assume that the rewards are bounded by $|r_t| \\leq 1$ for any $t$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "StoSOO (Stochastic Simultaneous Optimistic Optimization)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*sqrt(log(T*k/delta)/(2*k)) + w(Min(h_n - 1, h_eps, h_max))",
+    "expression_latex": "R_n \\le 2\\varepsilon + \\size\\left(\\min\\left( h(n) -1, h_\\varepsilon, h_{\\max}\\right)\\right), \\varepsilon=\\sqrt{\\log(nk/\\delta)/(2k)}",
+    "regime": null
+   },
+   "symbols": {
+    "k": "number of evaluations per node before expansion (algorithm parameter)",
+    "h_max": "maximum tree depth (algorithm parameter)",
+    "w": "cell diameter function w(h) w.r.t. the semi-metric",
+    "h_eps": "smallest h with w(h+1) < epsilon_n",
+    "h_n": "smallest h such that C_nod (k+1) h_max sum_{l=0}^h (w(l)+2 epsilon_n)^{-d_nod} >= n",
+    "C_nod": "constant of the nu/3-near-optimality dimension",
+    "d_nod": "nu/3-near-optimality dimension"
+   },
+   "conditions": [
+    "Assumptions A1-A2 hold for some semi-metric ell",
+    "d_nod is the nu/3-near-optimality dimension with constant C_nod",
+    "|r_t| <= 1"
+   ],
+   "tuning": [
+    "parameters k, h_max, delta > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:stosoo-regret",
+    "number": "Theorem 1",
+    "quote": "Assume that Assumptions A1-2 hold. Let $d$ be the $\\nu/3$-near-optimality dimension and $C$ be the corresponding constant. Then the loss of \\StoSOO{} run with parameters $k$, $h_{\\max}$, and $\\delta>0$, after $n$ iterations is bounded, with probability $1-\\delta$, as: $$R_n \\le 2\\varepsilon + \\size\\left(\\min\\left( h(n) -1, h_\\varepsilon, h_{\\max}\\right)\\right)$$ where $\\varepsilon=\\sqrt{\\log(nk/\\delta)/(2k)}$ and $h(n)$ is the smallest $h \\in \\NN$, such that: $$C (k +1) h_{\\max} \\sum_{l=0}^{h} \\left(\\size\\left(l\\right)+2\\varepsilon\\right)^{-d} \\ge n.$$"
+   },
+   "confidence": "medium",
+   "notes": "Paper's n is T. Paper's d and C (near-optimality dimension and constant) renamed d_nod and C_nod. Delta is the algorithm's confidence parameter."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(2 + 1/gamma_w)*sqrt(log(T*k/delta)/(2*k)) + c_w*gamma_w**(sqrt(T/k)*Min(0.5/C_nod, 1) - 2) + 2*delta",
+    "expression_latex": "\\E[R_n] \\leq (2 + 1/\\gamma)\\varepsilon + c \\gamma^{\\sqrt{n/k} \\min\\{0.5/C,1\\} - 2} + 2\\delta",
+    "regime": null
+   },
+   "symbols": {
+    "k": "number of evaluations per node before expansion",
+    "gamma_w": "geometric decay rate of cell diameters, w(h)=c_w*gamma_w^h, gamma_w<1",
+    "c_w": "scale of cell diameters",
+    "C_nod": "constant of the nu/3-near-optimality dimension (with d=0)"
+   },
+   "conditions": [
+    "Assumptions A1-A2 hold",
+    "cell diameters w(h)=c_w*gamma_w^h with c_w>0, gamma_w<1",
+    "nu/3-near-optimality dimension d = 0 with constant C_nod",
+    "|r_t| <= 1"
+   ],
+   "tuning": [
+    "h_max = sqrt(n/k)",
+    "k, delta > 0 free"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:stosoo",
+    "number": "Corollary 1",
+    "quote": "Assume that the diameters of the cells decrease exponentially fast, i.e.,\\ $\\size(h)=c \\gamma^h$ for some $c>0$ and $\\gamma<1$. Assume that the $\\nu/3$-near-optimality dimension is $d=0$ and let $C$ be the corresponding constant. Then the expected loss of \\StoSOO{} run with parameters $k$, $h_{\\max}=\\sqrt{n/k}$, and $\\delta>0$, is bounded as: \\E[R_n] \\leq (2 + 1/\\gamma)\\varepsilon + c \\gamma^{\\sqrt{n/k} \\min\\{0.5/C,1\\} - 2} + 2\\delta."
+   },
+   "confidence": "medium",
+   "notes": "epsilon = sqrt(log(nk/delta)/(2k)) substituted. Paper's c, gamma, C renamed to avoid canonical clashes."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)**2/sqrt(T)",
+    "expression_latex": "\\E[R_n]=O\\Big(\\frac{\\log^2(n)}{\\sqrt{n}}\\Big)",
+    "regime": "n larger than a quantity exponential in C/log(1/gamma)"
+   },
+   "symbols": {},
+   "conditions": [
+    "Assumptions A1-A2 hold",
+    "cell diameters decrease exponentially, w(h)=c*gamma^h",
+    "nu/3-near-optimality dimension d = 0",
+    "|r_t| <= 1"
+   ],
+   "tuning": [
+    "k = n/log^3(n)",
+    "delta = 1/sqrt(n)",
+    "h_max = sqrt(n/k)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:col1",
+    "number": "Corollary 2",
+    "quote": "For the choice $k=n/\\log^3(n)$  and $\\delta = 1/\\sqrt{n}$, we have: $$\\E[R_n]=O\\Big(\\frac{\\log^2(n)}{\\sqrt{n}}\\Big).$$"
+   },
+   "confidence": "medium",
+   "notes": "Hidden constants depend on C, gamma, c; holds for n large enough per proof. Rate for the d=0 class."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:21:12",
+  "source_chars": 50469,
+  "input_tokens": 61758,
+  "output_tokens": 4641,
+  "cost_usd_equiv": 0.30857199999999996,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

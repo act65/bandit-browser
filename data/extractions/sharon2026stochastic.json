@@ -1,0 +1,244 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Stochastic Reset Pathfinding: Path-Level Regret for Cascading Bandits over Graph Paths",
+  "arxiv_id": "2607.15440",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Guni Sharon",
+   "Wei Zhang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Stochastic Reset Pathfinding (SRP) / combinatorial cascading bandit over source-to-goal paths",
+   "objective": "cumulative_regret",
+   "feedback": "cascade",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "linear_optimization_oracle",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "paths",
+    "reward": "unspecified",
+    "loss_scale": "per_action"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Conjunctive (product) reward: path reward is the product of Bernoulli edge outcomes; expected reward prod_e p_e",
+    "Feedback: edge outcomes observed sequentially up to and including the first failure along the path",
+    "Edge probabilities p_e in [p_min, 1) with p_min > 0 a known constant (the learner knows p_min, used for clipping)",
+    "Known directed graph with known source and goal; actions are simple source-to-goal paths"
+   ],
+   "definition_quote": "An \\srp{} environment is a tuple $(G, v_s, v_g, \\mathcal{P})$ where $G = (V, E)$ is a known directed graph, $v_s \\ne v_g \\in V$ are known source and goal nodes, and $\\mathcal{P} = (p_e)_{e \\in E} \\in [0,1]^{|E|}$ is a vector of stationary edge success probabilities unknown to the agent. ... There exists a known constant $p_{\\min} > 0$ such that $p_e \\in [p_{\\min}, 1)$ for all $e \\in E$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "PathUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "p_min"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "PathTS",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "p_min",
+    "prior"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(8*rho*C_pi**2*log(T)/Delta_pi) + sum_subopt(24*log(T)/Q_L_pi) + E_num + Psi_num*L_max/T",
+    "expression_latex": "\\sum_{\\pi \\notin \\Psi^*} \\frac{8\\rho\\,C(\\pi)^2\\,\\ln T}{\\Delta(\\pi)} + \\sum_{\\pi \\notin \\Psi^*} \\frac{24\\,\\ln T}{Q_L(\\pi)} + O\\!\\left(|E| + \\frac{|\\Psi(v_s,v_g)|\\,L_{\\max}}{T}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "rho": "exploration parameter of PathUCB (rho >= 2)",
+    "C_pi": "path complexity C(pi) = sum_i S_i(pi)/sqrt(Q_i(pi)) of suboptimal path pi",
+    "Delta_pi": "path gap p* - P(pi)",
+    "Q_L_pi": "prefix reliability of the last edge of pi, prod_{j<L} p_{e_j}",
+    "E_num": "number of edges |E|",
+    "Psi_num": "number of simple source-to-goal paths |Psi(v_s,v_g)|",
+    "L_max": "maximum path length",
+    "p_min": "known lower bound on edge success probabilities"
+   },
+   "conditions": [
+    "p_e in [p_min, 1) for all edges with known p_min > 0 (Assumption 1)",
+    "goal reachable from source"
+   ],
+   "tuning": [
+    "rho >= 2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:path_dependent_regret",
+    "number": "Theorem 5",
+    "quote": "Under Assumption~\\ref{assum:strict_bounds} with $\\rho \\ge 2$, the expected cumulative regret of \\optinll{} satisfies \\mathbb{E}[R(T)] \\le \\sum_{\\pi \\notin \\Psi^*} \\frac{8\\rho\\,C(\\pi)^2\\,\\ln T}{\\Delta(\\pi)} + \\sum_{\\pi \\notin \\Psi^*} \\frac{24\\,\\ln T}{Q_L(\\pi)} + O\\!\\left(|E| + \\frac{|\\Psi(v_s,v_g)|\\,L_{\\max}}{T}\\right)."
+   },
+   "confidence": "medium",
+   "notes": "Sums are over suboptimal paths (the 'arms'), encoded with sum_subopt. The leading terms carry explicit constants, but the whole bound is recorded under O because of the O(.) remainder. Regret is defined via path reliabilities, so it is pseudo-regret. PathUCB is horizon-free (Remark 3), so the result is anytime, although Algorithm 1 lists T as the loop length."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "kveton2015combinatorial",
+   "cited_title": null,
+   "cited_first_author": "Kveton",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CombCascade",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Combinatorial cascading bandit with conjunctive reward, here applied to SRP with feasible set of source-to-goal paths; edge-level gap-dependent bound",
+   "bound": {
+    "notation": "exact",
+    "expression": "(L_max/mu_star)*sum_subopt(4272*log(T)/Delta_e) + pi**2/3*E_num",
+    "expression_latex": "\\frac{L_{\\max}}{p^*} \\sum_{e \\in \\tilde{E}} \\frac{4272}{\\Delta_e^{\\mathrm{CCB}}} \\ln T + \\frac{\\pi^2}{3}|E|",
+    "regime": null
+   },
+   "where": "Section 5, Eq. (combcascade_bound)"
+  },
+  {
+   "cited_key": "wang2018thompson",
+   "cited_title": null,
+   "cited_first_author": "Wang",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Combinatorial Thompson Sampling (Beta-Bernoulli)",
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Combinatorial semi-bandit with multiplicative (conjunctive) reward; lower bound on the leading regret constant of TS, where k* is the size of the optimal solution",
+   "bound": {
+    "notation": "Omega",
+    "expression": "2**k_star",
+    "expression_latex": "\\Omega(2^{k^*})",
+    "regime": null
+   },
+   "where": "Related Work; Appendix A"
+  },
+  {
+   "cited_key": "zhong2021thompson",
+   "cited_title": null,
+   "cited_first_author": "Cheung",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Beta-Bernoulli Thompson Sampling for cascading bandits",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Disjunctive cascading bandits (top-K), Beta-Bernoulli TS",
+   "bound": {
+    "notation": "O",
+    "expression": "L*log(T)/Delta",
+    "expression_latex": "O(L \\log T / \\Delta)",
+    "regime": null
+   },
+   "where": "Appendix A"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T11:34:33",
+  "source_chars": 73751,
+  "input_tokens": 74352,
+  "output_tokens": 4731,
+  "cost_usd_equiv": 0.41112400000000004,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

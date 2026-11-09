@@ -1,0 +1,261 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Empirical Bayesian Multi-Bandit Learning",
+  "arxiv_id": "2510.26284",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Xia Jiang",
+   "Rong J. B. Zhu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Multi-bandit contextual linear bandit with hierarchical Gaussian prior (N bandit instances, K arms each)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "d",
+    "K",
+    "sigma",
+    "S"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "oblivious_sequence",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "unspecified"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Multi-task: N bandit instances; at each round the instance Z_t is drawn from a categorical distribution p_j, then context x_t drawn i.i.d.",
+    "Each arm k in each instance j has its own parameter beta_{k,j} in R^d (disjoint linear model); reward x_t^T beta_{k,j} + Gaussian noise",
+    "Hierarchical Gaussian structure beta_{k,j} ~ N(beta_{k0}, Sigma_k) with eigenvalues of Sigma_k^{-1} in [lambda_d, lambda_1]",
+    "In the theory the learner knows Sigma_k and sigma (estimated empirically in practice), and the constants c_beta, c_x, lambda_1, lambda_d, N used in alpha_t(delta)",
+    "Context bound: d^{-1}||x||^2 <= c_x; parameter norm ||beta_{k,j}|| <= c_beta"
+   ],
+   "definition_quote": "We consider a contextual bandit problem with $N$ bandit instances, each associated with $K$ arms. ... $y_{k, j, t} = \\mathbf{x}_t^\\top \\boldsymbol{\\beta}_{k,j} + \\epsilon_{k,j,t}$ ... $\\epsilon_{k,j,t} \\sim \\mathcal{N}(0, \\sigma_k^2)$ ... $\\boldsymbol{\\beta}_{k,j} \\sim \\mathcal{N}(\\boldsymbol{\\beta}_{k0}, \\boldsymbol{\\Sigma}_k)$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "ebmUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "d",
+    "sigma",
+    "S",
+    "Sigma_k",
+    "lambda_1",
+    "lambda_d",
+    "c_x",
+    "N_tasks"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "ebmTS",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "d",
+    "sigma",
+    "S",
+    "Sigma_k",
+    "lambda_1",
+    "lambda_d",
+    "c_x",
+    "N_tasks"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*alpha_n*sqrt(T*d*K*(c_1*S_logn + c_3*log(1 + c_4*N_tasks))) + 2*sqrt(d*c_x)*c_beta*K*N_tasks*T*delta",
+    "expression_latex": "2\\alpha_{n}(\\delta) \\sqrt{nd K \\left[ c_1 \\sum_{j=1}^N\\log (1 + c_2 n_j)+c_3 \\log (1+ c_4 N) \\right]} + 2 \\sqrt{d c_x}c_{\\beta}KNn \\delta",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_n": "confidence width alpha_n(delta) = 2 sqrt(d m_1 log((m_2 + n c_x)/(m_3 delta))) + N m_4 = O(sqrt(d log(n/delta)))",
+    "S_logn": "sum over instances j of log(1 + c_2 n_j)",
+    "n_j": "number of arrivals at bandit instance j",
+    "N_tasks": "number of bandit instances (paper's N)",
+    "c_x": "bound with d^{-1}||x||^2 <= c_x",
+    "c_beta": "bound ||beta_{k,j}||_2 <= c_beta",
+    "c_1": "lambda_d^{-1} d c_x / log(1 + sigma^{-2} lambda_d^{-1} d c_x) = O(d)",
+    "c_2": "sigma^{-2} lambda_d^{-1} c_x",
+    "c_3": "O(d^2) constant depending on lambda_1, lambda_d, lambda, sigma, c_x",
+    "c_4": "lambda_1/lambda"
+   },
+   "conditions": [
+    "Assumption 1: ||beta_{k,j}||_2 <= c_beta; d^{-1}||x||_2^2 <= c_x; eigenvalues of Sigma_k^{-1} in [lambda_d, lambda_1] with lambda_d > 0; equal noise variance sigma^2 across arms",
+    "Gaussian noise",
+    "Sigma_k and sigma known in the analysis"
+   ],
+   "tuning": [
+    "confidence parameter delta > 0",
+    "prior precision lambda for beta_{k0}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "regret_bound_ebmUCB",
+    "number": "Theorem 4",
+    "quote": "For any $\\delta > 0$, the overall cumulative regret of \\textsc{ebmUCB} is at most $2\\alpha_{n}(\\delta) \\sqrt{nd K \\left[ c_1 \\sum_{j=1}^N\\log (1 + c_2 n_j)+c_3 \\log (1+ c_4 N) \\right]} + 2 \\sqrt{d c_x}c_{\\beta}KNn \\delta = O\\left( d^{3/2}\\sqrt{nK\\log\\frac{n}{\\delta} \\left(\\sum_{j=1}^N \\log n_j + d\\log N \\right) }\\right)$"
+   },
+   "confidence": "medium",
+   "notes": "Simplified form stated: O(d^{3/2} sqrt(T K log(T/delta) (sum_j log n_j + d log N))). The regret is defined through means (pseudo-regret) against the per-round best arm for the instance and context. The theorem gives no restriction on delta, but the additive term is linear in n*delta. In the proof, P(not xi_t) <= KN delta is obtained from the fixed-t Theorem 2."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*C_TS*(sqrt(2*d*log(d*T**2)) + 1)*alpha_n*sqrt(T*d*K*(c_1*S_logn + c_3*log(1 + c_4*N_tasks))) + 2*sqrt(d*c_x)*c_beta*K*N_tasks*(T*delta + pi**2/6)",
+    "expression_latex": "2C \\alpha^{\\prime}_n(\\delta) \\sqrt{nd K \\left[ c_1 \\sum_{j=1}^N\\log (1 + c_2 n_j)+c_3 \\log (1+ c_4 N)\\right]} + 2 \\sqrt{d c_x}c_{\\beta}KN (n\\delta + \\pi^2/6)",
+    "regime": null
+   },
+   "symbols": {
+    "C_TS": "C = max_{t>=1} 2/|1/(2 sqrt(2 pi e)) - 1/t^2| + 1 (numerical constant)",
+    "alpha_n": "confidence width alpha_n(delta) = 2 sqrt(d m_1 log((m_2 + n c_x)/(m_3 delta))) + N m_4 = O(sqrt(d log(n/delta)))",
+    "S_logn": "sum over instances j of log(1 + c_2 n_j)",
+    "n_j": "number of arrivals at bandit instance j",
+    "N_tasks": "number of bandit instances (paper's N)",
+    "c_x": "bound with d^{-1}||x||^2 <= c_x",
+    "c_beta": "bound ||beta_{k,j}||_2 <= c_beta",
+    "c_1": "O(d) constant",
+    "c_2": "sigma^{-2} lambda_d^{-1} c_x",
+    "c_3": "O(d^2) constant",
+    "c_4": "lambda_1/lambda"
+   },
+   "conditions": [
+    "Assumption 1: ||beta_{k,j}||_2 <= c_beta; d^{-1}||x||_2^2 <= c_x; eigenvalues of Sigma_k^{-1} in [lambda_d, lambda_1]; equal noise variance sigma^2 across arms",
+    "Gaussian noise",
+    "Sigma_k and sigma known in the analysis"
+   ],
+   "tuning": [
+    "confidence parameter delta > 0",
+    "sampling covariance alpha_t(delta)^2 C_{k,j,t}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "regret_bound_ebmTS",
+    "number": "Theorem 5",
+    "quote": "For any $\\delta > 0$, the overall cumulative regret of \\textsc{ebmTS} is at most $R_n \\leq 2C \\alpha^{\\prime}_n(\\delta) \\sqrt{nd K \\left[ c_1 \\sum_{j=1}^N\\log (1 + c_2 n_j)+c_3 \\log (1+ c_4 N)\\right]} + 2 \\sqrt{d c_x}c_{\\beta}KN (n\\delta + \\pi^2/6) = O\\left( d^{2}\\sqrt{nK\\log\\frac{n}{\\delta} \\log n\\left(\\sum_{j=1}^N \\log n_j + d\\log N \\right) }\\right)$, where ... $\\alpha^{\\prime}_n(\\delta) = ( \\gamma_n+1)\\alpha_{n}(\\delta)$, and $\\gamma_n=\\sqrt{2d\\log (dn^2)}$."
+   },
+   "confidence": "medium",
+   "notes": "Simplified form stated: O(d^2 sqrt(T K log(T/delta) log T (sum_j log n_j + d log N))). gamma_n = sqrt(2d log(d n^2)) is substituted directly into the expression."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T11:24:39",
+  "source_chars": 119013,
+  "input_tokens": 100769,
+  "output_tokens": 6260,
+  "cost_usd_equiv": 0.6530400000000001,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

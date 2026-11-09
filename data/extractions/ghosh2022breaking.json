@@ -1,0 +1,332 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Breaking the $\\sqrt{T}$ Barrier: Instance-Independent Logarithmic Regret in Stochastic Contextual Linear Bandits",
+  "arxiv_id": "2205.09899",
+  "arxiv_version": null,
+  "year": 2022,
+  "authors": [
+   "Avishek Ghosh",
+   "Abishek Sankararaman"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Stochastic contextual bandit with linear payoffs (stochastic contexts)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "K",
+    "d",
+    "sigma",
+    "S"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "not_applicable",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "K context vectors per round drawn independently of the past and of each other, supported on [-c/sqrt(d), c/sqrt(d)]^d, conditional mean zero, conditional covariance >= rho_min I, and (z^T beta)^2 conditionally sub-Gaussian with variance <= 4 rho_min",
+    "the learner knows rho_min (used to set the initial epoch length T_1 and the confidence radius)",
+    "||theta*|| <= 1"
+   ],
+   "definition_quote": "At the beginning of each round $t \\in [T]$, the learner chooses one of the $K$ available arms, and gets a reward. ... the learner is handed $K$ context vectors, $d$ dimensional each ... the reward obtained is given by $\\langle \\beta_{i,t}, \\theta^* \\rangle + \\xi_t$, where ... $\\|\\theta^*\\| \\leq 1$ ... $\\mathbb{E}_{t-1}[\\beta_{i,t}] = 0 \\qquad \\mathbb{E}_{t-1} [\\beta_{i,t} \\, \\beta_{i,t}^\\top] \\succeq \\rho_{\\min} I.$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "LR-SCB (Low Regret Stochastic Contextual Bandits)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "d",
+    "rho_min",
+    "delta"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "OFUL of Chatterji et al. (variant without arm biases)",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "d",
+    "rho_min"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "Modified ALB-Norm (Adaptive Linear Bandit - norm)",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "optimism",
+    "doubling_trick"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "d",
+    "rho_min"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_2*(d/rho_min)**(3/2)*Lambda**5*frakT*sqrt(log(T))",
+    "expression_latex": "R(T) \\leq C_2 \\left[ \\left( \\frac{d}{\\rho_{\\min}} \\right)^{3/2} \\mathsf{\\Lambda}^5 \\mathfrak{T} \\sqrt{\\log T} \\right] = \\mathcal{O}\\left( \\left( \\frac{d}{\\rho_{\\min}} \\right)^{3/2} \\polylog(T,K,d,\\delta) \\right)",
+    "regime": "d >= C_1 (log T / log log T) log(K^2/delta)"
+   },
+   "symbols": {
+    "rho_min": "lower bound on the minimum eigenvalue of the conditional context covariance",
+    "C_2": "universal constant",
+    "Lambda": "(1/log log T) * log(rho_min^2 T / (d^2 log^4(KT/delta) log(dT/delta)))",
+    "frakT": "log^3(K d^2 log T log^4(KT/delta) log(dT/delta)/(rho_min^2 delta)) * log^2(d^3 log T log^4(KT/delta) log(dT/delta)/(rho_min^2 delta))"
+   },
+   "conditions": [
+    "||theta*|| <= 1",
+    "sigma = 1",
+    "contexts satisfy the stochastic assumptions (zero mean, covariance >= rho_min I, bounded in [-c/sqrt(d), c/sqrt(d)]^d)",
+    "d >= C_1 (log T / log log T) log(K^2/delta)",
+    "the analysis uses a shift-robustness lemma that assumes contexts i.i.d. across time and arms"
+   ],
+   "tuning": [
+    "T_1 = C_1 d^2/rho_min^2 log^4(KT/delta) log(dT/delta)",
+    "T_i = T_1 (log T)^(i-1)",
+    "delta_i = delta/2^(i-1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main_theorem",
+    "number": "Theorem 5.1",
+    "quote": "Playing Algorithm~\\ref{algo:main_algo} with initial phase length $T_1$ time and probability slack $\\delta>0$, where\n\\begin{align*}\n    T_1 = C_1 \\, \\frac{d^2}{\\rho_{\\min}^2} \\log^4(KT/\\delta) \\log(dT/\\delta) \\,\\,\\,\\, \\text{and}\n\\end{align*}\n\\vspace{-2mm}\n\\begin{align*}\n    d \\geq C_1 \\frac{\\log T}{\\log \\log T} \\log (K^2/\\delta).\n\\end{align*} \nThen the regret of the player for a horizon of $T$ satisfies\n\\begin{align*}\n    R(T) &\\leq C_2  \\left[ \\left( \\frac{d}{\\rho_{\\min}} \\right)^{3/2} \\,\\mathsf{\\Lambda}^5 \\,\\, \\mathfrak{T} \\,\\, \\sqrt{\\log T} \\right] \\\\"
+   },
+   "confidence": "medium",
+   "notes": "Holds with probability at least 1 - c*delta. The regret is defined through means, max_j <beta_jt, theta*> - <beta_Bt, theta*>, against the best arm in each round."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d**3",
+    "expression_latex": "R(T) \\leq \\mathcal{O} \\left( d^3 \\,\\, \\polylog(T,K,d, \\delta) \\right)",
+    "regime": "d >= C_1 (log T / log log T) log(K^2/delta)"
+   },
+   "symbols": {},
+   "conditions": [
+    "contexts drawn from Unif[-c_0/sqrt(d), c_0/sqrt(d)]^d (rho_min = c_1/d)",
+    "||theta*|| <= 1",
+    "d >= C_1 (log T / log log T) log(K^2/delta)"
+   ],
+   "tuning": [
+    "T_1 = O_tilde(d^4)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Corollary 5.5",
+    "quote": "Suppose the initial phase length $T_1 = \\Tilde{\\mathcal{O}}(d^4)$ and $d \\geq C_1 \\frac{\\log T}{\\log \\log T} \\log (K^2/\\delta)$. Playing Algorithm~\\ref{algo:main_algo} for $T$ times incur a regret of $R(T) \\leq \\mathcal{O} ( d^3 \\polylog(T,K,d, \\delta) )$, with probability at least $1-\\delta$."
+   },
+   "confidence": "medium",
+   "notes": "Special case of Theorem 5.1 with uniform contexts. The polylog factor in T, K, d and delta is absorbed into O_tilde."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C*theta_norm*(sqrt(K)+sqrt(d))*sqrt(T)*log(K*T/delta_1)",
+    "expression_latex": "R(T) \\leq C\\|\\theta^*\\|(\\sqrt{K}+\\sqrt{d})\\sqrt{T}\\log\\left(\\frac{KT}{\\delta_1}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "C": "universal constant (not the corruption budget)",
+    "theta_norm": "||theta*||, the norm of the unknown parameter",
+    "delta_1": "confidence parameter; the bound holds w.p. >= 1 - 18 delta_1 - delta_s",
+    "delta_s": "confidence parameter of the initial norm estimate"
+   },
+   "conditions": [
+    "stochastic context assumptions of Section 3",
+    "T large enough that 2 C sigma sqrt(d) T^(-1/4) log(K sqrt(T)/delta_1) <= 1 (from Lemma B.2)"
+   ],
+   "tuning": [
+    "initial phase length T_1 = ceil(sqrt(T))",
+    "doubling epochs, delta_{i+1} = delta_i/2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:alb_norm_improved",
+    "number": "Corollary B.1",
+    "quote": "The regret of Algorithm \\ref{algo:alb_norm} at the end of $T$ time-steps satisfies with probability at-least $1- 18\\delta_1 - \\delta_s$, $R(T) \\leq C\\|\\theta^*\\|(\\sqrt{K}+\\sqrt{d})\\sqrt{T}\\log\\left(\\frac{KT}{\\delta_1}\\right)$, where $C$ is an universal constant."
+   },
+   "confidence": "medium",
+   "notes": "Stated as a corollary of Theorem 1 of Ghosh et al. (2021), obtained by recomputing that paper's Lemma 1 for the modified algorithm. Holds with probability at least 1 - 18*delta_1 - delta_s."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "chu2011contextual",
+   "cited_title": "Contextual bandits with linear payoff functions",
+   "cited_first_author": "W. Chu",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SupLinUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Linear contextual bandit with K arms and adversarially chosen contexts; high-probability regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(d*T*log(K*T)**3)",
+    "expression_latex": "\\mathcal{O}(\\sqrt{dT \\log^3(KT)})",
+    "regime": null
+   },
+   "where": "Section 1 (Introduction)"
+  },
+  {
+   "cited_key": "chu2011contextual",
+   "cited_title": "Contextual bandits with linear payoff functions",
+   "cited_first_author": "W. Chu",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Linear contextual bandit with adversarially generated contexts; any algorithm",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(d*T)",
+    "expression_latex": "\\Omega(\\sqrt{dT})",
+    "regime": null
+   },
+   "where": "Section 1 (Introduction)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:58:11",
+  "source_chars": 79173,
+  "input_tokens": 75150,
+  "output_tokens": 6628,
+  "cost_usd_equiv": 0.4554480000000001,
+  "quote_retry": {
+   "asked": 1,
+   "fixed": 1,
+   "cost_usd_equiv": 0.3259884
+  },
+  "status": "extracted"
+ }
+}

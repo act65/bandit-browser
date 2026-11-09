@@ -1,0 +1,261 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Thompson Sampling in Non-Episodic Restless Bandits",
+  "arxiv_id": "1910.05654",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Young Hun Jung",
+   "Marc Abeille",
+   "Ambuj Tewari"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Non-episodic (infinite time horizon) restless multi-armed bandit with policy mapping",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "markovian",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K",
+    "m",
+    "prior"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [
+    "restless"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "m_set",
+    "reward": "linear",
+    "loss_scale": "per_base_arm"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Restless Markov arms (POMDP/average-reward MDP formulation); markovian environments are out of scope in ontology v0.5.",
+   "unmapped": [
+    "Each arm has a finite Markov state with unknown active/passive transition matrices; reward is a known deterministic function r_k(s) in [0,1] of the observed state",
+    "Learner observes the states of the N active arms each round",
+    "Regret is against the policy mu(theta*) given by a known deterministic policy mapping mu (e.g. Whittle index, myopic, best fixed arms)",
+    "The learner knows the mixing time T^mix(1/4) of the passive chains (passive chains irreducible and aperiodic)",
+    "The learner knows the policy mapping mu, the reward functions and the initial meta-state",
+    "Bounded span assumption (Condition 2) for every theta and pi_theta, with uniform span bound H"
+   ],
+   "definition_quote": "At each time step $t$, the learner selects $N$ arms from $[K]$ which become \\textit{active} while the others remain \\textit{passive}. ... For all the chosen arms, the learner observes the state $s^t_k$ and receives a reward $r_k(s^t_k)$, where the rewards are deterministic \\textit{known} functions of the state $r_k : S_k \\rightarrow [0, 1]$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "TSDE in restless bandits (Thompson Sampling with Dynamic Episodes)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "prior",
+    "T",
+    "mixing time T^mix(1/4)",
+    "policy mapping mu",
+    "initial state xi_1"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)*log(T)",
+    "expression_latex": "BR(T) = \\bigO(\\sqrt{T} \\log T)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "Assumption 1: passive chains irreducible and aperiodic with known mixing time",
+    "Assumption 2: bounded span (Condition 2) for every theta and pi_theta = mu(theta)",
+    "theta* drawn from known prior Q"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1",
+    "quote": "The Bayesian regret of TSDE satisfies the following bound \\begin{align*} BR(T) = \\bigO(\\sqrt{T} \\log T), \\end{align*} where the exact upper bound appears later in Sec. \\ref{sec:regret}."
+   },
+   "confidence": "high",
+   "notes": "Comparator is the policy mu(theta*) from the given policy mapping, measured via its long-term average reward J. Unknown T handled by doubling trick per remark."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*(H_span + m)*sqrt(S_sum*T_mix*T*log(m*T)) + 28*(H_span + 1)*S_sum*sqrt(m*T_mix*T*log(T_mix*T))",
+    "expression_latex": "2(H+N)\\sqrt{(\\sum_{k=1}^K |S_k|) \\Tmix T\\log NT} + 28(H+1)(\\sum_{k=1}^K |S_k|)\\sqrt{N\\Tmix T \\log (\\Tmix T)}",
+    "regime": null
+   },
+   "symbols": {
+    "H_span": "uniform upper bound on the span of the bias function, sup_theta C_theta",
+    "S_sum": "sum over arms of the number of states, sum_k |S_k|",
+    "T_mix": "(log_2 T) * T^mix(1/4), with T^mix(1/4) the max mixing time of passive chains; O(log T)",
+    "m": "number N of arms activated each round"
+   },
+   "conditions": [
+    "Assumption 1: passive chains irreducible and aperiodic with known mixing time",
+    "Assumption 2: bounded span (Condition 2) for every theta and pi_theta = mu(theta)",
+    "theta* drawn from known prior Q"
+   ],
+   "tuning": [
+    "T_mix = (log_2 T) T^mix(1/4)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1 (restated)",
+    "quote": "The Bayesian regret of TSDE is bounded by\n\\begin{align*}\n2(H&+N)\\sqrt{\n    (\\sum_{k=1}^K |S_k|) \\Tmix T\\log NT\n}\\\\\n&+\n28(H+1)(\\sum_{k=1}^K |S_k|)\n\\sqrt{\n    N\\Tmix T \\log (\\Tmix T)\n},\n\\end{align*}\nwhere $\\Tmix = (\\log_2 T)\\Tmix(\\frac{1}{4}) = \\bigO(\\log T)$."
+   },
+   "confidence": "high",
+   "notes": "Paper's N (active arms) mapped to m; paper's H (span bound) renamed H_span."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "liu2013learning",
+   "cited_title": "Learning in a changing world: Restless multiarmed bandit with unknown dynamics",
+   "cited_first_author": "Haoyang Liu",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Restless bandits, regret against the policy pulling a fixed set of arms every round",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)",
+    "expression_latex": "\\bigO(\\log T)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "tekin2012online",
+   "cited_title": "Online learning of rested and restless bandits",
+   "cited_first_author": "Cem Tekin",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Restless bandits, regret against the policy pulling a fixed set of arms every round",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)",
+    "expression_latex": "\\bigO(\\log T)",
+    "regime": null
+   },
+   "where": "Introduction"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T13:17:50",
+  "source_chars": 69239,
+  "input_tokens": 72133,
+  "output_tokens": 4077,
+  "cost_usd_equiv": 0.38029199999999996,
+  "quote_retry": {
+   "asked": 1,
+   "fixed": 1,
+   "cost_usd_equiv": 0.2976284
+  },
+  "status": "extracted"
+ }
+}

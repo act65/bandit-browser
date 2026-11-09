@@ -1,0 +1,283 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Logarithmic High-Probability Regret for Online Convex Optimization with Two-Point Bandit Feedback",
+  "arxiv_id": "2603.25029",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Haishan Ye"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online convex optimization with two-point bandit feedback, strongly convex Lipschitz losses, non-anticipating adaptive adversary",
+   "objective": "cumulative_regret",
+   "feedback": "two_point",
+   "environment": "adversarial_adaptive",
+   "action_space": "convex_body",
+   "function_class": [
+    "convex",
+    "lipschitz",
+    "strongly_convex"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "noise_free",
+   "learner_knows": [
+    "T",
+    "alpha",
+    "r_K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "K is sandwiched r B ⊆ K ⊆ D B (contains a ball of radius r around origin, contained in ball of radius D)",
+    "adversary is non-anticipating: chooses l_t after seeing x_t but before the fresh random direction u_t",
+    "regret measured on the average of the two queried losses (two-query regret)"
+   ],
+   "definition_quote": "At each round $t = 1, \\dots, T$, the learner chooses an action $x_t$ from a fixed convex set $\\mathcal{K} \\subset \\mathbb{R}^d$. A non-anticipating adaptive adversary then selects a convex loss function $\\ell_t: \\mathcal{K} \\to \\mathbb{R}$ using the past history and, in the two-point protocol studied here, before the learner's fresh random direction at round $t$ is sampled."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Online gradient descent with two queries per round (two-point projected gradient method)",
+   "registry_id": "osgd_two_point",
+   "is_new": false,
+   "techniques": [
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "alpha",
+    "r_K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_abs*d*L_lip**2/alpha*(log(E*T) + log(E/delta)) + 4*(d + 1)*L_lip*D_K*log(E/delta) + L_lip*log(E*T)*(3 + 2*D_K/r_K)",
+    "expression_latex": "\\Cabs \\cdot \\frac{d G^2}{\\mu}\\cdot \\left( \\log(eT) + \\log \\frac{e}{\\delta} \\right) + 4(d+1)GD\\log\\frac{e}{\\delta} + G\\log(eT)\\left(3 + \\frac{2D}{r}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "C_abs": "unspecified absolute constant",
+    "D_K": "radius D with K contained in the ball D*B"
+   },
+   "conditions": [
+    "losses G-Lipschitz (L_lip = G) and mu-strongly convex with mu > 0 (alpha = mu)",
+    "r B ⊆ K ⊆ D B",
+    "non-anticipating adversary (Assumption 3)",
+    "comparator x in K fixed independently of the algorithm's random directions",
+    "T >= 2 and 2 log(eT)/T <= r",
+    "0 < delta < 1"
+   ],
+   "tuning": [
+    "eta_t = 2/(mu t)",
+    "smoothing radius log(eT)/T",
+    "xi = 2*(smoothing radius)/r"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1",
+    "quote": "Suppose the loss function $\\ell_t(\\cdot)$ is $\\mu$-strongly convex with $\\mu>0$ and $G$-Lipschitz continuous. The constraint set $\\cK$ is convex and satisfies Eq.~\\eqref{eq:DB}. ... Given $0<\\delta<1$ and $T\\ge 2$ such that $2\\log(eT)/T\\le r$, set the step size $\\eta_t = \\frac{2}{\\mu t}$, $\\alpha = \\frac{\\log(eT)}{T}$ and $\\xi = 2\\alpha / r$. Fix any comparator $\\bx\\in\\cK$ independently of the algorithmic random directions. Then, with probability at least $1-\\delta$, ... \\leq \\Cabs \\cdot \\frac{d G^2}{\\mu}\\cdot \\left( \\log(eT) + \\log \\frac{e}{\\delta} \\right) + 4(d+1)GD\\log\\frac{e}{\\delta} + G\\log(eT)\\left(3 + \\frac{2D}{r}\\right)"
+   },
+   "confidence": "medium",
+   "notes": "Fixed-comparator high-probability bound (event depends on the comparator), not against the realized hindsight minimizer; recorded with comparator best_fixed_action. Paper's mu mapped to canonical alpha, G to L_lip. Regret is on the average of the two queried losses. Algorithm needs Euclidean projection onto (1-xi)K."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_abs*d*L_lip**2/alpha*(log(E*T) + log(E/delta) + d*log(3*D_K/eps_alg)) + 4*(d + 1)*L_lip*D_K*(log(E/delta) + d*log(3*D_K/eps_alg)) + L_lip*log(E*T)*(3 + 2*D_K/r_K) + L_lip*T*eps_alg",
+    "expression_latex": "\\Cabs \\cdot \\frac{d G^2}{\\mu}\\left(\\log(eT)+\\log\\frac{e}{\\delta}+d\\log\\frac{3D}{\\varepsilon}\\right) + 4(d+1)GD\\left(\\log\\frac{e}{\\delta}+d\\log\\frac{3D}{\\varepsilon}\\right) + G\\log(eT)\\left(3+\\frac{2D}{r}\\right) + GT\\varepsilon",
+    "regime": "0 < eps_alg <= D_K"
+   },
+   "symbols": {
+    "C_abs": "unspecified absolute constant",
+    "D_K": "radius D with K contained in the ball D*B"
+   },
+   "conditions": [
+    "assumptions of Theorem 1 (G-Lipschitz, mu-strongly convex losses, rB ⊆ K ⊆ DB, non-anticipating adversary, T >= 2, 2 log(eT)/T <= r)"
+   ],
+   "tuning": [
+    "eta_t = 2/(mu t)",
+    "smoothing radius log(eT)/T",
+    "xi = 2*(smoothing radius)/r",
+    "eps_alg = covering radius of the analysis net (analysis parameter)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:uniform_cover",
+    "number": "Corollary 2",
+    "quote": "Suppose the assumptions of Theorem~\\ref{thm:main} hold. Let $0<\\varepsilon\\le D$, and let $\\mathcal N_\\varepsilon\\subset\\cK$ be an $\\varepsilon$-net of $\\cK$ ... Then with probability at least $1-\\delta$, ... -\\min_{\\bx\\in\\cK}\\sum_{t=1}^T\\ell_t(\\bx) \\leq \\Cabs \\cdot \\frac{d G^2}{\\mu}\\left(\\log(eT)+\\log\\frac{e}{\\delta}+d\\log\\frac{3D}{\\varepsilon}\\right) + 4(d+1)GD\\left(\\log\\frac{e}{\\delta}+d\\log\\frac{3D}{\\varepsilon}\\right) + G\\log(eT)\\left(3+\\frac{2D}{r}\\right) + GT\\varepsilon ."
+   },
+   "confidence": "high",
+   "notes": "Realized full-comparator regret against min_x sum_t l_t(x) on the sample path. eps is an analysis parameter only (algorithm unchanged)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_abs*d*L_lip**2/alpha*(log(E*T) + log(E/delta) + d*log(E*T)) + 4*(d + 1)*L_lip*D_K*(log(E/delta) + d*log(3*T)) + L_lip*log(E*T)*(3 + 2*D_K/r_K) + L_lip*D_K",
+    "expression_latex": "\\Cabs \\cdot \\frac{d G^2}{\\mu}\\left(\\log(eT)+\\log\\frac{e}{\\delta}+d\\log(eT)\\right) + 4(d+1)GD\\left(\\log\\frac{e}{\\delta}+d\\log(3T)\\right) + G\\log(eT)\\left(3+\\frac{2D}{r}\\right) + GD",
+    "regime": null
+   },
+   "symbols": {
+    "C_abs": "unspecified absolute constant",
+    "D_K": "radius D with K contained in the ball D*B"
+   },
+   "conditions": [
+    "assumptions of Theorem 1 (G-Lipschitz, mu-strongly convex losses, rB ⊆ K ⊆ DB, non-anticipating adversary, T >= 2, 2 log(eT)/T <= r)"
+   ],
+   "tuning": [
+    "eta_t = 2/(mu t)",
+    "smoothing radius log(eT)/T",
+    "xi = 2*(smoothing radius)/r",
+    "analysis cover radius eps = D/T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:uniform_cover",
+    "number": "Corollary 2",
+    "quote": "In particular, taking $\\varepsilon=D/T$ and using $T\\ge 2$ gives ... \\leq \\Cabs \\cdot \\frac{d G^2}{\\mu}\\left(\\log(eT)+\\log\\frac{e}{\\delta}+d\\log(eT)\\right) + 4(d+1)GD\\left(\\log\\frac{e}{\\delta}+d\\log(3T)\\right) + G\\log(eT)\\left(3+\\frac{2D}{r}\\right) + GD ."
+   },
+   "confidence": "high",
+   "notes": "Realized hindsight-comparator regret; overall O((d^2 G^2/mu) log T + d^2 G D log T)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "agarwal2010optimal",
+   "cited_title": "Optimal algorithms for online convex optimization with multi-point bandit feedback",
+   "cited_first_author": "Agarwal",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": "two-point projected gradient method",
+   "algorithm_registry_id": "osgd_two_point",
+   "side": "upper",
+   "setting_description": "Two-point bandit OCO with strongly convex Lipschitz losses; comparator-wise expected regret (and pseudo-regret corollary); horizon-dependent term up to problem parameters",
+   "bound": {
+    "notation": "O",
+    "expression": "d**2*log(T)",
+    "expression_latex": "O(d^2\\log T)",
+    "regime": null
+   },
+   "where": "Introduction and comparison table (Section 3)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:23:27",
+  "source_chars": 64971,
+  "input_tokens": 72154,
+  "output_tokens": 5803,
+  "cost_usd_equiv": 0.41497999999999996,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

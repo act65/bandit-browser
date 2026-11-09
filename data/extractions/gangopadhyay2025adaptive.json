@@ -1,0 +1,224 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Adaptive Budget Optimization for Multichannel Advertising Using Combinatorial Bandits",
+  "arxiv_id": "2502.02920",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Briti Gangopadhyay",
+   "Zhao Wang",
+   "Alberto Silvio Chiappa",
+   "Shingo Takamatsu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Automatic Budget Allocation (ABA) problem (combinatorial semi-bandit with GP reward functions per sub-campaign)",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "T",
+    "kernel"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [
+    "knapsack_constraints"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "arbitrary_subset",
+    "reward": "linear",
+    "loss_scale": "unspecified"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "hard_budget",
+    "violation": "never"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each of N sub-campaigns has an unknown reward function of the budget (discretized budget levels) that is a realization of a Gaussian process; super-arm picks one budget level per sub-campaign subject to a daily budget (multi-choice knapsack)",
+    "Reward functions assumed monotone increasing and concave (Assumption 3)",
+    "Learner knows the measurement noise variance lambda and arm efficiency theta_j (e.g. normalized CPC) used in exploration",
+    "Paper's broader setting is piecewise stationary with breakpoints, but the regret proposition is stated for a single GP realization"
+   ],
+   "definition_quote": "Let us consider an ABA problem over T rounds where the function $\\hat{n}_j(b)$ is the realization of a GP ... max_{x_{j,t}} \\sum_{j=1}^{N} n_{j,t}(x_{j,t}) s.t. \\sum_{j=1}^{N} b_{j,t} \\leq \\bar{b}_t"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "TUCB-MAE (Targeted UCB with saturating mean and MAE change point detection)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "restarts_or_sliding_window"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "kernel",
+    "lambda (noise variance)",
+    "theta_j (arm efficiency)",
+    "tau (change threshold)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T*N_camp*Gamma_sum)",
+    "expression_latex": "\\mathcal{R}_T(U) = \\tilde{\\mathcal{O}} \\left( \\sqrt{TN \\sum_{j=1}^{N} \\gamma_{T}(\\hat{n}_j)} \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "N_camp": "number of sub-campaigns (paper's N)",
+    "Gamma_sum": "sum over sub-campaigns j of the maximum information gain gamma_T(hat n_j)"
+   },
+   "conditions": [
+    "reward function of each sub-campaign is a realization of a GP",
+    "Gaussian measurement noise with variance lambda",
+    "kernel bounded by 1 (k(x,x) <= 1)"
+   ],
+   "tuning": [
+    "beta_{j,t} = 2 (1-theta_j) log(pi^2 N M t^2 / (3 delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Proposition",
+    "quote": "Let us consider an ABA problem over T rounds where the function $\\hat{n}_j(b)$ is the realization of a GP, using TUCB-MAE algorithm with the following upper bound on the reward function ... with probability at least $1 - \\delta$, it holds: \\[ \\mathcal{R}_T(U) = \\tilde{\\mathcal{O}} \\left( \\sqrt{TN \\sum_{j=1}^{N} \\gamma_{T}(\\hat{n}_j)} \\right), \\]"
+   },
+   "confidence": "medium",
+   "notes": "Regret is pseudo-regret against the optimal super-arm for the realized GP function, holding w.p. 1-delta. Proof also gives R_T^2 <= 4 T beta_T (1/log(1+1/lambda)) sum_j gamma_T. The proof is somewhat loose/inconsistent; analysis ignores the non-stationary change detection."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*N_camp*Gamma_sum_plus)",
+    "expression_latex": "R_T(U^+) = O \\left( \\sqrt{TN \\sum_{j=1}^{N} \\gamma_T(\\hat{n}_j, X_j^+)} \\right) \\leq \\mathcal{R}_T(U)",
+    "regime": null
+   },
+   "symbols": {
+    "N_camp": "number of sub-campaigns (paper's N)",
+    "Gamma_sum_plus": "sum over sub-campaigns of the information gain gamma_T(hat n_j, X_j^+) restricted to budget levels above the current best level"
+   },
+   "conditions": [
+    "reward function of each sub-campaign is a realization of a GP",
+    "monotonicity of hat n_j",
+    "Gaussian measurement noise with variance lambda"
+   ],
+   "tuning": [
+    "exploration restricted to budget levels b_{j,t} > b_{j max,t}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Proposition",
+    "quote": "Thus, under monotonocity assumption of $\\hat{n}_j$ \\[ R_T(U^+) = O \\left( \\sqrt{TN \\sum_{j=1}^{N} \\gamma_T(\\hat{n}_j, X_j^+)} \\right) \\leq \\mathcal{R}_T(U) \\]"
+   },
+   "confidence": "low",
+   "notes": "Stated inside the proposition's proof sketch as the targeted-UCB refinement; argument is informal."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T11:36:11",
+  "source_chars": 79636,
+  "input_tokens": 75588,
+  "output_tokens": 4055,
+  "cost_usd_equiv": 0.40749199999999997,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

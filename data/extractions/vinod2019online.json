@@ -1,0 +1,315 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Online Boosting for Multilabel Ranking with Top-k Feedback",
+  "arxiv_id": "1910.10937",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Raman, Vinod",
+   "Daniel Tianhou Zhang",
+   "Young Hun Jung",
+   "Ambuj Tewari"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online multilabel ranking (MLR) boosting with top-k feedback",
+   "objective": "other_pure_exploration",
+   "feedback": "partial_monitoring",
+   "environment": "adversarial_unspecified",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "not_applicable",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "fixed",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "permutations",
+    "reward": "unspecified",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "unspecified"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "unspecified",
+    "structure": "unspecified"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Objective is minimizing cumulative (unweighted) rank loss of an online booster; guarantees are loss bounds in terms of weak-learner edges, not regret against a comparator (objective field set to closest available value; it is really a cumulative-loss objective)",
+    "Learner outputs a ranking (score vector) over m labels; feedback is relevance of only the top-k ranked labels (top-k feedback); the learner cannot compute its own loss",
+    "Booster aggregates N online weak learners that receive full (estimated) cost vectors",
+    "Number of labels m is known to the learner"
+   ],
+   "definition_quote": "At each timestep $t=1, \\cdots, T$, the relevant labels are $R_t \\subseteq [m]$... An adversary chooses a labelled example $(x_t, R_t) \\in \\X \\times 2^{[m]}$ ... and sends $x_t$ to the learner. ... the learner then produces an $m$-dimensional score vector $y_t$ ... In the top-$k$ feedback setting, however, it only observes whether $l$ is in $R_t$ for each label $l \\in \\Top^k(\\sigma(y_t))$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Top-kBBM (Boost-By-Majority for ranking with top-k feedback)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "gamma (weak learner edge)",
+    "N (number of weak learners)",
+    "m (number of labels)",
+    "rho (exploration rate)"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Top-kAdaptive",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "exponential_weights",
+    "ftrl_or_mirror_descent",
+    "epsilon_greedy"
+   ],
+   "requires_knowledge_of": [
+    "m (number of labels)",
+    "rho (exploration rate)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "Phi_N_0*T + 2*m_lab**2*z*N_wl/rho",
+    "expression_latex": "\\sum_{t=1}^T L(s^N_t, R_t) \\leq \\Phi^N_{R_t}(0)T + \\Otilde(\\frac{2m^2}{\\rho}zN)",
+    "regime": null
+   },
+   "symbols": {
+    "Phi_N_0": "surrogate potential Phi^N(0) at zero scores",
+    "m_lab": "number of labels m",
+    "z": "maximum value of any pairwise loss f^{a,b}",
+    "N_wl": "number of weak learners",
+    "rho": "exploration rate"
+   },
+   "conditions": [
+    "weak learners satisfy Top-kWLC(gamma, delta, S, b)",
+    "loss pairwise decomposable with pairwise functions proper, uncrossable and convex (Assumptions 1-3)",
+    "delta << 1/N",
+    "bound on L(s^N_t,R_t) (unrandomized scores), probability at least 1-N*delta"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "bbm_bound",
+    "number": "Theorem (bbm_bound)",
+    "quote": "For any $T, N$ satisfying $\\delta \\ll \\frac{1}{N}$, and any decomposed function $f^{a,b}$ that satisfies Assumptions ..., the total loss incurred by \\optimalAlgo~satisfies the following inequality with probability at least $1-N\\delta$ $$\\sum_{t=1}^T L(s^N_t, R_t) \\leq \\Phi^N_{R_t}(0)T + \\Otilde(\\frac{2m^2}{\\rho}zN),$$ where $z$ is the maximum possible value that any $\\f{a, b}$ can output, and $\\Otilde$ suppresses dependence on $\\log\\frac{1}{\\delta}$."
+   },
+   "confidence": "medium",
+   "notes": "Cumulative loss bound for a boosting algorithm, not regret; Õ applies only to second term. Õ hides log(1/delta)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "m_lab**2/4*(N_wl + 1)*exp(-gamma**2*N_wl/2)*T + rho*m_lab**2*T + 2*m_lab**2*N_wl**2*sqrt(T)/rho",
+    "expression_latex": "\\sum_{t=1}^T \\Rank_t(\\ytilde_t) \\leq \\frac{m^2}{4}(N+1)\\exp(-\\frac{\\gamma^2N}{2})T + \\rho m^2 T + \\Otilde(\\frac{2m^2}{\\rho}N^2\\sqrt{T})",
+    "regime": null
+   },
+   "symbols": {
+    "m_lab": "number of labels m",
+    "N_wl": "number of weak learners",
+    "gamma": "edge of weak learners in the weak learning condition",
+    "rho": "exploration rate"
+   },
+   "conditions": [
+    "weak learners satisfy Top-kWLC with edge gamma",
+    "N << 1/delta",
+    "unweighted hinge loss used as potential loss; bound on unweighted rank loss of randomized predictions",
+    "probability at least 1-N*delta"
+   ],
+   "tuning": [
+    "uniform randomization with exploration rate rho; paper suggests rho proportional to N*T^(-1/4)*sqrt(2)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "opt_corollary",
+    "number": "Corollary (opt_corollary)",
+    "quote": "For any $T$ and $N \\ll \\frac{1}{\\delta}$, \\optimalAlgo's randomized predictions $\\ytilde_t$ satisfy the following bound on the rank loss with probability at least $1-N\\delta$ \\sum_{t=1}^T \\Rank_t(\\ytilde_t) \\leq \\frac{m^2}{4}(N+1)\\exp(-\\frac{\\gamma^2N}{2})T + \\rho m^2 T + \\Otilde(\\frac{2m^2}{\\rho}N^2\\sqrt{T})."
+   },
+   "confidence": "medium",
+   "notes": "Cumulative rank loss (not regret). Appendix states without formal theorem a single-swap variant: m^2/4(N+1)exp(-gamma^2N/2)T + 2 rho m T + Õ((2m^2-k^2)/rho N^2 sqrt(T)) (requires k>=3, rho<0.25)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "2*m_lab**2*T/gamma_sum + rho*m_lab**2*T + 2*m_lab**2*N_wl*sqrt(T)/(rho*gamma_sum)",
+    "expression_latex": "\\frac{2m^2}{\\sum_i|\\gamma_i|}T +\\rho m^2T + \\Otilde(\\frac{2m^2 N\\sqrt{T}}{\\rho\\sum_i|\\gamma_i|})",
+    "regime": null
+   },
+   "symbols": {
+    "m_lab": "number of labels m",
+    "N_wl": "number of weak learners",
+    "gamma_sum": "sum over weak learners of absolute empirical edges sum_i |gamma_i|",
+    "rho": "exploration rate"
+   },
+   "conditions": [
+    "delta << 1/N",
+    "probability at least 1-(N+4)*delta",
+    "bound on cumulative unweighted rank loss of randomized predictions"
+   ],
+   "tuning": [
+    "SGD step eta_t = 8*rho*sqrt(2)/(m^2*sqrt(t)) on alpha in [-2,2]",
+    "Hedge over experts",
+    "paper suggests rho proportional to sqrt(2N/sum_i|gamma_i|) T^(-1/4)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "ada_bound",
+    "number": "Theorem (ada_bound)",
+    "quote": "For any $T, N$ satisfying $\\delta \\ll \\frac{1}{N}$, the cumulative rank loss of \\adaptiveAlgo, $\\sum_{t=1}^{T}\\Rank(\\ytilde_t, R_t)$, satisfies the following bound with probability at least $1-(N+4)\\delta$: $$ \\frac{2m^2}{\\sum_i|\\gamma_i|}T +\\rho m^2T + \\Otilde(\\frac{2m^2 N\\sqrt{T}}{\\rho\\sum_i|\\gamma_i|}),$$ where $\\Otilde$ suppresses dependence on $\\log\\frac{1}{\\delta}$."
+   },
+   "confidence": "medium",
+   "notes": "Proof actually gives 2 m^2 log2 constant in first term. Empirical edges are data-dependent. Appendix single-swap variant (informal): 2m^2 log2/sum|gamma_i| T + 2 rho m T + Õ((2m^2-k^2)N sqrt(T)/(rho sum|gamma_i|))."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "jungMultilabel",
+   "cited_title": "Online boosting algorithms for multi-label ranking",
+   "cited_first_author": "Young Hun Jung",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "OnlineBMR",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online multilabel ranking boosting, full information, weak learners with edge gamma; bound on unweighted rank loss (rescaled by m^2/4)",
+   "bound": {
+    "notation": "exact",
+    "expression": "m_lab**2/4*(N_wl + 1)*exp(-gamma**2*N_wl/2)*T + m_lab**2/2*N_wl*S_excess",
+    "expression_latex": "\\frac{m^2}{4}(N+1)\\exp(-\\frac{\\gamma^2N}{2})T + \\frac{m^2}{2}NS",
+    "regime": null
+   },
+   "where": "Section 3.2.3"
+  },
+  {
+   "cited_key": "jungMultilabel",
+   "cited_title": "Online boosting algorithms for multi-label ranking",
+   "cited_first_author": "Young Hun Jung",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Ada.OLMR",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online multilabel ranking adaptive boosting, full information; bound on unweighted rank loss (rescaled by m^2/4)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "2*m_lab**2*T/gamma_sum + N_wl**2*m_lab**2/gamma_sum",
+    "expression_latex": "\\frac{2m^2}{\\sum_i |\\gamma_i|}T + \\Otilde(\\frac{N^2m^2}{\\sum_i |\\gamma_i|})",
+    "regime": null
+   },
+   "where": "Section 3.3.3"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T13:35:46",
+  "source_chars": 84233,
+  "input_tokens": 76436,
+  "output_tokens": 6023,
+  "cost_usd_equiv": 0.453636,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

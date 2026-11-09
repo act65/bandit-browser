@@ -1,0 +1,222 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Parallel Online Clustering of Bandits via Hedonic Game",
+  "arxiv_id": null,
+  "arxiv_version": null,
+  "year": 2023,
+  "authors": [
+   "Xiaotong Cheng",
+   "Cheng Pan",
+   "Setareh Maghsudi"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online clustering of bandits (parallel, n users in m clusters, linear stochastic payoffs)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "sigma"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "multi_agent_cooperative",
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "not_applicable",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "clustered"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "n users act in parallel each round; users in the same (unknown) cluster share the same parameter theta; regret summed over all users",
+    "each user's action set of L contexts is drawn i.i.d. each round from a random vector X with ||X||<=1 and E[XX^T] of minimal eigenvalue lambda_min > 0 (Assumption 2)",
+    "well-separatedness: distinct cluster parameters differ by at least gamma (Assumption 1)",
+    "the learner is assumed to know a lower bound on lambda_min"
+   ],
+   "definition_quote": "a_{i,t}(x) = θ_i^T x + ϵ_{i,t}, where θ_i is a fixed but unknown feature vector of agent i and ϵ_{i,t} is a conditionally zero-mean, sub-Gaussian noise with variance parameter σ^2(x) ≤ σ^2 ... Assumption 1 (Well-separatedness) ... ∥θ_j − θ_j'∥ ≥ γ > 0. Assumption 2 (Action regularity) ... D_{i,t} generated i.i.d. from a random vector X, ∥X∥ ≤ 1, such that E[XX^T] is full rank with minimal eigenvalue λ_min > 0."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "CLUB-HG",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "sigma"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "n_users/(lambda_min*gamma_sep**2) + sqrt(d*m_clu*n_users*T)*(sigma*sqrt(d) + 1)",
+    "expression_latex": "\\tilde O(\\frac{n}{\\lambda_{min}\\gamma^2} + \\sqrt{dmnT}(\\sigma\\sqrt{d}+1))",
+    "regime": "T > max{128/(3 delta lambda_min) log(128/(3 delta lambda_min)) + 3, 512/(gamma^2 lambda_min)(d lambda_min gamma^2/512 + 1 + 2 log(2/delta) + sigma^2 d log(512 sigma^2/(lambda_min gamma^2))), 4 Omega^2 log(T+1)/gamma^2}"
+   },
+   "symbols": {
+    "n_users": "number of users",
+    "m_clu": "number of underlying clusters",
+    "lambda_min": "minimal eigenvalue of E[XX^T] for the context distribution",
+    "gamma_sep": "separation gap between distinct cluster parameter vectors"
+   },
+   "conditions": [
+    "Assumption 1: distinct cluster vectors separated by gamma > 0",
+    "Assumption 2: contexts i.i.d. with ||X||<=1 and lambda_min(E[XX^T]) > 0",
+    "||theta_j|| <= 1"
+   ],
+   "tuning": [
+    "alpha_j(t) = sigma*sqrt(2 log(det(M_{j,t-1})^{1/2}/delta)) + 1",
+    "beta_t = sqrt(t/log(t+1))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 3",
+    "quote": "Let the CLUB-HG algorithm described in Algorithm 1 runs with a set of agents V = {1, 2, . . . , n}, which can be partitioned into m clusters ... Let Assumption 1 and 2 hold. ... Then with probability at least 1 − δ, the cumulative regret satisfies R(T) ≤ Õ(n/(λ_min γ^2) + √(dmnT)(σ√d + 1)), as T grows large (more precisely, for T > max{...}). Because of Õ notation, the factors log(1/δ), log(d), and log(T) do not appear."
+   },
+   "confidence": "medium",
+   "notes": "Õ hides log(1/delta), log d, log T. The explicit form in the proof is A n tau + 3 sqrt(mnT 2d log(1+nT/d))(sigma sqrt(d log(1+nT/d)+2log(1/delta))+1), where A bounds the payoff. Horizon marked anytime because the tuning does not use T. A distributed variant (Algorithm 3) is claimed to have the same bound."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "n_users*sqrt(d*T)*(sigma*sqrt(d) + 1)",
+    "expression_latex": "\\tilde O(n\\sqrt{dT}(\\sigma\\sqrt{d}+1))",
+    "regime": "T <= max{128/(3 delta lambda_min) log(128/(3 delta lambda_min)) + 3, 512/(gamma^2 lambda_min)(d lambda_min gamma^2/512 + 1 + 2 log(2/delta) + sigma^2 d log(512 sigma^2/(lambda_min gamma^2))), 4 Omega^2 log(T+1)/gamma^2}"
+   },
+   "symbols": {
+    "n_users": "number of users",
+    "lambda_min": "minimal eigenvalue of E[XX^T]",
+    "gamma_sep": "separation gap between cluster vectors"
+   },
+   "conditions": [
+    "Assumption 1: distinct cluster vectors separated by gamma > 0",
+    "Assumption 2: contexts i.i.d. with ||X||<=1 and lambda_min(E[XX^T]) > 0",
+    "||theta_j|| <= 1"
+   ],
+   "tuning": [
+    "alpha_j(t) = sigma*sqrt(2 log(det(M_{j,t-1})^{1/2}/delta)) + 1",
+    "beta_t = sqrt(t/log(t+1))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 4",
+    "quote": "Let the CLUB-HG algorithm described in Algorithm 1 run with a set of agents V = {1, 2, . . . , n}, which can be partitioned into m clusters ... Assume that Assumption 1 and 2 hold. ... When the sampling steps is not large enough such that T ≤ max{...}, with probability at least 1 − δ the cumulative regret satisfies R(T) ≤ Õ(n√(dT)(σ√d + 1))."
+   },
+   "confidence": "medium",
+   "notes": "Short-horizon regime. The proof also contains a term 4 Omega n sqrt(T log T), which is absorbed into the Õ notation."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:06:57",
+  "source_chars": 63616,
+  "input_tokens": 67661,
+  "output_tokens": 4819,
+  "cost_usd_equiv": 0.359356,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

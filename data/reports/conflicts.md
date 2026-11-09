@@ -2,30 +2,33 @@
 
 An upper bound grows more slowly than a lower bound in the same setting and regime. Usually an extraction error (a dropped term, a missing assumption in the setting) — occasionally a genuine contradiction.
 
-- adversarial (oblivious) · linear · bounded_pm1 · l1 ball · p_norm=1 (`S-0236e5b9`, 1 papers), regret / worst_case, variable T: upper 0.5·log^0.5 < lower 0.666667
-  - upper: `d*sqrt(T*log(T))` (O; inherited from hazan2016volumetric Corollary 7.1) — conditions: K equipped with a membership oracle; losses satisfy |L^T x| <= 1 for all x in K
-  - lower: `T**(2/3)*d**(1/3)/20` (exact; bubeck2017sparsity Theorem 5)
-- stochastic · linear (finite actions) · adversarial contexts · Gaussian · time_varying_action_sets · knows L_feat, S, sigma · finite (`S-e7387680`, 1 papers), regret / worst_case, variable K: upper 0 < lower 0.25
-  - upper: `sqrt(T*d)*log(2*T*d)*Min(sqrt(d), (d*log(K))**(1/4))` (O; inherited from jin2026nearly Theorem 4) — conditions: K >= d >= 2; T >= d; noise N(0,1); ||theta||_2 <= 1, ||x_{t,i}||_2 <= 1
-  - lower: `K**(1/4)*sqrt(T*d)` (Omega; jin2026nearly Theorem 1)
-- stochastic · linear (finite actions) · adversarial contexts · Gaussian · time_varying_action_sets · knows L_feat, S, sigma · finite (`S-e7387680`, 1 papers), regret / worst_case, variable d: upper 0.5 < lower 1
-  - upper: `(K*log(2*K*T + 1))**(1/4)*sqrt(T*d*log(T/d + 1))` (O; inherited from jin2026nearly Theorem 3) — conditions: 2 <= K <= d <= T; noise N(0,1); ||theta||_2 <= 1, ||x_{t,i}||_2 <= 1
-  - lower: `d*sqrt(T*log(T))` (Omega; inherited from li2019nearlyminimax Theorem 10)
-- stochastic · linear (finite actions) · adversarial contexts · Gaussian · time_varying_action_sets · finite (`S-7768e9b8`, 1 papers), regret / worst_case, variable K: upper 0 < lower 0.25
-  - upper: `sqrt(T*d)*log(2*T*d)*Min(sqrt(d), (d*log(K))**(1/4))` (O; jin2026nearly Theorem 4) — conditions: K >= d >= 2; T >= d; noise N(0,1); ||theta||_2 <= 1, ||x_{t,i}||_2 <= 1
-  - lower: `K**(1/4)*sqrt(T*d)` (Omega; inherited from jin2026nearly Theorem 1)
-- stochastic · linear (finite actions) · adversarial contexts · Gaussian · time_varying_action_sets · finite (`S-7768e9b8`, 1 papers), regret / worst_case, variable d: upper 0.5 < lower 1
-  - upper: `(K*log(2*K*T + 1))**(1/4)*sqrt(T*d*log(T/d + 1))` (O; jin2026nearly Theorem 3) — conditions: 2 <= K <= d <= T; noise N(0,1); ||theta||_2 <= 1, ||x_{t,i}||_2 <= 1
-  - lower: `d*sqrt(T*log(T))` (Omega; inherited from li2019nearlyminimax Theorem 10)
-- stochastic · linear (finite actions) · adversarial contexts · Gaussian · time_varying_action_sets · knows n_act, sigma · finite (`S-a4698ff8`, 1 papers), regret / worst_case, variable d: upper 0.5 < lower 1
-  - upper: `(K*log(2*K*T + 1))**(1/4)*sqrt(T*d*log(T/d + 1))` (O; inherited from jin2026nearly Theorem 3) — conditions: 2 <= K <= d <= T; noise N(0,1); ||theta||_2 <= 1, ||x_{t,i}||_2 <= 1
-  - lower: `d*sqrt(T*log(T))` (Omega; li2019nearlyminimax Theorem 10)
-- stochastic · K-armed · rewards in [0,1] · knows m (`S-b9467e6d`, 1 papers), regret / worst_case, variable K: upper 0 < lower 0.5
-  - upper: `sqrt(T*m*log(T))` (O; song2025outcome Theorem (thm:balanced-ucb-full)) — conditions: rewards in [0,1] with 1-sub-Gaussian noise; balanced partition s_o = K/m
-  - lower: `Min(T, sqrt(K*T))/20` (exact; inherited from auer2002exp3 Theorem 5.1)
-- stochastic · linear (finite actions) · adversarial contexts · conditionally_subgaussian · time_varying_action_sets · knows sigma · finite (`S-f887286f`, 1 papers), regret / worst_case, variable K: upper 0 < lower 0.25
-  - upper: `sqrt(T)*d**(3/2)*(sqrt(log(T)*log(1/delta)) + log(T))` (O; agrawal2013lints Theorem 1) [delta=1/T] — conditions: ||b_i(t)|| <= 1, ||mu|| <= 1, Delta_i(t) <= 1; noise conditionally R-sub-Gaussian (R = sigma)
-  - lower: `K**(1/4)*sqrt(T*d)` (Omega; inherited from jin2026nearly Theorem 1)
+- adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] · switching_cost (`S-0c139a66`, 1 papers), regret / worst_case, variable K: upper 0·log^0.5 < lower 0
+  - upper: `1099511627776*Min(T, sqrt(T*log(K))*log(E*K*T)**2)` (exact; inherited from cesari2026action Theorem 2) — conditions: graph strongly revealing, known and fixed; oblivious losses in [0,1]^K
+  - lower: `T**(2/3)/log(T)` (Omega; arora2019bandits Theorem 5.1)
+- adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] · switching_cost (`S-0c139a66`, 1 papers), regret / worst_case, variable T: upper 0.5·log^2 < lower 0.666667·log^-1
+  - upper: `1099511627776*Min(T, sqrt(T*log(K))*log(E*K*T)**2)` (exact; inherited from cesari2026action Theorem 2) — conditions: graph strongly revealing, known and fixed; oblivious losses in [0,1]^K
+  - lower: `T**(2/3)/log(T)` (Omega; arora2019bandits Theorem 5.1)
+- adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] · switching_cost (`S-6f1e943a`, 1 papers), regret / worst_case, variable K: upper 0·log^0.5 < lower 0
+  - upper: `1099511627776*Min(T, sqrt(T*log(K))*log(E*K*T)**2)` (exact; cesari2026action Theorem 2) — conditions: graph strongly revealing, known and fixed; oblivious losses in [0,1]^K
+  - lower: `T**(2/3)/log(T)` (Omega; inherited from arora2019bandits Theorem 5.1)
+- adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] · switching_cost (`S-6f1e943a`, 1 papers), regret / worst_case, variable T: upper 0.5·log^2 < lower 0.666667·log^-1
+  - upper: `1099511627776*Min(T, sqrt(T*log(K))*log(E*K*T)**2)` (exact; cesari2026action Theorem 2) — conditions: graph strongly revealing, known and fixed; oblivious losses in [0,1]^K
+  - lower: `T**(2/3)/log(T)` (Omega; inherited from arora2019bandits Theorem 5.1)
+- pac_epsilon_best · stochastic · combinatorial · rewards in [0,1] · knows m · finite (`S-e7a8db51`, 1 papers), sample_complexity / worst_case, variable d: upper 0 < lower 1
+  - upper: `K*(log(1/delta) + log(m))/epsilon**2` (O; chen2016pure Theorem 1.7)
+  - lower: `d/epsilon**2` (Omega; inherited from rejwan2019combinatorial Theorem 10)
+- stochastic · combinatorial · semi_bandit feedback · rewards in [0,1] · knows m, reward_family · finite (`S-88bac412`, 1 papers), regret / instance_dependent, variable d: upper 0 < lower 1
+  - upper: `K*m**2*log(T)**2/Delta_min` (O; inherited from xu2021simple Theorem 1.1)
+  - lower: `m*(d - m)*log(T)/(4*Delta)` (liminf; inherited from kveton2014tight Proposition 1)
+- pac_epsilon_best · stochastic · combinatorial · bernoulli · knows m, reward_family · finite (`S-70c3bd9a`, 1 papers), sample_complexity / worst_case, variable d: upper 0 < lower 1
+  - upper: `K*(log(1/delta) + log(m))/epsilon**2` (O; inherited from chen2016pure Theorem 1.7)
+  - lower: `d/epsilon**2` (Omega; rejwan2019combinatorial Theorem 10)
+- nonstationary_drifting · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 · knows V_T (`S-540a698b`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 0.5
+  - upper: `Min(S_T, sqrt(T*V_T))` (O_tilde; inherited from zhou2025learning Theorem (thm:bobw)) — conditions: V_T = Omega(ln T)
+  - lower: `sqrt(T*V_T)/16` (exact; zhou2025learning Theorem (thm:full_lb))
+- nonstationary_drifting · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 (`S-6e75cd9f`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 0.5
+  - upper: `Min(S_T, sqrt(T*V_T))` (O_tilde; zhou2025learning Theorem (thm:bobw)) — conditions: V_T = Omega(ln T)
+  - lower: `sqrt(T*V_T)/16` (exact; inherited from zhou2025learning Theorem (thm:full_lb))
 
 ## Vacuous upper bounds (regret growing at least linearly in T)
 
@@ -37,4 +40,10 @@ No better than the trivial bound. Usually an extraction error, an unoptimised tu
 - `T*eta/2 + d*log(2)/eta` (exact; audibert2011minimax Theorem 11)
 - `sqrt(K)*T**(1/(2 - 2**(1 - M_batch)))*log(K)*sqrt(log(K*T))` (O; gao2019batched Theorem 4)
 - `K*T**(1/M_batch)*log(K)*log(K*T)/Delta_min` (O; gao2019batched Theorem 4)
+- `T**(1/(-eps_m*(eps_m/(eps_m + 1))**(M_batch - 1) + eps_m + 1))*v_mom**(1/(eps_m + 1))*(K*log(K*T))**(eps_m/(eps_m + 1))*log(K)` (O; guo2025batched Theorem 1)
+- `K*T**(1/M_batch)*v_mom**(1/eps_m)*(1/Delta_min)**(1/eps_m)*log(K)*log(K*T)` (O; guo2025batched Theorem 1)
+- `(sqrt(T*d) + T*d/M_batch)*log(T)*sqrt(log(K*T))` (O; han2020sequential Theorem 1)
+- `C*T**(1/(M_batch + 3)) + T**(4/(M_batch + 3))*(sum_subopt(M_batch*log(K*T)/Delta_i) + K*log(1/Delta_min)*log(T)*log(K/Delta_min)/(Delta_min*M_batch))` (O; hu2025near Theorem 3)
+- `T**(1/M_batch)*log(T)/Delta_min` (O; karpov2021batched Theorem 1)
+- `T**(1/(2 - 2**(1 - M_batch)))*sqrt(log(T))` (O; karpov2021batched Theorem 7)
 - `3*L_star*d*eta*m + 3*d*m**2*(-log(eta) + 2*log(d/m) + 1) + 3*d + m*(log(d/m) + 1)/eta` (exact; neu2015first Corollary (cor:nonadapt))

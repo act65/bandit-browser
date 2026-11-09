@@ -1,0 +1,334 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Optimal Design for Active Preference Learning with Biased LLM Judges",
+  "arxiv_id": "2609.38860",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Zhongman Du",
+   "Huiming Zhang",
+   "Haodong Zhu",
+   "Baochang Zhang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Active preference learning with biased LLM judges (joint target-nuisance Bradley-Terry model, fixed design)",
+   "objective": "other_pure_exploration",
+   "feedback": "dueling",
+   "environment": "stochastic_iid",
+   "action_space": "generalized_linear",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "arbitrary_bounded",
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_unknown"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "utility_link",
+    "winner": "not_applicable",
+    "comparison": "pair"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Non-adaptive optimal experimental design / parameter estimation problem (allocation fixed before outcomes); the performance metric is policy risk of a reward estimator, not cumulative or interactive bandit regret.",
+   "unmapped": [
+    "two label sources: trusted human labels (Bradley-Terry with theta) and LLM-judge labels with logit X^T theta + W^T a (nuisance parameter a)",
+    "judge-deviation representation W is known/fixed (or learned from m historical units)",
+    "trusted-to-judge sample ratio n_c/n -> kappa",
+    "performance measured by KL-regularized policy loss D_F (Bregman divergence of log-partition value)",
+    "local asymptotic (root-n neighbourhood) analysis conditional on historical data"
+   ],
+   "definition_quote": "We model the fixed judge preference probability q(z) ... q_{\\theta,a}(z)=\\sigma(X(z)^\\top\\theta+W(z)^\\top a). Human labels follow the preference model p_\\theta ... At type i, we collect n_i judge labels ... An independent trusted sample contains n_c human labels ..."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "NAOD (Nuisance-Adjusted Optimal Design) with projected one-step estimator",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "Phi_kappa/n_judge",
+    "expression_latex": "\\lim_{R\\to\\infty}\\liminf_{n\\to\\infty}\\inf_{T_n}\\sup_{\\|\\eta\\|\\le R} n\\,\\mathbb{E}_\\eta D_F(\\theta_{n,h},T_n)\\ge\\Phi_\\kappa(\\xi)",
+    "regime": "n -> infinity, local minimax over root-n balls of radius R -> infinity"
+   },
+   "symbols": {
+    "Phi_kappa": "(1/2) tr(G_0 I_eff,kappa(xi)^{-1}), nuisance-adjusted policy-weighted design criterion",
+    "n_judge": "number of judge labels n"
+   },
+   "conditions": [
+    "fixed allocation xi, conditional on historical data",
+    "M_kappa(xi) positive definite",
+    "G_0 positive definite",
+    "regularity conditions of Appendix A.1",
+    "T_n ranges over all reward estimators based on current observations"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm-local-policy-risk",
+    "number": "Theorem 4.1",
+    "quote": "Fix \\(\\xi\\) and condition on the historical data. Under the regularity conditions ..., suppose \\(M_\\kappa(\\xi)\\succ0\\). If \\(G_0\\succ0\\), then \\lim_{R\\to\\infty}\\liminf_{n\\to\\infty}\\inf_{T_n}\\sup_{\\|\\eta\\|\\le R} n\\,\\mathbb{E}_\\eta D_F(\\theta_{n,h},T_n)\\ge\\Phi_\\kappa(\\xi)"
+   },
+   "confidence": "medium",
+   "notes": "Quantity is policy risk E[D_F], a KL-regularized policy loss, not bandit regret. Scaled risk bound divided by n."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "Phi_kappa/n_judge",
+    "expression_latex": "\\mathbb{E}_\\eta D_F(\\theta_{n,h},\\widehat\\theta_n)=\\Phi_\\kappa(\\xi)/n+o(n^{-1})",
+    "regime": "n -> infinity, uniformly over every fixed local ball"
+   },
+   "symbols": {
+    "Phi_kappa": "(1/2) tr(G_0 I_eff,kappa(xi)^{-1})",
+    "n_judge": "number of judge labels n"
+   },
+   "conditions": [
+    "kappa > 0",
+    "trusted-sample and initialization conditions of Appendix B.2",
+    "M_kappa(xi) positive definite",
+    "G_0 positive definite"
+   ],
+   "tuning": [
+    "projected one-step estimator with guard constant c_s"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm-local-policy-risk",
+    "number": "Theorem 4.1",
+    "quote": "Under the additional trusted-sample and initialization conditions in Appendix~\\ref{app-minimax}, with \\(\\kappa>0\\), the projected one-step estimator defined there attains this bound uniformly on every fixed local ball."
+   },
+   "confidence": "medium",
+   "notes": "Attainment part; actually n E D_F -> Phi_kappa (equality)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "Phi_B/B",
+    "expression_latex": "B\\,\\mathbb{E}_\\eta D_F(\\theta_0+h/\\sqrt B,\\widehat\\theta_B)-\\frac12\\operatorname{tr}(G_eM_B^{-1})\\longrightarrow0",
+    "regime": "B -> infinity, uniformly over bounded local parameters"
+   },
+   "symbols": {
+    "Phi_B": "(1/2) tr(G_e M_B^{-1}) for the realized selected set of B distinct comparisons",
+    "B": "number of selected judge comparisons (budget)"
+   },
+   "conditions": [
+    "conditional on historical data, candidate features and selected set",
+    "M_B uniformly positive definite",
+    "distinct-comparison regularity conditions of Appendix C.2"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm-distinct-comparisons",
+    "number": "Theorem 4.2",
+    "quote": "Condition on the historical data, candidate features, and selected set. ... suppose \\(M_B\\) is uniformly positive definite. Under the local model \\(\\gamma_0+\\eta/\\sqrt B\\), B\\,\\mathbb{E}_\\eta D_F(\\theta_0+h/\\sqrt B,\\widehat\\theta_B)-\\frac12\\operatorname{tr}(G_eM_B^{-1})\\longrightarrow0 ... If \\(M_B\\) converges to a positive definite limit, the corresponding conditional local minimax lower bound also holds."
+   },
+   "confidence": "medium",
+   "notes": "B here is the comparison budget, not knapsack budget. Statement also gives a matching local minimax lower bound when M_B converges (not recorded separately)."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "Phi_0/n_judge + C_P/m_hist",
+    "expression_latex": "\\mathbb E[D_F(\\theta_0,\\widehat\\theta_{n,m})]=\\frac{\\Phi_0}{n}+\\frac{C_P}{m}+o(n^{-1}+m^{-1})",
+    "regime": "m,n -> infinity with n/m -> lambda_P in [0,inf); up to o(1/n + 1/m)"
+   },
+   "symbols": {
+    "Phi_0": "limit of oracle risk constant (1/2) tr(G_e M_m^{-1})",
+    "C_P": "(1/2){tr(R_0 Sigma_P) + b_P^T R_0 b_P}, representation-learning cost",
+    "n_judge": "number of judge labels n",
+    "m_hist": "number of historical units used to learn the judge-deviation representation"
+   },
+   "conditions": [
+    "n_c/n -> kappa > 0",
+    "smallest eigenvalue of M_m bounded away from zero",
+    "(Phi_m,R_m) -> (Phi_0,R_0) in probability",
+    "sqrt(m) e_m converges in distribution to Z_P with mean b_P and covariance Sigma_P",
+    "sup_m E||sqrt(m) e_m||^4 < infinity",
+    "regularity conditions of Appendix D.2"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm-representation-cost",
+    "number": "Theorem 5.1",
+    "quote": "Under the regularity conditions ..., suppose \\(n_c/n\\to\\kappa>0\\) and the smallest eigenvalue of \\(M_m\\) is bounded away from zero. Let \\(m,n\\to\\infty\\) with \\(n/m\\to\\lambda_P\\in[0,\\infty)\\). ... Then \\mathbb E[D_F(\\theta_0,\\widehat\\theta_{n,m})]=\\frac{\\Phi_0}{n}+\\frac{C_P}{m}+o(n^{-1}+m^{-1})"
+   },
+   "confidence": "medium",
+   "notes": "Asymptotic equality with o-remainder; recorded as exact leading-order expression."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "Phi_dagger/n_judge",
+    "expression_latex": "n\\,\\mathbb E D_F(\\theta_n^\\dagger,\\widehat\\theta_n)\\to\\Psi_{\\rm soft}\\le\\frac12\\operatorname{tr}(G^\\dagger I_{\\rm eff}^{-1})",
+    "regime": "n -> infinity"
+   },
+   "symbols": {
+    "Phi_dagger": "(1/2) tr(G^dagger I_eff^{-1}) at the population root",
+    "n_judge": "number of judge labels n"
+   },
+   "conditions": [
+    "soft responses in [0,1], conditionally independent",
+    "every row mean-correct: E[Y|v]=q(gamma_dagger)",
+    "regular estimator with asymptotically linear expansion M^{-1} U_n/sqrt(n)",
+    "M positive definite"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "prop:app-soft-sandwich",
+    "number": "Proposition A.3",
+    "quote": "n\\,\\mathbb E D_F(\\theta_n^\\dagger,\\widehat\\theta_n)\\longrightarrow\\Psi_{\\rm soft}:=\\frac12\\operatorname{tr}(G^\\dagger I_{\\rm eff}^{-1}\\Omega_{\\rm eff}I_{\\rm eff}^{-1}). If every row is additionally mean-correct, ... \\Psi_{\\rm soft}\\le\\frac12\\operatorname{tr}(G^\\dagger I_{\\rm eff}^{-1})."
+   },
+   "confidence": "low",
+   "notes": "Soft-feedback (bounded responses in [0,1]) variant; noise is bounded rather than Bernoulli here. Theorem A.4 shows the sup over such response laws equals Phi_kappa, attained by Bernoulli feedback."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:43:15",
+  "source_chars": 166047,
+  "input_tokens": 115283,
+  "output_tokens": 6465,
+  "cost_usd_equiv": 0.773252,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

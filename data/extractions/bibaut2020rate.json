@@ -1,0 +1,287 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Rate-adaptive model selection over a collection of black-box contextual bandit algorithms",
+  "arxiv_id": "2006.03632",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Aurélien F. Bibaut",
+   "Antoine Chambaz",
+   "Mark J. van der Laan"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Model selection over J base stochastic contextual bandit algorithms",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "agnostic_policy_class"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Master algorithm combines J black-box base contextual bandit algorithms, each operating over its own policy class Pi_j; regret is measured against the best value over the union of the policy classes",
+    "The learner knows the regret-rate exponents beta_j of each base algorithm",
+    "Each base algorithm must satisfy an exponential deviation (high-probability) bound on its average conditional regret (Assumption 1)"
+   ],
+   "definition_quote": "A master algorithm $\\mathcal{M}$ has access to $J$ base contextual bandit algorithms $\\mathcal{A}(1),\\ldots,\\mathcal{A}(J)$. At any time $t$, the master observes a context vector $X(t) \\in \\mathcal{X} \\subset \\mathbb{R}^d$, selects the index $\\widehat{J}(t)$ of a base algorithm, and draws an action $A(t) \\in [K]$... We suppose that contexts are independent and identically distributed (i.i.d.) and that the conditional distribution of rewards given actions and contexts is fixed across time points."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "EnsBFC (Ensembling Bandits by Fair Comparison)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "epsilon_greedy",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "beta_j (regret exponents of base algorithms)",
+    "c_1",
+    "c_2"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "C_const*T**(1 - beta_1)",
+    "expression_latex": "E\\left[\\sum_{t=1}^T \\left(\\mathcal{V}^*(\\mathcal{E}) - Y(t)\\right)\\right] \\leq C T^{1-\\beta(1)}",
+    "regime": null
+   },
+   "symbols": {
+    "beta_1": "beta(1) = max of beta_j over base algorithms j with optimal limit value V*(E); base algorithm j has regret O~(n^{1-beta_j})",
+    "C_const": "constant depending only on the constants of the problem"
+   },
+   "conditions": [
+    "Assumption 1: each base algorithm satisfies an exponential deviation bound P[Rbar(j,n) - R*_j >= C_0 n^{-beta_j} + x] <= C_1 exp(-C_2 (n x^{1/beta_j})^{nu_j}) with beta_j <= 1/2",
+    "Assumption 2: rewards conditionally 1-sub-Gaussian given the past",
+    "Rbar(j,n) - R*_j >= 0"
+   ],
+   "tuning": [
+    "p_t = c_2 t^{-beta_bar} with beta_bar = max_j beta_j",
+    "selector uses penalty c_1 n^{-beta_j}",
+    "c_1, c_2 constants independent of T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret_master",
+    "number": "Theorem 1",
+    "quote": "Suppose that assumptions \\ref{assumption:concentration} and \\ref{assumption:conditional_sub_gaussian_rewards} hold, and recall the definition of $\\beta(1)$ from subsection \\ref{subsection:rate_adaptivity}.  Then, \\emph{EnsBFC} is rate-adaptive in pseudo-regret, that is, $$E\\left[\\sum_{t=1}^T \\left(\\mathcal{V}^*(\\mathcal{E}) - Y(t)\\right)\\right] \\leq C T^{1-\\beta(1)},$$ for some $C > 0$ depending only on the constants of the problem."
+   },
+   "confidence": "medium",
+   "notes": "Comparator is V*(E), the best value over the union of the base policy classes. Constant C depends on problem constants including the value gap between suboptimal classes, so it is not purely worst-case. Algorithm does not use T (anytime). Theorem also claims minimax adaptivity when base bounds are minimax. Corollaries 1-3 and Lemma 1 (exponential deviation bounds for UCB, eps-greedy, LinUCB, ILOVETOCONBANDITS) are reformulations of cited results and not recorded as results."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "foster2019",
+   "cited_title": "Model selection for contextual bandits",
+   "cited_first_author": "D. J. Foster",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "ModCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Model selection over nested linear policy classes in contextual bandits under realizability; d_star is dimension of smallest class containing optimal policy",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(2/3)*d_star**(1/3)",
+    "expression_latex": "\\widetilde{\\mathcal{O}}(T^{2/3} d_*^{1/3})",
+    "regime": null
+   },
+   "where": "Section 1"
+  },
+  {
+   "cited_key": "foster2019",
+   "cited_title": "Model selection for contextual bandits",
+   "cited_first_author": "D. J. Foster",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "ModCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Model selection over nested linear policy classes in contextual bandits under realizability; d_star is dimension of smallest class containing optimal policy",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(3/4) + sqrt(T*d_star)",
+    "expression_latex": "\\widetilde{\\mathcal{O}}(T^{3/4} + \\sqrt{T d_*})",
+    "regime": null
+   },
+   "where": "Section 1"
+  },
+  {
+   "cited_key": "agarwal17",
+   "cited_title": "Corralling a band of bandit algorithms",
+   "cited_first_author": "A. Agarwal",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CORRAL",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Corralling J base bandit algorithms, one of which has regret O(T^alpha); master learning rate tuned to alpha",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "J**(1 - alpha_c)*T**alpha_c",
+    "expression_latex": "\\widetilde{\\mathcal{O}}(J^{1-\\alpha} T^\\alpha)",
+    "regime": "learning rate eta optimized for alpha"
+   },
+   "where": "Section 1"
+  },
+  {
+   "cited_key": "pacchiano2020model",
+   "cited_title": "Model selection in contextual stochastic bandit problems",
+   "cited_first_author": "A. Pacchiano",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic bandit with conditionally 1-sub-Gaussian rewards; high-probability regret over n rounds",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*log(T/delta))",
+    "expression_latex": "\\mathcal{O}(\\sqrt{n \\log(n / \\delta)})",
+    "regime": null
+   },
+   "where": "Section 5, UCB paragraph"
+  },
+  {
+   "cited_key": "abbasi-yadkori2011",
+   "cited_title": "Improved algorithms for linear stochastic bandits",
+   "cited_first_author": "Y. Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "LinUCB (OFUL)",
+   "algorithm_registry_id": "oful",
+   "side": "upper",
+   "setting_description": "Linear stochastic bandit; high-probability bound on conditional regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)*log(1/delta)",
+    "expression_latex": "\\mathcal{O}(\\sqrt{n} \\log(1/ \\delta))",
+    "regime": null
+   },
+   "where": "Section 5, LinUCB paragraph"
+  },
+  {
+   "cited_key": "agarwalb14",
+   "cited_title": "Taming the monster: A fast and simple algorithm for contextual bandits",
+   "cited_first_author": "A. Agarwal",
+   "cited_year": 2014,
+   "cited_arxiv_id": null,
+   "algorithm_name": "ILOVETOCONBANDITS",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic contextual bandit with a policy class; high-probability regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)*log(T/delta) + log(T/delta)",
+    "expression_latex": "\\mathcal{O}(\\sqrt{n} \\log(n / \\delta) + \\log(n / \\delta))",
+    "regime": null
+   },
+   "where": "Section 5, ILOVETOCONBANDITS paragraph"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "ae3ec0bf9ad6",
+  "schema_version": "0.5",
+  "ontology_version": "bandits-0.5",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-09T12:15:11",
+  "source_chars": 69014,
+  "input_tokens": 70836,
+  "output_tokens": 4865,
+  "cost_usd_equiv": 0.385676,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}
