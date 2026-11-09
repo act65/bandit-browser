@@ -9,14 +9,15 @@ Each selected paper carries the reasons it was picked:
   lower_bound  screening reason or title/abstract says it proves lower bounds
   gap          named by gap triage (data/reports/triage.yaml) or cited-but-missing
   foundation   pre-2012 and listed in an expert bibliography
-Only core papers with an arXiv id (LaTeX available) that are not already in the corpus.
+Only core papers not already in the corpus, with an arXiv id (LaTeX available) or a PMLR page
+(open PDF, converted by fetch_pdf.py).
 Quotas are filled in that order of priority; overlaps count once; leftover capacity
 goes to the least-represented clusters.
 
 Writes corpus/batch-<name>.yaml (manifest-format entries plus `selected_for`) and prints
 the composition by reason, slice, year and cluster.
 
-Usage: uv run python pipeline/select_subset.py [--size 500] [--name 1] [--seed 0]
+Usage: uv run python pipeline/select_subset.py [--size 500] [--name 1] [--seed 0] [--skip-slices multi_agent]
 """
 
 from __future__ import annotations
@@ -40,6 +41,18 @@ ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / "corpus" / "harvest" / "citations.json"
 LOW_COVERAGE_BOOST = 2.0  # quota multiplier for slices with few corpus papers
 LB_RE = re.compile(r"lower bound|minimax (optimal|rate)|impossib|necessar(y|ily)|cannot be improved|tight", re.I)
+
+
+PMLR_ABS = re.compile(r"^https://proceedings\.mlr\.press/(v\d+)/([^/]+)\.html$")
+
+
+def pmlr_pdf(p: dict) -> str | None:
+    """Open PDF of a PMLR paper, from its abstract page URL."""
+    for u in p.get("urls") or []:
+        m = PMLR_ABS.match(u)
+        if m:
+            return f"https://proceedings.mlr.press/{m.group(1)}/{m.group(2)}/{m.group(2)}.pdf"
+    return None
 
 
 def citation_counts(papers: list[dict]) -> dict[str, int]:
@@ -81,6 +94,8 @@ def main() -> None:
     ap.add_argument("--name", default="1")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--clusters", type=int, default=40)
+    ap.add_argument("--skip-slices", nargs="*", default=[],
+                    help="screening slices to leave out, e.g. multi_agent (out of scope from ontology v0.5)")
     args = ap.parse_args()
     rnd = random.Random(args.seed)
 
@@ -94,9 +109,13 @@ def main() -> None:
     have = {p.get("arxiv_id") for p in manifest} | {p["id"] for p in manifest}
     core = [{**pool[i], "slice": r["slice"], "reason": r["reason"], "confidence": r["confidence"]}
             for i, r in scr.items() if r["label"] == "core" and i in pool]
-    cand = [p for p in core if p.get("arxiv_id") and p["arxiv_id"] not in have and p["id"] not in have
-            and p["confidence"] != "low"]
-    print(f"{len(core)} core papers; {len(cand)} candidates (arXiv, not in corpus, not low-confidence)")
+    for p in core:
+        p["pdf_url"] = None if p.get("arxiv_id") else pmlr_pdf(p)
+    cand = [p for p in core if (p.get("arxiv_id") or p["pdf_url"]) and not p.get("in_corpus")
+            and (p.get("arxiv_id") or p["id"]) not in have and p["id"] not in have
+            and p["confidence"] != "low" and p["slice"] not in args.skip_slices]
+    print(f"{len(core)} core papers; {len(cand)} candidates (arXiv or PMLR, not in corpus, not low-confidence; "
+          f"{sum(1 for p in cand if p['pdf_url'])} PMLR-only)")
 
     cites = citation_counts(cand)
     year_now = dt.date.today().year
@@ -174,8 +193,9 @@ def main() -> None:
     sel = [by_id[i] for i in chosen]
     out = []
     for p in sorted(sel, key=lambda p: (p["slice"], -(p["year"] or 0))):
-        out.append({"id": p["id"], "arxiv_id": p["arxiv_id"], "doi": p.get("doi"),
-                    "url": f"https://arxiv.org/abs/{p['arxiv_id']}", "title": p["title"], "authors": p["authors"][:30],
+        out.append({"id": p["id"], "arxiv_id": p.get("arxiv_id"), "doi": p.get("doi"),
+                    "url": f"https://arxiv.org/abs/{p['arxiv_id']}" if p.get("arxiv_id") else p["pdf_url"][:-4].rsplit("/", 1)[0] + ".html",
+                    **({"pdf_url": p["pdf_url"]} if p["pdf_url"] else {}), "title": p["title"], "authors": p["authors"][:30],
                     "year": p["year"], "venue": "; ".join(p.get("venues") or []) or None, "slice": p["slice"],
                     "selected_for": sorted(chosen[p["id"]]), "citations": cites.get(p["id"], 0),
                     "cluster": cl[p["id"]], "screening_reason": p["reason"]})
