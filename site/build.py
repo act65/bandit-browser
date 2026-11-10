@@ -1317,20 +1317,30 @@ def graph_page(site: Site) -> str:
     ids = [x["id"] for x in nodes]
     directed = [(x["s"], x["t"]) for x in edges if x["kind"] != "neighbour"]
     hier = layout.hierarchy(ids, directed, weight={x["id"]: x["up"] + x["lo"] for x in nodes})
-    frc = layout.force(ids, [(x["s"], x["t"]) for x in edges])
+    orders = Order(site.onto.data).orders if site.onto.data.get("dimensions") else {}
+    sim = layout.similarity({i: site.nodes[i]["key"] for i in ids}, orders, gap=60)
     for x in nodes:
         x["hx"], x["hy"] = (round(v, 1) for v in hier[x["id"]])
-        x["fx"], x["fy"] = (round(v, 1) for v in frc[x["id"]])
-    ghier = layout.hierarchy([g["id"] for g in gnodes], [(x["s"], x["t"]) for x in gedges], gap=230, rank_gap=150,
+        x["fx"], x["fy"] = (round(v, 1) for v in sim[x["id"]])
+    ghier = layout.hierarchy([g["id"] for g in gnodes], [(x["s"], x["t"]) for x in gedges], gap=150, rank_gap=120,
                              weight={g["id"]: g["n"] for g in gnodes})
-    for g in gnodes:
+    # similarity view of the groups: the centroid of their members, spread so groups don't overlap
+    gsim = layout.separate([(0.4 * sum(sim[m][0] for m in g["members"]) / len(g["members"]),
+                             0.4 * sum(sim[m][1] for m in g["members"]) / len(g["members"])) for g in gnodes],
+                           min_dist=110, iterations=200)
+    st_of = {x["id"]: x["st"] for x in nodes}
+    for g, (sx, sy) in zip(gnodes, gsim):
         g["x"], g["y"] = (round(v, 1) for v in ghier[g["id"]])
+        g["fx"], g["fy"] = round(sx, 1), round(sy, 1)
+        if site.analysis.ok:  # status mix of the members, drawn as a pie when colouring by status
+            g["stc"] = dict(Counter(st_of[m] or "none" for m in g["members"]))
     data = json.dumps({"nodes": nodes, "edges": edges, "groups": gnodes, "gedges": gedges},
                       ensure_ascii=False).replace("</", "<\\/")
     stc = Counter(x["st"] for x in nodes)
     st_legend = "".join(f'<li><span class="dot st-{k}"></span>{e(analysis.STATUS[k][0])} <span class="muted">&nbsp;{stc[k]}</span></li>'
                         for k in analysis.STATUS_RANK if stc[k])
-    st_legend += ('<li class="muted small">regret · worst-case regime, else the most relevant one</li>' if st_legend else "")
+    st_legend += ('<li class="muted small">regret · worst-case regime, else the most relevant one. '
+                  'Overview: each group is a pie of its settings\' statuses.</li>' if st_legend else "")
     n_dir = sum(1 for x in edges if x["kind"] != "neighbour")
     body = f"""
 <div class="graph-head">
@@ -1352,8 +1362,8 @@ Node size ∝ number of results. Click a node to open it.</p>
 <button type="button" data-colour="se" aria-pressed="false">Environment</button>
 {'<button type="button" data-colour="st" aria-pressed="false">Status</button>' if site.analysis.ok else ""}</div>
 <div class="seg" role="group" aria-label="Layout"><span>Layout</span>
-<button type="button" data-layout="dagre" aria-pressed="true">Hierarchy</button>
-<button type="button" data-layout="cose" aria-pressed="false">Force</button></div>
+<button type="button" data-layout="sim" aria-pressed="true">Similarity</button>
+<button type="button" data-layout="dagre" aria-pressed="false">Hierarchy</button></div>
 <label class="check"><input type="checkbox" id="show-nb"> show other neighbours</label>
 <input class="filter" id="graph-search" type="search" placeholder="Find a setting…" aria-label="Find a setting">
 </div>
@@ -1373,8 +1383,11 @@ Node size ∝ number of results. Click a node to open it.</p>
 <h3>Edges</h3>
 <ul class="edge-key"><li><span class="ek order"></span>specialisation</li>
 <li><span class="ek reduction"></span>reduction</li><li><span class="ek neighbour"></span>other neighbour</li></ul>
-<p class="muted small">Layouts are computed when the site is built. In the hierarchy, settings with no
-specialisation edge sit in the grid on the right. Table view: <a href="settings/index.html">settings index</a>.</p>
+<p class="muted small">Layouts are computed when the site is built. <b>Similarity</b>: a t-SNE map of the
+settings' assumptions (each value counted with its generalisations), so settings that share assumptions sit
+together whether or not an edge links them; arrows appear on hover. <b>Hierarchy</b>: specialisation layers,
+with settings that have no specialisation edge in the grid on the right.
+Table view: <a href="settings/index.html">settings index</a>.</p>
 </aside>
 <div id="cy-tip" role="tooltip" hidden></div>
 </div>

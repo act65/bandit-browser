@@ -1,5 +1,5 @@
 // Settings graph (graph.html): Cytoscape.js, data embedded as JSON in the page.
-// Node positions for the hierarchy and force layouts are computed when the site is built
+// Node positions for the similarity (t-SNE) and hierarchy layouts are computed when the site is built
 // (site/layout.py); the browser only runs a layout for the small ?focus= neighbourhood view.
 document.addEventListener("DOMContentLoaded", function () {
   var holder = document.getElementById("cy");
@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", function () {
   var elements = [];
   data.nodes.forEach(function (n) {
     var total = n.up + n.lo;
-    elements.push({ group: "nodes", position: { x: n.hx, y: n.hy }, data: Object.assign({}, n, {
+    elements.push({ group: "nodes", position: { x: n.fx, y: n.fy }, data: Object.assign({}, n, {
       size: 14 + 7 * Math.sqrt(total), total: total,
       short: n.name.length > 52 ? n.name.slice(0, 51) + "…" : n.name
     }) });
@@ -32,8 +32,8 @@ document.addEventListener("DOMContentLoaded", function () {
   });
   // Overview: groups of settings (environment x action space)
   (data.groups || []).forEach(function (g) {
-    elements.push({ group: "nodes", classes: "grp", position: { x: g.x, y: g.y }, data: Object.assign({}, g, {
-      size: 18 + 6 * Math.sqrt(g.results), total: g.results, short: g.name }) });
+    elements.push({ group: "nodes", classes: "grp", position: { x: g.fx, y: g.fy }, data: Object.assign({}, g, {
+      size: 16 + 3.5 * Math.sqrt(g.results), total: g.results, short: g.name }) });
   });
   (data.gedges || []).forEach(function (e, i) {
     elements.push({ group: "edges", classes: "gedge", data: { id: "g" + i, source: e.s, target: e.t } });
@@ -60,15 +60,35 @@ document.addEventListener("DOMContentLoaded", function () {
       { selector: "edge.reduction", style: { "line-style": "dashed" } },
       { selector: "edge.neighbour", style: { "width": 1, "line-color": css("--edge-faint"), "target-arrow-shape": "none", "opacity": 0.9 } },
       { selector: ".faded", style: { "opacity": 0.12 } },
+      { selector: "edge.quiet", style: { "opacity": 0.07 } },
       { selector: "node.hl", style: { "label": "data(short)", "border-color": fg, "border-width": 3, "color": fg, "font-weight": 600, "z-index": 10 } },
+      { selector: "node.sel", style: { "border-color": fg, "border-width": 1.5 } },
       { selector: "edge.hl", style: { "opacity": 1, "width": 2.4, "z-index": 9 } },
+      { selector: "edge.quiet.hl", style: { "opacity": 0.9, "width": 1.6 } },
       { selector: "edge.neighbour.hl", style: { "line-color": muted } },
       // neighbourhood view (?focus=): every node labelled in full, with room to read it
       { selector: "node.local", style: { "label": "data(name)", "text-max-width": 150, "font-size": 12,
         "color": fg, "text-background-opacity": 0.85 } },
       { selector: "node.local.hl", style: { "font-weight": 700, "border-width": 4 } },
-      { selector: "node.grp", style: { "label": "data(name)", "text-max-width": 170, "font-size": 20, "color": fg, "text-wrap": "wrap" } }
-    ];
+      // group labels stay readable when the overview is fitted far out (Cytoscape drops text under 6px)
+      { selector: "node.grp", style: { "label": "data(name)", "text-max-width": 130, "font-size": 15, "color": fg,
+        "text-wrap": "wrap", "min-zoomed-font-size": 0 } },
+      { selector: "node.grp[n < 4]", style: { "label": "" } },
+      { selector: "node.grp.hl", style: { "label": "data(name)" } }
+    ].concat(colourKey === "st" ? [{ selector: "node.grp", style: groupPie() }] : []);
+  };
+  // colouring by status: a group (overview) is a pie of its members' statuses
+  var ST_ORDER = ["tight", "log_gap", "poly_gap", "conflict", "no_lower", "no_upper", "none"];
+  var groupPie = function () {
+    var st = { "pie-size": "100%", "background-color": css("--st-none") };
+    ST_ORDER.forEach(function (k, i) {
+      st["pie-" + (i + 1) + "-background-color"] = css("--st-" + k);
+      st["pie-" + (i + 1) + "-background-size"] = function (ele) {
+        var c = ele.data("stc") || {};
+        return 100 * (c[k] || 0) / (ele.data("n") || 1);
+      };
+    });
+    return st;
   };
 
   var cy = cytoscape({ container: holder, elements: elements, style: style(), wheelSensitivity: 0.25,
@@ -79,12 +99,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
   var qv = new URLSearchParams(window.location.search);
   var focusSlug = qv.get("focus");
-  var layoutName = qv.get("layout") === "cose" ? "cose" : "dagre";
+  var layoutName = qv.get("layout") === "dagre" ? "dagre" : "sim";  // ("cose", the old force layout, maps to sim)
   var view = (focusSlug || qv.get("view") === "all" || qv.get("layout")) ? "all" : "overview";
   var nbBox = document.getElementById("show-nb");
 
   // ---- state: filters (which settings are shown) and a selection (highlighted, survives hover)
   var hidden = { sa: {}, se: {} };
+  var savedHidden = null;  // the filters as they were before a group was opened from the overview
   var selection = null;
   var passes = function (n) { return !hidden.sa[n.data("sa")] && !hidden.se[n.data("se")]; };
   var showNb = function (on) {
@@ -113,12 +134,13 @@ document.addEventListener("DOMContentLoaded", function () {
   };
   var applyBase = function () {  // the resting highlight state: the selection, or nothing
     cy.batch(function () {
-      cy.elements().removeClass("faded hl");
+      cy.elements().removeClass("faded hl sel");
       if (selection && selection.length) {
         cy.elements().addClass("faded");
         var inner = selection.edgesWith(selection);
         selection.union(inner).removeClass("faded");
-        selection.addClass("hl");
+        // a large selection (an opened group) is outlined, not labelled: 100+ labels just overlap
+        selection.addClass(selection.length > 12 ? "sel" : "hl");
       }
     });
   };
@@ -130,19 +152,31 @@ document.addEventListener("DOMContentLoaded", function () {
 
   var runLayout = function (name) {
     layoutName = name;
-    showNb(name !== "dagre");  // the hierarchy reads best without the unordered links
     cy.batch(function () {
       settingEls.nodes().forEach(function (n) {
         var d = n.data();
         n.position(name === "dagre" ? { x: d.hx, y: d.hy } : { x: d.fx, y: d.fy });
       });
+      groupEls.nodes().forEach(function (g) {
+        var d = g.data();
+        g.position(name === "dagre" ? { x: d.x, y: d.y } : { x: d.fx, y: d.fy });
+      });
+      // on the similarity map the 2000+ arrows are a haze: draw them faintly, in full on hover/selection
+      settingEls.edges().toggleClass("quiet", name !== "dagre");
     });
-    if (view === "all") fitVisible(24);
+    fitVisible(view === "overview" ? 30 : 24);
   };
   var setView = function (v) {
     view = v;
+    if (v === "overview" && savedHidden) {  // undo the filter that opening a group applied
+      hidden = savedHidden;
+      savedHidden = null;
+      syncBoxes();
+    }
+    selection = null;
+    tip.hidden = true;
     document.querySelectorAll("button[data-view]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.view === v)); });
-    document.querySelectorAll("button[data-layout], #show-nb").forEach(function (b) { b.disabled = v === "overview"; });
+    document.querySelectorAll("#show-nb").forEach(function (b) { b.disabled = v === "overview"; });
     applyVisibility();
     applyBase();
     fitVisible(v === "overview" ? 30 : 24);
@@ -226,8 +260,10 @@ document.addEventListener("DOMContentLoaded", function () {
   cy.on("tap", "node", function (ev) {
     var d = ev.target.data();
     if (ev.target.hasClass("grp")) {  // open the group: its settings, selected, other groups filtered out
+      var before = JSON.parse(JSON.stringify(hidden));
       onlyGroup(d);
       setView("all");
+      savedHidden = before;
       var hits = cy.nodes().filter(function (x) { return d.members.indexOf(x.id()) !== -1; });
       select(hits);
       if (hits.length) cy.fit(hits, 60);

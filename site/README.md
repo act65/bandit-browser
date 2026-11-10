@@ -45,7 +45,7 @@ Reference material (Lattimore's *Bandit Convex Optimisation*, the pilot facts) i
 
 - `build.py`: the data model and page renderers (setting and paper pages, home, graph, analysis pages, the Explore and shell pages), link rewriting, and the build
 - `export_db.py`: the database
-- `layout.py`: graph layouts computed at build time (layered hierarchy; networkx spring layout)
+- `layout.py`: graph layouts computed at build time (layered hierarchy; a t-SNE "similarity" map of the settings' ontology features, each value counted with its generalisations, so similar settings cluster whether or not an edge links them)
 - `serve.py`: local preview server with HTTP Range support
 - `ontology.py`: readable value labels, defaults and setting names
 - `pipeline/order.py` (imported via `sys.path`): the specialisation order `Order.leq`, the single source of truth for directed edges
