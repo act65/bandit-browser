@@ -53,6 +53,9 @@ def main() -> None:
     N["NBatchOnePapers"] = str(by_batch[1])
     N["NBatchTwoPapers"] = str(by_batch[2])
     N["NPool"] = comma(sum(1 for _ in open(ROOT / "corpus" / "pool.csv")) - 1)
+    scr = collections.Counter(json.loads(x).get("label") for x in open(ROOT / "corpus" / "screening.jsonl"))
+    N["NScreened"] = comma(sum(scr.values()))
+    N["NCore"] = comma(scr["core"])
     cost = sum(r.get("cost_usd_equiv") or 0 for r in runs)
     N["CostTotal"] = comma(round(cost))
     N["CostPerPaper"] = f"{cost / len(runs):.2f}"
