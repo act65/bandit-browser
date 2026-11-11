@@ -13,7 +13,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Bayesian optimization (Bayesian setting of GP bandit)",
+   "name_in_paper": "Bayesian optimization (Bayesian GP bandit) with Matérn kernel",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -84,14 +84,104 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "matern"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Domain is [0,r]^d; f is a sample path of a known zero-mean GP with kernel k(x,x) <= 1 (SE or Matern)",
-    "Learner knows the sample-path Lipschitz constants a, b (Lemma 1) and r, used in beta_t"
+    "Objective f is a sample path of a known zero-mean GP (not an RKHS-norm-bounded function)",
+    "Domain is [0,r]^d; the learner knows r and the sample-path Lipschitz constants a, b used in beta_t",
+    "Learner knows lengthscale and smoothness nu of the kernel"
    ],
-   "definition_quote": "Let $f: \\mX \\rightarrow \\R$ be a black-box objective function whose input domain $\\mX$ is $\\mX \\coloneqq [0, r]^d$ ... We consider a Bayesian setting, where the objective function $f$ and the noise sequence $(\\epsilon_t)$ are drawn from a known zero-mean Gaussian process (GP) and a Gaussian distribution, respectively. ... the cumulative regret $R_T \\coloneqq \\sum_{t \\in [T]} f(\\bx^{\\ast}) - f(\\bx_t)$"
+   "definition_quote": "Let $f: \\mX \\rightarrow \\R$ be a black-box objective function whose input domain $\\mX$ is $\\mX \\coloneqq [0, r]^d$ ... We consider a Bayesian setting, where the objective function $f$ and the noise sequence $(\\epsilon_t)$ are drawn from a known zero-mean Gaussian process (GP) and a Gaussian distribution, respectively."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Bayesian optimization (Bayesian GP bandit) with squared exponential kernel",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "kernel",
+    "prior",
+    "sigma",
+    "d"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "hypercube",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "squared_exponential"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Objective f is a sample path of a known zero-mean GP (not an RKHS-norm-bounded function)",
+    "Domain is [0,r]^d; the learner knows r and the sample-path Lipschitz constants a, b used in beta_t",
+    "Learner knows the lengthscale of the kernel"
+   ],
+   "definition_quote": "Let $f: \\mX \\rightarrow \\R$ be a black-box objective function whose input domain $\\mX$ is $\\mX \\coloneqq [0, r]^d$ ... We consider a Bayesian setting, where the objective function $f$ and the noise sequence $(\\epsilon_t)$ are drawn from a known zero-mean Gaussian process (GP) and a Gaussian distribution, respectively."
   }
  ],
  "algorithms": [
@@ -107,7 +197,10 @@
     "kernel",
     "prior",
     "sigma",
-    "d"
+    "d",
+    "delta",
+    "Lipschitz constants a, b of the GP sample path",
+    "domain length r"
    ]
   }
  ],
@@ -128,33 +221,35 @@
     "notation": "O_tilde",
     "expression": "sqrt(T)",
     "expression_latex": "\\tilde{O}\\rbr{\\sqrt{T}}",
-    "regime": "k = Matern with 2*nu + d <= nu^2"
+    "regime": "k = Matérn with 2*nu + d <= nu^2"
    },
    "symbols": {
-    "delta_GP": "failure probability for the sample-path regularity properties of Lemma 2"
+    "nu": "smoothness parameter of the Matérn kernel (nu_matern)"
    },
    "conditions": [
-    "Matern kernel with smoothness nu_matern > 2 and 2*nu_matern + d <= nu_matern^2",
-    "k(x,x) <= 1",
-    "d, nu, lengthscale ell, r, sigma^2 are fixed constants",
-    "f ~ GP(0,k) on [0,r]^d, Gaussian noise N(0, sigma^2)",
-    "holds with probability at least 1 - delta_GP - delta; hidden constants depend on ln(1/delta), d, nu, ell, r, sigma^2 and sample-path constants c_sup, c_gap, rho_quad, c_quad associated with delta_GP"
+    "Matérn smoothness nu > 2",
+    "2*nu + d <= nu^2",
+    "d, nu, lengthscale, r, sigma^2 are fixed constants",
+    "f ~ GP(0,k) with k(x,x) <= 1",
+    "holds with probability at least 1 - delta_GP - delta over GP draw, noise",
+    "hidden constants depend on ln(1/delta), d, nu, ell, r, sigma^2 and sample-path constants c_sup, c_gap, rho_quad, c_quad associated with delta_GP"
    ],
    "tuning": [
-    "beta_t = 2 ln(2 t^2 pi^2/(3 delta)) + 2d ln(t^2 d b r sqrt(ln(4da/delta))) with delta in (0, 1 - delta_GP)"
+    "beta_t = 2 ln(2 t^2 pi^2/(3 delta)) + 2d ln(t^2 d b r sqrt(ln(4da/delta)))",
+    "delta in (0, 1 - delta_GP)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:cr_gp-ucb",
     "number": "Theorem 3",
-    "quote": "Suppose Assumptions~\\ref{asmp:func} and \\ref{asmp:noise} hold. Set $k = \\sek$ or $k = \\matk$ with $\\nu > 2$. ... Then, with probability at least $1 - \\dGP - \\delta$, the cumulative regret of GP-UCB satisfies R_T = \\tilde{O}(\\sqrt{T}) if k = \\matk with 2\\nu + d \\leq \\nu^2, O(\\sqrt{T \\ln^2 T}) if k = \\sek."
+    "quote": "Suppose Assumptions~\\ref{asmp:func} and \\ref{asmp:noise} hold. Set $k = \\sek$ or $k = \\matk$ with $\\nu > 2$. ... Then, with probability at least $1 - \\dGP - \\delta$, the cumulative regret of GP-UCB satisfies $R_T = \\tilde{O}(\\sqrt{T})$ if $k = \\matk$ with $2\\nu + d \\leq \\nu^2$, $O(\\sqrt{T \\ln^2 T})$ if $k = \\sek$."
    },
-   "confidence": "medium",
-   "notes": "Probability is over both the GP prior draw and noise (Bayesian high-probability regret); dependence on T only. Not an expected regret bound."
+   "confidence": "high",
+   "notes": "Regret is realized regret sum f(x*) - f(x_t) on a GP sample path, bounded with high probability over prior and noise (Bayesian high-probability regret). Not a bound on expected Bayesian regret. Dependence 'worst_case' in the sense that it only depends on T (constants depend on the sample path)."
   },
   {
    "id": "r2",
-   "setting": "s1",
+   "setting": "s2",
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
@@ -170,27 +265,25 @@
     "expression_latex": "O\\rbr{\\sqrt{T \\ln^2 T}}",
     "regime": "k = SE"
    },
-   "symbols": {
-    "delta_GP": "failure probability for the sample-path regularity properties of Lemma 2"
-   },
+   "symbols": {},
    "conditions": [
-    "squared exponential kernel",
-    "k(x,x) <= 1",
-    "d, lengthscale ell, r, sigma^2 are fixed constants",
-    "f ~ GP(0,k) on [0,r]^d, Gaussian noise N(0, sigma^2)",
-    "holds with probability at least 1 - delta_GP - delta; hidden constants depend on ln(1/delta), d, ell, r, sigma^2 and sample-path constants c_sup, c_gap, rho_quad, c_quad associated with delta_GP"
+    "d, lengthscale, r, sigma^2 are fixed constants",
+    "f ~ GP(0,k) with k(x,x) <= 1",
+    "holds with probability at least 1 - delta_GP - delta over GP draw, noise",
+    "hidden constants depend on ln(1/delta), d, ell, r, sigma^2 and sample-path constants c_sup, c_gap, rho_quad, c_quad associated with delta_GP"
    ],
    "tuning": [
-    "beta_t = 2 ln(2 t^2 pi^2/(3 delta)) + 2d ln(t^2 d b r sqrt(ln(4da/delta))) with delta in (0, 1 - delta_GP)"
+    "beta_t = 2 ln(2 t^2 pi^2/(3 delta)) + 2d ln(t^2 d b r sqrt(ln(4da/delta)))",
+    "delta in (0, 1 - delta_GP)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:cr_gp-ucb",
     "number": "Theorem 3",
-    "quote": "Then, with probability at least $1 - \\dGP - \\delta$, the cumulative regret of GP-UCB (\\algoref{alg:gp-ucb}) satisfies ... O\\rbr{\\sqrt{T \\ln^2 T}} & \\mathrm{if}~ k = \\sek."
+    "quote": "Suppose Assumptions~\\ref{asmp:func} and \\ref{asmp:noise} hold. Set $k = \\sek$ or $k = \\matk$ with $\\nu > 2$. ... Then, with probability at least $1 - \\dGP - \\delta$, the cumulative regret of GP-UCB satisfies ... $O(\\sqrt{T \\ln^2 T})$ if $k = \\sek$."
    },
    "confidence": "high",
-   "notes": "Improves O(sqrt(T ln^{d+2} T)) of Srinivas et al.; constants hide d dependence."
+   "notes": "Improves O(sqrt(T ln^{d+2} T)) of Srinivas et al. Bayesian high-probability regret on the sample path."
   }
  ],
  "cited_results": [
@@ -203,10 +296,10 @@
    "algorithm_name": "GP-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Bayesian GP bandit, SE kernel, high-probability cumulative regret",
+   "setting_description": "Bayesian GP bandit on [0,r]^d with SE kernel, high-probability regret",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(T*log(T)**(d + 2))",
+    "expression": "sqrt(T*log(T)**(d+2))",
     "expression_latex": "O\\rbr{\\sqrt{T \\ln^{d+2} T}}",
     "regime": null
    },
@@ -221,14 +314,14 @@
    "algorithm_name": "GP-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Bayesian GP bandit, Matern kernel, high-probability cumulative regret (with MIG bound of Vakili et al. 2021)",
+   "setting_description": "Bayesian GP bandit on [0,r]^d with Matérn kernel (with MIG bound of vakili2021information), high-probability regret",
    "bound": {
     "notation": "O_tilde",
-    "expression": "T**((nu_matern + d)/(2*nu_matern + d))",
-    "expression_latex": "\\tilde{O}(T^{\\frac{\\nu+d}{2\\nu+d}})",
+    "expression": "T**((nu+d)/(2*nu+d))",
+    "expression_latex": "\\tilde{O}\\rbr{T^{\\frac{\\nu + d}{2\\nu + d}}}",
     "regime": null
    },
-   "where": "Introduction / Section 2"
+   "where": "Section 2 / Introduction"
   },
   {
    "cited_key": "scarlett2018tight",
@@ -257,7 +350,7 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "One-dimensional Bayesian optimization, expected cumulative regret",
+   "setting_description": "One-dimensional Bayesian optimization (GP sample path), expected cumulative regret",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(T)",
@@ -273,16 +366,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "ae3ec0bf9ad6",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
   "algorithm_registry_size": 133,
-  "date": "2026-11-09T11:24:02",
+  "date": "2026-11-11T11:37:54",
   "source_chars": 147665,
-  "input_tokens": 119490,
-  "output_tokens": 4580,
-  "cost_usd_equiv": 0.7692079999999999,
+  "input_tokens": 119918,
+  "output_tokens": 5564,
+  "cost_usd_equiv": 0.7886538,
   "quote_retry": {
    "asked": 0,
    "fixed": 0

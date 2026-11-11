@@ -31,6 +31,10 @@ base_settings:
                              action_space: linear_finite, function_class: [], domain: not_applicable,
                              context: none, noise: not_applicable, extras: []}
 
+  stoch_kernel: &stoch_kernel {objective: cumulative_regret, feedback: bandit, environment: stochastic_iid,
+                               action_space: kernel_rkhs, function_class: [], domain: not_applicable,
+                               context: none, noise: subgaussian, extras: []}
+
 facts:
   - id: F01
     setting: *stoch_k
@@ -176,3 +180,26 @@ facts:
     review: "2026-10-23: the setting now records the known gap lower bound and the regime is instance-dependent. Bubeck, Perchet & Rigollet's Theorem 8 is a sup over Delta, not a per-instance log T lower bound (see data/corrections.yaml); whether the best bounded-regret constant (with its log(1/Delta) factor) is tight is unclear to us, so this is a manual check until an expert confirms it."
     tests: ["learner_knows (mu_star, Delta_min) changes the rate: knowledge must be part of the setting comparison"]
     confidence: low
+
+  # Kernel bandits (added 2026-11-11 with ontology v0.6; notes/comparability.md). Rates as stated in Vakili et al.
+  # (arXiv:2009.06966, corpus/pre/2009.06966.tex lines 131 and 183), which cite Scarlett et al. 2017 for the lower
+  # bounds; frequentist (RKHS) setting, d and nu fixed.
+  - id: F15
+    setting: {<<: *stoch_kernel, kernel: {family: matern}}
+    regime: "worst case, frequentist, fixed d and nu"
+    status: tight_logs
+    upper: {bound: "T**((nu_matern + d)/(2*nu_matern + d))", notation: O_tilde, papers: [vakili2020information, valko2013finite]}
+    lower: {bound: "T**((nu_matern + d)/(2*nu_matern + d))", notation: Omega, papers: [scarlett2017lower]}
+    history: "GP-UCB with Srinivas et al.'s gamma_T bound left a polynomial gap; Vakili et al. 2021 bounded gamma_T = O~(T^{d/(2nu+d)}), so sqrt(T gamma_T) algorithms (SupKernelUCB) match Scarlett et al.'s lower bound up to logs."
+    tests: ["gamma_T substituted per kernel family", "fixed-dimension comparison (d, nu in the T-exponent)"]
+    confidence: high
+  - id: F16
+    setting: {<<: *stoch_kernel, kernel: {family: squared_exponential}}
+    regime: "worst case, frequentist, fixed d"
+    status: log_gap
+    upper: {bound: "sqrt(T)*log(T)**((d + 1)/2)", notation: O_tilde, papers: [vakili2020information, valko2013finite]}
+    lower: {bound: "sqrt(T*log(T)**(d/2))", notation: Omega, papers: [scarlett2017lower]}
+    history: "With gamma_T = O(log^{d+1} T), sqrt(T gamma_T) gives sqrt(T) log^{(d+1)/2} T against the Omega(sqrt(T (log T)^{d/2})) lower bound: polylogarithmic factors apart."
+    review: "2026-11-11: the lower bound first copied Vakili et al.'s citation, Omega(T^{1/2} log^{d/2} T); Scarlett et al. (arXiv:1706.00090, LaTeX l. 477, 567, 612) state Omega(sqrt(T (log T)^{d/2})), with the log inside the root. The atlas had the primary statement right."
+    tests: ["gamma_T substituted per kernel family", "fixed-dimension comparison"]
+    confidence: medium

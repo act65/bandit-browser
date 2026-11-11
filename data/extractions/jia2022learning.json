@@ -21,10 +21,8 @@
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
-   "action_space": "kernel_rkhs",
-   "function_class": [
-    "bounded"
-   ],
+   "action_space": "structured_general",
+   "function_class": [],
    "domain": "not_applicable",
    "context": "none",
    "noise": "subgaussian",
@@ -37,11 +35,11 @@
    "instance_assumptions": [],
    "extras": [],
    "action_set": {
-    "shape": "finite",
-    "time_varying": "fixed",
-    "access": "explicit",
-    "norm_bound": "unit_l2",
-    "parameter_set": "l2_ball",
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
     "loss_set": "not_applicable",
     "parameter_structure": "not_applicable"
    },
@@ -88,16 +86,18 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "not_applicable"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Each of the K arms has a fixed d-dimensional context vector x_i (unit norm, symmetric halves); unknown reward function h with 0<=h<=1 approximated by a ReLU network of width m and depth L",
+    "each of the K arms has a fixed d-dimensional context vector x_i with ||x_i||_2=1; unknown reward mapping h(x) in [0,1] approximated by a wide ReLU network (NTK regime)",
     "NTK matrix H on the context set satisfies H >= lambda_0 I",
-    "Reward norm bound S upper-bounds sqrt(2 h^T H^{-1} h) (RKHS norm of h in the NTK space)",
-    "Perturbation scale is set using lambda_K(A_K), the K-th largest eigenvalue of the covariance matrix after the initial K pulls"
+    "the learner's perturbation scale uses alpha_t, which depends on R, S, delta and lambda_K(A_K)"
    ],
-   "definition_quote": "We study the problem of contextual bandit with finite $K$ arms, where each arm is associated with a $d$-dimensional context vector: $\\xb_i \\in \\RR^d$ for $i \\in [K]$. At each round $t \\in [T]$, the agent needs to select one of the arms, denoted as $a_t$, and receives its reward $r_{a_t, t}$, which is generated as $r_{a_t, t} = h(\\xb_{a_t}) + \\eta_{t}$. In particular, $h(\\xb)$ represents the unknown underlying reward mapping function satisfying $0 \\leq h(\\xb) \\leq 1$ for any $\\xb$, and $\\eta_{t}$ is an $R$-sub-Gaussian random variable"
+   "definition_quote": "We study the problem of contextual bandit with finite $K$ arms, where each arm is associated with a $d$-dimensional context vector: $\\xb_i \\in \\RR^d$ for $i \\in [K]$. ... $r_{a_t, t} = h(\\xb_{a_t}) + \\eta_{t}$. In particular, $h(\\xb)$ ... satisfying $0 \\leq h(\\xb) \\leq 1$ ... and $\\eta_{t}$ is an $R$-sub-Gaussian random variable ... The goal is to minimize pseudo regret over $T$ rounds"
   }
  ],
  "algorithms": [
@@ -132,35 +132,33 @@
    "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "44*E*sqrt(pi)*(1 + sqrt((4*log(T) + 2*log(K))/(1 - lam/lam_KA)))*(sigma*sqrt(d_eff*log(1 + T*K/lam) + 2 - 2*log(delta)) + sqrt(lam)*S)*sqrt(2*d_eff*T*log(1 + T*K/lam) + 2) + 7 + K",
+    "expression": "44*E*sqrt(pi)*(1 + sqrt((4*log(T) + 2*log(K))/(1 - lam/lambda_KA)))*(sigma*sqrt(d_eff*log(1 + T*K/lam) + 2 - 2*log(delta)) + sqrt(lam)*S)*sqrt(2*d_eff*T*log(1 + T*K/lam) + 2) + 7 + K",
     "expression_latex": "R_T \\leq \\Gamma \\Big(R\\sqrt{\\tilde{d}\\log(1 + TK/\\lambda) +2 - 2\\log \\delta} + \\sqrt{\\lambda}S\\Big)\\cdot\\sqrt{2\\tilde dT\\log(1+TK/\\lambda) +2} + 7 + K, \\Gamma = 44\\eb \\sqrt{\\pi} (1 + \\sqrt{(4\\log T + 2\\log K) / (1 - \\lambda \\lambda_K^{-1}(\\Ab_K))})",
     "regime": null
    },
    "symbols": {
-    "lam_KA": "K-th largest eigenvalue of the covariance matrix A_K built after the initial K pulls"
+    "lambda_KA": "K-th largest eigenvalue of the covariance matrix A_K after the initial K pulls"
    },
    "conditions": [
-    "h(x) in [0,1]",
-    "R-sub-Gaussian observation noise (paper's R = sigma)",
-    "Assumption 9: NTK matrix H >= lambda_0 I, ||x_i||_2 = 1, [x_i]_j = [x_i]_{j+d/2}",
+    "NTK matrix H >= lambda_0 I, ||x_i||_2 = 1, [x_i]_j = [x_i]_{j+d/2} (Assumption 9)",
     "sqrt(2 h^T H^{-1} h) <= S",
-    "d_eff is the effective dimension of the NTK matrix: log det(I + T H/lambda)/log(1+TK/lambda)"
+    "h(x) in [0,1], noise R-sub-Gaussian"
    ],
    "tuning": [
     "m >= poly(T, L, K, 1/lambda, 1/S, log(1/delta))",
     "eta = C_1 (m T L + m lambda)^{-1}",
     "lambda >= max{1, S^{-2}}",
     "perturbation sigma = alpha_t (1 - lambda/lambda_K(A_K))^{-1/2}",
-    "number of GD steps J chosen as in the proof"
+    "J gradient-descent steps chosen as in proof"
    ],
    "is_new": true,
    "source": {
     "label": "thm:regret",
     "number": "Theorem 7",
-    "quote": "Let $\\tilde d$ be the effective dimension of the NTK kernel matrix $\\Hb$. There exist positive constants $C_1$ and $C_r$, such that for any $\\delta \\in(0, 1)$, when network structure and the step size for model update satisfy $m \\geq \\text{poly}(T, L, K, \\lambda^{-1}, S^{-1}, \\log(1/\\delta))$, $\\eta = C_1( mTL +  m \\lambda)^{-1}$ and $\\lambda \\geq \\max\\{1, S^{-2}\\}$, with probability at least $1-\\delta$, the cumulative regret of \\model{} satisfies R_T \\leq \\Gamma (R\\sqrt{\\tilde{d}\\log(1 + TK/\\lambda) +2 - 2\\log \\delta} + \\sqrt{\\lambda}S)\\cdot\\sqrt{2\\tilde dT\\log(1+TK/\\lambda) +2} + 7 + K"
+    "quote": "Let $\\tilde d$ be the effective dimension of the NTK kernel matrix $\\Hb$. There exist positive constants $C_1$ and $C_r$, such that for any $\\delta \\in(0, 1)$, when network structure and the step size for model update satisfy $m \\geq \\text{poly}(T, L, K, \\lambda^{-1}, S^{-1}, \\log(1/\\delta))$, $\\eta = C_1( mTL +  m \\lambda)^{-1}$ and $\\lambda \\geq \\max\\{1, S^{-2}\\}$, with probability at least $1-\\delta$, the cumulative regret of \\model{} satisfies R_T \\leq \\Gamma(...)\\cdot\\sqrt{2\\tilde dT\\log(1+TK/\\lambda) +2} + 7 + K"
    },
    "confidence": "medium",
-   "notes": "R_T is defined as E[sum (r_{a*} - r_{a_t})], i.e. through expected rewards, so it is recorded as pseudo-regret; the 1-delta probability is over network initialization and the confidence events. The paper's R (sub-Gaussian parameter) is mapped to sigma. The paper's perturbation std (also called sigma/nu) is an algorithm parameter and is described in tuning. The abstract summarises this bound as O~(d_eff sqrt(T)). Setting choices are judgement calls: the contexts are a fixed set of K vectors in the theory, so context=none; NTK reward modelling is mapped to kernel_rkhs with reward_model neural_ntk."
+   "notes": "Paper's R (sub-Gaussian parameter) mapped to sigma; paper's sigma is the perturbation scale (tuning). tilde d (NTK effective dimension, log det(I+TH/lambda)/log(1+TK/lambda)) mapped to d_eff. R_T is pseudo-regret holding with prob 1-delta over network initialization/observation noise. Abstract summarizes this as O_tilde(d_eff sqrt(T)). Context modelled as a fixed set of arm feature vectors (analysis uses NTK on fixed set {x_i})."
   }
  ],
  "cited_results": [],
@@ -170,16 +168,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "ae3ec0bf9ad6",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
   "algorithm_registry_size": 133,
-  "date": "2026-11-09T12:08:15",
+  "date": "2026-11-11T11:38:39",
   "source_chars": 81619,
-  "input_tokens": 77411,
-  "output_tokens": 4399,
-  "cost_usd_equiv": 0.428956,
+  "input_tokens": 77839,
+  "output_tokens": 3711,
+  "cost_usd_equiv": 0.4149618,
   "quote_retry": {
    "asked": 0,
    "fixed": 0

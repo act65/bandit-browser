@@ -30,7 +30,8 @@
    "learner_knows": [
     "T",
     "S",
-    "sigma"
+    "sigma_std",
+    "gamma_T"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -86,17 +87,19 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "general"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Objective is the CVaR_alpha of f(x,W) over an environmental variable W ~ P_W; regret r_t = CVaR_alpha[f(x_t,W)] - CVaR_alpha[f(x*,W)] (minimisation)",
-    "Learner actively queries a pair (x_t, w_t) on X x W and observes f(x_t,w_t) plus Gaussian noise",
-    "The learner knows the distribution P_W (represented by finitely many scenarios)",
-    "The kernel / hyperparameters are unknown; the learner knows a finite candidate set Theta of GP models containing at least one well-specified candidate theta* (f in RKHS of k_theta* with norm <= B)",
-    "All candidate kernels satisfy k_theta <= 1"
+    "Objective is the CVaR_alpha over an environmental variable W ~ P_W of f(x,W); the learner queries pairs (x,w) and regret is measured on CVaR of the chosen design x_t",
+    "The learner knows the environmental distribution P_W (finite set of scenarios)",
+    "The kernel/hyperparameters are unknown; the learner knows a finite candidate set Theta of GP models containing a well-specified one (f in RKHS of k_theta* with norm <= B)",
+    "Regret bound depends on |Theta|"
    ],
-   "definition_quote": "We consider an unknown objective function $f : \\mathcal{X} \\times \\mathcal{W} \\to \\mathbb{R}$ ... seek a design $x$ that minimizes $x^\\star \\in \\arg\\min_{x \\in \\mathcal{X}} \\mathrm{CVaR}_\\alpha[f(x,W)]$ ... at iteration $t$ it actively selects a query $(x_t,w_t)$ and observes a noisy evaluation $y_t = f(x_t,w_t) + \\varepsilon_t$, $\\varepsilon_t \\sim \\mathcal{N}(0,\\sigma_\\varepsilon^2)$ ... we assume a finite candidate set $\\Theta$ of GP models containing the unknown correct candidate $\\theta^\\star$"
+   "definition_quote": "We consider an unknown objective function $f : \\mathcal{X} \\times \\mathcal{W} \\to \\mathbb{R}$ ... at iteration $t$ it actively selects a query $(x_t,w_t) \\in \\mathcal{X} \\times \\mathcal{W}$ and observes a noisy evaluation $y_t = f(x_t,w_t) + \\varepsilon_t, \\varepsilon_t \\sim \\mathcal{N}(0,\\sigma_\\varepsilon^2)$. ... cumulative regret $R_T := \\sum_{t=1}^T r_t$ with per-round regret $r_t := \\mathrm{CVaR}_\\alpha[f(x_t,W)] - \\mathrm{CVaR}_\\alpha[f(x^\\star,W)]$."
   }
  ],
  "algorithms": [
@@ -110,12 +113,12 @@
     "elimination"
    ],
    "requires_knowledge_of": [
-    "T",
     "S",
-    "sigma",
+    "sigma_std",
+    "gamma_T",
+    "T",
     "candidate set Theta",
-    "P_W",
-    "delta"
+    "P_W"
    ]
   }
  ],
@@ -134,34 +137,34 @@
    "compute": "not_stated",
    "bound": {
     "notation": "O",
-    "expression": "Theta_card*S + Theta_card*sqrt(xi_T*T) + beta_T*Theta_card*sqrt(T*gamma_T)",
+    "expression": "n_Theta*S + n_Theta*sqrt(xi_T*T) + beta_T*n_Theta*sqrt(T*gamma_T)",
     "expression_latex": "\\mathcal{O}\\!\\bigl(\\,|\\Theta|\\,B + |\\Theta|\\,\\sqrt{\\xi_T\\,T} + \\beta_T|\\Theta|\\,\\sqrt{T\\,\\,\\gamma_T}\\,\\bigr)",
     "regime": null
    },
    "symbols": {
-    "Theta_card": "size |Theta| of the finite candidate set of GP models",
-    "xi_T": "noise-concentration threshold 2 sigma^2 log(4|Theta| pi^2 T^2 / (3 delta))",
-    "beta_T": "max over candidates of the confidence width beta_T^theta = B + sigma sqrt(2(gamma_{T-1}^theta + 1 + ln(2/delta)))"
+    "n_Theta": "size |Theta| of the finite candidate set of GP models",
+    "xi_T": "2 sigma_eps^2 log(4|Theta| pi^2 T^2 / (3 delta))",
+    "beta_T": "max_theta beta_T^theta, beta_t^theta = B + sigma_eps sqrt(2(gamma_{t-1}^theta + 1 + ln(2/delta)))"
    },
    "conditions": [
-    "regret is cumulative CVaR_alpha regret: sum_t CVaR_alpha[f(x_t,W)] - CVaR_alpha[f(x*,W)]",
-    "f in RKHS of k_theta* with ||f|| <= B for some theta* in Theta",
-    "noise i.i.d. N(0, sigma^2)",
+    "f in RKHS of k_{theta*} with norm <= B for some theta* in Theta",
+    "epsilon_t ~ N(0, sigma_eps^2) i.i.d.",
     "k_theta <= 1 for all theta in Theta",
-    "gamma_T is the maximum over candidates of the maximum information gain"
+    "gamma_T is the max over theta of the maximum information gain",
+    "regret is cumulative CVaR_alpha regret: sum_t CVaR_alpha[f(x_t,W)] - CVaR_alpha[f(x*,W)]"
    ],
    "tuning": [
-    "beta_t^theta = B + sigma*sqrt(2(gamma_{t-1}^theta + 1 + ln(2/delta)))",
-    "xi_t = 2 sigma^2 log(4|Theta| pi^2 t^2 / (3 delta))"
+    "beta_t^theta = B + sigma_eps*sqrt(2(gamma_{t-1}^theta + 1 + ln(2/delta)))",
+    "xi_t = 2 sigma_eps^2 log(4|Theta| pi^2 t^2/(3 delta))"
    ],
    "is_new": true,
    "source": {
     "label": "thm:regret",
     "number": "Theorem 3",
-    "quote": "Assume $f \\in \\mathcal{H}_{k_{\\theta^\\star}}$ with $\\|f\\|_{\\mathcal{H}_{k_{\\theta^\\star}}} \\le B$ for some $\\theta^\\star \\in \\Theta$, $\\varepsilon_t \\sim \\mathcal{N}(0,\\sigma_\\varepsilon^2)$ i.i.d., and $k_\\theta \\le 1$ for all $\\theta \\in \\Theta$. Set $\\beta_t^\\theta = B + \\sigma_\\varepsilon(2(\\gamma_{t-1}^\\theta + 1 + \\ln(2/\\delta)))^{1/2}$ and $\\xi_t = 2\\sigma_\\varepsilon^2 \\log(4|\\Theta|\\pi^2 t^2/3\\delta)$. Then with probability at least $1 - \\delta$, the cumulative regret satisfies $R_T \\le \\mathcal{O}(|\\Theta| B + |\\Theta|\\sqrt{\\xi_T T} + \\beta_T|\\Theta|\\sqrt{T\\gamma_T})$"
+    "quote": "Assume $f \\in \\mathcal{H}_{k_{\\theta^\\star}}$ with $\\|f\\|_{\\mathcal{H}_{k_{\\theta^\\star}}} \\le B$ for some $\\theta^\\star \\in \\Theta$, $\\varepsilon_t \\sim \\mathcal{N}(0,\\sigma_\\varepsilon^2)$ i.i.d., and $k_\\theta \\le 1$ for all $\\theta \\in \\Theta$. Set $\\beta_t^\\theta = ...$ and $\\xi_t = ...$. Then with probability at least $1 - \\delta$, the cumulative regret satisfies $R_T \\le \\mathcal{O}(|\\Theta| B + |\\Theta|\\sqrt{\\xi_T T} + \\beta_T|\\Theta|\\sqrt{T\\gamma_T})$"
    },
    "confidence": "medium",
-   "notes": "Restated as Theorem 5 in the appendix (same bound). The proof gives explicit constants: 2|Theta|B + 4|Theta|(sqrt(xi_T T) + beta_T sqrt(C gamma_T T)) + lower-order terms. RKHS norm bound B is mapped to S. Quantity is 'other' because the regret is defined on the CVaR risk functional. Regret is for minimisation of CVaR."
+   "notes": "Quantity set to 'other' since regret is on the CVaR risk functional. B mapped to S (RKHS norm bound). Restated identically as Theorem 5 in the appendix (not recorded separately). Sublinear when gamma_T = o(sqrt T)."
   }
  ],
  "cited_results": [],
@@ -171,16 +174,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "ae3ec0bf9ad6",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
   "algorithm_registry_size": 133,
-  "date": "2026-11-09T11:22:29",
+  "date": "2026-11-11T11:37:12",
   "source_chars": 89762,
-  "input_tokens": 78328,
-  "output_tokens": 3737,
-  "cost_usd_equiv": 0.42305200000000004,
+  "input_tokens": 78756,
+  "output_tokens": 3417,
+  "cost_usd_equiv": 0.41641779999999995,
   "quote_retry": {
    "asked": 0,
    "fixed": 0

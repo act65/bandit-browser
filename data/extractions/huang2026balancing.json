@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Quantum kernel bandit (f* in RKHS of n-qubit shift-invariant quantum kernel, finite action set)",
+   "name_in_paper": "Quantum kernel bandit (f* in RKHS of an n-qubit shift-invariant quantum kernel, finite action set)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -58,7 +58,7 @@
     "generation": "not_applicable"
    },
    "noise_detail": {
-    "variance": "unspecified"
+    "variance": "homoscedastic"
    },
    "combinatorial": {
     "family": "not_applicable",
@@ -66,7 +66,7 @@
     "loss_scale": "not_applicable"
    },
    "reward_model": {
-    "kind": "misspecified"
+    "kind": "not_applicable"
    },
    "constraints": {
     "kind": "not_applicable",
@@ -84,20 +84,23 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "unspecified"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "learner models f* with a misspecified D-dimensional random-Fourier-feature linear class approximating the quantum RKHS",
-    "learner knows the Fourier frequency set Omega of the quantum kernel (samples frequencies from it) and the misspecification level used to tune SquareCB"
+    "Kernel is an n-qubit shift-invariant quantum fidelity kernel with finite Fourier frequency set Omega (4^n-dimensional feature space)",
+    "Learner uses a misspecified D-dimensional random Fourier feature surrogate model"
    ],
-   "definition_quote": "We consider a sequential online learning problem where at each round $t$, the learner chooses an action $\\xbf_t \\in \\mathcal{X}$ from the finite action set $\\mathcal{X}$. Corresponding to the chosen action, the learner observes a noisy reward $y_t= f^*(\\xbf_t) + \\eta_t$ ... We assume that the $f^*$ belongs to the RKHS $ \\mathcal{H}_{\\kappa_Q}(\\mathcal{X})$ defined by a quantum kernel $\\kappa_Q(\\xbf,\\xbf')$, with bounded RKHS norm, i.e., $\\Vert f^* \\Vert_{\\mathcal{H}_{\\kappa_Q}} \\leq B$"
+   "definition_quote": "We consider a sequential online learning problem where at each round $t$, the learner chooses an action $\\xbf_t \\in \\mathcal{X}$ from the finite action set $\\mathcal{X}$. ... $y_t= f^*(\\xbf_t) + \\eta_t$ ... We assume that the $f^*$ belongs to the RKHS $ \\mathcal{H}_{\\kappa_Q}(\\mathcal{X})$ defined by a quantum kernel $\\kappa_Q(\\xbf,\\xbf')$, with bounded RKHS norm, i.e., $\\Vert f^* \\Vert_{\\mathcal{H}_{\\kappa_Q}} \\leq B$"
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "SquareCB with RFF features of the quantum kernel (Vovk-Azoury-Warmuth oracle)",
+   "name": "SquareCB with RFF features (Vovk-Azoury-Warmuth oracle)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -112,7 +115,7 @@
   },
   {
    "id": "a2",
-   "name": "EC-GP-UCB with summed linear projected quantum kernels",
+   "name": "EC-GP-UCB with summed LPQK",
    "registry_id": null,
    "is_new": false,
    "techniques": [
@@ -140,22 +143,22 @@
    "bound": {
     "notation": "exact",
     "expression": "Min(2*sqrt(4**n_q*K*T*log(1 + T/4**n_q)), 2*sqrt(K)*T**(3/4)*sqrt(log(T)) + 20*sqrt(K)*T**(3/4)*S*Omega_card*(sqrt(log(T)) + 4*B_X*omega_max))",
-    "expression_latex": "\\min \\Bigl\\{ 2\\sqrt{4^n KT \\log\\big(1+\\tfrac{T}{4^n}\\big)}, 2\\sqrt{K}T^{3/4}\\sqrt{\\log T} + 20\\sqrt{K}T^{3/4}B|\\Omega|\\Big(\\sqrt{\\log T}+4B_\\Xcal\\,\\omega_{\\max}\\Big) \\Bigr\\}",
+    "expression_latex": "\\min \\Bigl\\{ 2\\sqrt{4^n KT \\log\\big(1+\\tfrac{T}{4^n}\\big)}, 2\\sqrt{K}T^{3/4}\\sqrt{\\log T} +20\\sqrt{K}T^{3/4}B|\\Omega|\\Big(\\sqrt{\\log T}+4B_\\Xcal\\,\\omega_{\\max}\\Big) \\Bigr\\}",
     "regime": null
    },
    "symbols": {
-    "n_q": "number of qubits",
-    "Omega_card": "size |Omega| of the frequency set of the quantum kernel",
+    "n_q": "number of qubits n",
+    "Omega_card": "size |Omega| of the Fourier frequency set of the quantum kernel",
     "B_X": "domain radius sup_x ||x||_2",
     "omega_max": "maximum frequency norm max_{omega in Omega} ||omega||_2"
    },
    "conditions": [
-    "f* in RKHS of an n-qubit shift-invariant (Pauli-encoding) quantum kernel with ||f*||_H <= B (S = B)",
-    "finite action set of size K",
-    "losses/rewards in [0,1] (SquareCB setting)"
+    "f* in H_{kappa_Q} with ||f*||_{H_{kappa_Q}} <= B (B mapped to S)",
+    "kappa_Q is an n-qubit shift-invariant quantum kernel with finite (integer) frequency set Omega",
+    "losses/rewards in [0,1] as required by SquareCB"
    ],
    "tuning": [
-    "D = ceil(sqrt(T)) random Fourier features sampled uniformly from Omega",
+    "D = ceil(sqrt(T)) random Fourier features sampled uniformly from Omega x {c,s}",
     "mu = K, gamma = sqrt(8KT/(Reg_Sq(T) + eps^2 T))",
     "Vovk-Azoury-Warmuth regression oracle"
    ],
@@ -163,10 +166,10 @@
    "source": {
     "label": "thm:regret_RFF",
     "number": "Theorem 6",
-    "quote": "Using SquareCB with $\\mathcal{H}_{\\kappa_{\\text{RFF}}}(\\mathcal{X})$ yields an expected cumulative regret of \\mathbb E[R_T] \\leq \\min \\Bigl\\{ 2\\sqrt{4^n KT \\log\\big(1+\\tfrac{T}{4^n}\\big)}, 2\\sqrt{K}T^{3/4}\\sqrt{\\log T} + 20\\sqrt{K}T^{3/4}B|\\Omega|\\Big(\\sqrt{\\log T}+4B\\!_\\Xcal\\,\\omega_{\\max}\\Big) \\Bigr\\}, where the expectation is over SquareCB's random action sampling, the stochastic rewards, as well as the sampled Fourier features."
+    "quote": "Using SquareCB with $\\mathcal{H}_{\\kappa_{\\text{RFF}}}(\\mathcal{X})$ yields an expected cumulative regret of $\\mathbb E[R_T] \\leq \\min \\Bigl\\{ 2\\sqrt{4^n KT \\log\\big(1+\\tfrac{T}{4^n}\\big)}, 2\\sqrt{K}T^{3/4}\\sqrt{\\log T} +20\\sqrt{K}T^{3/4}B|\\Omega|\\Big(\\sqrt{\\log T}+4B\\!_\\Xcal\\,\\omega_{\\max}\\Big) \\Bigr\\}$, where the expectation is over SquareCB's random action sampling, the stochastic rewards, as well as the sampled Fourier features."
    },
    "confidence": "medium",
-   "notes": "Expectation also over sampled Fourier features. Proof contains an additive +1 term dropped in the statement. Noise model mapped to bounded_01 because SquareCB assumes losses in [0,1]; main text assumes i.i.d. zero-mean (Gaussian) noise. Regret defined via means, so pseudo-regret. The first branch corresponds to SquareCB with the full 4^n-dimensional quantum feature map (a different instantiation). Paper notes doubling trick for unknown T."
+   "notes": "Regret defined via f*(x*) - f*(x_t), so pseudo-regret. Proof in appendix has an extra +1 term (from the failure event of RFF sampling) not present in the theorem statement; recorded as stated. The min is over two algorithm instantiations (full quantum feature model vs. RFF surrogate). Noise mapped to bounded_01 since SquareCB analysis assumes losses in [0,1]; main text only says zero-mean i.i.d. (Gaussian) noise. Õ(sqrt(K) T^{3/4}) overall."
   }
  ],
  "cited_results": [
@@ -179,7 +182,7 @@
    "algorithm_name": "GP-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Kernelized/GP bandit, realizable, high-probability regret",
+   "setting_description": "Kernelized (GP) bandit, realizable RKHS, high probability regret",
    "bound": {
     "notation": "O",
     "expression": "sqrt(T*beta_T*gamma_T)",
@@ -197,11 +200,11 @@
    "algorithm_name": "EC-GP-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Misspecified kernelized bandit with uniform misspecification eps, w.p. 1-delta",
+   "setting_description": "Misspecified kernelized bandit with uniform misspecification eps, high probability regret",
    "bound": {
     "notation": "O",
-    "expression": "S*sqrt(gamma_T*T) + sqrt((log(1/delta) + gamma_T)*gamma_T*T) + epsilon*T*sqrt(gamma_T)",
-    "expression_latex": "\\mathcal{O}\\big(B\\sqrt{\\gamma_T T}+\\sqrt{(\\ln(1/\\delta)+\\gamma_T)\\gamma_TT}+\\varepsilon_b T\\sqrt{\\gamma_T}\\big)",
+    "expression": "S*sqrt(gamma_T*T) + sqrt((log(1/delta) + gamma_T)*gamma_T*T) + eps_mis*T*sqrt(gamma_T)",
+    "expression_latex": "\\mathcal{O}\\big( B\\sqrt{\\gamma_T T} + \\sqrt{ (\\ln(1/\\delta) + \\gamma_T)\\gamma_TT} + \\varepsilon_b T\\sqrt{\\gamma_T} \\big)",
     "regime": null
    },
    "where": "Eq. (regret_ECGPUCB), Section 3.1"
@@ -212,13 +215,13 @@
    "cited_first_author": "Foster",
    "cited_year": 2020,
    "cited_arxiv_id": null,
-   "algorithm_name": "SquareCB",
+   "algorithm_name": "SquareCB (with Vovk-Azoury-Warmuth forecaster)",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Misspecified (contextual) linear bandit with D-dimensional features, K actions, misspecification eps",
+   "setting_description": "Misspecified (contextual) linear bandit with D-dim features, K actions, misspecification eps",
    "bound": {
     "notation": "exact",
-    "expression": "2*sqrt(K*T*d*log(1 + T/d)) + 5*epsilon*sqrt(K)*T",
+    "expression": "2*sqrt(K*T*d*log(1 + T/d)) + 5*eps_mis*sqrt(K)*T",
     "expression_latex": "2 \\sqrt{K TD \\log(1+T/D)} + 5\\varepsilon \\sqrt{K} T",
     "regime": null
    },
@@ -233,10 +236,10 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Misspecified linear bandit with eps-perturbed additive reward, d-dimensional",
+   "setting_description": "Misspecified linear bandit, eps-perturbed additive reward model, d-dimensional actions",
    "bound": {
     "notation": "Omega",
-    "expression": "epsilon*sqrt(d)*T",
+    "expression": "eps_mis*sqrt(d)*T",
     "expression_latex": "\\Omega(\\varepsilon\\sqrt{d}T)",
     "regime": null
    },
@@ -249,16 +252,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "ae3ec0bf9ad6",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
   "algorithm_registry_size": 133,
-  "date": "2026-11-09T12:24:02",
+  "date": "2026-11-11T11:39:20",
   "source_chars": 168725,
-  "input_tokens": 124157,
-  "output_tokens": 4584,
-  "cost_usd_equiv": 0.806624,
+  "input_tokens": 124585,
+  "output_tokens": 5134,
+  "cost_usd_equiv": 0.8173897999999999,
   "quote_retry": {
    "asked": 0,
    "fixed": 0

@@ -17,21 +17,23 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Batch sequential optimization of f in an RKHS with noisy evaluations (strict regret)",
+   "name_in_paper": "Batch sequential optimization of f in an RKHS with sub-Gaussian noise (kernelized bandit, batch TS)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
    "action_space": "kernel_rkhs",
-   "function_class": [],
+   "function_class": [
+    "bounded"
+   ],
    "domain": "constrained",
    "context": "none",
    "noise": "subgaussian",
    "learner_knows": [
-    "T",
     "S",
     "sigma",
     "gamma_T",
-    "kernel"
+    "kernel",
+    "d"
    ],
    "instance_assumptions": [],
    "extras": [
@@ -40,7 +42,7 @@
    "action_set": {
     "shape": "arbitrary_compact",
     "time_varying": "fixed",
-    "access": "not_applicable",
+    "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
     "loss_set": "not_applicable",
@@ -89,19 +91,23 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "general"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Each round the learner queries a batch of B_batch points; regret summed over all T*B_batch queries"
+    "Each round the learner queries a batch of B_batch points and receives all B_batch noisy observations",
+    "Frequentist regret for a fixed f with ||f||_{H_k} <= S and k(x,x') <= 1"
    ],
-   "definition_quote": "We consider the sequential optimization of an unknown function $f$ over a compact set $\\X\\subset \\Rr^d$. A sequential learning policy selects a batch of $B$ observation points $\\{x_{t,b}\\}_{b\\in [B]}$ at each time step $t=1,2,\\dots,T$ and receives the corresponding real-valued and noisy rewards ... Given an RKHS $H_k$, the norm of the objective function is bounded: $||f||_{H_k}\\le \\Bc$, for some $\\Bc>0$, and $k(x,x')\\le 1$"
+   "definition_quote": "A sequential learning policy selects a batch of $B$ observation points $\\{x_{t,b}\\}_{b\\in [B]}$ at each time step $t=1,2,\\dots,T$ and receives the corresponding real-valued and noisy rewards $\\{y_{t,b}=f(x_{t,b})+\\epsilon_{t,b}\\}$ ... $\\epsilon_{t,b}$ are i.i.d. ... $R-$sub-Gaussian ... $||f||_{H_k}\\le \\Bc$ ... $k(x,x')\\le 1$"
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "S-GP-TS (batch Thompson sampling with approximate / sparse variational GP and decoupled sampling)",
+   "name": "S-GP-TS (scalable batch GP Thompson sampling with SVGP and decoupled sampling)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -111,8 +117,7 @@
     "S",
     "sigma",
     "gamma_T",
-    "kernel",
-    "T"
+    "kernel"
    ]
   }
  ],
@@ -127,27 +132,27 @@
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
-   "horizon": "known",
-   "compute": "polynomial",
+   "horizon": "anytime",
+   "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "30*a_bar*beta_T*B_batch*sqrt(2*T*gamma_T/log(1 + 1/tau)) + (31*beta_T + alpha_T)*eps_approx*T*B_batch + 15*B_batch*S + 2*B_batch",
+    "expression": "30*a_bar*beta_T*B_batch*sqrt(2*T*gamma_T/log(1 + 1/tau)) + (31*beta_T + alpha_T)*eps_apx*T*B_batch + 15*B_batch*S + 2*B_batch",
     "expression_latex": "30\\bar{a}\\beta_TB\\sqrt{\\frac{2T\\gamma_T}{\\log(1+\\frac{1}{\\tau})}}+(31\\beta_T+\\alpha_T)\\epsilon TB + 15B\\Bc+2B",
     "regime": null
    },
    "symbols": {
-    "B_batch": "batch size per round",
-    "a_bar": "upper multiplicative approximation constant of the posterior std (Assumption 3)",
-    "eps_approx": "additive approximation error bound epsilon of the posterior std (Assumption 3)",
+    "B_batch": "batch size B",
+    "a_bar": "upper multiplicative approximation constant of the std (Assumption 3)",
+    "eps_apx": "additive approximation error bound epsilon on the std (Assumption 3)",
     "beta_T": "alpha_T*(b_T+1/2), b_T = sqrt(2 log(N_T T^2))",
-    "alpha_T": "covariance scaling 2*u_T(1/T^2) with u_t = a_under_t(S + R sqrt(2(gamma_{tB}+1+log(1/delta))) + c_t)",
-    "tau": "GP noise regularization parameter"
+    "alpha_T": "covariance scaling 2*u_T(1/T^2)",
+    "tau": "GP model noise regularisation parameter"
    },
    "conditions": [
-    "Assumption 3 (quality of approximate std) and Assumption 4 (quality of approximate mean) hold",
+    "Assumption 3: approximate posterior std within multiplicative constants a_lower, a_bar and additive eps of exact std",
+    "Assumption 4: |mu_tilde - mu| <= c_t sigma_t with c_t <= c",
     "Assumption 5: discretization D_t with |f(x)-f(x^(t))| <= 1/t^2 and |D_t| <= C(d,B) t^{2d}",
-    "k(x,x') <= 1",
-    "||f||_H <= S"
+    "k(x,x') <= 1"
    ],
    "tuning": [
     "alpha_t = 2*u_t(1/t^2)"
@@ -156,10 +161,10 @@
    "source": {
     "label": "The:RegretBoundsApproximate",
     "number": "Theorem 1",
-    "quote": "Consider S-GP-TS with $\\alpha_t = 2\\u_{t}(1/(t^2))$. Under Assumptions~\\ref{AssNoise},~\\ref{AssNorm},~\\ref{Ass1}~,~\\ref{Ass2} and~\\ref{AssDisc}, the regret defined in~\\eqref{eq:regdef}, satisfies R(T,B;f) \\le 30\\bar{a}\\beta_TB\\sqrt{\\frac{2T\\gamma_T}{\\log(1+\\frac{1}{\\tau})}}+(31\\beta_T+\\alpha_T)\\epsilon TB + 15B\\Bc+2B"
+    "quote": "Consider S-GP-TS with $\\alpha_t = 2\\u_{t}(1/(t^2))$. Under Assumptions 1,2,3,4 and 5, the regret defined in (1), satisfies R(T,B;f) \\le 30\\bar{a}\\beta_TB\\sqrt{\\frac{2T\\gamma_T}{\\log(1+\\frac{1}{\\tau})}}+(31\\beta_T+\\alpha_T)\\epsilon TB + 15B\\Bc+2B"
    },
    "confidence": "medium",
-   "notes": "Holds for any approximate GP model satisfying Assumptions 3-4 (agnostic to sampling rule). Paper's B is batch size (renamed B_batch); paper's \\mathcal{B} is RKHS norm bound S. Regret is defined via f values in expectation, hence pseudo_regret."
+   "notes": "Applies to TS with any approximate GP satisfying Assumptions 3-4. Regret is E[sum f(x*)-f(x_tb)] i.e. pseudo-regret. Horizon treated as anytime since tuning depends only on t."
   },
   {
    "id": "r2",
@@ -171,25 +176,24 @@
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "expectation",
-   "horizon": "known",
-   "compute": "polynomial",
+   "horizon": "anytime",
+   "compute": "not_stated",
    "bound": {
     "notation": "O",
-    "expression": "a_under*a_bar*B_batch*sigma*sqrt(d*gamma_T*(gamma_TB + log(T))*T*log(T)) + a_under*eps_approx*T*B_batch*sigma*sqrt(d*(gamma_TB + log(T))*log(T))",
+    "expression": "a_low*a_bar*B_batch*sigma*sqrt(d*gamma_T*(gamma_TB + log(T))*T*log(T)) + a_low*eps_apx*T*B_batch*sigma*sqrt(d*(gamma_TB + log(T))*log(T))",
     "expression_latex": "{O}\\left( \\underline{a}\\bar{a}BR\\sqrt{d\\gamma_T(\\gamma_{TB}+\\log(T)) T\\log(T)} + \\underline{a}\\epsilon TBR\\sqrt{d(\\gamma_{TB}+\\log(T))\\log(T)}  \\right)",
     "regime": null
    },
    "symbols": {
-    "B_batch": "batch size per round",
-    "a_under": "lower multiplicative approximation constant (Assumption 3)",
-    "a_bar": "upper multiplicative approximation constant (Assumption 3)",
-    "eps_approx": "additive std approximation error (Assumption 3)",
-    "gamma_TB": "maximal information gain after T*B_batch observations"
+    "B_batch": "batch size B",
+    "a_low": "lower multiplicative approximation constant (underline a)",
+    "a_bar": "upper multiplicative approximation constant",
+    "eps_apx": "additive std approximation error",
+    "gamma_TB": "maximal information gain after T*B observations"
    },
    "conditions": [
-    "Assumptions 3, 4, 5 hold",
-    "k(x,x') <= 1",
-    "||f||_H <= S"
+    "Assumptions 3, 4, 5 on approximation quality and discretization",
+    "k(x,x') <= 1"
    ],
    "tuning": [
     "alpha_t = 2*u_t(1/t^2)"
@@ -198,10 +202,10 @@
    "source": {
     "label": "The:RegretBoundsApproximate",
     "number": "Theorem 1",
-    "quote": "={O}\\left( \\underline{a}\\bar{a}BR\\sqrt{d\\gamma_T(\\gamma_{TB}+\\log(T)) T\\log(T)} + \\underline{a}\\epsilon TBR\\sqrt{d(\\gamma_{TB}+\\log(T))\\log(T)}  \\right), where $\\beta_t = \\alpha_t(b_t+\\frac{1}{2})$ with $b_t = \\sqrt{2\\log(N_t t^2)}$."
+    "quote": "={O}\\left( \\underline{a}\\bar{a}BR\\sqrt{d\\gamma_T(\\gamma_{TB}+\\log(T)) T\\log(T)} + \\underline{a}\\epsilon TBR\\sqrt{d(\\gamma_{TB}+\\log(T))\\log(T)}  \\right)"
    },
    "confidence": "medium",
-   "notes": "Order form of the same Theorem 1 bound. R is the sub-Gaussian parameter (sigma)."
+   "notes": "Order form of Theorem 1; R is the sub-Gaussian parameter (sigma)."
   },
   {
    "id": "r3",
@@ -222,30 +226,29 @@
     "regime": null
    },
    "symbols": {
-    "B_batch": "batch size per round",
-    "gamma_TB": "maximal information gain after T*B_batch observations"
+    "B_batch": "batch size B",
+    "gamma_TB": "maximal information gain after T*B observations"
    },
    "conditions": [
-    "Matern kernel (nu > d/2, sufficiently larger for inducing points) or SE kernel",
+    "Matern kernel with nu > d/2 or SE kernel, with Mercer decomposition available",
     "k(x,x') <= 1",
-    "||f||_H <= S",
-    "Mercer decomposition of kernel used; inducing points from epsilon_0-close k-DPP (rule with inducing points)",
-    "discretization as in Assumption 5"
+    "inducing points from an eps_0-close k-DPP (inducing point rule) or eigenfunction inducing features"
    ],
    "tuning": [
     "Matern, inducing points: m_t ~ T^{2d/(2nu-d)}, M ~ T^{(2nu+d)d/(2(2nu-d)nu)}",
     "Matern, inducing features: m_t ~ T^{d/(2nu)}, M ~ T^{(2nu+d)d/(4nu^2)}",
     "SE: m_t, M ~ (log T)^d",
-    "alpha_t = 2*u_t(1/t^2)"
+    "alpha_t = 2*u_t(1/t^2)",
+    "delta = 1/T, eps_0 = 1/(T^2 log T) for inducing points"
    ],
    "is_new": true,
    "source": {
     "label": "The:MatSE",
     "number": "Theorem 2",
-    "quote": "Under Assumptions~\\ref{AssNoise} and \\ref{AssNorm}, with the algorithmic parameters, kernels and sampling rules specified in Table \\ref{Table:CC}, S-GP-TS offers $R(T,B;f) = O(B\\sqrt{\\gamma_T\\gamma_{TB}T\\log(T)}).$"
+    "quote": "Under Assumptions 1 and 2, with the algorithmic parameters, kernels and sampling rules specified in Table 1, S-GP-TS offers $R(T,B;f) = O(B\\sqrt{\\gamma_T\\gamma_{TB}T\\log(T)})$."
    },
    "confidence": "medium",
-   "notes": "With B=1 recovers exact GP-TS rate. Algorithmic parameters depend on T, hence known horizon."
+   "notes": "Proved for Matern and SE kernels, stated via information gain. Compute: cost O(B(M+m_T)N_T T + B m_T^2 T^2), polynomial in T but N_T exponential in d. Parameters depend on T so horizon known."
   }
  ],
  "cited_results": [
@@ -258,7 +261,7 @@
    "algorithm_name": "GP-TS",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Kernelized bandit, f in RKHS with bounded norm, sub-Gaussian noise, sequential (B=1), exact GP Thompson sampling",
+   "setting_description": "Kernelized bandit, RKHS norm bound, sub-Gaussian noise, sequential (B=1), exact GP Thompson sampling",
    "bound": {
     "notation": "O",
     "expression": "gamma_T*sqrt(T*log(T))",
@@ -274,16 +277,20 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "00a106c81dc8",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
-  "algorithm_registry_size": 132,
-  "date": "2026-10-21T15:08:44",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-11T11:28:01",
   "source_chars": 100859,
-  "input_tokens": 85424,
-  "output_tokens": 4934,
-  "cost_usd_equiv": 0.513042,
+  "input_tokens": 87066,
+  "output_tokens": 5340,
+  "cost_usd_equiv": 0.5213578,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
   "status": "extracted"
  }
 }

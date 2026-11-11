@@ -17,15 +17,13 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Constrained non-stationary Gaussian process (kernelized) bandit, unknown variation budget",
+   "name_in_paper": "Constrained non-stationary Gaussian process (kernelized) bandit, variation budget unknown",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "nonstationary_drifting",
    "action_space": "kernel_rkhs",
-   "function_class": [
-    "bounded"
-   ],
-   "domain": "constrained",
+   "function_class": [],
+   "domain": "not_applicable",
    "context": "none",
    "noise": "subgaussian",
    "learner_knows": [
@@ -91,27 +89,28 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "general"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "unknown time-varying constraint function g_t in an RKHS (norm bound G) observed with noise alongside the reward",
-    "Slater condition with margin tau known to the learner (rho = 4B/tau)",
-    "variation budgets on both reward and constraint functions measured in RKHS norm"
+    "unknown time-varying constraint function g_t in an RKHS of kernel tilde k with norm bound G, observed with noise; regret against best feasible per-round policy and long-term constraint violation [sum g_t(x_t)]_+",
+    "Slater condition: for every t a policy with E g_t <= -tau exists; learner knows tau (rho = 4B/tau) and G",
+    "variation budgets sum ||f_{t+1}-f_t|| <= B_f and sum ||g_{t+1}-g_t|| <= B_g in RKHS norm (unknown to learner)"
    ],
-   "definition_quote": "We assume that $f_t$ at each time $t$ is bounded by $\\|f_t\\|_{\\mathbb H_k} \\leq B$ and $k(x,x) \\leq 1$ ... $||g||_{\\mathbb H_{\\tilde k}} \\leq G$ ... $\\sum_{t=1}^{T-1} \\|f_{t+1}-f_t\\|_{\\mathbb H_k} \\leq B_f$ and $\\sum_{t=1}^{T-1} \\|g_{t+1}-g_t\\|_{\\mathbb H_{\\tilde k}} \\leq B_g$."
+   "definition_quote": "We assume that the variations in  reward and constraint functions are bounded, i.e. $\\sum_{t=1}^{T-1} \\|f_{t+1}-f_t\\|_{\\mathbb H_k} \\leq B_f$ and $\\sum_{t=1}^{T-1} \\|g_{t+1}-g_t\\|_{\\mathbb H_{\\tilde k}} \\leq B_g$."
   },
   {
    "id": "s2",
-   "name_in_paper": "Constrained non-stationary Gaussian process (kernelized) bandit, known variation budget",
+   "name_in_paper": "Constrained non-stationary Gaussian process (kernelized) bandit, variation budget known",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "nonstationary_drifting",
    "action_space": "kernel_rkhs",
-   "function_class": [
-    "bounded"
-   ],
-   "domain": "constrained",
+   "function_class": [],
+   "domain": "not_applicable",
    "context": "none",
    "noise": "subgaussian",
    "learner_knows": [
@@ -178,15 +177,18 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "general"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "unknown time-varying constraint function g_t in an RKHS (norm bound G) observed with noise alongside the reward",
-    "Slater condition with margin tau known to the learner (rho = 4B/tau)",
-    "variation budgets on both reward and constraint functions measured in RKHS norm"
+    "unknown time-varying constraint function g_t in an RKHS of kernel tilde k with norm bound G; long-term constraint violation",
+    "Slater condition with margin tau known to learner; learner knows G",
+    "learner knows combined variation budget B_Delta = max(B_f, B_g)"
    ],
-   "definition_quote": "If the combined variation budget $B_{\\Delta}$ is known, the order of $B_{\\Delta}$ in the upper bounds can be reduced from $1$ to $\\frac{1}{4}$, with a different value of restart period $W$."
+   "definition_quote": "If the combined variation budget $B_{\\Delta}$ is known,  the order of $B_{\\Delta}$ in the upper bounds can be reduced from $1$ to $\\frac{1}{4}$, with a different value of restart period $W$."
   }
  ],
  "algorithms": [
@@ -205,7 +207,9 @@
     "S",
     "gamma_T",
     "sigma",
-    "kernel"
+    "kernel",
+    "G",
+    "tau"
    ]
   }
  ],
@@ -225,22 +229,22 @@
    "bound": {
     "notation": "O",
     "expression": "rho*G*sqrt(T) + rho*gamma_hat**(7/8)*B_Delta*T**(3/4)",
-    "expression_latex": "O \\left(\\rho G \\sqrt{T} + \\rho \\hat \\gamma_T^{\\frac{7}{8}} B_{\\Delta} T^{\\frac{3}{4}}\\right)",
+    "expression_latex": "O \\left(\\rho G  \\sqrt{T} + \\rho \\hat \\gamma_T^{\\frac{7}{8}} B_{\\Delta} T^{\\frac{3}{4}}\\right)",
     "regime": null
    },
    "symbols": {
     "rho": "dual variable projection bound, rho >= 4B/tau",
-    "G": "RKHS norm bound of the constraint function",
-    "gamma_hat": "max of the maximum information gains of reward and constraint kernels at T",
-    "B_Delta": "max of the RKHS-norm variation budgets B_f and B_g"
+    "G": "RKHS norm bound of the constraint function g_t",
+    "gamma_hat": "max(gamma_T, tilde gamma_T), combined maximum information gain of reward and constraint kernels",
+    "B_Delta": "max(B_f, B_g), combined RKHS-norm variation budget of reward and constraint functions"
    },
    "conditions": [
-    "||f_t||_{H_k} <= B, k(x,x) <= 1, ||g_t|| <= G",
+    "||f_t||_H_k <= B, k(x,x) <= 1, ||g||_H_tilde_k <= G, tilde k(x,x) <= 1",
     "Slater condition with margin tau > 0",
     "finite codebook action set"
    ],
    "tuning": [
-    "W = gamma_hat^{1/4} T^{1/2}",
+    "W = gamma_hat^(1/4) T^(1/2)",
     "rho >= 4B/tau",
     "eta = rho/(G sqrt(T))"
    ],
@@ -248,10 +252,10 @@
    "source": {
     "label": "thm: bound",
     "number": "Theorem 1",
-    "quote": "If the restart period $W= \\hat \\gamma_T^{\\frac{1}{4}} T^{\\frac{1}{2}}$, for any $\\rho \\geq \\frac{4B}{\\tau}$, the regret $R(T)$ and constraint violation $V(T)$ in Algorithm~ \\ref{alg} at time $T$ are bounded by: R(T) \\leq O(\\rho G \\sqrt{T} + \\rho \\hat \\gamma_T^{\\frac{7}{8}} B_{\\Delta} T^{\\frac{3}{4}})."
+    "quote": "If the restart period $W= \\hat \\gamma_T^{\\frac{1}{4}} T^{\\frac{1}{2}}$, for any $\\rho \\geq \\frac{4B}{\\tau}$, the regret $R(T)$ and constraint violation  $V(T)$  in Algorithm~ \\ref{alg} at time $T$ are bounded by: R(T) \\leq  O \\left(\\rho G  \\sqrt{T} + \\rho \\hat \\gamma_T^{\\frac{7}{8}} B_{\\Delta} T^{\\frac{3}{4}}\\right)."
    },
    "confidence": "medium",
-   "notes": "Theorem does not state probability explicitly; relies on confidence-bound lemma with delta, so treated as high probability. Regret is against per-round best feasible (randomised) policy. Lemma 7 restates this bound."
+   "notes": "Probability type not stated in the theorem; analysis relies on concentration (confidence delta) and conclusion says 'with a high probability', so recorded as high-probability. Regret is dynamic, against per-round best feasible (randomized) policy. Also restated as Lemma 7."
   },
   {
    "id": "r2",
@@ -273,17 +277,17 @@
    },
    "symbols": {
     "rho": "dual variable projection bound, rho >= 4B/tau",
-    "G": "RKHS norm bound of the constraint function",
-    "gamma_hat": "max of the maximum information gains of reward and constraint kernels at T",
-    "B_Delta": "max of the RKHS-norm variation budgets B_f and B_g"
+    "G": "RKHS norm bound of the constraint function g_t",
+    "gamma_hat": "max(gamma_T, tilde gamma_T)",
+    "B_Delta": "max(B_f, B_g)"
    },
    "conditions": [
-    "||f_t||_{H_k} <= B, k(x,x) <= 1, ||g_t|| <= G",
+    "||f_t||_H_k <= B, k(x,x) <= 1, ||g||_H_tilde_k <= G, tilde k(x,x) <= 1",
     "Slater condition with margin tau > 0",
-    "finite codebook action set"
+    "quantity is cumulative constraint violation V(T) = [sum_t g_t(x_t)]_+"
    ],
    "tuning": [
-    "W = gamma_hat^{1/4} T^{1/2}",
+    "W = gamma_hat^(1/4) T^(1/2)",
     "rho >= 4B/tau",
     "eta = rho/(G sqrt(T))"
    ],
@@ -291,10 +295,10 @@
    "source": {
     "label": "thm: bound",
     "number": "Theorem 1",
-    "quote": "V(T) \\leq O \\left(\\left(1+\\frac{1}{\\rho}\\right) \\hat \\gamma_T^{\\frac{7}{8}} B_{\\Delta} T^{\\frac{3}{4}} + G\\sqrt{T} \\right)."
+    "quote": "V(T) &\\leq O \\left(\\left(1+\\frac{1}{\\rho}\\right) \\hat \\gamma_T^{\\frac{7}{8}} B_{\\Delta} T^{\\frac{3}{4}} + G\\sqrt{T} \\right)."
    },
    "confidence": "medium",
-   "notes": "Cumulative constraint violation V(T) = [sum_t g_t(x_t)]_+. Lemma 10 states an intermediate form with G^2 T^{1/2}/rho + rho T^{1/2}. Probability not explicit in statement."
+   "notes": "Constraint violation bound. Lemma 10 states an intermediate form with G^2 T^{1/2}/rho + rho T^{1/2}, which reduces to this. Probability type inferred from concentration-based analysis."
   },
   {
    "id": "r3",
@@ -311,22 +315,21 @@
    "bound": {
     "notation": "O",
     "expression": "rho*G*sqrt(T) + rho*gamma_hat**(7/8)*B_Delta**(1/4)*T**(3/4)",
-    "expression_latex": "O \\left(\\rho G \\sqrt{T} + \\rho \\hat \\gamma_T^{\\frac{7}{8}} B_{\\Delta}^{\\frac{1}{4}} T^{\\frac{3}{4}}\\right)",
+    "expression_latex": "O  \\left(\\rho G  \\sqrt{T} + \\rho \\hat \\gamma_T^{\\frac{7}{8}} B_{\\Delta}^{\\frac{1}{4}} T^{\\frac{3}{4}}\\right)",
     "regime": null
    },
    "symbols": {
     "rho": "dual variable projection bound, rho >= 4B/tau",
-    "G": "RKHS norm bound of the constraint function",
-    "gamma_hat": "max of the maximum information gains of reward and constraint kernels at T",
-    "B_Delta": "max of the RKHS-norm variation budgets B_f and B_g"
+    "G": "RKHS norm bound of the constraint function g_t",
+    "gamma_hat": "max(gamma_T, tilde gamma_T)",
+    "B_Delta": "max(B_f, B_g), known to learner"
    },
    "conditions": [
-    "||f_t||_{H_k} <= B, k(x,x) <= 1, ||g_t|| <= G",
-    "Slater condition with margin tau > 0",
-    "finite codebook action set"
+    "||f_t||_H_k <= B, k(x,x) <= 1, ||g||_H_tilde_k <= G, tilde k(x,x) <= 1",
+    "Slater condition with margin tau > 0"
    ],
    "tuning": [
-    "W = gamma_hat^{1/4} T^{1/2} B_Delta^{-1/2}",
+    "W = gamma_hat^(1/4) T^(1/2) B_Delta^(-1/2)",
     "rho >= 4B/tau",
     "eta = rho/(G sqrt(T))"
    ],
@@ -334,10 +337,10 @@
    "source": {
     "label": "cor: bound",
     "number": "Corollary 2",
-    "quote": "If restart period $W= \\hat \\gamma_T^{\\frac{1}{4}} T^{\\frac{1}{2}} B_{\\Delta}^{-\\frac{1}{2}}$, we have tighter upper bounds for both regret and constraint violation. R(T) \\leq O(\\rho G \\sqrt{T} + \\rho \\hat \\gamma_T^{\\frac{7}{8}} B_{\\Delta}^{\\frac{1}{4}} T^{\\frac{3}{4}})."
+    "quote": "If restart period $W= \\hat \\gamma_T^{\\frac{1}{4}} T^{\\frac{1}{2}} B_{\\Delta}^{-\\frac{1}{2}}$, we have tighter upper bounds for both regret and constraint violation. R(T) &\\leq  O  \\left(\\rho G  \\sqrt{T} + \\rho \\hat \\gamma_T^{\\frac{7}{8}} B_{\\Delta}^{\\frac{1}{4}} T^{\\frac{3}{4}}\\right)."
    },
    "confidence": "medium",
-   "notes": "Requires knowledge of B_Delta (variation budget). Probability not explicit."
+   "notes": "Probability type inferred. Requires knowledge of B_Delta to set W."
   },
   {
    "id": "r4",
@@ -354,22 +357,22 @@
    "bound": {
     "notation": "O",
     "expression": "(1 + 1/rho)*gamma_hat**(7/8)*B_Delta**(1/4)*T**(3/4) + G*sqrt(T)",
-    "expression_latex": "O \\left( \\left(1+\\frac{1}{\\rho}\\right) \\hat \\gamma_T^{\\frac{7}{8}} B_{\\Delta}^{\\frac{1}{4}} T^{\\frac{3}{4}} + G\\sqrt{T} \\right)",
+    "expression_latex": "O  \\left( \\left(1+\\frac{1}{\\rho}\\right) \\hat \\gamma_T^{\\frac{7}{8}} B_{\\Delta}^{\\frac{1}{4}} T^{\\frac{3}{4}} + G\\sqrt{T} \\right)",
     "regime": null
    },
    "symbols": {
     "rho": "dual variable projection bound, rho >= 4B/tau",
-    "G": "RKHS norm bound of the constraint function",
-    "gamma_hat": "max of the maximum information gains of reward and constraint kernels at T",
-    "B_Delta": "max of the RKHS-norm variation budgets B_f and B_g"
+    "G": "RKHS norm bound of the constraint function g_t",
+    "gamma_hat": "max(gamma_T, tilde gamma_T)",
+    "B_Delta": "max(B_f, B_g), known to learner"
    },
    "conditions": [
-    "||f_t||_{H_k} <= B, k(x,x) <= 1, ||g_t|| <= G",
+    "||f_t||_H_k <= B, k(x,x) <= 1, ||g||_H_tilde_k <= G, tilde k(x,x) <= 1",
     "Slater condition with margin tau > 0",
-    "finite codebook action set"
+    "quantity is cumulative constraint violation V(T) = [sum_t g_t(x_t)]_+"
    ],
    "tuning": [
-    "W = gamma_hat^{1/4} T^{1/2} B_Delta^{-1/2}",
+    "W = gamma_hat^(1/4) T^(1/2) B_Delta^(-1/2)",
     "rho >= 4B/tau",
     "eta = rho/(G sqrt(T))"
    ],
@@ -377,10 +380,10 @@
    "source": {
     "label": "cor: bound",
     "number": "Corollary 2",
-    "quote": "V(T) \\leq O \\left( \\left(1+\\frac{1}{\\rho}\\right) \\hat \\gamma_T^{\\frac{7}{8}} B_{\\Delta}^{\\frac{1}{4}} T^{\\frac{3}{4}} + G\\sqrt{T} \\right)."
+    "quote": "V(T) &\\leq O  \\left( \\left(1+\\frac{1}{\\rho}\\right) \\hat \\gamma_T^{\\frac{7}{8}} B_{\\Delta}^{\\frac{1}{4}} T^{\\frac{3}{4}} + G\\sqrt{T} \\right)."
    },
    "confidence": "medium",
-   "notes": "Cumulative constraint violation bound with known variation budget."
+   "notes": "Constraint violation bound with known variation budget."
   }
  ],
  "cited_results": [],
@@ -390,16 +393,20 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "00a106c81dc8",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
-  "algorithm_registry_size": 132,
-  "date": "2026-10-21T15:21:42",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-11T11:29:25",
   "source_chars": 60112,
-  "input_tokens": 64569,
-  "output_tokens": 6227,
-  "cost_usd_equiv": 0.372062,
+  "input_tokens": 66211,
+  "output_tokens": 6531,
+  "cost_usd_equiv": 0.37833780000000006,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
   "status": "extracted"
  }
 }

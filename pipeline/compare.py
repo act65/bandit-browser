@@ -99,6 +99,74 @@ SYMBOL_CLASSES = ((__import__("yaml").safe_load(_SYMBOLS_FILE.read_text()) or {}
 HELD_CLASSES = {"constant", "instance_constant", "tuning_constant"}
 CONDITIONAL_CLASSES = {"instance_constant", "tuning_constant"}  # held, and the cell's verdict depends on them
 HELD_VALUES = (3, sympy.Rational(1, 3))
+# Fixed-dimension settings (kernel and Lipschitz bandits): the dimension d (and a Matern kernel's smoothness nu) is
+# fixed and the question is the rate in T as a function of them, e.g. T^((nu+d)/(2nu+d)); scanning d to infinity
+# is meaningless there. Each bound is profiled at every grid point, and each (variable, grid point) is compared as
+# its own variable ("T@d=2,nu=3/2"), so a cell is tight only if it is tight at every point.
+FIXED_DIM_ACTIONS = {"kernel_rkhs", "lipschitz_metric"}
+FIXED_GRID = [(d, nu) for d in (1, 2, 5) for nu in (sympy.Rational(1, 2), sympy.Rational(3, 2), sympy.Rational(5, 2))]
+REP_TAG = "d=2,nu=3/2"  # the grid point shown when the grid is collapsed for display
+
+
+def grid_tag(g) -> str:
+    return f"d={g[0]},nu={g[1]}"
+
+
+def _base(k: str) -> str:
+    return k.partition("@")[0]
+
+
+def _tags(p: dict) -> set[str]:
+    return {k.partition("@")[2] for k in p["_path"] if "@" in k}
+
+
+def _expand(p: dict, names) -> set[str]:
+    """Variable names as keys of profile p: grid variants in a fixed-dimension profile."""
+    tags = _tags(p)
+    return {f"{v}@{t}" for v in names for t in tags} if tags else set(names)
+
+
+def _has(p: dict, v: str) -> bool:
+    return any(_base(k) == v for k in p if not k.startswith("_"))
+
+
+def profile_bound(inst, paper: str, side: str, canonical: set[str], fixed: bool = False) -> dict | None:
+    """Profile of one bound: paper-specific symbols held or substituted (hold_symbols), and, in a fixed-dimension
+    setting, one profile per grid point merged under keys "<var>@d=..,nu=..". None if it cannot be profiled."""
+    held = hold_symbols(inst, paper, canonical, side=side)
+    if held is None:
+        return None
+    e, hs, cond = held
+    out = None
+    for g in (FIXED_GRID if fixed else [None]):
+        eg = e.subs({sympy.Symbol("d"): g[0], sympy.Symbol("nu_matern"): g[1]}) if g else e
+        if runaway_exponent(eg):
+            return None
+        q = None
+        for value in (HELD_VALUES if hs else (None,)):
+            q = profile(eg.subs({sympy.Symbol(h): value for h in hs}) if hs else eg, canonical)
+            if q is not None:
+                break
+        if q is None:
+            return None
+        if cond:
+            # a held instance parameter may stand in for a scanned variable (a "number of base arms" that is d,
+            # a K_star <= K): variables the bound does not mention get an unknown exponent, not 0, so it is
+            # compared only in the variables it contains
+            present = {str(x) for x in eg.free_symbols}
+            q = {**q, "_held": cond, "_unknown": set(q.get("_unknown", ())) | (set(SCAN) - present)}
+        if g is None:
+            return q
+        t = grid_tag(g)
+        out = out or {"_path": {}, "_unknown": set()}
+        out.update({f"{k}@{t}": v for k, v in q.items() if not k.startswith("_")})
+        out["_path"].update({f"{k}@{t}": v for k, v in q["_path"].items()})
+        out["_unknown"] |= {f"{k}@{t}" for k in q.get("_unknown", ())}
+        if cond:
+            out["_held"] = cond
+    return out
+
+
 LOG_TOL = 0.1  # log exponents closer than this are equal (log log factors fit to small fractional powers)  # nominal values; the second when the first makes the bound vanish
 
 
@@ -334,6 +402,39 @@ def profile(e, canonical: set[str]) -> dict | None:
     return out
 
 
+LEVEL = {"unresolved": -1, "tight": 0, "log_gap": 1, "poly_gap": 2, "conflict": 3}
+
+
+def satisfied_conditions(settings: list[dict], ontology: dict) -> dict:
+    """setting id -> regexes of conditions its node-parameter values satisfy (ontology field `satisfies`)."""
+    rules = {(n, f): spec.get("satisfies") or {} for n, nspec in (ontology.get("node_parameters") or {}).items()
+             for f, spec in nspec["fields"].items() if spec.get("satisfies")}
+    out = {}
+    for s in settings:
+        rx = [re.compile(r, re.I) for (n, f), by_val in rules.items()
+              for r in by_val.get(((s.get("key") or {}).get(n) or {}).get(f), [])]
+        if rx:
+            out[s["id"]] = rx
+    return out
+
+
+def collapse_grid(per_var: dict) -> dict:
+    """Per-variable statuses of a fixed-dimension cell, one entry per variable: the worst status over the grid,
+    the rates at REP_TAG, and every grid point under "grid"."""
+    if not any("@" in v for v in per_var):
+        return per_var
+    out: dict = {}
+    for v, x in per_var.items():
+        b, _, t = v.partition("@")
+        out.setdefault(b, {"grid": {}})["grid"][t] = x
+    for b, y in out.items():
+        g = y["grid"]
+        rep_x = g.get(REP_TAG) or next(iter(g.values()))
+        y.update(status=max((x["status"] for x in g.values()), key=LEVEL.get), upper=rep_x["upper"],
+                 lower=rep_x["lower"], at=REP_TAG if REP_TAG in g else next(iter(g)))
+    return out
+
+
 def _round(x: float) -> float:
     """Snap to simple fractions (halves, thirds, quarters, sixths)."""
     for den in (1, 2, 3, 4, 6):
@@ -347,8 +448,9 @@ def path_exp(p: dict, v: str) -> tuple:
     grows along the path through T = v^PATH_POWER (when it involves T)."""
     if v in p["_path"]:
         return tuple(p["_path"][v])
-    aT, bT = p["_path"].get("T", (0, 0))
-    return (_round(PATH_POWER * aT), bT) if v != "T" else (0, 0)
+    base, _, tag = v.partition("@")
+    aT, bT = p["_path"].get(f"T@{tag}" if tag else "T", (0, 0))
+    return (_round(PATH_POWER * aT), bT) if base != "T" else (0, 0)
 
 
 def comparable_vars(p: dict, q: dict) -> set:
@@ -366,10 +468,15 @@ def fmt(ab) -> str:
     return f"{a:g}" + (f"·log^{b:g}" if b else "")
 
 
-def compare(results: dict, inferred: list[dict], canonical: set[str], adaptive: set[str] = frozenset()) -> dict:
+def compare(results: dict, inferred: list[dict], canonical: set[str], adaptive: set[str] = frozenset(),
+            fixed_dim: set[str] = frozenset(), satisfied: dict | None = None) -> dict:
     """Profiles, per-cell status, conflicts and rate regimes for results {id: result} and the
     inferred bounds (the content of comparison.json, plus counters under "_stats").
-    `adaptive`: setting ids with an adaptive adversary, where regret is split (ADAPTIVE_SPLIT)."""
+    `adaptive`: setting ids with an adaptive adversary, where regret is split (ADAPTIVE_SPLIT).
+    `fixed_dim`: setting ids compared at fixed dimension (FIXED_GRID), e.g. kernel and Lipschitz bandits.
+    `satisfied`: setting id -> compiled regexes of conditions the setting satisfies by definition (ontology
+    `satisfies`, e.g. polynomial eigendecay for a Matern kernel); such conditions don't restrict a bound there."""
+    satisfied = satisfied or {}
     entries = []  # (id, setting_id, side, quantity, dependence, algorithm_class, notation, expr, inherited, caveats)
     for r in results.values():
         entries.append((r["id"], r["setting_id"], r["side"], r.get("quantity"), r.get("dependence"),
@@ -395,28 +502,13 @@ def compare(results: dict, inferred: list[dict], canonical: set[str], adaptive: 
     cache = {}
     for eid, sid, side, q, dep, cls, nota, expr, inh, cav in entries:
         paper = eid.split(":", 1)[0]
-        key = (expr, nota, paper, side)  # the meaning of a paper-specific symbol depends on the paper
+        fixed = sid in fixed_dim
+        key = (expr, nota, paper, side, fixed)  # the meaning of a paper-specific symbol depends on the paper
         if key not in cache:
             signal.signal(signal.SIGALRM, _alarm)
             signal.alarm(PROFILE_TIMEOUT_S)
             try:
-                inst = instance_expr(expr, nota)
-                held = hold_symbols(inst, paper, canonical, side=side)
-                cache[key] = None
-                if held is not None and not runaway_exponent(held[0]):
-                    e, hs, cond = held
-                    for value in (HELD_VALUES if hs else (None,)):
-                        q = profile(e.subs({sympy.Symbol(h): value for h in hs}) if hs else e, canonical)
-                        if q is not None:
-                            if cond:
-                                # a held instance parameter may stand in for a scanned variable (a "number of base
-                                # arms" that is d, a K_star <= K): variables the bound does not mention get an
-                                # unknown exponent, not 0, so it is compared only in the variables it contains
-                                present = {str(x) for x in e.free_symbols}
-                                q = {**q, "_held": cond,
-                                     "_unknown": set(q.get("_unknown", ())) | (set(SCAN) - present)}
-                            cache[key] = q
-                            break
+                cache[key] = profile_bound(instance_expr(expr, nota), paper, side, canonical, fixed)
             except _Timeout:
                 print(f"profile timed out after {PROFILE_TIMEOUT_S}s, skipped: {expr[:150]}", flush=True)
                 cache[key] = None
@@ -427,10 +519,10 @@ def compare(results: dict, inferred: list[dict], canonical: set[str], adaptive: 
         p = cache[key]
         if p is None:
             failures["no_profile"] += 1
-        elif dep == "instance_dependent" and nota in ("O", "O_tilde", "Theta") and "Delta" not in p:
-            p = {**p, "_unknown": set(p.get("_unknown", ())) | {"Delta"}}  # hidden instance-dependent constant
-        elif "Delta" in p and set(resolve.IDENT_RE.findall(expr)) & INSTANCE_TIED_PARAMS:
-            p = {**p, "_unknown": set(p.get("_unknown", ())) | {"Delta"}}  # tuning parameter constrained by the gap (e.g. eps < Delta)
+        elif dep == "instance_dependent" and nota in ("O", "O_tilde", "Theta") and not _has(p, "Delta"):
+            p = {**p, "_unknown": set(p.get("_unknown", ())) | _expand(p, {"Delta"})}  # hidden instance-dependent constant
+        elif _has(p, "Delta") and set(resolve.IDENT_RE.findall(expr)) & INSTANCE_TIED_PARAMS:
+            p = {**p, "_unknown": set(p.get("_unknown", ())) | _expand(p, {"Delta"})}  # tuning parameter constrained by the gap (e.g. eps < Delta)
         profiles[eid] = p
 
     inferred_by_id = {x["id"]: x for x in inferred}
@@ -446,6 +538,7 @@ def compare(results: dict, inferred: list[dict], canonical: set[str], adaptive: 
         if p is not None:
             src = source_of(eid)
             unk = side_condition_unknowns(conditions_of(eid) + [src["bound"].get("regime") or ""], canonical | set(SCAN))
+            unk = _expand(p, unk)
             if unk & set(p["_path"]):
                 profiles[eid] = {**p, "_unknown": set(p.get("_unknown", ())) | unk}
     notation = {e[0]: e[6] for e in entries}
@@ -462,19 +555,21 @@ def compare(results: dict, inferred: list[dict], canonical: set[str], adaptive: 
         p = profiles.get(eid)
         if fam is None or p is None:
             continue
-        if changes_model(conditions_of(eid)):
+        # conditions the target setting satisfies by definition (e.g. polynomial eigendecay in a Matern setting)
+        conds = [c for c in conditions_of(eid) if not any(rx.search(c) for rx in satisfied.get(sid, ()))]
+        if changes_model(conds):
             continue  # a different protocol (e.g. quantum oracle access): not this setting's rate
-        if side == "upper" and restricts_instances(conditions_of(eid)):
+        if side == "upper" and restricts_instances(conds):
             continue  # holds only on a restricted instance class: shown, but not the setting's rate
-        if side == "upper" and any(T_CAPPED.match(c) for c in conditions_of(eid)):
+        if side == "upper" and any(T_CAPPED.match(c) for c in conds):
             continue  # holds only for small horizons (e.g. T < (K log K)^2): says nothing about the rate
-        if side == "lower" and cls == "other" and any(CONSISTENCY.search(c) for c in conditions_of(eid)):
+        if side == "lower" and cls == "other" and any(CONSISTENCY.search(c) for c in conds):
             cls = "consistent"  # the admissible class of the lower bound (consistent, uniformly good, delta-correct)
         if side == "lower" and (cls not in MINIMAX_LOWER_CLASSES or any(c.startswith("holds for") for c in cav)
-                                or (cls in (None, "all") and restricts_algorithms(conditions_of(eid)))):
+                                or (cls in (None, "all") and restricts_algorithms(conds))):
             continue  # algorithm-specific or fixed-parameter lower bounds don't define the setting's rate
         if side == "lower" and inh and any("unspecified on one side" in c for c in cav) \
-                and restricts_instances(conditions_of(eid)):
+                and restricts_instances(conds):
             continue  # hard instances may lie outside the target (e.g. non-observable graphs, observability unspecified)
         for f in fams:
             regimes[(sid, f, dep)][side].append({"id": eid, "profile": p, "inherited": inh})
@@ -536,6 +631,7 @@ def compare(results: dict, inferred: list[dict], canonical: set[str], adaptive: 
                 per_var[v] = {"status": s, "upper": fmt(du), "lower": fmt(dl)}
                 worst = max(worst, lvl)
             status = ["tight", "log_gap", "poly_gap", "conflict"][worst]
+            per_var = collapse_grid(per_var)
         status_count[status] += 1
         settings_out[sid][f"{fam}|{dep}"] = {
             "status": status, "per_var": per_var,
@@ -559,7 +655,9 @@ def main() -> None:
     settings = json.loads((OUT / "settings.json").read_text())
     settings = settings["settings"] if isinstance(settings, dict) else settings
     adaptive = {x["id"] for x in settings if (x.get("key") or {}).get("environment") == "adversarial_adaptive"}
-    out = compare(results, inferred, canonical, adaptive)
+    fixed_dim = {x["id"] for x in settings if (x.get("key") or {}).get("action_space") in FIXED_DIM_ACTIONS}
+    satisfied = satisfied_conditions(settings, schema.load_ontology())
+    out = compare(results, inferred, canonical, adaptive, fixed_dim, satisfied)
     profiles, conflicts, st = out["profiles"], out["conflicts"], out["_stats"]
     (OUT / "comparison.json").write_text(json.dumps(
         {"profiles": {k: ({v: (sorted(ab) if v == "_unknown" else ab if v == "_path" else list(ab))

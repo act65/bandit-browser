@@ -24,8 +24,8 @@
    "context": "none",
    "noise": "gaussian_known_variance",
    "learner_knows": [
-    "kernel",
     "prior",
+    "kernel",
     "sigma_std",
     "d"
    ],
@@ -85,15 +85,18 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "general"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Reward functions evolve by the Markov GP recursion f_{t+1} = sqrt(1-eps) f_t + sqrt(eps) g_{t+1}, with g_t i.i.d. GP(0,k_S); drift rate eps in (0,1] (not a variation budget V_T)",
-    "The learner knows the drift parameter eps (it is used in the posterior)",
-    "Regret is measured against the per-round maximiser x_t^* of f_t (dynamic regret)"
+    "reward function evolves by the Markov GP recursion f_{t+1} = sqrt(1-eps) f_t + sqrt(eps) g_{t+1}, with g_t i.i.d. GP(0,k_S) (separable time-decayed kernel)",
+    "the learner knows the drift parameter eps",
+    "derivative tail bound assumption (Assumption 1) on sample paths with constants a, b"
    ],
-   "definition_quote": "f_1(x)=g_1(x),\\qquad f_{t+1}(x)=\\sqrt{1-\\epsilon}\\,f_t(x)+\\sqrt{\\epsilon}\\,g_{t+1}(x), ... y_t = f_t(x_t) + z_t, z_t \\sim \\mathcal{N}(0,\\sigma^2) i.i.d. ... r_t := f_t(x_t^\\star)-f_t(x_t)"
+   "definition_quote": "Let $(g_t)_{t\\ge 1}$ be i.i.d.\\ draws from $\\mathcal{GP}(0,k_S)$ ... $f_1(x)=g_1(x),\\qquad f_{t+1}(x)=\\sqrt{1-\\epsilon}\\,f_t(x)+\\sqrt{\\epsilon}\\,g_{t+1}(x)$ ... with drift parameter $\\epsilon\\in(0,1]$. ... $y_t = f_t(x_t) + z_t, z_t \\sim \\mathcal{N}(0,\\sigma^2)$ i.i.d. ... $r_t := f_t(x_t^\\star)-f_t(x_t)$"
   }
  ],
  "algorithms": [
@@ -106,11 +109,10 @@
     "optimism"
    ],
    "requires_knowledge_of": [
-    "kernel",
     "prior",
+    "kernel",
     "sigma_std",
-    "eps_drift",
-    "beta (constant exploration parameter)"
+    "eps_drift"
    ]
   }
  ],
@@ -122,48 +124,44 @@
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "bayesian_regret",
-   "dependence": "worst_case",
+   "dependence": "instance_dependent",
    "comparator": "best_action_per_round",
    "probability": "expectation",
    "horizon": "anytime",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "sqrt(C_1*T*beta_c*gamma_tilde_T) + T*C_2 + T*delta*C_3",
+    "expression": "sqrt(8*T*beta_ucb*gamma_tilde/log(1 + sigma_std**(-2))) + T*r_dom*d*b_tail/tau*sqrt(log(3*a_tail*d/delta)) + T*delta*(mu_w + 2*sigma_w*sqrt(2*log(E/delta)))",
     "expression_latex": "\\mathbb{E}[R_T] \\le \\sqrt{C_1 T \\beta\\,\\tilde{\\gamma}_T}+ T C_2 + T\\delta C_3",
     "regime": null
    },
    "symbols": {
-    "beta_c": "constant exploration parameter beta",
-    "gamma_tilde_T": "time-varying maximum information gain under the time-decayed kernel",
-    "C_1": "8/log(1+sigma_std^-2)",
-    "C_2": "(r*d*b/tau)*sqrt(log(3*a*d/delta))",
-    "C_3": "mu_w + 2*sigma_w*sqrt(2*log(E/delta))",
-    "tau": "grid resolution parameter (grid size tau^d)",
-    "r": "side length: S subset of [0,r]^d",
-    "a": "constant in the derivative tail bound",
-    "b": "constant in the derivative tail bound",
+    "beta_ucb": "constant exploration parameter beta of GP-UCB",
+    "gamma_tilde": "time-varying maximum information gain under the time-decayed kernel",
+    "r_dom": "side length r with S subset of [0,r]^d",
+    "a_tail": "constant a of the derivative tail bound",
+    "b_tail": "constant b of the derivative tail bound",
+    "tau": "grid resolution analysis parameter (grid size tau^d)",
     "mu_w": "expected spatial span E[sup f_t - inf f_t]",
     "sigma_w": "sub-Gaussian variance proxy of the span W_t"
    },
    "conditions": [
     "S subset of [0,r]^d compact and convex",
     "k_S(x,x) <= 1",
-    "derivative tail bound (Assumption 1) with constants a >= 1, b > 0",
-    "epsilon in (0,1]"
+    "derivative tail bound (Assumption 1) with constants a>=1, b>0"
    ],
    "tuning": [
-    "beta >= 2(log(6/delta) + d log(tau))",
-    "delta in (0,1), tau in N+ are analysis parameters"
+    "beta_ucb >= 2(log(6/delta) + d log(tau))",
+    "delta in (0,1), tau in N+ analysis parameters"
    ],
    "is_new": true,
    "source": {
     "label": "thrm:improved_regret",
     "number": "Theorem 1",
-    "quote": "If the evaluation points $\\{x_t\\}_{t=1}^T$ are selected according to Algorithm~\\ref{alg:TV} with any constant exploration parameter satisfying \\beta \\ge 2(\\log(6/\\delta)+ d\\log(\\tau)). then the expected cumulative regret satisfies \\mathbb{E}[R_T] \\le \\sqrt{C_1 T \\beta\\,\\tilde{\\gamma}_T}+ T C_2 + T\\delta C_3"
+    "quote": "If the evaluation points $\\{x_t\\}_{t=1}^T$ are selected according to Algorithm~\\ref{alg:TV} with any constant exploration parameter satisfying $\\beta \\ge 2\\Big(\\log\\!\\big(\\tfrac{6}{\\delta}\\big)+ d\\log(\\tau)\\Big)$ then the expected cumulative regret satisfies $\\mathbb{E}[R_T] \\le \\sqrt{C_1 T \\beta\\,\\tilde{\\gamma}_T}+ T C_2 + T\\delta C_3$, ... $C_1=\\frac{8}{\\log(1+\\sigma^{-2})}, C_2=\\frac{rdb}{\\tau} \\sqrt{\\log(\\frac{3ad}{\\delta})}, C_3=\\mu_w+2\\sigma_w\\sqrt{2\\log(e/\\delta)}$."
    },
    "confidence": "high",
-   "notes": "The expectation is over the GP prior, the noise and the algorithm, and regret is against the per-round maximiser, so it is recorded as Bayesian dynamic regret. The bound is linear in T. The algorithm does not use T, so the result is recorded as anytime."
+   "notes": "Expectation over GP prior and noise; regret against per-round maximiser (dynamic, Bayesian). Linear in T; algorithm does not use T."
   },
   {
    "id": "r2",
@@ -172,45 +170,42 @@
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "high_probability_regret",
-   "dependence": "worst_case",
+   "dependence": "instance_dependent",
    "comparator": "best_action_per_round",
    "probability": "high_probability",
    "horizon": "anytime",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "sqrt(C_1*T*beta_c*gamma_tilde_T) + T*C_2 + T*delta*C_3/omega",
-    "expression_latex": "R_T \\le U_T + \\frac{T \\delta C_3}{\\omega}",
+    "expression": "sqrt(8*T*beta_ucb*gamma_tilde/log(1 + sigma_std**(-2))) + T*r_dom*d*b_tail/tau*sqrt(log(3*a_tail*d/delta)) + T*delta*(mu_w + 2*sigma_w*sqrt(2*log(E/delta)))/omega",
+    "expression_latex": "R_T \\;\\le\\; U_T \\;+\\; \\frac{T \\delta C_3}{\\omega}",
     "regime": null
    },
    "symbols": {
-    "beta_c": "constant exploration parameter",
-    "gamma_tilde_T": "time-varying maximum information gain",
-    "C_1": "8/log(1+sigma_std^-2)",
-    "C_2": "(r*d*b/tau)*sqrt(log(3*a*d/delta))",
-    "C_3": "mu_w + 2*sigma_w*sqrt(2*log(E/delta))",
-    "omega": "failure probability of the reported bound",
-    "tau": "grid parameter",
-    "r": "domain side length",
-    "a": "tail constant",
-    "b": "tail constant",
+    "beta_ucb": "constant exploration parameter",
+    "gamma_tilde": "time-varying maximum information gain",
+    "r_dom": "side length r of [0,r]^d",
+    "a_tail": "derivative tail constant a",
+    "b_tail": "derivative tail constant b",
+    "tau": "grid resolution analysis parameter",
     "mu_w": "expected span",
-    "sigma_w": "span sub-Gaussian proxy"
+    "sigma_w": "span sub-Gaussian proxy",
+    "omega": "failure probability of the realized-regret bound"
    },
    "conditions": [
-    "same as Theorem 1"
+    "setting and assumptions of Theorem 1"
    ],
    "tuning": [
-    "beta >= 2(log(6/delta) + d log(tau))"
+    "beta_ucb >= 2(log(6/delta) + d log(tau))"
    ],
    "is_new": true,
    "source": {
     "label": "prop:realized_regret",
     "number": "Proposition 2",
-    "quote": "Assume the setting and parameter choices of Theorem~\\ref{thrm:improved_regret}. For any target failure probability $\\omega \\in (0,1)$, the realized cumulative regret $R_T$ satisfies the following bound with probability at least $1-\\omega$: R_T \\le U_T + \\frac{T \\delta C_3}{\\omega}."
+    "quote": "Assume the setting and parameter choices of Theorem~\\ref{thrm:improved_regret}. For any target failure probability $\\omega \\in (0,1)$, the realized cumulative regret $R_T$ satisfies the following bound with probability at least $1-\\omega$: $R_T \\le U_T + \\frac{T \\delta C_3}{\\omega}$."
    },
    "confidence": "high",
-   "notes": "U_T = sqrt(C_1 T beta gamma_tilde_T) + T C_2. The probability is over the prior and the noise."
+   "notes": "U_T = sqrt(C_1 T beta gamma_tilde) + T C_2. Probability over prior and noise; omega chosen post hoc."
   },
   {
    "id": "r3",
@@ -219,7 +214,7 @@
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "high_probability_regret",
-   "dependence": "worst_case",
+   "dependence": "instance_dependent",
    "comparator": "best_action_per_round",
    "probability": "high_probability",
    "horizon": "anytime",
@@ -227,17 +222,17 @@
    "bound": {
     "notation": "O_tilde",
     "expression": "T*eps_drift**(alpha_ig/2)*sqrt(1 + log(1/omega) + log(1/eps_drift))",
-    "expression_latex": "\\frac{R_T}{T} = \\widetilde{\\mathcal O}\\left(\\epsilon^{\\alpha/2}\\sqrt{1+\\log(1/\\omega)+\\log(1/\\epsilon)}\\right)",
-    "regime": null
+    "expression_latex": "\\frac{R_T}{T} = \\widetilde{\\mathcal O}\\!\\left(\\epsilon^{\\alpha/2}\\sqrt{1+\\log(1/\\omega)+\\log(1/\\epsilon)}\\right)",
+    "regime": "regime where gamma_tilde_T/T = O_tilde(eps^alpha)"
    },
    "symbols": {
     "eps_drift": "drift parameter epsilon of the TV-GP model",
-    "alpha_ig": "exponent with gamma_tilde_T/T = O_tilde(eps^alpha)",
+    "alpha_ig": "exponent alpha with gamma_tilde_T/T = O_tilde(eps^alpha)",
     "omega": "failure probability"
    },
    "conditions": [
-    "gamma_tilde_T / T = O_tilde(eps^alpha) with alpha > 0 in the regime considered",
-    "setting of Theorem 1"
+    "setting of Theorem 1",
+    "gamma_tilde_T/T = O_tilde(eps^alpha) with alpha > 0"
    ],
    "tuning": [
     "delta = omega*eps^(alpha/2)",
@@ -248,10 +243,10 @@
    "source": {
     "label": "cor:prescribed_confidence",
     "number": "Corollary 3",
-    "quote": "Then, with probability at least $1-\\omega$, \\frac{R_T}{T} = \\widetilde{\\mathcal O}\\left(\\epsilon^{\\alpha/2}\\sqrt{1+\\log(1/\\omega)+\\log(1/\\epsilon)}\\right). In particular, $\\beta$ remains independent of $t$ and $T$."
+    "quote": "Fix $\\omega\\in(0,1)$ and choose $\\delta=\\omega\\epsilon^{\\alpha/2}, \\tau=\\lceil\\epsilon^{-\\alpha/2}\\rceil$, together with the constant exploration parameter $\\beta=2(\\log\\frac{6}{\\omega\\epsilon^{\\alpha/2}}+d\\log\\lceil\\epsilon^{-\\alpha/2}\\rceil)$. Then, with probability at least $1-\\omega$, $\\frac{R_T}{T}=\\widetilde{\\mathcal O}(\\epsilon^{\\alpha/2}\\sqrt{1+\\log(1/\\omega)+\\log(1/\\epsilon)})$."
    },
-   "confidence": "high",
-   "notes": "The paper bounds the average regret R_T/T; the expression is multiplied by T so that it bounds total regret. The algorithm uses omega and epsilon to set beta."
+   "confidence": "medium",
+   "notes": "Paper bounds average regret R_T/T; multiplied by T. Algorithm uses omega and eps to set beta."
   },
   {
    "id": "r4",
@@ -260,7 +255,7 @@
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "bayesian_regret",
-   "dependence": "worst_case",
+   "dependence": "instance_dependent",
    "comparator": "best_action_per_round",
    "probability": "expectation",
    "horizon": "anytime",
@@ -268,29 +263,28 @@
    "bound": {
     "notation": "O_tilde",
     "expression": "T*eps_drift**((1 - q)/(4 - q))",
-    "expression_latex": "\\frac{\\mathbb E[R_T]}{T} = \\widetilde{\\mathcal O}\\left(\\epsilon^{\\frac{1-q}{4-q}}\\right)",
-    "regime": "persistent-drift regime T >= N_eps = eps^(-2/(4-q))"
+    "expression_latex": "\\frac{\\mathbb E[R_T]}{T}=\\widetilde{\\mathcal O}\\!\\left(\\epsilon^{\\frac{1-q}{4-q}}\\right)",
+    "regime": "persistent-drift regime T >~ N_eps = eps^(-2/(4-q))"
    },
    "symbols": {
     "eps_drift": "drift parameter epsilon",
-    "q": "exponent of the static maximum information gain, gamma_N = O_tilde(N^q), q in [0,1)"
+    "q": "capacity exponent with static gamma_N = O_tilde(N^q), q in [0,1)"
    },
    "conditions": [
-    "static maximum information gain gamma_N = O_tilde(N^q) with q in [0,1)",
-    "setting of Theorem 1"
+    "static maximum information gain gamma_N = O_tilde(N^q), q in [0,1)",
+    "assumptions of Theorem 1"
    ],
    "tuning": [
-    "delta = eps^(alpha/2), tau = ceil(eps^(-alpha/2)) with alpha = 2(1-q)/(4-q)",
-    "beta_opt approx 2 log 6 + alpha(1+d) log(1/eps)"
+    "delta = eps^(alpha/2), tau = ceil(eps^(-alpha/2)) with alpha = 2(1-q)/(4-q); beta at threshold equality"
    ],
    "is_new": true,
    "source": {
     "label": "eq:regret_main_rate",
-    "number": "Equation (eq:regret_main_rate), Section 4.1",
-    "quote": "Balancing the remaining terms in Theorem~\\ref{thrm:improved_regret} as in Section~\\ref{subsec:Opt_beta_eps} then yields \\frac{\\mathbb E[R_T]}{T} = \\widetilde{\\mathcal O}\\left(\\epsilon^{\\frac{1-q}{4-q}}\\right)."
+    "number": "Section 4.1, Eq. (regret_main_rate)",
+    "quote": "In the persistent-drift regime where $T$ exceeds this effective block length, Corollary~\\ref{cor:info_gain_scaling} gives ... Balancing the remaining terms in Theorem~\\ref{thrm:improved_regret} as in Section~\\ref{subsec:Opt_beta_eps} then yields $\\frac{\\mathbb E[R_T]}{T}=\\widetilde{\\mathcal O}(\\epsilon^{\\frac{1-q}{4-q}})$."
    },
    "confidence": "medium",
-   "notes": "Derived in the main text by combining Theorem 1 with Corollary 7; it is not a formal theorem. The average-regret rate is multiplied by T. Special cases: for the squared exponential kernel (q=0) the average regret is O_tilde(eps^(1/4)); for the Matern kernel with nu > 2 it is O_tilde(eps^(2nu/(8nu+3d)))."
+   "notes": "Derived in text from Theorem 1 + Corollary 7 rather than a numbered theorem. Average regret multiplied by T. Specialisations: squared exponential kernel gives T*eps^(1/4); Matern(nu>2) gives T*eps^(2nu/(8nu+3d))."
   }
  ],
  "cited_results": [],
@@ -300,16 +294,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "ae3ec0bf9ad6",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
   "algorithm_registry_size": 133,
-  "date": "2026-11-09T13:10:23",
+  "date": "2026-11-11T11:44:14",
   "source_chars": 80127,
-  "input_tokens": 76543,
-  "output_tokens": 6834,
-  "cost_usd_equiv": 0.470712,
+  "input_tokens": 76971,
+  "output_tokens": 6886,
+  "cost_usd_equiv": 0.47151780000000004,
   "quote_retry": {
    "asked": 0,
    "fixed": 0

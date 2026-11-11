@@ -26,8 +26,7 @@
    "noise": "gaussian_unknown_variance",
    "learner_knows": [
     "S",
-    "sigma",
-    "kernel"
+    "sigma"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -36,7 +35,7 @@
     "time_varying": "fixed",
     "access": "explicit",
     "norm_bound": "not_applicable",
-    "parameter_set": "l2_ball",
+    "parameter_set": "not_applicable",
     "loss_set": "not_applicable",
     "parameter_structure": "not_applicable"
    },
@@ -83,11 +82,15 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "general"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "learner knows an upper bound sigma_+ >= sigma and a lower bound sigma_- <= sigma on the noise level; noise variance itself unknown"
+    "Noise variance sigma^2 unknown; learner knows a loose upper bound sigma_+ >= sigma and a lower bound sigma_- <= sigma",
+    "Learner knows an upper bound C on the RKHS norm ||f_star||_K (recorded as S)"
    ],
    "definition_quote": "At each time step $t \\geq 1$, a bandit algorithm recommends a point $x_t$ to sample and observes a noisy outcome $y_t = f_\\star(x_t) + \\xi_t$, where $\\xi_t \\sim \\Normal(0, \\sigma^2)$. ... minimizes the cumulative regret $\\kR_T = \\sum_{t=1}^T f_\\star(\\star) - f_\\star(x_t)$."
   },
@@ -105,7 +108,7 @@
    "learner_knows": [
     "S",
     "sigma",
-    "kernel"
+    "K"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -114,7 +117,7 @@
     "time_varying": "fixed",
     "access": "explicit",
     "norm_bound": "not_applicable",
-    "parameter_set": "l2_ball",
+    "parameter_set": "not_applicable",
     "loss_set": "not_applicable",
     "parameter_structure": "not_applicable"
    },
@@ -161,11 +164,15 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "general"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "learner knows an upper bound sigma_+ >= sigma and a lower bound sigma_- <= sigma on the noise level; noise variance itself unknown"
+    "Noise variance sigma^2 unknown; learner knows a loose upper bound sigma_+ >= sigma and a lower bound sigma_- <= sigma",
+    "Learner knows an upper bound C on the RKHS norm ||f_star||_K (recorded as S)"
    ],
    "definition_quote": "We assume that the set of arms $\\bX$ is \\emph{discrete}. ... observes a noisy outcome $y_t = f_\\star(x_t) + \\xi_t$, where $\\xi_t \\sim \\Normal(0, \\sigma^2)$."
   }
@@ -173,7 +180,7 @@
  "algorithms": [
   {
    "id": "a1",
-   "name": "Kernel UCB with adaptive regularization and variance estimation",
+   "name": "Kernel UCB with unknown variance and adaptive regularization",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -182,12 +189,12 @@
    "requires_knowledge_of": [
     "S",
     "sigma",
-    "kernel"
+    "delta"
    ]
   },
   {
    "id": "a2",
-   "name": "Kernel TS with adaptive variance estimation and regularization tuning",
+   "name": "Kernel TS with adaptive variance estimation and regularization tuning (Algorithm 1)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -196,7 +203,8 @@
    "requires_knowledge_of": [
     "S",
     "sigma",
-    "kernel"
+    "K",
+    "delta"
    ]
   }
  ],
@@ -208,30 +216,32 @@
    "algorithm": "a1",
    "algorithm_class": null,
    "quantity": "high_probability_regret",
-   "dependence": "worst_case",
+   "dependence": "instance_dependent",
    "comparator": "best_fixed_action",
    "probability": "high_probability",
    "horizon": "anytime",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "2*(sigma_plus/sigma)*(1 + sqrt(2*log(4/delta) + 2*gamma_T_minus))*S*sqrt(T*2*gamma_T_star/log(1 + S**2/sigma**2))",
-    "expression_latex": "2\\frac{\\sigma_+}{\\sigma}\\Big(1 + \\sqrt{2\\ln(4/\\delta) + 2 \\gamma_T(\\sigma_{-}^2/C^2)}\\big)C\\sqrt{T \\frac{2\\gamma_T(\\sigma^2/C^2) }{\\ln(1 + C^2/\\sigma^2)} }",
+    "expression": "2*(sigma_plus/sigma)*(1 + sqrt(2*log(4/delta) + 2*gamma_minus))*S*sqrt(T*2*gamma_sig/log(1 + S**2/sigma**2))",
+    "expression_latex": "2\\frac{\\sigma_+}{\\sigma}\\Big(1 + \\sqrt{2\\ln(4/\\delta) + 2 \\gamma_T(\\sigma_{-}^2/C^2)}\\big)C \\sqrt{T \\frac{2\\gamma_T(\\sigma^2/C^2) }{\\ln(1 + C^2/\\sigma^2)} }",
     "regime": null
    },
    "symbols": {
-    "sigma_plus": "known upper bound on the noise standard deviation sigma",
-    "gamma_T_minus": "information gain gamma_T(sigma_-^2/C^2) with regularization sigma_-^2/C^2, sigma_- a known lower bound on sigma",
-    "gamma_T_star": "information gain gamma_T(sigma^2/C^2)"
+    "sigma_plus": "known upper bound sigma_+ >= sigma on the noise standard deviation",
+    "sigma_minus": "known lower bound sigma_- <= sigma",
+    "gamma_sig": "information gain gamma_T(sigma^2/C^2) = 1/2 sum_t ln(1 + k_{lambda,t-1}(x_t,x_t)/lambda) with lambda = sigma^2/C^2",
+    "gamma_minus": "information gain gamma_T(sigma_-^2/C^2)"
    },
    "conditions": [
-    "||f_star||_K <= C (C = S known)",
-    "sup_x k(x,x) <= 1",
-    "Gaussian noise N(0, sigma^2) (second-order sub-Gaussian)",
-    "0 < sigma_- < sigma <= sigma_+ known"
+    "sup_x k(x,x) <= 1 (Lemma 4.1)",
+    "||f_star||_K <= C (C = S)",
+    "noise Gaussian N(0, sigma^2) (second-order sigma-sub-Gaussian)",
+    "0 < sigma_- < sigma <= sigma_+"
    ],
    "tuning": [
-    "lambda_t = sigma_{+,t}^2/C^2 adaptively tuned via Corollary 3.1"
+    "lambda_t = sigma_{+,t}^2/C^2 adapted online via Corollary 3.1",
+    "confidence width B_{lambda_t,t-1}(delta/4)"
    ],
    "is_new": true,
    "source": {
@@ -240,7 +250,7 @@
     "quote": "With probability higher than $1-\\delta$, the regret of Kernel UCB with adaptive regularization and variance estimation satisfies for all $T\\geq0$ ... $\\kR_T \\leq 2\\sum_{t=1}^T\\sqrt{\\frac{k_{\\lambda_t,t-1}(x_t,x_t)}{\\lambda_t}} B_{\\lambda_t,t-1}(\\delta/4)$. In particular, we have $\\kR_T \\leq 2\\frac{\\sigma_+}{\\sigma}\\Big(1 + \\sqrt{2\\ln(4/\\delta) + 2 \\gamma_T(\\sigma_{-}^2/C^2)}\\big)C \\sqrt{T \\frac{2\\gamma_T(\\sigma^2/C^2) }{\\ln(1 + C^2/\\sigma^2)} }$."
    },
    "confidence": "medium",
-   "notes": "Regret is pseudo-regret on f_star values but bound holds w.p. >= 1-delta, so recorded as high-probability regret. Data-dependent first bound not recorded separately. Proof's probability bookkeeping (1-4delta vs 1-delta) is slightly inconsistent."
+   "notes": "Regret is sum of f_star gaps (realized pseudo-regret) holding w.p. 1-delta uniformly over T. gamma_T here is the data-dependent information gain on the played points, not the max information gain. Paper's C is the RKHS norm bound (mapped to S). Lemma 4.1 requires lambda_t >= sigma^2/C^2, which holds w.h.p."
   },
   {
    "id": "r2",
@@ -249,81 +259,44 @@
    "algorithm": "a2",
    "algorithm_class": null,
    "quantity": "high_probability_regret",
-   "dependence": "worst_case",
+   "dependence": "instance_dependent",
    "comparator": "best_fixed_action",
    "probability": "high_probability",
    "horizon": "anytime",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "(4*sqrt(pi*E) + 1)*(1 + sqrt(2*log(T*(T + 1)*K/(sqrt(pi)*delta))))*(sigma_plus/sigma)*(1 + sqrt(2*log(4/delta) + 2*gamma_T_minus))*S*sqrt(T*2*gamma_T_star/log(1 + S**2/sigma**2)) + sqrt(8*pi*E*(1 + delta*sqrt(4*pi*E))**2)*R_max*sqrt(T*log(1/delta)) + 4*pi*E*R_max*delta",
+    "expression": "(4*sqrt(pi*E) + 1)*(1 + sqrt(2*log(T*(T + 1)*K/(sqrt(pi)*delta))))*(sigma_plus/sigma)*(1 + sqrt(2*log(4/delta) + 2*gamma_minus))*S*sqrt(T*2*gamma_sig/log(1 + S**2/sigma**2)) + sqrt(8*pi*E*(1 + delta*sqrt(4*pi*E))**2)*R_max*sqrt(T*log(1/delta)) + 4*pi*E*R_max*delta",
     "expression_latex": "C_{1,T}\\frac{\\sigma_+}{\\sigma}\\Big( 1 +\\sqrt{2\\ln(4/\\delta) + 2 \\gamma_T(\\sigma_-^2/C^2)} \\Big)  C\\sqrt{T \\frac{2 \\gamma_T(\\sigma^2/C^2)}{\\ln(1 + C^2/\\sigma^2)}} +C_2 R\\sqrt{T \\ln(1/\\delta)} + 4\\pi e R \\delta",
     "regime": null
    },
    "symbols": {
-    "sigma_plus": "known upper bound on the noise standard deviation sigma",
-    "gamma_T_minus": "information gain gamma_T(sigma_-^2/C^2)",
-    "gamma_T_star": "information gain gamma_T(sigma^2/C^2)",
+    "sigma_plus": "known upper bound sigma_+ >= sigma",
+    "sigma_minus": "known lower bound sigma_- <= sigma",
+    "gamma_sig": "information gain gamma_T(sigma^2/C^2) on the played points",
+    "gamma_minus": "information gain gamma_T(sigma_-^2/C^2)",
     "R_max": "maximal instantaneous pseudo-regret max_x f_star(star) - f_star(x)"
    },
    "conditions": [
-    "discrete arm set with K = |X| arms",
-    "||f_star||_K <= C (C = S known)",
-    "sup_x k(x,x) <= 1",
     "R_max finite",
-    "Gaussian noise N(0, sigma^2)",
-    "0 < sigma_- < sigma <= sigma_+ known"
+    "arm set discrete with |X| = K",
+    "sup_x k(x,x) <= 1 (Lemma 4.1)",
+    "||f_star||_K <= C (C = S)",
+    "noise Gaussian N(0, sigma^2)",
+    "0 < sigma_- < sigma <= sigma_+"
    ],
    "tuning": [
     "v_t = B_{lambda_t,t-1}(delta/4)/sigma_{+,t-1}",
-    "lambda_t adaptively tuned via Corollary 3.1"
+    "lambda_t = sigma_{+,t}^2/C^2 adaptive"
    ],
    "is_new": true,
    "source": {
     "label": "thm:kernel_ts",
     "number": "Theorem 4.2",
-    "quote": "Assume that the maximal instantaneous pseudo-regret $R=\\max_{x\\in\\bX}\\big(f_\\star(\\star)-f_\\star(x)\\big)$ is finite. Then, the regret of Kernel TS ... with $v_t = \\frac{B_{\\lambda_t,t-1}(\\delta/4)}{\\sigma_{+,t-1}}$ ... with probability $1-3\\delta$, the regret is bounded for all $T\\geq0$ ... where $C_{1,T} = (4\\sqrt{\\pi e}+1)\\bigg(1+\\sqrt{2\\ln\\Big(\\frac{T(T+1) |\\bX|}{\\sqrt{\\pi}\\delta}\\Big)}\\bigg)$ and $C_2=\\sqrt{ 8 \\pi e(1 + \\delta\\sqrt{4\\pi e})^2}$."
+    "quote": "Assume that the maximal instantaneous pseudo-regret $R=\\max_{x\\in\\bX}\\big(f_\\star(\\star)-f_\\star(x)\\big)$ is finite. Then, the regret of Kernel TS (Algorithm~\\ref{alg:kernel_ts}) with $v_t = \\frac{B_{\\lambda_t,t-1}(\\delta/4)}{\\sigma_{+,t-1}}$ after $T$ episodes is $\\cO(C \\sqrt{T \\ln(T |\\bX|)} \\gamma_T(\\sigma^2/C^2))$ with probability $1 - 3 \\delta$. ... Further, we have $\\kR_T \\leq C_{1,T}\\frac{\\sigma_+}{\\sigma}\\Big( 1 +\\sqrt{2\\ln(4/\\delta) + 2 \\gamma_T(\\sigma_-^2/C^2)} \\Big)  C\\sqrt{T \\frac{2 \\gamma_T(\\sigma^2/C^2)}{\\ln(1 + C^2/\\sigma^2)}} +C_2 R\\sqrt{T \\ln(1/\\delta)} + 4\\pi e R \\delta$."
    },
    "confidence": "medium",
-   "notes": "Probability 1-3delta. C_{1,T} and C_2 substituted. K = |X|."
-  },
-  {
-   "id": "r3",
-   "setting": "s2",
-   "side": "upper",
-   "algorithm": "a2",
-   "algorithm_class": null,
-   "quantity": "high_probability_regret",
-   "dependence": "worst_case",
-   "comparator": "best_fixed_action",
-   "probability": "high_probability",
-   "horizon": "anytime",
-   "compute": "not_stated",
-   "bound": {
-    "notation": "O",
-    "expression": "S*sqrt(T*log(T*K))*gamma_T_star",
-    "expression_latex": "\\cO(C \\sqrt{T \\ln(T |\\bX|)} \\gamma_T(\\sigma^2/C^2))",
-    "regime": null
-   },
-   "symbols": {
-    "gamma_T_star": "information gain gamma_T(sigma^2/C^2)"
-   },
-   "conditions": [
-    "discrete arm set with K = |X| arms",
-    "||f_star||_K <= C (C = S known)",
-    "maximal instantaneous pseudo-regret finite"
-   ],
-   "tuning": [
-    "v_t = B_{lambda_t,t-1}(delta/4)/sigma_{+,t-1}"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "thm:kernel_ts",
-    "number": "Theorem 4.2",
-    "quote": "the regret of Kernel TS (Algorithm~\\ref{alg:kernel_ts}) with $v_t = \\frac{B_{\\lambda_t,t-1}(\\delta/4)}{\\sigma_{+,t-1}}$ after $T$ episodes is $\\cO(C \\sqrt{T \\ln(T |\\bX|)} \\gamma_T(\\sigma^2/C^2))$ with probability $1 - 3 \\delta$."
-   },
-   "confidence": "low",
-   "notes": "Order statement from the theorem; not fully consistent with the explicit bound (which has gamma_T under square roots and mixed regularizations)."
+   "notes": "Holds w.p. 1-3delta for all T. C_{1,T} expanded inline with |X| = K. The theorem also states a summary O(C sqrt(T ln(T|X|)) gamma_T(sigma^2/C^2)); not recorded separately since it is a loose restatement whose exact derivation from the explicit bound is unclear."
   }
  ],
  "cited_results": [],
@@ -333,16 +306,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "ae3ec0bf9ad6",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
   "algorithm_registry_size": 133,
-  "date": "2026-11-09T12:32:37",
+  "date": "2026-11-11T11:42:45",
   "source_chars": 99990,
-  "input_tokens": 92223,
-  "output_tokens": 7002,
-  "cost_usd_equiv": 0.599512,
+  "input_tokens": 92651,
+  "output_tokens": 6692,
+  "cost_usd_equiv": 0.5930778000000001,
   "quote_retry": {
    "asked": 0,
    "fixed": 0

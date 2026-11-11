@@ -25,7 +25,8 @@
    "context": "none",
    "noise": "noise_free",
    "learner_knows": [
-    "kernel"
+    "kernel",
+    "prior"
    ],
    "instance_assumptions": [
     "bayesian_prior",
@@ -84,20 +85,24 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "general"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "objective f is a sample path of a zero-mean GP prior with known kernel hyperparameters; function values observed exactly (noise-free)",
-    "learner samples from a fixed finite lattice L in D"
+    "Objective f is a sample from a zero-mean GP prior with known kernel hyperparameters; kernel four times differentiable along the diagonal (applies to SE and Matern nu>=2); not stated via information gain",
+    "Function values observed exactly (deterministic observations)",
+    "Learner samples only from a fixed finite lattice L in D"
    ],
-   "definition_quote": "As in (Srinivas et al., 2010), the objective function is distributed according to a Gaussian process prior: f(x) ~ GP(m(.), kappa(.,.)). ... our assumption is that once the function has been probed at point x in D, then the value f(x) can be observed with very high precision."
+   "definition_quote": "Let f : D → R be a function on a compact subset D ⊆ R^d ... our assumption is that once the function has been probed at point x ∈ D, then the value f(x) can be observed with very high precision. ... the objective function is distributed according to a Gaussian process prior: f(x) ∼ GP(m(·), κ(·, ·))."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Branch and Bound (GP-UCB with search-space shrinking)",
+   "name": "Branch and Bound (GP-UCB/LCB with search-space shrinking)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -105,7 +110,8 @@
     "elimination"
    ],
    "requires_knowledge_of": [
-    "kernel"
+    "kernel",
+    "prior"
    ]
   }
  ],
@@ -124,35 +130,33 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "A_const*exp(-tau*t/log(t)**(d/4))",
+    "expression": "A*exp(-tau*t/log(t)**(d/4))",
     "expression_latex": "r(x_t) < A e^{-\\frac{\\tau t}{(\\ln t)^{d/4}}}",
     "regime": "t > T_0"
    },
    "symbols": {
     "t": "round index",
-    "A_const": "positive constant A (instance dependent)",
-    "tau": "positive decay constant depending on behaviour of f near its maximum",
-    "T_0": "integer threshold T after which the bound holds",
-    "alpha_conf": "failure probability alpha in (0,1) used by the algorithm"
+    "A": "positive constant depending on the instance",
+    "tau": "positive decay rate depending on behaviour of f near its maximum",
+    "T_0": "integer threshold (paper's T) after which bound holds"
    },
    "conditions": [
-    "D subset of R^d compact",
+    "D compact subset of R^d",
     "kernel four times differentiable along the diagonal",
-    "f ~ GP(0,kappa) continuous sample with unique global maximum x_M",
-    "either (dagger) x_M interior with quadratic upper/lower bounds near x_M on ball B(x_M, rho_0), or (double dagger) x_M on boundary, f and boundary smooth at x_M with nonzero gradient",
-    "lattice L satisfies 2L ∩ conv(L) ⊆ L and is fine enough (condition (5)) in case (dagger)"
+    "f continuous sample with unique global maximum x_M satisfying either (†) interior quadratic behaviour c2||x-xM||^2 <= f(xM)-f(x) < c1||x-xM||^2 on B(xM,rho0), or (‡) xM on boundary, f and ∂D smooth at xM with nonzero gradient",
+    "lattice L satisfies 2L ∩ conv(L) ⊆ L and is fine enough (condition (5))"
    ],
    "tuning": [
-    "beta_T = 2 ln(|L| T^2 / alpha_conf)"
+    "beta_T = 2 ln(|L| T^2 / alpha), alpha in (0,1)"
    ],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Theorem 2",
-    "quote": "Then, there exist positive numbers A and τ and an integer T such that the points specified by the Branch and Bound algorithm, {x_t}, will satisfy the following asymptotic bound: For all t > T, with probability 1 − α we have r(x_t) < A e^{−τt/(ln t)^{d/4}}."
+    "quote": "Then, there exist positive numbers A and τ and an integer T such that the points specified by the Branch and Bound algorithm, {x_t}, will satisfy the following asymptotic bound: For all t > T, with probability 1 − α we have r(x_t) < A e^{-τt/(ln t)^{d/4}}."
    },
    "confidence": "medium",
-   "notes": "Bound is on instantaneous regret r(x_t) = f(x_M) - f(x_t) of the point sampled at round t, hence quantity 'other'. Probability 1-alpha is over GP prior. Paper's alpha (confidence) renamed alpha_conf."
+   "notes": "Bound is on the instantaneous regret r(x_t)=f(x_M)-f(x_t), not cumulative; quantity 'other'. Holds with probability 1-alpha (alpha is the algorithm's confidence parameter). Constants A, tau, T depend on instance and lattice."
   },
   {
    "id": "r2",
@@ -174,10 +178,10 @@
    },
    "symbols": {},
    "conditions": [
-    "same conditions as Theorem 2"
+    "same conditions as Theorem 2 on kernel, f and lattice L"
    ],
    "tuning": [
-    "beta_T = 2 ln(|L| T^2 / alpha)"
+    "beta_T = 2 ln(|L| T^2 / alpha), alpha in (0,1)"
    ],
    "is_new": true,
    "source": {
@@ -186,7 +190,7 @@
     "quote": "Given κ, f ∼ GP(0, κ) and L ⊆ D as in Theorem 2, the cumulative regret is bounded from above."
    },
    "confidence": "low",
-   "notes": "Corollary only states boundedness (constant in T) of cumulative regret; probability type implied by Theorem 2 (w.p. 1-alpha) but not explicitly stated."
+   "notes": "Qualitative statement: cumulative regret bounded (constant in T). Probability type not explicitly stated; inherited from Theorem 2 (probability 1-alpha)."
   }
  ],
  "cited_results": [
@@ -199,10 +203,10 @@
    "algorithm_name": "GP-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "GP bandits with Gaussian observation noise of positive variance; regret vanishes at rate ~1/sqrt(t)",
+   "setting_description": "GP bandits with Gaussian observation noise of strictly positive variance; regret vanishing rate (average regret)",
    "bound": {
     "notation": "O",
-    "expression": "1/sqrt(t)",
+    "expression": "1/sqrt(T)",
     "expression_latex": "O(1/\\sqrt{t})",
     "regime": null
    },
@@ -217,10 +221,10 @@
    "algorithm_name": "DOO",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Deterministic function optimization, known smoothness (Hessian known); finite stop-time regret",
+   "setting_description": "Deterministic function optimization, known Hessian (smoothness), finite stop-time regret",
    "bound": {
     "notation": "O",
-    "expression": "exp(-t)",
+    "expression": "exp(-T)",
     "expression_latex": "O(e^{-t})",
     "regime": null
    },
@@ -235,10 +239,10 @@
    "algorithm_name": "SOO",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Deterministic function optimization, unknown smoothness (Hessian unknown); finite stop-time regret",
+   "setting_description": "Deterministic function optimization, unknown Hessian, finite stop-time regret",
    "bound": {
     "notation": "O",
-    "expression": "exp(-sqrt(t))",
+    "expression": "exp(-sqrt(T))",
     "expression_latex": "O(e^{-\\sqrt{t}})",
     "regime": null
    },
@@ -251,16 +255,20 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "00a106c81dc8",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
-  "algorithm_registry_size": 132,
-  "date": "2026-10-21T15:38:11",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-11T11:33:52",
   "source_chars": 31945,
-  "input_tokens": 47836,
-  "output_tokens": 3751,
-  "cost_usd_equiv": 0.188678,
+  "input_tokens": 49478,
+  "output_tokens": 3961,
+  "cost_usd_equiv": 0.1930738,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
   "status": "extracted"
  }
 }

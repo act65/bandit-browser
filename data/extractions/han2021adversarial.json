@@ -14,8 +14,8 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Targeted adversarial attacks on GP bandits (corrupted observations y_t = f(x_t) + c_t + z_t), attacker's perspective",
-   "objective": "other_pure_exploration",
+   "name_in_paper": "Targeted adversarial attacks on GP bandits (corrupted GP bandit setup of Bogunovic et al. 2020, attacker's perspective)",
+   "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_corrupted",
    "action_space": "kernel_rkhs",
@@ -28,7 +28,8 @@
    "learner_knows": [
     "S",
     "sigma",
-    "kernel"
+    "kernel",
+    "gamma_T"
    ],
    "instance_assumptions": [],
    "extras": [],
@@ -84,21 +85,24 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "matern"
+   },
    "parameters": {},
    "in_scope": false,
-   "out_of_scope_reason": "Guarantees are for the attacker (attack budget needed to force target-region pulls), not for the learner.",
+   "out_of_scope_reason": "Guarantees are for the attacker (budget needed to force a non-robust GP bandit algorithm into a target region), not for the learner.",
    "unmapped": [
-    "Objective is the attacker's: force T(1-o(1)) plays in a target region R_target using small corruption budget",
-    "Attacker knows x_t (deterministic learner) and may or may not know f",
-    "Matern kernel; f has RKHS norm at most B (S)"
+    "Objective of the attacker: force T(1-o(1)) plays in a target region R_target using small corruption budget",
+    "Attacker observes x_t and (for white-box attacks) knows f",
+    "Learner algorithm is deterministic (GP-UCB or MaxVar+Elimination) and non-robust"
    ],
-   "definition_quote": "In the presence of adversarial noise, we consider corrupted observations taking the form y_t = f(x_t) + c_t + z_t, where z_t ~ N(0,sigma^2), and c_t is adversarial noise injected at time t. ... we constrain \\sum_{t=1}^n |c_t| \\le C for some total corruption budget C."
+   "definition_quote": "The player seeks to maximize an unknown function $f(\\xv)$ over $\\xv \\in D$, and we model the smoothness of $f$ by assuming that it has RKHS norm at most $B$ ... we consider corrupted observations taking the form $y_t = f(\\xv_t) + c_t + z_t$, where $z_t \\sim \\N(0,\\sigma^2)$ ... we constrain $\\sum_{t=1}^n |c_t| \\le C$"
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Function-shifting targeted attack (generic, Theorem 1; includes Subtraction and Aggressive Subtraction attacks)",
+   "name": "Function-shifting targeted attack (f -> f tilde; e.g. Subtraction / Aggressive Subtraction attack)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -117,7 +121,8 @@
    "requires_knowledge_of": [
     "S",
     "sigma",
-    "kernel"
+    "kernel",
+    "gamma_T"
    ]
   },
   {
@@ -131,12 +136,13 @@
    "requires_knowledge_of": [
     "S",
     "sigma",
-    "kernel"
+    "kernel",
+    "gamma_T"
    ]
   },
   {
    "id": "a4",
-   "name": "Clipping Attack",
+   "name": "Clipping attack",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -156,7 +162,7 @@
    "dependence": "instance_dependent",
    "comparator": "not_applicable",
    "probability": "high_probability",
-   "horizon": "not_applicable",
+   "horizon": "known",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
@@ -165,14 +171,14 @@
     "regime": null
    },
    "symbols": {
-    "B_0": "uniform bound on |f(x) - f_tilde(x)|",
-    "N_0": "number of Delta-suboptimal actions the attacked algorithm plays w.p. >= 1-delta in the uncorrupted setting"
+    "B_0": "uniform bound on |f - f tilde|",
+    "N_0": "number of Delta-suboptimal actions the uncorrupted algorithm plays w.p. >= 1-delta, depending on (T, Delta, delta)"
    },
    "conditions": [
-    "Delta-optimal points of f_tilde lie in R_target and f_tilde = f there",
-    "|f - f_tilde| <= B_0 everywhere",
-    "||f_tilde||_k <= B",
-    "attacked algorithm plays at most N_0 Delta-suboptimal actions w.p. >= 1-delta absent an adversary"
+    "every Delta-optimal point of f tilde lies in R_target and has f tilde = f",
+    "|f(x) - f tilde(x)| <= B_0 for all x",
+    "||f tilde||_k <= B",
+    "learner algorithm plays at most N_0 Delta-suboptimal actions w.p. >= 1-delta absent adversary"
    ],
    "tuning": [],
    "is_new": true,
@@ -182,7 +188,7 @@
     "quote": "Then, in the presence of the adversary, with probability at least $1-\\delta$, the attack succeeds in forcing $T(1-o(1))$ actions to be played from $\\targetr$, while using an attack budget $C$ of at most $B_0 N_0$."
    },
    "confidence": "medium",
-   "notes": "Bound is on the attack budget C needed (attacker-side guarantee) while forcing T(1-o(1)) target-region plays."
+   "notes": "Bound is on the attack budget used (attacker guarantee), while forcing T(1-o(1)) plays in target region; applies to any learner with the stated non-robust guarantee."
   },
   {
    "id": "r2",
@@ -194,7 +200,7 @@
    "dependence": "instance_dependent",
    "comparator": "not_applicable",
    "probability": "high_probability",
-   "horizon": "not_applicable",
+   "horizon": "known",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
@@ -203,21 +209,20 @@
     "regime": null
    },
    "symbols": {
-    "B_0": "uniform bound on |f - f_tilde|",
-    "N_max": "max{N : N <= C_1 gamma_N beta_T / Delta^2}, C_1 = 8/lambda / log(1+1/lambda)"
+    "B_0": "uniform bound on |f - f tilde|",
+    "N_max": "max{N : N <= C_1 gamma_N beta_T / Delta^2}, C_1 = 8/lambda / log(1+1/lambda)",
+    "Delta": "suboptimality margin of f tilde outside target region (not an arm gap)"
    },
    "conditions": [
-    "attacked algorithm is GP-UCB",
-    "conditions (i)-(iii) of Theorem 1 hold"
+    "learner is GP-UCB with beta_t from Chowdhury & Gopalan",
+    "conditions (i)-(iii) of Theorem 1"
    ],
-   "tuning": [
-    "beta_t^{1/2} = B + sigma lambda^{-1/2} sqrt(2(gamma_{t-1} + ln(1/delta)))"
-   ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "cor:main",
     "number": "Corollary 1",
-    "quote": "the attack succeeds in forcing $T(1-o(1))$ actions to be played from $\\targetr$ against GP-UCB (respectively, the elimination algorithm) using an attack budget $C$ of at most $B_0 N_{\\max}(\\Delta,T)$"
+    "quote": "the attack succeeds in forcing $T(1-o(1))$ actions to be played from $\\targetr$ against GP-UCB (respectively, the elimination algorithm) using an attack budget $C$ of at most $B_0 N_{\\max}(\\Delta,T)$ (respectively, $B_0 N'_{\\max}(\\Delta)$)"
    },
    "confidence": "medium",
    "notes": "Attack budget against GP-UCB."
@@ -232,7 +237,7 @@
    "dependence": "instance_dependent",
    "comparator": "not_applicable",
    "probability": "high_probability",
-   "horizon": "not_applicable",
+   "horizon": "known",
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
@@ -241,43 +246,79 @@
     "regime": null
    },
    "symbols": {
-    "B_0": "uniform bound on |f - f_tilde|",
-    "N_max_prime": "max{N : N <= 4 C_1 gamma_N beta_N / Delta^2}, C_1 = 8/lambda / log(1+1/lambda)"
+    "B_0": "uniform bound on |f - f tilde|",
+    "N_max_prime": "max{N : N <= 4 C_1 gamma_N beta_N / Delta^2}",
+    "Delta": "suboptimality margin of f tilde outside target region"
    },
    "conditions": [
-    "attacked algorithm is MaxVar + Elimination",
-    "conditions (i)-(iii) of Theorem 1 hold"
+    "learner is MaxVar + Elimination",
+    "conditions (i)-(iii) of Theorem 1"
    ],
-   "tuning": [
-    "beta_t^{1/2} = B + sigma lambda^{-1/2} sqrt(2(gamma_{t-1} + ln(1/delta)))"
-   ],
+   "tuning": [],
    "is_new": true,
    "source": {
     "label": "cor:main",
     "number": "Corollary 1",
-    "quote": "(respectively, $B_0 N'_{\\max}(\\Delta)$), where ... $N'_{\\max}(\\Delta) = \\max \\{ N : N\\leq \\frac{4C_1\\gamma_N\\beta_N}{\\Delta^2} \\}$"
+    "quote": "using an attack budget $C$ of at most $B_0 N_{\\max}(\\Delta,T)$ (respectively, $B_0 N'_{\\max}(\\Delta)$)"
    },
    "confidence": "medium",
-   "notes": "Attack budget against elimination; independent of T."
+   "notes": "Attack budget against the elimination algorithm; independent of T."
   }
  ],
- "cited_results": [],
+ "cited_results": [
+  {
+   "cited_key": "Cai21",
+   "cited_title": "Lenient regret and good-action identification in gaussian process bandits",
+   "cited_first_author": "Cai",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GP-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Uncorrupted GP bandit, RKHS norm B; number of Delta-suboptimal actions in T rounds, w.p. >= 1-delta",
+   "bound": {
+    "notation": "exact",
+    "expression": "N_max",
+    "expression_latex": "N_{\\max}(\\Delta,T) = \\max\\{N : N \\le C_1\\gamma_N\\beta_T/\\Delta^2\\}",
+    "regime": null
+   },
+   "where": "Proof of Corollary 1"
+  },
+  {
+   "cited_key": "Cai21",
+   "cited_title": "Lenient regret and good-action identification in gaussian process bandits",
+   "cited_first_author": "Cai",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "MaxVar + Elimination",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Uncorrupted GP bandit, RKHS norm B; number of Delta-suboptimal actions, w.p. >= 1-delta",
+   "bound": {
+    "notation": "exact",
+    "expression": "N_max_prime",
+    "expression_latex": "N'_{\\max}(\\Delta) = \\max\\{N : N \\le 4C_1\\gamma_N\\beta_N/\\Delta^2\\}",
+    "regime": null
+   },
+   "where": "Proof of Corollary 1"
+  }
+ ],
  "_run": {
   "backend": "claude_cli",
   "models": [
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "ae3ec0bf9ad6",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
   "algorithm_registry_size": 133,
-  "date": "2026-11-09T12:38:34",
+  "date": "2026-11-11T11:43:19",
   "source_chars": 141565,
-  "input_tokens": 109133,
-  "output_tokens": 3769,
-  "cost_usd_equiv": 0.6701320000000001,
+  "input_tokens": 109561,
+  "output_tokens": 4369,
+  "cost_usd_equiv": 0.6818978,
   "quote_retry": {
    "asked": 0,
    "fixed": 0

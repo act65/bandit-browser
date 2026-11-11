@@ -14,7 +14,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Safe sequential maximisation of a function monotone in a safety variable (regret w.r.t. threshold h)",
+   "name_in_paper": "Safe sequential maximisation of a function monotone in a safety variable (cumulative regret w.r.t. threshold h)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -28,8 +28,7 @@
    "learner_knows": [
     "S",
     "sigma",
-    "kernel",
-    "T"
+    "kernel"
    ],
    "instance_assumptions": [],
    "extras": [
@@ -61,7 +60,7 @@
     "generation": "not_applicable"
    },
    "noise_detail": {
-    "variance": "unspecified"
+    "variance": "homoscedastic"
    },
    "combinatorial": {
     "family": "not_applicable",
@@ -87,21 +86,24 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "general"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Domain D = [0,1] x D_X with D_X subset R^d compact; f is monotonically non-decreasing in the safety variable s",
-    "Safety constraint f(s_t,x_t) <= h for all t w.h.p., with h known to the learner",
-    "f(0,x) <= h for all x (s=0 always safe) and max f > h",
-    "Regret measured against the threshold h: r_t = h - f(s_t,x_t)",
-    "RKHS norm ||f||_k <= B with k(z,z) <= 1"
+    "Domain D = [0,1] x D_X with f monotonically non-decreasing in the safety variable s",
+    "Safety: every sampled point must satisfy f(s_t,x_t) <= h (known threshold h), with high probability",
+    "f(0,x) <= h for all x (s=0 always safe); some point has f > h",
+    "Regret measured against the threshold h: r_t = h - f(s_t, x_t)",
+    "the learner knows the safety threshold h"
    ],
-   "definition_quote": "We consider the problem of sequentially maximising a fixed but unknown function $f: \\mathcal{D} \\rightarrow \\mathbb{R}$ over a set of decisions while satisfying safety constraints, where $\\mathcal{D} = \\mathcal{D_S} \\times \\mathcal{D_X}$ ... we assume that the function is monotonically increasing in the first argument. ... The algorithm is also required to satisfy the safety constraint $f(s_t, \\mathbf{x}_t) \\leq h \\; \\forall t \\geq 1$ with high probability. ... $R_T = \\sum_{t=1}^T r_t$, where $r_t = h - f(s_t, \\mathbf{x}_t)$"
+   "definition_quote": "We consider the problem of sequentially maximising a fixed but unknown function $f: \\mathcal{D} \\rightarrow \\mathbb{R}$ over a set of decisions while satisfying safety constraints, where $\\mathcal{D} = \\mathcal{D_S} \\times \\mathcal{D_X}$ ... R_T = \\sum_{t=1}^T r_t, where r_t = h - f(s_t, x_t)"
   },
   {
    "id": "s2",
-   "name_in_paper": "Safe sub-level set estimation of a function monotone in a safety variable",
+   "name_in_paper": "Safe sub-level set estimation for monotone function (epsilon-accurate solution)",
    "objective": "thresholding",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -148,7 +150,7 @@
     "generation": "not_applicable"
    },
    "noise_detail": {
-    "variance": "unspecified"
+    "variance": "homoscedastic"
    },
    "combinatorial": {
     "family": "not_applicable",
@@ -174,16 +176,19 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "general"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Domain D = [0,1] x D_X with D_X subset R^d compact; f monotone non-decreasing in safety variable s",
-    "Goal: estimate the h-sub-level set L_h(f) with misclassification loss l_h (infinite penalty for declaring unsafe points safe)",
-    "f(0,x) <= h for all x and max f > h; h known",
-    "RKHS norm ||f||_k <= B with k(z,z) <= 1"
+    "Domain D = [0,1] x D_X with f monotonically non-decreasing in the safety variable s",
+    "Goal: estimate the h-sub-level set L_h(f) with misclassification loss l_h (infinite for unsafe classified safe, h-f for safe classified unsafe)",
+    "Safety: every sampled point must satisfy f <= h with high probability; f(0,x) <= h for all x; some point has f > h",
+    "the learner knows the safety threshold h"
    ],
-   "definition_quote": "For the sub-level set, we define $L_h(f) = \\{(s, \\mathbf{x}) \\in \\mathcal{D} | f(s, \\mathbf{x}) \\leq h\\}$ ... We require that the algorithm should return an $\\epsilon$-accurate solution with probability at least $1-\\delta$"
+   "definition_quote": "We require that the algorithm should return an $\\epsilon$-accurate solution with probability at least $1-\\delta$, i.e., \\mathbb{P}\\{\\max_{s,x} l_h(s,x) \\leq \\epsilon \\} \\geq 1-\\delta."
   }
  ],
  "algorithms": [
@@ -193,14 +198,15 @@
    "registry_id": null,
    "is_new": true,
    "techniques": [
-    "optimism"
+    "optimism",
+    "other"
    ],
    "requires_knowledge_of": [
     "S",
     "sigma",
     "kernel",
-    "delta",
-    "h"
+    "gamma_T",
+    "delta"
    ]
   }
  ],
@@ -215,26 +221,26 @@
    "dependence": "worst_case",
    "comparator": "best_feasible_policy",
    "probability": "high_probability",
-   "horizon": "known",
-   "compute": "polynomial",
+   "horizon": "anytime",
+   "compute": "not_stated",
    "bound": {
     "notation": "O",
     "expression": "S*sqrt(T*gamma_T) + sqrt(T*gamma_T*(gamma_T + log(1/delta)))",
-    "expression_latex": "O\\left(B\\sqrt{T\\gamma_T} + \\sqrt{T\\gamma_T(\\gamma_T + \\ln(1/\\delta))}\\right)",
+    "expression_latex": "R_T = O\\left(B\\sqrt{T\\gamma_T} + \\sqrt{T\\gamma_T(\\gamma_T + \\ln(1/\\delta))}\\right)",
     "regime": null
    },
    "symbols": {},
    "conditions": [
-    "f monotone non-decreasing in s",
+    "||f||_k <= B (B = S)",
+    "k(z,z) <= 1",
+    "f monotonically non-decreasing in s",
     "f(0,x) <= h for all x",
     "max f > h",
-    "||f||_k <= B, k(z,z) <= 1",
     "noise conditionally R-sub-Gaussian",
-    "d, R and kernel treated as constants"
+    "d and R treated as constants"
    ],
    "tuning": [
-    "beta_t = B + R*sqrt(2(gamma_{t-1}+1+ln(1/delta)))",
-    "select points with UCB_{t-1} = h (max s), maximise posterior variance among candidates"
+    "beta_t = B + R*sqrt(2(gamma_{t-1}+1+ln(1/delta)))"
    ],
    "is_new": true,
    "source": {
@@ -243,7 +249,7 @@
     "quote": "Under the setup and assumptions of Section \\ref{sec:problem}, and the choice of $\\beta_t$ in Lemma \\ref{lemma:beta}, \\textsc{\\sffamily M-SafeUCB} satisfies the following regret bound with probability at least $1-\\delta$: R_T = O\\left(B\\sqrt{T\\gamma_T} + \\sqrt{T\\gamma_T(\\gamma_T + \\ln(1/\\delta))}\\right)."
    },
    "confidence": "medium",
-   "notes": "Regret is relative to the safety threshold h (r_t = h - f), not to a best action; comparator best_feasible_policy chosen as closest. B (RKHS norm) mapped to S, R to sigma. Algorithm written for discrete D_X but paper claims theory holds for continuous domains. Safety also holds w.p. 1-delta."
+   "notes": "Regret is against the safety threshold h (r_t = h - f(s_t,x_t)), mapped to best_feasible_policy. Safety also holds w.h.p. Paper's B is RKHS norm bound (canonical S), R is sub-Gaussian parameter."
   },
   {
    "id": "r2",
@@ -256,7 +262,7 @@
    "comparator": "not_applicable",
    "probability": "high_probability",
    "horizon": "known",
-   "compute": "polynomial",
+   "compute": "not_stated",
    "bound": {
     "notation": "O",
     "expression": "S*sqrt(gamma_T/T) + sqrt((gamma_T + log(1/delta))*gamma_T/T)",
@@ -265,12 +271,12 @@
    },
    "symbols": {},
    "conditions": [
-    "f monotone non-decreasing in s",
+    "||f||_k <= B (B = S)",
+    "k(z,z) <= 1",
+    "f monotonically non-decreasing in s",
     "f(0,x) <= h for all x",
     "max f > h",
-    "||f||_k <= B, k(z,z) <= 1",
-    "noise conditionally R-sub-Gaussian",
-    "d, R and kernel treated as constants"
+    "noise conditionally R-sub-Gaussian"
    ],
    "tuning": [
     "beta_t = B + R*sqrt(2(gamma_{t-1}+1+ln(1/delta)))"
@@ -279,48 +285,30 @@
    "source": {
     "label": "theorem:safe_boundary",
     "number": "Theorem 2",
-    "quote": "With $l_h(s, \\mathbf{x})$ as defined in equation \\eqref{eqn:misclassification}, \\textsc{\\sffamily M-SafeUCB} finds an $\\epsilon$-accurate solution $\\hat{L}$ with probability at least $1-\\delta$: \\mathbb{P}\\{\\max_{s,\\mathbf{x} \\in \\mathcal{D}} l_h(s,\\mathbf{x}) \\leq \\epsilon \\} \\geq 1-\\delta, where \\epsilon = O\\left(B\\sqrt{\\gamma_T/T} + \\sqrt{(\\gamma_T + \\ln(1/\\delta))\\gamma_T/T}\\right)."
+    "quote": "Consider the setup and assumptions of Section \\ref{sec:problem}, and the choice of $\\beta_t$ in Lemma \\ref{lemma:beta}. With $l_h(s, \\mathbf{x})$ as defined in equation \\eqref{eqn:misclassification}, \\textsc{\\sffamily M-SafeUCB} finds an $\\epsilon$-accurate solution $\\hat{L}$ with probability at least $1-\\delta$ ... where $\\epsilon$ scales as follows: \\epsilon = O(B\\sqrt{\\gamma_T/T} + \\sqrt{(\\gamma_T + \\ln(1/\\delta))\\gamma_T/T})."
    },
    "confidence": "medium",
-   "notes": "Bound is on the maximum misclassification loss epsilon of the returned sub-level set estimate after T rounds (quantity 'other'). Proof gives explicit epsilon = 2 beta_T sqrt(8 gamma_T/T) for T >= 2."
+   "notes": "Bound is on the max misclassification loss epsilon of the returned sub-level set after T rounds; proof gives epsilon = 2 beta_T sqrt(8 gamma_T / T) for T >= 2."
   }
  ],
  "cited_results": [
   {
-   "cited_key": "li2022gaussian",
-   "cited_title": "Gaussian process bandit optimization with few batches",
-   "cited_first_author": "Zihan Li",
-   "cited_year": 2022,
+   "cited_key": "sui2015safe",
+   "cited_title": "Safe exploration for optimization with Gaussian processes",
+   "cited_first_author": "Yanan Sui",
+   "cited_year": 2015,
    "cited_arxiv_id": null,
-   "algorithm_name": null,
+   "algorithm_name": "SafeOpt",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Standard (non-safe) GP bandit cumulative regret",
+   "setting_description": "Safe GP optimisation: identify reachable safe region up to epsilon w.h.p.; sample requirement T/(beta_T gamma_T) >= C|R0|/eps^2, R0 reachable safe region",
    "bound": {
-    "notation": "O_tilde",
-    "expression": "sqrt(T*gamma_T)",
-    "expression_latex": "\\sqrt{T \\gamma_T}",
+    "notation": "O",
+    "expression": "C_safe*R_0*beta_T*gamma_T/epsilon**2",
+    "expression_latex": "\\frac{T}{\\beta_T \\gamma_T} \\ge \\frac{C |\\bar{R}_0|}{\\epsilon^2}",
     "regime": null
    },
-   "where": "Section 4, Dependence on gamma_T and T"
-  },
-  {
-   "cited_key": "vakili2021optimal",
-   "cited_title": "Optimal order simple regret for Gaussian process bandits",
-   "cited_first_author": "Sattar Vakili",
-   "cited_year": 2021,
-   "cited_arxiv_id": null,
-   "algorithm_name": null,
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Standard (non-safe) GP bandit simple regret",
-   "bound": {
-    "notation": "O_tilde",
-    "expression": "sqrt(gamma_T/T)",
-    "expression_latex": "\\sqrt{\\frac{\\gamma_T}{T}}",
-    "regime": null
-   },
-   "where": "Section 4, Dependence on gamma_T and T"
+   "where": "Section 4, Dependence on D_X"
   }
  ],
  "_run": {
@@ -329,16 +317,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "ae3ec0bf9ad6",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
   "algorithm_registry_size": 133,
-  "date": "2026-11-09T11:54:55",
+  "date": "2026-11-11T11:38:36",
   "source_chars": 85720,
-  "input_tokens": 74783,
-  "output_tokens": 5714,
-  "cost_usd_equiv": 0.43423199999999995,
+  "input_tokens": 155510,
+  "output_tokens": 9251,
+  "cost_usd_equiv": 0.5604916,
   "quote_retry": {
    "asked": 0,
    "fixed": 0

@@ -121,7 +121,19 @@ def out_of_scope(key: dict, ont: dict) -> str | None:
     return None
 
 
+_ID_OPTIONAL: set | None = None
+
+
 def setting_id(key: dict) -> str:
+    """Stable id: a hash of the canonical key. Node parameters marked id_optional in the ontology (added after
+    ids were published, e.g. kernel in v0.6) are left out when all their fields are not_applicable, so adding
+    one changes only the ids of the settings it applies to."""
+    global _ID_OPTIONAL
+    if _ID_OPTIONAL is None:
+        _ID_OPTIONAL = {n for n, spec in (schema.load_ontology().get("node_parameters") or {}).items()
+                        if spec.get("id_optional")}
+    key = {k: v for k, v in key.items() if not (k in _ID_OPTIONAL and isinstance(v, dict)
+                                                and all(x == "not_applicable" for x in v.values()))}
     blob = json.dumps(key, sort_keys=True)
     return "S-" + hashlib.sha1(blob.encode()).hexdigest()[:8]
 

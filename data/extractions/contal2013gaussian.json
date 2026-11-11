@@ -9,13 +9,14 @@
   "authors": [
    "Emile Contal",
    "Vianney Perchet",
+   "Vianney Perchet",
    "Nicolas Vayatis"
   ]
  },
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Gaussian process optimization (f sampled from GP, noisy observations)",
+   "name_in_paper": "Gaussian process optimization (general kernel)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -27,7 +28,7 @@
    "learner_knows": [
     "kernel",
     "prior",
-    "sigma"
+    "sigma_std"
    ],
    "instance_assumptions": [
     "bayesian_prior"
@@ -85,6 +86,9 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "general"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
@@ -92,6 +96,89 @@
     "f is a sample path of a zero-mean GP with kernel k, k(x,x) <= 1"
    ],
    "definition_quote": "Let $f:\\X \\to \\R$, where $\\X \\subset \\R^d$ is a compact and convex set ... $y_t = f(x_t)+\\epsilon_t$ ... noise variables ... $\\N(0,\\sigma^2)$ ... we assume that $f$ is sampled from a Gaussian process $\\mathcal{GP}(m, k)$ ... $k(x,x)\\leq 1$"
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "Gaussian process optimization with RBF kernel",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "kernel",
+    "prior",
+    "sigma_std"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "squared_exponential"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "f is a sample path of a zero-mean GP with squared exponential kernel"
+   ],
+   "definition_quote": "the kernel $k$ of the Gaussian process is under the form of a squared exponential (RBF) kernel, $k(x_1,x_2) = \\exp\\Big(-\\frac{\\norm{x_1-x_2}^2}{2 l^2}\\Big)$"
   }
  ],
  "algorithms": [
@@ -106,7 +193,7 @@
    "requires_knowledge_of": [
     "kernel",
     "prior",
-    "sigma"
+    "sigma_std"
    ]
   },
   {
@@ -120,7 +207,7 @@
    "requires_knowledge_of": [
     "kernel",
     "prior",
-    "sigma"
+    "sigma_std"
    ]
   },
   {
@@ -134,7 +221,7 @@
    "requires_knowledge_of": [
     "kernel",
     "prior",
-    "sigma"
+    "sigma_std"
    ]
   }
  ],
@@ -153,30 +240,30 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "Phi_sum + 4*sqrt(log(2/delta)*(C_1*gamma_T + 1)) + sqrt(log(2/delta))/2*Sigma_star/sqrt(C_1*gamma_T + 1)",
-    "expression_latex": "\\sum_{t=1}^T (\\phi_t(x_t) -\\phi_t(x^\\star)) + 4\\sqrt{\\alpha (C_1\\gamma_T+1)} + \\frac{\\sqrt{\\alpha}}{2}\\frac{\\sum_{t=1}^T \\sigma_t^2(x^\\star)}{\\sqrt{C_1\\gamma_T+1}}",
+    "expression": "Phi_sum + 4*sqrt(log(2/delta)*(2/log(1 + sigma_std**(-2))*gamma_T + 1)) + sqrt(log(2/delta))/2*Sigma_star/sqrt(2/log(1 + sigma_std**(-2))*gamma_T + 1)",
+    "expression_latex": "\\sum_{t=1}^T \\big(\\phi_t(x_t) -\\phi_t(x^\\star) \\big) + 4\\sqrt{\\alpha (C_1\\gamma_T+1)} + \\frac{\\sqrt{\\alpha}}{2}\\frac{\\sum_{t=1}^T \\sigma_t^2(x^\\star)}{\\sqrt{C_1\\gamma_T+1}}",
     "regime": null
    },
    "symbols": {
-    "Phi_sum": "sum_t (phi_t(x_t) - phi_t(x*))",
-    "Sigma_star": "sum_t sigma_t^2(x*), posterior variances at the optimum",
-    "C_1": "2/log(1+sigma^-2)"
+    "Phi_sum": "sum_t (phi_t(x_t) - phi_t(x_star)), algorithm-dependent exploration term",
+    "Sigma_star": "sum_t sigma_t^2(x_star), posterior variances at the optimum"
    },
    "conditions": [
-    "k(x,x) <= 1",
-    "k nonnegative"
+    "f sampled from a GP with k(x,x) <= 1",
+    "k(x*, x_t) >= 0 used in proof"
    ],
    "tuning": [
+    "phi_t measurable w.r.t. Y_{t-1}",
     "alpha = log(2/delta)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:general_regret",
     "number": "Theorem 1",
-    "quote": "For all $\\delta>0$ and $T>0$, the regret $R_T$ incurred by Algorithm \\ref{alg:gpopt} on $f$ distributed as a GP perturbed by independent Gaussian noise with variance $\\sigma^2$ satisfies ... $\\Pr[ R_T \\leq \\sum_{t=1}^T (\\phi_t(x_t) -\\phi_t(x^\\star)) + 4\\sqrt{\\alpha (C_1\\gamma_T+1)} + \\frac{\\sqrt{\\alpha}}{2}\\frac{\\sum_{t=1}^T \\sigma_t^2(x^\\star)}{\\sqrt{C_1\\gamma_T+1}} ] \\geq 1-\\delta$."
+    "quote": "For all $\\delta>0$ and $T>0$, the regret $R_T$ incurred by Algorithm \\ref{alg:gpopt} on $f$ distributed as a GP perturbed by independent Gaussian noise with variance $\\sigma^2$ satisfies ... $\\Pr\\left[ R_T \\leq \\sum_{t=1}^T \\big(\\phi_t(x_t) -\\phi_t(x^\\star) \\big) + 4\\sqrt{\\alpha (C_1\\gamma_T+1)} + \\frac{\\sqrt{\\alpha}}{2}\\frac{\\sum_{t=1}^T \\sigma_t^2(x^\\star)}{\\sqrt{C_1\\gamma_T+1}} \\right] \\geq 1-\\delta$"
    },
    "confidence": "low",
-   "notes": "The paper's erratum states the proof of Lemma 1 is wrong and invalidates the main theorem; per the authors, GP-MI can incur linear regret. Probability is over the GP prior and the noise."
+   "notes": "The paper's own erratum states that Lemma 1 (martingale claim) is wrong, invalidating this theorem in the stated setting with noisy observations; authors found GP-MI can incur linear regret. Regret is under the GP prior (random f) with high probability."
   },
   {
    "id": "r2",
@@ -198,7 +285,7 @@
    },
    "symbols": {},
    "conditions": [
-    "k(x,x) <= 1"
+    "f sampled from a GP with k(x,x) <= 1"
    ],
    "tuning": [
     "phi_t(x) = sqrt(alpha)/2 sigma_t^2(x)",
@@ -208,14 +295,14 @@
    "source": {
     "label": "cor:gpucb",
     "number": "Corollary 1",
-    "quote": "For $f$ sampled from a GP with general kernel:\\\\\n    $R_T = \\O(\\gamma_T)$."
+    "quote": "Consider the Algorithm \\ref{alg:gpopt} where we set $\\phi_t(x) = \\frac{\\sqrt{\\alpha}}{2} \\sigma_t^2(x)$. ... For $f$ sampled from a GP with general kernel: $R_T = \\O(\\gamma_T)$."
    },
    "confidence": "low",
-   "notes": "Invalidated by the erratum. In the proof the explicit form is sqrt(alpha)/2 C_1 gamma_T + 4 sqrt(alpha(C_1 gamma_T+1))."
+   "notes": "Proof gives explicit bound sqrt(alpha)/2 C_1 gamma_T + 4 sqrt(alpha(C_1 gamma_T+1)) w.p. 1-delta. Text also claims O(d log T) for linear kernel. Invalidated by the paper's erratum."
   },
   {
    "id": "r3",
-   "setting": "s1",
+   "setting": "s2",
    "side": "upper",
    "algorithm": "a2",
    "algorithm_class": null,
@@ -227,25 +314,26 @@
    "compute": "not_stated",
    "bound": {
     "notation": "O",
-    "expression": "log(T)**(d+1)",
+    "expression": "log(T)**(d + 1)",
     "expression_latex": "R_T = \\O\\big( (\\log T)^{d+1} \\big)",
     "regime": null
    },
    "symbols": {},
    "conditions": [
-    "squared exponential (RBF) kernel"
+    "f sampled from a GP with RBF kernel"
    ],
    "tuning": [
-    "phi_t(x) = sqrt(alpha)/2 sigma_t^2(x)"
+    "phi_t(x) = sqrt(alpha)/2 sigma_t^2(x)",
+    "alpha = log(2/delta)"
    ],
    "is_new": true,
    "source": {
     "label": "cor:gpucb",
     "number": "Corollary 1",
-    "quote": "For $f$ sampled from a GP with RBF kernel:\\\\\n    $R_T = \\O\\big( (\\log T)^{d+1} \\big)$."
+    "quote": "Consider the Algorithm \\ref{alg:gpopt} where we set $\\phi_t(x) = \\frac{\\sqrt{\\alpha}}{2} \\sigma_t^2(x)$.\n  Under the assumptions of Theorem~\\ref{thm:general_regret},\n  we have that the cumulative regret for Algorithm \\ref{alg:gpopt}\n  satisfies the following upper bounds with high probability:\n  \\begin{itemize}\n  \\item\n    For $f$ sampled from a GP with general kernel:\\\\\n    $R_T = \\O(\\gamma_T)$.\n  \\item\n    For $f$ sampled from a GP with RBF kernel:\\\\\n    $R_T = \\O\\big( (\\log T)^{d+1} \\big)$.\n  \\end{itemize}"
    },
    "confidence": "low",
-   "notes": "Invalidated by the erratum. The paper also mentions O(d log T) for the linear kernel in the text."
+   "notes": "Invalidated by the paper's erratum."
   },
   {
    "id": "r4",
@@ -261,15 +349,14 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "5*sqrt(log(2/delta)*C_1*gamma_T) + 4*sqrt(log(2/delta))",
+    "expression": "5*sqrt(log(2/delta)*2/log(1 + sigma_std**(-2))*gamma_T) + 4*sqrt(log(2/delta))",
     "expression_latex": "5\\sqrt{\\alpha C_1 \\gamma_T} + 4\\sqrt{\\alpha}",
-    "regime": "T > 1"
+    "regime": null
    },
-   "symbols": {
-    "C_1": "2/log(1+sigma^-2)"
-   },
+   "symbols": {},
    "conditions": [
-    "k(x,x) <= 1"
+    "f sampled from a GP with k(x,x) <= 1",
+    "T > 1"
    ],
    "tuning": [
     "alpha = log(2/delta)"
@@ -278,14 +365,14 @@
    "source": {
     "label": "thm:regret",
     "number": "Theorem 2",
-    "quote": "For all $\\delta>0$ and $T>1$, the regret $R_T$ incurred by Algorithm \\ref{alg:gpmi} on $f$ distributed as a GP perturbed by independent Gaussian noise with variance $\\sigma^2$ satisfies ... $\\Pr\\Big[R_T \\leq 5\\sqrt{\\alpha C_1 \\gamma_T} + 4\\sqrt{\\alpha} \\Big] \\geq 1-\\delta$."
+    "quote": "For all $\\delta>0$ and $T>1$, the regret $R_T$ incurred by Algorithm \\ref{alg:gpmi} on $f$ distributed as a GP perturbed by independent Gaussian noise with variance $\\sigma^2$ satisfies ... with $C_1\\!=\\!\\frac{2}{\\log(1+\\sigma^{-2})}$ and $\\alpha\\!=\\!\\log\\frac{2}{\\delta}$: \\[\\Pr\\Big[R_T \\leq 5\\sqrt{\\alpha C_1 \\gamma_T} + 4\\sqrt{\\alpha} \\Big] \\geq 1-\\delta\\,.\\]"
    },
    "confidence": "low",
-   "notes": "The erratum explicitly says this main theorem is invalid; the authors build instances where GP-MI incurs linear regret. Lemma 5 restates this theorem."
+   "notes": "Erratum in the paper explicitly says this main theorem is invalid (the martingale argument fails) and that GP-MI can incur linear regret; recorded as stated. Restated as Lemma 5."
   },
   {
    "id": "r5",
-   "setting": "s1",
+   "setting": "s2",
    "side": "upper",
    "algorithm": "a3",
    "algorithm_class": null,
@@ -297,13 +384,13 @@
    "compute": "not_stated",
    "bound": {
     "notation": "O",
-    "expression": "log(T)**((d+1)/2)",
+    "expression": "log(T)**((d + 1)/2)",
     "expression_latex": "R_T = \\O\\Big((\\log T)^{\\frac{d+1}{2}}\\Big)",
     "regime": null
    },
    "symbols": {},
    "conditions": [
-    "squared exponential (RBF) kernel"
+    "f sampled from a GP with RBF kernel"
    ],
    "tuning": [
     "alpha = log(2/delta)"
@@ -312,10 +399,10 @@
    "source": {
     "label": "cor:rbf_gpmi",
     "number": "Corollary 2",
-    "quote": "The cumulative regret $R_T$ incurred by Algorithm \\ref{alg:gpmi} on $f$ sampled from a GP with RBF kernel satisfies with high probability, $R_T = \\O\\Big((\\log T)^{\\frac{d+1}{2}}\\Big)$."
+    "quote": "The cumulative regret $R_T$ incurred by Algorithm \\ref{alg:gpmi} on $f$ sampled from a GP with RBF kernel satisfies with high probability, \\[R_T = \\O\\Big((\\log T)^{\\frac{d+1}{2}}\\Big)\\,.\\]"
    },
    "confidence": "low",
-   "notes": "Invalidated by the erratum."
+   "notes": "Invalidated by the paper's own erratum."
   }
  ],
  "cited_results": [
@@ -328,11 +415,11 @@
    "algorithm_name": "GP-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "GP bandit optimization, f sampled from GP, Gaussian noise; high-probability cumulative regret",
+   "setting_description": "GP bandit optimization, f sampled from GP, general kernel, Gaussian noise",
    "bound": {
     "notation": "O",
     "expression": "sqrt(T*log(T/delta)*gamma_T)",
-    "expression_latex": "R_T = \\O(\\sqrt{T \\beta_T \\gamma_T}), \\beta_T = \\O(\\log\\frac{T}{\\delta})",
+    "expression_latex": "R_T = \\O\\big(\\sqrt{T \\beta_T \\gamma_T}\\big),\\ \\beta_T = \\O(\\log\\frac{T}{\\delta})",
     "regime": null
    },
    "where": "Section 3.1"
@@ -346,10 +433,10 @@
    "algorithm_name": "GP-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "GP bandit optimization with a squared exponential kernel",
+   "setting_description": "GP bandit optimization with Gaussian (RBF) kernel",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(T*log(T)**(d+1))",
+    "expression": "sqrt(T*log(T)**(d + 1))",
     "expression_latex": "\\O(\\sqrt{T (\\log T)^{d+1}})",
     "regime": null
    },
@@ -362,24 +449,21 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "00a106c81dc8",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
-  "algorithm_registry_size": 132,
-  "date": "2026-10-21T15:09:46",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-11T11:28:37",
   "source_chars": 51598,
-  "input_tokens": 60700,
-  "output_tokens": 5214,
-  "cost_usd_equiv": 0.32084999999999997,
-  "status": "extracted",
-  "quote_fixes": [
-   {
-    "asked": 2,
-    "fixed": 2,
-    "cost_usd_equiv": 0.10682019999999999,
-    "date": "2026-11-09"
-   }
-  ]
+  "input_tokens": 62342,
+  "output_tokens": 6553,
+  "cost_usd_equiv": 0.3478258,
+  "quote_retry": {
+   "asked": 1,
+   "fixed": 1,
+   "cost_usd_equiv": 0.2171324
+  },
+  "status": "extracted"
  }
 }

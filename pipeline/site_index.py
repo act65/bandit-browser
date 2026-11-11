@@ -77,6 +77,9 @@ def js_function(expr: str, notation: str | None) -> dict | None:
 def main() -> None:
     settings, results, inferred, cmp, years = report.load()
     algos = {a["id"]: a for a in json.loads((CAN / "algorithms.json").read_text())}
+    # conditions a setting satisfies by definition (e.g. polynomial eigendecay in a Matern setting) don't restrict there
+    satisfied = compare.satisfied_conditions(list(settings.values()) if isinstance(settings, dict) else settings,
+                                             schema.load_ontology())
     triage_path = ROOT / "data" / "reports" / "triage.yaml"
     triage = (yaml.safe_load(triage_path.read_text()) or {}).get("triage", {}) if triage_path.exists() else {}
     profiles = cmp["profiles"]
@@ -102,7 +105,9 @@ def main() -> None:
             "paper": src["paper"], "year": years.get(src["paper"]),
             "algorithm_id": src.get("algorithm_id"), "algorithm_family": family(src.get("algorithm_id")),
             "confidence": src.get("confidence"),
-            "restricted": src["side"] == "upper" and compare.restricts_instances(src.get("conditions")),
+            "restricted": src["side"] == "upper" and compare.restricts_instances(
+                [c for c in src.get("conditions") or []
+                 if not any(rx.search(c) for rx in satisfied.get(rec["setting_id"], ()))]),
             "rate_regime": cmp.get("rate_regime", {}).get(eid),  # None: shown, but not used for the rate
             "n_caveats": len(rec.get("caveats") or []), "expression": expr,
             "profile": {k: v for k, v in (profiles.get(eid) or {}).items() if not k.startswith("_")} or None,

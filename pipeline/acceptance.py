@@ -35,6 +35,7 @@ CAN = ROOT / "data" / "canonical"
 FACTS = ROOT / "data" / "ground_truth" / "pilot-facts.yaml"
 REPORT = ROOT / "data" / "acceptance-report.md"
 MATCH_DIMS = ("objective", "feedback", "environment", "action_space", "context")
+MATCH_NODES = ("kernel",)  # node parameters a fact's setting must match when it names them (e.g. kernel.family)
 EXPECTED = {"tight_constants": {"tight"}, "tight_logs": {"tight", "log_gap"}, "log_gap": {"log_gap", "tight"},
             "poly_gap": {"poly_gap"}}
 STATUS_RANK = {"tight": 0, "log_gap": 1, "poly_gap": 2, "no_lower": 3, "no_upper": 4, "conflict": 5}
@@ -49,10 +50,16 @@ def regime_of(fact: dict) -> tuple[str, str]:
 
 def fact_rates(fact: dict, canonical: set) -> dict:
     out = {}
+    # fixed-dimension cells report their rates at compare.REP_TAG (d = 2, nu = 3/2): profile the fact there too
+    fixed = (fact.get("setting") or {}).get("action_space") in compare.FIXED_DIM_ACTIONS
+    rep = dict(zip(("d", "nu_matern"), next(g for g in compare.FIXED_GRID if compare.grid_tag(g) == compare.REP_TAG)))
     for side in ("upper", "lower"):
         b = (fact.get(side) or {}).get("bound")
         if b:
-            p = compare.profile(compare.instance_expr(b, (fact[side].get("notation") or "O")), canonical)
+            e = compare.instance_expr(b, (fact[side].get("notation") or "O"))
+            if fixed:
+                e = e.subs({compare.sympy.Symbol(k): v for k, v in rep.items()})
+            p = compare.profile(e, canonical)
             if p:
                 out[side] = {v: compare.fmt(ab) for v, ab in p.items() if not v.startswith("_")}
     return out
@@ -75,8 +82,11 @@ def main() -> None:
             fam, dep = regime_of(f)
             want = {d: f["setting"].get(d) for d in MATCH_DIMS}
             required = {d: set(f["setting"].get(d) or []) for d in ("learner_knows", "instance_assumptions")}
+            # node parameters the fact names (e.g. kernel.family) must match too
+            nodes = {n: v for n, v in f["setting"].items() if n in MATCH_NODES and isinstance(v, dict)}
             matches = [s for s in settings if all(s["key"].get(d) == v for d, v in want.items())
-                       and all(req <= set(s["key"].get(d) or []) for d, req in required.items())]
+                       and all(req <= set(s["key"].get(d) or []) for d, req in required.items())
+                       and all((s["key"].get(n) or {}).get(k) == x for n, v in nodes.items() for k, x in v.items())]
             cells = [(s, cmp.get(s["id"], {}).get(f"{fam}|{dep}")) for s in matches]
             cells = [(s, c) for s, c in cells if c]
             if not cells:

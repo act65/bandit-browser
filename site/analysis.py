@@ -29,6 +29,7 @@ STATUS = {  # key -> (label, short help)
     "tight": ("tight", "best upper and lower bounds match up to constants"),
     "none": ("no comparable bounds", "no bound in this setting has a usable rate profile"),
 }
+FIXED_DIM_ACTIONS = {"kernel_rkhs", "lipschitz_metric"}  # = pipeline/compare.py FIXED_DIM_ACTIONS
 # per-variable only: an apparent violation that rests on held instance parameters (not counted as a conflict)
 PER_VAR_STATUS = {"unresolved": ("unresolved", "the best upper bound holds a paper-specific parameter fixed that may hide "
                                  "this variable, so the comparison is left open")}
@@ -172,7 +173,9 @@ class Analysis:
         regs = collections.Counter(x["reg"] for x in out)
         order = sorted(regs, key=lambda r: (r != "regret|worst_case", r not in cells, -regs[r], r))
         return {
-            "sliders": self.sliders, "defaults": self.defaults,
+            # fixed-dimension settings report rates at d = 2 (compare.REP_TAG): start the plot there too
+            "sliders": self.sliders,
+            "defaults": ({**self.defaults, "d": 2} if n["key"].get("action_space") in FIXED_DIM_ACTIONS else self.defaults),
             "regimes": [{"key": r, "label": regime_label(r), "status": (cells.get(r) or {}).get("status"),
                          "statusLabel": STATUS.get((cells.get(r) or {}).get("status") or "", ("",))[0],
                          "perVar": (cells.get(r) or {}).get("per_var") or {}} for r in order],
@@ -250,8 +253,13 @@ class Pages:
         for v, x in per_var.items():
             st = x.get("status") or ""
             sym = {"Delta": "1/Δ", "delta": "1/δ", "epsilon": "1/ε"}.get(v, v)
-            out.append(f'<span class="pv pv-{h.e(st)}" title="{h.e({**STATUS, **PER_VAR_STATUS}.get(st, (st,))[0], quote=True)}">'
-                       f'<b>{h.e(sym)}</b> ↑{h.e(rate_str(x.get("upper")))} ↓{h.e(rate_str(x.get("lower")))}</span>')
+            tip = {**STATUS, **PER_VAR_STATUS}.get(st, (st,))[0]
+            if x.get("grid"):  # fixed-dimension cell (kernel, Lipschitz): rates at one (d, nu), status worst over the grid
+                at = x.get("at", "").replace("nu=", "ν=")
+                tip += f"; rates shown at {at}, status the worst over {len(x['grid'])} values of (d, ν)"
+                sym = h.e(sym) + f"<sub>{h.e(at)}</sub>"
+            out.append(f'<span class="pv pv-{h.e(st)}" title="{h.e(tip, quote=True)}">'
+                       f'<b>{sym if x.get("grid") else h.e(sym)}</b> ↑{h.e(rate_str(x.get("upper")))} ↓{h.e(rate_str(x.get("lower")))}</span>')
         return '<div class="pvs">' + "".join(out) + "</div>"
 
 

@@ -84,22 +84,28 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "unspecified"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Contract space X=[0,1]^m; reward is principal's utility (v-x)_i with outcome i drawn from production function under the agent's hidden stochastic best response",
-    "Each round the chosen contract is sampled ell>1 times to estimate the mean and the heteroscedastic variance",
-    "Noise variance function lies in an RKHS of a kernel kappa^v with norm bounded by B_v (known); variance-estimate noise is sub-Gaussian with known proxy",
-    "Arcsin (neural network) kernel"
+    "Kernel is the arcsin / neural-network (erf) kernel of Williams (1998), not among the vocabulary families",
+    "Contract space X=[0,1]^m with m the number of outcomes (dimension d=m)",
+    "Reward is the principal's utility (v-x)_i with outcome i drawn from a production function induced by a strategic agent's best response under random utility perturbation (hidden action / moral hazard)",
+    "Noise variance function lies in an RKHS of a kernel kappa^v with norm bound B_v known to the learner; variance bounded by chi_u known to the learner",
+    "Sample-variance noise eta(x_t) is rho_eta(x_t)-sub-Gaussian with known rho_eta",
+    "Each round the learner samples the chosen contract ell times (repeated sampling)",
+    "Agent has a finite action set"
    ],
-   "definition_quote": "Formally, in each round $t$, the principal posts a contract $x_t \\in \\mathcal{X}:= [0,1]^m$ ... $\\tilde{y}_t= \\tilde{U}^{\\mathrm{PA}}(x_t) + \\tilde{\\varepsilon}(x_t)$, where $\\tilde{\\varepsilon}(x_t)$ is assumed to be a zero-mean \\textit{heteroscedastic} noise ... $\\Tilde{R}_T= T\\Tilde{U}^{\\mathrm{P}*} - \\sum_{t=1}^T \\Tilde{U}^{\\mathrm{PA}}(x_t)$"
+   "definition_quote": "the principal posts a contract $x_t \\in \\mathcal{X}:= [0,1]^m$ ... $\\tilde{y}_t= \\tilde{U}^{\\mathrm{PA}}(x_t) + \\tilde{\\varepsilon}(x_t)$, where $\\tilde{\\varepsilon}(x_t)$ is assumed to be a zero-mean heteroscedastic noise ... $\\Tilde{R}_T= T\\Tilde{U}^{\\mathrm{P}*} - \\sum_{t=1}^T \\Tilde{U}^{\\mathrm{PA}}(x_t)$"
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Heteroscedastic GP-UCB (with Neural Network / Arcsin kernel)",
+   "name": "Heteroscedastic GP-UCB (with Neural Network / arcsin kernel)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -108,11 +114,11 @@
    "requires_knowledge_of": [
     "S",
     "kernel",
-    "loss_range",
     "B_v",
     "rho_eta",
     "chi_u",
-    "delta"
+    "delta",
+    "ell"
    ]
   }
  ],
@@ -131,31 +137,32 @@
    "compute": "not_stated",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(T)*log(T)**(d + 1)",
+    "expression": "sqrt(T)*log(T)**(d+1)",
     "expression_latex": "\\mathcal{O}\\left(\\sqrt{T}(\\log T)^{m+1}\\right)",
-    "regime": "T large (asymptotic simplification in proof)"
+    "regime": null
    },
    "symbols": {},
    "conditions": [
-    "tilde U^PA in RKHS H_k of the arcsin kernel with norm <= B (S)",
-    "noise variance in RKHS of kappa^v with norm <= B_v (Assumption 4.2)",
-    "variance-estimate noise eta(x_t) is rho_eta(x_t)-sub-Gaussian with known proxy, independent in time (Assumption 4.3)",
-    "contract space [0,1]^d (paper's m is the dimension)",
-    "noise bounded |eps| < sqrt(chi_u)"
+    "Utility in RKHS of arcsin NN kernel with ||U^PA||_{H_k} <= B",
+    "Noise variance function in RKHS of kappa^v with norm <= B_v (Assumption 4.2)",
+    "Sample-variance noise rho_eta(x)-sub-Gaussian with known rho_eta, independent in time (Assumption 4.3)",
+    "Contract space [0,1]^m, d = m",
+    "Agent has finite action set (Assumption 4.1)",
+    "Assumptions 3.1 and 3.3 (stochastic regularity, continuity)"
    ],
    "tuning": [
     "lambda = 1",
     "beta_t as in eq. (beta_t) with confidence delta",
-    "ell > 1 repeated samples per round"
+    "ell > 1 samples per round"
    ],
    "is_new": true,
    "source": {
     "label": "main_theorem",
     "number": "Theorem 4.5",
-    "quote": "Consider $\\tilde{U}^{\\mathrm{PA}} \\in \\mathcal{H}_k$ with bounded RKHS-norm (i.e., $\\|\\tilde{U}^{\\mathrm{PA}}\\|_{\\mathcal{H}_k} \\le B$) and sampling model in \\eqref{feedback_eq} with unknown variance ... satisfies Assumptions~\\ref{var_proxy_assumption} and~\\ref{noise_assumption}. ... Setting $\\lambda=1$ in \\eqref{beta_t}, the cumulative regret $\\Tilde{R}_T$ ... is bounded as $\\mathbb{P}\\left[\\Tilde{R}_T \\leq \\mathcal{O}\\left(\\sqrt{T}(\\log T)^{m+1}\\right)\\right] \\geq 1 - \\delta$"
+    "quote": "Consider $\\tilde{U}^{\\mathrm{PA}} \\in \\mathcal{H}_k$ with bounded RKHS-norm (i.e., $\\|\\tilde{U}^{\\mathrm{PA}}\\|_{\\mathcal{H}_k} \\le B$) and sampling model in \\eqref{feedback_eq} with unknown variance ... Setting $\\lambda=1$ in \\eqref{beta_t}, the cumulative regret $\\Tilde{R}_T$ defined in \\eqref{reg_final} is bounded as $\\mathbb{P}\\left[\\Tilde{R}_T \\leq \\mathcal{O}\\left(\\sqrt{T}(\\log T)^{m+1}\\right)\\right] \\geq 1 - \\delta$"
    },
    "confidence": "medium",
-   "notes": "Paper's m (contract dimension) mapped to canonical d. Constants (log(1/delta), B, ell, chi_u) hidden in O. Proof derives gamma_T = O((log T)^{m+1}) via Proposition 4.4 eigenvalue tail bound and plugs into Makarova et al. Theorem 1. Regret counts per-round utility although ell samples are drawn per round."
+   "notes": "Paper's m (contract dimension / number of outcomes) mapped to d. Regret is measured on the smoothed expected utility; rounds count contract postings, each with ell samples. Horizon labelled anytime since the algorithm loop and beta_t do not use T, but this is not stated explicitly. Proof is asymptotic (T -> infinity) and relies on an information-gain bound derived from Proposition 4.4."
   }
  ],
  "cited_results": [
@@ -168,10 +175,10 @@
    "algorithm_name": "Agnostic Zooming",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Repeated principal-agent contract design over monotone contracts in [0,1]^m, assuming first-order stochastic dominance",
+   "setting_description": "Repeated principal-agent contract design over monotone contracts in [0,1]^m, first-order stochastic dominance assumed",
    "bound": {
     "notation": "O",
-    "expression": "alpha_zoom*log(T)*T**((d + 1)/(d + 2))",
+    "expression": "alpha_ho*log(T)*T**((d+1)/(d+2))",
     "expression_latex": "\\mathcal{O}(\\alpha \\log T)T^{\\frac{m+1}{m+2}}",
     "regime": null
    },
@@ -186,10 +193,10 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Online contract design with m outcomes, general utilities, expected regret",
+   "setting_description": "Online contract design with general utilities, contract space [0,1]^m, expected regret",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(d)*log(T)*T**(2*d/(2*d + 1))",
+    "expression": "sqrt(d)*log(T)*T**(2*d/(2*d+1))",
     "expression_latex": "\\mathcal{O}(\\sqrt{m}\\log(T) T^{\\frac{2m}{2m+1}})",
     "regime": null
    },
@@ -204,7 +211,7 @@
    "algorithm_name": "Discover and Cover",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Online contract design with m outcomes and n (finite) agent actions, high-probability regret",
+   "setting_description": "Online contract design with n agent actions and m outcomes, high-probability regret",
    "bound": {
     "notation": "O",
     "expression": "d**n_agent*I_poly*log(T)*T**(4/5)",
@@ -212,24 +219,6 @@
     "regime": null
    },
    "where": "Section 2.1"
-  },
-  {
-   "cited_key": "makarova2021risk",
-   "cited_title": "Risk-averse heteroscedastic bayesian optimization",
-   "cited_first_author": "Anastasia Makarova",
-   "cited_year": 2021,
-   "cited_arxiv_id": null,
-   "algorithm_name": "RAHBO (risk coefficient alpha=0)",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Kernelized bandit with heteroscedastic noise and repeated sampling ell per query, high-probability regret",
-   "bound": {
-    "notation": "exact",
-    "expression": "beta_T*ell*sqrt(2*gamma_T*T/log(1 + ell/chi_u**2))",
-    "expression_latex": "\\beta_T \\ell \\sqrt{\\frac{2 \\hat{\\gamma}_T T}{\\log(1+\\frac{\\ell}{\\chi_u^2})}}",
-    "regime": null
-   },
-   "where": "Section 4.3"
   }
  ],
  "_run": {
@@ -238,16 +227,20 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "00a106c81dc8",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
-  "algorithm_registry_size": 132,
-  "date": "2026-10-21T15:07:19",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-11T11:27:16",
   "source_chars": 95853,
-  "input_tokens": 80567,
-  "output_tokens": 4429,
-  "cost_usd_equiv": 0.464086,
+  "input_tokens": 82209,
+  "output_tokens": 4182,
+  "cost_usd_equiv": 0.741304,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
   "status": "extracted"
  }
 }

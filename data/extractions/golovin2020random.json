@@ -85,18 +85,22 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "general"
+   },
    "parameters": {},
    "in_scope": false,
-   "out_of_scope_reason": "Multi-objective (vector-valued) rewards; regret measured via hypervolume of the Pareto frontier.",
+   "out_of_scope_reason": "Multi-objective (vector-valued) rewards; regret measured via hypervolume indicator of the Pareto frontier.",
    "unmapped": [
-    "k objectives, each an independent GP sample f_i ~ GP(0, kappa_i); noisy vector observation F(x)+noise",
-    "regret is hypervolume regret HV_z(Y*) - HV_z(Y_t) w.r.t. reference point z"
+    "k objectives f_1..f_k, each a sample from a known GP prior; vector-valued observations",
+    "regret is hypervolume regret HV_z(Y*) - HV_z(Y_t) with respect to reference point z",
+    "domain [0,1]^n"
    ],
    "definition_quote": "For multi-objective Bayesian optimization, we assume that all objectives $f_i$ are samples from known GP priors $\\GP(0, \\kappa_i)$ with input domain $\\X$."
   },
   {
    "id": "s2",
-   "name_in_paper": "Multi-objective black-box optimization via any single-objective optimizer",
+   "name_in_paper": "Multi-objective optimization via general single-objective optimizer with random hypervolume scalarizations",
    "objective": "optimization_error",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -164,12 +168,16 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "not_applicable"
+   },
    "parameters": {},
    "in_scope": false,
-   "out_of_scope_reason": "Multi-objective (vector-valued) optimization with hypervolume error objective.",
+   "out_of_scope_reason": "Multi-objective (vector-valued) black-box optimization; generic reduction result.",
    "unmapped": [
-    "k objectives F: X -> [0,B]^k",
-    "guarantee is relative to an arbitrary single-objective optimizer with convergence epsilon_T"
+    "k objectives with F(X) in [0,B]^k",
+    "guarantee measured by hypervolume indicator",
+    "relies on a black-box single-objective optimizer with eps_T convergence guarantee"
    ],
    "definition_quote": "Let $F(\\X) \\subseteq [0, B]^{k}$ and $z \\geq 0$ and let $\\alg$ be any single-objective maximization algorithm on objective function $g(x)$ that guarantees that after $T$ iterations, it returns $x_T$ such that $g(x_T) \\geq g(x^*) - \\epsilon_T$"
   }
@@ -177,7 +185,7 @@
  "algorithms": [
   {
    "id": "a1",
-   "name": "Algorithm 1 (random hypervolume scalarization with UCB or TS acquisition)",
+   "name": "Scalarization for Multi-Objective Bayesian Optimization (Algorithm 1) with hypervolume scalarization and UCB or TS acquisition",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -193,7 +201,7 @@
   },
   {
    "id": "a2",
-   "name": "Algorithm 2 (scalarization with general single-objective optimization)",
+   "name": "Scalarization with General Single-Objective Optimization (Algorithm 2) with hypervolume scalarization",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -211,7 +219,7 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "other",
+   "quantity": "bayesian_regret",
    "dependence": "worst_case",
    "comparator": "not_applicable",
    "probability": "expectation",
@@ -220,31 +228,31 @@
    "bound": {
     "notation": "O",
     "expression": "k_obj**2*sqrt(d)*sqrt(gamma_T*T*log(T))",
-    "expression_latex": "O(k^2 n^{1/2} [ \\gamma_T T\\ln(T)]^{1/2})",
+    "expression_latex": "\\sum_{t=1}^T (\\HV_z(Y^* ) - \\HV_z(Y_t)) \\leq O(k^2 n^{1/2} [ \\gamma_T T\\ln(T)]^{1/2})",
     "regime": null
    },
    "symbols": {
     "k_obj": "number of objectives k"
    },
    "conditions": [
-    "each f_i on [0,1]^n is a GP sample with marginal variance <= 1",
-    "independent Gaussian noise sigma_i^2 <= sigma^2 <= 1",
-    "F(X) subset of [0,2/5]^k",
+    "each objective f_i on [0,1]^n is a GP sample with marginal variances bounded by 1",
+    "independent Gaussian noise with sigma_i^2 <= sigma^2 <= 1",
+    "F(X) subset of [0, 2/5]^k",
     "reference point z >= 0",
-    "gamma_T upper bounds the MIG of every objective"
+    "gamma_T bounds the MIG of every objective"
    ],
    "tuning": [
     "D_lambda uniform on positive unit sphere S_+^{k-1}",
-    "hypervolume scalarization s_lambda(y)=min_i max(0,y_i/lambda_i)^k"
+    "hypervolume scalarization s_lambda(y) = min_i max(0, y_i/lambda_i)^k"
    ],
    "is_new": true,
    "source": {
     "label": "thm:hyper_regret",
     "number": "Theorem (thm:hyper_regret)",
-    "quote": "Assume the conditions in Theorem~\\ref{thm:regret} holds and let $F(\\X) \\subseteq [0, 2/5]^{k}$ and $z \\geq 0$ and $Y_t = F(X_t)$. Running Algorithm~\\ref{alg:scalarization} with hypervolume scalarizations ... produces hypervolume regret after $T$ observations that is bounded by: $$\\sum_{t=1}^T (\\HV_z(Y^* ) - \\HV_z(Y_t)) \\leq O(k^2 n^{1/2} [ \\gamma_T T\\ln(T)]^{1/2})$$"
+    "quote": "Assume the conditions in Theorem~\\ref{thm:regret} holds and let $F(\\X) \\subseteq [0, 2/5]^{k}$ and $z \\geq 0$ and $Y_t = F(X_t)$. Running Algorithm~\\ref{alg:scalarization} with hypervolume scalarizations with reference point $z$ and $D_\\lambda = \\Sphere^{k-1}$ on either UCB or TS acqusition function produces hypervolume regret after $T$ observations that is bounded by: $$\\sum_{t=1}^T (\\HV_z(Y^* ) - \\HV_z(Y_t)) \\leq O(k^2 n^{1/2} [ \\gamma_T T\\ln(T)]^{1/2})$$"
    },
    "confidence": "medium",
-   "notes": "Cumulative hypervolume regret; derived from the expected (over lambda and GP prior) cumulative scalarized regret of Paria et al., so effectively a Bayesian expectation. Paper's n is input dimension d."
+   "notes": "Cumulative hypervolume regret; paper's n is input dimension (d). Bound derived from Paria et al.'s expected (over GP prior and lambda) cumulative regret, so interpreted as Bayesian expected regret though the statement does not write an expectation."
   },
   {
    "id": "r2",
@@ -268,9 +276,9 @@
     "k_obj": "number of objectives k"
    },
    "conditions": [
-    "each f_i on [0,1]^n is a GP sample with marginal variance <= 1",
-    "independent Gaussian noise sigma_i^2 <= sigma^2 <= 1",
-    "F(X) subset of [0,2/5]^k",
+    "each objective f_i on [0,1]^n is a GP sample with marginal variances bounded by 1",
+    "independent Gaussian noise with sigma_i^2 <= sigma^2 <= 1",
+    "F(X) subset of [0, 2/5]^k",
     "reference point z >= 0"
    ],
    "tuning": [
@@ -283,7 +291,7 @@
     "quote": "Furthermore, $\\HV_z(Y_T) \\geq \\HV_z(Y^*) - \\epsilon_T$, where $\\epsilon_T = O(k^2 n^{1/2} [ \\gamma_T \\ln(T)/T]^{1/2})$."
    },
    "confidence": "medium",
-   "notes": "Final hypervolume gap after T observations (monotonicity argument). Not a cumulative quantity."
+   "notes": "Final hypervolume gap HV_z(Y*) - HV_z(Y_T); obtained from monotonicity of the hypervolume regret."
   },
   {
    "id": "r3",
@@ -301,30 +309,30 @@
     "notation": "exact",
     "expression": "5*c_k*eps_T",
     "expression_latex": "\\HV_z(Y_T) \\geq \\HV_z(Y^*) - 5 c_k \\epsilon_T",
-    "regime": "after l*T observations with l = O~((2B)^{k^2} k^{k+1}/(c_k^{k-1} eps_T^{k+1}))"
+    "regime": "after l*T observations with l = O_tilde((2B)^{k^2} k^{k+1}/(c_k^{k-1} eps_T^{k+1}))"
    },
    "symbols": {
-    "c_k": "pi^{k/2}/(2^k Gamma(k/2+1))",
-    "eps_T": "convergence guarantee of the single-objective algorithm after T iterations",
-    "B_range": "objective range bound, F(X) subset of [0,B]^k"
+    "c_k": "pi^{k/2}/(2^k Gamma(k/2+1)), volume constant",
+    "eps_T": "convergence accuracy of the single-objective optimizer after T iterations",
+    "B_range": "range bound, F(X) in [0,B]^k"
    },
    "conditions": [
     "F(X) subset of [0,B]^k",
     "reference point z >= 0",
-    "single-objective algorithm guarantees g(x_T) >= g(x*) - eps_T after T iterations"
+    "single-objective algorithm returns x_T with g(x_T) >= g(x*) - eps_T after T iterations"
    ],
    "tuning": [
-    "l = O~((2B)^{k^2} k^{k+1}/(c_k^{k-1} eps_T^{k+1})) scalarizations",
-    "D_lambda uniform on S_+^{k-1}"
+    "D_lambda uniform on S_+^{k-1}",
+    "l = O_tilde((2B)^{k^2} k^{k+1}/(c_k^{k-1} eps_T^{k+1})) scalarizations"
    ],
    "is_new": true,
    "source": {
     "label": "thm:hyper_regret_general",
     "number": "Theorem (thm:hyper_regret_general)",
-    "quote": "Then, running Algorithm~\\ref{alg:scalarization_general} on hypervolume scalarizations with reference point $z$ and $D_\\lambda = \\Sphere^{k-1}$ with $l = \\widetilde{O}((2B)^{k^2} k^{k+1}/(c_k^{k-1}\\epsilon_T^{k+1}))$ converges to the Pareto frontier and after $l\\cdot T$ observations, we have $$\\HV_z(Y_T) \\geq \\HV_z(Y^*) - 5 c_k \\epsilon_T$$"
+    "quote": "Let $F(\\X) \\subseteq [0, B]^{k}$ and $z \\geq 0$ and let $\\alg$ be any single-objective maximization algorithm ... Then, running Algorithm~\\ref{alg:scalarization_general} on hypervolume scalarizations with reference point $z$ and $D_\\lambda = \\Sphere^{k-1}$ with $l = \\widetilde{O}((2B)^{k^2} k^{k+1}/(c_k^{k-1}\\epsilon_T^{k+1}))$ converges to the Pareto frontier and after $l\\cdot T$ observations, we have $$\\HV_z(Y_T) \\geq \\HV_z(Y^*) - 5 c_k \\epsilon_T$$"
    },
-   "confidence": "low",
-   "notes": "Theorem statement does not state a probability; proof uses concentration with probability 1-delta (log(1/delta) hidden in O~). Hypervolume error bound."
+   "confidence": "medium",
+   "notes": "Hypervolume error guarantee; proof uses concentration so holds with high probability over the random scalarizations (statement does not say explicitly)."
   }
  ],
  "cited_results": [
@@ -334,14 +342,14 @@
    "cited_first_author": "Biswajit Paria",
    "cited_year": 2018,
    "cited_arxiv_id": "1805.12168",
-   "algorithm_name": "Random scalarization with UCB or TS (Algorithm 1)",
+   "algorithm_name": "Random scalarization BO with UCB or TS (L-Lipschitz scalarizations)",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Multi-objective GP Bayesian optimization on [0,1]^n, k objectives, L-Lipschitz scalarizations; expected cumulative scalarized regret",
+   "setting_description": "Multi-objective GP Bayesian optimization on [0,1]^n, k objectives, expected cumulative scalarized regret with L-Lipschitz scalarizations",
    "bound": {
     "notation": "O",
     "expression": "L_lip*k_obj*sqrt(d)*sqrt(gamma_T*T*log(T))",
-    "expression_latex": "O(L k n^{1/2} [ \\gamma_T T \\ln(T)]^{1/2})",
+    "expression_latex": "\\E_[R_C(T)] = O(L k n^{1/2} [ \\gamma_T T \\ln(T)]^{1/2})",
     "regime": null
    },
    "where": "Theorem (thm:regret), Section 4"
@@ -353,16 +361,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "ae3ec0bf9ad6",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
   "algorithm_registry_size": 133,
-  "date": "2026-11-09T11:26:55",
+  "date": "2026-11-11T11:38:08",
   "source_chars": 62451,
-  "input_tokens": 65175,
-  "output_tokens": 5632,
-  "cost_usd_equiv": 0.355728,
+  "input_tokens": 65603,
+  "output_tokens": 5790,
+  "cost_usd_equiv": 0.35865379999999997,
   "quote_retry": {
    "asked": 0,
    "fixed": 0

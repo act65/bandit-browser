@@ -14,20 +14,23 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Attacker's continuous-armed bandit over attack parameters lambda in [0,1]^3 with contextual state s (GP-UCB)",
+   "name_in_paper": "Attacker's continuous-armed bandit over attack parameters lambda in [0,1]^3 (GP-UCB with contextual state)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
-   "environment": "adversarial_unspecified",
+   "environment": "nonstationary_drifting",
    "action_space": "kernel_rkhs",
    "function_class": [],
    "domain": "constrained",
    "context": "adversarial_contexts",
    "noise": "subgaussian",
    "learner_knows": [
-    "kernel"
+    "kernel",
+    "S"
    ],
    "instance_assumptions": [],
-   "extras": [],
+   "extras": [
+    "budgeted_exploration"
+   ],
    "action_set": {
     "shape": "hypercube",
     "time_varying": "fixed",
@@ -80,23 +83,25 @@
    "delay": {
     "generation": "not_applicable"
    },
-   "parameters": {
-    "d": "d_gp = |s| + 3"
+   "kernel": {
+    "family": "squared_exponential"
    },
+   "parameters": {},
    "in_scope": false,
-   "out_of_scope_reason": "Guarantee for an attacker (context-poisoning adversary) rather than the learner.",
+   "out_of_scope_reason": "Guarantee for an attacker (context-poisoning adversary) rather than for the bandit learner.",
    "unmapped": [
-    "Contextual states s are estimated from an IRL surrogate of a non-stationary victim policy; state bias from IRL error and policy drift",
-    "Attacker reward r(s,lambda) in RKHS with norm bound B_rkhs, squared-exponential kernel"
+    "Attacker poisons contexts of a victim neural contextual bandit; attacker's reward depends on the evolving victim policy",
+    "Contextual state built from an IRL surrogate of the victim (approximate states); IRL misspecification error eps_mis",
+    "Attack budget B limits number of attack rounds n <= B"
    ],
-   "definition_quote": "The attacker's reward function $r(\\mathbf{s},\\boldsymbol{\\lambda})$ lies in the RKHS $\\mathcal{H}_k$ with bounded norm $\\|r\\|_{\\mathcal{H}_k} \\leq B_{\\textsc{rkhs}}$, and observations are corrupted by $\\sigma_n$-sub-Gaussian noise."
+   "definition_quote": "we formalize the attack as a bilevel problem over a continuous arm space $\\boldsymbol{\\Lambda} = [0,1]^3$ ... The attacker's reward function $r(\\mathbf{s},\\boldsymbol{\\lambda})$ lies in the RKHS $\\mathcal{H}_k$ with bounded norm $\\|r\\|_{\\mathcal{H}_k} \\leq B_{\\textsc{rkhs}}$, and observations are corrupted by $\\sigma_n$-sub-Gaussian noise."
   },
   {
    "id": "s2",
-   "name_in_paper": "K-armed contextual bandit victim (R-NeuralUCB) under black-box context poisoning",
+   "name_in_paper": "Victim K-armed neural contextual bandit (R-NeuralUCB) under context poisoning attack",
    "objective": "cumulative_regret",
    "feedback": "bandit",
-   "environment": "stochastic_iid",
+   "environment": "adversarial_adaptive",
    "action_space": "finite_K",
    "function_class": [],
    "domain": "not_applicable",
@@ -139,7 +144,7 @@
     "loss_scale": "not_applicable"
    },
    "reward_model": {
-    "kind": "not_applicable"
+    "kind": "unspecified"
    },
    "constraints": {
     "kind": "not_applicable",
@@ -157,21 +162,24 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "not_applicable"
+   },
    "parameters": {},
    "in_scope": false,
-   "out_of_scope_reason": "Lower bound on regret induced by an attacker (guarantee for the attacker, not the learner).",
+   "out_of_scope_reason": "Result quantifies the damage achieved by an attacker (lower bound on the victim's regret under a specific attack), a guarantee for the attacker rather than the learner.",
    "unmapped": [
-    "Contexts perturbed by attacker with ||delta||_inf <= epsilon on at most B rounds",
-    "Reward h: R^d -> [0,1] is L_h-Lipschitz in the context",
-    "Victim is R-NeuralUCB"
+    "Contexts perturbed by an attacker with l_inf bound epsilon and attack budget B",
+    "Reward h is L_h-Lipschitz in context with values in [0,1]",
+    "Victim is the specific algorithm R-NeuralUCB"
    ],
-   "definition_quote": "The attacker perturbs the context of each arm $i \\in [K]$ of the learner, presenting a perturbed context $\\tilde{x_{t,i}} = \\mathbf{x}_{t,i} + \\boldsymbol{\\delta}_{t,i}$ with $\\|\\boldsymbol{\\delta}_{t,i}\\|_\\infty \\leq \\epsilon$, subject to a total attack budget $B$"
+   "definition_quote": "In a $K$-armed contextual bandit setting with horizon $T$ ... receives a reward $r_{t,a_t} = h(\\mathbf{x}_{t,a_t}) + \\xi_t$ ... The attacker perturbs the context of each arm ... $\\|\\boldsymbol{\\delta}_{t,i}\\|_\\infty \\leq \\epsilon$, subject to a total attack budget $B$"
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "AdvBandit (GP-UCB attack parameter selection with MaxEnt IRL surrogate and PGD)",
+   "name": "AdvBandit (GP-UCB attack parameter selection with MaxEnt IRL surrogate, query selection and PGD)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -180,7 +188,6 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "B",
     "kernel"
    ]
   }
@@ -197,26 +204,27 @@
    "comparator": "best_action_per_round",
    "probability": "high_probability",
    "horizon": "known",
-   "compute": "not_stated",
+   "compute": "polynomial",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(n_att*gamma_T*log(n_att/rho)) + sqrt(n_att)*sqrt(d_Theta/W) + sqrt(n_att*Delta_IRL) + n_att*eps_mis",
-    "expression_latex": "O(\\sqrt{n \\gamma_n \\log(n/\\rho)}) + O(\\sqrt{n} \\sqrt{d_\\Theta/W}) + O(\\sqrt{n \\Delta_{IRL}}) + n \\epsilon_{mis}",
+    "expression": "sqrt(n_att*gamma_n*log(n_att/delta)) + sqrt(n_att)*sqrt(d_Theta/W) + sqrt(n_att*Delta_IRL) + n_att*eps_mis",
+    "expression_latex": "O(\\sqrt{n \\gamma_n \\log(n/\\rho)}) + O(\\sqrt{n} \\sqrt{d_\\Theta/W}) + O(\\sqrt{n \\Delta_{irl}}) + n \\epsilon_{mis}",
     "regime": null
    },
    "symbols": {
-    "n_att": "number of attack rounds n (n <= B)",
-    "gamma_T": "maximum information gain gamma_n at n_att, O((log n)^(d_gp+1)) for SE kernel",
-    "rho": "failure probability",
+    "n_att": "number of attack rounds (n <= attack budget)",
+    "gamma_n": "maximum information gain after n rounds, O((log n)^{d_gp+1}) for SE kernel",
     "d_Theta": "number of IRL parameters, O(d d_h K)",
     "W": "IRL sliding window size",
     "Delta_IRL": "IRL retraining interval",
-    "eps_mis": "misspecification error of the IRL model class (TV)"
+    "eps_mis": "IRL misspecification error (TV distance)"
    },
    "conditions": [
-    "Approximate realizability (Assumption 5.3) with misspecification eps_mis",
-    "attacker reward in RKHS with bounded norm, sigma_n-sub-Gaussian noise, SE kernel",
-    "victim R-NeuralUCB with O(1/sqrt t) exploration bonus"
+    "Approximate realizability (Assumption 5.3) with misspecification error eps_mis",
+    "attacker reward r(s, lambda) in RKHS of SE kernel with bounded norm",
+    "sigma_n-sub-Gaussian observation noise",
+    "r Lipschitz in state",
+    "victim is R-NeuralUCB-type with O(1/sqrt t) confidence widths"
    ],
    "tuning": [
     "beta_gp = O(sqrt(log(n/rho)))"
@@ -225,55 +233,16 @@
    "source": {
     "label": "thm:attacker_regret_full",
     "number": "Theorem 5.4",
-    "quote": "Let $\\boldsymbol{\\lambda}^*(\\mathbf{s}) = \\arg\\max_{\\boldsymbol{\\lambda}} r(\\mathbf{s},\\boldsymbol{\\lambda})$. Under Assumption~\\ref{assm:approx_real}, with probability at least $1-\\rho$, the attacker's cumulative regret over $n$ attack rounds satisfies: R_{attack}(n) \\le O(\\sqrt{n \\gamma_n \\log(n/\\rho)}) + O(\\sqrt{n} \\sqrt{d_\\Theta/W}) + O(\\sqrt{n \\Delta_{IRL}}) + n \\epsilon_{mis}."
+    "quote": "Let $\\boldsymbol{\\lambda}^*(\\mathbf{s}) = \\arg\\max_{\\boldsymbol{\\lambda}} r(\\mathbf{s},\\boldsymbol{\\lambda})$. Under Assumption~\\ref{assm:approx_real}, with probability at least $1-\\rho$, the attacker's cumulative regret over $n$ attack rounds satisfies: R_attack(n) \\le O(\\sqrt{n \\gamma_n \\log(n/\\rho)}) + O(\\sqrt{n} \\sqrt{d_\\Theta/W}) + O(\\sqrt{n \\Delta_{irl}}) + n \\epsilon_{mis}. ... Under exact realizability ($\\epsilon_{mis} = 0$), this simplifies to $R_{attack}(n) \\leq O(\\sqrt{n \\gamma_n \\log(n/\\rho)} + \\sqrt{n})$."
    },
-   "confidence": "medium",
-   "notes": "Out-of-scope attacker guarantee. Regret measured against per-state optimal lambda*(s)."
+   "confidence": "low",
+   "notes": "Attacker-side guarantee (out of scope). Regret is against lambda*(s) per state. Proof is sketchy/heuristic. Simplified exact-realizability form O(sqrt(n gamma_n log(n/rho)) + sqrt(n)) needs W = Omega(d_Theta) and constant Delta_IRL; not recorded separately."
   },
   {
    "id": "r2",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
-   "quantity": "high_probability_regret",
-   "dependence": "worst_case",
-   "comparator": "best_action_per_round",
-   "probability": "high_probability",
-   "horizon": "known",
-   "compute": "not_stated",
-   "bound": {
-    "notation": "O",
-    "expression": "sqrt(n_att*gamma_T*log(n_att/rho)) + sqrt(n_att)",
-    "expression_latex": "O(\\sqrt{n \\gamma_n \\log(n/\\rho)} + \\sqrt{n})",
-    "regime": "exact realizability (eps_mis = 0)"
-   },
-   "symbols": {
-    "n_att": "number of attack rounds n",
-    "gamma_T": "maximum information gain gamma_n at n_att",
-    "rho": "failure probability"
-   },
-   "conditions": [
-    "exact realizability eps_mis = 0",
-    "W = Omega(d_Theta) and constant Delta_IRL (from proof)"
-   ],
-   "tuning": [
-    "beta_gp = O(sqrt(log(n/rho)))"
-   ],
-   "is_new": true,
-   "source": {
-    "label": "thm:attacker_regret_full",
-    "number": "Theorem 5.4",
-    "quote": "Under exact realizability ($\\epsilon_{\\text{mis}} = 0$), this simplifies to $R_{\\text{attack}}(n) \\leq O(\\sqrt{n \\gamma_n \\log(n/\\rho)} + \\sqrt{n})$."
-   },
-   "confidence": "medium",
-   "notes": "Special case of r1 stated in the theorem."
-  },
-  {
-   "id": "r3",
    "setting": "s2",
    "side": "lower",
-   "algorithm": "a1",
+   "algorithm": null,
    "algorithm_class": "other",
    "quantity": "high_probability_regret",
    "dependence": "instance_dependent",
@@ -283,30 +252,32 @@
    "compute": "not_stated",
    "bound": {
     "notation": "Omega",
-    "expression": "B*alpha_bar - sqrt(B)*sqrt(d_Theta/W) - sqrt(B*Delta_IRL) - sqrt(T*log(T))",
-    "expression_latex": "R_v(T) \\geq B \\bar{\\alpha} - O(\\sqrt{B}\\sqrt{d_\\Theta/W}) - O(\\sqrt{B \\Delta_{IRL}}) - O(\\sqrt{T\\log T})",
+    "expression": "B_att*alpha_bar - sqrt(B_att)*sqrt(d_Theta/W) - sqrt(B_att*Delta_IRL) - sqrt(T*log(T))",
+    "expression_latex": "R_v(T) \\geq B \\cdot \\bar{\\alpha} - O(\\sqrt{B} \\sqrt{d_\\Theta/W}) - O(\\sqrt{B \\Delta_{irl}}) - O(\\sqrt{T \\log T})",
     "regime": null
    },
    "symbols": {
-    "alpha_bar": "average positive attackability margin (1/B) sum [Delta(x_t,a_t^dagger) - 2 L_h epsilon]^+",
-    "d_Theta": "number of IRL parameters",
-    "W": "IRL window size",
+    "B_att": "attack budget (number of attacked rounds)",
+    "alpha_bar": "average positive attackability margin (1/B) sum_{attacked t} [Delta(x_t, a_t^dagger) - 2 L_h epsilon]^+",
+    "d_Theta": "number of IRL parameters, O(d d_h K)",
+    "W": "IRL sliding window size",
     "Delta_IRL": "IRL retraining interval"
    },
    "conditions": [
-    "victim is R-NeuralUCB with O(sqrt T) unattacked regret",
-    "attacker is AdvBandit with budget B and perturbation bound epsilon",
-    "h maps to [0,1] and is L_h-Lipschitz"
+    "victim algorithm is R-NeuralUCB with O(sqrt T) unattacked regret",
+    "attacker runs AdvBandit with budget B, perturbation bound epsilon",
+    "true reward h: R^d -> [0,1] is L_h-Lipschitz in context",
+    "attacks distributed across horizon"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "thm:victim_regret",
     "number": "Theorem 5.2",
-    "quote": "With attack budget $B$, perturbation bound $\\epsilon$, and IRL retraining interval $\\Delta_{\\textsc{irl}}$ with window size $W$, the victim's cumulative regret satisfies with probability at least $1-\\rho$: R_v(T) \\geq B \\bar{\\alpha} - O(\\sqrt{B}\\sqrt{d_\\Theta/W}) - O(\\sqrt{B \\Delta_{IRL}}) - O(\\sqrt{T \\log T})."
+    "quote": "With attack budget $B$, perturbation bound $\\epsilon$, and IRL retraining interval $\\Delta_{\\textsc{irl}}$ with window size $W$, the victim's cumulative regret satisfies with probability at least $1-\\rho$: R_v(T) \\geq B \\cdot \\bar{\\alpha} - O(\\sqrt{B} \\cdot \\sqrt{d_\\Theta/W}) - O(\\sqrt{B \\cdot \\Delta_{irl}}) - O(\\sqrt{T \\log T})."
    },
    "confidence": "low",
-   "notes": "Lower bound on victim regret induced by a specific attacker against a specific victim; subtracted terms are O(.) so Omega notation is an approximation of the stated form."
+   "notes": "Lower bound on the victim's regret induced by the specific AdvBandit attack against R-NeuralUCB, not a minimax lower bound for learners. Subtracted terms carry hidden constants (O(.)), recorded via Omega notation. Corollary F.3 (profitability condition B > O(sqrt(T log T))/(alpha_bar - O(sqrt(d_Theta/W)))) follows from it."
   }
  ],
  "cited_results": [
@@ -319,14 +290,14 @@
    "algorithm_name": "Bandit-based black-box structure perturbation attack on GNNs",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Black-box structure perturbations on graph neural networks with bandit feedback (loss values)",
+   "setting_description": "Bandit optimization for black-box graph structure perturbation attacks on GNNs (perturbations as arms, loss values as bandit feedback); N is the number of nodes/perturbation dimension",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(N_g)*T**(3/4)",
+    "expression": "sqrt(N_nodes)*T**(3/4)",
     "expression_latex": "O(\\sqrt{N} T^{3/4})",
     "regime": null
    },
-   "where": "Related Works"
+   "where": "Section 2 (Related Works)"
   }
  ],
  "_run": {
@@ -335,16 +306,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "ae3ec0bf9ad6",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
   "algorithm_registry_size": 133,
-  "date": "2026-11-09T12:34:41",
+  "date": "2026-11-11T11:42:53",
   "source_chars": 179617,
-  "input_tokens": 127407,
-  "output_tokens": 6759,
-  "cost_usd_equiv": 0.876124,
+  "input_tokens": 127835,
+  "output_tokens": 5767,
+  "cost_usd_equiv": 0.8560498,
   "quote_retry": {
    "asked": 0,
    "fixed": 0

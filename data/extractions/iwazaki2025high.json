@@ -15,92 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "High-dimensional kernelized (nonparametric) contextual bandit with K arms (no-regret regime)",
-   "objective": "cumulative_regret",
-   "feedback": "bandit",
-   "environment": "stochastic_iid",
-   "action_space": "kernel_rkhs",
-   "function_class": [],
-   "domain": "not_applicable",
-   "context": "stochastic_contexts",
-   "noise": "heavy_tailed",
-   "learner_knows": [
-    "K",
-    "d"
-   ],
-   "instance_assumptions": [
-    "bounded_variance"
-   ],
-   "extras": [],
-   "action_set": {
-    "shape": "finite",
-    "time_varying": "not_applicable",
-    "access": "explicit",
-    "norm_bound": "unspecified",
-    "parameter_set": "l2_ball",
-    "loss_set": "not_applicable",
-    "parameter_structure": "not_applicable"
-   },
-   "corruption": {
-    "adversary": "not_applicable",
-    "budget_measure": "not_applicable",
-    "structure": "not_applicable",
-    "regret_reference": "not_applicable",
-    "model": "not_applicable",
-    "target": "not_applicable"
-   },
-   "feedback_graph": {
-    "observability": "not_applicable",
-    "time_varying": "not_applicable",
-    "knowledge": "not_applicable",
-    "self_loops": "not_applicable",
-    "directedness": "not_applicable",
-    "generation": "not_applicable"
-   },
-   "noise_detail": {
-    "variance": "homoscedastic"
-   },
-   "combinatorial": {
-    "family": "not_applicable",
-    "reward": "not_applicable",
-    "loss_scale": "not_applicable"
-   },
-   "reward_model": {
-    "kind": "realizable_general_class"
-   },
-   "constraints": {
-    "kind": "not_applicable",
-    "violation": "not_applicable"
-   },
-   "preference": {
-    "model": "not_applicable",
-    "winner": "not_applicable",
-    "comparison": "not_applicable"
-   },
-   "partial_monitoring": {
-    "observability": "not_applicable",
-    "structure": "not_applicable"
-   },
-   "delay": {
-    "generation": "not_applicable"
-   },
-   "parameters": {
-    "eps_m": "1"
-   },
-   "in_scope": true,
-   "out_of_scope_reason": null,
-   "unmapped": [
-    "Each of the K arms has its own d-dimensional context X^(i)(t), i.i.d. over rounds but possibly correlated across arms, and its own unknown reward function f^(i) in the RKHS with norm <= B",
-    "Dimension d grows with T (high-dimensional asymptotic regime d = Theta(T^tau_1))",
-    "Whitened contexts have independent, bounded, zero-mean unit-variance coordinates; covariance operator norm <= 1",
-    "Kernel with 1/d scaling (inner-product or RBF class), K(x,x) <= 1",
-    "Noise has zero mean and variance <= sigma^2 (no sub-Gaussianity)"
-   ],
-   "definition_quote": "The forecaster chooses an arm $\\Ich \\in [K]$ based on the $\\Xit$ values of all the arms, and then observes a reward ... $\\Yt = f_\\ast^{(I(t))}( \\Xt) + \\xi(t)$ ... The independent noise term $\\xi(t)$ has zero mean and bounded variance $\\Var[\\xi(t)] \\leq \\sigma^2$ ... A reward function $f_\\ast^{(i)}$ is an element of RKHS $\\mH$ and satisfies norm $\\|f_\\ast^{(i)}\\|_\\mH \\leq B$"
-  },
-  {
-   "id": "s2",
-   "name_in_paper": "High-dimensional kernelized contextual bandit, lenient regret (non-vanishing generalization error regime)",
+   "name_in_paper": "High-dimensional kernelized contextual bandit (inner-product class of kernels)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -112,18 +27,19 @@
    "learner_knows": [
     "K",
     "d",
-    "v_mom"
+    "sigma",
+    "kernel"
    ],
    "instance_assumptions": [
     "bounded_variance"
    ],
    "extras": [],
    "action_set": {
-    "shape": "finite",
+    "shape": "unspecified",
     "time_varying": "not_applicable",
-    "access": "explicit",
+    "access": "not_applicable",
     "norm_bound": "unspecified",
-    "parameter_set": "l2_ball",
+    "parameter_set": "arbitrary_bounded",
     "loss_set": "not_applicable",
     "parameter_structure": "not_applicable"
    },
@@ -144,7 +60,7 @@
     "generation": "not_applicable"
    },
    "noise_detail": {
-    "variance": "homoscedastic"
+    "variance": "unspecified"
    },
    "combinatorial": {
     "family": "not_applicable",
@@ -152,7 +68,7 @@
     "loss_scale": "not_applicable"
    },
    "reward_model": {
-    "kind": "realizable_general_class"
+    "kind": "not_applicable"
    },
    "constraints": {
     "kind": "not_applicable",
@@ -170,24 +86,116 @@
    "delay": {
     "generation": "not_applicable"
    },
-   "parameters": {
-    "eps_m": "1"
+   "kernel": {
+    "family": "unspecified"
    },
+   "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Per-arm contexts and per-arm RKHS reward functions with norm <= B",
-    "d grows with T (d = Theta(T^tau))",
-    "Regret is lenient: per-round regret below a tolerance Delta_len is not counted",
-    "The learner knows the lenient tolerance Delta_len, the covariance-structure parameter eps and kernel quantities (h'', h') used to set the exploration length T0"
+    "Each arm i has its own context X^(i)(t) in R^d, i.i.d. over rounds (arms' contexts may be correlated), and its own reward function f^(i) in an RKHS with ||f^(i)||_H <= B",
+    "Kernel from the inner-product class K(x,x')=h(<x,x'>/d) with h in C^3, h(0)>0, h'(0)>0, h'' bounded below; scaled by 1/d",
+    "Whitened contexts have independent bounded coordinates with zero mean and unit variance; ||Sigma|| op <= 1",
+    "Noise only assumed to have bounded variance sigma^2 (finite second moment)",
+    "High-dimensional regime: d grows polynomially with T",
+    "Lenient-regret tuning of T0 uses the lenient tolerance Delta, the covariance parameter epsilon and kernel derivatives h''_min, beta"
    ],
-   "definition_quote": "$R_{\\Delta}(T) = \\sum_{t=1}^T \\Phi_{\\Delta}\\rbr{r(t)}$, where $\\Phi_{\\Delta}(a) = \\max\\{a - \\Delta, 0\\}$, and $\\Delta > 0$ is the hyperparameter specified before the algorithm run."
+   "definition_quote": "This paper considers a nonparametric contextual bandit problem with $K$ arms. We consider the fully stochastic setting, where the contexts, as well as the rewards, are drawn from fixed distributions. ... $\\Yt = f_\\ast^{(I(t))}( \\Xt) + \\xi(t)$ ... The independent noise term $\\xi(t)$ has zero mean and bounded variance $\\Var[\\xi(t)] \\leq \\sigma^2$."
+  },
+  {
+   "id": "s2",
+   "name_in_paper": "High-dimensional kernelized contextual bandit (RBF class of kernels)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "heavy_tailed",
+   "learner_knows": [
+    "K",
+    "d",
+    "sigma",
+    "kernel"
+   ],
+   "instance_assumptions": [
+    "bounded_variance"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "unspecified",
+    "parameter_set": "arbitrary_bounded",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "unspecified"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each arm i has its own context X^(i)(t) in R^d, i.i.d. over rounds, and its own reward function f^(i) in an RKHS with ||f^(i)||_H <= B",
+    "Kernel from the RBF class K(x,x')=h(||x-x'||^2/d) with h in C^3, h>0, h'<0 on [0,2], h' increasing (includes Gaussian, Laplace, Matern with length scale growing with d)",
+    "Whitened contexts have independent bounded coordinates; ||Sigma||_op <= 1",
+    "Noise only assumed to have bounded variance sigma^2",
+    "High-dimensional regime: d grows polynomially with T",
+    "Lenient-regret tuning of T0 uses the lenient tolerance Delta, epsilon, h'_min and c_underline"
+   ],
+   "definition_quote": "This paper considers a nonparametric contextual bandit problem with $K$ arms. ... \\textbf{Radial-basis function (RBF) Class}: With $h \\in C^3$ satisfies $h(x) > 0, h'(x) < 0, \\forall x \\in [0, 2]$, and $h'(\\cdot)$ is monotonically increasing, the class of kernels is defined as $K(x,x') = h(\\|x-x'\\|^2/d)$."
   }
  ],
  "algorithms": [
   {
    "id": "a1",
-   "name": "Explore-then-Commit with kernel interpolation (EtC)",
+   "name": "Explore-then-Commit with kernel (ridgeless) interpolation (EtC)",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -195,7 +203,8 @@
    ],
    "requires_knowledge_of": [
     "K",
-    "d"
+    "d",
+    "kernel"
    ]
   }
  ],
@@ -214,36 +223,37 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O_tilde",
-    "expression": "T**Max(tau_1, 1 - Min(tau_1/2, tau_2, tau_1 - 4*tau_2)/2)",
+    "expression": "T**Max(tau_1, 1 - tau_bar/2)",
     "expression_latex": "R(T) = \\tilde{O}\\rbr{T^{\\max\\{\\tau_1, 1 - {\\overline{\\tau}}/  {2}\\}}}",
     "regime": null
    },
    "symbols": {
     "tau_1": "exponent with d = Theta(T^tau_1), tau_1 in (0,1)",
-    "tau_2": "exponent with eps = Theta(T^-tau_2), tau_2 in (0, tau_1/4)"
+    "tau_2": "exponent with epsilon = Theta(T^-tau_2), tau_2 in (0, tau_1/4)",
+    "tau_bar": "min{tau_1/2, tau_2, tau_1 - 4 tau_2}"
    },
    "conditions": [
-    "kernel from the inner-product class with 1/d scaling, K(x,x) <= 1",
-    "Assumption 4.1 (RKHS norm <= B, ||Sigma||_op <= 1, whitened contexts with independent bounded coordinates)",
     "d = Theta(T^tau_1), tau_1 in (0,1)",
-    "low-rank covariance (Case I): Sigma = diag(1,...,1,0,...,0) with rank eps*d, eps = Theta(T^-tau_2), tau_2 in (0, tau_1/4)",
+    "Assumption 4.1 (RKHS norm <= B, ||Sigma||_op <= 1, whitened contexts with independent bounded coordinates)",
+    "low-rank covariance Sigma = diag(1,...,1,0,...,0) with rank epsilon d (Case I), epsilon = Theta(T^-tau_2), tau_2 in (0, tau_1/4)",
+    "kernel normalized with K(x,x) <= 1",
     "K = O(1)"
    ],
    "tuning": [
-    "exploration duration T0 = Theta(K d)"
+    "exploration duration T_0 = Theta(K d)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:etc_reg_simple",
     "number": "Theorem 4.8",
-    "quote": "Consider a kernel from the inner-product class as Definition \\ref{def:kernel_class}. Suppose that $d = \\Theta(T^{\\tau_1})$ and Assumption~\\ref{asmp:basic} holds, where $\\tau_1 \\in (0, 1)$. Furthermore, assume the contexts are generated through low-rank covariance structure (Case I in \\exref{ex:liang_sec4}) with $\\varepsilon = \\Theta(T^{-\\tau_2})$, where $\\tau_2 \\in (0, \\tau_1 / 4)$. Then, with $\\overline{\\tau} = \\min\\cbr{{\\tau_1}/  {2}, \\tau_2, \\tau_1 - 4\\tau_2} > 0$, EtC with the exploration duration $T_0 = \\Theta(Kd)$ is a no-regret algorithm, and the regret satisfies $R(T) = \\tilde{O}\\rbr{T^{\\max\\{\\tau_1, 1 - {\\overline{\\tau}}/  {2}\\}}}$."
+    "quote": "Consider a kernel from the inner-product class as Definition \\ref{def:kernel_class}. Suppose that $d = \\Theta(T^{\\tau_1})$ and Assumption~\\ref{asmp:basic} holds, where $\\tau_1 \\in (0, 1)$. Furthermore, assume the contexts are generated through low-rank covariance structure (Case I ...) with $\\varepsilon = \\Theta(T^{-\\tau_2})$, where $\\tau_2 \\in (0, \\tau_1 / 4)$. Then, with $\\overline{\\tau} = \\min\\cbr{{\\tau_1}/  {2}, \\tau_2, \\tau_1 - 4\\tau_2} > 0$, EtC with the exploration duration $T_0 = \\Theta(Kd)$ is a no-regret algorithm, and the regret satisfies R(T) = \\tilde{O}(T^{\\max\\{\\tau_1, 1 - \\overline{\\tau}/2\\}})."
    },
    "confidence": "medium",
-   "notes": "Regret defined via expected f values versus per-round optimal arm, so pseudo-regret against best action per round. Exploration length depends on d, not T; horizon marked anytime, though the asymptotic regime ties d to T. Noise only has bounded variance."
+   "notes": "Regret defined via expectations of f (pseudo-regret) against per-round optimal arm. EtC does not use T itself; marked anytime, but bound is along a sequence of instances with d tied to T."
   },
   {
    "id": "r2",
-   "setting": "s1",
+   "setting": "s2",
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
@@ -255,38 +265,38 @@
    "compute": "polynomial",
    "bound": {
     "notation": "O_tilde",
-    "expression": "T**Max(tau_1, 1 - 2*tau_1, 1 - c_rbf*tau_1, 1 - Min(tau_1/2, tau_2, tau_1 - 2*tau_2)/2)",
+    "expression": "T**Max(tau_1, 1 - 2*tau_1, 1 - c_rbf*tau_1, 1 - tau_bar/2)",
     "expression_latex": "R(T) = \\tilde{O}\\rbr{T^{\\max\\cbr{\\tau_1, 1-2\\tau_1, 1- c\\tau_1, 1 - {\\overline{\\tau}} / {2}}}}",
     "regime": null
    },
    "symbols": {
-    "tau_1": "exponent with d = Theta(T^tau_1), tau_1 in (0,1)",
-    "tau_2": "exponent with eps = Theta(T^-tau_2), tau_2 in (0, tau_1/2)",
+    "tau_1": "exponent with d = Theta(T^tau_1)",
+    "tau_2": "exponent with epsilon = Theta(T^-tau_2), tau_2 in (0, tau_1/2)",
+    "tau_bar": "min{tau_1/2, tau_2, tau_1 - 2 tau_2}",
     "c_rbf": "constant c > 0 with ||X_1^(i)|| = o(d^-c)"
    },
    "conditions": [
-    "kernel from the RBF class with 1/d scaling, K(x,x) <= 1",
-    "Assumption 4.1",
     "d = Theta(T^tau_1), tau_1 in (0,1)",
-    "||X_1^(i)|| = o(d^-c) and gamma_d^(i) >= c_underline Tr(Sigma)/d for sufficiently large d and some c > 0",
-    "low-rank covariance (Case I) with eps = Theta(T^-tau_2), tau_2 in (0, tau_1/2)",
+    "Assumption 4.1",
+    "||X_1^(i)|| = o(d^-c) and gamma_d^(i) >= c_underline Tr(Sigma)/d for sufficiently large d, some c > 0",
+    "low-rank covariance (Case I) with epsilon = Theta(T^-tau_2), tau_2 in (0, tau_1/2)",
     "K = O(1)"
    ],
    "tuning": [
-    "exploration duration T0 = Theta(K d)"
+    "exploration duration T_0 = Theta(K d)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:etc_reg_simple_rbf",
     "number": "Theorem 4.9",
-    "quote": "Consider a kernel from the RBF class as Definition \\ref{def:kernel_class}. Suppose that $d = \\Theta(T^{\\tau_1})$ and Assumption~\\ref{asmp:basic} holds, where $\\tau_1 \\in (0, 1)$. Also, suppose that $\\|X_1^{(i)}\\| = o(d^{-c})$ and $\\gamma_d^{(i)} \\geq \\underline{c} \\mathrm{Tr}(\\Sigma_d^{(i)})/d$ hold ... with $\\varepsilon = \\Theta(T^{-\\tau_2})$, where $\\tau_2 \\in (0, \\tau_1 / 2)$. Then, with $\\overline{\\tau} = \\min\\cbr{{\\tau_1}/  {2}, \\tau_2, \\tau_1 - 2\\tau_2} > 0$, EtC with the exploration duration $T_0 = \\Theta(Kd)$ is a no-regret algorithm, and the regret satisfies $R(T) = \\tilde{O}(T^{\\max\\cbr{\\tau_1, 1-2\\tau_1, 1- c\\tau_1, 1 - {\\overline{\\tau}} / {2}}})$."
+    "quote": "Consider a kernel from the RBF class ... Suppose that $d = \\Theta(T^{\\tau_1})$ and Assumption~\\ref{asmp:basic} holds ... Also, suppose that $\\|X_1^{(i)}\\| = o(d^{-c})$ and $\\gamma_d^{(i)} \\geq \\underline{c} \\mathrm{Tr}(\\Sigma_d^{(i)})/d$ ... Case I ... with $\\varepsilon = \\Theta(T^{-\\tau_2})$, where $\\tau_2 \\in (0, \\tau_1 / 2)$. Then, with $\\overline{\\tau} = \\min\\cbr{{\\tau_1}/{2}, \\tau_2, \\tau_1 - 2\\tau_2} > 0$, EtC with the exploration duration $T_0 = \\Theta(Kd)$ is a no-regret algorithm, and the regret satisfies R(T) = \\tilde{O}(T^{\\max\\{\\tau_1, 1-2\\tau_1, 1- c\\tau_1, 1 - \\overline{\\tau}/2\\}})."
    },
    "confidence": "medium",
-   "notes": "Same remarks as Theorem 4.8."
+   "notes": "Pseudo-regret against per-round optimal arm."
   },
   {
    "id": "r3",
-   "setting": "s2",
+   "setting": "s1",
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
@@ -303,27 +313,26 @@
     "regime": "T sufficiently large"
    },
    "symbols": {
-    "Delta_len": "lenient regret tolerance Delta > 0 (fixed constant)"
+    "Delta_len": "lenient tolerance: per-round regret up to Delta_len is not counted"
    },
    "conditions": [
-    "quantity is lenient regret R_Delta(T) = sum_t max(r(t) - Delta_len, 0)",
-    "kernel from the inner-product class",
-    "setup of Theorem 4.6 (c_L <= d/N <= c_U, Assumption 4.1)",
-    "covariance of Case I, II or III of Example 1",
+    "lenient regret R_Delta(T) = sum_t max{r(t) - Delta_len, 0} with fixed constant Delta_len > 0",
     "d = Theta(T^tau), tau in (0,1)",
-    "eps sufficiently small as a function of Delta_len (e.g. Case I: 3B^2 h''_max eps^2/4 + B^2 beta eps < Delta_len/(4K))"
+    "setup of Theorem 4.6 with covariance Case I, II or III of Example 1",
+    "epsilon sufficiently small as a function of Delta_len (e.g. 3B^2 h''_max eps^2/4 + B^2 beta eps < Delta_len/(4K) in Case I)",
+    "Assumption 4.1"
    ],
    "tuning": [
-    "T0 = O(d); e.g. Case I and II: T0 = ceil(256 sigma^2 K^2 eps / Delta_len) d; Case III: T0 = floor(eps^2 h''_min Delta_len/(64 sigma^2 beta)) d"
+    "T_0 = O(d), e.g. T_0 = ceil(256 sigma^2 K^2 eps / Delta_len) d (Cases I, II), T_0 = floor(eps^2 h''_min Delta_len/(64 sigma^2 beta)) d (Case III)"
    ],
    "is_new": true,
    "source": {
     "label": "thm:etc_lr_Td",
     "number": "Theorem 4.11",
-    "quote": "Fix any $\\Delta > 0$ as a constant. Consider the setup of Theorem \\ref{thm:inner-product} with the cases $\\mathrm{I}$, $\\mathrm{II}$, and $\\mathrm{III}$ as Example \\ref{ex:liang_sec4}. ... assume that $d = \\Theta(T^{\\tau})$ holds for some $\\tau \\in (0, 1)$. Furthermore, each of the cases $\\mathrm{I}$, $\\mathrm{II}$, and $\\mathrm{III}$, if $\\varepsilon$ is sufficiently small as a function of $\\Delta$, then we can choose $T_0 = O(d)$ and the lenient regret for each of the three examples in Example \\ref{ex:liang_sec4} is $R_{\\Delta}(T) = O(d) = o(T)$."
+    "quote": "Fix any $\\Delta > 0$ as a constant. Consider the setup of Theorem \\ref{thm:inner-product} with the cases I, II, and III ... assume that $d = \\Theta(T^{\\tau})$ holds for some $\\tau \\in (0, 1)$. Furthermore, each of the cases I, II, and III, if $\\varepsilon$ is sufficiently small as a function of $\\Delta$, then we can choose $T_0 = O(d)$ and the lenient regret for each of the three examples in Example \\ref{ex:liang_sec4} is $R_{\\Delta}(T) = O(d) = o(T)$."
    },
    "confidence": "medium",
-   "notes": "Lenient regret (not standard regret); quantity 'other'. The Delta here is the lenient tolerance, not an arm gap. Exploration length per Table 2 in the appendix."
+   "notes": "Quantity is lenient regret (Delta-tolerant pseudo-regret), recorded as 'other'. One record covers all three covariance cases."
   },
   {
    "id": "r4",
@@ -345,20 +354,17 @@
    },
    "symbols": {
     "tau": "exponent with d = Theta(T^tau), tau in (0,1)",
-    "Delta_len": "lenient regret tolerance Delta > 0"
+    "Delta_len": "lenient tolerance"
    },
    "conditions": [
-    "quantity is lenient regret R_Delta(T) = sum_t max(r(t) - Delta_len, 0)",
-    "kernel from the RBF class",
+    "lenient regret with fixed Delta_len > 0",
     "Assumption 4.1",
-    "covariance of Case I, II or III of Example 1 with constant eps > 0",
-    "d = Theta(T^tau), tau in (0,1)",
-    "-5 B^2 h'_min eps < Delta_len/(4K) with h'_min = min_{a in [0,2]} h'(a) < 0"
+    "epsilon > 0 constant with -5 B^2 h'_min eps < Delta_len/(4K), h'_min = min_{a in [0,2]} h'(a) < 0",
+    "d = Theta(T^tau)",
+    "covariance Case I, II or III of Example 1"
    ],
    "tuning": [
-    "Case I: T0 = ceil(256 sigma^2 K^2 eps / Delta_len) d",
-    "Case II: T0 = ceil(256 sigma^2 K^2 / (Delta_len eps)) d",
-    "Case III: T0 = floor(Delta_len eps c_underline / (32 h'_min sigma^2)) d"
+    "Case I: T_0 = ceil(256 sigma^2 K^2 eps/Delta_len) d; Case II: T_0 = ceil(256 sigma^2 K^2/(Delta_len eps)) d; Case III: T_0 = floor(Delta_len eps c_underline/(32 h'_min sigma^2)) d"
    ],
    "is_new": true,
    "source": {
@@ -367,7 +373,7 @@
     "quote": "Fix any $\\Delta > 0$. Suppose that Assumption~\\ref{asmp:basic} holds and $\\varepsilon > 0$ is constant. Furthermore, assume that $d = \\Theta(T^{\\tau})$ holds for some $\\tau \\in (0, 1)$. Then, the lenient regret for each of the three examples in Example \\ref{ex:liang_sec4} is $R_{\\Delta}(T) = O(T^\\tau)$ if $\\varepsilon$ is small enough such that $-5B^2 h_{\\mathrm{min}}' \\varepsilon < \\frac{\\Delta}{4K}$ ..."
    },
    "confidence": "medium",
-   "notes": "Lenient regret for the RBF class; O(T^tau) = O(d)."
+   "notes": "Lenient regret recorded as 'other'."
   }
  ],
  "cited_results": [
@@ -380,7 +386,7 @@
    "algorithm_name": "CGP-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Kernelized contextual bandit, common reward function, sigma-sub-Gaussian noise",
+   "setting_description": "Kernelized contextual bandit with common reward function, sub-Gaussian noise; bound via maximum information gain",
    "bound": {
     "notation": "O",
     "expression": "gamma_T*sqrt(T)",
@@ -398,11 +404,11 @@
    "algorithm_name": "Sup-kernel-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Kernelized contextual bandit with K arms, common reward function, sigma-sub-Gaussian noise",
+   "setting_description": "Kernelized contextual bandit with common reward function across arms, sub-Gaussian noise",
    "bound": {
     "notation": "O",
     "expression": "sqrt(gamma_T*T)",
-    "expression_latex": "O\\rbr{\\sqrt{\\gamma_T T}}",
+    "expression_latex": "O(\\sqrt{\\gamma_T T})",
     "regime": null
    },
    "where": "Appendix D.1"
@@ -414,16 +420,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "ae3ec0bf9ad6",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
   "algorithm_registry_size": 133,
-  "date": "2026-11-09T12:01:41",
+  "date": "2026-11-11T11:39:08",
   "source_chars": 129744,
-  "input_tokens": 107231,
-  "output_tokens": 8520,
-  "cost_usd_equiv": 0.749936,
+  "input_tokens": 107659,
+  "output_tokens": 9560,
+  "cost_usd_equiv": 0.7705018,
   "quote_retry": {
    "asked": 0,
    "fixed": 0

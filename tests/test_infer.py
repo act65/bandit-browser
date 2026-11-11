@@ -135,3 +135,32 @@ def test_lower_bound_in_K_reaches_compact_sets_only_at_K_equals_d():
     got = run(S, R)
     assert got[("m:l", "compact")]["expression"].replace(" ", "") == "sqrt(T*d*log(d))"
     assert ("m:x", "compact") not in got
+
+
+KERNEL = dict(action_space="kernel_rkhs", noise="subgaussian")
+
+
+def test_gamma_T_substituted_per_kernel_family():
+    """Ontology v0.6: a sqrt(T gamma_T) upper bound for any kernel (family general) passes down to named kernels
+    with gamma_T replaced by its order (Srinivas et al. 2010; Vakili et al. 2021); a Matern lower bound passes up
+    to the general kernel class, unchanged. Without the map the inherited bound keeps gamma_T and is never compared."""
+    S = {"gen": key(**KERNEL, kernel={"family": "general"}), "se": key(**KERNEL, kernel={"family": "squared_exponential"}),
+         "mat": key(**KERNEL, kernel={"family": "matern"}), "lin": key(**KERNEL, kernel={"family": "linear"})}
+    R = [result("g:u", "gen", "upper", "sqrt(T*gamma_T)", notation="O"),
+         result("m:l", "mat", "lower", "T**((nu_matern + d)/(2*nu_matern + d))")]
+    got = run(S, R)
+    assert "gamma_T" not in got[("g:u", "se")]["expression"] and "log(T)" in got[("g:u", "se")]["expression"]
+    assert "nu_matern" in got[("g:u", "mat")]["expression"]
+    assert got[("g:u", "lin")]["expression"].replace(" ", "") in ("sqrt(T*d*log(T))", "sqrt(d*T*log(T))", "sqrt(T*d*log(T))")
+    assert ("m:l", "gen") in got and ("g:u", "mat") in got
+    assert ("m:l", "se") not in got  # Matern and squared exponential are not ordered
+
+
+def test_kernel_node_parameter_keeps_other_setting_ids():
+    """kernel is id_optional: adding it in v0.6 must not change the id of a setting it does not apply to
+    (ids are published in links)."""
+    import resolve
+    k = key()
+    assert k["kernel"] == {"family": "not_applicable"}
+    assert resolve.setting_id(k) == resolve.setting_id({x: v for x, v in k.items() if x != "kernel"})
+    assert resolve.setting_id(key(**KERNEL, kernel={"family": "matern"})) != resolve.setting_id(key(**KERNEL))

@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Bayesian setting (f sample from GP with known kernel)",
+   "name_in_paper": "Sequential optimization, Bayesian setting (f sample from GP)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -85,18 +85,20 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "general"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "kernel satisfies Mercer conditions with bounded kernel (k_bar) and uniformly bounded eigenfunctions (psi) (Assumption 1)",
-    "eigendecay condition (polynomial or exponential) on the kernel"
+    "Kernel assumed Mercer with bounded eigenfeatures |phi_m| <= psi (Assumption 1)"
    ],
    "definition_quote": "Under the {Bayesian} setting, $f$ is assumed to be a sample from a prior GP with kernel $k$. The observation noise $\\{\\epsilon_t\\}_{t=1}^T$ are assumed to be i.i.d. zero mean Gaussian random variables with variance~$\\tau$."
   },
   {
    "id": "s2",
-   "name_in_paper": "Frequentist setting (f in RKHS with ||f||_Hk <= B)",
+   "name_in_paper": "Sequential optimization, frequentist setting (f in RKHS)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -118,7 +120,7 @@
     "time_varying": "fixed",
     "access": "explicit",
     "norm_bound": "not_applicable",
-    "parameter_set": "l2_ball",
+    "parameter_set": "not_applicable",
     "loss_set": "not_applicable",
     "parameter_structure": "not_applicable"
    },
@@ -165,12 +167,14 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "general"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "kernel satisfies Mercer conditions with bounded kernel and uniformly bounded eigenfunctions (Assumption 1)",
-    "eigendecay condition (polynomial or exponential) on the kernel"
+    "Kernel assumed Mercer with bounded eigenfeatures |phi_m| <= psi (Assumption 1)"
    ],
    "definition_quote": "Under the {frequentist} setting, $f$ is assumed to live in the RKHS corresponding to $k$. In particular, $\\|f\\|_{H_k}\\le B$, for some $B>0$ ... The observation noise are assumed to be i.i.d. sub-Gaussian random variables."
   }
@@ -198,7 +202,8 @@
     "thompson_sampling"
    ],
    "requires_knowledge_of": [
-    "kernel"
+    "kernel",
+    "prior"
    ]
   },
   {
@@ -233,28 +238,28 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "D_proj/2*log(1 + k_bar*T/(tau*D_proj)) + delta_D*T/(2*tau)",
+    "expression": "D_proj/2*log(1 + kbar*T/(tau*D_proj)) + delta_D*T/(2*tau)",
     "expression_latex": "\\gamma_T \\le \\frac{1}{2}D\\log\\left(1+\\frac{\\bar{k}T}{\\tau D}\\right) + \\frac{1}{2}\\frac{\\delta_DT}{\\tau}",
-    "regime": "for all D in N"
+    "regime": "for all D_proj in N"
    },
    "symbols": {
-    "D_proj": "projection dimension D (any positive integer)",
-    "k_bar": "uniform bound on |k(x,x')|",
-    "tau": "noise variance / regularisation parameter",
+    "D_proj": "dimension of the finite projection (paper's D)",
+    "kbar": "uniform bound on |k(x,x')|",
+    "tau": "noise variance / regulariser",
     "delta_D": "tail mass sum_{m>D} lambda_m psi^2"
    },
    "conditions": [
-    "kernel satisfies Assumption 1 (Mercer kernel, |k|<=k_bar, |phi_m|<=psi)"
+    "Kernel satisfies Assumption 1 (Mercer, |k|<=kbar, |phi_m|<=psi)"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "TheoremDT",
     "number": "Theorem 3",
-    "quote": "Consider a GP with a kernel $k$ satisfying Assumption~\\ref{ass1}. For $D\\in \\Nn$, let $\\delta_D$ be as defined in~\\eqref{eq:deltaM}. The following upper bound on $\\gamma_T $, defined in~\\eqref{maximal}, holds for all $D\\in\\Nn$. \\gamma_T \\le \\frac{1}{2}D\\log\\left(1+\\frac{\\bar{k}T}{\\tau D}\\right) + \\frac{1}{2}\\frac{\\delta_DT}{\\tau}."
+    "quote": "Consider a GP with a kernel $k$ satisfying Assumption~\\ref{ass1}. For $D\\in \\Nn$, let $\\delta_D$ be as defined in~\\eqref{eq:deltaM}. The following upper bound on $\\gamma_T $ ... holds for all $D\\in\\Nn$. \\gamma_T \\le \\frac{1}{2}D\\log\\left(1+\\frac{\\bar{k}T}{\\tau D}\\right) + \\frac{1}{2}\\frac{\\delta_DT}{\\tau}."
    },
-   "confidence": "medium",
-   "notes": "Bound on maximal information gain gamma_T (kernel quantity), not a regret bound; applies to both Bayesian and frequentist settings. Quantity 'other'; probability field not meaningful (deterministic)."
+   "confidence": "high",
+   "notes": "Bound on maximal information gain gamma_T (deterministic quantity), not regret; applies to both Bayesian and frequentist settings."
   },
   {
    "id": "r2",
@@ -270,20 +275,20 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "((C_p*psi**2*T/tau)**(1/beta_p)*log(1 + k_bar*T/tau)**(-1/beta_p) + 1)*log(1 + k_bar*T/tau)",
+    "expression": "((C_p*psi**2*T/tau)**(1/beta_p)*log(1 + kbar*T/tau)**(-1/beta_p) + 1)*log(1 + kbar*T/tau)",
     "expression_latex": "\\gamma_T\\le \\left((\\frac{C_p\\psi^2T}{\\tau})^{\\frac{1}{\\beta_p}}\\log^{-\\frac{1}{\\beta_p}}(1+\\frac{\\bar{k}T}{\\tau})+1\\right)\\log(1+\\frac{\\bar{k}T}{\\tau})",
     "regime": null
    },
    "symbols": {
     "C_p": "polynomial eigendecay constant",
     "beta_p": "polynomial eigendecay exponent (>1)",
-    "psi": "uniform bound on eigenfunctions",
-    "k_bar": "kernel bound",
+    "psi": "bound on eigenfeatures",
+    "kbar": "bound on kernel",
     "tau": "noise variance"
    },
    "conditions": [
-    "kernel has (C_p, beta_p) polynomial eigendecay: lambda_m <= C_p m^{-beta_p}, beta_p > 1",
-    "Assumption 1"
+    "Kernel satisfies Assumption 1",
+    "(C_p, beta_p) polynomial eigendecay: lambda_m <= C_p m^{-beta_p}, beta_p > 1"
    ],
    "tuning": [],
    "is_new": true,
@@ -293,7 +298,7 @@
     "quote": "If $k$ has a $(C_p,\\beta_p)$ polynomial eigendecay, we have \\gamma_T\\le \\left((\\frac{C_p\\psi^2T}{\\tau})^{\\frac{1}{\\beta_p}}\\log^{-\\frac{1}{\\beta_p}}(1+\\frac{\\bar{k}T}{\\tau})+1\\right)\\log(1+\\frac{\\bar{k}T}{\\tau}). The expression can be simplified as $\\gamma_T=\\O\\left(T^{\\frac{1}{\\beta_p}}\\log^{1-\\frac{1}{\\beta_p}}(T)\\right)$."
    },
    "confidence": "high",
-   "notes": "Information-gain bound; simplified O(T^{1/beta_p} log^{1-1/beta_p} T). Matérn-nu special case (Remark 2): O(T^{d/(2nu+d)} log^{2nu/(2nu+d)} T)."
+   "notes": "Bound on gamma_T. Simplified: O(T^{1/beta_p} log^{1-1/beta_p} T). For Matern-nu (Remark 2): O(T^{d/(2nu+d)} log^{2nu/(2nu+d)} T)."
   },
   {
    "id": "r3",
@@ -309,36 +314,106 @@
    "compute": "not_stated",
    "bound": {
     "notation": "exact",
-    "expression": "((2/C_e2*(log(T) + C_beta_e))**(1/beta_e) + 1)*log(1 + k_bar*T/tau)",
+    "expression": "(((2/C_e2)*(log(T) + C_beta_e))**(1/beta_e) + 1)*log(1 + kbar*T/tau)",
     "expression_latex": "\\gamma_T \\le \\left(\\left(\\frac{2}{C_{e,2}}(\\log(T)+C_{\\beta_e})\\right)^{\\frac{1}{\\beta_e}}+1\\right)\\log(1+\\frac{\\bar{k}T}{\\tau})",
     "regime": null
    },
    "symbols": {
-    "C_e2": "exponential eigendecay rate constant",
+    "C_e2": "exponential eigendecay rate constant C_{e,2}",
     "beta_e": "exponential eigendecay exponent",
-    "C_beta_e": "constant depending on C_e1, C_e2, beta_e, psi, tau as defined in Corollary 1",
-    "k_bar": "kernel bound",
+    "C_beta_e": "constant depending on C_{e,1}, C_{e,2}, beta_e, psi, tau as defined in Corollary 1",
+    "kbar": "bound on kernel",
     "tau": "noise variance"
    },
    "conditions": [
-    "kernel has (C_e1, C_e2, beta_e) exponential eigendecay: lambda_m <= C_e1 exp(-C_e2 m^{beta_e})",
-    "Assumption 1"
+    "Kernel satisfies Assumption 1",
+    "(C_e1, C_e2, beta_e) exponential eigendecay: lambda_m <= C_e1 exp(-C_e2 m^{beta_e})"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": "Cor:PolExp",
     "number": "Corollary 1",
-    "quote": "If $k$ has a $(C_{e,1},C_{e,2},\\beta_e)$ exponential eigendecay, we have \\gamma_T \\le \\left(\\left(\\frac{2}{C_{e,2}}(\\log(T)+C_{\\beta_e})\\right)^{\\frac{1}{\\beta_e}}+1\\right)\\log(1+\\frac{\\bar{k}T}{\\tau}) ... The expression can be simplified as $\\gamma_T=\\O(\\log^{1+\\frac{1}{\\beta_e}}(T))$."
+    "quote": "If $k$ has a $(C_{e,1},C_{e,2},\\beta_e)$ exponential eigendecay, we have \\gamma_T \\le \\left(\\left(\\frac{2}{C_{e,2}}(\\log(T)+C_{\\beta_e})\\right)^{\\frac{1}{\\beta_e}}+1\\right)\\log(1+\\frac{\\bar{k}T}{\\tau}) ... simplified as $\\gamma_T=\\O(\\log^{1+\\frac{1}{\\beta_e}}(T))$."
    },
    "confidence": "high",
-   "notes": "Information-gain bound; SE special case O(log^{d+1} T) (Remark 2)."
+   "notes": "Bound on gamma_T. Simplified O(log^{1+1/beta_e} T); SE kernel: O(log^{d+1} T) (Remark 2)."
   },
   {
    "id": "r4",
    "setting": "s1",
    "side": "upper",
    "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "regret_unspecified",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "T**((beta_p + 1)/(2*beta_p))*log(T)**(1 - 1/(2*beta_p))",
+    "expression_latex": "\\O\\left(T^{\\frac{\\beta_p+1}{2\\beta_p}}\\log^{1-\\frac{1}{2\\beta_p}}(T)\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "beta_p": "polynomial eigendecay exponent"
+   },
+   "conditions": [
+    "Kernel satisfies Assumption 1",
+    "polynomial eigendecay with exponent beta_p > 1"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "Sec:RegBounds",
+    "number": "Section 4",
+    "quote": "Under the Bayesian setting, the application of our bounds on $\\gamma_T$ to $\\O(\\sqrt{\\log(T)\\gamma_T T})$ regret bounds for GP-UCB and GP-TS established in~\\cite{srinivas2010gaussian, kandasamy2018parallelised} results in $\\O\\left(T^{\\frac{\\beta_p+1}{2\\beta_p}}\\log^{1-\\frac{1}{2\\beta_p}}(T)\\right)$ and $\\O\\left(T^{\\frac{1}{2}}\\log^{1+\\frac{1}{2\\beta_e}}(T)\\right)$ regret bounds"
+   },
+   "confidence": "medium",
+   "notes": "Informal statement in text (not a theorem); combines Srinivas et al. high-probability bound with Corollary 1. Matern: O(T^{(nu+d)/(2nu+d)} log^{(4nu+d)/(4nu+2d)} T). Probability type taken from Srinivas et al. analysis (w.p. 1-delta)."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "regret_unspecified",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)*log(T)**(1 + 1/(2*beta_e))",
+    "expression_latex": "\\O\\left(T^{\\frac{1}{2}}\\log^{1+\\frac{1}{2\\beta_e}}(T)\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "beta_e": "exponential eigendecay exponent"
+   },
+   "conditions": [
+    "Kernel satisfies Assumption 1",
+    "exponential eigendecay with exponent beta_e"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "Sec:RegBounds",
+    "number": "Section 4",
+    "quote": "results in ... $\\O\\left(T^{\\frac{1}{2}}\\log^{1+\\frac{1}{2\\beta_e}}(T)\\right)$ regret bounds under the polynomial and exponential eigendecays, respectively."
+   },
+   "confidence": "medium",
+   "notes": "Informal. SE kernel: O(T^{1/2} log^{d/2+1} T)."
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
    "algorithm_class": null,
    "quantity": "bayesian_regret",
    "dependence": "worst_case",
@@ -356,24 +431,24 @@
     "beta_p": "polynomial eigendecay exponent"
    },
    "conditions": [
-    "polynomial eigendecay with exponent beta_p > 1",
-    "Assumption 1"
+    "Kernel satisfies Assumption 1",
+    "polynomial eigendecay with exponent beta_p > 1"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
-    "label": null,
+    "label": "Sec:RegBounds",
     "number": "Section 4",
-    "quote": "Under the Bayesian setting, the application of our bounds on $\\gamma_T$ to $\\O(\\sqrt{\\log(T)\\gamma_T T})$ regret bounds for GP-UCB and GP-TS established in~\\cite{srinivas2010gaussian, kandasamy2018parallelised} results in $\\O\\left(T^{\\frac{\\beta_p+1}{2\\beta_p}}\\log^{1-\\frac{1}{2\\beta_p}}(T)\\right)$ and ..."
+    "quote": "Under the Bayesian setting, the application of our bounds on $\\gamma_T$ to $\\O(\\sqrt{\\log(T)\\gamma_T T})$ regret bounds for GP-UCB and GP-TS established in~\\cite{srinivas2010gaussian, kandasamy2018parallelised} results in $\\O\\left(T^{\\frac{\\beta_p+1}{2\\beta_p}}\\log^{1-\\frac{1}{2\\beta_p}}(T)\\right)$"
    },
    "confidence": "medium",
-   "notes": "Derived in text (not a formal theorem) by plugging Corollary 1 into prior regret bounds. Also holds for GP-TS. Matérn special case O(T^{(nu+d)/(2nu+d)} log^{(4nu+d)/(4nu+2d)} T). Regret type follows cited works (Bayesian)."
+   "notes": "Informal; GP-TS Bayesian regret via Kandasamy et al. Quantity type (Bayesian regret) inferred from cited analysis."
   },
   {
-   "id": "r5",
+   "id": "r7",
    "setting": "s1",
    "side": "upper",
-   "algorithm": "a1",
+   "algorithm": "a2",
    "algorithm_class": null,
    "quantity": "bayesian_regret",
    "dependence": "worst_case",
@@ -391,88 +466,18 @@
     "beta_e": "exponential eigendecay exponent"
    },
    "conditions": [
-    "exponential eigendecay with exponent beta_e",
-    "Assumption 1"
+    "Kernel satisfies Assumption 1",
+    "exponential eigendecay with exponent beta_e"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
-    "label": null,
+    "label": "Sec:RegBounds",
     "number": "Section 4",
-    "quote": "... results in ... and $\\O\\left(T^{\\frac{1}{2}}\\log^{1+\\frac{1}{2\\beta_e}}(T)\\right)$ regret bounds under the polynomial and exponential eigendecays, respectively."
+    "quote": "results in ... $\\O\\left(T^{\\frac{1}{2}}\\log^{1+\\frac{1}{2\\beta_e}}(T)\\right)$ regret bounds under the polynomial and exponential eigendecays, respectively."
    },
    "confidence": "medium",
-   "notes": "Derived in text; also for GP-TS. SE special case O(T^{1/2} log^{d/2+1} T)."
-  },
-  {
-   "id": "r6",
-   "setting": "s2",
-   "side": "upper",
-   "algorithm": "a3",
-   "algorithm_class": null,
-   "quantity": "high_probability_regret",
-   "dependence": "worst_case",
-   "comparator": "best_fixed_action",
-   "probability": "high_probability",
-   "horizon": "known",
-   "compute": "not_stated",
-   "bound": {
-    "notation": "O",
-    "expression": "T**((beta_p + 1)/(2*beta_p))*log(T)**(5/2 - 1/(2*beta_p))",
-    "expression_latex": "\\O\\left(T^{\\frac{\\beta_p+1}{2\\beta_p}}\\log^{\\frac{5}{2}-\\frac{1}{2\\beta_p}}(T)\\right)",
-    "regime": null
-   },
-   "symbols": {
-    "beta_p": "polynomial eigendecay exponent"
-   },
-   "conditions": [
-    "polynomial eigendecay with exponent beta_p > 1",
-    "Assumption 1"
-   ],
-   "tuning": [],
-   "is_new": true,
-   "source": {
-    "label": null,
-    "number": "Section 4",
-    "quote": "Under the frequentist setting, the application of our bounds on $\\gamma_T$ to $\\O(\\log^2(T)\\sqrt{\\gamma_T T})$ regret bounds for SupKernelUCB reported in~\\cite{Valko2013kernelbandit}, results in $\\O\\left(T^{\\frac{\\beta_p+1}{2\\beta_p}}\\log^{\\frac{5}{2}-\\frac{1}{2\\beta_p}}(T)\\right)$ and ..."
-   },
-   "confidence": "medium",
-   "notes": "Derived in text; probability type inherited from Valko et al. (not stated here; assumed high-probability). "
-  },
-  {
-   "id": "r7",
-   "setting": "s2",
-   "side": "upper",
-   "algorithm": "a3",
-   "algorithm_class": null,
-   "quantity": "high_probability_regret",
-   "dependence": "worst_case",
-   "comparator": "best_fixed_action",
-   "probability": "high_probability",
-   "horizon": "known",
-   "compute": "not_stated",
-   "bound": {
-    "notation": "O",
-    "expression": "sqrt(T)*log(T)**(5/2 + 1/(2*beta_e))",
-    "expression_latex": "\\O\\left(T^{\\frac{1}{2}}\\log^{\\frac{5}{2}+\\frac{1}{2\\beta_e}}(T)\\right)",
-    "regime": null
-   },
-   "symbols": {
-    "beta_e": "exponential eigendecay exponent"
-   },
-   "conditions": [
-    "exponential eigendecay with exponent beta_e",
-    "Assumption 1"
-   ],
-   "tuning": [],
-   "is_new": true,
-   "source": {
-    "label": null,
-    "number": "Section 4",
-    "quote": "... and $\\O\\left(T^{\\frac{1}{2}}\\log^{\\frac{5}{2}+\\frac{1}{2\\beta_e}}(T)\\right)$ regret bounds under the polynomial and exponential eigendecays, respectively."
-   },
-   "confidence": "medium",
-   "notes": "Derived in text; SE special case O(T^{1/2} log^{d/2+5/2} T)."
+   "notes": "Informal; GP-TS."
   },
   {
    "id": "r8",
@@ -480,7 +485,7 @@
    "side": "upper",
    "algorithm": "a3",
    "algorithm_class": null,
-   "quantity": "high_probability_regret",
+   "quantity": "regret_unspecified",
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "high_probability",
@@ -488,23 +493,61 @@
    "compute": "not_stated",
    "bound": {
     "notation": "O",
-    "expression": "T**((nu_matern + d)/(2*nu_matern + d))*log(T)**(5/2 - d/(4*nu_matern + 2*d))",
-    "expression_latex": "{\\O}\\left(T^{\\frac{\\nu+d}{2\\nu+d}}\\log^{\\frac{5}{2}-\\frac{d}{4\\nu+2d}}(T)\\right)",
+    "expression": "T**((beta_p + 1)/(2*beta_p))*log(T)**(Rational(5,2) - 1/(2*beta_p))",
+    "expression_latex": "\\O\\left(T^{\\frac{\\beta_p+1}{2\\beta_p}}\\log^{\\frac{5}{2}-\\frac{1}{2\\beta_p}}(T)\\right)",
     "regime": null
    },
-   "symbols": {},
+   "symbols": {
+    "beta_p": "polynomial eigendecay exponent"
+   },
    "conditions": [
-    "Matérn-nu kernel with nu > 1/2"
+    "Kernel satisfies Assumption 1",
+    "polynomial eigendecay with exponent beta_p > 1"
    ],
    "tuning": [],
    "is_new": true,
    "source": {
-    "label": null,
+    "label": "Sec:RegBounds",
     "number": "Section 4",
-    "quote": "Consequently, the regret bounds for SupKernelUCB with Mat{\\'e}rn and SE kernels are ${\\O}\\left(T^{\\frac{\\nu+d}{2\\nu+d}}\\log^{\\frac{5}{2}-\\frac{d}{4\\nu+2d}}(T)\\right)$ and $\\O\\left(T^{\\frac{1}{2}}\\log^{\\frac{d}{2}+\\frac{5}{2}}(T)\\right)$, respectively"
+    "quote": "Under the frequentist setting, the application of our bounds on $\\gamma_T$ to $\\O(\\log^2(T)\\sqrt{\\gamma_T T})$ regret bounds for SupKernelUCB reported in~\\cite{Valko2013kernelbandit}, results in $\\O\\left(T^{\\frac{\\beta_p+1}{2\\beta_p}}\\log^{\\frac{5}{2}-\\frac{1}{2\\beta_p}}(T)\\right)$ and $\\O\\left(T^{\\frac{1}{2}}\\log^{\\frac{5}{2}+\\frac{1}{2\\beta_e}}(T)\\right)$"
    },
    "confidence": "medium",
-   "notes": "Matérn special case, matching the Scarlett et al. lower bound up to log^{5/2} T."
+   "notes": "Informal. Matern-nu: O(T^{(nu+d)/(2nu+d)} log^{5/2 - d/(4nu+2d)} T), matching Scarlett et al. lower bound up to log^{5/2}. Original SupKernelUCB analysis on finite search space, extended via discretization."
+  },
+  {
+   "id": "r9",
+   "setting": "s2",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "regret_unspecified",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)*log(T)**(Rational(5,2) + 1/(2*beta_e))",
+    "expression_latex": "\\O\\left(T^{\\frac{1}{2}}\\log^{\\frac{5}{2}+\\frac{1}{2\\beta_e}}(T)\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "beta_e": "exponential eigendecay exponent"
+   },
+   "conditions": [
+    "Kernel satisfies Assumption 1",
+    "exponential eigendecay with exponent beta_e"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "Sec:RegBounds",
+    "number": "Section 4",
+    "quote": "results in ... $\\O\\left(T^{\\frac{1}{2}}\\log^{\\frac{5}{2}+\\frac{1}{2\\beta_e}}(T)\\right)$ regret bounds under the polynomial and exponential eigendecays, respectively."
+   },
+   "confidence": "medium",
+   "notes": "Informal. SE kernel: O(T^{1/2} log^{d/2+5/2} T)."
   }
  ],
  "cited_results": [
@@ -517,14 +560,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Frequentist RKHS bandit, Matérn-nu kernel",
+   "setting_description": "Frequentist RKHS GP bandit, Matern-nu kernel",
    "bound": {
     "notation": "Omega",
     "expression": "T**((nu_matern + d)/(2*nu_matern + d))",
     "expression_latex": "\\Omega(T^{\\frac{\\nu+d}{2\\nu+d}})",
     "regime": null
    },
-   "where": "Table 1 / Introduction"
+   "where": "Introduction / Table 1"
   },
   {
    "cited_key": "Scarlett2017Lower",
@@ -535,32 +578,14 @@
    "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "lower",
-   "setting_description": "Frequentist RKHS bandit, SE kernel",
+   "setting_description": "Frequentist RKHS GP bandit, SE kernel",
    "bound": {
     "notation": "Omega",
     "expression": "sqrt(T)*log(T)**(d/2)",
     "expression_latex": "\\Omega(T^{\\frac{1}{2}}\\log^{\\frac{d}{2}}(T))",
     "regime": null
    },
-   "where": "Table 1 / Introduction"
-  },
-  {
-   "cited_key": "Janz2020SlightImprov",
-   "cited_title": "Bandit optimisation of functions in the Matérn kernel RKHS",
-   "cited_first_author": "D. Janz",
-   "cited_year": 2020,
-   "cited_arxiv_id": null,
-   "algorithm_name": "GP-UCB variant with cover (pi-GP-UCB)",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Frequentist RKHS bandit, Matérn-nu kernel",
-   "bound": {
-    "notation": "O_tilde",
-    "expression": "T**((nu_matern + d*(d + 3/2))/(2*nu_matern + d*(d + 2)))",
-    "expression_latex": "\\tilde{\\O}(T^\\frac{\\nu+d(d+1.5)}{2\\nu+d(d+2)})",
-    "regime": null
-   },
-   "where": "Introduction"
+   "where": "Introduction / Table 1"
   },
   {
    "cited_key": "srinivas2010gaussian",
@@ -568,17 +593,53 @@
    "cited_first_author": "N. Srinivas",
    "cited_year": 2010,
    "cited_arxiv_id": null,
-   "algorithm_name": "GP-UCB",
+   "algorithm_name": null,
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Bayesian GP bandit",
+   "setting_description": "Maximal information gain gamma_T for Matern-nu kernel",
    "bound": {
-    "notation": "O",
-    "expression": "sqrt(log(T)*gamma_T*T)",
-    "expression_latex": "\\O(\\sqrt{\\log(T)\\gamma_T T})",
+    "notation": "O_tilde",
+    "expression": "T**(d*(d + 1)/(2*nu_matern + d*(d + 1)))",
+    "expression_latex": "\\tilde{\\O}(T^{\\frac{d(d+1)}{2\\nu+d(d+1)}})",
     "regime": null
    },
-   "where": "Section 4"
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "srinivas2010gaussian",
+   "cited_title": "Gaussian process optimization in the bandit setting: no regret and experimental design",
+   "cited_first_author": "N. Srinivas",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Maximal information gain gamma_T for SE kernel",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)**(d + 1)",
+    "expression_latex": "\\O(\\log^{d+1}(T))",
+    "regime": null
+   },
+   "where": "Section 1.1"
+  },
+  {
+   "cited_key": "Janz2020SlightImprov",
+   "cited_title": "Bandit optimisation of functions in the Matérn kernel RKHS",
+   "cited_first_author": "D. Janz",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Maximal information gain gamma_T for Matern-nu kernel (cover-based GP-UCB analysis)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(d*(d + 1)/(2*nu_matern + d*(d + 2)))",
+    "expression_latex": "\\tilde{\\O}(T^{\\frac{d(d+1)}{2\\nu+d(d+2)}})",
+    "regime": null
+   },
+   "where": "Section 1.1"
   },
   {
    "cited_key": "Valko2013kernelbandit",
@@ -589,11 +650,29 @@
    "algorithm_name": "SupKernelUCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Frequentist RKHS bandit",
+   "setting_description": "Frequentist RKHS GP bandit, regret in terms of gamma_T",
    "bound": {
     "notation": "O",
     "expression": "log(T)**2*sqrt(gamma_T*T)",
     "expression_latex": "\\O(\\log^2(T)\\sqrt{\\gamma_T T})",
+    "regime": null
+   },
+   "where": "Section 4"
+  },
+  {
+   "cited_key": "srinivas2010gaussian",
+   "cited_title": "Gaussian process optimization in the bandit setting: no regret and experimental design",
+   "cited_first_author": "N. Srinivas",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GP-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Bayesian GP bandit (f sample from GP)",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(log(T)*gamma_T*T)",
+    "expression_latex": "\\O(\\sqrt{\\log(T)\\gamma_T T})",
     "regime": null
    },
    "where": "Section 4"
@@ -607,11 +686,11 @@
    "algorithm_name": "GP-UCB / GP-TS",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Frequentist RKHS bandit",
+   "setting_description": "Frequentist RKHS GP bandit",
    "bound": {
     "notation": "O_tilde",
     "expression": "gamma_T*sqrt(T)",
-    "expression_latex": "\\tilde{\\O}(\\gamma_T\\sqrt{T})",
+    "expression_latex": "\\tilde{O}(\\gamma_T\\sqrt{T})",
     "regime": null
    },
    "where": "Introduction"
@@ -623,16 +702,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "ae3ec0bf9ad6",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
   "algorithm_registry_size": 133,
-  "date": "2026-11-09T12:30:31",
+  "date": "2026-11-11T11:42:08",
   "source_chars": 68224,
-  "input_tokens": 72348,
-  "output_tokens": 9819,
-  "cost_usd_equiv": 0.49685199999999996,
+  "input_tokens": 72776,
+  "output_tokens": 12052,
+  "cost_usd_equiv": 0.5412778,
   "quote_retry": {
    "asked": 0,
    "fixed": 0

@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Variable selection of a high-dimensional GP sample (HDS)",
+   "name_in_paper": "Variable selection of a high-dimensional GP sample depending on few active variables (HDS)",
    "objective": "general_identification",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -25,7 +25,7 @@
    "context": "none",
    "noise": "gaussian_known_variance",
    "learner_knows": [
-    "sigma_std",
+    "sigma",
     "kernel"
    ],
    "instance_assumptions": [
@@ -84,14 +84,17 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "squared_exponential"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "f is a sample from a zero-mean GP on [-1,1]^D with squared-exponential kernel depending only on an unknown set A of d active variables (d << D); goal is to identify A",
-    "the learner knows the kernel bandwidth b and self variance sigma_s^2"
+    "goal is to identify the set A of active coordinates of f on [-1,1]^D (extrinsic dimension D, d=|A| active)",
+    "f depends only on an unknown subset of d active variables; kernel is SE over active coordinates only, with known bandwidth b and self-variance sigma_s^2"
    ],
-   "definition_quote": "Let f : [-1,1]^D -> R be a fixed, but unknown function. ... We assume that this function depends only on a subset of the domain variables, which we call the active variables ... we assume that the kernel is of the form K(x,x') = sigma_s^2 exp(-sum_{i in A}(x_i-x'_i)^2/b^2) ... y_t = f(x_t)+eps_t ... eps_t i.i.d. normal ... variance sigma^2 > 0 (assumed known)"
+   "definition_quote": "Let f : [−1, 1]^D → R be a fixed, but unknown function... We assume that this function depends only on a subset of the domain variables, which we call the active variables... we assume that it is a sample from a Gaussian Process ... with zero mean and a squared-exponential kernel K... y_t = f(x_t) + ε_t where ε_t are i.i.d. normal random variables with zero mean and variance σ^2 > 0 (assumed known)"
   },
   {
    "id": "s2",
@@ -100,13 +103,15 @@
    "feedback": "bandit",
    "environment": "stochastic_iid",
    "action_space": "kernel_rkhs",
-   "function_class": [],
+   "function_class": [
+    "bounded"
+   ],
    "domain": "constrained",
    "context": "none",
    "noise": "gaussian_known_variance",
    "learner_knows": [
     "T",
-    "sigma_std",
+    "sigma",
     "kernel"
    ],
    "instance_assumptions": [
@@ -165,12 +170,16 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "squared_exponential"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "f is a GP sample on [-1,1]^D with squared-exponential kernel depending only on d unknown active variables",
-    "the learner knows the kernel bandwidth b, self variance sigma_s^2 and the number of active variables d (used in beta_t and delta)"
+    "f on [-1,1]^D depends only on d unknown active variables; SE kernel over active coordinates with known bandwidth b and self-variance sigma_s^2",
+    "the learner knows the number of active variables d (used in beta_t)",
+    "per-round regret bounded by known C_0"
    ],
    "definition_quote": "We evaluate any candidate algorithm in\nPT\nterms of its regret, RT = t=1 [f (x∗ ) − f (xt )]."
   }
@@ -178,7 +187,7 @@
  "algorithms": [
   {
    "id": "a1",
-   "name": "Hierarchical Diagonal Sampling (HDS) with generic testing procedure",
+   "name": "Hierarchical Diagonal Sampling (HDS) with generic test",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -186,7 +195,7 @@
     "other"
    ],
    "requires_knowledge_of": [
-    "sigma_std",
+    "sigma",
     "kernel"
    ]
   },
@@ -200,15 +209,13 @@
     "other"
    ],
    "requires_knowledge_of": [
-    "sigma_std",
-    "kernel",
-    "d_act",
-    "D_ext"
+    "sigma",
+    "kernel"
    ]
   },
   {
    "id": "a3",
-   "name": "HDS-FDT followed by GP-UCB on selected variables",
+   "name": "HDS-FDT followed by GP-UCB on active variables",
    "registry_id": null,
    "is_new": true,
    "techniques": [
@@ -217,9 +224,8 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "sigma_std",
-    "kernel",
-    "d_act"
+    "sigma",
+    "kernel"
    ]
   }
  ],
@@ -230,69 +236,77 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "error_probability",
-   "dependence": "worst_case",
-   "comparator": "not_applicable",
-   "probability": "high_probability",
-   "horizon": "not_applicable",
-   "compute": "not_stated",
-   "bound": {
-    "notation": "exact",
-    "expression": "eps_err",
-    "expression_latex": "P(A' = A) \\ge 1-\\epsilon",
-    "regime": null
-   },
-   "symbols": {
-    "eps_err": "target failure probability of support recovery",
-    "D_ext": "extrinsic dimension D"
-   },
-   "conditions": [],
-   "tuning": [
-    "test false positive/negative rates alpha, beta <= (eps_err/D_ext)^(1/ceil(log2 D_ext))"
-   ],
-   "is_new": true,
-   "source": {
-    "label": null,
-    "number": "Theorem 3.2",
-    "quote": "Accuracy:\nFor an arbitrary  > 0, provided\nα, β ≤ (/D)1/dlog De the probability of perfect recovery is P (A0 = A) ≥ 1 − ."
-   },
-   "confidence": "medium",
-   "notes": "Bound on probability of incorrect variable recovery; generic testing block."
-  },
-  {
-   "id": "r2",
-   "setting": "s1",
-   "side": "upper",
-   "algorithm": "a1",
-   "algorithm_class": null,
    "quantity": "sample_complexity",
-   "dependence": "worst_case",
+   "dependence": "instance_dependent",
    "comparator": "not_applicable",
    "probability": "expectation",
    "horizon": "not_applicable",
-   "compute": "not_stated",
+   "compute": "polynomial",
    "bound": {
     "notation": "exact",
-    "expression": "2*(1 - alpha_test)/(1 - 2*alpha_test)*d_act*ceiling(log(D_ext)/log(2))*T_max",
+    "expression": "2*(1 - alpha_err)/(1 - 2*alpha_err)*d_act*ceiling(log(D_ext, 2))*T_max",
     "expression_latex": "E(N) \\le \\frac{2(1-\\alpha)}{1-2\\alpha} d\\lceil\\log D\\rceil T_{max}",
     "regime": null
    },
    "symbols": {
-    "alpha_test": "false positive rate of the testing procedure",
-    "d_act": "number of active variables",
+    "alpha_err": "false positive rate of the testing procedure",
+    "d_act": "number of active variables d=|A|",
     "D_ext": "extrinsic dimension D",
     "T_max": "maximum expected sample usage per node"
    },
-   "conditions": [],
+   "conditions": [
+    "alpha < 1/2"
+   ],
    "tuning": [],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Theorem 3.2",
-    "quote": "Sample Complexity: Let Tmax be the maximum expected sample usage per node, and N be the sample complexity of the HDS algorithm. The expected sample complexity is bounded by: E(N) \\le \\frac{2(1-\\alpha)}{1-2\\alpha} d\\lceil\\log D\\rceil T_{max}"
+    "quote": "Accuracy: For an arbitrary ε > 0, provided α, β ≤ (ε/D)^{1/⌈log D⌉} the probability of perfect recovery is P(A' = A) ≥ 1 − ε. Sample Complexity: Let Tmax be the maximum expected sample usage per node, and N be the sample complexity of the HDS algorithm. The expected sample complexity is bounded by: E(N) ≤ 2(1−α)/(1−2α) d⌈log D⌉Tmax"
    },
    "confidence": "medium",
-   "notes": "Logs base 2."
+   "notes": "Accuracy part: recovery probability ≥ 1−ε if α,β ≤ (ε/D)^{1/ceil(log D)}. Logs base 2."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "A_FDT*d_act*ceiling(log(D_ext, 2))*(log(16, 2) + log(1/delta, 2)/ceiling(log(D_ext, 2)))",
+    "expression_latex": "N < \\bar N \\equiv A d\\lceil\\log D\\rceil(\\log 16 + \\frac{\\log(1/\\epsilon)}{\\lceil \\log D\\rceil})",
+    "regime": null
+   },
+   "symbols": {
+    "A_FDT": "max{2, 16(1+sqrt(1+B))^2/B^2, 8/B^2}, with B = sigma_s^2 b^2/(4096 c_2^2 log(4 c_1/(b delta')))",
+    "d_act": "number of active variables",
+    "D_ext": "extrinsic dimension D"
+   },
+   "conditions": [
+    "alpha = (eps/(2D))^{1/ceil(log D)} < 1/4",
+    "bandwidth b <= (log 8 / log(1/delta'))^2 with delta' = eps/(6 d ceil(log D))",
+    "f is a GP sample with SE kernel"
+   ],
+   "tuning": [
+    "fixed sample size per node A log(2/alpha)",
+    "judicious choice of constants c_1, c_2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 3.3",
+    "quote": "Consider the HDS algorithm with non-sequential FDT using a fixed sample size per node A log(2/α)... Then, for a judicious choice of c1 and c2 the HDS-FDT procedure is correct with probability at least 1 − ε, and the sample complexity: N < N̄ ≡ A d⌈log D⌉(log 16 + log(1/ε)/⌈log D⌉)."
+   },
+   "confidence": "medium",
+   "notes": "Paper's ε (failure probability) mapped to delta. Correct recovery w.p. ≥ 1−ε (probability over f and noise). Logs base 2. Text extracted from PDF, some formula details lossy."
   },
   {
    "id": "r3",
@@ -305,75 +319,71 @@
    "comparator": "not_applicable",
    "probability": "high_probability",
    "horizon": "not_applicable",
-   "compute": "not_stated",
+   "compute": "polynomial",
    "bound": {
-    "notation": "exact",
-    "expression": "A_n*d_act*ceiling(log(D_ext)/log(2))*(log(16)/log(2) + log(1/eps_err)/log(2)/ceiling(log(D_ext)/log(2)))",
-    "expression_latex": "N < A d\\lceil\\log D\\rceil(\\log 16 + \\frac{\\log(1/\\epsilon)}{\\lceil\\log D\\rceil})",
+    "notation": "Theta",
+    "expression": "(log(1/delta) + log(d_act*ceiling(log(D_ext, 2))))**8*d_act*(ceiling(log(D_ext, 2)) + log(1/delta))",
+    "expression_latex": "\\bar N = \\Theta((\\log\\frac1\\epsilon + \\log(d\\lceil\\log D\\rceil))^8 d(\\lceil\\log D\\rceil + \\log\\frac1\\epsilon))",
     "regime": null
    },
    "symbols": {
-    "A_n": "A = max{2, 16(1+sqrt(1+B))^2/B^2, 8/B^2} with B = sigma_s^2 b^2/(4096 c_2^2 log(4 c_1/(b delta)))",
     "d_act": "number of active variables",
-    "D_ext": "extrinsic dimension D",
-    "eps_err": "failure probability of recovery"
+    "D_ext": "extrinsic dimension D"
    },
    "conditions": [
-    "eps small enough so that alpha < 1/4",
-    "b <= 8/(log(1/delta))^2 (bandwidth condition)"
+    "same as Theorem 3.3"
    ],
    "tuning": [
-    "delta = eps/(6 d ceil(log D))",
-    "alpha = (eps/(2D))^(1/ceil(log D))",
     "fixed sample size per node A log(2/alpha)"
    ],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Theorem 3.3",
-    "quote": "Consider the HDS algorithm with non-sequential FDT using a fixed sample size per node A log(2/\\alpha) ... Then, for a judicious choice of c1 and c2 the HDS-FDT procedure is correct with probability at least 1-\\epsilon, and the sample complexity: N < A d\\lceil\\log D\\rceil(\\log 16 + \\log(1/\\epsilon)/\\lceil\\log D\\rceil)."
+    "quote": "Note that A = Θ((log(1/ε) + log(d⌈log D⌉))^8), and N̄ = Θ((log 1/ε + log(d⌈log D⌉))^8 d(⌈log D⌉ + log 1/ε))."
    },
    "confidence": "medium",
-   "notes": "Logs base 2. Text garbled by PDF extraction (bandwidth condition reconstructed). Correctness w.p. >= 1-eps."
+   "notes": "Asymptotic form of the bound N̄ (Theta describes the bound itself, upper bound on N). ε mapped to delta."
   },
   {
    "id": "r4",
-   "setting": "s1",
+   "setting": "s2",
    "side": "upper",
-   "algorithm": "a2",
+   "algorithm": "a3",
    "algorithm_class": null,
-   "quantity": "sample_complexity",
+   "quantity": "regret_unspecified",
    "dependence": "worst_case",
-   "comparator": "not_applicable",
+   "comparator": "best_fixed_action",
    "probability": "high_probability",
-   "horizon": "not_applicable",
+   "horizon": "known",
    "compute": "not_stated",
    "bound": {
-    "notation": "Theta",
-    "expression": "(log(1/eps_err) + log(d_act*ceiling(log(D_ext)/log(2))))**8*d_act*(ceiling(log(D_ext)/log(2)) + log(1/eps_err))",
-    "expression_latex": "N = \\Theta((\\log\\frac1\\epsilon + \\log(d\\lceil\\log D\\rceil))^8 d(\\lceil\\log D\\rceil + \\log\\frac1\\epsilon))",
+    "notation": "exact",
+    "expression": "A_T*sqrt(T) + (N_HDS + 1)*C_0 + 2 + N_HDS*C_0/T",
+    "expression_latex": "E(R_T) \\le A'_T\\sqrt{T} + (\\bar N + 1)C_0 + 2 + \\frac{\\bar N C_0}{T}",
     "regime": null
    },
    "symbols": {
-    "d_act": "number of active variables",
-    "D_ext": "extrinsic dimension D",
-    "eps_err": "failure probability of recovery"
+    "A_T": "A'_T = sqrt(C_1 beta_T gamma_T) = O((log T)^{d/2+1}), C_1 = 8/log(1+b^{-2})",
+    "N_HDS": "bound on HDS termination time, O((log T)^9)",
+    "C_0": "bound on per-sample regret"
    },
    "conditions": [
-    "eps small enough so that alpha < 1/4"
+    "f bounded so per-sample regret <= C_0",
+    "f is GP sample with SE kernel on active variables"
    ],
    "tuning": [
-    "delta = eps/(6 d ceil(log D))",
-    "alpha = (eps/(2D))^(1/ceil(log D))"
+    "epsilon = 1/T",
+    "beta_t = 2 log(t^2 2 pi^2/(3 delta_o)) + 2d log(t^2 d sigma_s ... sqrt(log(4d/delta_o)))"
    ],
    "is_new": true,
    "source": {
     "label": null,
-    "number": "Theorem 3.3",
-    "quote": "Note that A = \\Theta((\\log(1/\\epsilon) + \\log(d\\lceil\\log D\\rceil))^8), and N = \\Theta((\\log\\frac1\\epsilon + \\log(d\\lceil\\log D\\rceil))^8 d(\\lceil\\log D\\rceil + \\log\\frac1\\epsilon))."
+    "number": "Theorem 4.1",
+    "quote": "Running HDS with FDT and recovery rate 1 − ε, followed by the GP-UCB algorithm on the variables deemed active guarantees that with probability ≥ 1−δo: E(R_T) ≤ A'_T √T + (N̄ + 1)C0 + 2 + N̄C0/T. where A'_T = √(C1 βT γT) = O((log T)^{d/2+1}), C1 = 8/log(1 + b^{−2}), and N̄ = O(log(1/ε)^9) = O((log T)^9)."
    },
-   "confidence": "medium",
-   "notes": "Theta here describes the value of the upper bound N-bar, not a matching lower bound on sample complexity."
+   "confidence": "low",
+   "notes": "Statement mixes expectation and 'with probability ≥ 1−δo' (over f presumably); recorded as high-probability regret_unspecified. Regret-type unclear."
   },
   {
    "id": "r5",
@@ -381,46 +391,7 @@
    "side": "upper",
    "algorithm": "a3",
    "algorithm_class": null,
-   "quantity": "high_probability_regret",
-   "dependence": "worst_case",
-   "comparator": "best_fixed_action",
-   "probability": "high_probability",
-   "horizon": "known",
-   "compute": "not_stated",
-   "bound": {
-    "notation": "exact",
-    "expression": "A_T*sqrt(T) + (N_hds + 1)*C_0 + 2 + N_hds*C_0/T",
-    "expression_latex": "E(R_T) \\le A'_T\\sqrt{T} + (N+1)C_0 + 2 + \\frac{N C_0}{T}",
-    "regime": null
-   },
-   "symbols": {
-    "A_T": "A'_T = sqrt(C_1 beta_T gamma_T) = O((log T)^(d/2+1)), C_1 = 8/log(1+b^-2)",
-    "N_hds": "termination time of HDS, O((log T)^9)",
-    "C_0": "bound on maximum per-round regret"
-   },
-   "conditions": [
-    "f bounded so that per-sample regret <= C_0"
-   ],
-   "tuning": [
-    "eps = 1/T",
-    "beta_t = 2 log(t^2 2 pi^2/(3 delta_o)) + 2d log(t^2 d b ... sqrt(log(4d/delta_o)))"
-   ],
-   "is_new": true,
-   "source": {
-    "label": null,
-    "number": "Theorem 4.1",
-    "quote": "Running HDS with FDT and recovery rate 1-\\epsilon, followed by the GP-UCB algorithm on the variables deemed active guarantees that with probability \\ge 1-\\delta_o: E(R_T) \\le A'_T\\sqrt{T} + (N+1)C_0 + 2 + \\frac{N C_0}{T}, where A'_T = \\sqrt{C_1\\beta_T\\gamma_T} = O((\\log T)^{d/2+1}), C_1 = 8/\\log(1+b^{-2}), and N = O(\\log(1/\\epsilon)^9) = O((\\log T)^9)."
-   },
-   "confidence": "low",
-   "notes": "Statement mixes expectation and probability 1-delta_o; recorded as high-probability. Regret defined through f values (no noise). beta_t formula garbled in extraction."
-  },
-  {
-   "id": "r6",
-   "setting": "s2",
-   "side": "upper",
-   "algorithm": "a3",
-   "algorithm_class": null,
-   "quantity": "high_probability_regret",
+   "quantity": "regret_unspecified",
    "dependence": "worst_case",
    "comparator": "best_fixed_action",
    "probability": "high_probability",
@@ -428,33 +399,33 @@
    "compute": "not_stated",
    "bound": {
     "notation": "O",
-    "expression": "sqrt(T)*log(T)**(d_act/2 + 1) + C_0*log(T)**9",
-    "expression_latex": "A'_T\\sqrt{T} + (N+1)C_0 with A'_T = O((\\log T)^{d/2+1}), N = O((\\log T)^9)",
+    "expression": "log(T)**(d_act/2 + 1)*sqrt(T) + C_0*log(T)**9",
+    "expression_latex": "A'_T = O((\\log T)^{d/2+1}),\\ \\bar N = O((\\log T)^9)",
     "regime": null
    },
    "symbols": {
     "d_act": "number of active variables",
-    "C_0": "bound on maximum per-round regret"
+    "C_0": "bound on per-sample regret"
    },
    "conditions": [
-    "f bounded so that per-sample regret <= C_0"
+    "f bounded so per-sample regret <= C_0"
    ],
    "tuning": [
-    "eps = 1/T"
+    "epsilon = 1/T"
    ],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Theorem 4.1",
-    "quote": "where A'_T = \\sqrt{C_1\\beta_T\\gamma_T} = O((\\log T)^{d/2+1}) ... and N = O(\\log(1/\\epsilon)^9) = O((\\log T)^9). Thus, the regret depends only logarithmically on the extrinsic dimension D."
+    "quote": "where A'_T = √(C1 βT γT) = O((log T)^{d/2+1}) ... and N̄ = O(log(1/ε)^9) = O((log T)^9). Thus, the regret depends only logarithmically on the extrinsic dimension D."
    },
    "confidence": "low",
-   "notes": "Asymptotic form derived by combining the stated O-forms of A'_T and N; dependence on D hidden in constants of N."
+   "notes": "Asymptotic form obtained by substituting the O-orders stated in the theorem into the exact bound; hidden dependence on log D via N̄."
   }
  ],
  "cited_results": [
   {
-   "cited_key": "Srinivas et al., 2010",
+   "cited_key": "Srinivas et al. 2010",
    "cited_title": "Gaussian process optimization in the bandit setting: No regret and experimental design",
    "cited_first_author": "Srinivas",
    "cited_year": 2010,
@@ -462,12 +433,12 @@
    "algorithm_name": "GP-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "GP bandit optimization, f sampled from GP, Gaussian noise",
+   "setting_description": "GP bandit optimization with squared exponential kernel on a d'-dimensional domain, cumulative regret",
    "bound": {
     "notation": "O_tilde",
     "expression": "sqrt(T*gamma_T)",
     "expression_latex": "O^*(\\sqrt{T\\gamma_T})",
-    "regime": "squared exponential kernel: gamma_T = O((log T)^(d'+1))"
+    "regime": null
    },
    "where": "Section 4"
   }
@@ -478,20 +449,20 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "ae3ec0bf9ad6",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
   "algorithm_registry_size": 133,
-  "date": "2026-11-09T12:34:02",
+  "date": "2026-11-11T11:42:56",
   "source_chars": 36580,
-  "input_tokens": 52190,
-  "output_tokens": 7843,
-  "cost_usd_equiv": 0.296068,
+  "input_tokens": 52618,
+  "output_tokens": 7248,
+  "cost_usd_equiv": 0.2839338,
   "quote_retry": {
-   "asked": 3,
-   "fixed": 2,
-   "cost_usd_equiv": 0.13982039999999998
+   "asked": 2,
+   "fixed": 1,
+   "cost_usd_equiv": 0.14071640000000002
   },
   "status": "extracted"
  }

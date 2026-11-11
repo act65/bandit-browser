@@ -304,3 +304,40 @@ def test_adaptive_adversary_splits_pseudo_and_expected_regret():
     # without the split (oblivious / stochastic) they pool into one regret cell
     pooled = compare.compare({r["id"]: r for r in rs}, [], CAN)["settings"]["SA"]
     assert set(pooled) == {"regret|worst_case"}
+
+
+def test_fixed_dimension_cells_compare_T_rates_over_a_grid():
+    """Kernel / Lipschitz settings fix d (and nu): Matern T^((nu+d)/(2nu+d)) is a T-rate per (d, nu), not a runaway
+    exponent in d. An extra log T is a log gap at every grid point; a d-dependent polynomial difference is a poly gap."""
+    up = result("pa:r1", "SK", "upper", "T**((nu_matern + d)/(2*nu_matern + d))*log(T)", quantity="expected_regret", notation="O")
+    lo = result("pb:r1", "SK", "lower", "T**((nu_matern + d)/(2*nu_matern + d))", quantity="expected_regret")
+    cell = compare.compare({r["id"]: r for r in (up, lo)}, [], CAN, fixed_dim={"SK"})["settings"]["SK"]["regret|worst_case"]
+    assert cell["status"] == "log_gap" and set(cell["per_var"]) == {"T"} and len(cell["per_var"]["T"]["grid"]) == 9
+    up2 = result("pc:r1", "SK", "upper", "T**((nu_matern + 2*d)/(2*nu_matern + 2*d))", quantity="expected_regret", notation="O")
+    cell = compare.compare({r["id"]: r for r in (up2, lo)}, [], CAN, fixed_dim={"SK"})["settings"]["SK"]["regret|worst_case"]
+    assert cell["status"] == "poly_gap"
+
+
+def test_squared_exponential_rates_profile_only_at_fixed_dimension():
+    """sqrt(T) log^(d/2) T (squared exponential lower bound) has d in an exponent: a runaway exponent when d is
+    scanned, a plain T-rate when d is fixed."""
+    lo = result("pb:r1", "SK", "lower", "sqrt(T)*log(T)**(d/2)", quantity="expected_regret")
+    up = result("pa:r1", "SK", "upper", "sqrt(T)*log(T)**(d/2 + 1)", quantity="expected_regret", notation="O")
+    rs = {r["id"]: r for r in (up, lo)}
+    assert compare.compare(rs, [], CAN)["profiles"]["pb:r1"] is None
+    cell = compare.compare(rs, [], CAN, fixed_dim={"SK"})["settings"]["SK"]["regret|worst_case"]
+    assert cell["status"] == "log_gap"
+
+
+def test_condition_satisfied_by_the_setting_does_not_exclude_the_bound():
+    """A polynomial-eigendecay upper bound is instance-restricted for 'any kernel', but a Matern kernel has polynomial
+    eigendecay: in a Matern setting the bound counts (ontology kernel.family satisfies)."""
+    import re
+    up = result("pa:r1", "SM", "upper", "T**(3/4)", quantity="expected_regret", notation="O",
+                conditions=["polynomial eigendecay with exponent beta_p > 1"])
+    lo = result("pb:r1", "SM", "lower", "T**(3/4)", quantity="expected_regret")
+    rs = {r["id"]: r for r in (up, lo)}
+    assert compare.compare(rs, [], CAN)["settings"]["SM"]["regret|worst_case"]["status"] == "no_upper"
+    sat = {"SM": [re.compile(r, re.I) for r in compare.schema.load_ontology()["node_parameters"]["kernel"]["fields"]
+                  ["family"]["satisfies"]["matern"]]}
+    assert compare.compare(rs, [], CAN, satisfied=sat)["settings"]["SM"]["regret|worst_case"]["status"] == "tight"

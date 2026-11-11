@@ -15,7 +15,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Parallel (batch) time-varying Gaussian process bandit optimization for online hyperparameter selection",
+   "name_in_paper": "Parallel (batch) time-varying Gaussian process bandit optimization (online hyperparameter schedule selection)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "nonstationary_drifting",
@@ -28,15 +28,19 @@
     "T",
     "d",
     "kernel",
+    "prior",
     "sigma"
    ],
    "instance_assumptions": [
     "bayesian_prior"
    ],
+   "extras": [
+    "batched"
+   ],
    "action_set": {
     "shape": "convex_body",
     "time_varying": "fixed",
-    "access": "not_applicable",
+    "access": "explicit",
     "norm_bound": "not_applicable",
     "parameter_set": "not_applicable",
     "loss_set": "not_applicable",
@@ -85,15 +89,16 @@
    "delay": {
     "generation": "not_applicable"
    },
-   "extras": [
-    "batched"
-   ],
+   "kernel": {
+    "family": "general"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Reward function evolves as a time-varying GP: f_{t+1} = sqrt(1-omega) f_t + sqrt(omega) g_{t+1}, g ~ GP(0,k), with forgetting parameter omega in [0,1] (Bogunovic et al. 2016 model)",
-    "Population of B parallel agents choose a batch of B points each round; batch regret uses the best point in the batch (max over b)"
+    "Time-varying GP model of Bogunovic et al.: f_1 = g_1, f_{t+1} = sqrt(1-omega) f_t + sqrt(omega) g_{t+1}, g_i i.i.d. GP(0,k); forgetting parameter omega",
+    "Batch of B parallel agents per round; regret per round is that of the best agent in the batch (min over b)",
+    "The learner knows the time-varying kernel including omega, and the constants a, b, r used in beta_T"
    ],
    "definition_quote": "We formulate this problem as optimizing the time-varying black-box reward function $f_t$, over $\\mathcal{D}$. Every $t_{\\mathrm{ready}}$ steps, we observe and record noisy observations, $y_t = f_t(x_t) + \\epsilon_t$, where $\\epsilon_t \\sim \\mathcal{N}(0, \\sigma^2\\mathbf{I})$ ... f_{t+1}(x) = \\sqrt{1-\\omega}f_t(x) + \\sqrt{\\omega}g_{t+1}(x)"
   }
@@ -123,8 +128,8 @@
    "side": "upper",
    "algorithm": "a1",
    "algorithm_class": null,
-   "quantity": "high_probability_regret",
-   "dependence": "instance_dependent",
+   "quantity": "dynamic_regret",
+   "dependence": "worst_case",
    "comparator": "best_action_per_round",
    "probability": "high_probability",
    "horizon": "known",
@@ -138,32 +143,28 @@
    "symbols": {
     "C_1": "32/log(1+sigma_f^2), sigma_f^2 the noise variance",
     "beta_T": "2 log(pi^2 T^2/(2 delta)) + 2 d log(r d b T^2 sqrt(log(d a pi^2 T^2/(2 delta))))",
-    "N_tilde": "block length for the time-varying information gain bound",
-    "B_pop": "population (batch) size",
+    "N_tilde": "block length, any integer in {1,...,T}",
+    "B_pop": "population (batch) size B",
     "gamma_NB": "maximum information gain of the (time-invariant) kernel after N_tilde*B_pop points",
-    "omega": "forgetting/time-variation parameter of the time-varying GP",
-    "r": "side length of the box [0,r]^d containing the domain",
-    "a": "Lipschitz-tail constant",
-    "b": "Lipschitz-tail constant"
+    "omega": "forgetting parameter of the time-varying GP"
    },
    "conditions": [
-    "domain D subset [0,r]^d compact and convex",
+    "domain D subset of [0,r]^d compact and convex",
     "f_t ~ GP(0,k) almost surely continuously differentiable",
-    "p(sup |df_t/dx^(j)| >= L) <= a exp(-(L/b)^2) for all L >= 0",
-    "regret per round measured using the best agent in the batch: f_t(x_t^*) - max_b f_t(x_{t,b})"
+    "Lipschitz assumption: P(sup |df_t/dx^(j)| >= L_t) <= a exp(-(L_t/b)^2) for some a, b",
+    "B << T"
    ],
    "tuning": [
-    "beta_T = 2 log(pi^2 T^2/(2 delta)) + 2 d log(r d b T^2 sqrt(log(d a pi^2 T^2/(2 delta))))",
-    "delta in (0,1)"
+    "beta_T = 2 log(pi^2 T^2/(2 delta)) + 2 d log(r d b T^2 sqrt(log(d a pi^2 T^2/(2 delta))))"
    ],
    "is_new": true,
    "source": {
     "label": null,
     "number": "Theorem 2",
-    "quote": "Let the domain $\\mathcal{D}\\subset[0,r]^{d}$ be compact and convex ... Pick $\\delta\\in(0,1)$, set $\\beta_{T}=...$ and define $C_{1}=32/\\log(1+\\sigma_{f}^{2})$, the PB2 algorithm satisfies the following regret bound after $T$ time steps over $B$ parallel agents with probability at least $1-\\delta$: R_{TB}=\\sum_{t=1}^{T}f_{t}(\\bx_{t}^{*})-\\max_{b=1,...,B} f_{t}(\\bx_{t,b})\\le \\sqrt{C_{1}T\\beta_{T}\\left(\\frac{T}{\\tilde{N}B}+1\\right)\\left(\\gamma_{\\tilde{N}B}+\\left[\\tilde{N}B\\right]^{3}\\omega\\right)}+2 the bound holds for any block length $\\tilde{N}\\in\\left\\{ 1,...,T\\right\\}$ and $B\\ll T$."
+    "quote": "Let the domain $\\mathcal{D}\\subset[0,r]^{d}$ be compact and convex ... Pick $\\delta\\in(0,1)$, set $\\beta_{T}=2\\log\\frac{\\pi^{2}T^{2}}{2\\delta}+2d\\log rdbT^{2}\\sqrt{\\log\\frac{da\\pi^{2}T^{2}}{2\\delta}}$ and define $C_{1}=32/\\log(1+\\sigma_{f}^{2})$, the PB2 algorithm satisfies the following regret bound after $T$ time steps over $B$ parallel agents with probability at least $1-\\delta$: R_{TB}=\\sum_{t=1}^{T}f_{t}(\\bx_{t}^{*})-\\max_{b} f_{t}(\\bx_{t,b})\\le \\sqrt{C_{1}T\\beta_{T}(\\frac{T}{\\tilde{N}B}+1)(\\gamma_{\\tilde{N}B}+[\\tilde{N}B]^{3}\\omega)}+2 the bound holds for any block length $\\tilde{N}\\in\\{1,...,T\\}$ and $B\\ll T$."
    },
    "confidence": "medium",
-   "notes": "Restated identically as Theorem 12 (label main_theorem) in the appendix. The proof's final line actually has an extra 1/B factor and a 1/sigma_f^2 factor on the omega term, and C_1 is written inconsistently (log(1+sigma_f^{-2}) vs log(1+sigma_f^2)); recorded as stated in the theorem. The proof also specialises to the SE kernel with gamma replaced by (d+1)log(N_tilde B). 'B << T' is a vague condition. Environment mapped to nonstationary_drifting as the closest fit for the time-varying GP model."
+   "notes": "Restated as Theorem 12 (label main_theorem) in the appendix with identical bound. The proof's final line actually has T/B instead of T and a 1/sigma_f^2 factor on the omega term, and C_1 is defined inconsistently (log(1+sigma_f^2) vs log(1+sigma_f^{-2})); recorded the statement as printed. Regret per round is f_t(x*_t) minus the best of B batch points, against per-round maximiser. Proof also specialises to SE kernel with gamma = O((log N_tilde B)^{d+1}); not recorded separately. Time-varying GP drift via omega mapped to nonstationary_drifting."
   }
  ],
  "cited_results": [],
@@ -173,16 +174,20 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "00a106c81dc8",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
-  "algorithm_registry_size": 132,
-  "date": "2026-10-21T15:08:44",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-11T11:27:45",
   "source_chars": 97105,
-  "input_tokens": 170863,
-  "output_tokens": 6157,
-  "cost_usd_equiv": 0.5681148,
+  "input_tokens": 85348,
+  "output_tokens": 3572,
+  "cost_usd_equiv": 0.47225379999999995,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
   "status": "extracted"
  }
 }

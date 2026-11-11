@@ -147,6 +147,12 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `sqrt(T*d)` (Omega; inherited from foster2021statistical Section 6.1.1 (text after Proposition prop:bandit_lower_linear))
 - relies on inherited bounds: True
 
+## stochastic · kernel_rkhs · Gaussian · knows S, gamma_T, kernel, nu_matern, sigma · hypercube (`S-90b13adb`, 2 papers): hp_regret, worst_case — **poly gap**
+- T: upper 0.9·log^0.6 vs lower 0.7 (poly_gap)
+- best upper: `S*sqrt(T*T**(d/(d + 2*nu_matern))*log(T)**(2*nu_matern/(d + 2*nu_matern))) + sqrt(T*T**(d/(d + 2*nu_matern))*(T**(d/(d + 2*nu_matern))*log(T)**(2*nu_matern/(d + 2*nu_matern)) + log(1/delta))*log(T)**(2*nu_matern/(d + 2*nu_matern)))` (O; inherited from chowdhury2017kernelized Theorem 3)
+- best lower: `S**(d/(d + 2*nu_matern))*T**((d + nu_matern)/(d + 2*nu_matern))*(sigma**2*log(1/delta))**(nu_matern/(d + 2*nu_matern))` (Omega; inherited from cai2020lower Theorem 2)
+- relies on inherited bounds: True
+
 ## adversarial (adaptive) · K-armed · graph_feedback feedback · rewards in [0,1] (`S-e7825ea7`, 2 papers): pseudo_regret, worst_case — **poly gap**
 - K: upper 0.5 vs lower 0 (poly_gap)
 - T: upper 0.5 vs lower 0.5 (tight)
@@ -225,6 +231,12 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - T: upper 0.666667 vs lower 0.5 (poly_gap)
 - best upper: `T**(2/3)*(K*S_max*log(K))**(1/3)*sqrt(log(N_Theta))` (O; bubeck2012survey Theorem (th:theta-regret))
 - best lower: `sqrt(K*T)` (Omega; inherited from foster2021statistical Section 5.1.3 (Regret lower bound paragraph, via Proposition prop:mab_lower and Theorem thm:lower_main_expectation)); `sqrt(K*T)/20` (exact; inherited from bubeck2012survey Theorem (th:LBminimax)); `sqrt(K*T)` (Omega; inherited from alon2014nonstochastic Theorem 5)
+- relies on inherited bounds: True
+
+## stochastic · kernel_rkhs · {bounded} · Gaussian · knows S, gamma_T, kernel, nu_matern, sigma · hypercube (`S-3dca91d3`, 1 papers): hp_regret, worst_case — **poly gap**
+- T: upper 0.9·log^0.6 vs lower 0.7 (poly_gap)
+- best upper: `S*sqrt(T*T**(d/(d + 2*nu_matern))*log(T)**(2*nu_matern/(d + 2*nu_matern))) + sqrt(T*T**(d/(d + 2*nu_matern))*(T**(d/(d + 2*nu_matern))*log(T)**(2*nu_matern/(d + 2*nu_matern)) + log(1/delta))*log(T)**(2*nu_matern/(d + 2*nu_matern)))` (O; inherited from chowdhury2017kernelized Theorem 3)
+- best lower: `S**(d/(d + 2*nu_matern))*T**((d + nu_matern)/(d + 2*nu_matern))*(sigma**2*log(1/delta))**(nu_matern/(d + 2*nu_matern))` (Omega; cai2020lower Theorem 2)
 - relies on inherited bounds: True
 
 ## stochastic · continuum_other · partial_monitoring feedback · general_model_class (`S-642138e9`, 1 papers): regret, worst_case — **poly gap**
@@ -633,6 +645,12 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `sqrt(K*T)` (Omega; inherited from foster2021statistical Section 5.1.3 (Regret lower bound paragraph, via Proposition prop:mab_lower and Theorem thm:lower_main_expectation)); `Min(T, sqrt(K*T))/20` (exact; inherited from auer2002exp3 Theorem 5.1); `sqrt(K*T)/20` (exact; inherited from bubeck2012survey Theorem (th:LBminimax))
 - relies on inherited bounds: True
 
+## nonstationary_switching · K-armed · stochastic contexts · rewards in [0,1] · knows M_ctx, N_exp (`S-ca2c184b`, 1 papers): regret, worst_case — **poly gap**
+- T: upper 0.666667 vs lower 0.5 (poly_gap)
+- best upper: `T**(2/3)*(2*sqrt(log(M_size)) + 1)` (exact; inherited from skalse2026online Theorem 1)
+- best lower: `sqrt(K*T)` (Omega; inherited from foster2021statistical Section 5.1.3 (Regret lower bound paragraph, via Proposition prop:mab_lower and Theorem thm:lower_main_expectation)); `Min(T, sqrt(K*T))/20` (exact; inherited from auer2002exp3 Theorem 5.1); `sqrt(K*T)/20` (exact; inherited from bubeck2012survey Theorem (th:LBminimax))
+- relies on inherited bounds: True
+
 ## stochastic · K-armed · adversarial contexts · rewards in [0,1] (`S-ef4d3b68`, 1 papers): regret, worst_case — **poly gap**
 - T: upper 0.666667 vs lower 0.5 (poly_gap)
 - best upper: `T**(2/3)*(2*sqrt(log(M_size)) + 1)` (exact; inherited from skalse2026online Theorem 1)
@@ -868,6 +886,12 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `sqrt(K*T)` (Omega; inherited from foster2021statistical Section 5.1.3 (Regret lower bound paragraph, via Proposition prop:mab_lower and Theorem thm:lower_main_expectation)); `Min(T, sqrt(K*T))/20` (exact; inherited from auer2002exp3 Theorem 5.1); `sqrt(K*T)/20` (exact; inherited from bubeck2012survey Theorem (th:LBminimax))
 - relies on inherited bounds: True
 
+## stochastic · kernel_rkhs · Gaussian · knows S, gamma_T, kernel, sigma · hypercube (`S-633b4f18`, 1 papers): hp_regret, worst_case — **poly gap**
+- T: upper 0.9·log^0.6 vs lower 0.7 (poly_gap)
+- best upper: `S*sqrt(T*T**(d/(d + 2*nu_matern))*log(T)**(2*nu_matern/(d + 2*nu_matern))) + sqrt(T*T**(d/(d + 2*nu_matern))*(T**(d/(d + 2*nu_matern))*log(T)**(2*nu_matern/(d + 2*nu_matern)) + log(1/delta))*log(T)**(2*nu_matern/(d + 2*nu_matern)))` (O; inherited from chowdhury2017kernelized Theorem 3)
+- best lower: `S**(d/(d + 2*nu_matern))*T**((d + nu_matern)/(d + 2*nu_matern))*(sigma**2*log(1/delta))**(nu_matern/(d + 2*nu_matern))` (Omega; inherited from cai2020lower Theorem 2)
+- relies on inherited bounds: True
+
 ## stochastic · linear (finite actions) · subgaussian · knows S, sigma · finite (`S-ce9ba867`, 1 papers): regret, worst_case — **poly gap**
 - K: upper 0 vs lower 0 (log_gap)
 - T: upper 0.5 vs lower 0.5 (log_gap)
@@ -1010,6 +1034,24 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `sqrt(T)/log(T)` (Omega; inherited from pacchiano2020model Theorem 5.2)
 - relies on inherited bounds: True
 
+## stochastic · kernel_rkhs · Gaussian · knows S, gamma_T, kernel, sigma · hypercube (`S-33988b87`, 2 papers): regret, worst_case — **log gap**
+- T: upper 0.5·log^3 vs lower 0.5·log^0.5 (log_gap)
+- best upper: `sqrt(T)*log(T)**(d/2 + 5/2)` (O; inherited from vakili2020information Section 4); `S*sqrt(T*log(T)**(d + 1)) + sqrt(T*(log(T)**(d + 1) + log(1/delta))*log(T)**(d + 1))` (O; inherited from chowdhury2017kernelized Theorem 3) [delta=1/T]
+- best lower: `sqrt(T*sigma**2*log(S**2*T/sigma**2)**(d/2))` (Omega; scarlett2017lower Theorem 2)
+- relies on inherited bounds: True
+
+## stochastic · kernel_rkhs · Gaussian · knows S, gamma_T, kernel, sigma · hypercube (`S-33988b87`, 2 papers): hp_regret, worst_case — **log gap**
+- T: upper 0.5·log^3 vs lower 0.5·log^0.5 (log_gap)
+- best upper: `S*sqrt(T*log(T)**(d + 1)) + sqrt(T*(log(T)**(d + 1) + log(1/delta))*log(T)**(d + 1))` (O; inherited from chowdhury2017kernelized Theorem 3)
+- best lower: `sqrt(T*sigma**2*log(1/delta)*log(S**2*T/(sigma**2*log(1/delta)))**(d/2))` (Omega; inherited from cai2020lower Theorem 2)
+- relies on inherited bounds: True
+
+## stochastic · kernel_rkhs · Gaussian · knows S, gamma_T, kernel, nu_matern, sigma · hypercube (`S-90b13adb`, 2 papers): regret, worst_case — **log gap**
+- T: upper 0.7·log^2.3 vs lower 0.7 (log_gap)
+- best upper: `T**(d*(1 + (d + 2*nu_matern)/d)/(2*(d + 2*nu_matern)))*log(T)**(-d/(2*(d + 2*nu_matern)) + 5/2)` (O; inherited from vakili2020information Section 4)
+- best lower: `S**(d/(d + 2*nu_matern))*T**((d + nu_matern)/(d + 2*nu_matern))*sigma**(2*nu_matern/(d + 2*nu_matern))` (Omega; scarlett2017lower Theorem 2)
+- relies on inherited bounds: True
+
 ## corrupted stochastic · K-armed · rewards in [0,1] · knows C (`S-c0839ca7`, 2 papers): regret, worst_case — **log gap**
 - K: upper 0.5·log^0.5 vs lower 0.5 (log_gap)
 - T: upper 0.5 vs lower 0.5 (tight)
@@ -1141,6 +1183,12 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - d: upper 1 vs lower 1 (log_gap)
 - best upper: `sqrt(T)*d*delta + d*sqrt(T*log(T)*log(1/delta))*log(log(T/delta))` (O; inherited from li2019tight Theorem 2)
 - best lower: `sqrt(T)*d` (Omega; bubeck2017sparsity Theorem 4)
+- relies on inherited bounds: True
+
+## stochastic · kernel_rkhs · {bounded} · Gaussian · knows S, gamma_T, kernel, sigma · hypercube (`S-3d4816ee`, 1 papers): hp_regret, worst_case — **log gap**
+- T: upper 0.5·log^3 vs lower 0.5·log^0.5 (log_gap)
+- best upper: `S*sqrt(T*log(T)**(d + 1)) + sqrt(T*(log(T)**(d + 1) + log(1/delta))*log(T)**(d + 1))` (O; inherited from chowdhury2017kernelized Theorem 3)
+- best lower: `sqrt(T*sigma**2*log(1/delta)*log(S**2*T/(sigma**2*log(1/delta)))**(d/2))` (Omega; cai2020lower Theorem 2)
 - relies on inherited bounds: True
 
 ## adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] · switching_cost (`S-40d2342c`, 1 papers): regret, worst_case — **log gap**
@@ -1375,7 +1423,6 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 
 ## stochastic · lipschitz_metric · {bounded,lipschitz} · rewards in [0,1] · batched · knows M_batch · hypercube (`S-20cb2c78`, 1 papers): regret, worst_case — **log gap**
 - T: upper 1·log^1 vs lower 1 (log_gap)
-- d: upper 0 vs lower 0 (log_gap)
 - best upper: `log(E*T)*Max(T**((d + 1)/(d + 2)), T**((d + 1)/((1 - 1/(d + 2)**M_batch)*(d + 2)))/M_batch**2, T**((d + 2)/(d + 3))/(W_mem*(M_batch - 1) + 1)**(1/(d*(d + 3))))` (O; lyu2026memory Theorem 3.1)
 - best lower: `T**((d + 1)/((1 - 1/(d + 2)**M_batch)*(d + 2)))/M_batch**2` (Omega; lyu2026memory Lemma B.3)
 - relies on inherited bounds: False
@@ -1455,6 +1502,35 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - d: upper 1 vs lower 1 (log_gap)
 - best upper: `sqrt(T)*d*delta + d*sqrt(T*log(T)*log(1/delta))*log(log(T/delta))` (O; inherited from li2019tight Theorem 2)
 - best lower: `sqrt(T)*(d - 1)` (Omega; shamir2015complexity Theorem 6)
+- relies on inherited bounds: True
+
+## stochastic · linear · heavy_tailed · knows eps_m, v_mom · arbitrary compact (`S-212d8173`, 1 papers): regret, worst_case — **log gap**
+- T: upper 0.5 vs lower 0.5 (log_gap)
+- d: upper 1 vs lower 1 (log_gap)
+- best upper: `T**(1/(eps_m + 1))*d**((3*eps_m + 1)/(2*eps_m + 2))` (O_tilde; tajdini2025improved Corollary 1)
+- best lower: `sqrt(T)*d/10` (exact; inherited from dani2008stochastic Theorem 3); `T**(1/(eps_m + 1))*d**(2*eps_m/(eps_m + 1))` (Omega; inherited from tajdini2025improved Theorem 1); `sqrt(T)*(d - 1)` (Omega; inherited from shamir2015complexity Theorem 3)
+- relies on inherited bounds: True
+
+## stochastic · linear (finite actions) · heavy_tailed · knows eps_m, v_mom · finite (`S-844d366e`, 1 papers): regret, worst_case — **log gap**
+- K: upper 0 vs lower 0·log^0.5 (log_gap)
+- T: upper 0.5 vs lower 0.5 (log_gap)
+- d: upper 0.5 vs lower 0.5·log^-0.5 (log_gap)
+- best upper: `T**(1/(eps_m + 1))*sqrt(d)*log(K)**(eps_m/(eps_m + 1))` (O_tilde; tajdini2025improved Corollary 1); `T**(1/(eps_m + 1))*d**((3*eps_m + 1)/(2*eps_m + 2))` (O_tilde; inherited from tajdini2025improved Corollary 1)
+- best lower: `T**(1/(eps_m + 1))*d**(eps_m/(eps_m + 1))*(log(K)/log(d))**(eps_m/(eps_m + 1))` (Omega; tajdini2025improved Theorem 2)
+- relies on inherited bounds: True
+
+## stochastic · linear · heavy_tailed · knows eps_m, v_mom · polytope (`S-cbe58259`, 1 papers): regret, worst_case — **log gap**
+- T: upper 0.5 vs lower 0.5 (log_gap)
+- d: upper 1 vs lower 1 (log_gap)
+- best upper: `T**(1/(eps_m + 1))*d**((3*eps_m + 1)/(2*eps_m + 2))` (O_tilde; inherited from tajdini2025improved Corollary 1)
+- best lower: `T**(1/(eps_m + 1))*d**(2*eps_m/(eps_m + 1))` (Omega; tajdini2025improved Theorem 1); `sqrt(T)*(d - 1)` (Omega; inherited from shamir2015complexity Theorem 6)
+- relies on inherited bounds: True
+
+## stochastic · linear · heavy_tailed · knows eps_m, v_mom · unit ball (`S-86ea003b`, 1 papers): regret, worst_case — **log gap**
+- T: upper 0.5 vs lower 0.5 (log_gap)
+- d: upper 1 vs lower 1 (log_gap)
+- best upper: `T**(1/(eps_m + 1))*d**((3*eps_m + 1)/(2*eps_m + 2))` (O_tilde; inherited from tajdini2025improved Corollary 1)
+- best lower: `T**(1/(eps_m + 1))*d**(2*eps_m/(eps_m + 1))` (Omega; tajdini2025improved Theorem 4); `sqrt(T)*d*r_rank` (Omega; inherited from lu2020rank Theorem 6)
 - relies on inherited bounds: True
 
 ## stochastic · continuum_other · semi_bandit feedback · {bounded,lipschitz} · rewards in [0,1] · knows L_lip · simplex (`S-a1471a3f`, 1 papers): regret, worst_case — **log gap**
@@ -1639,6 +1715,12 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - T: upper 0.666667·log^2 vs lower 0.666667 (log_gap)
 - best upper: `T**(2/3)*log(T)**2` (O; inherited from han2020optimal Corollary 1)
 - best lower: `T**(2/3)` (Omega; inherited from lunghi2025online Remark 1); `T**(2/3)` (Omega_tilde; inherited from xu2022towards Corollary 9)
+- relies on inherited bounds: True
+
+## stochastic · kernel_rkhs · Gaussian · knows S, gamma_T, kernel, sigma · hypercube (`S-633b4f18`, 1 papers): regret, worst_case — **log gap**
+- T: upper 0.7·log^2.3 vs lower 0.7 (log_gap)
+- best upper: `T**(d*(1 + (d + 2*nu_matern)/d)/(2*(d + 2*nu_matern)))*log(T)**(-d/(2*(d + 2*nu_matern)) + 5/2)` (O; inherited from vakili2020information Section 4)
+- best lower: `S**(d/(d + 2*nu_matern))*T**((d + nu_matern)/(d + 2*nu_matern))*sigma**(2*nu_matern/(d + 2*nu_matern))` (Omega; inherited from scarlett2017lower Theorem 2)
 - relies on inherited bounds: True
 
 ## stochastic · linear (finite actions) · adversarial contexts · conditionally_subgaussian · time_varying_action_sets · finite (`S-6da6e851`, 1 papers): regret, worst_case — **log gap**

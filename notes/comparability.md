@@ -150,6 +150,58 @@ the main risk. A spot check of the instance-constant class looked sound, but the
 differently defined gaps (Condorcet gap, preference gap) into Δ. Within a cell these are usually the same
 kind of problem, but not always.
 
+## Kernel bandits (2026-11-11)
+
+Before this work, none of the 88 kernel settings reached a verdict. There were three causes, and the
+information gain γ_T was only one of them:
+
+1. **γ_T stands for a function of T.** It grows at a kernel-dependent rate, so √(T γ_T) has no T-exponent
+   until the kernel is known. It was marked opaque.
+2. **The kernel wasn't recorded.** Squared-exponential and Matérn results shared settings, and lower bounds
+   are kernel-specific.
+3. **d and ν sit inside the T-exponent** (T^{(ν+d)/(2ν+d)}, √(T log^{d/2} T)). Scanning d to infinity made
+   these "runaway exponents", although in kernel (and Lipschitz) bandits d is a fixed dimension.
+
+What changed:
+
+- **Ontology v0.6:** node parameter `kernel.family` (linear, polynomial, squared_exponential, matern, general).
+  It is `id_optional`, so it is left out of setting ids when not_applicable, and no non-kernel id changed
+  (there's a test). The 54 papers with kernel settings were re-extracted ($34).
+- **Per-family substitution** (`value_maps`), when an upper bound passes from a general kernel to a named one:
+  - γ_T: linear d log T and squared-exponential log^{d+1} T (Srinivas et al. 2010, Thm 5); Matérn
+    T^{d/(2ν+d)} log^{2ν/(2ν+d)} T (Vakili et al. 2021);
+  - the eigendecay exponents: Matérn β_p = (2ν+d)/d, squared-exponential β_e = 1/d (Vakili et al., l. 804).
+
+  The rates were read from the papers' LaTeX in the corpus, not from memory.
+- **Knowledge implication:** "knows the kernel ⇒ knows γ_T" (γ_T is determined by the kernel, the domain and T).
+  Without it, bounds whose algorithms are tuned with γ_T never reached settings that state only the kernel.
+- **Fixed-dimension comparison** (`compare.FIXED_GRID`): in kernel and Lipschitz settings, bounds are profiled
+  at d ∈ {1, 2, 5} × ν ∈ {½, 3⁄2, 5⁄2}, and each (variable, grid point) is compared separately. A cell is tight
+  only if it is tight everywhere. The site shows rates at d=2, ν=3⁄2 and the worst status over the grid.
+- **Conditions a setting satisfies by definition** (ontology `satisfies`): "polynomial eigendecay" restricts
+  the kernel class in a general setting, but holds for Matérn, so it no longer excludes the bound there. Standard
+  kernel regularity (Mercer, bounded kernel and eigenfunctions) is now a normalisation, not an instance
+  restriction.
+
+**Result:** kernel settings with a verdict went from 0 to 5 (5 log-gap and 3 poly-gap cells), and conflicts
+are unchanged. Two new pilot facts:
+- **F15 (Matérn):** PASS_STATUS. The atlas finds T^{0.7}·log against Scarlett et al.'s T^{0.7} at d=2, ν=3⁄2.
+  The polynomial gap that Vakili et al. closed shows as closed up to logs.
+- **F16 (squared-exponential):** PASS_STATUS, a log gap.
+
+Writing F16 exposed a citation drift. Vakili et al. cite Scarlett et al.'s lower bound as Ω(T^{1/2} log^{d/2} T),
+but the theorem is Ω(√(T (log T)^{d/2})). The atlas, reading the primary source, had it right; the fact,
+copied from the citation, did not.
+
+**Why most kernel settings stay grey:**
+- Most are "general family", stated through γ_T. They can't reach a verdict by design, because lower bounds
+  exist only for named kernels.
+- Many are variants (contextual, batched, safe, delayed, time-varying) with no lower bound in the literature.
+- Some re-extracted results proved for one specific kernel (γ-exponential, piecewise-polynomial) were filed
+  as "general". The condition filter excludes them, but it's an extraction error to fix in the prompt.
+- 82 triage verdicts were attached to cells whose keys changed: kernel cells, and adaptive regret cells now
+  split into pseudo and expected regret. They need re-triage.
+
 ## Open questions
 
 - Is "tight up to instance parameters" a useful status for readers, or does it dilute "tight"? Experts may

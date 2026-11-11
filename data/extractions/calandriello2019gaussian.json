@@ -17,7 +17,7 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Gaussian process optimization / kernelized bandit with finite arm set (frequentist, bounded RKHS norm)",
+   "name_in_paper": "Optimization under bandit feedback / kernelized bandits (frequentist, bounded RKHS norm)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
@@ -28,8 +28,8 @@
    "noise": "gaussian_known_variance",
    "learner_knows": [
     "T",
-    "S",
     "sigma",
+    "S",
     "kernel"
    ],
    "instance_assumptions": [],
@@ -86,11 +86,14 @@
    "delay": {
     "generation": "not_applicable"
    },
+   "kernel": {
+    "family": "general"
+   },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "kernel bounded: k(x,x) <= kappa^2 on all arms"
+    "bounded kernel k(x,x) <= kappa^2 for all arms; the learner knows kappa"
    ],
    "definition_quote": "we assume that $\\armset \\triangleq \\{\\bx_i\\}_{i=1}^{\\Narm}$ is a fixed finite set of $\\Narm$ vectors in $\\Real^d$. ... receives reward $y_t \\triangleq f(\\bx_t) + \\eta_t$, where $\\eta_t$ is a zero-mean noise ... $R_T \\triangleq \\sum_{t=1}^T f(\\bx_\\star) - f(\\bx_t)$ ... we additionally assume that the reward function $f$ has a bounded norm ... $\\normsmall{f}_{\\rkhs} \\leq F$"
   }
@@ -106,8 +109,8 @@
    ],
    "requires_knowledge_of": [
     "T",
-    "S",
     "sigma",
+    "S",
     "kernel"
    ]
   }
@@ -132,30 +135,31 @@
     "regime": null
    },
    "symbols": {
-    "alpha_acc": "(1+eps_alg)/(1-eps_alg), approximation accuracy factor with 0<eps_alg<1",
+    "alpha_acc": "(1+eps_alg)/(1-eps_alg), approximation accuracy factor",
     "kappa": "bound on kernel: k(x,x) <= kappa^2",
-    "d_eff": "effective dimension Tr(K_T(K_T+lam I)^{-1}) of the arms selected by BKB up to T"
+    "d_eff": "effective dimension d_eff(lambda, X_T) = Tr(K_T(K_T+lambda I)^{-1}) of the arms selected by the algorithm (data-dependent)",
+    "sigma": "noise standard deviation xi (Gaussian N(0, xi^2))"
    },
    "conditions": [
-    "||f||_H <= F (F mapped to S)",
-    "k(x_i,x_i) <= kappa^2 for all arms",
-    "noise Gaussian with variance xi^2 (xi mapped to sigma), lambda = xi^2 in the GP posterior",
-    "finite arm set"
+    "||f||_H <= F (F = S) known",
+    "k(x,x) <= kappa^2 for all arms",
+    "Gaussian noise N(0, xi^2) (paper notes extends to xi-sub-Gaussian)",
+    "finite fixed arm set"
    ],
    "tuning": [
-    "0 < eps < 1, alpha = (1+eps)/(1-eps)",
+    "0 < eps_alg < 1, alpha = (1+eps)/(1-eps)",
     "qbar >= 6 alpha log(4T/delta)/eps^2",
-    "beta_t = 2 xi sqrt(alpha log(kappa^2 t) sum_s sigma_tilde_t^2(x_s) + log(1/delta)) + (1 + 1/sqrt(1-eps)) sqrt(lambda) F",
-    "lambda > 0"
+    "lambda > 0",
+    "beta_t = 2 xi sqrt(alpha log(kappa^2 t) sum_s sigma_tilde_t^2(x_s) + log(1/delta)) + (1 + 1/sqrt(1-eps)) sqrt(lambda) F"
    ],
    "is_new": true,
    "source": {
     "label": "thm:main-regret",
     "number": "Theorem 2",
-    "quote": "Assume $\\normsmall{f}_{\\rkhs} \\leq F < \\infty$. For any desired $0 < \\varepsilon < 1$, $0 < \\delta < 1$, $0 < \\lambda$, let $\\alpha \\triangleq (1 + \\varepsilon)/(1 - \\varepsilon)$ and $\\qbar \\geq 6\\alpha\\log(4T/\\delta)/\\varepsilon^2$. If we run \\bkb with ... then, with probability of at least $1-\\delta$, the regret $R_T$ of \\bkb is bounded as R_T \\leq 2(2\\alpha)^{3/2}\\sqrt{T}(\\xi\\deff(\\lambda,\\wt{\\bX}_T)\\log(\\kappa^2T) +\\sqrt{\\lambda \\fnorm^2 \\deff(\\lambda,\\wt{\\bX}_T)\\log(\\kappa^2T)}+ \\xi\\log(1/\\delta))"
+    "quote": "Assume $\\normsmall{f}_{\\rkhs} \\leq F < \\infty$. For any desired $0 < \\varepsilon < 1$, $0 < \\delta < 1$, $0 < \\lambda$, let $\\alpha \\triangleq (1 + \\varepsilon)/(1 - \\varepsilon)$ and $\\qbar \\geq 6\\alpha\\log(4T/\\delta)/\\varepsilon^2$. If we run \\bkb with ... then, with probability of at least $1-\\delta$, the regret $R_T$ of \\bkb is bounded as R_T \\leq 2(2\\alpha)^{3/2}\\sqrt{T}(...)"
    },
    "confidence": "medium",
-   "notes": "d_eff is data-dependent (evaluated on the arms played). The paper's noise is Gaussian with std xi; it notes sub-Gaussian noise also works. Regret is realized regret in f-values, holding w.p. 1-delta. Theorem 1 (dictionary size / variance accuracy) is a computational guarantee and not recorded."
+   "notes": "Regret is defined via f values (pseudo-regret type) but holds w.h.p., so recorded as high_probability_regret. d_eff is data-dependent (on arms selected by BKB); paper notes d_eff <= logdet(K_T/lambda + I) so GP-UCB gamma_T bounds apply. Per-step runtime O(A d_eff^2). Theorem 1 (variance accuracy and dictionary size |S_t| <= 3(1+kappa^2/lambda) alpha qbar d_eff) is a computational guarantee, not recorded."
   }
  ],
  "cited_results": [
@@ -168,10 +172,10 @@
    "algorithm_name": "SOFUL-UCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Stochastic linear bandit in R^d with Frequent Directions sketch of size m; eps_m is the sum of the d-m smallest eigenvalues of A_T",
+   "setting_description": "Linear bandits with Frequent Directions sketch of size m; eps_m is sum of the d-m smallest eigenvalues of A_T",
    "bound": {
     "notation": "O_tilde",
-    "expression": "(1 + eps_m_tail)**(3/2)*(d + m)*sqrt(T)",
+    "expression": "(1 + eps_m_tail)**(3/2)*(d + m_sketch)*sqrt(T)",
     "expression_latex": "\\abigotime((1 + \\varepsilon_m)^{3/2}(d + m)\\sqrt{T})",
     "regime": null
    },
@@ -184,16 +188,20 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "00a106c81dc8",
-  "schema_version": "0.5",
-  "ontology_version": "bandits-0.5",
+  "prompt_sha": "5c6f2646ebe8",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
-  "algorithm_registry_size": 132,
-  "date": "2026-10-21T15:36:23",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-11T11:31:50",
   "source_chars": 111871,
-  "input_tokens": 93233,
-  "output_tokens": 3768,
-  "cost_usd_equiv": 0.552194,
+  "input_tokens": 94875,
+  "output_tokens": 3595,
+  "cost_usd_equiv": 0.5489298,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
   "status": "extracted"
  }
 }
