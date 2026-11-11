@@ -62,7 +62,9 @@ def main() -> None:
     N["TokensInPerPaper"] = comma(round(sum(r.get("input_tokens") or 0 for r in runs) / len(runs) / 1000)) + "k"
     N["TokensOutPerPaper"] = comma(round(sum(r.get("output_tokens") or 0 for r in runs) / len(runs) / 1000)) + "k"
     models = collections.Counter(m for r in runs for m in r.get("models") or [])
-    N["ExtractModel"] = models.most_common(1)[0][0]
+    mid = models.most_common(1)[0][0]  # e.g. claude-opus-5-5 -> Claude Opus 5.5
+    parts = mid.split("-")
+    N["ExtractModel"] = " ".join(w.capitalize() for w in parts[:2]) + " " + ".".join(parts[2:])
 
     # ---- ontology
     onto_path = sorted((ROOT / "ontology").glob("bandits-*.yaml"),
