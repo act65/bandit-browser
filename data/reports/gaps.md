@@ -83,10 +83,17 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `sqrt(T*(K - 1)*log(1/(4*delta)))/27` (exact; inherited from gerchinovitz2016refined Theorem 1)
 - relies on inherited bounds: True
 
-## adversarial (adaptive) · K-armed · graph_feedback feedback · rewards in [0,1] (`S-1e748ff8`, 3 papers): regret, worst_case — **poly gap**
+## adversarial (adaptive) · K-armed · graph_feedback feedback · rewards in [0,1] (`S-1e748ff8`, 3 papers): pseudo_regret, worst_case — **poly gap**
 - K: upper 0.5 vs lower 0 (poly_gap)
 - T: upper 0.5 vs lower 0.5 (tight)
 - best upper: `37*sqrt(K*T*q)/(1 - 1/q)` (exact; inherited from audibert2009moss Theorem 4); `A_u*sqrt(K)*M/c_alg + C_1*sqrt(K*T) + C_2*log(T + 1)` (exact; inherited from lee2024follow Theorem 4); `sqrt(K*T)` (O; inherited from lee2025revisiting Corollary 4.2)
+- best lower: `sqrt(T*alpha_G)` (Omega; inherited from alon2014nonstochastic Theorem 5)
+- relies on inherited bounds: True
+
+## adversarial (adaptive) · K-armed · graph_feedback feedback · rewards in [0,1] (`S-1e748ff8`, 3 papers): expected_regret, worst_case — **poly gap**
+- K: upper 0.5 vs lower 0 (poly_gap)
+- T: upper 0.5 vs lower 0.5 (tight)
+- best upper: `sqrt(K*T)` (O; inherited from lee2025revisiting Corollary 4.2); `sqrt(pi)*sqrt(K)/(2*m_lr) + sqrt(K*T)*(60*sqrt(pi)*m_lr + 5.7/m_lr) + (E**2 + 2*K/27)*log(T + 1)` (exact; inherited from lee2025revisiting Theorem 4.3)
 - best lower: `sqrt(T*alpha_G)` (Omega; inherited from alon2014nonstochastic Theorem 5)
 - relies on inherited bounds: True
 
@@ -140,10 +147,17 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `sqrt(T*d)` (Omega; inherited from foster2021statistical Section 6.1.1 (text after Proposition prop:bandit_lower_linear))
 - relies on inherited bounds: True
 
-## adversarial (adaptive) · K-armed · graph_feedback feedback · rewards in [0,1] (`S-e7825ea7`, 2 papers): regret, worst_case — **poly gap**
+## adversarial (adaptive) · K-armed · graph_feedback feedback · rewards in [0,1] (`S-e7825ea7`, 2 papers): pseudo_regret, worst_case — **poly gap**
 - K: upper 0.5 vs lower 0 (poly_gap)
 - T: upper 0.5 vs lower 0.5 (tight)
 - best upper: `37*sqrt(K*T*q)/(1 - 1/q)` (exact; inherited from audibert2009moss Theorem 4); `A_u*sqrt(K)*M/c_alg + C_1*sqrt(K*T) + C_2*log(T + 1)` (exact; inherited from lee2024follow Theorem 4); `sqrt(K*T)` (O; inherited from lee2025revisiting Corollary 4.2)
+- best lower: `sqrt(T*alpha_G)` (Omega; inherited from alon2014nonstochastic Theorem 5)
+- relies on inherited bounds: True
+
+## adversarial (adaptive) · K-armed · graph_feedback feedback · rewards in [0,1] (`S-e7825ea7`, 2 papers): expected_regret, worst_case — **poly gap**
+- K: upper 0.5 vs lower 0 (poly_gap)
+- T: upper 0.5 vs lower 0.5 (tight)
+- best upper: `sqrt(K*T)` (O; inherited from lee2025revisiting Corollary 4.2); `sqrt(pi)*sqrt(K)/(2*m_lr) + sqrt(K*T)*(60*sqrt(pi)*m_lr + 5.7/m_lr) + (E**2 + 2*K/27)*log(T + 1)` (exact; inherited from lee2025revisiting Theorem 4.3)
 - best lower: `sqrt(T*alpha_G)` (Omega; inherited from alon2014nonstochastic Theorem 5)
 - relies on inherited bounds: True
 
@@ -206,11 +220,11 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `C*d` (Omega; bogunovic2020stochastic Theorem 3)
 - relies on inherited bounds: True
 
-## adversarial (adaptive) · K-armed · adversarial contexts · rewards in [0,1] (`S-8bb51c3a`, 1 papers): regret, worst_case — **poly gap**
+## adversarial (adaptive) · K-armed · adversarial contexts · rewards in [0,1] (`S-8bb51c3a`, 1 papers): pseudo_regret, worst_case — **poly gap**
 - K: upper 0.333333·log^0.333333 vs lower 0.5 (poly_gap)
 - T: upper 0.666667 vs lower 0.5 (poly_gap)
 - best upper: `T**(2/3)*(K*S_max*log(K))**(1/3)*sqrt(log(N_Theta))` (O; bubeck2012survey Theorem (th:theta-regret))
-- best lower: `sqrt(K*T)` (Omega; inherited from foster2021statistical Section 5.1.3 (Regret lower bound paragraph, via Proposition prop:mab_lower and Theorem thm:lower_main_expectation)); `Min(T, sqrt(K*T))/20` (exact; inherited from auer2002exp3 Theorem 5.1); `sqrt(2)*sqrt(K*T)/36` (exact; inherited from eldowa2023minimax Theorem 4)
+- best lower: `sqrt(K*T)` (Omega; inherited from foster2021statistical Section 5.1.3 (Regret lower bound paragraph, via Proposition prop:mab_lower and Theorem thm:lower_main_expectation)); `sqrt(K*T)/20` (exact; inherited from bubeck2012survey Theorem (th:LBminimax)); `sqrt(K*T)` (Omega; inherited from alon2014nonstochastic Theorem 5)
 - relies on inherited bounds: True
 
 ## stochastic · continuum_other · partial_monitoring feedback · general_model_class (`S-642138e9`, 1 papers): regret, worst_case — **poly gap**
@@ -403,14 +417,28 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `sqrt(T*(K - 1)*log(1/(4*delta)))/27` (exact; inherited from gerchinovitz2016refined Theorem 1)
 - relies on inherited bounds: True
 
-## adversarial (adaptive) · combinatorial · full_information feedback · adversarial contexts · rewards in [0,1] · knows N_exp, m · finite (`S-2e54646b`, 1 papers): regret, worst_case — **poly gap**
+## adversarial (adaptive) · combinatorial · full_information feedback · adversarial contexts · rewards in [0,1] · knows N_exp, m · finite (`S-2e54646b`, 1 papers): pseudo_regret, worst_case — **poly gap**
 - K: upper 0.5 vs lower 0 (poly_gap)
 - T: upper 0.5 vs lower 0.5 (tight)
 - best upper: `(d_ctx*m)**(1/4)*sqrt(K*T*log(N_exp))` (O; syrgkanis2016efficient Theorem 2)
 - best lower: `0.05*sqrt(T*d)` (exact; inherited from audibert2011minimax Theorem 21)
 - relies on inherited bounds: True
 
-## adversarial (adaptive) · combinatorial · semi_bandit feedback · adversarial contexts · rewards in [0,1] · knows N_exp, m · finite (`S-6fd0a200`, 1 papers): regret, worst_case — **poly gap**
+## adversarial (adaptive) · combinatorial · full_information feedback · adversarial contexts · rewards in [0,1] · knows N_exp, m · finite (`S-2e54646b`, 1 papers): expected_regret, worst_case — **poly gap**
+- K: upper 0.5 vs lower 0 (poly_gap)
+- T: upper 0.5 vs lower 0.5 (tight)
+- best upper: `(d_ctx*m)**(1/4)*sqrt(K*T*log(N_exp))` (O; syrgkanis2016efficient Theorem 2)
+- best lower: `0.05*sqrt(T*d)` (exact; inherited from audibert2011minimax Theorem 21)
+- relies on inherited bounds: True
+
+## adversarial (adaptive) · combinatorial · semi_bandit feedback · adversarial contexts · rewards in [0,1] · knows N_exp, m · finite (`S-6fd0a200`, 1 papers): pseudo_regret, worst_case — **poly gap**
+- K: upper 0.5 vs lower 0 (poly_gap)
+- T: upper 0.5 vs lower 0.5 (tight)
+- best upper: `d_ctx**(1/4)*m**(3/4)*sqrt(K*T*log(N_exp))` (O; syrgkanis2016efficient Theorem 3)
+- best lower: `0.05*sqrt(T*d)` (exact; inherited from audibert2011minimax Theorem 21)
+- relies on inherited bounds: True
+
+## adversarial (adaptive) · combinatorial · semi_bandit feedback · adversarial contexts · rewards in [0,1] · knows N_exp, m · finite (`S-6fd0a200`, 1 papers): expected_regret, worst_case — **poly gap**
 - K: upper 0.5 vs lower 0 (poly_gap)
 - T: upper 0.5 vs lower 0.5 (tight)
 - best upper: `d_ctx**(1/4)*m**(3/4)*sqrt(K*T*log(N_exp))` (O; syrgkanis2016efficient Theorem 3)
@@ -465,6 +493,12 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `sqrt(T*V_T) + (Lambda_T*T*V_T)**(1/3)` (Omega; wei2017tracking Theorem 4.3)
 - relies on inherited bounds: False
 
+## adversarial (adaptive) · K-armed · stochastic contexts · rewards in [0,1] · expert_advice · knows N_exp, function_class (`S-973e68b6`, 1 papers): expected_regret, worst_case — **poly gap**
+- T: upper 0.8 vs lower 0.5 (poly_gap)
+- best upper: `T**(4/5)*(K**(2/3)*log(N_exp)**(1/3) + K*sqrt(log(K)))` (O; wu2024oracle Theorem 18)
+- best lower: `sqrt(K*T)/18` (exact; inherited from eldowa2023information Theorem 8)
+- relies on inherited bounds: True
+
 ## stochastic · continuum_other · partial_monitoring feedback · {unimodal} · general_model_class (`S-a957eb0d`, 1 papers): regret, worst_case — **poly gap**
 - T: upper 0.5·log^0.5 vs lower -0.333333 (poly_gap)
 - best upper: `sqrt(T*log(T))*(2*sqrt(2) + 4)*(sqrt(2*E - 2) + 8) + 3` (exact; inherited from cesabianchi2024role Theorem 4)
@@ -504,14 +538,21 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `Min(d/Delta_min, Delta_min*T)` (Omega; inherited from foster2021statistical Section 6.1.5 (text after Proposition prop:bandit_gap_linear))
 - relies on inherited bounds: True
 
-## adversarial (adaptive) · K-armed · adversarial contexts · rewards in [0,1] · knows function_class (`S-962bae9f`, 1 papers): regret, worst_case — **poly gap**
+## adversarial (adaptive) · K-armed · adversarial contexts · rewards in [0,1] · knows function_class (`S-962bae9f`, 1 papers): pseudo_regret, worst_case — **poly gap**
 - K: upper 0.333333·log^0.333333 vs lower 0.5 (poly_gap)
 - T: upper 0.666667 vs lower 0.5 (poly_gap)
 - best upper: `T**(2/3)*(K*S_max*log(K))**(1/3)*sqrt(log(N_Theta))` (O; inherited from bubeck2012survey Theorem (th:theta-regret))
-- best lower: `sqrt(K*T)` (Omega; inherited from foster2021statistical Section 5.1.3 (Regret lower bound paragraph, via Proposition prop:mab_lower and Theorem thm:lower_main_expectation)); `Min(T, sqrt(K*T))/20` (exact; inherited from auer2002exp3 Theorem 5.1); `sqrt(2)*sqrt(K*T)/36` (exact; inherited from eldowa2023minimax Theorem 4)
+- best lower: `sqrt(K*T)` (Omega; inherited from foster2021statistical Section 5.1.3 (Regret lower bound paragraph, via Proposition prop:mab_lower and Theorem thm:lower_main_expectation)); `sqrt(K*T)/20` (exact; inherited from bubeck2012survey Theorem (th:LBminimax)); `sqrt(K*T)` (Omega; inherited from alon2014nonstochastic Theorem 5)
 - relies on inherited bounds: True
 
-## adversarial (adaptive) · combinatorial · full_information feedback · adversarial contexts · rewards in [0,1] · knows N_exp, S_T, m · finite (`S-1b65beee`, 1 papers): regret, worst_case — **poly gap**
+## adversarial (adaptive) · combinatorial · full_information feedback · adversarial contexts · rewards in [0,1] · knows N_exp, S_T, m · finite (`S-1b65beee`, 1 papers): pseudo_regret, worst_case — **poly gap**
+- K: upper 0.5 vs lower 0 (poly_gap)
+- T: upper 0.5 vs lower 0.5 (tight)
+- best upper: `(d_ctx*m)**(1/4)*sqrt(K*T*log(N_exp))` (O; inherited from syrgkanis2016efficient Theorem 2)
+- best lower: `0.05*sqrt(T*d)` (exact; inherited from audibert2011minimax Theorem 21)
+- relies on inherited bounds: True
+
+## adversarial (adaptive) · combinatorial · full_information feedback · adversarial contexts · rewards in [0,1] · knows N_exp, S_T, m · finite (`S-1b65beee`, 1 papers): expected_regret, worst_case — **poly gap**
 - K: upper 0.5 vs lower 0 (poly_gap)
 - T: upper 0.5 vs lower 0.5 (tight)
 - best upper: `(d_ctx*m)**(1/4)*sqrt(K*T*log(N_exp))` (O; inherited from syrgkanis2016efficient Theorem 2)
@@ -525,7 +566,14 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `sqrt(T*d*(log(d) + log(1/delta)))` (Omega; inherited from bacchiocchi2026efficient Corollary 1)
 - relies on inherited bounds: True
 
-## adversarial (adaptive) · linear (finite actions) · bounded_pm1 · arms_span_Rd · finite (`S-e9a0a033`, 1 papers): regret, worst_case — **poly gap**
+## adversarial (adaptive) · linear (finite actions) · bounded_pm1 · arms_span_Rd · finite (`S-e9a0a033`, 1 papers): pseudo_regret, worst_case — **poly gap**
+- T: upper 0.5·log^1 vs lower 0.5 (log_gap)
+- d: upper 1 vs lower 0.5 (poly_gap)
+- best upper: `sqrt(T)*d*log(T/delta)` (O; inherited from krishnamurthy2018semiparametric Theorem 4) [delta=1/T]
+- best lower: `sqrt(T*d)` (Omega; inherited from foster2021statistical Section 5.1.3 (Regret lower bound paragraph, via Proposition prop:mab_lower and Theorem thm:lower_main_expectation)); `sqrt(T*d)/20` (exact; inherited from bubeck2012survey Theorem (th:LBminimax)); `sqrt(T*(d - 1))/504` (exact; inherited from eldowa2026leveraging Proposition (prop:one-point-tree-lb))
+- relies on inherited bounds: True
+
+## adversarial (adaptive) · linear (finite actions) · bounded_pm1 · arms_span_Rd · finite (`S-e9a0a033`, 1 papers): expected_regret, worst_case — **poly gap**
 - T: upper 0.5·log^1 vs lower 0.5 (log_gap)
 - d: upper 1 vs lower 0.5 (poly_gap)
 - best upper: `sqrt(T)*d*log(T/delta)` (O; inherited from krishnamurthy2018semiparametric Theorem 4) [delta=1/T]
@@ -539,7 +587,14 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `sqrt(T*d*(log(d) + log(1/delta)))` (Omega; inherited from bacchiocchi2026efficient Corollary 1)
 - relies on inherited bounds: True
 
-## adversarial (adaptive) · linear (finite actions) · bounded_pm1 · arms_span_Rd · finite (`S-814688f7`, 1 papers): regret, worst_case — **poly gap**
+## adversarial (adaptive) · linear (finite actions) · bounded_pm1 · arms_span_Rd · finite (`S-814688f7`, 1 papers): pseudo_regret, worst_case — **poly gap**
+- T: upper 0.5·log^1 vs lower 0.5 (log_gap)
+- d: upper 1 vs lower 0.5 (poly_gap)
+- best upper: `sqrt(T)*d*log(T/delta)` (O; inherited from krishnamurthy2018semiparametric Theorem 4) [delta=1/T]
+- best lower: `sqrt(T*d)` (Omega; inherited from foster2021statistical Section 5.1.3 (Regret lower bound paragraph, via Proposition prop:mab_lower and Theorem thm:lower_main_expectation)); `sqrt(T*d)/20` (exact; inherited from bubeck2012survey Theorem (th:LBminimax)); `sqrt(T*d)` (Omega; inherited from alon2014nonstochastic Theorem 5)
+- relies on inherited bounds: True
+
+## adversarial (adaptive) · linear (finite actions) · bounded_pm1 · arms_span_Rd · finite (`S-814688f7`, 1 papers): expected_regret, worst_case — **poly gap**
 - T: upper 0.5·log^1 vs lower 0.5 (log_gap)
 - d: upper 1 vs lower 0.5 (poly_gap)
 - best upper: `sqrt(T)*d*log(T/delta)` (O; inherited from krishnamurthy2018semiparametric Theorem 4) [delta=1/T]
@@ -943,9 +998,15 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `sqrt(T*(K - 1)*log(1/(4*delta)))/27` (exact; inherited from gerchinovitz2016refined Theorem 1)
 - relies on inherited bounds: True
 
-## adversarial (adaptive) · K-armed · rewards in [0,1] · K=2 (`S-daac918b`, 2 papers): regret, worst_case — **log gap**
+## adversarial (adaptive) · K-armed · rewards in [0,1] · K=2 (`S-daac918b`, 2 papers): pseudo_regret, worst_case — **log gap**
 - T: upper 0.5 vs lower 0.5·log^-1 (log_gap)
 - best upper: `37*sqrt(2)*sqrt(T*q)/(1 - 1/q)` (exact; inherited from audibert2009moss Theorem 4); `2*sqrt(T)*sqrt(log(2))` (exact; inherited from bubeck2012survey Theorem (th:Exp3)); `2*sqrt(2)*sqrt(T)*sqrt(log(2))` (exact; inherited from bubeck2012survey Theorem (th:Exp3))
+- best lower: `sqrt(T)/log(T)` (Omega; inherited from pacchiano2020model Theorem 5.2)
+- relies on inherited bounds: True
+
+## adversarial (adaptive) · K-armed · rewards in [0,1] · K=2 (`S-daac918b`, 2 papers): expected_regret, worst_case — **log gap**
+- T: upper 0.5 vs lower 0.5·log^-1 (log_gap)
+- best upper: `sqrt(2)*sqrt(T)/sqrt(log(2)) + 5.15*sqrt(2)*sqrt(T)*sqrt(log(2))` (exact; inherited from bubeck2012survey Theorem (Expected regret of Exp3.P)); `sqrt(2)*sqrt(T)` (O; inherited from lee2025revisiting Corollary 4.2); `sqrt(2)*sqrt(T)*(60*sqrt(pi)*m_lr + 5.7/m_lr) + (E**2 + 4/27)*log(T + 1) + sqrt(2)*sqrt(pi)/(2*m_lr)` (exact; inherited from lee2025revisiting Theorem 4.3)
 - best lower: `sqrt(T)/log(T)` (Omega; inherited from pacchiano2020model Theorem 5.2)
 - relies on inherited bounds: True
 
@@ -1047,11 +1108,11 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `sqrt(T*d)` (Omega; inherited from foster2021statistical Section 6.1.1 (text after Proposition prop:bandit_lower_linear))
 - relies on inherited bounds: True
 
-## adversarial (adaptive) · K-armed · adversarial contexts · rewards in [0,1] · knows M_ctx (`S-ad3afe31`, 1 papers): regret, worst_case — **log gap**
+## adversarial (adaptive) · K-armed · adversarial contexts · rewards in [0,1] · knows M_ctx (`S-ad3afe31`, 1 papers): pseudo_regret, worst_case — **log gap**
 - K: upper 0.5·log^0.5 vs lower 0.5 (log_gap)
 - T: upper 0.5 vs lower 0.5 (tight)
 - best upper: `sqrt(2)*sqrt(K*M_ctx*T*log(K))` (exact; bubeck2012survey Theorem (th:context-simple))
-- best lower: `sqrt(K*T)` (Omega; inherited from foster2021statistical Section 5.1.3 (Regret lower bound paragraph, via Proposition prop:mab_lower and Theorem thm:lower_main_expectation)); `Min(T, sqrt(K*T))/20` (exact; inherited from auer2002exp3 Theorem 5.1); `sqrt(2)*sqrt(K*T)/36` (exact; inherited from eldowa2023minimax Theorem 4)
+- best lower: `sqrt(K*T)` (Omega; inherited from foster2021statistical Section 5.1.3 (Regret lower bound paragraph, via Proposition prop:mab_lower and Theorem thm:lower_main_expectation)); `sqrt(K*T)/20` (exact; inherited from bubeck2012survey Theorem (th:LBminimax)); `sqrt(K*T)` (Omega; inherited from alon2014nonstochastic Theorem 5)
 - relies on inherited bounds: True
 
 ## adversarial (oblivious) · linear (finite actions) · bounded_pm1 · arms_span_Rd · finite (`S-f8d98c81`, 1 papers): regret, worst_case — **log gap**
@@ -1430,18 +1491,25 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `Min(T**(2/3), sqrt(K*T), sqrt(M_ctx*T*alpha_G))` (Omega; inherited from han2020optimal Theorem 6); `sqrt(T*Min(K, M_ctx, T**(1/3)))` (Omega_tilde; inherited from han2020optimal Corollary 2)
 - relies on inherited bounds: True
 
-## adversarial (adaptive) · combinatorial · graph_feedback feedback · rewards in [0,1] · knows alpha_G, m · finite (`S-2044575f`, 1 papers): regret, worst_case — **log gap**
+## adversarial (adaptive) · combinatorial · graph_feedback feedback · rewards in [0,1] · knows alpha_G, m · finite (`S-2044575f`, 1 papers): expected_regret, worst_case — **log gap**
 - K: upper 0 vs lower 0·log^0.5 (log_gap)
 - T: upper 0.5 vs lower 0.5 (log_gap)
 - best upper: `sqrt(T)*m + sqrt(T*alpha_G*m)` (O_tilde; wen2025adversarial Theorem 1.1); `m*sqrt(T*alpha_G)` (O_tilde; inherited from wen2025adversarial Theorem 5.2); `Min(m*sqrt(T*alpha_G), sqrt(K*T*m))` (O_tilde; inherited from wen2025adversarial Theorem 5.2)
 - best lower: `m*sqrt(T*log(K/m)) + sqrt(T*alpha_G*m)` (Omega; wen2025adversarial Theorem 1.3)
 - relies on inherited bounds: True
 
-## adversarial (adaptive) · combinatorial · graph_feedback feedback · rewards in [0,1] · knows alpha_G, m · finite (`S-a18f41c4`, 1 papers): regret, worst_case — **log gap**
+## adversarial (adaptive) · combinatorial · graph_feedback feedback · rewards in [0,1] · knows alpha_G, m · finite (`S-a18f41c4`, 1 papers): expected_regret, worst_case — **log gap**
 - K: upper 0 vs lower 0·log^0.5 (log_gap)
 - T: upper 0.5 vs lower 0.5 (log_gap)
 - best upper: `m*sqrt(T*alpha_G)` (O_tilde; wen2025adversarial Theorem 5.2); `Min(m*sqrt(T*alpha_G), sqrt(K*T*m))` (O_tilde; wen2025adversarial Theorem 5.2)
 - best lower: `m*sqrt(T*log(K/m)) + sqrt(T*alpha_G*m)` (Omega; inherited from wen2025adversarial Theorem 1.3)
+- relies on inherited bounds: True
+
+## adversarial (adaptive) · combinatorial · graph_feedback feedback · rewards in [0,1] · knows alpha_G, m · finite (`S-a18f41c4`, 1 papers): pseudo_regret, worst_case — **log gap**
+- K: upper 0 vs lower 0 (log_gap)
+- T: upper 0.5 vs lower 0.5 (log_gap)
+- best upper: `m*sqrt(T*alpha_G)` (O_tilde; wen2025adversarial Theorem 5.2); `Min(m*sqrt(T*alpha_G), sqrt(K*T*m))` (O_tilde; wen2025adversarial Theorem 5.2)
+- best lower: `0.008*sqrt(T)*d` (exact; inherited from audibert2011minimax Theorem 20)
 - relies on inherited bounds: True
 
 ## corrupted stochastic · K-armed · rewards in [0,1] · knows m (`S-1d591128`, 1 papers): regret, instance_dependent — **log gap**

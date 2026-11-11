@@ -77,17 +77,19 @@ value is set less by how much it reads than by how much of what it reads it can 
 
 ## Options
 
-1. **Hold instance constants fixed** (trying now). Classify each (paper, symbol) once, cached like
-   `condition-classes.yaml`, as: constant, instance constant, alias of a canonical variable, grows with a
-   scanned variable, tuning, derived, or misuse.
-   - Hold constants and instance constants fixed, unless they appear in an exponent.
-   - Substitute aliases.
-   - Leave everything else unprofiled.
-   - Mark a cell whose front relies on a held-fixed parameter as **conditional** ("up to instance
-     parameters"), so a tight label can't hide a κ- or S-dependence.
+1. **Hold instance constants fixed.** Done 2026-11-11; see "What holding parameters fixed did" below.
+   Each (paper, symbol) is classified once (`pipeline/classify_symbols.py` → `data/symbol-classes.yaml`,
+   3,702 pairs) as one of:
+   - constant;
+   - instance constant;
+   - constant tuning;
+   - alias of a canonical variable;
+   - scales with a scanned variable;
+   - derived;
+   - misuse.
 
-   Expected gain: on the order of 1,500 more profiled bounds. Risk: misclassifying a growing quantity as
-   fixed, which creates false tight cells or false conflicts. The conflict count is the alarm.
+   Upper bounds hold constants, instance constants and constant tunings fixed unless they appear in an
+   exponent. Aliases are substituted. Everything else stays unprofiled.
 2. **Grow the registry** with recurring parameters (zooming dimension, path length, number of players,
    budget, delay, eluder dimension, κ), scanned as further variables where they define a regime. This is
    more work per parameter, but it gives real comparisons, e.g. dynamic regret in P_T.
@@ -98,6 +100,55 @@ value is set less by how much it reads than by how much of what it reads it can 
    substitute it (the extractor already stores `tuning`).
 5. **Extraction guidance**: ask the extractor to state each bound in canonical variables when the paper
    also does (many papers give a corollary "with κ = O(1)").
+
+## What holding parameters fixed did (2026-11-11)
+
+Option 1 was implemented in `pipeline/compare.py` (`hold_symbols`) and merged together with the
+pseudo/expected-regret split for adaptive adversaries (author correspondence).
+
+| | before | after |
+|---|---|---|
+| own bounds with a profile | 1,282 (27%) | 2,270 (48%) |
+| cells | 2,108 | 2,599 |
+| tight | 115 | 155 (37 of them only up to instance parameters) |
+| log gap / poly gap | 107 / 57 | 114 / 136 |
+| conflict | 7 | 11 |
+| acceptance, gold set | 5 PASS, 0 contradicted | unchanged |
+
+The first version produced **72 conflict cells**. Each spike led to a rule, now tested in
+`tests/test_compare.py`:
+
+1. **Lower bounds hold only numerical constants.** Their free parameters are usually the proof's
+   construction parameters (a perturbation size, a number of hard arms), chosen as functions of T and K.
+   Holding them fixed turned √T lower bounds into T ones (carpentier2026revealing: min(Tr, Dr + Tε + √(DTr))).
+2. **A held parameter makes unmentioned variables unknown.** Instance parameters often stand in for a
+   scanned variable: a "number of base arms" that is d, K* ≤ K, a ground-set size. A bound that holds
+   one is compared only in the variables it contains (gong2023efficient: σ√(K*T log T) against √(KT)).
+3. **Held parameters cannot create a conflict.** Rule 2 cannot see a parameter that hides d inside a
+   T-exponent (T^{2/3} with a class size M against T^{(d+1)/(d+2)}). An apparent violation resting on held
+   parameters is marked "unresolved" for that variable, not a conflict.
+4. **log log factors are equal.** log(log(1/Δ)) fits to a fractional log power (log^0.04 vs log^0.05);
+   log exponents within 0.1 compare equal.
+
+With these four rules, 72 → 11 conflicts. None of the 11 rests on a held parameter. The 4 new ones are
+two known kinds: the zhou2025learning switch-count S_T, and K-armed log T bounds inherited into combinatorial
+settings (the base-arm symbol issue). Of the 115 previously tight cells, 113 are still tight; 2 became the
+S_T conflicts.
+
+**What "conditional" means.** A cell is marked "up to instance parameters" only if **every** best upper
+bound holds a parameter fixed. If an ordinary bound reaches the same rate, the verdict doesn't depend on
+the held parameters. The site shows a dashed badge with the parameters in its tooltip.
+
+**What remains.** Half of the extracted bounds are still uncompared:
+- symbols that scale with a scanned variable (653 pairs);
+- derived quantities (636);
+- parameters in exponents;
+- lower bounds with construction parameters.
+
+Options 2–4 (registry growth, conversions, tuned values) address these. Classification quality is
+the main risk. A spot check of the instance-constant class looked sound, but the `alias:Delta` class merges
+differently defined gaps (Condorcet gap, preference gap) into Δ. Within a cell these are usually the same
+kind of problem, but not always.
 
 ## Open questions
 

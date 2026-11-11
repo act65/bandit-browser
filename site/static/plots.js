@@ -181,7 +181,16 @@ window.bbReady(function () {
         var sw = h("span", "rp-key" + (side === "lower" ? " lo" : "") + (b.shape ? " shape" : ""), lab);
         sw.style.borderTopColor = colour(b);
         var txt = h("span", "rp-ltxt", lab);
-        h("b", "", txt, (b.shape ? "∝ " : "") + b.cite);
+        // every reference links to its paper page (static pages live in settings/, the database pages at the root)
+        var cite = h("b", "", txt, b.shape ? "∝ " : "");
+        if (b.pslug) {
+          var a = h("a", "", cite, b.cite);
+          a.href = (/\/settings\//.test(window.location.pathname) ? "../papers/" + encodeURIComponent(b.pslug) + ".html"
+                                                                  : "paper.html?p=" + encodeURIComponent(b.pslug));
+          a.addEventListener("click", function (ev) { ev.stopPropagation(); });  // don't toggle the checkbox
+        } else {
+          cite.appendChild(document.createTextNode(b.cite));
+        }
         if (b.alg) h("span", "muted", txt, " · " + b.alg);
         var tags = [];
         if (b.front) tags.push("best");

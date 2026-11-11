@@ -284,3 +284,23 @@ def test_cell_is_not_conditional_when_an_ordinary_bound_reaches_the_rate(monkeyp
           result("pb:r1", "S1", "lower", "sqrt(K*T)", quantity="expected_regret")]
     cell = compare.compare({r["id"]: r for r in rs}, [], CAN)["settings"]["S1"]["regret|worst_case"]
     assert cell["status"] == "tight" and cell["conditional"] == []
+
+
+def test_adaptive_adversary_splits_pseudo_and_expected_regret():
+    """Author correspondence (2026-11-11): against an adaptive adversary pseudo-regret <= expected regret and the two
+    differ, so they get separate cells. Expected upper bounds and pseudo lower bounds count in both; a pseudo upper
+    bound must not make the expected-regret cell tight, nor an expected lower bound the pseudo cell."""
+    rs = [result("pa:r1", "SA", "upper", "sqrt(K*T)", quantity="pseudo_regret", notation="O"),
+          result("pb:r1", "SA", "lower", "sqrt(K*T)", quantity="pseudo_regret"),
+          result("pc:r1", "SA", "upper", "T**(2/3)", quantity="expected_regret", notation="O"),
+          result("pd:r1", "SA", "lower", "T**(2/3)", quantity="expected_regret")]
+    out = compare.compare({r["id"]: r for r in rs}, [], CAN, adaptive={"SA"})["settings"]["SA"]
+    assert set(out) == {"pseudo_regret|worst_case", "expected_regret|worst_case"}
+    ps, ex = out["pseudo_regret|worst_case"], out["expected_regret|worst_case"]
+    assert ps["status"] == "tight" and "pa:r1" in ps["upper_front"] and "pd:r1" not in ps["lower_front"]
+    assert ex["status"] == "tight" and "pc:r1" in ex["upper_front"] and "pa:r1" not in ex["upper_front"]
+    assert ex["n_lower"] == 2 and "pb:r1" not in ex["lower_front"]  # counted, but dominated by T^(2/3)
+    assert "pc:r1" in ps["upper_front"] or ps["n_upper"] == 2
+    # without the split (oblivious / stochastic) they pool into one regret cell
+    pooled = compare.compare({r["id"]: r for r in rs}, [], CAN)["settings"]["SA"]
+    assert set(pooled) == {"regret|worst_case"}

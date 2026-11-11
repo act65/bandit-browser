@@ -72,6 +72,16 @@ FAMILY = {"pseudo_regret": "regret", "expected_regret": "regret", "regret_unspec
           "simple_regret": "simple_regret", "sample_complexity": "sample_complexity",
           "error_probability": "error_probability", "dynamic_regret": "dynamic_regret",
           "switching_regret": "switching_regret"}
+# Against an adaptive adversary, expected regret E[max_i ...] exceeds pseudo-regret max_i E[...], and the two are
+# compared separately (author correspondence, 2026-11-11). Since pseudo <= expected: an expected-regret upper bound
+# is also a pseudo-regret upper bound, and a pseudo-regret lower bound is also an expected-regret lower bound.
+# Unspecified regret goes only where it is valid either way (upper -> pseudo, lower -> expected).
+ADAPTIVE_SPLIT = {("pseudo_regret", "upper"): ["pseudo_regret"],
+                  ("pseudo_regret", "lower"): ["pseudo_regret", "expected_regret"],
+                  ("expected_regret", "upper"): ["pseudo_regret", "expected_regret"],
+                  ("expected_regret", "lower"): ["expected_regret"],
+                  ("regret_unspecified", "upper"): ["pseudo_regret"],
+                  ("regret_unspecified", "lower"): ["expected_regret"]}
 # Regret against a switching comparator is switching regret, whatever quantity the paper names: pooling it with
 # regret against the best fixed action would compare a static upper bound with a switching lower bound.
 COMPARATOR_FAMILY = {("regret", "best_switching_sequence"): "switching_regret",
@@ -356,9 +366,10 @@ def fmt(ab) -> str:
     return f"{a:g}" + (f"·log^{b:g}" if b else "")
 
 
-def compare(results: dict, inferred: list[dict], canonical: set[str]) -> dict:
+def compare(results: dict, inferred: list[dict], canonical: set[str], adaptive: set[str] = frozenset()) -> dict:
     """Profiles, per-cell status, conflicts and rate regimes for results {id: result} and the
-    inferred bounds (the content of comparison.json, plus counters under "_stats")."""
+    inferred bounds (the content of comparison.json, plus counters under "_stats").
+    `adaptive`: setting ids with an adaptive adversary, where regret is split (ADAPTIVE_SPLIT)."""
     entries = []  # (id, setting_id, side, quantity, dependence, algorithm_class, notation, expr, inherited, caveats)
     for r in results.values():
         entries.append((r["id"], r["setting_id"], r["side"], r.get("quantity"), r.get("dependence"),
@@ -444,6 +455,8 @@ def compare(results: dict, inferred: list[dict], canonical: set[str]) -> dict:
     for eid, sid, side, q, dep, cls, nota, expr, inh, cav in entries:
         fam = FAMILY.get(q)
         fam = COMPARATOR_FAMILY.get((fam, source_of(eid).get("comparator")), fam)
+        fams = ADAPTIVE_SPLIT.get((q, side), [fam]) if fam == "regret" and sid in adaptive else [fam]
+        fam = fams[0]
         if set(resolve.IDENT_RE.findall(expr)) & WORST_CASE_T:
             dep = "data_dependent"  # small-loss / variation bounds: not comparable with gap-based ones
         p = profiles.get(eid)
@@ -463,7 +476,8 @@ def compare(results: dict, inferred: list[dict], canonical: set[str]) -> dict:
         if side == "lower" and inh and any("unspecified on one side" in c for c in cav) \
                 and restricts_instances(conditions_of(eid)):
             continue  # hard instances may lie outside the target (e.g. non-observable graphs, observability unspecified)
-        regimes[(sid, fam, dep)][side].append({"id": eid, "profile": p, "inherited": inh})
+        for f in fams:
+            regimes[(sid, f, dep)][side].append({"id": eid, "profile": p, "inherited": inh})
         rate_regime[eid] = f"{fam}|{dep}"
 
     settings_out, conflicts = collections.defaultdict(dict), []
@@ -542,7 +556,10 @@ def main() -> None:
     results = {r["id"]: r for r in json.loads((OUT / "results.json").read_text())}
     inferred = json.loads((OUT / "inferred.json").read_text())
     canonical = set(schema.load_variables()["variables"]) | {"Delta"}
-    out = compare(results, inferred, canonical)
+    settings = json.loads((OUT / "settings.json").read_text())
+    settings = settings["settings"] if isinstance(settings, dict) else settings
+    adaptive = {x["id"] for x in settings if (x.get("key") or {}).get("environment") == "adversarial_adaptive"}
+    out = compare(results, inferred, canonical, adaptive)
     profiles, conflicts, st = out["profiles"], out["conflicts"], out["_stats"]
     (OUT / "comparison.json").write_text(json.dumps(
         {"profiles": {k: ({v: (sorted(ab) if v == "_unknown" else ab if v == "_path" else list(ab))

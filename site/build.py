@@ -1164,7 +1164,11 @@ def rates_section(site: Site, n: dict) -> str:
     rows = []
     for c in cells:
         tri = analysis.triage_badge(h, c.get("triage")) if c["status"] in analysis.GAP_STATUSES else ""
-        rows.append(f'<li>{analysis.status_badge(h, c["status"])} <span class="reg-l">{e(analysis.regime_label(c["regime"]))}</span>'
+        cond = c.get("conditional") or []
+        cond_html = (f' <span class="badge cond" title="{e("Every best upper bound holds paper-specific instance parameters fixed ("
+                                                          + ", ".join(cond) + "): the verdict is up to their values.", quote=True)}">'
+                     f'up to instance parameters</span>') if cond and c["status"] != "no_upper" else ""
+        rows.append(f'<li>{analysis.status_badge(h, c["status"])}{cond_html} <span class="reg-l">{e(analysis.regime_label(c["regime"]))}</span>'
                     f' {tri}{pages.per_var_html(c.get("per_var") or {})}</li>')
     strip = (f'<ul class="cellstrip">{"".join(rows)}</ul>' if rows else
              '<p class="muted small">No regime has bounds with a usable rate profile, so no tightness status.</p>')

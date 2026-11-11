@@ -29,6 +29,9 @@ STATUS = {  # key -> (label, short help)
     "tight": ("tight", "best upper and lower bounds match up to constants"),
     "none": ("no comparable bounds", "no bound in this setting has a usable rate profile"),
 }
+# per-variable only: an apparent violation that rests on held instance parameters (not counted as a conflict)
+PER_VAR_STATUS = {"unresolved": ("unresolved", "the best upper bound holds a paper-specific parameter fixed that may hide "
+                                 "this variable, so the comparison is left open")}
 GAP_STATUSES = ["conflict", "poly_gap", "log_gap", "no_lower", "no_upper"]
 # Most relevant first: what a setting's colour on the graph shows when it has several regimes.
 STATUS_RANK = {s: i for i, s in enumerate(["conflict", "poly_gap", "log_gap", "no_lower", "no_upper", "tight", "none"])}
@@ -36,7 +39,7 @@ TRIAGE = {"closed": "closed by prior work", "open_known": "known open problem", 
 FAMILY_LABEL = {"regret": "regret", "hp_regret": "high-prob. regret", "bayesian_regret": "Bayesian regret",
                 "simple_regret": "simple regret", "switching_regret": "switching regret",
                 "sample_complexity": "sample complexity", "error_probability": "error probability",
-                "dynamic_regret": "dynamic regret"}
+                "dynamic_regret": "dynamic regret", "pseudo_regret": "pseudo-regret", "expected_regret": "expected regret"}
 DEP_LABEL = {"worst_case": "worst-case", "instance_dependent": "instance-dependent", "data_dependent": "data-dependent"}
 # As in pipeline/compare.py: small-loss / variation bounds form their own regime.
 DATA_DEPENDENT = re.compile(r"\b(L_star|Q_T|Lambda_T)\b")
@@ -137,13 +140,30 @@ class Analysis:
             return {"id": full_id, "side": b["side"], "reg": reg, "nota": b.get("notation"),
                     "shape": bool(b.get("shape_only")), "inh": bool(b.get("inherited")),
                     "from": src["name"] if src else None, "fromSlug": src["slug"] if src else None,
-                    "paper": b.get("paper"), "cite": site.cite(b.get("paper")), "year": b.get("year"),
+                    "paper": b.get("paper"), "pslug": site.slug_of_paper(b.get("paper")) if b.get("paper") else None,
+                    "cite": site.cite(b.get("paper")), "year": b.get("year"),
                     "alg": alg, "js": b.get("js"), "tex": tex if ok else None, "expr": b.get("expression"),
                     "prof": b.get("profile"), "front": full_id in fronts.get(reg, ()), "dsub": dsub,
                     "restricted": bool(b.get("restricted")), "conf": b.get("confidence"),
                     "rate": dsub or b.get("rate_regime") == reg}
 
-        out = [entry(b, self.regime(b), b["id"], False) for b in bs]
+        def regs_for(b: dict) -> list[str]:
+            """The regimes a bound is shown in: its own, or, where regret is split by adversary (adaptive
+            settings; pipeline/compare.py ADAPTIVE_SPLIT), every pseudo/expected-regret cell it counts in."""
+            from compare import ADAPTIVE_SPLIT  # pipeline/ is on sys.path (site/build.py)
+            reg = self.regime(b)
+            fam, _, dep = reg.partition("|")
+            if fam == "regret" and any(k.split("|")[0] in ("pseudo_regret", "expected_regret") for k in cells):
+                return [f"{f}|{dep}" for f in ADAPTIVE_SPLIT.get((b.get("quantity"), b["side"]), ["pseudo_regret"])]
+            return [reg]
+
+        out = []
+        for b in bs:
+            regs_b = regs_for(b)
+            for reg in regs_b:
+                e_ = entry(b, reg, b["id"], False)
+                e_["rate"] = e_["rate"] or (len(regs_b) > 1 or regs_b != [self.regime(b)]) and bool(b.get("rate_regime"))
+                out.append(e_)
         # High-probability bounds read in expectation with delta = 1/T (front ids "...@delta=1/T").
         for reg, c in cells.items():
             for bid in c["upper_front"] + c["lower_front"]:
@@ -230,7 +250,7 @@ class Pages:
         for v, x in per_var.items():
             st = x.get("status") or ""
             sym = {"Delta": "1/Δ", "delta": "1/δ", "epsilon": "1/ε"}.get(v, v)
-            out.append(f'<span class="pv pv-{h.e(st)}" title="{h.e(STATUS.get(st, (st,))[0], quote=True)}">'
+            out.append(f'<span class="pv pv-{h.e(st)}" title="{h.e({**STATUS, **PER_VAR_STATUS}.get(st, (st,))[0], quote=True)}">'
                        f'<b>{h.e(sym)}</b> ↑{h.e(rate_str(x.get("upper")))} ↓{h.e(rate_str(x.get("lower")))}</span>')
         return '<div class="pvs">' + "".join(out) + "</div>"
 

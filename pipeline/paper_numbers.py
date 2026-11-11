@@ -97,6 +97,12 @@ def main() -> None:
                     ("no_lower", "NNoLower"), ("no_upper", "NNoUpper")]:
         N[name] = comma(st[k])
     N["NGaps"] = comma(st["log_gap"] + st["poly_gap"])
+    cond = [c for c in si["cells"] if c.get("conditional")]
+    N["NTightConditional"] = str(sum(1 for c in cond if c["status"] == "tight"))
+    N["NTightPlain"] = str(st["tight"] - sum(1 for c in cond if c["status"] == "tight"))
+    N["NConditionalVerdicts"] = str(sum(1 for c in cond if c["status"] in ("tight", "log_gap", "poly_gap")))
+    syms = yaml.safe_load((ROOT / "data" / "symbol-classes.yaml").read_text())["classes"]
+    N["NSymbolPairs"] = comma(len(syms))
     N["NTransfer"] = comma(len(si["transfer"]))
     N["NUnstudied"] = comma(len(si["unstudied"]))
     corr = yaml.safe_load((ROOT / "data" / "corrections.yaml").read_text())
