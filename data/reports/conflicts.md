@@ -23,12 +23,24 @@ An upper bound grows more slowly than a lower bound in the same setting and regi
 - pac_epsilon_best · stochastic · combinatorial · bernoulli · knows m, reward_family · finite (`S-70c3bd9a`, 1 papers), sample_complexity / worst_case, variable d: upper 0 < lower 1
   - upper: `K*(log(1/delta) + log(m))/epsilon**2` (O; inherited from chen2016pure Theorem 1.7)
   - lower: `d/epsilon**2` (Omega; rejwan2019combinatorial Theorem 10)
-- nonstationary_drifting · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 · knows V_T (`S-540a698b`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 0.5
+- stochastic · combinatorial · semi_bandit feedback · bernoulli · knows m · finite (`S-a06b480b`, 1 papers), regret / instance_dependent, variable d: upper 0 < lower 1
+  - upper: `log(T)` (O; inherited from lai2007cognitive Lemma 11)
+  - lower: `d*log(T)/(eps_gap*m)` (Omega; yang2021combinatorial Theorem 3)
+- nonstationary_drifting · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 · knows V_T (`S-540a698b`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 1
   - upper: `Min(S_T, sqrt(T*V_T))` (O_tilde; inherited from zhou2025learning Theorem (thm:bobw)) — conditions: V_T = Omega(ln T)
-  - lower: `sqrt(T*V_T)/16` (exact; zhou2025learning Theorem (thm:full_lb))
-- nonstationary_drifting · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 (`S-6e75cd9f`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 0.5
+  - lower: `T*c_1` (exact; zhou2025learning Proposition (prop:lb1))
+- nonstationary_drifting · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 (`S-6e75cd9f`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 1
   - upper: `Min(S_T, sqrt(T*V_T))` (O_tilde; zhou2025learning Theorem (thm:bobw)) — conditions: V_T = Omega(ln T)
-  - lower: `sqrt(T*V_T)/16` (exact; inherited from zhou2025learning Theorem (thm:full_lb))
+  - lower: `T*c_1` (exact; inherited from zhou2025learning Proposition (prop:lb1))
+- nonstationary_switching · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 (`S-a878f7d7`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 1
+  - upper: `S_T` (O_tilde; zhou2025learning Theorem (thm:full_lt1)) — conditions: L_T = o(T)
+  - lower: `T*c_1**2` (exact; inherited from zhou2025learning Proposition (prop:lb1))
+- nonstationary_switching · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 · knows S_T (`S-469c2c8b`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 1
+  - upper: `S_T` (O_tilde; inherited from zhou2025learning Theorem (thm:full_lt1)) — conditions: L_T = o(T)
+  - lower: `T*c_1**2` (exact; zhou2025learning Proposition (prop:lb1))
+- stochastic · combinatorial · semi_bandit feedback · rewards in [0,1] · knows loss_range, m · finite (`S-8b4db714`, 1 papers), regret / instance_dependent, variable d: upper 0 < lower 1
+  - upper: `sum_subopt(log(T)*log(K*T)/Delta_i) + K*m*log(1/Delta_min)*log(K/Delta_min)/Delta_min` (O; inherited from hu2025near Theorem 6)
+  - lower: `d*log(T)/(eps_gap*m)` (Omega; inherited from yang2021combinatorial Theorem 3)
 
 ## Vacuous upper bounds (regret growing at least linearly in T)
 

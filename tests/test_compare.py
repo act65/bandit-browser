@@ -11,6 +11,7 @@ small-T, model changes, fixed-parameter lower bounds), consistency classes excep
 from __future__ import annotations
 
 import pytest
+import sympy
 from conftest import CANONICAL, result
 
 import compare
@@ -207,3 +208,79 @@ def test_runaway_exponents_are_skipped_deterministically():
     for expr in ["T**((d + 1)/(d + 2))", "sqrt(K*T*log(K))", "T**(K/(K + 1))*log(T)**(1/(K + 1))",
                  "Lambda_T**(nu_matern/(d + 2*nu_matern))*T**(d/(d + 2*nu_matern))", "d*sqrt(T)*log(T)**2"]:
         assert not compare.runaway_exponent(P(expr)), expr
+
+
+def test_paper_symbols_held_fixed_substituted_or_blocked():
+    """notes/comparability.md: instance constants are held fixed (and reported), aliases become their canonical
+    variable, and anything that scales, sits in an exponent, or is unclassified blocks the profile."""
+    P = resolve.parse
+    can = {"T", "K", "d", "Delta", "delta"}
+    cls = {"p|kappa": "instance_constant", "p|n_r": "alias:T", "p|C_1": "constant", "p|P_T": "scales",
+           "p|d_z": "instance_constant"}
+    e, held, cond = compare.hold_symbols(P("kappa*d*sqrt(T)"), "p", can, cls)
+    assert held == ["kappa"] and cond == ["kappa"]
+    e, held, cond = compare.hold_symbols(P("C_1*sqrt(K*n_r)"), "p", can, cls)
+    assert e == P("sqrt(K*T)") * sympy.Symbol("C_1") and held == ["C_1"] and cond == []
+    assert compare.hold_symbols(P("sqrt(T*P_T)"), "p", can, cls) is None          # grows with T
+    assert compare.hold_symbols(P("T**((d_z + 1)/(d_z + 2))"), "p", can, cls) is None  # rate depends on its value
+    assert compare.hold_symbols(P("sqrt(T*rho)"), "p", can, cls) is None          # unclassified
+    assert compare.hold_symbols(P("sqrt(T*kappa)"), "q", can, cls) is None        # classes are per paper
+
+
+def test_held_parameter_makes_the_cell_conditional(monkeypatch):
+    """A cell whose best upper bound needs a held instance parameter is tight only 'up to instance parameters'."""
+    monkeypatch.setattr(compare, "SYMBOL_CLASSES", {"pa|kappa": "instance_constant"})
+    up = result("pa:r1", "S1", "upper", "kappa*d*sqrt(T)", quantity="expected_regret", dependence="worst_case")
+    lo = result("pb:r1", "S1", "lower", "d*sqrt(T)", quantity="expected_regret", dependence="worst_case")
+    out = compare.compare({r["id"]: r for r in (up, lo)}, [], CAN)
+    cell = out["settings"]["S1"]["regret|worst_case"]
+    assert cell["status"] == "tight" and cell["conditional"] == ["kappa"]
+
+
+def test_lower_bounds_hold_only_numerical_constants():
+    """A lower bound's free parameters are usually construction parameters chosen with T and K
+    (carpentier2026revealing: min(T r, D r + T eps + sqrt(D T r))); holding them fixed overstates the rate."""
+    P = resolve.parse
+    cls = {"p|r": "instance_constant", "p|C_1": "constant"}
+    assert compare.hold_symbols(P("Min(T*r, sqrt(T*r))"), "p", {"T"}, cls, side="lower") is None
+    assert compare.hold_symbols(P("C_1*sqrt(T)"), "p", {"T"}, cls, side="lower")[1] == ["C_1"]
+    assert compare.hold_symbols(P("Min(T*r, sqrt(T*r))"), "p", {"T"}, cls, side="upper")[1] == ["r"]
+
+
+def test_held_parameter_cannot_stand_in_for_a_missing_variable(monkeypatch):
+    """gong2023efficient: sigma*sqrt(K_star*T log T) with K_star <= K held fixed must not read as K-free and
+    'beat' a sqrt(KT) lower bound; its K-exponent is unknown, so the cell is not a conflict in K."""
+    monkeypatch.setattr(compare, "SYMBOL_CLASSES", {"pa|K_star": "instance_constant"})
+    up = result("pa:r1", "S1", "upper", "sqrt(K_star*T*log(T))", quantity="expected_regret", notation="O")
+    lo = result("pb:r1", "S1", "lower", "sqrt(K*T)", quantity="expected_regret")
+    cell = compare.compare({r["id"]: r for r in (up, lo)}, [], CAN)["settings"]["S1"]["regret|worst_case"]
+    assert cell["status"] != "conflict" and "K" not in cell["per_var"]
+
+
+def test_held_parameters_cannot_create_a_conflict(monkeypatch):
+    """skalse2026online: T^(2/3) with a held class size M (which may grow with d) against a T^((d+1)/(d+2))
+    lower bound is not evidence of an error; the variable is left unresolved instead of a conflict."""
+    monkeypatch.setattr(compare, "SYMBOL_CLASSES", {"pa|M_size": "instance_constant"})
+    up = result("pa:r1", "S1", "upper", "T**(2/3)*sqrt(log(M_size))", quantity="expected_regret", notation="O")
+    lo = result("pb:r1", "S1", "lower", "T**((d + 1)/(d + 2))", quantity="expected_regret")
+    cell = compare.compare({r["id"]: r for r in (up, lo)}, [], CAN)["settings"]["S1"]["regret|worst_case"]
+    assert cell["status"] != "conflict" and cell["per_var"]["T"]["status"] == "unresolved"
+
+
+def test_log_log_factors_do_not_make_a_conflict():
+    """chen2015optimal: (log(1/delta) + log log(1/Delta))/Delta^2 against log log(1/Delta)/Delta^2 is one rate."""
+    up = result("pa:r1", "S1", "upper", "(log(1/delta) + log(log(1/Delta)))/Delta**2", quantity="sample_complexity",
+                dependence="instance_dependent", notation="O")
+    lo = result("pb:r1", "S1", "lower", "log(log(1/Delta))/Delta**2", quantity="sample_complexity",
+                dependence="instance_dependent")
+    cell = compare.compare({r["id"]: r for r in (up, lo)}, [], CAN)["settings"]["S1"]["sample_complexity|instance_dependent"]
+    assert cell["status"] != "conflict"
+
+
+def test_cell_is_not_conditional_when_an_ordinary_bound_reaches_the_rate(monkeypatch):
+    monkeypatch.setattr(compare, "SYMBOL_CLASSES", {"pa|kappa": "instance_constant"})
+    rs = [result("pa:r1", "S1", "upper", "kappa*sqrt(K*T)", quantity="expected_regret", notation="O"),
+          result("pc:r1", "S1", "upper", "2*sqrt(K*T)", quantity="expected_regret", notation="O"),
+          result("pb:r1", "S1", "lower", "sqrt(K*T)", quantity="expected_regret")]
+    cell = compare.compare({r["id"]: r for r in rs}, [], CAN)["settings"]["S1"]["regret|worst_case"]
+    assert cell["status"] == "tight" and cell["conditional"] == []

@@ -114,7 +114,7 @@ def main() -> None:
         for reg, c in regimes.items():
             tri = triage.get(f"{sid}|{reg}")
             cells.append({"setting_id": sid, "regime": reg, **{k: c[k] for k in (
-                "status", "per_var", "upper_front", "lower_front", "relies_on_inherited", "n_upper", "n_lower")},
+                "status", "per_var", "upper_front", "lower_front", "relies_on_inherited", "n_upper", "n_lower")}, "conditional": c.get("conditional", []),
                 "triage": ({"verdict": tri["verdict"], "summary": tri["summary"],
                             "papers": tri.get("papers", [])} if tri else None)})
 

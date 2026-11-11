@@ -82,6 +82,53 @@ MINIMAX_LOWER_CLASSES = {None, "all", "consistent", "uniformly_good"}
 BENIGN_CONDITION = re.compile(r"^[\sTKdnN0-9δdelta()\[\]{}*+\-/^.,≥≤><=_maxinlogeqpwr]+$")
 
 
+# Paper-specific symbols (pipeline/classify_symbols.py, notes/comparability.md): "paper|symbol" -> class.
+_SYMBOLS_FILE = schema.ROOT / "data" / "symbol-classes.yaml"
+SYMBOL_CLASSES = ((__import__("yaml").safe_load(_SYMBOLS_FILE.read_text()) or {}).get("classes", {})
+                  if _SYMBOLS_FILE.exists() else {})
+HELD_CLASSES = {"constant", "instance_constant", "tuning_constant"}
+CONDITIONAL_CLASSES = {"instance_constant", "tuning_constant"}  # held, and the cell's verdict depends on them
+HELD_VALUES = (3, sympy.Rational(1, 3))
+LOG_TOL = 0.1  # log exponents closer than this are equal (log log factors fit to small fractional powers)  # nominal values; the second when the first makes the bound vanish
+
+
+def _in_exponent(e, s: str) -> bool:
+    sym = sympy.Symbol(s)
+    for x in sympy.preorder_traversal(e):
+        arg = x.exp if isinstance(x, sympy.Pow) else x.args[0] if isinstance(x, sympy.exp) else None
+        if arg is not None and sym in arg.free_symbols:
+            return True
+    return False
+
+
+def hold_symbols(e, paper: str, canonical: set[str], classes: dict | None = None, side: str = "upper"):
+    """Make a bound with paper-specific symbols profilable, or None.
+
+    Aliases are replaced by their canonical variable; constants, instance constants and constant tunings are
+    returned to be held fixed (unless they sit in an exponent, where the rate would depend on their value).
+    Anything else (unclassified, scales with a scanned variable, derived, misuse) blocks the profile.
+    Lower bounds hold only numerical constants: their free parameters are usually the proof's construction
+    parameters (a perturbation size, a number of hard arms), chosen as functions of T and K, so holding them
+    fixed misstates the rate (it turned sqrt(T) lower bounds into T ones).
+    Returns (expression, held symbols, conditional symbols)."""
+    classes = SYMBOL_CLASSES if classes is None else classes
+    foreign = {str(s) for s in e.free_symbols} - canonical - set(SCAN)
+    if not foreign:
+        return e, [], []
+    alias, held = {}, []
+    for s in sorted(foreign):
+        c = classes.get(f"{paper}|{s}")
+        if c is None:
+            return None
+        if c.startswith("alias:"):
+            alias[sympy.Symbol(s)] = sympy.Symbol(c.split(":", 1)[1])
+        elif (c in HELD_CLASSES if side == "upper" else c == "constant") and not _in_exponent(e, s):
+            held.append(s)
+        else:
+            return None
+    return e.subs(alias), held, [s for s in held if classes[f"{paper}|{s}"] in CONDITIONAL_CLASSES]
+
+
 _CLASSES_FILE = schema.ROOT / "data" / "condition-classes.yaml"
 CONDITION_CLASSES = ((__import__("yaml").safe_load(_CLASSES_FILE.read_text()) or {}).get("classes", {})
                      if _CLASSES_FILE.exists() else {})
@@ -336,13 +383,29 @@ def compare(results: dict, inferred: list[dict], canonical: set[str]) -> dict:
     profiles, failures = {}, collections.Counter()
     cache = {}
     for eid, sid, side, q, dep, cls, nota, expr, inh, cav in entries:
-        key = (expr, nota)
+        paper = eid.split(":", 1)[0]
+        key = (expr, nota, paper, side)  # the meaning of a paper-specific symbol depends on the paper
         if key not in cache:
             signal.signal(signal.SIGALRM, _alarm)
             signal.alarm(PROFILE_TIMEOUT_S)
             try:
                 inst = instance_expr(expr, nota)
-                cache[key] = None if runaway_exponent(inst) else profile(inst, canonical)
+                held = hold_symbols(inst, paper, canonical, side=side)
+                cache[key] = None
+                if held is not None and not runaway_exponent(held[0]):
+                    e, hs, cond = held
+                    for value in (HELD_VALUES if hs else (None,)):
+                        q = profile(e.subs({sympy.Symbol(h): value for h in hs}) if hs else e, canonical)
+                        if q is not None:
+                            if cond:
+                                # a held instance parameter may stand in for a scanned variable (a "number of base
+                                # arms" that is d, a K_star <= K): variables the bound does not mention get an
+                                # unknown exponent, not 0, so it is compared only in the variables it contains
+                                present = {str(x) for x in e.free_symbols}
+                                q = {**q, "_held": cond,
+                                     "_unknown": set(q.get("_unknown", ())) | (set(SCAN) - present)}
+                            cache[key] = q
+                            break
             except _Timeout:
                 print(f"profile timed out after {PROFILE_TIMEOUT_S}s, skipped: {expr[:150]}", flush=True)
                 cache[key] = None
@@ -354,9 +417,9 @@ def compare(results: dict, inferred: list[dict], canonical: set[str]) -> dict:
         if p is None:
             failures["no_profile"] += 1
         elif dep == "instance_dependent" and nota in ("O", "O_tilde", "Theta") and "Delta" not in p:
-            p = {**p, "_unknown": {"Delta"}}  # hidden instance-dependent constant
+            p = {**p, "_unknown": set(p.get("_unknown", ())) | {"Delta"}}  # hidden instance-dependent constant
         elif "Delta" in p and set(resolve.IDENT_RE.findall(expr)) & INSTANCE_TIED_PARAMS:
-            p = {**p, "_unknown": {"Delta"}}  # tuning parameter constrained by the gap (e.g. eps < Delta)
+            p = {**p, "_unknown": set(p.get("_unknown", ())) | {"Delta"}}  # tuning parameter constrained by the gap (e.g. eps < Delta)
         profiles[eid] = p
 
     inferred_by_id = {x["id"]: x for x in inferred}
@@ -435,6 +498,13 @@ def compare(results: dict, inferred: list[dict], canonical: set[str]) -> dict:
                 # them, only the polynomial rates are known, so equal polynomial rates are a log gap at best
                 hidden_logs = all(notation.get(x["id"]) == "O_tilde" for x in us if path_exp(x["profile"], v) == bu) \
                     or all(notation.get(x["id"]) == "Omega_tilde" for x in ls if path_exp(x["profile"], v) == bl)
+                if bu[0] == bl[0] and abs(bu[1] - bl[1]) < LOG_TOL:
+                    bu = bl  # equal up to a numerically fitted log log factor (e.g. log(log(1/Delta)))
+                if bu < bl and all(x["profile"].get("_held") for x in us if path_exp(x["profile"], v) == bu):
+                    # the apparent violation rests on held instance parameters, which may hide a scanned
+                    # variable (a class size that grows with d): not evidence of an error, so no verdict here
+                    per_var[v] = {"status": "unresolved", "upper": fmt(du), "lower": fmt(dl)}
+                    continue
                 if bu[0] == bl[0] and bu <= bl and hidden_logs:
                     s, lvl = "log_gap", 1
                 elif bu < bl:
@@ -457,6 +527,10 @@ def compare(results: dict, inferred: list[dict], canonical: set[str]) -> dict:
             "status": status, "per_var": per_var,
             "upper_front": [x["id"] for x in up_front], "lower_front": [x["id"] for x in lo_front],
             "relies_on_inherited": any(x["inherited"] for x in up_front + lo_front),
+            # the verdict holds with the best bounds' instance parameters (kappa, S, ...) fixed: "up to instance parameters"
+            # only when every best upper bound needs one (if an ordinary bound reaches the same rate, it doesn't)
+            "conditional": (sorted({h for x in up_front for h in x["profile"]["_held"]})
+                            if up_front and all(x["profile"].get("_held") for x in up_front) else []),
             "n_upper": len(ups), "n_lower": len(los)}
 
     return {"profiles": profiles, "settings": settings_out, "conflicts": conflicts, "rate_regime": rate_regime,
