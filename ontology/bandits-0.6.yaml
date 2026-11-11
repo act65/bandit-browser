@@ -506,13 +506,14 @@ node_parameters:
     id_optional: true
     fields:
       family:
-        values: [not_applicable, unspecified, linear, polynomial, squared_exponential, matern, general]
-        order: [[linear, general], [polynomial, general], [squared_exponential, general], [matern, general]]
+        values: [not_applicable, unspecified, linear, polynomial, squared_exponential, matern, other, general]
+        order: [[linear, general], [polynomial, general], [squared_exponential, general], [matern, general], [other, general]]
         note: >
           The kernel the result is proved for. general = any kernel, with the bound stated through the maximum
           information gain gamma_T (or an effective dimension). matern: the smoothness is the variable nu_matern.
           A result proved for several named kernels at once is general if stated via gamma_T, else one setting
-          per kernel.
+          per kernel. other = one specific kernel not listed here (gamma-exponential, piecewise-polynomial, neural
+          tangent, rational quadratic, a quantum kernel, ...): never general, even if the bound uses gamma_T.
         # Upper bounds stated through gamma_T for any kernel pass down to a named kernel with gamma_T replaced by
         # its known order: linear O(d log T) and squared exponential O(log^{d+1} T) (Srinivas et al. 2010, Thm 5);
         # Matern-nu O(T^{d/(2nu+d)} log^{2nu/(2nu+d)} T) (Vakili et al. 2021, arXiv:2009.06966, Sec. 1-2).
@@ -534,7 +535,7 @@ node_parameters:
 # Mapping guidance (ontology/review-v0.3.md: features that ARE expressible but were left
 # unmapped). Rendered into the extractor prompt.
 guidance:
-  - "Kernel / GP bandits: action_space = kernel_rkhs plus node parameter kernel.family. Bounds through the maximum information gain gamma_T for any kernel are family = general; results for a named kernel (squared exponential / RBF, Matern with smoothness nu, linear, polynomial) use that family, with nu as the variable nu_matern."
+  - "Kernel / GP bandits: action_space = kernel_rkhs plus node parameter kernel.family. Bounds through the maximum information gain gamma_T for any kernel are family = general; results for a named kernel (squared exponential / RBF, Matern with smoothness nu, linear, polynomial) use that family, with nu as the variable nu_matern; a result for one other specific kernel (gamma-exponential, piecewise-polynomial, neural tangent kernel, ...) is family = other, never general, even when its bound is written with gamma_T."
   - "A fixed numerical noise level (1-sub-Gaussian, standard Gaussian, R = 1) is noise = subgaussian / gaussian_known_variance; the value (sigma = 1) goes in the result's conditions, not the setting."
   - "Known parametric structure (OSSB-type, known Theta and reward map, eluder-dimension classes) is action_space = structured_general; GLM link conditions are generalized_linear with k_mu, c_mu."
   - "All distributions on [0,1] is noise = bounded_01; canonical exponential families are exponential_family; h-moment / psi-conditions / generic concentration classes are heavy_tailed or general_model_class with the condition in the result's conditions."
@@ -657,3 +658,4 @@ vocabularies:
 #   gamma_T substituted per family when upper bounds pass from general to a named kernel (value_maps, cited).
 #   id_optional: left out of setting ids when not_applicable, so non-kernel ids are unchanged.
 #   Kernel papers re-extracted with this version; see notes/comparability.md ("kernel bandits").
+#   kernel.family other (2026-11-11): a specific kernel not in the list; the extractor had filed such results as general.

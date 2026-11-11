@@ -886,7 +886,7 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `sqrt(K*T)` (Omega; inherited from foster2021statistical Section 5.1.3 (Regret lower bound paragraph, via Proposition prop:mab_lower and Theorem thm:lower_main_expectation)); `Min(T, sqrt(K*T))/20` (exact; inherited from auer2002exp3 Theorem 5.1); `sqrt(K*T)/20` (exact; inherited from bubeck2012survey Theorem (th:LBminimax))
 - relies on inherited bounds: True
 
-## stochastic · kernel_rkhs · Gaussian · knows S, gamma_T, kernel, sigma · hypercube (`S-633b4f18`, 1 papers): hp_regret, worst_case — **poly gap**
+## stochastic · kernel_rkhs · {bounded} · Gaussian · knows S, gamma_T, kernel, nu_matern, sigma · hypercube (`S-d135bcb9`, 1 papers): hp_regret, worst_case — **poly gap**
 - T: upper 0.9·log^0.6 vs lower 0.7 (poly_gap)
 - best upper: `S*sqrt(T*T**(d/(d + 2*nu_matern))*log(T)**(2*nu_matern/(d + 2*nu_matern))) + sqrt(T*T**(d/(d + 2*nu_matern))*(T**(d/(d + 2*nu_matern))*log(T)**(2*nu_matern/(d + 2*nu_matern)) + log(1/delta))*log(T)**(2*nu_matern/(d + 2*nu_matern)))` (O; inherited from chowdhury2017kernelized Theorem 3)
 - best lower: `S**(d/(d + 2*nu_matern))*T**((d + nu_matern)/(d + 2*nu_matern))*(sigma**2*log(1/delta))**(nu_matern/(d + 2*nu_matern))` (Omega; inherited from cai2020lower Theorem 2)
@@ -1715,12 +1715,6 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - T: upper 0.666667·log^2 vs lower 0.666667 (log_gap)
 - best upper: `T**(2/3)*log(T)**2` (O; inherited from han2020optimal Corollary 1)
 - best lower: `T**(2/3)` (Omega; inherited from lunghi2025online Remark 1); `T**(2/3)` (Omega_tilde; inherited from xu2022towards Corollary 9)
-- relies on inherited bounds: True
-
-## stochastic · kernel_rkhs · Gaussian · knows S, gamma_T, kernel, sigma · hypercube (`S-633b4f18`, 1 papers): regret, worst_case — **log gap**
-- T: upper 0.7·log^2.3 vs lower 0.7 (log_gap)
-- best upper: `T**(d*(1 + (d + 2*nu_matern)/d)/(2*(d + 2*nu_matern)))*log(T)**(-d/(2*(d + 2*nu_matern)) + 5/2)` (O; inherited from vakili2020information Section 4)
-- best lower: `S**(d/(d + 2*nu_matern))*T**((d + nu_matern)/(d + 2*nu_matern))*sigma**(2*nu_matern/(d + 2*nu_matern))` (Omega; inherited from scarlett2017lower Theorem 2)
 - relies on inherited bounds: True
 
 ## stochastic · linear (finite actions) · adversarial contexts · conditionally_subgaussian · time_varying_action_sets · finite (`S-6da6e851`, 1 papers): regret, worst_case — **log gap**

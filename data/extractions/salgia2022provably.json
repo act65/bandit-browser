@@ -15,12 +15,14 @@
  "settings": [
   {
    "id": "s1",
-   "name_in_paper": "Neural contextual bandit with smooth activations (NT-kernel RKHS reward)",
+   "name_in_paper": "Neural contextual bandit (reward in NTK RKHS, smooth activations sigma_s)",
    "objective": "cumulative_regret",
    "feedback": "bandit",
    "environment": "stochastic_iid",
    "action_space": "kernel_rkhs",
-   "function_class": [],
+   "function_class": [
+    "bounded"
+   ],
    "domain": "not_applicable",
    "context": "adversarial_contexts",
    "noise": "conditionally_subgaussian",
@@ -29,21 +31,22 @@
     "K",
     "S",
     "sigma",
+    "gamma_T",
     "kernel"
    ],
    "instance_assumptions": [],
-   "extras": [
-    "time_varying_action_sets"
-   ],
    "action_set": {
     "shape": "finite",
     "time_varying": "adaptive_sequence",
     "access": "explicit",
     "norm_bound": "unit_l2",
-    "parameter_set": "unspecified",
+    "parameter_set": "l2_ball",
     "loss_set": "not_applicable",
     "parameter_structure": "not_applicable"
    },
+   "extras": [
+    "time_varying_action_sets"
+   ],
    "corruption": {
     "adversary": "not_applicable",
     "budget_measure": "not_applicable",
@@ -88,16 +91,17 @@
     "generation": "not_applicable"
    },
    "kernel": {
-    "family": "general"
+    "family": "other"
    },
    "parameters": {},
    "in_scope": true,
    "out_of_scope_reason": null,
    "unmapped": [
-    "Reward function h lies in the RKHS of the neural tangent kernel of a fully connected net with activations sigma_s(u)=max(0,u)^s; contexts x_{t,a} on the hypersphere S^{d-1}, K per round, chosen arbitrarily",
-    "Learner knows the noise sub-Gaussian parameter nu and the NTK RKHS norm S (used in beta)"
+    "Kernel is the neural tangent kernel of an L-layer fully connected net with activation sigma_s(u)=max(0,u)^s",
+    "Contexts x_{t,a} lie on the hypersphere S^{d-1}; K context-action vectors revealed each round, chosen arbitrarily",
+    "Learner uses an overparameterized neural net trained by gradient descent"
    ],
-   "definition_quote": "In the stochastic contextual bandit problem, at each discrete sequential step $t=1,2,\\dots, T$, for each action $a\\in[K]$, a context vector $\\bfx_{t}\\in \\cX$ is revealed... receives the corresponding reward $r_{t} = h(\\bfx_{t, a_t})+\\xi_t$... (i) The input space is the $d$ dimensional hypersphere... (ii) The reward function $h$ belongs to the RKHS induced by the NT kernel, and $h(\\bfx)\\in [0, 1]$... (iii) $\\xi_t$ are assumed to be conditionally $\\nu$-sub-Gaussian"
+   "definition_quote": "at each discrete sequential step $t=1,2,\\dots, T$, for each action $a\\in[K]$, a context vector $\\bfx_{t}\\in \\cX$ is revealed ... receives the corresponding reward $r_{t} = h(\\bfx_{t, a_t})+\\xi_t$ ... (i) The input space is the $d$ dimensional hypersphere ... (ii) The reward function $h$ belongs to the RKHS induced by the NT kernel, and $h(\\bfx)\\in [0, 1]$ ... (iii) $\\xi_t$ are assumed to be conditionally $\\nu$-sub-Gaussian"
   }
  ],
  "algorithms": [
@@ -108,13 +112,14 @@
    "is_new": true,
    "techniques": [
     "optimism",
-    "elimination"
+    "elimination",
+    "other"
    ],
    "requires_knowledge_of": [
     "T",
-    "K",
     "S",
     "sigma",
+    "gamma_T",
     "delta"
    ]
   }
@@ -135,34 +140,33 @@
    "bound": {
     "notation": "O_tilde",
     "expression": "sqrt(T*gamma_T) + sqrt(T*gamma_T*log(1/delta)) + q_max*gamma_T",
-    "expression_latex": "R(T) =\\Oct\\left( \\sqrt{T \\Gamma_k(T)} +  \\sqrt{T \\Gamma_k(T) \\log(1/\\delta)} +\\max_rq_r\\Gamma_k(T)\\right)",
+    "expression_latex": "\\Oct\\left( \\sqrt{T \\Gamma_k(T)} +  \\sqrt{T \\Gamma_k(T) \\log(1/\\delta)} +\\max_rq_r\\Gamma_k(T)\\right)",
     "regime": null
    },
    "symbols": {
-    "q_max": "maximum batch size max_r q_r used for retraining the neural nets",
-    "gamma_T": "maximal information gain Gamma_k(T) of the NT kernel"
+    "q_max": "max_r q_r, largest fixed retraining batch size across the R levels"
    },
    "conditions": [
-    "Assumption 2: NTK Gram matrix H on all context-action pairs satisfies H >= lambda_0 I",
-    "f(x; W_0) = 0",
-    "contexts on hypersphere S^{d-1}, h in [0,1] with NTK RKHS norm S",
-    "activations sigma_s(u) = max(0,u)^s",
-    "network width m >= poly(T, L, K, 1/lambda, 1/lambda_0, 1/S, log(1/delta))"
+    "NTK Gram matrix H on all context-action pairs satisfies H >= lambda_0 I (Assumption 2(i))",
+    "f(x; W_0) = 0 (Assumption 2(ii))",
+    "reward function h has RKHS (NTK) norm S and h(x) in [0,1]",
+    "contexts on the unit hypersphere S^{d-1}"
    ],
    "tuning": [
-    "fixed batch size q_r for each group",
-    "number of training epochs J = Omega_tilde(T), learning rate eta = O(1/T)",
-    "R = ceil(log2 T) neural nets",
-    "alpha_0 = O(Gamma_k(T))"
+    "width m >= poly(T, L, K, 1/lambda, 1/lambda_0, 1/S, log(1/delta))",
+    "training epochs J = Omega_tilde(T), learning rate eta = O(1/T)",
+    "fixed batch size q_r per group",
+    "alpha_0 = O(Gamma_k(T))",
+    "R = ceil(log2 T) neural nets"
    ],
    "is_new": true,
    "source": {
     "label": "theorem:regret_guarantees",
     "number": "Theorem 3",
-    "quote": "Suppose Assumptions~\\ref{ass1} and \\ref{ass2} hold. Consider NeuralGCB given in Algorithm~\\ref{alg:NeuralGCB}, with $R$ neural nets, as defined in~\\eqref{eq:nn} with $L$ hidden layers each of width $m \\geq \\text{poly}(T, L, K, \\lambda^{-1}, \\lambda_0^{-1}, S^{-1}, \\log(1/\\delta))$. Suppose NeuralGCB is run with a fixed batch size for each group, then the regret~defined in~\\eqref{eq:regret_def} satisfies R(T) =\\Oct( \\sqrt{T \\Gamma_k(T)} + \\sqrt{T \\Gamma_k(T) \\log(1/\\delta)} +\\max_rq_r\\Gamma_k(T))"
+    "quote": "Suppose Assumptions~\\ref{ass1} and \\ref{ass2} hold. Consider NeuralGCB given in Algorithm~\\ref{alg:NeuralGCB}, with $R$ neural nets, as defined in~\\eqref{eq:nn} with $L$ hidden layers each of width $m \\geq \\text{poly}(T, L, K, \\lambda^{-1}, \\lambda_0^{-1}, S^{-1}, \\log(1/\\delta))$. Suppose NeuralGCB is run with a fixed batch size for each group, then the regret~defined in~\\eqref{eq:regret_def} satisfies $R(T) =\\Oct( \\sqrt{T \\Gamma_k(T)} +  \\sqrt{T \\Gamma_k(T) \\log(1/\\delta)} +\\max_rq_r\\Gamma_k(T))$"
    },
    "confidence": "medium",
-   "notes": "Theorem does not explicitly state the probability, but the bound depends on delta and the proof uses high-probability confidence intervals, so recorded as high-probability. Intro states that with Gamma bounds for smooth activations this gives O~(T^{(2d+2s-3)/(2d+4s-4)}), not a formal statement. Appendix also claims O(sqrt(T Gamma log(1/delta)) max_r sqrt(q_r)) for adaptive batch sizes (informal, not recorded)."
+   "notes": "Theorem does not explicitly state 'with probability 1-delta' but the bound depends on delta and the proof uses high-probability confidence intervals; recorded as high-probability. gamma_T is the maximal information gain Gamma_k(T) of the NTK. Intro claims this yields O_tilde(T^{(2d+2s-3)/(2d+4s-4)}) when combined with info-gain bounds from Vakili et al. (2021); not recorded separately since not stated formally. Appendix also sketches an adaptive-batch bound O(sqrt(T Gamma log(1/delta)) max_r sqrt(q_r)) (not a formal statement)."
   }
  ],
  "cited_results": [
@@ -175,7 +179,7 @@
    "algorithm_name": "NeuralUCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Neural contextual bandit with ReLU activations",
+   "setting_description": "Neural contextual bandit with ReLU activations (NTK)",
    "bound": {
     "notation": "O_tilde",
     "expression": "gamma_T*sqrt(T)",
@@ -193,25 +197,7 @@
    "algorithm_name": "NeuralTS",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Neural contextual bandit with ReLU activations",
-   "bound": {
-    "notation": "O_tilde",
-    "expression": "gamma_T*sqrt(T)",
-    "expression_latex": "\\Oct(\\Gamma_k(T)\\sqrt{T})",
-    "regime": null
-   },
-   "where": "Section 1.1"
-  },
-  {
-   "cited_key": "gu2021batched",
-   "cited_title": "Batched neural bandits",
-   "cited_first_author": "Q. Gu",
-   "cited_year": 2021,
-   "cited_arxiv_id": "2102.13028",
-   "algorithm_name": "Batched NeuralUCB",
-   "algorithm_registry_id": null,
-   "side": "upper",
-   "setting_description": "Batched neural contextual bandit with ReLU activations",
+   "setting_description": "Neural contextual bandit with ReLU activations (NTK)",
    "bound": {
     "notation": "O_tilde",
     "expression": "gamma_T*sqrt(T)",
@@ -229,7 +215,7 @@
    "algorithm_name": "SupNeuralUCB",
    "algorithm_registry_id": null,
    "side": "upper",
-   "setting_description": "Neural contextual bandit with ReLU activations",
+   "setting_description": "Neural contextual bandit with ReLU activations (NTK)",
    "bound": {
     "notation": "O_tilde",
     "expression": "sqrt(gamma_T*T)",
@@ -245,16 +231,16 @@
    "claude-opus-5-5"
   ],
   "effort": null,
-  "prompt_sha": "5c6f2646ebe8",
+  "prompt_sha": "7d4c38bfd00b",
   "schema_version": "0.6",
   "ontology_version": "bandits-0.6",
   "variables_version": "0.4",
   "algorithm_registry_size": 133,
-  "date": "2026-11-11T11:39:12",
+  "date": "2026-11-11T13:52:12",
   "source_chars": 184545,
-  "input_tokens": 143046,
-  "output_tokens": 4538,
-  "cost_usd_equiv": 0.9531578,
+  "input_tokens": 143208,
+  "output_tokens": 4963,
+  "cost_usd_equiv": 1.244916,
   "quote_retry": {
    "asked": 0,
    "fixed": 0

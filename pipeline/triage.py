@@ -145,6 +145,7 @@ def main() -> None:
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--remap", action="store_true", help="only re-attach stale verdicts to renamed settings")
+    ap.add_argument("--only", nargs="*", default=None, help="triage only these cell ids (setting|family|dependence)")
     ap.add_argument("--old-settings", type=Path, default=None,
                     help="settings.json from before the rename (for verdicts written without a key)")
     args = ap.parse_args()
@@ -155,7 +156,8 @@ def main() -> None:
                        + yaml.safe_dump({"triage": done}, sort_keys=False, allow_unicode=True, width=110))
         print(f"remapped {n} verdicts; {len(done)} kept")
         return
-    todo = [c for c in candidates(args.missing) if args.force or c["id"] not in done][: args.limit]
+    todo = [c for c in candidates(args.missing) if (args.force or c["id"] not in done)
+            and (args.only is None or c["id"] in args.only)][: args.limit]
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
         futs = {ex.submit(triage_one, c): c for c in todo}
         for f in as_completed(futs):

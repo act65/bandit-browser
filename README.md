@@ -11,7 +11,7 @@ Theory papers state results of a regular shape: *in setting S, algorithm X achie
 
 Bandits are the test domain; the goal is a domain-agnostic engine for ML, CS and maths theory.
 
-**Status:** Phase 4 (scaling). 559-paper corpus (58 pilot papers plus a 500-paper breadth batch) extracted by an LLM with ontology v0.5: 2,466 results across 1,117 canonical settings, not yet human-verified. Reference material (Lattimore's *Bandit Convex Optimisation*, the pilot facts) is written up in [`notes/`](notes/). Browse at <https://act65.github.io/bandit-browser/>.
+**Status:** Phase 4 (scaling). 1,057 papers (a 59-paper pilot and two breadth batches of about 500) extracted by an LLM with ontology v0.6: about 4,700 results across about 2,060 canonical settings. Results are checked by automated audits and a textbook gold set ([`notes/validation.md`](notes/validation.md)), and a few by their authors, but are not human-verified in general. Roughly half the extracted bounds can be compared across papers; why the rest can't is in [`notes/comparability.md`](notes/comparability.md). Browse at <https://act65.github.io/bandit-browser/>; contributions and corrections: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Documents
 
@@ -25,6 +25,7 @@ Bandits are the test domain; the goal is a domain-agnostic engine for ML, CS and
 | [pipeline/README.md](pipeline/README.md) | Fetch → preprocess → extract → validate |
 | [site/README.md](site/README.md) | Static site build and GitHub Pages deploy |
 | [ontology/](ontology/) | Machine-readable ontology versions and review notes |
+| [notes/](notes/) | Validation, comparability, the bandit convex optimisation ground truth and the pilot facts |
 | [data/](data/) | Extractions, ground truth, validation report |
 
 ## License
