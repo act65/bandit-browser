@@ -146,7 +146,31 @@ def instance_expr(expr: str, notation: str | None):
     return e
 
 
-PROFILE_TIMEOUT_S = 10  # some paper expressions (e.g. factorials of T) never finish evaluating at T = 10^(10^10)
+# Backstop only: expressions that blow up are skipped deterministically by runaway_exponent() first.
+# (A 10s wall-clock limit used to do that job, so which bounds got a rate depended on machine speed and
+# CI's re-derive check failed.) Anything still hitting this is a real hang, logged below.
+PROFILE_TIMEOUT_S = 60
+
+
+def runaway_exponent(e) -> bool:
+    """True if some exponent (of a power or exp) grows without bound as one scanned variable goes to its
+    limit with the others at their base values: log(T)**(d+1), 2**d, exp(-Delta**2*T/K). Rates like these
+    are not of the form x^a (log x)^b, and evaluating them at x = 10^(10^10) does not finish. Bounded
+    exponents such as T**((d+1)/(d+2)) pass. Deterministic, unlike a timeout."""
+    for x in sympy.preorder_traversal(e):
+        arg = x.exp if isinstance(x, sympy.Pow) else x.args[0] if isinstance(x, sympy.exp) else None
+        if arg is None:
+            continue
+        for v in {s.name for s in arg.free_symbols} & set(SCAN):
+            point = {s: SCAN[s.name][0] if s.name in SCAN else 1 for s in arg.free_symbols}
+            point[sympy.Symbol(v)] = 1e30 if SCAN[v][1] == "up" else 1e-30
+            try:
+                val = complex(arg.subs(point).evalf())
+            except Exception:  # undefined at the probe point: treat as runaway, i.e. unprofiled
+                return True
+            if not abs(val) < 1e3:
+                return True
+    return False
 
 
 class _Timeout(BaseException):  # not caught by the broad `except Exception` handlers below
@@ -317,7 +341,8 @@ def compare(results: dict, inferred: list[dict], canonical: set[str]) -> dict:
             signal.signal(signal.SIGALRM, _alarm)
             signal.alarm(PROFILE_TIMEOUT_S)
             try:
-                cache[key] = profile(instance_expr(expr, nota), canonical)
+                inst = instance_expr(expr, nota)
+                cache[key] = None if runaway_exponent(inst) else profile(inst, canonical)
             except _Timeout:
                 print(f"profile timed out after {PROFILE_TIMEOUT_S}s, skipped: {expr[:150]}", flush=True)
                 cache[key] = None

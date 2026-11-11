@@ -135,7 +135,7 @@ def main() -> None:
         if c["status"] not in ("log_gap", "poly_gap", "no_upper"):
             continue
         sugg = collections.defaultdict(list)
-        for n in nbrs.get(c["setting_id"], ()):
+        for n in sorted(nbrs.get(c["setting_id"], ())):  # sorted: evidence is truncated to 5 below
             nc = cell_of.get((n, c["regime"]))
             if not nc or nc["status"] not in ("tight", "log_gap"):
                 continue

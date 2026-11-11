@@ -14,6 +14,7 @@ import pytest
 from conftest import CANONICAL, result
 
 import compare
+import resolve
 
 CAN = CANONICAL | {"Delta"}
 
@@ -194,3 +195,15 @@ def test_O_tilde_upper_cannot_make_a_cell_tight():
     lower bound and the cell read 'tight', though the O~ hides log factors. A plain O bound with the same rate is tight."""
     assert cells([U("u", "sqrt(K*T)", notation="O_tilde"), L("l", "sqrt(K*T)")])["regret|worst_case"]["status"] == "log_gap"
     assert cells([U("u", "sqrt(K*T)"), L("l", "sqrt(K*T)")])["regret|worst_case"]["status"] == "tight"
+
+
+def test_runaway_exponents_are_skipped_deterministically():
+    """Exponents that grow with a scanned variable are refused up front (they used to hit a wall-clock
+    timeout, which made the derived data depend on machine speed); bounded exponents still profile."""
+    P = resolve.parse
+    for expr in ["log(T)**(d + 1)", "2**d", "exp(-10*Delta**2*T/K)/4", "epsilon**(2 - d)",
+                 "sqrt(T)*log(T)**(d + 1)", "K*exp((K - T)/(144*sigma**2))"]:
+        assert compare.runaway_exponent(P(expr)), expr
+    for expr in ["T**((d + 1)/(d + 2))", "sqrt(K*T*log(K))", "T**(K/(K + 1))*log(T)**(1/(K + 1))",
+                 "Lambda_T**(nu_matern/(d + 2*nu_matern))*T**(d/(d + 2*nu_matern))", "d*sqrt(T)*log(T)**2"]:
+        assert not compare.runaway_exponent(P(expr)), expr
