@@ -146,6 +146,7 @@ class Analysis:
                     "alg": alg, "js": b.get("js"), "tex": tex if ok else None, "expr": b.get("expression"),
                     "prof": b.get("profile"), "front": full_id in fronts.get(reg, ()), "dsub": dsub,
                     "restricted": bool(b.get("restricted")), "conf": b.get("confidence"),
+                    "held": b.get("held") or [], "noplot": b.get("noplot"),
                     "rate": dsub or b.get("rate_regime") == reg}
 
         def regs_for(b: dict) -> list[str]:
@@ -171,7 +172,9 @@ class Analysis:
                 if "@" in bid and self.bound(bid):
                     out.append(entry(self.bound(bid), reg, bid, True))
         regs = collections.Counter(x["reg"] for x in out)
-        order = sorted(regs, key=lambda r: (r != "regret|worst_case", r not in cells, -regs[r], r))
+        # open on a regime with something to draw: plottable bounds first, then a compared cell, then regret
+        drawable = collections.Counter(x["reg"] for x in out if x.get("js"))
+        order = sorted(regs, key=lambda r: (not drawable[r], r not in cells, r != "regret|worst_case", -regs[r], r))
         return {
             # fixed-dimension settings report rates at d = 2 (compare.REP_TAG): start the plot there too
             "sliders": self.sliders,

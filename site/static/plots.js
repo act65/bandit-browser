@@ -197,7 +197,8 @@ window.bbReady(function () {
         if (b.inh) tags.push("inherited");
         if (b.dsub) tags.push("δ = 1/T");
         if (b.restricted) tags.push("restricted");
-        if (!b.fn) tags.push("not plottable");
+        if (b.held && b.held.length) tags.push("held: " + b.held.join(", "));
+        if (!b.fn) tags.push("not plottable" + (b.noplot ? " (" + b.noplot + ")" : ""));
         if (tags.length) h("span", "rp-tags", txt, tags.join(" · "));
         var f = h("span", "rp-ltex", li);
         if (b.tex) tex(f, b.tex); else f.textContent = b.expr || "";

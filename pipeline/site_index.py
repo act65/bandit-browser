@@ -49,11 +49,39 @@ TUNING = {"eta", "eps_alg", "c_alg", "alpha_ts"}
 CANONICAL = set(schema.load_variables()["variables"])
 
 
-def js_function(expr: str, notation: str | None) -> dict | None:
-    """{args, body} computing the bound on the uniform-gap instance, or None."""
+def plot_form(expr: str, notation: str | None, paper: str, side: str) -> tuple[dict | None, list[str], str | None]:
+    """(js, held, why): the plot function, the paper-specific parameters held at 1 to draw it (as in the
+    comparison: compare.hold_symbols, aliases substituted), and why it can't be plotted when js is None."""
     try:
         e = compare.instance_expr(expr, notation)
     except Exception:  # unparseable expressions are not plotted
+        return None, [], "unparseable"
+    held = compare.hold_symbols(e, paper, CANONICAL | {"Delta"}, side=side)
+    if held is None:
+        foreign = sorted({str(x) for x in e.free_symbols} - CANONICAL - {"Delta"} - set(SLIDERS))
+        cls = {f: compare.SYMBOL_CLASSES.get(f"{paper}|{f}", "unclassified") for f in foreign}
+        grows = [f for f, c in cls.items() if c == "scales"]
+        if grows:
+            return None, [], f"{', '.join(grows[:3])} grow{'s' if len(grows) == 1 else ''} with a scanned variable"
+        return None, [], f"depends on {', '.join(foreign[:3])}" if foreign else "not plottable"
+    e, hs, cond = held
+    for value in ((1, 3) if hs else (1,)):  # 1 unless the bound is undefined there (e.g. 1/(1 - 1/q))
+        js = js_function(e, notation, extra_fixed=hs, value=value)
+        if js:
+            return js, [f"{h} = {value}" for h in cond], None
+    return None, [], "no plottable form"
+
+
+def js_function(expr, notation: str | None, extra_fixed=(), value=1) -> dict | None:
+    """{args, body} computing the bound on the uniform-gap instance, or None. `expr` is a string or an
+    instance expression; `extra_fixed` are held paper-specific symbols, set to `value`."""
+    try:
+        e = compare.instance_expr(expr, notation) if isinstance(expr, str) else expr
+    except Exception:  # unparseable expressions are not plotted
+        return None
+    try:
+        e = e.subs({sympy.Symbol(h): value for h in extra_fixed})
+    except (ValueError, TypeError, ZeroDivisionError):  # e.g. Min/Max of an undefined value at 1
         return None
     names = {str(s) for s in e.free_symbols}
     if names & TUNING or names - CANONICAL - set(SLIDERS):
@@ -111,8 +139,11 @@ def main() -> None:
             "rate_regime": cmp.get("rate_regime", {}).get(eid),  # None: shown, but not used for the rate
             "n_caveats": len(rec.get("caveats") or []), "expression": expr,
             "profile": {k: v for k, v in (profiles.get(eid) or {}).items() if not k.startswith("_")} or None,
-            "js": js_function(expr, nota), "shape_only": nota in SHAPE_ONLY,
+            "shape_only": nota in SHAPE_ONLY,
         })
+        js, held, why = plot_form(expr, nota, src["paper"], src["side"])
+        out_bounds[-1].update(js=js, held=held, noplot=why if not js else None,
+                              shape_only=out_bounds[-1]["shape_only"] or bool(held))
 
     cells = []
     for sid, regimes in cmp["settings"].items():
