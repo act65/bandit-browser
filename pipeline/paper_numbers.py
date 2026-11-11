@@ -101,6 +101,13 @@ def main() -> None:
     N["NTightConditional"] = str(sum(1 for c in cond if c["status"] == "tight"))
     N["NTightPlain"] = str(st["tight"] - sum(1 for c in cond if c["status"] == "tight"))
     N["NConditionalVerdicts"] = str(sum(1 for c in cond if c["status"] in ("tight", "log_gap", "poly_gap")))
+    # settings by action space that reach a verdict (tight / gap / conflict) in some regime
+    verdict = {c["setting_id"] for c in si["cells"] if c["status"] in ("tight", "log_gap", "poly_gap", "conflict")}
+    kernel = [x["id"] for x in settings if (x.get("key") or {}).get("action_space") == "kernel_rkhs"]
+    N["NKernelSettings"] = str(len(kernel))
+    N["NKernelVerdicts"] = str(sum(1 for k in kernel if k in verdict))
+    karmed = [x["id"] for x in settings if (x.get("key") or {}).get("action_space") == "finite_K"]
+    N["PctKarmedVerdicts"] = str(round(100 * sum(1 for k in karmed if k in verdict) / len(karmed)))
     syms = yaml.safe_load((ROOT / "data" / "symbol-classes.yaml").read_text())["classes"]
     N["NSymbolPairs"] = comma(len(syms))
     N["NTransfer"] = comma(len(si["transfer"]))
