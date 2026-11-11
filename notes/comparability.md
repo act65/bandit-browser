@@ -110,7 +110,7 @@ pseudo/expected-regret split for adaptive adversaries (author correspondence).
 |---|---|---|
 | own bounds with a profile | 1,282 (27%) | 2,270 (48%) |
 | cells | 2,108 | 2,599 |
-| tight | 115 | 155 (37 of them only up to instance parameters) |
+| tight | 115 | 155 (36 of them only up to instance parameters) |
 | log gap / poly gap | 107 / 57 | 114 / 136 |
 | conflict | 7 | 11 |
 | acceptance, gold set | 5 PASS, 0 contradicted | unchanged |
