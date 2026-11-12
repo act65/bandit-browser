@@ -1,0 +1,316 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Online learning in MDPs with linear function approximation and bandit feedback",
+  "arxiv_id": "2007.01612",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Gergely Neu",
+   "Julia Olkhovskaya"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online learning in episodic linear MDPs with adversarial rewards and bandit feedback",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_adaptive",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "d",
+    "H",
+    "K",
+    "L_feat",
+    "S"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Episodic MDP (reinforcement learning) with adversarial rewards, not a bandit problem.",
+   "unmapped": [
+    "episodic layered MDP with horizon H and T episodes",
+    "linear MDP: transitions P(.|x,a)=<m(.),phi(x,a)> and rewards r_{t,h}(x,a)=<theta_{t,h},phi(x,a)>",
+    "the learner knows the transition function P exactly (simulator access)",
+    "feature covariance of uniform policy has eigenvalues >= lambda_min > 0 (Assumption 2); learner knows lambda_min for tuning M",
+    "first feature coordinate is constantly 1"
+   ],
+   "definition_quote": "we consider an online learning problem where the learner interacts with its environment in a sequence of episodes t=1,2,...,T, facing a different reward functions r_{t,1}, ... r_{t,H+1} selected by a (possibly adaptive) adversary at the beginning of each episode t. ... observes the reward r_{t,h}(X_{t,h}, A_{t,h})."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Online Q-REPS",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent",
+    "exponential_weights"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d",
+    "H",
+    "L_feat",
+    "S",
+    "lambda_min",
+    "transition function P"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*T*L_feat*S*H*exp(-gamma_expl*beta_mgr*lambda_min*M_mgr) + gamma_expl*H*T + eta*H*d*T*4/3 + D_star/eta + DC_star/alpha_reg + sqrt(alpha_reg*eps_opt)*(M_mgr + 2)*H*T",
+    "expression_latex": "2T \\sigma R H\\cdot \\exp(-\\gamma\\beta\\lambda_{\\min} M) + \\gamma H T + \\eta HdT\\frac{4}{3} + \\frac{1}{\\eta}D(\\mu^*\\|\\mu_{0}) + \\frac{1}{\\alpha}D_C(u^*\\|\\mu_{0}) + \\sqrt{\\alpha \\varepsilon }(M+2) H T",
+    "regime": null
+   },
+   "symbols": {
+    "gamma_expl": "exploration probability gamma in (0,1)",
+    "beta_mgr": "Matrix Geometric Resampling step parameter beta",
+    "M_mgr": "number of MGR iterations M",
+    "lambda_min": "lower bound on eigenvalues of uniform-policy feature covariance",
+    "D_star": "relative entropy D(mu*||mu_0)",
+    "DC_star": "conditional relative entropy D_C(u*||mu_0)",
+    "alpha_reg": "conditional-entropy regularisation parameter alpha",
+    "eps_opt": "optimisation accuracy epsilon of the inner convex problem"
+   },
+   "conditions": [
+    "Assumption 1 (linear MDP, ||phi||<=sigma, ||theta_{t,h}||<=R, phi_1=1)",
+    "Assumption 2 (lambda_min > 0)",
+    "transition function known"
+   ],
+   "tuning": [
+    "gamma in (0,1)",
+    "M >= 0",
+    "0 < eta <= 2/((M+2)H)",
+    "0 < beta <= 1/(2 sigma^2)",
+    "Z_t solves G_t up to additive error epsilon"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th_regret",
+    "number": "Theorem 1",
+    "quote": "Then, for $\\gamma\\in (0,1)$, $M \\ge 0$, any positive $\\eta \\le \\frac{2}{(M+2) H}$ and any positive $\\beta \\le \\frac{1}{2\\sigma^2}$, the expected regret of \\ftrlrl over $T$ episodes satisfies \\regret_T \\le 2T \\sigma R H\\cdot \\exp(-\\gamma\\beta\\lambdamin M) + \\gamma H T + \\eta HdT\\frac{4}{3} + \\frac{1}{\\eta}D(\\mu^*\\|\\mu_{0}) + \\frac{1}{\\alpha}\\DC(u^*\\|\\mu_{0}) + \\sqrt{\\alpha \\varepsilon }(M+2) H T."
+   },
+   "confidence": "medium",
+   "notes": "Paper's sigma (feature norm) mapped to L_feat, R (parameter norm) to S. Regret defined via occupancy measures against best stationary policy, i.e. pseudo-regret. Out-of-scope MDP setting."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(d*H*T)*(2 + D_star + DC_star) + sqrt(H*T) + sqrt(eps_opt)*T**(5/4)*(H*d)**(1/4) + 2",
+    "expression_latex": "\\sqrt{dHT} (2 + D(\\mu^*\\|\\mu_0) + D_C(u^*\\|\\mu_0)) + \\sqrt{HT} + \\sqrt{ \\varepsilon }T^{5/4}(Hd)^{1/4} + 2",
+    "regime": "T large enough so that constraints on M, gamma, eta, beta hold"
+   },
+   "symbols": {
+    "D_star": "relative entropy D(mu*||mu_0)",
+    "DC_star": "conditional relative entropy D_C(u*||mu_0)",
+    "eps_opt": "optimisation accuracy epsilon of the inner convex problem"
+   },
+   "conditions": [
+    "Assumption 1 (linear MDP, ||phi||<=sigma, ||theta_{t,h}||<=R, phi_1=1)",
+    "Assumption 2 (lambda_min > 0)",
+    "transition function known"
+   ],
+   "tuning": [
+    "beta = 1/(2 sigma^2)",
+    "M = ceil(2 sigma^2 log(T H sigma R)/(gamma lambda_min))",
+    "eta = 1/sqrt(TdH)",
+    "alpha = 1/sqrt(TdH)",
+    "gamma = 1/sqrt(TH)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "th_regret",
+    "number": "Theorem 1",
+    "quote": "Furthermore, letting $\\beta = \\frac{1}{2\\sigma^2}$, $M = \\left\\lceil\\frac{ 2 \\sigma^2 \\log (T H \\sigma R)}{\\gamma \\lambdamin}\\right\\rceil$, $\\eta = \\frac{1}{\\sqrt{TdH }}$, $\\alpha = \\frac{1}{\\sqrt{TdH }}$ and $\\gamma = \\frac{1}{\\sqrt{TH}}$ ... we also have \\regret_T \\le \\sqrt{dHT} (2 + D(\\mu^*\\|\\mu_0) + \\DC(u^*\\|\\mu_0)) + \\sqrt{HT} + \\sqrt{ \\varepsilon }T^{5/4}(Hd)^{1/4} + 2."
+   },
+   "confidence": "medium",
+   "notes": "With epsilon = T^{-3/2} the paper states O(sqrt(dHT D(mu*||mu_0)))."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "2019arXiv191205830C",
+   "cited_title": "Provably efficient exploration in policy optimization",
+   "cited_first_author": "Q. Cai",
+   "cited_year": 2019,
+   "cited_arxiv_id": "1912.05830",
+   "algorithm_name": "OPPO",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Episodic linear MDP with adversarial rewards, full-information feedback, unknown transitions",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(d**3*H**3*T)",
+    "expression_latex": "\\widetilde{\\mathcal{O}}(\\sqrt{d^3H^3 T})",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "NIPS20134974",
+   "cited_title": "Online learning in episodic markovian decision processes by relative entropy policy search",
+   "cited_first_author": "A. Zimin",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "O-REPS",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Tabular episodic MDP with adversarial rewards, bandit feedback, known transitions; |X| states",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T*H*n_states*K)",
+    "expression_latex": "\\widetilde{\\mathcal{O}}( \\sqrt{TH|\\ssp|K})",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "NGS10",
+   "cited_title": "The online loop-free stochastic shortest-path problem",
+   "cited_first_author": "G. Neu",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Episodic loop-free MDP with adversarial rewards, bandit feedback, all states reachable w.p. alpha",
+   "bound": {
+    "notation": "O",
+    "expression": "H**2*sqrt(T*K)/alpha_reach",
+    "expression_latex": "\\OO(H^2\\sqrt{T K }/\\alpha)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "JJLSY20",
+   "cited_title": "Learning adversarial MDPs with bandit feedback and unknown transition",
+   "cited_first_author": "C. Jin",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Tabular episodic MDP with adversarial rewards, bandit feedback, unknown transitions",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "H*n_states*sqrt(K*T)",
+    "expression_latex": "\\widetilde{\\mathcal{O}}( H|\\ssp|\\sqrt{KT})",
+    "regime": null
+   },
+   "where": "Introduction"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:07:56",
+  "source_chars": 83429,
+  "input_tokens": 82192,
+  "output_tokens": 5430,
+  "cost_usd_equiv": 0.4829022,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

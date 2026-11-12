@@ -1,0 +1,397 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Federated Contextual Cascading Bandits with Asynchronous Communication and Heterogeneous Users",
+  "arxiv_id": "2402.16312",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Hantao Yang",
+   "Xutong Liu",
+   "Zhiyong Wang",
+   "Hong Xie",
+   "John C. S. Lui",
+   "Defu Lian",
+   "Enhong Chen"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Federated Contextual Combinatorial Cascading Bandits (FedC^3B) with heterogeneous users and asynchronous communication",
+   "objective": "cumulative_regret",
+   "feedback": "cascade",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "m",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "federated",
+    "multi_agent_cooperative",
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "oblivious_sequence",
+    "access": "linear_optimization_oracle",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "clustered"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "ordered_list",
+    "reward": "click_model",
+    "loss_scale": "per_action"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "|U| agents each serving one user, asynchronous server-client communication; communication cost also measured",
+    "users partitioned into J unknown clusters with shared preference vectors theta^j, ||theta|| <= 1, minimum heterogeneity gap gamma between clusters (unknown)",
+    "users arrive uniformly at random from U each round",
+    "item features drawn i.i.d. from a distribution rho on the unit ball with E[xx^T] min eigenvalue lambda_x > 0 and sub-Gaussian (theta^T x)^2",
+    "click probability linear: E[w_t(i)] = <theta_{u_t}, x_{t,i}>; reward 1 - prod(1 - w) over list of length at most K",
+    "learner has an offline alpha-approximation oracle; regret is alpha-approximate"
+   ],
+   "definition_quote": "In FedC$^3$B, there is a finite set $\\mathcal{U}$ of users, to be served by $|\\mathcal{U}|$ (local) learning agents individually. ... The goal of the agents is to collaboratively minimize the cumulative $\\alpha$-approximate regret defined as Reg(T) = E[sum_t (alpha f(a*_t, w_t) - f(a_t, w_t))]"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "FedC^3UCB-H",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "m",
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "alpha_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt((J + U*alpha_c)*(1 + U**2*alpha_c)*m*T)*log(T) + U*(d/(gamma**2*lambda_x_tilde) + 1/lambda_x_tilde**2)*log(T)",
+    "expression_latex": "O\\big(d\\sqrt{(J+|\\cU|\\alpha_c)(1+|\\cU|^2\\alpha_c)KT}\\log T + |\\cU|({d}\\gamma^{-2}\\tilde{\\lambda}_x^{-1}+\\tilde{\\lambda}^{-2}_x)\\log{T}\\big)",
+    "regime": null
+   },
+   "symbols": {
+    "U": "number of users/agents |U|",
+    "J": "number of latent user clusters",
+    "alpha_c": "communication threshold of the determinant condition",
+    "gamma": "minimum heterogeneity gap between cluster preference vectors",
+    "lambda_x_tilde": "integral of (1-exp(-(lambda_x-x)^2/(2 sigma^2)))^I over [0, lambda_x]; lambda_x min eigenvalue of feature covariance"
+   },
+   "conditions": [
+    "Assumptions 1-3: min heterogeneity gap gamma, uniform random user arrival, item regularity",
+    "||theta_u|| <= 1, ||x|| <= 1",
+    "|U| < O(T^{1/4}) (used in proof)"
+   ],
+   "tuning": [
+    "beta as in Lemma 1",
+    "p_t = 3 log t / t",
+    "alpha_c = 1/|U|^2 gives O~(d sqrt(J K T))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1",
+    "quote": "Under Assumptions 1-3 ..., if we set $\\beta$ as in \\cref{lem:concentration} ..., then the expected cumulative regret of \\cref{alg:main} is upper bounded by Reg(T) \\le O(d\\sqrt{(J+|\\cU|\\alpha_c)(1+|\\cU|^2\\alpha_c)KT}\\log T + |\\cU|(d\\gamma^{-2}\\tilde{\\lambda}_x^{-1}+\\tilde{\\lambda}^{-2}_x)\\log T)."
+   },
+   "confidence": "medium",
+   "notes": "Paper's K (max list length) mapped to m. Regret is alpha-approximate regret in expectation over user arrivals/contexts/clicks. beta depends on T so horizon treated as known."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "d*(U + 1/alpha_c)*log(T) + log(T)**2",
+    "expression_latex": "O\\left(d(|\\mathcal{U}|+1/\\alpha_c)\\log T+ \\log^2 T\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "U": "number of users/agents |U|",
+    "alpha_c": "communication threshold"
+   },
+   "conditions": [
+    "Assumptions 1-3"
+   ],
+   "tuning": [
+    "p_t = 3 log t / t"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1",
+    "quote": "The communication cost is bounded by $\\text{Com}(T) \\le O\\left(d(\\left | \\mathcal{U} \\right |+1/\\alpha_c)\\log T+ \\log^2 T\\right)$"
+   },
+   "confidence": "high",
+   "notes": "Communication cost = expected number of rounds with agent-server communication."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "abbasi2011improved",
+   "cited_title": "Improved algorithms for linear stochastic bandits",
+   "cited_first_author": "Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "OFUL",
+   "algorithm_registry_id": "oful",
+   "side": "upper",
+   "setting_description": "single-agent linear contextual bandit, homogeneous users",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(T)*log(T)",
+    "expression_latex": "O(d\\sqrt{T}\\log{T})",
+    "regime": null
+   },
+   "where": "Table 2"
+  },
+  {
+   "cited_key": "li2016contextual",
+   "cited_title": "Contextual combinatorial cascading bandits",
+   "cited_first_author": "Li",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": "C^3-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "single-agent contextual combinatorial cascading bandit",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(m*T)*log(T)",
+    "expression_latex": "O(d\\sqrt{KT}\\log{T})",
+    "regime": null
+   },
+   "where": "Table 2"
+  },
+  {
+   "cited_key": "2019Distributed",
+   "cited_title": "Distributed Bandit Learning: Near-Optimal Regret with Efficient Communication",
+   "cited_first_author": "Wang",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "DisLinUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "synchronous distributed linear bandit, homogeneous users",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(T)*log(T)**2",
+    "expression_latex": "O(d\\sqrt{T}\\log^2{T})",
+    "regime": null
+   },
+   "where": "Table 2"
+  },
+  {
+   "cited_key": "li2018online",
+   "cited_title": "Online clustering of contextual cascading bandits",
+   "cited_first_author": "Li",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CLUB-cascade",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "synchronous clustering of contextual cascading bandits, heterogeneous users (J clusters), O(T) communication",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(J*m*T)*log(T)",
+    "expression_latex": "O(d\\sqrt{JKT}\\log{T})",
+    "regime": null
+   },
+   "where": "Table 2"
+  },
+  {
+   "cited_key": "li2021asynchronous",
+   "cited_title": "Asynchronous Upper Confidence Bound Algorithms for Federated Linear Bandits",
+   "cited_first_author": "Li",
+   "cited_year": 2021,
+   "cited_arxiv_id": "2110.01463",
+   "algorithm_name": "Async-LinUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "partially asynchronous federated linear bandit, homogeneous users",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(T)*log(T)",
+    "expression_latex": "O(d\\sqrt{T}\\log{T})",
+    "regime": null
+   },
+   "where": "Table 2"
+  },
+  {
+   "cited_key": "li2021asynchronous",
+   "cited_title": "Asynchronous Upper Confidence Bound Algorithms for Federated Linear Bandits",
+   "cited_first_author": "Li",
+   "cited_year": 2021,
+   "cited_arxiv_id": "2110.01463",
+   "algorithm_name": "Async-LinUCB-AM",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "partially asynchronous federated linear bandit, heterogeneous users",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(U*T)*log(T)",
+    "expression_latex": "O(d\\sqrt{|\\mathcal{U}|T}\\log{T})",
+    "regime": null
+   },
+   "where": "Table 2"
+  },
+  {
+   "cited_key": "liu2022federated",
+   "cited_title": "Federated Online Clustering of Bandits",
+   "cited_first_author": "Liu",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Phase-based FCLUB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "partially asynchronous federated clustering of linear bandits",
+   "bound": {
+    "notation": "O",
+    "expression": "d*U*sqrt(J*T)*log(T)**1.5",
+    "expression_latex": "O(d|\\mathcal{U}|\\sqrt{JT}\\log^{1.5}{T})",
+    "regime": null
+   },
+   "where": "Table 2"
+  },
+  {
+   "cited_key": "he2022simple",
+   "cited_title": "A Simple and Provably Efficient Algorithm for Asynchronous Federated Contextual Linear Bandits",
+   "cited_first_author": "He",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "FedLinUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "fully asynchronous federated linear contextual bandit, homogeneous users",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(T)*log(T)",
+    "expression_latex": "O(d\\sqrt{T}\\log{T})",
+    "regime": null
+   },
+   "where": "Table 2"
+  },
+  {
+   "cited_key": "liu2022federated",
+   "cited_title": "Federated Online Clustering of Bandits",
+   "cited_first_author": "Liu",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "clustering of linear bandits with J clusters, unlimited communication",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(d*J*T)",
+    "expression_latex": "\\Omega(\\sqrt{dJT})",
+    "regime": null
+   },
+   "where": "Discussion after Theorem 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:29:42",
+  "source_chars": 129830,
+  "input_tokens": 107659,
+  "output_tokens": 5731,
+  "cost_usd_equiv": 0.6926582,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

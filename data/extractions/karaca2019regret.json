@@ -1,0 +1,235 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "No-Regret Learning from Partially Observed Data in Repeated Auctions",
+  "arxiv_id": "1912.09905",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Orcun Karaca",
+   "Pier Giuseppe Sessa",
+   "Anna Leidi",
+   "Maryam Kamgarpour"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Repeated auction with partially observed data (losing bidders observe a set of losing actions)",
+   "objective": "cumulative_regret",
+   "feedback": "graph_feedback",
+   "environment": "adversarial_unspecified",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "strongly_observable",
+    "time_varying": "adaptive_sequence",
+    "knowledge": "revealed_after_action",
+    "self_loops": "all",
+    "directedness": "directed",
+    "generation": "correlated_with_losses"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Side observations only when the chosen action is a losing (zero-allocation) bid: the learner then observes a subset L_t of actions sharing the same loss l(0)",
+    "The learner is assumed to know the revelation probabilities r_t[k] of observing each action's loss",
+    "The learner knows the average feedback information alpha_avg (used to tune eta)",
+    "Losses arise from a repeated auction against other (possibly learning) bidders"
+   ],
+   "definition_quote": "At every round $t$ bidder~$\\ell$ picks an action $k(t) \\in  \\mathcal{K}_\\ell$, an adversarial environment selects a \\emph{loss vector} $\\mathbf{l}_t \\in [0,\\,1]^{|\\mathcal{K}_\\ell|}$, and bidder~$\\ell$ incurs loss $\\mathbf{l}_t[k(t)]$. ... assume bidder~$\\ell$ loses the auction ... bidder~$\\ell$ gets to know of a subset $\\mathcal{L}_t\\subseteq\\mathcal{K}_\\ell$ of losing actions"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Extended Exp3 (MWU with revelation-probability importance-weighted estimator)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "exponential_weights"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "alpha_avg",
+    "revelation probabilities r_t"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(2*(K/alpha_avg)*T*log(K))",
+    "expression_latex": "\\sqrt{2\\;(K/\\alpha_\\text{avg}) T \\log K}",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_avg": "average feedback information: inverse of the average over t and k of w_t[k]/r_t[k], in [1,K]"
+   },
+   "conditions": [
+    "losses in [0,1]",
+    "revelation probabilities r_t[k] are known to the learner (estimator unbiased)"
+   ],
+   "tuning": [
+    "eta = sqrt(2*alpha_avg*log(K)/(K*T))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1",
+    "quote": "Assume bidder~$\\ell$ bids according to Algorithm~\\ref{alg:MWU} with loss vector estimate $\\tilde{\\mathbf{l}}_t$ computed as in \\eqref{eq:our_estimator} and $\\eta = \\sqrt{2 \\alpha_\\text{avg} \\log(K) /(K T)}$, then $$ \\mathbb{E} \\big[ R_\\ell(T) \\big]\\leq \\sqrt{2\\;(K/\\alpha_\\text{avg}) T \\log K} \\,. $$"
+   },
+   "confidence": "medium",
+   "notes": "Regret defined with max over k inside expectation (expected_regret), though the proof effectively treats losses as fixed. Tuning requires alpha_avg, which is only computable after all rounds. Mapping to graph_feedback is approximate; environment kept unspecified."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "freund1997decision",
+   "cited_title": null,
+   "cited_first_author": "Freund",
+   "cited_year": 1997,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Hedge",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Adversarial experts, full information, K actions, losses in [0,1]",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*log(K))",
+    "expression_latex": "\\mathcal{O}(\\sqrt{T\\log K})",
+    "regime": null
+   },
+   "where": "Section 1 / Section 2.2"
+  },
+  {
+   "cited_key": "auer2002nonstochastic",
+   "cited_title": null,
+   "cited_first_author": "Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Exp3",
+   "algorithm_registry_id": "exp3",
+   "side": "upper",
+   "setting_description": "Adversarial K-armed bandit, losses in [0,1]",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(K))",
+    "expression_latex": "\\mathcal{O}(\\sqrt{KT\\log K})",
+    "regime": null
+   },
+   "where": "Section 1 / Section 2.2"
+  },
+  {
+   "cited_key": "alon2017nonstochastic",
+   "cited_title": null,
+   "cited_first_author": "Alon",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Exp3 with graph-based estimator",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Adversarial bandits with feedback graphs revealed after action",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(2*Sum_m_t*log(K))",
+    "expression_latex": "\\sqrt{2\\sum_{t=1}^T m_t\\log K}",
+    "regime": "m_t upper bound on max acyclic subgraph size at round t; Sum_m_t = sum_t m_t"
+   },
+   "where": "Section 3.1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T16:27:32",
+  "source_chars": 51794,
+  "input_tokens": 61530,
+  "output_tokens": 3503,
+  "cost_usd_equiv": 0.2790662,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

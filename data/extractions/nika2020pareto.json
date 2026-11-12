@@ -1,0 +1,256 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Pareto Active Learning with Gaussian Processes and Adaptive Discretization",
+  "arxiv_id": "2006.14061",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Andi Nika",
+   "Kerem Bozgan",
+   "Çağın Ararat",
+   "Cem Tekin"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Pareto active learning (epsilon-accurate Pareto set identification) with an m-output GP-sampled objective on a well-behaved compact metric space",
+   "objective": "general_identification",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "kernel",
+    "prior",
+    "sigma"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "arbitrary_compact",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "general"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Multi-objective (vector-valued) rewards: Pareto set identification with m >= 2 objectives.",
+   "unmapped": [
+    "vector-valued objective f: X -> R^m with m >= 2 objectives; goal is an epsilon-accurate Pareto set",
+    "design space is a well-behaved compact metric space (tree of cells with geometrically decaying radii) with metric dimension D_1",
+    "learner knows the metric-dimension and Hölder constants (D_1, C_k, alpha) used to set V_h, and the tree partition"
+   ],
+   "definition_quote": "We consider the problem of optimizing a vector-valued objective function f sampled from a Gaussian Process (GP) whose index set is a well-behaved, compact metric space (X,d) of designs. We assume that f is not known beforehand and that evaluating f at design x results in a noisy observation of f(x)."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Adaptive epsilon-PAL",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "elimination",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "kernel",
+    "prior",
+    "sigma",
+    "epsilon",
+    "delta",
+    "D_1",
+    "C_k",
+    "alpha_H",
+    "tree partition (N, rho, v_1, v_2)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "g_eps",
+    "expression_latex": "\\tilde{O}(g(\\epsilon)),\\ g(\\epsilon)=\\min\\{T\\ge1:\\sqrt{\\gamma_T/T}<\\epsilon\\}; \\text{exactly: smallest } T \\text{ with } \\sqrt{C\\beta_T\\gamma_T/T}<\\epsilon",
+    "regime": null
+   },
+   "symbols": {
+    "g_eps": "min{T >= 1 : sqrt(gamma_T/T) < epsilon}, where epsilon = min_j epsilon^j",
+    "gamma_T": "maximum information gain of the m-output GP after T evaluations"
+   },
+   "conditions": [
+    "Assumption 1: l_j(x,y) <= C_k d(x,y)^alpha_H with 0<alpha_H<=1",
+    "k^{jj}(x,x) <= 1",
+    "zero-mean GP prior, Gaussian noise N(0, sigma^2)",
+    "epsilon = min_j epsilon^j > 0"
+   ],
+   "tuning": [
+    "beta_tau = 2 log(2 m pi^2 N^{h_max+1} (tau+1)^2/(3 delta))",
+    "V_h as defined in Theorem 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "mainthm",
+    "number": "Theorem 1",
+    "quote": "When we run Adaptive $\\bs{\\epsilon}$-PAL with prior $GP(0,\\bs{k})$ and noise $\\mathcal{N}(0,\\sigma^2 )$, the following holds with probability at least $1- \\delta $:\n\t\t\n\t\tAn $\\bs{\\epsilon}$-accurate Pareto set can be found with at most $T$ function evaluations, where $T$ is the smallest natural number satisfying \n\t\t\\begin{align*}\n\t\t\\min & \\left\\{    K_1 \\beta_T T^{\\frac{-\\alpha}{\\bar{D}+2\\alpha}} \\left( \\log T \\right)^{\\frac{-(\\bar{D}+\\alpha)}{\\bar{D}+2\\alpha}} + \n\t\tK_2 T^{\\frac{-\\alpha}{\\bar{D}+2\\alpha}} \\left( \\log T \\right)^{\\frac{\\alpha}{\\bar{D}+2\\alpha}}  ,   \\sqrt{\\frac{C\\beta_{T}   \\gamma_T }{T}} \\right\\} < \\epsilon  ~,\n\t\t\\end{align*}"
+   },
+   "confidence": "medium",
+   "notes": "Information-type branch of Theorem 1 (also Proposition 4 with constant 16 sigma^2 C m). Expressed in the Õ form of Remark 2; the theorem itself gives an implicit definition of T. Probability 1-delta."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "epsilon**(-(D_bar/alpha_H + 2))",
+    "expression_latex": "\\tilde{O}(\\epsilon^{-(\\frac{\\bar{D}}{\\alpha}+2)})",
+    "regime": "for any D_bar > D_1"
+   },
+   "symbols": {
+    "D_bar": "any number strictly larger than the metric dimension D_1 of (X,d)",
+    "D_1": "metric dimension of the design space (X,d)",
+    "alpha_H": "Hölder exponent alpha in (0,1] of the GP-induced metric w.r.t. d (Assumption 1)",
+    "C_k": "Hölder constant of the GP-induced metric"
+   },
+   "conditions": [
+    "Assumption 1: l_j(x,y) <= C_k d(x,y)^alpha_H with 0<alpha_H<=1",
+    "k^{jj}(x,x) <= 1",
+    "(X,d) well-behaved compact metric space with finite metric dimension D_1",
+    "zero-mean GP prior, Gaussian noise N(0, sigma^2)"
+   ],
+   "tuning": [
+    "beta_tau = 2 log(2 m pi^2 N^{h_max+1} (tau+1)^2/(3 delta))",
+    "V_h as defined in Theorem 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "mainthm",
+    "number": "Theorem 1",
+    "quote": "An $\\bs{\\epsilon}$-accurate Pareto set can be found with at most $T$ function evaluations, where $T$ is the smallest natural number satisfying \n\t\t\\begin{align*}\n\t\t\\min & \\left\\{    K_1 \\beta_T T^{\\frac{-\\alpha}{\\bar{D}+2\\alpha}} \\left( \\log T \\right)^{\\frac{-(\\bar{D}+\\alpha)}{\\bar{D}+2\\alpha}} + \n\t\tK_2 T^{\\frac{-\\alpha}{\\bar{D}+2\\alpha}} \\left( \\log T \\right)^{\\frac{\\alpha}{\\bar{D}+2\\alpha}}  ,   \\sqrt{\\frac{C\\beta_{T}   \\gamma_T }{T}} \\right\\} < \\epsilon  ~,\n\t\t\\end{align*}"
+   },
+   "confidence": "medium",
+   "notes": "Metric-dimension branch of Theorem 1 (also Proposition 5); Õ form from Remark 2. Theorem's bound is the minimum of r1 and r2."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "auer2016pareto",
+   "cited_title": "Pareto front identification from stochastic bandit feedback",
+   "cited_first_author": "Peter Auer",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Pareto front identification, finite set of arms, 1-sub-Gaussian independent outcomes, fixed confidence",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "1/Delta**2",
+    "expression_latex": "\\text{near-}O(1/\\text{gap}^2)",
+    "regime": null
+   },
+   "where": "Remark 2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T16:47:25",
+  "source_chars": 193560,
+  "input_tokens": 142364,
+  "output_tokens": 4566,
+  "cost_usd_equiv": 0.9469982,
+  "quote_retry": {
+   "asked": 2,
+   "fixed": 2,
+   "cost_usd_equiv": 0.8675923999999999
+  },
+  "status": "extracted"
+ }
+}

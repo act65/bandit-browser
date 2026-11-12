@@ -1,0 +1,256 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Combinatorial Sleeping Bandits with Fairness Constraints",
+  "arxiv_id": "1901.04891",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Fengjiao Li",
+   "Jia Liu",
+   "Bo Ji"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Combinatorial Sleeping MAB with Fairness constraints (CSMAB-F)",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K",
+    "m"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "sleeping_arms",
+    "fairness",
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "oblivious_sequence",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "at_most_m",
+    "reward": "linear",
+    "loss_scale": "per_base_arm"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "fairness",
+    "violation": "unspecified"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Set of available arms A(t) drawn i.i.d. from an unknown distribution and revealed at the start of each round",
+    "Long-term fairness constraint: liminf (1/T) sum E[d_i(t)] >= r_i for each arm (minimum selection fraction)",
+    "Compound reward is weighted sum of played arms' rewards with known positive weights w_i <= w_max; the learner knows the weights w_i and the fractions r_i",
+    "Regret is measured against the optimal fairness-feasible stationary A-only policy (LP solution) and defined as time-average"
+   ],
+   "definition_quote": "In each round, the player is allowed to play multiple, but no more than $m$, available arms ... receives a compound reward $R(t)$, which is a weighted sum of the rewards of the played arms ... \\liminf_{T \\to \\infty} \\frac{1}{T} \\sum_{t=0}^{T-1}\\mathbb{E}[d_i(t)]\\geq r_i \\, \\, \\forall i \\in \\N"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Learning with Fairness Guarantee (LFG)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "m"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_feasible_policy",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "K*T/(2*eta) + 2*sqrt(6)*w_max*sqrt(m*K*T*log(T)) + (1 + 5*pi**2/12)*w_max*K",
+    "expression_latex": "R_{\\text{LFG}}(T) \\leq \\frac{N}{2\\eta} + \\frac{\\beta_1 \\sqrt{mNT\\log T}+ \\beta_2N}{T}, \\beta_1 = 2\\sqrt{6}w_{\\max}, \\beta_2 = (1+\\frac{5\\pi^2}{12}) w_{\\max}",
+    "regime": null
+   },
+   "symbols": {
+    "w_max": "upper bound on the known arm weights w_i",
+    "eta": "LFG trade-off parameter between virtual queues and UCB estimates"
+   },
+   "conditions": [
+    "fairness vector r feasible (comparator is optimal A-only policy satisfying the constraints)"
+   ],
+   "tuning": [
+    "eta > 0 free design parameter"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem 2",
+    "quote": "Under the LFG algorithm, the time-average regret defined in \\eqref{eq:regret} has the following upper bound: R_{\\text{LFG}}(T) \\leq \\frac{N}{2\\eta} + \\frac{\\beta_1 \\sqrt{mNT\\log T}+ \\beta_2N}{T}, where $\\beta_1 \\triangleq 2\\sqrt{6}w_{\\max}$, and $\\beta_2 \\triangleq (1+\\frac{5\\pi^2}{12}) w_{\\max}$."
+   },
+   "confidence": "high",
+   "notes": "Paper bounds time-average regret; multiplied by T to give cumulative. Paper's N (number of arms) mapped to K. Regret defined via means vs R*, hence pseudo-regret. The N/(2 eta) term makes the cumulative bound linear in T unless eta grows."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "asymptotic",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "(K/2 + eta*m*w_max)/eps_slack",
+    "expression_latex": "\\limsup_{T\\to \\infty} \\frac{1}{T}\\sum_{t=0}^{T-1} \\mathbb{E} [\\sum_{i=1}^N Q_i(t) ] \\leq \\frac{B}{\\epsilon}, B = \\frac{N}{2} + \\eta m w_{\\max}",
+    "regime": null
+   },
+   "symbols": {
+    "w_max": "upper bound on arm weights",
+    "eta": "LFG design parameter",
+    "eps_slack": "positive constant such that r + eps*1 is strictly inside the maximal feasibility region"
+   },
+   "conditions": [
+    "r strictly inside the maximal feasibility region C"
+   ],
+   "tuning": [
+    "eta > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:feasibility",
+    "number": "Theorem 1",
+    "quote": "The LFG algorithm is feasibility-optimal. Specifically, for any minimum selection fraction $\\mathbf{r}$ strictly inside the maximal feasibility region $\\mathcal{C}$, the virtual queue system defined in \\eqref{queue} is strongly stable under LFG. That is, \\limsup_{T\\to \\infty} \\frac{1}{T}\\sum_{t=0}^{T-1} \\mathbb{E} [\\sum_{i=1}^N Q_i(t) ] \\leq \\frac{B}{\\epsilon} < \\infty ..."
+   },
+   "confidence": "medium",
+   "notes": "Bound on time-averaged virtual queue lengths (fairness constraint satisfaction), not regret; implies the fairness constraints hold in the long run."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "cai2018learning",
+   "cited_title": "An online learning approach to network application optimization with guarantee",
+   "cited_first_author": "K. Cai",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "MAB with minimum-guarantee constraints on total reward of some type/level; bound on constraint violation",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(5/6)",
+    "expression_latex": "O(T^{5/6})",
+    "regime": null
+   },
+   "where": "Remark after Theorem 1"
+  },
+  {
+   "cited_key": "bubeck2012regret",
+   "cited_title": "Regret analysis of stochastic and nonstochastic multi-armed bandit problems",
+   "cited_first_author": "S. Bubeck",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "basic stochastic MAB, instance-independent cumulative regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*log(T))",
+    "expression_latex": "O(\\sqrt{T \\log{T}})",
+    "regime": null
+   },
+   "where": "Remark after Theorem 2 (footnote)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:52:25",
+  "source_chars": 97258,
+  "input_tokens": 85162,
+  "output_tokens": 4109,
+  "cost_usd_equiv": 0.48024219999999995,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

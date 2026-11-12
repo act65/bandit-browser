@@ -1,0 +1,293 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Online Restless Bandits with Unobserved States",
+  "arxiv_id": null,
+  "arxiv_version": null,
+  "year": 2023,
+  "authors": [
+   "Bowen Jiang",
+   "Bo Jiang",
+   "Jian Li",
+   "Tao Lin",
+   "Xinbing Wang",
+   "Chenghu Zhou"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online restless bandit with unobserved states and unknown parameters (Bayesian)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "markovian",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "T",
+    "K",
+    "prior"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [
+    "restless"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Restless Markov arms with hidden states (POMDP); markovian environments are out of scope from ontology v0.5.",
+   "unmapped": [
+    "Each arm is a hidden Markov chain with unknown transition and reward functions; states are never observed, even after pulling",
+    "State transitions are action-independent (arms evolve whether pulled or not)",
+    "Rewards take values in a finite known set; reward distribution depends on hidden state",
+    "Regret measured against the optimal long-term average reward J(theta*) of the belief-MDP (oracle knowing parameters but not states)",
+    "The learner knows the state space size, the reward set, the initial state distribution h, and the lower bounds eps_1, eps_2 used in the prior"
+   ],
+   "definition_quote": "Consider a restless bandit problem with one agent and N arms. Each arm i is associated with an independent discrete-time Markov chain ... Note that the states of the arms are never observed, even after pulling. ... R_T := E_{θ*∼Q}[ sum_{t=1}^T (J(θ*) − r_t) ]."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "TSEETC (Thompson Sampling with Episodic Explore-Then-Commit)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling",
+    "explore_then_commit"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "prior"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "exponential",
+   "bound": {
+    "notation": "exact",
+    "expression": "48*C_1*C_2*S_st*sqrt(K*T*log(K*T)) + C_1*C_2 + (tau_1*Delta_R + H_span + 4*C_1*C_2*S_st*K)*sqrt(T)",
+    "expression_latex": "R_T \\le 48C_1C_2S\\sqrt{NT\\log(NT)} + C_1C_2 + (\\tau_1\\Delta R + H + 4C_1C_2SN)\\sqrt{T}",
+    "regime": null
+   },
+   "symbols": {
+    "S_st": "number of states per arm",
+    "C_1": "L_1 + L_2 N + N^2 + S^2",
+    "C_2": "r_max + H",
+    "L_1": "4(1-eps_1)^2/(N eps_1^2 eps_2)",
+    "L_2": "4(1-eps_1)^2/eps_1^3",
+    "tau_1": "fixed exploration length per episode",
+    "Delta_R": "r_max - r_min, reward range",
+    "H_span": "bound on the span of the bias function of the belief MDP",
+    "eps_1": "smallest entry of transition matrices",
+    "eps_2": "smallest entry of reward functions"
+   },
+   "conditions": [
+    "Assumption 3.1: smallest transition probability eps_1 > 0",
+    "Assumption 3.2: smallest reward probability eps_2 > 0",
+    "finite known reward set and state space",
+    "optimal average reward J independent of initial distribution",
+    "parameters drawn from known prior Q",
+    "Oracle returns the optimal belief-MDP policy each episode; exact posterior updates"
+   ],
+   "tuning": [
+    "T_1 = ceil((sqrt(T)+1)/2), T_k = T_1 + k - 1",
+    "tau_1 * k_T = O(sqrt(T)) and tau_1 <= (T_1 + k_T - 1)/2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 5.1",
+    "quote": "Suppose Assumptions 3.1,3.2 hold and the Oracle returns the optimal policy in each episode. The Bayesian regret of our algorithm satisfies R_T ≤ 48C_1C_2 S\\sqrt{NT log(NT)} + C_1C_2 + (τ_1 ΔR + H + 4C_1C_2SN)\\sqrt{T}, where C_1 = L_1 + L_2N + N^2 + S^2, C_2 = r_max + H ..."
+   },
+   "confidence": "medium",
+   "notes": "Paper's N (number of arms) mapped to K; paper's S (states) renamed S_st; H renamed H_span. Overall Õ(sqrt T). Restated as Theorem B.7. Exact posterior marginalization is exponential in the sequence length (Remark 5.3), hence compute marked exponential."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "zhou2021regime",
+   "cited_title": "Regime switching bandits",
+   "cited_first_author": "Zhou",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SEEU",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Restless/regime switching bandits with unobserved states, frequentist regret",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(2/3)",
+    "expression_latex": "\\tilde O(T^{2/3})",
+    "regime": null
+   },
+   "where": "Introduction / Section 5.1"
+  },
+  {
+   "cited_key": "jahromi2022online",
+   "cited_title": "Online learning for unknown partially observable mdps",
+   "cited_first_author": "Jahromi",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "POMDP with unknown parameters, Bayesian regret",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(2/3)",
+    "expression_latex": "\\tilde O(T^{2/3})",
+    "regime": null
+   },
+   "where": "Related work / Section 5.1"
+  },
+  {
+   "cited_key": "wang2020restless",
+   "cited_title": "Restless-ucb, an efficient and low-complexity algorithm for online restless bandits",
+   "cited_first_author": "Wang",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Restless-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online restless bandits with birth-death Markov chains, states of pulled arms observed",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(2/3)",
+    "expression_latex": "\\tilde O(T^{2/3})",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "jung2019thompson",
+   "cited_title": "Thompson sampling in non-episodic restless bandits",
+   "cited_first_author": "Jung",
+   "cited_year": 2019,
+   "cited_arxiv_id": "1910.05654",
+   "algorithm_name": "Thompson sampling",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Non-episodic restless bandits, Bayesian regret",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)*sqrt(T)",
+    "expression_latex": "O(\\log T\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 5.1"
+  },
+  {
+   "cited_key": "ortner2012regret",
+   "cited_title": "Regret bounds for restless markov bandits",
+   "cited_first_author": "Ortner",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Restless Markov bandits",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)**(7/2)*sqrt(T)",
+    "expression_latex": "O(\\log^{7/2} T\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 5.1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T16:05:46",
+  "source_chars": 82038,
+  "input_tokens": 78252,
+  "output_tokens": 4181,
+  "cost_usd_equiv": 0.42640219999999995,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,255 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Bandit optimisation of functions in the Matérn kernel RKHS",
+  "arxiv_id": "2001.10396",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "David Janz",
+   "David R. Burt",
+   "Javier González"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Matérn kernel RKHS bandit (kernelised continuum-armed bandit) on [0,1]^d",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "S",
+    "sigma",
+    "nu_matern",
+    "kernel",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "hypercube",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "matern"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [],
+   "definition_quote": "Let $\\dom = [0,1]^d$, let $\\mcH_k(\\dom)$ be the RKHS of a Mat\\'ern kernel $k$ with parameter $\\nu>1$ such that $k\\leq 1$. Suppose $f: \\dom \\to \\R$ satisfies $\\|f\\|_{\\mcH_k} \\leq B$ for a known $B$ and we observe $y(x_t) = f(x_t)+\\epsilon_t$, where $\\epsilon_t$ is $\\subgauss$ sub-Gaussian."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "π-GP-UCB (Partitioned Improved GP-UCB)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "S",
+    "sigma",
+    "kernel",
+    "nu_matern",
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**((d*(2*d + 3) + 2*nu_matern)/(d*(2*d + 4) + 4*nu_matern))",
+    "expression_latex": "\\porder{T^{\\frac{d(2d+3)+2\\nu}{d(2d+4) + 4\\nu}}}",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "nu > 1",
+    "k <= 1 (normalised kernel)",
+    "domain [0,1]^d",
+    "||f||_{H_k} <= B with B known"
+   ],
+   "tuning": [
+    "alpha = 1 + 2/T",
+    "beta_t^A = beta_t^A(delta / (4(t+1)^{bd}))",
+    "initial cover of cardinality O(T^q)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:ucb-regret",
+    "number": "Theorem (thm:ucb-regret)",
+    "quote": "Let $\\dom = [0,1]^d$, let $\\mcH_k(\\dom)$ be the RKHS of a Mat\\'ern kernel $k$ with parameter $\\nu>1$ such that $k\\leq 1$. Suppose $f: \\dom \\to \\R$ satisfies $\\|f\\|_{\\mcH_k} \\leq B$ for a known $B$ and we observe $y(x_t) = f(x_t)+\\epsilon_t$, where $\\epsilon_t$ is $\\subgauss$ sub-Gaussian. Then for any fixed $\\delta \\in (0,1)$, with probability at least $1-\\delta$ the regret incurred by $\\pi$-GP-UCB is bounded by $\\porder{T^{\\frac{d(2d+3)+2\\nu}{d(2d+4) + 4\\nu}}}$."
+   },
+   "confidence": "high",
+   "notes": "The paper's Õ is defined as: f = Õ(t^a) iff for all eps>0, f = O(t^{a+eps}). Noise is conditionally sub-Gaussian with known constant L (mapped to sigma). Errata footnote notes an omitted o(1) term, regime claimed unchanged. Theorem (thm:gp-ucb-improved) on information gain Õ(T^{d(d+1)/(d(d+2)+2nu)}) not recorded as it is not a regret guarantee."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "chowdhury2017kernelized",
+   "cited_title": "On kernelized multi-armed bandits",
+   "cited_first_author": "Sayak Ray Chowdhury",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Improved GP-UCB (IGP-UCB)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Kernelised bandit, f in RKHS with known norm bound, sub-Gaussian noise; high-probability regret",
+   "bound": {
+    "notation": "O",
+    "expression": "gamma_T*sqrt(T)",
+    "expression_latex": "\\mcO(\\info{\\dom}{T}\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 2 (Background)"
+  },
+  {
+   "cited_key": "chowdhury2017kernelized",
+   "cited_title": "On kernelized multi-armed bandits",
+   "cited_first_author": "Sayak Ray Chowdhury",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "IGP-UCB / GP-UCB / KernelUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Matérn kernel RKHS bandit on [0,1]^d, high-probability regret",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**Min(1, (3*d**2 + 2*nu_matern)/(2*d**2 + 4*nu_matern))",
+    "expression_latex": "\\widetilde{O}\\left(T^{\\min\\left\\{1, \\frac{3d^2 + 2\\nu}{2d^2+4\\nu}\\right\\}}\\right)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "scarlett17lower",
+   "cited_title": "Lower bounds on regret for noisy Gaussian process bandit optimization",
+   "cited_first_author": "Jonathan Scarlett",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Matérn kernel RKHS bandit, algorithm-agnostic lower bound",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T**((d + nu_matern)/(d + 2*nu_matern))",
+    "expression_latex": "\\Omega(T^{\\frac{d + \\nu}{d + 2\\nu}})",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "valko2013finite",
+   "cited_title": "Finite-time analysis of kernelised contextual bandits",
+   "cited_first_author": "Michal Valko",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SupKernelUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Kernelised bandit (finite arms, extendable to continuum via discretisation)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(d_eff*T)",
+    "expression_latex": "\\porder{(\\deffe{\\dom} T)^{1/2}}",
+    "regime": null
+   },
+   "where": "Related work"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:26:33",
+  "source_chars": 55229,
+  "input_tokens": 65666,
+  "output_tokens": 3812,
+  "cost_usd_equiv": 0.3183342,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

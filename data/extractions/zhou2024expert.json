@@ -1,0 +1,259 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Expert with Clustering: Hierarchical Online Preference Learning Framework",
+  "arxiv_id": "2401.15062",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Tianyue Zhou",
+   "Jung-Hoon Cho",
+   "Babak Rahimi Ardabili",
+   "Hamed Tabkhi",
+   "Cathy Wu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online preference learning cast as prediction with expert advice (cluster centroids as experts), N users, T rounds per user",
+   "objective": "cumulative_regret",
+   "feedback": "full_information",
+   "environment": "adversarial_unspecified",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "N_exp"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "expert_advice"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "unspecified"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "N users each run a separate Hedge instance over K cluster-centroid experts; the user's choice y_{i,t} is revealed so all expert losses are observed",
+    "user preference parameters theta_i drawn from a distribution P with finite kurtosis; centroids learned from offline training data via (k-Means) clustering",
+    "regret measured against the oracle prediction using each user's true theta_i rather than the best expert"
+   ],
+   "definition_quote": "We define the regret of EWC as the performance difference between EWC and Oracle $\\boldsymbol{\\theta}_{i}$: R_{EWC} = \\sum_{i=1}^N \\sum_{t=1}^T ( \\langle \\mathbf{p}_{i,t}, \\mathbf{l}_{i,t}\\rangle - | \\hat{y}(\\boldsymbol{\\theta}_i, x_{i,t})-y_{i,t}|^2 )"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Expert with Clustering (EWC)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "exponential_weights",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "N_exp",
+    "T"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_policy",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*N*sqrt(T*log(N_exp)) + T*L_y*(eps_alg/2*sigma_P_sq + (eps_alg/2 + 1)*E_Lclust)",
+    "expression_latex": "2N\\sqrt{T\\log K} +  TL\\left(\\frac{\\epsilon}{2}\\sigma^2+(\\frac{\\epsilon}{2}+1)\\mathbb{E}_P[\\mathcal{L}]\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "L_y": "Lipschitz-type constant: (1/T)||yhat(theta1,x_i)-yhat(theta2,x_i)||^2 <= L ||theta1-theta2||^2",
+    "sigma_P_sq": "variance of the preference distribution P, E_P||theta_i - mu||^2",
+    "E_Lclust": "expected total squared clustering distance E_P[sum_i ||c_{k*(i)} - theta_i||^2]",
+    "N_exp": "number of clusters/experts K"
+   },
+   "conditions": [
+    "theta_i drawn from distribution P with finite kurtosis",
+    "yhat(., x_i) Lipschitz with constant L under L2 distance and dimension normalization",
+    "offline sample size m >= 12800(8+M4)/(eps^2 delta) (3 + 30K(d+4) log 6K + log(1/delta)) (k-Means uniform deviation bound)"
+   ],
+   "tuning": [
+    "Hedge learning rate tuned for 2 sqrt(T log K) regret"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "EWC_Bound",
+    "number": "Theorem 4.1",
+    "quote": "If $\\mathbf{\\hat{y}}(\\cdot, \\mathbf{x}_i)$ is Lipschitz continuous for all $\\mathbf{x}_i$ with Lipschitz constant $L$, L$_2$ norm distance, and dimension normalization, then with probability at least $1-\\delta$, the regret of EWC is bounded by: R_{EWC}\\leq \\overline{R}_{EWC}=2N\\sqrt{T\\log K} +  TL\\left(\\frac{\\epsilon}{2}\\sigma^2+(\\frac{\\epsilon}{2}+1)\\mathbb{E}_P[\\mathcal{L}]\\right)"
+   },
+   "confidence": "medium",
+   "notes": "Theorem number inferred from \\newtheorem{EWC}{Theorem}[section] in Section 4; the paper does not print it. The paper's K (number of clusters/experts) is mapped to N_exp. The regret is measured against the oracle theta_i predictor, which does not fit the comparator vocabulary well. The probability is over the k-Means deviation bound."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_policy",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*N*sqrt(T*log(N_exp)) + T*N*l_centroids",
+    "expression_latex": "2N\\sqrt{T\\log K} +  TNl_{centroids}",
+    "regime": null
+   },
+   "symbols": {
+    "l_centroids": "L*eps/(2N)*sigma^2 + L*(eps/2+1)*sum_k pi_k trace(Sigma_k), the average loss caused by centroids",
+    "N_exp": "number of clusters/experts K"
+   },
+   "conditions": [
+    "P is a Gaussian mixture with K components (weights pi_k, means mu_k, covariances Sigma_k)",
+    "clustering outputs the optimal centroids c_k = mu_k",
+    "Lipschitz condition of Theorem 4.1"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "EWC_Bound_GMM",
+    "number": "Corollary 4.1.1",
+    "quote": "If $P$ is a Gaussian Mixture Model (GMM) with K Gaussian distributions, each of which has weight $\\pi_k$, mean $\\boldsymbol{\\mu}_k$, and covariance $\\Sigma_k$, and the clustering outputs the optimal centroids where $\\mathbf{c}_{k}=\\boldsymbol{\\mu}_k$. ... With probability at least $1-\\delta$, the regret of EWC is bounded by R_{EWC}\\leq \\overline{R}_{EWC}= 2N\\sqrt{T\\log K} +  TNl_{centroids}"
+   },
+   "confidence": "medium",
+   "notes": "Corollary number inferred from the counter definition and not printed by the paper."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "HedgeRegretBound",
+   "cited_title": "A decision-theoretic generalization of on-line learning and an application to boosting",
+   "cited_first_author": "Yoav Freund",
+   "cited_year": 1997,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Hedge",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Prediction with expert advice, K experts, losses in [0,1], full information",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*sqrt(T*log(N_exp))",
+    "expression_latex": "2\\sqrt{T \\log K}",
+    "regime": null
+   },
+   "where": "Section 4.1"
+  },
+  {
+   "cited_key": "li_contextual-bandit_2010",
+   "cited_title": "A Contextual-Bandit Approach to Personalized News Article Recommendation",
+   "cited_first_author": "Lihong Li",
+   "cited_year": 2010,
+   "cited_arxiv_id": "1003.0146",
+   "algorithm_name": "SupLinUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Linear contextual bandit (expected loss linear in features), summed over N users, high probability",
+   "bound": {
+    "notation": "O",
+    "expression": "N*sqrt(T*d*log(K*T*log(T)/delta)**3)",
+    "expression_latex": "O\\left(N\\sqrt{Td\\ln^3{(KT\\ln T/\\delta})}\\right)",
+    "regime": null
+   },
+   "where": "Lemma 4.2.1 (LinUCB_Bound)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:01:10",
+  "source_chars": 48062,
+  "input_tokens": 59674,
+  "output_tokens": 4897,
+  "cost_usd_equiv": 0.2920982,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,240 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Incorporating Behavioral Constraints in Online AI Systems",
+  "arxiv_id": "1809.05720",
+  "arxiv_version": null,
+  "year": 2018,
+  "authors": [
+   "Avinash Balakrishnan",
+   "Djallel Bouneffouf",
+   "Nicholas Mattei",
+   "Francesca Rossi"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Behavior Constrained Contextual Bandits (BCCB)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "d",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "unspecified",
+    "loss_set": "not_applicable",
+    "parameter_structure": "unspecified"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Disjoint linear contextual model: each arm k has its own unknown weight vector mu_k with E[r_k(t)|c(t)] = mu_k^T c(t)",
+    "A preliminary constraint-learning phase of N rounds in which a teacher reveals binary constraint feedback r^e_k(t); no constraint feedback during the online phase",
+    "Behavioral constraints learned from examples; blending weight sigma_online between constrained and reward-driven policies",
+    "How contexts are generated is not specified"
+   ],
+   "definition_quote": "At each time $t \\in \\{1,...,T\\}$, a player is presented with a {\\em context vector} $c(t) \\in \\mathbf{R}^d$ and must choose an arm $k \\in K$ ... $r_k(t) \\in [0,1]$ ... $E[r_k(t)|c(t)] = \\mu_k^T c(t)$ ... In this setting, the agent first goes through a {\\em constraint learning phase} where it is allowed to query the user $N$ times and receive feedback $r^e_k(t) \\in [0,1]$ about whether or not the chosen decision is allowed"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Behavior Constrained Thompson Sampling (BCTS)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "d",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sigma_online*d*delta/z*sqrt(T**(z+1))*log(T)*d*log(1/delta) + (1 - sigma_online)*c_max*T*mu_norm",
+    "expression_latex": "\\blend \\frac{d\\gamma}{z} \\sqrt{T^{z+1}} (ln (T) d) ln \\frac{1}{\\gamma}+ (1-\\blend) c_{max} T ||\\tilde{\\mu}^*_{max}+\\mu^{e}_{min}||_2",
+    "regime": null
+   },
+   "symbols": {
+    "sigma_online": "blending weight in [0,1] between reward-driven and constrained policy",
+    "z": "constant parameter of CTS, 0<z<1",
+    "c_max": "max_t ||c(t)||_2",
+    "mu_norm": "||mu*_max + mu^e_min||_2, with mu*_max = max_k ||mu*_k||_1 and mu^e = learned constrained policy"
+   },
+   "conditions": [
+    "regret measured against Definition 1 optimal (reward-driven) policy"
+   ],
+   "tuning": [
+    "0 <= sigma_online <= 1",
+    "v = R sqrt(24/z d ln(1/gamma))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:upperbcts",
+    "number": "Theorem 1",
+    "quote": "Consider the BCTS algorithm with $K$ arms, $d$ features, and take $0 \\leq \\blend \\leq 1$ and $0 \\leq \\gamma \\leq 1$. Then, with probability $(1-\\gamma)$, the upper bound on the regret R(T) at time $T$ is: \\blend \\frac{d\\gamma}{z} \\sqrt{T^{z+1}} (ln (T) d) ln \\frac{1}{\\gamma}+ (1-\\blend) c_{max} T ||\\tilde{\\mu}^*_{max}+\\mu^{e}_{min}||_2"
+   },
+   "confidence": "low",
+   "notes": "Paper's gamma is the failure probability (mapped to delta); bound as printed contains a gamma factor. Statement writes mu^e_min while the definition and proof use mu^e_max; recorded as in theorem. Bound is linear in T when sigma_online<1. Regret notion loosely defined."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "Max(sigma_star, sigma_online)*d*delta/z*sqrt(T**(z+1))*log(T)*d*log(1/delta) + Max(1 - sigma_star, 1 - sigma_online)*d*delta/z*sqrt(N_teach**(z+1))*log(N_teach)*d*log(1/delta)",
+    "expression_latex": "max(\\blend^*,\\blend)\\frac{d\\gamma}{z} \\sqrt{T^{z+1}} (ln (T) d) ln \\frac{1}{\\gamma}+max((1-\\blend^*),(1-\\blend))\\frac{d\\gamma}{z} \\sqrt{N^{z+1}} (ln (N) d) ln \\frac{1}{\\gamma}",
+    "regime": null
+   },
+   "symbols": {
+    "sigma_online": "blending weight used by BCTS",
+    "sigma_star": "optimal blending weight in Definition 2",
+    "z": "constant parameter of CTS, 0<z<1",
+    "N_teach": "number of teacher queries in the constraint learning phase"
+   },
+   "conditions": [
+    "regret measured against Definition 2 optimal BCCB policy (blend of optimal reward and constraint policies)",
+    "CTS used in the constraint learning phase"
+   ],
+   "tuning": [
+    "0 <= sigma_online <= 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:upperCBTS",
+    "number": "Theorem 2",
+    "quote": "Using Definition 2 of optimal policy we have, with probability $(1-\\gamma)$, the upper bound on the regret R(T) at time $T$ is: max(\\blend^*,\\blend)\\frac{d\\gamma}{z} \\sqrt{T^{z+1}} (ln (T) d) ln \\frac{1}{\\gamma}+max((1-\\blend^*),(1-\\blend))\\frac{d\\gamma}{z} \\sqrt{N^{z+1}} (ln (N) d) ln \\frac{1}{\\gamma}"
+   },
+   "confidence": "low",
+   "notes": "Comparator is the Definition 2 blended optimal policy, mapped to best_policy. Paper's N (teacher queries) declared as N_teach to avoid conflict with canonical N. gamma mapped to delta."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "AgrawalG13",
+   "cited_title": "Thompson sampling for contextual bandits with linear payoffs",
+   "cited_first_author": "Agrawal",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Contextual Thompson Sampling (CTS)",
+   "algorithm_registry_id": "lin_ts",
+   "side": "upper",
+   "setting_description": "Linear contextual bandit with K arms and d features; holds with probability 1-gamma",
+   "bound": {
+    "notation": "exact",
+    "expression": "d*delta/z*sqrt(T**(z+1))*log(T)*d*log(1/delta)",
+    "expression_latex": "\\frac{d\\gamma}{z} \\sqrt{T^{z+1}} (ln (T) d) ln \\frac{1}{\\gamma}",
+    "regime": null
+   },
+   "where": "Lemma 1 (Appendix, proof of Theorem 1)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:52:39",
+  "source_chars": 61007,
+  "input_tokens": 64431,
+  "output_tokens": 4317,
+  "cost_usd_equiv": 0.3185542,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

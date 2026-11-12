@@ -2,6 +2,24 @@
 
 Staged so that each phase ends with a **go / no-go check**. We do not scale extraction until the schema and accuracy are proven on a small, hand-checked set ([desiderata.md](desiderata.md) D6).
 
+## Status (2026-11-12)
+
+Batch 3 is in: **1,555 papers**, 6,920 results, 2,939 canonical settings, 4,065 cells (**225 tight**, 165 log gap,
+223 poly gap, **9 conflict**, all from before batch 3); acceptance 6 PASS / 2 PASS_STATUS / 2 PARTIAL / 6 MANUAL /
+0 FAIL; gold set 39/53 recovered, 0 contradicted. Every batch-2 gap cell is triaged (395 verdicts: 275 closed,
+45 open_known, 75 blank).
+- **Conflict review:** 85 → 9 cells. Engine: a bound stated for "K = 2" or with "K treated as a constant" says nothing
+  about K (an absent variable was read as K^0); the consistency regex reads little-o only (O(T^alpha) and a
+  learning-rate "for all a > 0" had admitted algorithm-specific lower bounds); the gold check moves upper bounds with
+  the order's parameter map (linear → K-armed: d = K), as inference does. 21 corrections: bilateral trade mapped to the
+  same keys as auction bidding (the mechanism leak), shape-constrained thresholding bounds, weak and fixed-arm dueling
+  regret in Borda cells, foresight regret, a PDE scaling limit, a linear cascade filed as plain cascade, two hidden
+  side conditions.
+- **Ontology gaps the review hit again:** no mechanism field (auctions vs bilateral trade), no dueling regret notion
+  beyond the winner, no shape constraints on the means, linear structure of combinatorial / cascade items.
+- Not yet done for batch 3: gap triage of the new gap cells, the batch-3 audit, the ontology review, crosscheck;
+  saha2022versatile and saha2022versatilea are two versions of one paper (dedupe).
+
 ## Status (2026-11-09)
 
 Batch 2 is in: **1,057 papers**, 4,700 results, 2,037 canonical settings, 2,108 cells (**115 tight**, 107 log gap,
@@ -182,6 +200,9 @@ Everything here builds on one piece of machinery: **D2 bound comparison**. Each 
   18 PMLR-only from open PDFs; 499 extracted, one withdrawn duplicate), Opus 5.5 with prompt rules 22–27 and the quote
   retry, ~$394 API-equivalent, no quota stop. Then: conflict review (57 → 7 cells), condition classes for 3,235 new
   strings, batch-2 audit, ontology review (`ontology/review-v0.5.md`). See the status at the top.
+- [x] **Batch 3** (`corpus/batch-3.yaml`, 2026-11-12): 500 papers chosen the same way (seed 0, multi_agent skipped;
+  25 PMLR-only); 498 extracted, 2 withdrawn on arXiv; ~$402 API-equivalent, no quota stop. Then: condition classes
+  (2,966 new strings) and symbol classes, conflict review (85 → 9 cells). See the status at the top.
 - [ ] Extend the ontology module by module (contextual, combinatorial, non-stationary, pure exploration, partial monitoring, …), each with a small gold set.
 - [x] Cross-check with `cited_results` (`pipeline/crosscheck.py` → `data/reports/crosscheck.md`): 67% agree; 26 "consensus disagreements" (a rate cited by ≥ 2 papers that our extraction lacks) are the review queue.
 - [ ] Human verification queue prioritising results that drive gap reports (the audit's 8 major errors and the 26 consensus disagreements first).

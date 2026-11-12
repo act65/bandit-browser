@@ -29,6 +29,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import compare  # noqa: E402
+import infer  # noqa: E402
 import resolve  # noqa: E402
 import schema  # noqa: E402
 from order import Order  # noqa: E402
@@ -119,8 +120,12 @@ def main() -> None:
         recovered, contradicted, n_rel = [], [], 0
         for sid, s in settings.items():
             same = s["key"] == key
-            gen = same or bool(order.leq(key, s["key"]))   # S is more general than B: its upper bounds hold at B
-            spe = same or bool(order.leq(s["key"], key))   # S is a special case: its lower bounds hold at B
+            down = None if same else order.leq(key, s["key"])
+            up = None if same else order.leq(s["key"], key)
+            gen = same or down is not None   # S is more general than B: its upper bounds hold at B
+            spe = same or up is not None     # S is a special case: its lower bounds hold at B
+            # an upper bound moves to B with the order's parameter map (e.g. linear -> K-armed: d = K), as infer.py does
+            down_map = {k: v for ch in (down or []) for k, v in (ch.param_map or {}).items()}
             if not (gen or spe):
                 continue
             n_rel += 1
@@ -128,6 +133,9 @@ def main() -> None:
                 if compare.FAMILY.get(r.get("quantity")) != fam or r.get("dependence") != dep:
                     continue
                 q = norm(profiles.get(r["id"]))
+                expr = r["bound"].get("expression_normalised") or r["bound"]["expression"]
+                if r["side"] == "upper" and down_map and set(resolve.IDENT_RE.findall(expr)) & set(down_map):
+                    q = norm(prof(infer.substitute(expr, down_map)[0], r["bound"].get("notation"), canonical))
                 if q is None:
                     continue
                 c = cmp_rates(q, p)

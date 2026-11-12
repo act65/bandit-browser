@@ -1,0 +1,362 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Asymptotically-Optimal Gaussian Bandits with Side Observations",
+  "arxiv_id": "2505.10698",
+  "arxiv_version": null,
+  "year": 2022,
+  "authors": [
+   "Alexia Atsidakou",
+   "Orestis Papadigenopoulos",
+   "Constantine Caramanis",
+   "Sujay Sanghavi",
+   "Sanjay Shakkottai"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Gaussian bandits with general side information matrix",
+   "objective": "cumulative_regret",
+   "feedback": "graph_feedback",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "unspecified",
+    "time_varying": "fixed",
+    "knowledge": "known_in_advance",
+    "self_loops": "optional",
+    "directedness": "directed",
+    "generation": "arbitrary"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_revealed"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Feedback is a weighted (noisy) side-observation structure: playing arm i reveals a Gaussian sample of every arm j with standard deviation sigma_{i,j} given by an arbitrary known K x K matrix Sigma (sigma_{i,j}=infinity means no information); generalizes graph feedback",
+    "The learner knows the side-information matrix Sigma"
+   ],
+   "definition_quote": "By playing an action $i \\in [K]$ the player observes a noisy sample $X_{j}$ from the reward of each arm $j \\in [K]$, distributed independently as $X_j \\sim \\mathcal{N}(\\mu_j,\\sigma_{i,j}^2)$, and collects the realized value $X_i \\sim \\mathcal{N}(\\mu_i,\\sigma_{i,i}^2)$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Asymptotically-Optimal Algorithm for Gaussian Bandits with Side Observations (Algorithm 1)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "Sigma (side-information matrix)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "consistent",
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "liminf",
+    "expression": "sum_arms(c_star_i*Delta_i)*log(T)",
+    "expression_latex": "\\liminf_{T\\rightarrow \\infty}{\\frac{R_T(\\mu)}{\\log{T}}} \\geq \\sum_{i\\in [K]} c_i^*(\\mu) \\D_i(\\mu)",
+    "regime": null
+   },
+   "symbols": {
+    "c_star_i": "optimal solution of the LP min sum_i c_i Delta_i s.t. sum_j c_j/sigma_{j,i}^2 >= 2/Delta_i^2 for suboptimal i and >= 2/Delta_min^2 for the optimal arm"
+   },
+   "conditions": [
+    "policy is consistent: R_T/T^p -> 0 for every p>0 on every environment"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lower_bound",
+    "number": "Theorem (thm:lower_bound)",
+    "quote": "For any environment $(\\mu, \\Feedback)$, the regret of any consistent policy within $T$ rounds satisfies \\liminf_{T\\rightarrow \\infty}{\\frac{R_T(\\mu)}{\\log{T}}} \\geq \\sum_{i\\in [K]} c_i^*(\\mu) \\D_i(\\mu)."
+   },
+   "confidence": "high",
+   "notes": "Regret defined as T mu* - E[sum X_{i_t,t}], i.e. pseudo-regret."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(2*K + 8*K/(alpha_alg - 4) + 2)*Delta_max + 2*Delta_max*K*S_eps + Delta_max*(4*alpha_alg*sum_arms(c_eps_i)*log(T) + K)**gamma_alg + 4*alpha_alg*sum_arms(Delta_i*c_eps_i)*log(T)",
+    "expression_latex": "\\left(2K + \\frac{8K}{\\alpha-4}  + 2\\right)\\D_{\\max} + 2\\D_{\\max} K \\sum_{\\tau\\in[T]} \\exp\\left(-\\frac{\\tau^{\\gamma} \\epsilon^2}{4K\\sm^2}\\right) + \\D_{\\max} \\left(4\\alpha \\sum_{j\\in[K]} c^*_j(\\mu,\\epsilon)  \\log{T}  +K \\right)^{\\gamma} + 4\\alpha \\sum_{j\\in[K]} \\D_j(\\mu) c^*_j(\\mu,\\epsilon)  \\log{T}",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_alg": "algorithm parameter alpha > 4 (confidence width scaling)",
+    "gamma_alg": "algorithm parameter gamma in (0,1) of beta(x)=x^gamma/(2 sigma_bar^2)",
+    "c_eps_i": "worst-case epsilon-approximate LP solution c*_i(mu, eps) = sup over ||mu'-mu||_inf <= eps of c*_i(mu')",
+    "S_eps": "sum_{tau=1}^T exp(-tau^gamma_alg * eps_alg^2/(4 K sigma_bar^2))",
+    "sigma_bar": "max_i min_j sigma_{j,i}",
+    "eps_alg": "free analysis parameter epsilon > 0"
+   },
+   "conditions": [],
+   "tuning": [
+    "alpha > 4",
+    "gamma in (0,1)",
+    "beta(x)=x^gamma/(2 sigma_bar^2)",
+    "any epsilon > 0 (analysis parameter)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret_upper_bound",
+    "number": "Theorem (thm:regret_upper_bound)",
+    "quote": "For any $\\alpha>4$, $\\gamma \\in (0,1)$, and $\\epsilon>0$, the regret of algorithm \\cref{algorithm1} satisfies R_T(\\mu) \\leq \\left(2K + \\frac{8K}{\\alpha-4}  + 2\\right)\\D_{\\max} + 2\\D_{\\max} K \\sum_{\\tau\\in[T]} \\exp\\left(-\\frac{\\tau^{\\gamma} \\epsilon^2}{4K\\sm^2}\\right) + \\D_{\\max} \\left(4\\alpha \\sum_{j\\in[K]} c^*_j(\\mu,\\epsilon)  \\log{T}  +K \\right)^{\\gamma} + 4\\alpha \\sum_{j\\in[K]} \\D_j(\\mu) c^*_j(\\mu,\\epsilon)  \\log{T}."
+   },
+   "confidence": "medium",
+   "notes": "Algorithm solves an LP each exploration round (polynomial). Anytime: algorithm does not take T. The proof's final line differs slightly from the statement; recorded as stated in theorem."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "4*alpha_alg*sum_arms(Delta_i*c_eps_i)*log(T)",
+    "expression_latex": "\\limsup_{T\\rightarrow\\infty} \\frac{R_T(\\mu)}{\\log{T}} \\leq 4\\alpha \\sum_{j\\in[K]} \\D_j(\\mu) c^*_j(\\mu,\\epsilon)",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_alg": "algorithm parameter alpha > 4",
+    "c_eps_i": "worst-case epsilon-approximate LP solution c*_i(mu, eps)"
+   },
+   "conditions": [],
+   "tuning": [
+    "alpha > 4",
+    "gamma in (0,1)",
+    "any epsilon > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:asymptotic_optimality",
+    "number": "Corollary (cor:asymptotic_optimality)",
+    "quote": "As the time horizon tends to infinity, the regret of \\cref{algorithm1} satisfies \\limsup_{T\\rightarrow\\infty} \\frac{R_T(\\mu)}{\\log{T}} \\leq 4\\alpha \\sum_{j\\in[K]} \\D_j(\\mu) c^*_j(\\mu,\\epsilon)."
+   },
+   "confidence": "high",
+   "notes": "Matches the lower bound up to constant factor 4*alpha as epsilon -> 0."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Caron2012",
+   "cited_title": "Leveraging side observations in stochastic bandits",
+   "cited_first_author": "Stéphane Caron",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Stochastic bandits with graph feedback, when not all suboptimal arms have a maximum-reward neighbor",
+   "bound": {
+    "notation": "Omega",
+    "expression": "log(T)",
+    "expression_latex": "\\Omega(\\log(T))",
+    "regime": null
+   },
+   "where": "Section 1.3 Related Work"
+  },
+  {
+   "cited_key": "Caron2012",
+   "cited_title": "Leveraging side observations in stochastic bandits",
+   "cited_first_author": "Stéphane Caron",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB variants with side observations",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic bandits with graph feedback; chi is clique-partition number",
+   "bound": {
+    "notation": "O",
+    "expression": "chi*Delta_max/Delta_min**2*log(T)",
+    "expression_latex": "\\mathcal{O}\\left(\\chi\\cdot \\frac{\\D_{\\max}}{\\D_{\\min}^2}\\cdot\\log(T)\\right)",
+    "regime": null
+   },
+   "where": "Section 1.3 Related Work"
+  },
+  {
+   "cited_key": "buccapatnam2014",
+   "cited_title": "Stochastic bandits with side observations on networks",
+   "cited_first_author": "Swapna Buccapatnam",
+   "cited_year": 2014,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic bandits with graph feedback; sum over a dominating set D",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_D(log(T)/Delta_i)",
+    "expression_latex": "\\mathcal{O}\\left(\\sum_{i\\in D} \\frac{\\log(T)}{\\D_i}\\right)",
+    "regime": null
+   },
+   "where": "Section 1.3 Related Work"
+  },
+  {
+   "cited_key": "Mannor2011",
+   "cited_title": "From bandits to experts: On the value of side-observations",
+   "cited_first_author": "Shie Mannor",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Adversarial bandits with undirected feedback graph, independence number alpha",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(alpha_G*log(K)*T)",
+    "expression_latex": "\\mathcal{O}(\\sqrt{\\alpha\\cdot \\log(k) \\cdot T})",
+    "regime": null
+   },
+   "where": "Section 1.3 Related Work"
+  },
+  {
+   "cited_key": "Mannor2011",
+   "cited_title": "From bandits to experts: On the value of side-observations",
+   "cited_first_author": "Shie Mannor",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Adversarial bandits with feedback graph, independence number alpha",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(alpha_G*T)",
+    "expression_latex": "{\\Omega}(\\sqrt{\\alpha \\cdot T})",
+    "regime": null
+   },
+   "where": "Section 1.3 Related Work"
+  },
+  {
+   "cited_key": "kocak2016",
+   "cited_title": "Online learning with noisy side observations",
+   "cited_first_author": "Tomás Kocák",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Adversarial bandits with weighted feedback graph; alpha* generalized independence number",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(alpha_star*T)",
+    "expression_latex": "\\mathcal{\\Tilde{O}}(\\sqrt{\\alpha^* \\cdot T})",
+    "regime": null
+   },
+   "where": "Section 1.3 Related Work"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T16:26:00",
+  "source_chars": 91091,
+  "input_tokens": 83049,
+  "output_tokens": 6533,
+  "cost_usd_equiv": 0.5118182,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

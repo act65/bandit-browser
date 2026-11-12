@@ -1,0 +1,408 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "TopRank+: A Refinement of TopRank Algorithm",
+  "arxiv_id": "2001.07617",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Victor de la Peña",
+   "Haolin Zou"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online learning to rank in a generalized stochastic click model (TopRank setting, Assumptions 1-4)",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "ordered_list",
+    "reward": "click_model",
+    "loss_scale": "unspecified"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Learner ranks L items, displays the top K positions and observes binary clicks on each displayed item",
+    "General click model v(a,k)=alpha(a(k))*chi(a,k) satisfying Assumptions 1-4 (nests cascade and position-based models)"
+   ],
+   "definition_quote": "Assume there are L items to be ranked, indexed by i=1,2, …, L. ... only the first K most attractive items are of interest. Information is provided sequentially in the form of user clicks. ... For each round, the algorithm provides a permutation A_t of all items based on previous clicks, display the first K items to the user, and collect new clicks."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "TopRank",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "elimination",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "delta"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "TopRank+ (tighter version, criterion (20) with loglog + logloglog + C_1(delta))",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "delta",
+    "C_1(delta)"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "TopRank+ (simpler version, criterion sqrt((2+C_2(delta)) N loglog N))",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "delta",
+    "C_2(delta)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "delta*T*m*L_items**2 + sum_pairs(1 + 6*(alpha_i + alpha_j)*(log(log(T)) + Rational(5,2)*log(log(log(T))) + C_1)/Delta_ij)",
+    "expression_latex": "R_n \\le \\delta n K L^2 + \\sum_{j=1}^L \\sum_{i=1}^{\\min\\{K,j-1\\}} \\left(1 + \\frac{6(\\alpha(i)+\\alpha(j))(\\log\\log(n) + \\frac{5}{2}\\log\\log\\log(n) + C_1(\\delta))}{\\Delta_{ij}}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "L_items": "number of items to be ranked",
+    "m": "number of displayed positions K in the paper",
+    "alpha_i": "attractiveness of item i",
+    "alpha_j": "attractiveness of item j",
+    "Delta_ij": "alpha(i) - alpha(j)",
+    "C_1": "C_1(delta) = log(1/(4 delta sqrt(pi))) + C_0, with C_0 an assumed constant upper bound on an o(1) term",
+    "sum_pairs": "sum over j=1..L and i=1..min(K,j-1)"
+   },
+   "conditions": [
+    "v satisfies Assumptions 1-4",
+    "alpha(1) > alpha(2) > ... > alpha(L)",
+    "delta in (0,1)",
+    "a constant C_0 bounding the o(1) term in the Robbins-Siegmund expansion exists"
+   ],
+   "tuning": [
+    "confidence parameter delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1'",
+    "quote": "Theorem 1’. (assumptions similar as before)\n\n                                                                        5\n                    𝐿 min{𝐾,𝑗−1}            6(𝛼(𝑖) + 𝛼(𝑗)) (𝑙𝑜𝑔𝑙𝑜𝑔(𝑛) + 2 𝑙𝑜𝑔𝑙𝑜𝑔𝑙𝑜𝑔(𝑛) + 𝐶1 (𝛿))\n       𝑅𝑛 ≤ 𝛿𝑛𝐾𝐿2 + ∑     ∑            1+                                                            (22)"
+   },
+   "confidence": "low",
+   "notes": "Text converted from PDF is lossy; the logloglog coefficient appears as '5 ... 2' and is read as 5/2 (consistent with Lemma 5'). Bound relies on unproven existence of constant C_0; derivation is informal/asymptotic."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "delta*T*m*L_items**2 + m*L_items + sqrt(4*m**3*L_items*T*(log(log(T)) + Rational(5,2)*log(log(log(T))) + C_1))",
+    "expression_latex": "R_n \\le \\delta n K L^2 + KL + \\sqrt{4K^3 L n (\\log\\log(n) + \\frac{5}{2}\\log\\log\\log(n) + C_1(\\delta))}",
+    "regime": null
+   },
+   "symbols": {
+    "L_items": "number of items to be ranked",
+    "m": "number of displayed positions K in the paper",
+    "C_1": "C_1(delta) = log(1/(4 delta sqrt(pi))) + C_0"
+   },
+   "conditions": [
+    "v satisfies Assumptions 1-4",
+    "alpha(1) > alpha(2) > ... > alpha(L)",
+    "delta in (0,1)",
+    "a constant C_0 bounding the o(1) term exists"
+   ],
+   "tuning": [
+    "confidence parameter delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1'",
+    "quote": "𝑅𝑛 ≤ 𝛿𝑛𝐾𝐿2 + 𝐾𝐿 + √4𝐾 3𝐿𝑛 ∗ (𝑙𝑜𝑔𝑙𝑜𝑔(𝑛) + 𝑙𝑜𝑔𝑙𝑜𝑔𝑙𝑜𝑔(𝑛) + 𝐶1 (𝛿))                      (23)"
+   },
+   "confidence": "low",
+   "notes": "Placement of square root over the log terms inferred from analogy with Theorem 1 (5); PDF extraction lossy."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "delta*T*m*L_items**2 + sum_pairs(1 + (1 + 2*sqrt(2 + C_2))*(alpha_i + alpha_j)*log(log(T))/Delta_ij)",
+    "expression_latex": "R_n \\le \\delta n K L^2 + \\sum_{j=1}^L \\sum_{i=1}^{\\min\\{K,j-1\\}} \\left(1 + \\frac{(1+2\\sqrt{2+C_2(\\delta)})(\\alpha(i)+\\alpha(j))\\log\\log(n)}{\\Delta_{ij}}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "L_items": "number of items to be ranked",
+    "m": "number of displayed positions K in the paper",
+    "alpha_i": "attractiveness of item i",
+    "alpha_j": "attractiveness of item j",
+    "Delta_ij": "alpha(i) - alpha(j)",
+    "C_2": "C_2(delta), constant such that beta_F(N,1/(2delta)) <= sqrt((2+C_2) N loglog N); no closed form given",
+    "sum_pairs": "sum over j=1..L and i=1..min(K,j-1)"
+   },
+   "conditions": [
+    "v satisfies Assumptions 1-4",
+    "alpha(1) > alpha(2) > ... > alpha(L)",
+    "delta in (0,1)",
+    "a constant C_2(delta) satisfying (18) exists"
+   ],
+   "tuning": [
+    "confidence parameter delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1''",
+    "quote": "Theorem 1’’. (assumptions similar as before)\n\n                                𝐿 min{𝐾,𝑗−1}\n                                                      (1 + 2√2 + 𝐶2 (𝛿))(𝛼(𝑖) + 𝛼(𝑗))𝑙𝑜𝑔𝑙𝑜𝑔(𝑛)\n                         2                                                                              (22)\n              𝑅𝑛 ≤ 𝛿𝑛𝐾𝐿 + ∑          ∑         (1 +                                              )"
+   },
+   "confidence": "low",
+   "notes": "Extent of the square root (√(2+C_2) vs √2+C_2) ambiguous in PDF extraction; read as sqrt(2+C_2). Derivation informal."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "delta*T*m*L_items**2 + m*L_items + sqrt(2*(2 + C_2)*m**3*L_items*T*log(log(T)))",
+    "expression_latex": "R_n \\le \\delta n K L^2 + KL + \\sqrt{2(2+C_2(\\delta))K^3 L n \\log\\log(n)}",
+    "regime": null
+   },
+   "symbols": {
+    "L_items": "number of items to be ranked",
+    "m": "number of displayed positions K in the paper",
+    "C_2": "C_2(delta), constant from (18); no closed form given"
+   },
+   "conditions": [
+    "v satisfies Assumptions 1-4",
+    "alpha(1) > alpha(2) > ... > alpha(L)",
+    "delta in (0,1)",
+    "a constant C_2(delta) satisfying (18) exists"
+   ],
+   "tuning": [
+    "confidence parameter delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 1''",
+    "quote": "𝑅𝑛 ≤ 𝛿𝑛𝐾𝐿2 + 𝐾𝐿 + √2(2 + 𝐶2 (𝛿))𝐾 3 𝐿𝑛 ∗ 𝑙𝑜𝑔𝑙𝑜𝑔(𝑛)                         (23)"
+   },
+   "confidence": "low",
+   "notes": "PDF-extracted; derivation informal and relies on unspecified C_2(delta)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "[4]",
+   "cited_title": "TopRank: A practical algorithm for online stochastic ranking",
+   "cited_first_author": "T. Lattimore",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "TopRank",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online learning to rank, generalized click model (Assumptions 1-4), L items, K positions, distinct attractiveness; gap-dependent n-step regret",
+   "bound": {
+    "notation": "exact",
+    "expression": "delta*T*m*L_items**2 + sum_pairs(1 + 6*(alpha_i + alpha_j)*log(c_alg*sqrt(T)/delta)/Delta_ij)",
+    "expression_latex": "R_n \\le \\delta n K L^2 + \\sum_{j=1}^L \\sum_{i=1}^{\\min\\{K,j-1\\}} \\left(1 + \\frac{6(\\alpha(i)+\\alpha(j))\\log(c\\sqrt{n}/\\delta)}{\\Delta_{ij}}\\right)",
+    "regime": null
+   },
+   "where": "Section 2.2, Theorem 1 eq (4)"
+  },
+  {
+   "cited_key": "[4]",
+   "cited_title": "TopRank: A practical algorithm for online stochastic ranking",
+   "cited_first_author": "T. Lattimore",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "TopRank",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online learning to rank, generalized click model; worst-case n-step regret",
+   "bound": {
+    "notation": "exact",
+    "expression": "delta*T*m*L_items**2 + m*L_items + sqrt(4*m**3*L_items*T*log(c_alg*sqrt(T)/delta))",
+    "expression_latex": "R_n \\le \\delta n K L^2 + KL + \\sqrt{4K^3 L n \\log(c\\sqrt{n}/\\delta)}",
+    "regime": null
+   },
+   "where": "Section 2.2, Theorem 1 eq (5)"
+  },
+  {
+   "cited_key": "[4]",
+   "cited_title": "TopRank: A practical algorithm for online stochastic ranking",
+   "cited_first_author": "T. Lattimore",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "TopRank",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online learning to rank, generalized click model; delta = 1/n, gap-dependent",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_pairs(alpha_i*log(T)/Delta_ij)",
+    "expression_latex": "O(\\sum_{j=1}^L \\sum_{i=1}^{\\min\\{K,j-1\\}} \\alpha(i)\\log(n)/\\Delta_{ij})",
+    "regime": "delta = 1/n"
+   },
+   "where": "Section 2.2, after Theorem 1"
+  },
+  {
+   "cited_key": "[4]",
+   "cited_title": "TopRank: A practical algorithm for online stochastic ranking",
+   "cited_first_author": "T. Lattimore",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "TopRank",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online learning to rank, generalized click model; delta = 1/n, worst case",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(m**3*L_items*T*log(T))",
+    "expression_latex": "O(\\sqrt{K^3 L n \\log(n)})",
+    "regime": "delta = 1/n"
+   },
+   "where": "Section 2.2, after Theorem 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:37:16",
+  "source_chars": 22241,
+  "input_tokens": 50557,
+  "output_tokens": 6743,
+  "cost_usd_equiv": 0.25608220000000004,
+  "quote_retry": {
+   "asked": 4,
+   "fixed": 4,
+   "cost_usd_equiv": 0.15028439999999998
+  },
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,409 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Federated Neural Bandits",
+  "arxiv_id": "2205.14309",
+  "arxiv_version": null,
+  "year": 2022,
+  "authors": [
+   "Zhongxiang Dai",
+   "Yao Shu",
+   "Arun Verma",
+   "Flint Xiaofeng Fan",
+   "Bryan Kian Hsiang Low",
+   "Patrick Jaillet"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Federated neural contextual bandits",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [
+    "bounded"
+   ],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "K",
+    "N",
+    "S",
+    "sigma",
+    "d_eff"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "federated",
+    "multi_agent_cooperative",
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "neural_ntk"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "other"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "N agents share the same reward function and communicate synchronously via a central server; raw observations not shared",
+    "the learner knows d_tilde_max (per-agent effective dimension) used in nu_TK",
+    "communication rounds are a second performance measure"
+   ],
+   "definition_quote": "Our setting involves $N$ agents with the same reward function $h$ defined on a domain $\\mathcal{X}\\subset \\mathbb{R}^d$. ... In each iteration $t\\in[T]$, every agent $i\\in[N]$ receives a set $\\mathcal{X}_{t,i}$ of $K$ context vectors and selects one of them $x_{t,i}$ to be queried to observe a noisy output $y_{t,i}= h(x_{t,i}) + \\epsilon$ where $\\epsilon$ is an $R$-sub-Gaussian noise. We will analyze the total cumulative regret $R_T = \\sum_i\\sum_t r_{t,i}$ where $r_{t,i} = h(x_{t,i}^*) - h(x_{t,i})$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "FN-UCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "N",
+    "S",
+    "sigma",
+    "d_eff",
+    "d_tilde_max",
+    "delta"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "FN-UCB (Less Comm.)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "N",
+    "S",
+    "sigma",
+    "d_eff",
+    "d_tilde_max",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d_eff*sqrt(T*N) + d_tilde_max*N*sqrt(T)",
+    "expression_latex": "\\widetilde{O}\\big(\\widetilde{d}\\sqrt{TN} + \\widetilde{d}_{\\max} N \\sqrt{T}\\big)",
+    "regime": null
+   },
+   "symbols": {
+    "d_eff": "effective dimension of the NTK matrix on all TKN contexts",
+    "d_tilde_max": "maximum over agents of the per-agent effective dimension of the NTK matrix on its TK contexts"
+   },
+   "conditions": [
+    "|h(x)| <= 1",
+    "sqrt(2 h^T H^{-1} h) <= B (B mapped to S)",
+    "Assumption 1: H >= lambda_0 I and H_i >= lambda_0 I; ||x||_2 = 1 and [x]_j = [x]_{j+d/2}",
+    "NN width m >= poly(lambda, T, K, N, L, log(1/delta), 1/lambda_0)"
+   ],
+   "tuning": [
+    "lambda = 1 + 2/T",
+    "D = O(T/(N d_tilde))",
+    "eta = C_4 (m lambda + m T L)^{-1}",
+    "J = O_tilde(T L/(lambda C_4))",
+    "alpha chosen only in first iteration of each epoch, alpha=0 otherwise"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:regret",
+    "number": "Theorem 1",
+    "quote": "Let $\\delta\\in(0,1)$, $\\lambda=1+2/T$, and $D=\\mathcal{O}(T / (N \\widetilde{d}))$. Suppose that the NN width $m$ grows polynomially: $m \\geq \\text{poly}( \\lambda, T, K, N, L, \\log(1/\\delta), 1/\\lambda_0)$. For the gradient descent training, let $\\eta=C_4(m\\lambda + mTL)^{-1}$ ... and $J=\\widetilde{O}(TL/(\\lambda C_4))$. Then, with probability of at least $1-\\delta$, $R_T = \\widetilde{O}(\\widetilde{d}\\sqrt{TN} + \\widetilde{d}_{\\max} N \\sqrt{T})$."
+   },
+   "confidence": "high",
+   "notes": "Analysed for simplified algorithm setting alpha=0 except first iteration of each epoch. Regret summed over N agents, against per-round best context."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d_eff*sqrt(N)",
+    "expression_latex": "C_T = \\widetilde{\\mathcal{O}}(\\widetilde{d}\\sqrt{N})",
+    "regime": null
+   },
+   "symbols": {
+    "d_eff": "effective dimension of the NTK matrix on all TKN contexts"
+   },
+   "conditions": [
+    "m >= poly(T, K, N, L, log(1/delta))",
+    "Assumption 1"
+   ],
+   "tuning": [
+    "same parameters as Theorem 1: D = O(T/(N d_tilde)), lambda = 1+2/T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:communication",
+    "number": "Theorem 2",
+    "quote": "With the same parameters as Theorem 1, if the NN width $m$ satisfies $m \\geq \\text{poly}(T, K, N, L, \\log(1/\\delta))$, then with probability of at least $1-\\delta$, the total number of communication rounds for FN-UCB satisfies $C_T = \\widetilde{\\mathcal{O}}(\\widetilde{d}\\sqrt{N})$."
+   },
+   "confidence": "high",
+   "notes": "Communication complexity (number of communication rounds); also holds for FN-UCB (Less Comm.)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d_eff*sqrt(T*N) + d_tilde_max*N*sqrt(T*N)",
+    "expression_latex": "R_T = \\widetilde{O}(\\widetilde{d}\\sqrt{TN} + \\widetilde{d}_{\\max} N \\sqrt{TN})",
+    "regime": null
+   },
+   "symbols": {
+    "d_eff": "effective dimension on all TKN contexts",
+    "d_tilde_max": "max per-agent effective dimension"
+   },
+   "conditions": [
+    "same as Theorem 1"
+   ],
+   "tuning": [
+    "same as Theorem 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "app:proof:regret:fn:ucb:less:comm",
+    "number": "Appendix (app:proof:regret:fn:ucb:less:comm)",
+    "quote": "We also prove (App.) that FN-UCB (Less Comm.) ... enjoys a regret upper bound of $R_T = \\widetilde{O}(\\widetilde{d}\\sqrt{TN} + \\widetilde{d}_{\\max} N \\sqrt{TN})$"
+   },
+   "confidence": "medium",
+   "notes": "Not a numbered theorem; derived in appendix as modification of Theorem 1 proof."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "gamma_TKN*sqrt(T*N) + gamma_TK*N*sqrt(T)",
+    "expression_latex": "R_T = \\widetilde{O}( \\gamma_{TKN} \\sqrt{TN} + \\gamma_{TK} N \\sqrt{T})",
+    "regime": null
+   },
+   "symbols": {
+    "gamma_TKN": "maximum information gain of the NTK over TKN points",
+    "gamma_TK": "maximum information gain of the NTK over TK points"
+   },
+   "conditions": [
+    "same as Theorem 1"
+   ],
+   "tuning": [
+    "same as Theorem 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Appendix (subsec:regret:total)",
+    "quote": "we can replace $\\widetilde{d} \\log(1+TKN/\\lambda)$ by $2\\gamma_{TKN}$ and replace $\\widetilde{d}_{j} \\log(1+TK/\\lambda)$ by $2\\gamma_{TK}$, after which the regret upper bound becomes $R_T = \\widetilde{O}( \\gamma_{TKN} \\sqrt{TN} + \\gamma_{TK} N \\sqrt{T})$."
+   },
+   "confidence": "medium",
+   "notes": "Using gamma_T = O_tilde(T^{(d-1)/d}) for NTK, the paper further states R_T = O_tilde(K^{(d-1)/d} T^{(3d-2)/(2d)} N)."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d_eff*sqrt(T*N) + sqrt(D_bar)*d_tilde_max*N*sqrt(T)",
+    "expression_latex": "R_T = \\widetilde{O}(\\widetilde{d} \\sqrt{TN} + \\sqrt{\\overline{D}} \\widetilde{d}_{\\max} N \\sqrt{T})",
+    "regime": null
+   },
+   "symbols": {
+    "D_bar": "upper bound on det ratio of local covariance matrix within any epoch for any agent",
+    "d_eff": "effective dimension on all TKN contexts",
+    "d_tilde_max": "max per-agent effective dimension"
+   },
+   "conditions": [
+    "det V^local_{t_p+E_p-2,i} / det V^local_{t_p-1,i} <= D_bar for all i, p",
+    "same conditions as Theorem 1"
+   ],
+   "tuning": [
+    "alpha chosen in every iteration (general algorithm)",
+    "same as Theorem 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "app:extended:analysis:general:algo",
+    "number": "Appendix (app:extended:analysis:general:algo)",
+    "quote": "we can show that the final regret upper bound for the general algorithm, in which we do not set $\\alpha=0$ in any iteration, is $R_T = \\widetilde{O}(\\widetilde{d} \\sqrt{TN} + \\sqrt{\\overline{D}} \\widetilde{d}_{\\max} N \\sqrt{T})$."
+   },
+   "confidence": "low",
+   "notes": "Informal appendix derivation under an extra assumption."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "zhou2020neural",
+   "cited_title": "Neural contextual bandits with UCB-based exploration",
+   "cited_first_author": "Dongruo Zhou",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Neural UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "single-agent neural contextual bandit, NTK effective dimension d_tilde",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d_eff*sqrt(T)",
+    "expression_latex": "\\widetilde{O}(\\widetilde{d}\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 4.1"
+  },
+  {
+   "cited_key": "zhang2020neural",
+   "cited_title": "Neural Thompson sampling",
+   "cited_first_author": "Weitong Zhang",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Neural TS",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "single-agent neural contextual bandit, NTK effective dimension d_tilde",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d_eff*sqrt(T)",
+    "expression_latex": "\\widetilde{O}(\\widetilde{d}\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 4.1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:05:45",
+  "source_chars": 180177,
+  "input_tokens": 131231,
+  "output_tokens": 6879,
+  "cost_usd_equiv": 0.9041942000000001,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

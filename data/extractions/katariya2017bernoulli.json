@@ -1,0 +1,220 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Bernoulli Rank-$1$ Bandits for Click Feedback",
+  "arxiv_id": "1703.06513",
+  "arxiv_version": null,
+  "year": 2017,
+  "authors": [
+   "Sumeet Katariya",
+   "Branislav Kveton",
+   "Csaba Szepesvári",
+   "Claire Vernade",
+   "Zheng Wen"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Bernoulli rank-1 bandit",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "unspecified"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Actions are (row, column) pairs in [K] x [L_col]; reward is the product u_t(i) v_t(j) of independent Bernoulli row and column rewards, so the mean reward matrix is rank 1 (position-based click model)",
+    "The learner knows the number of columns L_col"
+   ],
+   "definition_quote": "An instance of our learning problem is a tuple $B = (K, L, P_\\textsc{u}, P_\\textsc{v})$, where $K$ is the number of rows, $L$ is the number of columns, $P_{\\textsc{u}}$ is a distribution over $\\set{0, 1}^K$ from which the row rewards are drawn, and $P_{\\textsc{v}}$ is a distribution over $\\set{0, 1}^L$ from which the column rewards are drawn. ... At time $t$, the learning agent chooses a row index $\\rnd{i}_t \\in [K]$ and a column index $\\rnd{j}_t \\in [L]$, and observes $\\rnd{u}_t(\\rnd{i}_t) \\rnd{v}(\\rnd{j}_t)$ as its reward."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Rank1ElimKL",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "L_col"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "160/(mu_avg*gamma)*(sum_rows_inv_gap + sum_cols_inv_gap)*log(T) + (6*E + 82)*(K + L_col)",
+    "expression_latex": "\\frac{160}{\\mu \\gamma} \\left(\\sum_{i = 1}^K \\frac{1}{\\bar{\\Delta}^\\textsc{u}_i} + \\sum_{j = 1}^L \\frac{1}{\\bar{\\Delta}^\\textsc{v}_j}\\right) \\log n + C(K + L)",
+    "regime": "n >= 5"
+   },
+   "symbols": {
+    "L_col": "number of columns L",
+    "mu_avg": "min of the average row mean and average column mean, min{(1/K) sum_i ubar(i), (1/L) sum_j vbar(j)}",
+    "gamma": "max{mu_avg, 1 - p_max}, p_max the largest row/column mean",
+    "sum_rows_inv_gap": "sum over rows i of 1/Delta_bar^U_i, where Delta_bar^U_i = Delta^U_i, or Delta^V_min if Delta^U_i = 0",
+    "sum_cols_inv_gap": "sum over columns j of 1/Delta_bar^V_j, where Delta_bar^V_j = Delta^V_j, or Delta^U_min if Delta^V_j = 0"
+   },
+   "conditions": [
+    "n >= 5",
+    "row and column rewards Bernoulli, independent of each other"
+   ],
+   "tuning": [
+    "n_l = ceil(16 * 2^{2l} log n)",
+    "delta_l = log n + 3 log log n"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:upper bound",
+    "number": "Theorem 1",
+    "quote": "Let $C = 6 e + 82$, $n\\ge 5$. The expected $n$-step regret of $\\rklucb$ is bounded as R(n) \\leq \\frac{160}{\\mu \\gamma} \\left(\\sum_{i = 1}^K \\frac{1}{\\bar{\\Delta}^\\textsc{u}_i} + \\sum_{j = 1}^L \\frac{1}{\\bar{\\Delta}^\\textsc{v}_j}\\right) \\log n + C(K + L), where \\bar{\\Delta}^\\textsc{u}_i = \\Delta^\\textsc{u}_i + \\I{\\Delta^\\textsc{u}_i = 0} \\Delta^\\textsc{v}_{\\min}, ..."
+   },
+   "confidence": "high",
+   "notes": "Regret is defined as E[sum_t u_t(i*)v_t(j*) - u_t(i_t)v_t(j_t)] with fixed (i*,j*), so it equals pseudo-regret. The algorithm uses log n, so the horizon is known."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "rank1stochastic",
+   "cited_title": "Stochastic rank-1 bandits",
+   "cited_first_author": "Sumeet Katariya",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Rank1Elim",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic rank-1 bandit with K rows and L columns; mu = min of average row/column means, Delta = min of row and column gaps",
+   "bound": {
+    "notation": "O",
+    "expression": "(K + L_col)*log(T)/(mu_avg**2*Delta)",
+    "expression_latex": "\\mathcal{O}( (K+L)\\, \\mu^{-2}\\Delta^{-1} \\log n )",
+    "regime": null
+   },
+   "where": "Section 1 (Introduction)"
+  },
+  {
+   "cited_key": "kawale15efficient",
+   "cited_title": "Efficient Thompson sampling for online matrix-factorization recommendation",
+   "cited_first_author": "Jaya Kawale",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson sampling with Rao-Blackwellization (analysed variant)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Bandit low-rank matrix completion, rank-1 matrices",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)/Delta**2",
+    "expression_latex": "O((1 / \\Delta^2) \\log n)",
+    "regime": null
+   },
+   "where": "Section 6 (Related Work)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:40:24",
+  "source_chars": 73920,
+  "input_tokens": 76132,
+  "output_tokens": 3642,
+  "cost_usd_equiv": 0.39866219999999997,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

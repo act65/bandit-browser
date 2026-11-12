@@ -1,0 +1,240 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Perturbed-History Exploration in Stochastic Linear Bandits",
+  "arxiv_id": "1903.09132",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Branislav Kveton",
+   "Csaba Szepesvari",
+   "Mohammad Ghavamzadeh",
+   "Craig Boutilier"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "stochastic linear bandit",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K",
+    "d",
+    "S",
+    "L_feat"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm",
+    "arms_span_Rd"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "l2_ball",
+    "loss_set": "bounded_mean_reward",
+    "parameter_structure": "dense"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "last feature is a bias term x_i(d)=1 for all arms",
+    "feature vectors of the last d arms form a basis of R^d"
+   ],
+   "definition_quote": "Let $K$ be the number of arms, $x_i \\in \\realset^d$ be the feature vector of arm $i \\in [K]$, and $\\theta_\\ast \\in \\realset^d$ be an unknown parameter vector. The reward of arm $i$ in round $t \\in [n]$, $Y_{i, t}$, is drawn i.i.d. from a distribution of that arm with mean $\\mu_i = x_i\\T \\theta_\\ast$. ... rewards are bounded in $[0, 1]$ ... the last feature is a bias term ... the feature vectors of the last $d$ arms are a basis in $\\realset^d$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "LinPHE (perturbed-history exploration in a linear bandit)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "d",
+    "S",
+    "L_feat"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Any model-based algorithm (pulls argmax_i x_i^T theta_tilde_t)",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "(c_1 + c_2)*(1 + 2/(p_3 - p_2))*sqrt(c_3*T) + (p_1 + p_2)*T + d",
+    "expression_latex": "(c_1 + c_2) \\left(1 + \\frac{2}{p_3 - p_2}\\right) \\sqrt{c_3 n} + (p_1 + p_2) n + d",
+    "regime": null
+   },
+   "symbols": {
+    "c_1": "confidence width constant for least-squares estimate (>=1)",
+    "c_2": "confidence width constant for perturbed estimate (>=1)",
+    "c_3": "2 d log(1 + n L^2/(d lambda))",
+    "p_1": "upper bound on probability that least-squares estimate is not close in some round",
+    "p_2": "upper bound on per-round probability that the perturbed estimate is not close",
+    "p_3": "lower bound on per-round probability the optimal arm's estimate is optimistic"
+   },
+   "conditions": [
+    "c_1, c_2 >= 1",
+    "p_3 > p_2",
+    "rewards in [0,1]"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:lin upper bound",
+    "number": "Theorem (thm:lin upper bound)",
+    "quote": "Let $c_1, c_2 \\geq 1$. Let $A$ be any algorithm that pulls arm $I_t = \\argmax_{i \\in [K]} x_i\\T \\tilde{\\theta}_t$ in round $t$, where $\\tilde{\\theta}_t$ is estimated from past data. Let the rewards be in $[0, 1]$; $p_1$, $p_2$, and $p_3$ be defined as above; and $p_3 > p_2$. Then the expected $n$-round regret of $A$ is bounded as $R(n) \\leq (c_1 + c_2) (1 + \\frac{2}{p_3 - p_2}) \\sqrt{c_3 n} + (p_1 + p_2) n + d$"
+   },
+   "confidence": "medium",
+   "notes": "Generic bound for any randomized model-based algorithm; the paper says it is extracted from prior work (Agrawal & Goyal 2013; Valko et al. 2014) but states it as its own theorem. Regret is defined via gaps times expected pull counts, so it is pseudo-regret. Expressed through abstract constants."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "R(n) = \\tilde{O}(d \\sqrt{n})",
+    "regime": "n > max{34, 8*sqrt(2)*c_1} = O~(d)"
+   },
+   "symbols": {
+    "c_1": "(1/2) sqrt(d log(n + n^2 L^2/(d lambda))) + lambda^{1/2} ||theta_*||"
+   },
+   "conditions": [
+    "rewards in [0,1]",
+    "n > max{34, 8 sqrt(2) c_1}",
+    "last feature is bias term; last d arms form a basis",
+    "arm 1 is the unique optimal arm"
+   ],
+   "tuning": [
+    "lambda = lambda_min(G_{d+1})/4",
+    "a = ceil(16 c_1^2)",
+    "c_2 = sqrt(a log(sqrt(2K) n))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:linphe upper bound",
+    "number": "Theorem (thm:linphe upper bound)",
+    "quote": "Let all parameters be chosen as in \\cref{tab:constants} and $n > \\max \\set{34, \\, 8 \\sqrt{2} c_1} = \\tilde{O}(d)$. Then the expected $n$-round regret of $\\linphe$ is $R(n) = \\tilde{O}(d \\sqrt{n})$."
+   },
+   "confidence": "high",
+   "notes": "The proof uses L = O(sqrt d) and ||theta_*|| = O(sqrt d). Tuning a = ceil(16 c_1^2) requires n, d, ||theta_*|| and L."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:58:51",
+  "source_chars": 61241,
+  "input_tokens": 68827,
+  "output_tokens": 3746,
+  "cost_usd_equiv": 0.3423022,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

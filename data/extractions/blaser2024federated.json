@@ -1,0 +1,285 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Federated Linear Contextual Bandits with Heterogeneous Clients",
+  "arxiv_id": "2403.00116",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Ethan Blaser",
+   "Chuanhao Li",
+   "Hongning Wang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Federated linear contextual bandits with heterogeneous (clustered) clients",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "N",
+    "d",
+    "sigma"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "federated"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "not_applicable",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "clustered"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "N clients each with own parameter theta_i; clients form M unknown clusters with within-cluster distance <= epsilon = 1/(N sqrt(T)) and between-cluster separation >= gamma",
+    "Each round each client receives K arms drawn i.i.d. from a sub-Gaussian distribution with E[x x^T] having minimum eigenvalue lambda_c > 0 (context regularity)",
+    "Star-shaped communication: server can broadcast only one model per time step; communication cost also measured",
+    "Regret summed over all N clients",
+    "The learner's exploration length T_0 uses gamma, lambda_c and psi^d (which depends on M); the learner knows gamma and lambda_c"
+   ],
+   "definition_quote": "In each time step $t=1,2,...T$, each client $i \\in {N}$ chooses an action $x_{t,i}$ from its action set $\\mathcal{A}_{t,i} = \\{{x}_{t,1}, {x}_{t,2}...,x_{t,K}\\}$, where $x\\in \\bR^d$. ... the corresponding reward received by client $i$ is $y_{t,i} = \\langle \\theta_i^{*},{x}_{t,i}\\rangle + \\eta_t$, where noise $\\eta_t$ comes from a $\\sigma^2$ sub-Gaussian distribution ... $\\|x\\|_2 \\leq 1$ and $\\|\\theta_{i}^*\\| \\leq 1$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "HetoFedBandit",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma",
+    "gamma",
+    "lambda_c",
+    "M"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "HetoFedBandit-E",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "N*psi_d*sigma**2/(lambda_c*gamma**2) + sum_clusters(d*sqrt(n_k*T)*log(n_k*T)**2 + d*n_k**2*M*log(n_k*T))",
+    "expression_latex": "O\\biggr( \\frac{N\\psi^d \\sigma^2}{\\lambda_c \\gamma^2} + \\sum_{k=1}^M d\\sqrt{|C_k|T}\\log^{2}(|C_k|T) + d|C_k|^2M\\log(|C_k|\\,T)\\biggr)",
+    "regime": null
+   },
+   "symbols": {
+    "M": "number of ground-truth client clusters",
+    "n_k": "size |C_k| of cluster k",
+    "sum_clusters": "sum over the M clusters k=1..M",
+    "psi_d": "psi^d = F^{-1}(delta/(N^2(M-1)); d, upsilon^c), inverse noncentral chi^2 CDF",
+    "lambda_c": "minimum eigenvalue of E[x x^T] (context regularity)",
+    "gamma": "cluster separation parameter"
+   },
+   "conditions": [
+    "Assumption 1: clients in same cluster within epsilon = 1/(N sqrt(T))",
+    "Assumption 2: clients in different clusters separated by gamma",
+    "Assumption 3: contexts i.i.d. sub-Gaussian with lambda_min(E[x x^T]) >= lambda_c > 0",
+    "||x||_2 <= 1, ||theta_i|| <= 1"
+   ],
+   "tuning": [
+    "T_0 = 16 psi^d sigma^2/(lambda_c gamma^2)",
+    "upsilon^c >= F^{-1}(1 - delta/N^2, df, psi^c)",
+    "D_k = T log(|C_k| T)/(d |C_k|)",
+    "delta = 1/(N^2 T) in proof"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret_comm",
+    "number": "Theorem 3",
+    "quote": "With an exploration phase length of $T_0 = \\frac{16\\psi^d \\sigma^2}{\\lambda_c \\gamma^2}$, with probability $1-\\delta$ our protocol achieves a cumulative regret of R_T = O( \\frac{N\\psi^d \\sigma^2}{\\lambda_c \\gamma^2} + \\sum_{k=1}^M d\\sqrt{|C_k|T}\\log^{2}(|C_k|T) + d|C_k|^2M\\log(|C_k|\\,T)), where $\\psi^{d}=F^{-1}\\big(\\frac{\\delta}{N^{2}(M-1)};d,\\upsilon^{c}\\big)$, with communication cost ..."
+   },
+   "confidence": "medium",
+   "notes": "Regret defined via means summed over N clients against per-round best arm (pseudo-regret form) but stated w.p. 1-delta. Paper discusses special cases informally: M=1 gives O~(d sqrt(NT)), M=N gives O~(dN sqrt(T)), equal clusters give O~(d sqrt(MNT))."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "N*d**2 + sum_clusters(n_k**1.5*d**3)",
+    "expression_latex": "C_{T}= O(Nd^2) + \\sum_{k=1}^M O(|C_k|^{1.5} \\cdot d^3)",
+    "regime": null
+   },
+   "symbols": {
+    "n_k": "size |C_k| of cluster k",
+    "sum_clusters": "sum over the M clusters"
+   },
+   "conditions": [
+    "Assumptions 1-3"
+   ],
+   "tuning": [
+    "D_k = T log(|C_k| T)/(d |C_k|)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret_comm",
+    "number": "Theorem 3",
+    "quote": "with communication cost C_{T}= O(Nd^2) + \\sum_{k=1}^M O(|C_k|^{1.5} \\cdot d^3)."
+   },
+   "confidence": "medium",
+   "notes": "Communication cost (number of scalars communicated), not regret. Probability qualifier taken from theorem context."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "dislinucb",
+   "cited_title": "Distributed bandit learning: Near-optimal regret with efficient communication",
+   "cited_first_author": "Yuanhao Wang",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "DisLinUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Federated linear bandits with N homogeneous clients",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(N*T)",
+    "expression_latex": "\\Tilde{O}(d\\sqrt{NT})",
+    "regime": null
+   },
+   "where": "Section 3.3, Case 1"
+  },
+  {
+   "cited_key": "abbasi2011improved",
+   "cited_title": "Improved algorithms for linear stochastic bandits",
+   "cited_first_author": "Yasin Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "LinUCB (OFUL) run independently on each of N clients",
+   "algorithm_registry_id": "oful",
+   "side": "upper",
+   "setting_description": "N independent linear bandit clients, total regret",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*N*sqrt(T)",
+    "expression_latex": "\\Tilde{O}(dN\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 3.3, Case 2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:52:32",
+  "source_chars": 120456,
+  "input_tokens": 95695,
+  "output_tokens": 4892,
+  "cost_usd_equiv": 0.5801662,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

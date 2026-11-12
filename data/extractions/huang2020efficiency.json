@@ -1,0 +1,202 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "An Efficiency-Boosting Client Selection Scheme for Federated Learning With Fairness Guarantee",
+  "arxiv_id": "2011.01783",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Tiansheng Huang",
+   "Weiwei Lin",
+   "Wentai Wu",
+   "Ligang He",
+   "Keqin Li",
+   "Albert Y. Zomaya"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Fairness-guaranteed client selection in FL as a contextual combinatorial MAB (C^2MAB) with Lyapunov long-term fairness constraint",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "sigma",
+    "S",
+    "L_feat",
+    "m",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "fairness",
+    "sleeping_arms",
+    "federated",
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "oblivious_sequence",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "at_most_m",
+    "reward": "nonlinear_monotone_lipschitz",
+    "loss_scale": "unspecified"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "long_term_average",
+    "violation": "unspecified"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {
+    "d": "3"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each arm (client) n has its own unknown parameter theta_n in R^3; observed latency tau_{t,n} = c_{t,n}^T theta_n + eps_{t,n} with known per-round contexts c_{t,n}",
+    "Round loss is the maximum latency over selected clients (max of base-arm losses)",
+    "Exactly min(m, #available) clients must be selected among those available (availability i.i.d. per round)",
+    "Long-term fairness constraint: each client's average selection rate >= beta",
+    "Regret is measured against the optimal policy satisfying the fairness constraint, averaged over T rounds"
+   ],
+   "definition_quote": "Each round selection in a Contextual Combinatorial Multi Arm Bandit ($\\rm C^2MAB$) is characterized by a tuple ... Then loss drawn from each selected arm, formulated by $ l_{t,n}=\\bm c_{t,n}^{\\top} \\bm \\theta_{n}^*+ \\epsilon_{t,n}, n \\in S_t $ is revealed to the scheduler, and meanwhile, a collective loss ... is imposed. ... (P1): min lim 1/T sum E[f(S_t,tau_t)] s.t. (fairness), (availability), (pick number)"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "RBCS-F (Reputation Based Client Selection with Fairness)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "S",
+    "L_feat",
+    "m",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_feasible_policy",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "T*K*(1 + beta_fair**2)/(2*V_pen) + Max(K_tau, 1)*Max(2*sigma*sqrt(3*log((1 + T*L_feat**2/lam)/delta)) + sqrt(lam)*S, 1)*sqrt(6*T*log(1 + T*L_feat**2/(3*lam)))",
+    "expression_latex": "R(T)\\leq \\frac{N\\left(1+\\beta^2 \\right)}{2V}+ \\zeta_T \\sqrt{ \\frac{6 \\log ( 1+T L^2/ 3 \\lambda)}{T} }, \\zeta_T=\\max\\{K,1\\} \\cdot \\max\\left\\{2R \\sqrt{3 \\log \\left(\\frac{1+T  L^2/ \\lambda}{\\delta}\\right)}+\\lambda^{1 / 2} S,1 \\right\\}",
+    "regime": null
+   },
+   "symbols": {
+    "beta_fair": "guaranteed long-term selection rate of each client (fairness parameter beta)",
+    "V_pen": "Lyapunov penalty factor V",
+    "K_tau": "paper's constant K: upper bound on expected model exchange time tau*_{t,n}"
+   },
+   "conditions": [
+    "||theta_n||_2 <= S for all n",
+    "||c_{t,n}||_2 <= L_feat for all t, n",
+    "noise conditionally R-sub-Gaussian, zero mean, with support ensuring tau positive",
+    "expected exchange time bounded by K_tau",
+    "client availability i.i.d. across rounds",
+    "lambda >= 1 (used in proof via Lemma 3)"
+   ],
+   "tuning": [
+    "alpha_t = R*sqrt(3*log((1+t*L^2/lambda)/delta)) + sqrt(lambda)*S",
+    "any V >= 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "regret bound",
+    "number": "Theorem 3",
+    "quote": "Given any control parameter $V$, with probability at least $(1- \\delta)^2$, the time average regret achieved by RBCS-F is upper bounded by: R(T)\\leq \\frac{N\\left(1+\\beta^2 \\right)}{2V}+ \\zeta_T \\sqrt{ \\frac{6 \\log ( 1+T L^2/ 3 \\lambda)}{T} } where $S$ and $L$ are both positive finite constants satisfying ... $\\zeta_T=\\max\\{K,1\\} \\cdot \\max\\left\\{2R \\sqrt{3 \\log \\left(\\frac{1+T  L^2/ \\lambda}{\\delta}\\right)}+\\lambda^{1 / 2} S,1 \\right\\}$ where $K$ is a constant value."
+   },
+   "confidence": "low",
+   "notes": "Paper bounds time-average regret R(T) = (1/T) sum E[f(S_t)-f(S*_t)]; multiplied by T here. Paper's N (number of clients) mapped to K; paper's K renamed K_tau; R -> sigma; L -> L_feat; beta -> beta_fair. Regret includes expectation inside but statement is 'with probability (1-delta)^2', recorded as high-probability. Proof is loose (mixing expectation and probability). Theorem 4 (fairness queues mean rate stable for any V) is a constraint-satisfaction guarantee without a rate and is not recorded separately."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:52:05",
+  "source_chars": 106499,
+  "input_tokens": 86739,
+  "output_tokens": 4184,
+  "cost_usd_equiv": 0.49435819999999997,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

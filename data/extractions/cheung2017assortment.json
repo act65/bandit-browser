@@ -1,0 +1,328 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Assortment Optimization under Unknown MultiNomial Logit Choice Models",
+  "arxiv_id": "1704.00108",
+  "arxiv_version": null,
+  "year": 2017,
+  "authors": [
+   "Wang Chi Cheung",
+   "David Simchi-Levi"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online assortment optimization under unknown MNL choice model with resource constraints",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "m"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "knapsack_constraints"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "arbitrary_subset",
+    "reward": "unspecified",
+    "loss_scale": "per_action"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "hard_budget",
+    "violation": "never"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Reward is the revenue of the product purchased under a MultiNomial Logit choice model phi(i,S|v) = v(i)/(1+sum_{l in S} v(l)); expected revenue is non-monotone in S and v",
+    "Feedback: the seller observes which product (or no purchase) was chosen from the offered assortment (MNL choice feedback, not independent per-item rewards)",
+    "Allowed assortment family S is an arbitrary subfamily of 2^N containing the empty set with max size B (here m)",
+    "The learner knows the bound R with v*(i) in [1/R, R], the revenues r(i) in [0,1], resource consumptions a(i,k) in {0,1} and capacities c(k)",
+    "K resources with total budget T*c(k) each; regret benchmark is T*OPT(LP(v*)), the fluid LP over distributions on assortments"
+   ],
+   "definition_quote": "The seller has a set of products N = {1,...,N} for sale, and a set of resources K = {1,...,K} ... A customer's purchase decision is governed by the MNL choice probability function phi(.,.|v*) ... v* is the latent utility parameter unknown to the seller; the seller only knows that v*(i) in [1/R, R] ... Reg = T Opt(LP(v*)) - sum_t r(I_t), subject to the resource constraints"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Online(tau)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "m"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "UCB Policy (UCB-LP)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "m"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_feasible_policy",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "tau_learn + T*R_util*m*sqrt(N_prod/tau_learn*log(N_prod/delta)) + sqrt(T*log((K_res + 1)/delta))",
+    "expression_latex": "\\tau + O\\left(TRB\\sqrt{\\frac{N}{\\tau}\\log\\frac{N}{\\delta}}\\right) + O \\left(\\sqrt{T\\log \\frac{K+1}{\\delta}}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "tau_learn": "length of the learning phase tau",
+    "R_util": "bound R with v*(i) in [1/R, R]",
+    "N_prod": "number of products N",
+    "K_res": "number of resources K"
+   },
+   "conditions": [
+    "tau satisfies Assumption 4.2: tau*sqrt(log(4NK/delta)) <= T c(k) and C*eps(tau) <= c(k)/2 for all k",
+    "r(i) in [0,1], a(i,k) in {0,1}",
+    "max assortment size B (= m)"
+   ],
+   "tuning": [
+    "learning phase length tau"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:simpleregret",
+    "number": "Theorem 4.1",
+    "quote": "Suppose $\\tau$ satisfies Assumption~\\ref{ass:tau}. The policy {\\sc Online}$(\\tau)$ satisfies all resource constraints and incurs a regret at most \\tau + O(TRB\\sqrt{\\frac{N}{\\tau}\\log\\frac{N}{\\delta}}) + O(\\sqrt{T\\log \\frac{K+1}{\\delta}}) with probability $1-\\delta$."
+   },
+   "confidence": "medium",
+   "notes": "Paper's B (max assortment size) mapped to m. Regret is against the fluid LP benchmark T*Opt(LP(v*)), realized revenue; holds w.p. 1-delta. Polynomial compute via column generation when the reduced problem is tractable."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_feasible_policy",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "(T*R_util*m)**(2/3)*N_prod**(1/3)",
+    "expression_latex": "\\tilde{O}((TRB)^{2/3}N^{1/3})",
+    "regime": null
+   },
+   "symbols": {
+    "R_util": "bound R with v*(i) in [1/R, R]",
+    "N_prod": "number of products N"
+   },
+   "conditions": [
+    "tau satisfies Assumption 4.2 (holds for T sufficiently large)",
+    "r(i) in [0,1], a(i,k) in {0,1}"
+   ],
+   "tuning": [
+    "tau = (T R B)^{2/3} N^{1/3}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:simpleregret",
+    "number": "Theorem 4.1",
+    "quote": "In particular, the choice $\\tau = (TRB)^{2/3}N^{1/3}$ minimizes the regret bound up to a constant factor, yielding the bound $\\tilde{O}((TRB)^{2/3}N^{1/3})$."
+   },
+   "confidence": "medium",
+   "notes": "Tuned version of r1; B mapped to m."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_feasible_policy",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)*R_util**3*m**(5/2)*N_prod*log(T*N_prod*K_res/delta)",
+    "expression_latex": "O\\left(\\sqrt{T} R^3 B^{5/2} N  \\log{\\frac{TNK}{\\delta}}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "R_util": "bound R with v*(i) in [1/R, R]",
+    "N_prod": "number of products N",
+    "K_res": "number of resources K"
+   },
+   "conditions": [
+    "omega < 1, where omega = 11 Psi N / min_k c(k) * sqrt(B/T log(4(K+1)/delta)) (horizon long enough)",
+    "r(i) in [0,1], a(i,k) in {0,1}"
+   ],
+   "tuning": [
+    "confidence radius eps(n) = (sqrt(N)+1) Psi / sqrt(n), Psi = R(1+BR)^2 sqrt(6 log(2NT(K+1)/delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem D.1",
+    "quote": "Assume that $\\omega< 1$, where $\\omega$ is defined in (\\ref{eq:omega}). Algorithm \\ref{alg:UCB} satisfies the resource constraints with probability 1, and achieves a regret of $$O\\left(\\sqrt{T} R^3 B^{5/2} N  \\log{\\frac{TNK}{\\delta}}\\right)$$ with probability at least $1-\\delta$."
+   },
+   "confidence": "medium",
+   "notes": "Full version of Theorem 4.3 (thm:regret-short), which states the same bound. UCB-LP is not known to be efficiently solvable. B mapped to m."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "AgrawalAGZ16",
+   "cited_title": "A near-optimal exploration-exploitation approach for assortment selection",
+   "cited_first_author": "Shipra Agrawal",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online assortment optimization under unknown MNL choice model, no resource constraints; instance-independent regret",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\tilde{O}(\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 2 (Literature Review)"
+  },
+  {
+   "cited_key": "RusmevichientongSS10",
+   "cited_title": "Dynamic assortment optimization with a multinomial logit choice model and capacity constraint",
+   "cited_first_author": "Paat Rusmevichientong",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online assortment optimization under unknown MNL choice model; instance-dependent regret",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)",
+    "expression_latex": "O(\\log T)",
+    "regime": null
+   },
+   "where": "Section 2 (Literature Review)"
+  },
+  {
+   "cited_key": "SaureZ13",
+   "cited_title": "Optimal dynamic assortment planning with demand learning",
+   "cited_first_author": "Denis Saure",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online assortment optimization for a wider class of choice models; instance-dependent regret",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)",
+    "expression_latex": "O(\\log T)",
+    "regime": null
+   },
+   "where": "Section 2 (Literature Review)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:40:02",
+  "source_chars": 95672,
+  "input_tokens": 89669,
+  "output_tokens": 5400,
+  "cost_usd_equiv": 0.5421182,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

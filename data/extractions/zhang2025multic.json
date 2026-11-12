@@ -1,0 +1,230 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Multi-Metric Adaptive Experimental Design Under a Fixed Budget with Validation",
+  "arxiv_id": "2506.03062",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Qining Zhang",
+   "Tanner Fiez",
+   "Yi Liu",
+   "Wenyang Liu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Multi-Metric Multi-Armed Bandit (M3AB) with heterogeneous variance, fixed-budget exploration followed by A/B validation",
+   "objective": "bai_fixed_budget",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "T",
+    "K",
+    "sigma_i"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_revealed"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Multi-objective (vector-valued, M metrics) rewards; ontology scope excludes multi-objective rewards.",
+   "unmapped": [
+    "Rewards are M-dimensional vectors with independent Gaussian metrics; per-arm, per-metric variances are known (heterogeneous) to the learner",
+    "A distinguished control arm 0 plus A treatments; the target is the treatment maximizing min over metrics of the z value (mu_{a,i}-mu_{0,i})/sqrt(sigma_{a,i}^2+sigma_{0,i}^2)+xi_{a,i}",
+    "The learner knows the validation constants xi_{a,i} (validation horizon T_v, confidence levels delta_i or posterior thresholds q_i and prior variances tau_i)"
+   ],
+   "definition_quote": "We consider a stochastic MAB model with $A+1$ arms denoted as $\\gA = \\{0, 1, \\cdots, A\\}$. The arm $0$ is called control ... The rewards of arms are vectors of dimension $M$ ... $\\nu_{a,i}$ is a normal distribution ... We assume the expectations are unknown to the agent but $\\{\\vsigma_a^2\\}$ are known. ... the performance is measured by the probability of error, i.e., $\\sP(\\hat{a} \\neq a^*)$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "SHRVar (Sequential Halving with Relative Variance)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma_i",
+    "validation constants xi_{a,i}"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "SHRVar-c (Sequential Halving with Relative Variance and Confidence-Based Elimination)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "sigma_i",
+    "validation constants xi_{a,i}"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "6*M_met*log(A_tr)/log(2)*exp(-T/(2*H_3*log(A_tr)/log(2)))",
+    "expression_latex": "6 M \\log_2 A \\cdot \\exp\\left( -\\frac{T}{2 H_3 \\log_2 A} \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "M_met": "number of reward metrics M",
+    "A_tr": "number of treatments A (arms excluding the control)",
+    "H_3": "complexity measure H_3 = (min_{S containing a*} min_{a in S'_c} D_{S,a}^2/(rho_{S,Sigma}+lambda_{S,Sigma})^2)^{-1} based on z-value effective gaps and relative variances"
+   },
+   "conditions": [
+    "A is a power of 2",
+    "metrics are independent Gaussian with known variances"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:estimate",
+    "number": "Theorem 1",
+    "quote": "If we use \\texttt{SHRVar} in algorithm~\\ref{alg:mosh} to identify the best treatment $a^*$ in our exploration phase, the probability of mistake can be upper bounded as: \\prob\\left( \\hat{a}\\neq a^* \\right) \\leq 6 M \\log_2 A \\cdot \\exp\\left( -\\frac{T}{2 H_3 \\log_2 A} \\right)."
+   },
+   "confidence": "high",
+   "notes": "Error probability P(hat a != a*) where a* maximizes the minimum z value over metrics. 'probability' field set to expectation as it is a bound on a probability of error."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "6*M_met*log(A_tr)/log(2)*exp(-T/(2*H_3_tilde*log(A_tr)/log(2)))",
+    "expression_latex": "6 M \\log_2 A \\cdot \\exp\\left( -\\frac{T}{2 \\tilde{H}_3 \\log_2 A} \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "M_met": "number of reward metrics M",
+    "A_tr": "number of treatments A",
+    "H_3_tilde": "complexity measure tilde H_3, analogous to H_3 with effective gap tilde D_{S,a} that includes terms depending on Delta_min (min z-value gap of bottleneck metric) and 8 A log_2^2 A / T"
+   },
+   "conditions": [
+    "A is a power of 2",
+    "metrics are independent Gaussian with known variances"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:conf",
+    "number": "Theorem 2",
+    "quote": "If we use \\texttt{SHRVar-c} in algorithm~\\ref{alg:shrvarc} to identify the best treatment $a^*$ in our exploration phase, the probability of mistake can be upper bounded as: \\prob\\left( \\hat{a}\\neq a^* \\right) \\leq 6 M \\log_2 A \\cdot \\exp\\left( -\\frac{T}{2 \\tilde{H}_3 \\log_2 A} \\right)."
+   },
+   "confidence": "medium",
+   "notes": "Recorded as stated; the appendix proof actually derives a factor 8 instead of 2 in the exponent denominator (T/(8 tilde H_3 log_2 A)), so the stated constant may be inconsistent. tilde H_3 depends on T itself via the 8A log_2^2 A/T term."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T16:31:51",
+  "source_chars": 206178,
+  "input_tokens": 138221,
+  "output_tokens": 3985,
+  "cost_usd_equiv": 0.9022342,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,316 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Learning-to-Defer in Non-Stationary Time Series via Switching State-Space Models",
+  "arxiv_id": "2601.22538",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Yannis Montreuil",
+   "Letian Yu",
+   "Axel Carlier",
+   "Lai Xing Ng",
+   "Wei Tsang Ooi"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Learning-to-defer in non-stationary time series with selective (bandit) expert feedback and historical full-feedback archive",
+   "objective": "cumulative_regret",
+   "feedback": "graph_feedback",
+   "environment": "nonstationary_drifting",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K",
+    "loss_range"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets",
+    "expert_advice"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "strongly_observable",
+    "time_varying": "fixed",
+    "knowledge": "known_in_advance",
+    "self_loops": "all",
+    "directedness": "directed",
+    "generation": "arbitrary"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Actions are the internal forecast (action 0) or one of K experts; costs are squared forecast error plus known fees beta_k, bounded by C_* = 4B^2 + beta_max (rescaled to [0,1])",
+    "Target y_t is always observed, so the internal action's cost is always revealed; consulting expert k reveals only expert k's forecast (feedback graph: every action observes itself and action 0)",
+    "Targets, forecasts, contexts and availabilities come from an arbitrary unknown (possibly non-stationary, history-dependent) law; no i.i.d. assumption, and no variation budget is used",
+    "A historical archive with full feedback on all experts is available before deployment (fitting and calibration segments)",
+    "The learner knows the fees beta_k and the output bound B"
+   ],
+   "definition_quote": "At round $t$, the system observes context $\\vect{x}_t\\in\\mathcal X$ and the available external experts $\\mathcal E_t\\subseteq\\{1,\\ldots,K\\}$. It produces an internal forecast $f_t$ and chooses $I_t$ from $\\mathcal A_t=\\{0\\}\\cup\\mathcal E_t$. ... The target $y_t$ is observed after the forecast interval, whereas an external forecast is observed only when it is selected."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "L2D-SLDS (greedy routing with moment-score weighted SLDS candidates)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "exponential_weights",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "loss_range"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_star*Lambda_c*sqrt(T*B_T/2) + C_star*Lambda_c*eps_s*T/sqrt(2) + C_star*Xi_T + 2*B_out**2*B_T",
+    "expression_latex": "C_*\\Lambda\\sqrt{T\\mathcal B_T/2} +C_*\\Lambda\\epsilon T/\\sqrt2 +C_*\\mathbb E\\sum_t\\xi_t+2B^2\\mathcal B_T",
+    "regime": null
+   },
+   "symbols": {
+    "C_star": "maximum action cost 4B^2 + beta_max",
+    "Lambda_c": "cost-contrast constant Lambda in Assumption 1",
+    "B_T": "predictive-moment budget min_j {2 log(1/w_{1,j}) + E sum_t Delta_{t,j}}",
+    "eps_s": "moment smoothing parameter epsilon in (0,1)",
+    "Xi_T": "E sum_t xi_t, cumulative cost-contrast residual",
+    "B_out": "bound on targets and forecasts, values in (-B,B)"
+   },
+   "conditions": [
+    "Observable cost contrasts (Assumption 1) holds almost surely with deterministic Lambda and predictable xi_t",
+    "conditional on the archive",
+    "costs bounded by C_*"
+   ],
+   "tuning": [
+    "greedy argmin of aggregated predicted costs",
+    "no-share exponential-weights moment-score update"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:pr-main",
+    "number": "Theorem (thm:pr-main)",
+    "quote": "Under the protocol of Section~\\ref{sec:pr-problem}, conditionally on the archive, and under the cost-contrast condition, \\operatorname{Reg}_T(\\varphi)\\leq C_*\\Lambda\\sqrt{T\\mathcal B_T/2} +C_*\\Lambda\\epsilon T/\\sqrt2 +C_*\\mathbb E\\sum_t\\xi_t+2B^2\\mathcal B_T ."
+   },
+   "confidence": "medium",
+   "notes": "Regret is against a per-round conditional-risk oracle with internal prediction varphi (any predictable varphi in [-B,B]). The environment/feedback mapping is approximate. The appendix shows that an exact candidate gives B_T <= 2 log(L/zeta) + 2 when epsilon = 1/(T+1)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_star*S_kappa + B_out**2*S_kappa_eps + (2*C_star + 4*B_out**2)*S_b",
+    "expression_latex": "C_*\\sum_t\\sqrt{\\kappa_t} +B^2\\sum_t(\\sqrt{\\kappa_t}+\\epsilon)^2 +(2C_*+4B^2)\\sum_t\\bar b_t",
+    "regime": null
+   },
+   "symbols": {
+    "C_star": "maximum action cost 4B^2 + beta_max",
+    "B_out": "output bound B",
+    "S_kappa": "sum_t sqrt(kappa_t), with kappa_t the chi^2 divergence bound of accurate candidates",
+    "S_kappa_eps": "sum_t (sqrt(kappa_t)+epsilon)^2",
+    "S_b": "sum_t bar b_t, with bar b_t = min{1, U exp(-(t-1) gamma_L^2/4)} and U = (L-1)e^{A/2}(e^{-N gamma_H^2/4} + L (zeta/(L(1-zeta)))^{1/4})"
+   },
+   "conditions": [
+    "a nonempty set G of accurate candidates whose target and target-expert pair laws are within chi^2 divergence kappa_t of the truth (deterministic kappa_t)",
+    "total reference error over calibration and deployment at most A almost surely",
+    "every inaccurate candidate accumulates separation at least N gamma_H^2 over calibration and n gamma_L^2 over every live prefix of length n",
+    "exact predictive integration",
+    "uniform initial calibration weights"
+   ],
+   "tuning": [
+    "w_{1,j} = (1-zeta) nu_j + zeta/L"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:pr-archive-robust",
+    "number": "Theorem (thm:pr-archive-robust)",
+    "quote": "Under the protocol of Section~\\ref{sec:pr-problem} and the preceding divergence, reference-error, and separation conditions, with deterministic $\\kappa_t$ and exact predictive integration, \\operatorname{Reg}_T(y^\\star)\\leq C_*\\sum_t\\sqrt{\\kappa_t} +B^2\\sum_t(\\sqrt{\\kappa_t}+\\epsilon)^2 +(2C_*+4B^2)\\sum_t\\bar b_t . If these conditions hold jointly with fitting-conditioned probability at least $1-\\delta$, the bound holds with an additional $C_*T\\delta$."
+   },
+   "confidence": "medium",
+   "notes": "Comparator internal prediction is the Bayes prediction y^star. If the conditions hold only with probability 1-delta, the bound gains an additive term C_* T delta."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T*log(E*L_cand/zeta))",
+    "expression_latex": "O\\bigl(\\sqrt{T\\log(eL/\\zeta)}\\bigr)",
+    "regime": null
+   },
+   "symbols": {
+    "L_cand": "number of predictive candidates L",
+    "zeta": "initial mixing weight in (0,1)"
+   },
+   "conditions": [
+    "some candidate is exact",
+    "cost-contrast condition holds with xi_t = 0",
+    "L, B, beta_max, Lambda fixed"
+   ],
+   "tuning": [
+    "epsilon = 1/(T+1)",
+    "fixed 0 < zeta < 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:pr-sublinear",
+    "number": "Corollary 1",
+    "quote": "(i) If some candidate is exact and the cost-contrast condition holds with $\\xi_t=0$, then for fixed $0<\\zeta<1$, $\\operatorname{Reg}_T(y^\\star)=O\\bigl(\\sqrt{T\\log(eL/\\zeta)}\\bigr)$."
+   },
+   "confidence": "medium",
+   "notes": "Follows from Theorem (thm:pr-main) with B_T <= 2 log(L/zeta) + 2."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "dynamic_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)",
+    "expression_latex": "O(\\sqrt T)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "L >= 2",
+    "every candidate in G satisfies kappa_t <= c/T in both phases, with c fixed",
+    "historical separation gamma_H > 0 fixed (live separation gamma_L may be 0)",
+    "N = Theta(log(T+1)) calibration dates, sufficiently many",
+    "L, B, beta_max, Lambda fixed"
+   ],
+   "tuning": [
+    "epsilon = 1/(T+1)",
+    "zeta = O((T+1)^-4), sufficiently small"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:pr-sublinear",
+    "number": "Corollary 1",
+    "quote": "(ii) If $L\\geq2$, every candidate in $\\mathcal G$ satisfies $\\kappa_t\\leq c/T$ in both phases, and $c$ and $\\gamma_{\\rm H}>0$ are fixed, then sufficiently many $N=\\Theta(\\log(T+1))$ calibration dates and a sufficiently small mixing weight $\\zeta=O((T+1)^{-4})$ give $\\operatorname{Reg}_T(y^\\star)=O(\\sqrt T)$, even when $\\gamma_{\\rm L}=0$."
+   },
+   "confidence": "medium",
+   "notes": "Explicit form in the appendix: Reg_T <= C_* T sqrt(kappa) + B^2 T (sqrt(kappa)+eps)^2 + 2C_* + 4B^2. If the certificate fails with probability delta, the bound gains C_* T delta, so the rate needs delta = O(T^-1/2)."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T16:02:20",
+  "source_chars": 187560,
+  "input_tokens": 123813,
+  "output_tokens": 7001,
+  "cost_usd_equiv": 0.8472902,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

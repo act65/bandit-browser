@@ -1,0 +1,498 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Neural Variance-aware Dueling Bandits with Deep Representation and Shallow Exploration",
+  "arxiv_id": "2506.01250",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Youngmin Oh",
+   "Jinje Park",
+   "Taejin Paik"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Contextual dueling bandits with nonlinear (neural) utility",
+   "objective": "cumulative_regret",
+   "feedback": "dueling",
+   "environment": "stochastic_iid",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "K",
+    "d",
+    "S",
+    "c_mu"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_unknown"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "neural_ntk"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "utility_link",
+    "winner": "utility_best",
+    "comparison": "pair"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "utility u(x) = theta_*^T phi_*(x) with unknown feature map phi_*, approximated by an overparameterized ReLU network (NTK regime, minimum eigenvalue of NTK matrix positive)",
+    "link function g from exponential family is known to the learner, with derivative bounded in [beta_g, alpha_g] and Lipschitz",
+    "regret is the average regret of the pair (u(x*) - (u(x1)+u(x2))/2)",
+    "contexts satisfy ||x||=1 and a symmetric-coordinate condition"
+   ],
+   "definition_quote": "A learner observes a context set $X_{t}=\\left\\{x_{t,1},\\cdots,x_{t,K}\\right\\}\\subset \\xs\\subset \\mathbb{R}^{d}$ at each round ... receives a binary preference feedback signal $o_t$ ... sampled from a Bernoulli distribution $\\mathcal{B}(p_t)$ ... $p_{t}=\\link(\\Delta \\util_{t})$ ... $\\util(x_{t,k})=\\theta_{*}^\\intercal \\rep_*(x_{t,k})$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "NVLDB-UCB (UCB-ASYM / UCB-OSYM / UCB-CSYM, variance-aware)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "d",
+    "S",
+    "c_mu"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "NVLDB-TS (TS-ASYM / TS-OSYM / TS-CSYM, variance-aware)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "d",
+    "S",
+    "c_mu"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "NLDB-UCB (variance-agnostic, zeta_t = 1)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "d",
+    "S",
+    "c_mu"
+   ]
+  },
+  {
+   "id": "a4",
+   "name": "NLDB-TS (variance-agnostic, zeta_t = 1)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "d",
+    "S",
+    "c_mu"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(d*T) + d*sqrt(Lambda_T) + T*d**3*B_ntk**(4/3)/m_width**(1/6)",
+    "expression_latex": "\\sqrt{dT}+d\\sqrt{\\sum_{i=1}^{T}\\sigma_i^2}+\\frac{Td^{3}}{ m^{1/6}}\\|\\mathbf{u} - \\widetilde{\\mathbf{u}}\\|_{\\mathbf{H}^{-1}}^{4/3}",
+    "regime": "m = Omega~(T^6)"
+   },
+   "symbols": {
+    "m_width": "width of the neural network",
+    "B_ntk": "||u - u_tilde||_{H^{-1}}, NTK-norm of the difference between true utilities and initial network outputs"
+   },
+   "conditions": [
+    "Assumptions 1-3 (||x||=1, link derivative in [beta_g, alpha_g], |u|<=1, ||theta_*||<=J, gradient Lipschitz, lambda_min(NTK)>0)",
+    "network width m = Omega~(T^6)",
+    "sigma_i^2 is the Bernoulli variance of the comparison at round i"
+   ],
+   "tuning": [
+    "a_t = (8/beta_g)(sqrt(d log(a_t') log(4t^2/delta)) + (1/epsilon) log(4t^2/delta)) + 2 sqrt(lambda)(J + 2(2+sqrt(d^{-1} log(1/delta))))",
+    "eta <= C (d^2 m n T^6 L^6 log(TK/delta))^{-1}",
+    "epsilon = O(1/sqrt(d))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:main_ucb",
+    "number": "Theorem 1",
+    "quote": "If the width $\\wid$ of $\\nn$ is sufficiently large as in \\cref{lem:concentration_inequality} and $\\epsilon=\\bigo(1/\\sqrt{d})$, then the cumulative average regret $R_T^a$ under any UCB-based arm selection method ... is upper-bounded as $R_T^a = \\bigol(\\sqrt{dT}+d\\sqrt{\\sum_{i=1}^{T}\\sigma_i^2}+\\frac{Td^{3}}{ m^{1/6}}\\|\\mathbf{\\util} - \\widetilde{\\mathbf{\\util}}\\|_{\\ntk^{-1}}^{4/3})$ ignoring all other hyperparameters with probability at least $1-\\delta$"
+   },
+   "confidence": "medium",
+   "notes": "Holds for all three UCB arm-selection strategies. Bound hides other hyperparameters. Restated as Theorem 3 in appendix. Under ||u-u_tilde||=O(1) and m=Omega~(T^6) the last term reduces as discussed in paper."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T) + T*d**3*B_ntk**(4/3)/m_width**(1/6)",
+    "expression_latex": "d\\sqrt{T} + \\frac{Td^{3}}{ m^{1/6}}\\|\\mathbf{u} - \\widetilde{\\mathbf{u}}\\|_{\\mathbf{H}^{-1}}^{4/3}",
+    "regime": "m = Omega~(T^6)"
+   },
+   "symbols": {
+    "m_width": "width of the neural network",
+    "B_ntk": "||u - u_tilde||_{H^{-1}}"
+   },
+   "conditions": [
+    "Assumptions 1-3",
+    "network width m = Omega~(T^6)"
+   ],
+   "tuning": [
+    "zeta_t = 1 (epsilon = 1)",
+    "a_t and eta as in Theorem 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:main_ucb2",
+    "number": "Corollary 1",
+    "quote": "Assume the conditions in \\cref{theorem:main_ucb} hold, but we fix $\\wt=1$ (i.e., $\\epsilon=1$) for all round $0\\leq t \\leq T$. Then the cumulative regret $R^{a}_t$ under any UCB-based arm selection method ... is bounded as $R_T^a = \\bigol(d\\sqrt{T} + \\frac{Td^{3}}{ m^{1/6}}\\|\\mathbf{\\util} - \\widetilde{\\mathbf{\\util}}\\|_{\\ntk^{-1}}^{4/3})$"
+   },
+   "confidence": "medium",
+   "notes": "Variance-agnostic. Restated as Corollary 3."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(d*T) + d*sqrt(Lambda_T) + T*d**3*B_ntk**(4/3)/m_width**(1/6)",
+    "expression_latex": "\\sqrt{dT}+d\\sqrt{\\sum_{i=1}^{T}\\sigma_i^2}+\\frac{Td^{3}}{ m^{1/6}}\\|\\mathbf{u} - \\widetilde{\\mathbf{u}}\\|_{\\mathbf{H}^{-1}}^{4/3}",
+    "regime": "m = Omega~(T^6)"
+   },
+   "symbols": {
+    "m_width": "width of the neural network",
+    "B_ntk": "||u - u_tilde||_{H^{-1}}"
+   },
+   "conditions": [
+    "Assumptions 1-3",
+    "network width m = Omega~(T^6)"
+   ],
+   "tuning": [
+    "a_t, eta as in Theorem 1",
+    "epsilon = O(1/sqrt(d))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:main_ts",
+    "number": "Theorem 2",
+    "quote": "Assume the conditions in \\cref{theorem:main_ucb} hold. Then the cumulative regret $R^{a}_t$ under any TS-based arm selection method in \\cref{subsection:arm_strategy} is bounded as \\cref{eq:variance-aware} with probability at least $1-\\delta$"
+   },
+   "confidence": "medium",
+   "notes": "Covers TS-ASYM, TS-OSYM, TS-CSYM. Restated as Theorem 4."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a4",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T) + T*d**3*B_ntk**(4/3)/m_width**(1/6)",
+    "expression_latex": "d\\sqrt{T} + \\frac{Td^{3}}{ m^{1/6}}\\|\\mathbf{u} - \\widetilde{\\mathbf{u}}\\|_{\\mathbf{H}^{-1}}^{4/3}",
+    "regime": "m = Omega~(T^6)"
+   },
+   "symbols": {
+    "m_width": "width of the neural network",
+    "B_ntk": "||u - u_tilde||_{H^{-1}}"
+   },
+   "conditions": [
+    "Assumptions 1-3",
+    "network width m = Omega~(T^6)"
+   ],
+   "tuning": [
+    "zeta_t = 1 (epsilon = 1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:main_ts2",
+    "number": "Corollary 2",
+    "quote": "Assume the conditions in \\cref{theorem:main_ucb2} hold. Then the cumulative regret $R^{a}_t$ under any TS-based arm selection method in \\cref{subsection:arm_strategy} is bounded as \\eqref{eq:variance-agnostic} with probability at least $1-\\delta$"
+   },
+   "confidence": "medium",
+   "notes": "Variance-agnostic TS. Restated as Corollary 4."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "zhou2020neural",
+   "cited_title": "Neural contextual bandits with ucb-based exploration",
+   "cited_first_author": "Dongruo Zhou",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "NeuralUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Neural contextual bandits, requires m = Omega~(T^7)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\widetilde{O}(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "shallow",
+   "cited_title": "Neural contextual bandits with deep representation and shallow exploration",
+   "cited_first_author": "Pan Xu",
+   "cited_year": 2020,
+   "cited_arxiv_id": "2012.01780",
+   "algorithm_name": "Neural-LinUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Neural linear contextual bandits (shallow exploration), m = Omega~(T^3)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\widetilde{O}(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "bui2024variance",
+   "cited_title": "Variance-aware linear ucb with deep representation for neural contextual bandits",
+   "cited_first_author": "Ha Manh Bui",
+   "cited_year": 2024,
+   "cited_arxiv_id": "2411.05979",
+   "algorithm_name": "Neural-sigma^2-LinearUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Variance-aware neural contextual bandits, m = Omega~(T^3)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(d*T) + d*sqrt(Lambda_T)",
+    "expression_latex": "\\widetilde{O}(\\sqrt{dT}+d\\sqrt{\\sum_{t=1}^{T}\\sigma_t^2})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "ndb",
+   "cited_title": "Neural dueling bandits",
+   "cited_first_author": "Arun Verma",
+   "cited_year": 2024,
+   "cited_arxiv_id": "2407.17112",
+   "algorithm_name": "Neural Dueling Bandits (NDB)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Neural contextual dueling bandits, m = Omega~(T^14)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\widetilde{O}(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "lst",
+   "cited_title": "Stochastic contextual dueling bandits under linear stochastic transitivity models",
+   "cited_first_author": "Viktor Bengs",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CoLSTIM",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Linear contextual dueling bandits",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\widetilde{\\mathcal{O}}(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "saha2021optimal",
+   "cited_title": "Optimal algorithms for stochastic contextual preference bandits",
+   "cited_first_author": "Aadirupa Saha",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Linear contextual dueling bandits",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(d*T)",
+    "expression_latex": "\\widetilde{\\mathcal{O}}(\\sqrt{dT})",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "feelgood",
+   "cited_title": "Feel-good thompson sampling for contextual dueling bandits",
+   "cited_first_author": "Xuheng Li",
+   "cited_year": 2024,
+   "cited_arxiv_id": "2404.06013",
+   "algorithm_name": "FGTS.CDB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Linear contextual dueling bandits",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\widetilde{\\mathcal{O}}(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "saha2021optimal",
+   "cited_title": "Optimal algorithms for stochastic contextual preference bandits",
+   "cited_first_author": "Aadirupa Saha",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Linear contextual dueling bandits, average and weak regret",
+   "bound": {
+    "notation": "Omega_tilde",
+    "expression": "sqrt(d*T)",
+    "expression_latex": "\\widetilde{\\mathcal{O}}(\\sqrt{dT})",
+    "regime": null
+   },
+   "where": "Section 2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:40:37",
+  "source_chars": 214139,
+  "input_tokens": 153982,
+  "output_tokens": 7893,
+  "cost_usd_equiv": 1.1064821999999999,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

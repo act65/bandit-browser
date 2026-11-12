@@ -1,0 +1,212 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Does 1/2-Tsallis-INF Also Work Well for Best-Arm Identification?",
+  "arxiv_id": "2608.15365",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Jingxin Zhan",
+   "Yuze Han",
+   "Zhihua Zhang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Stochastic multi-armed bandit; failure probability Err_t of the empirical best arm from importance-weighted cumulative loss estimates",
+   "objective": "bai_fixed_budget",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Error probability is evaluated at every time t (anytime) for a regret-minimizing algorithm without a stopping/budget input; the recommendation is the argmin of cumulative importance-weighted loss estimates",
+    "Loss vectors (not only marginals) are i.i.d. from a joint distribution D on [0,1]^d"
+   ],
+   "definition_quote": "We study a stochastic multi-armed bandit problem with arm set $\\mathcal{I}=\\{1,\\ldots,d\\}$. ... the environment produces a loss vector $\\ell_t\\in[0,1]^d$. The learner only observes and suffers the loss $\\ell_{t,I_t}$ of the chosen arm. ... loss vectors are i.i.d. draws from an unknown distribution $\\mathcal{D}$. ... $i_*$ the unique optimal arm ... We study the failure probability $\\Err_t=\\P(i_{t}^*\\ne i_*)$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "1/2-Tsallis-INF (FTRL with -4 sum sqrt(p_i), eta_t = alpha/sqrt(t), IW estimators)",
+   "registry_id": "tsallis_inf",
+   "is_new": false,
+   "techniques": [
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "C_aqr*K**(3*q)*log(K)**(2*q)/Delta_min**(4*q)*T**(-q)",
+    "expression_latex": "\\Err_t\\leq C_{\\alpha,q,\\rho}\\frac{d^{3q}(\\log(d))^{2q}}{\\Delta^{4q}}t^{-q}",
+    "regime": "q in (0, 2 - alpha_lr**2*mu_istar/4), any t >= 1"
+   },
+   "symbols": {
+    "q": "polynomial decay exponent, q = 2 - alpha_lr^2 mu_istar/4 - rho with rho > 0",
+    "alpha_lr": "learning-rate coefficient, eta_t = alpha_lr/sqrt(t), in (0,1)",
+    "mu_istar": "mean loss of the optimal arm",
+    "C_aqr": "constant depending only on alpha_lr, q and rho"
+   },
+   "conditions": [
+    "unique optimal arm",
+    "losses in [0,1]"
+   ],
+   "tuning": [
+    "eta_t = alpha_lr/sqrt(t) with alpha_lr in (0,1)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "et",
+    "number": "Theorem 3.1",
+    "quote": "For Algorithm \\ref{alg: FTRL}, if $i_*$ is unique and $\\alpha\\in(0,1)$, then for any $t\\ge 1$ and $q\\in(0,2-\\frac{\\alpha^2 \\mu_{i_*}}{4})$, there exists $C_{\\alpha,q,\\rho}>0$ depending only on $\\alpha$, $q$ and $\\rho:=2-\\frac{\\alpha^2 \\mu_{i_*}}{4}-q$ such that \\[ \\Err_t\\leq C_{\\alpha,q,\\rho}\\frac{d^{3q}(\\log(d))^{2q}}{\\Delta^{4q}}t^{-q}. \\]"
+   },
+   "confidence": "high",
+   "notes": "Paper's d = number of arms (K); Delta = smallest positive gap (Delta_min); t is the current round (T). Err_t is a probability of misidentification at time t. Constant unspecified so notation O."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "other",
+   "quantity": "error_probability",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T**(-2 - eps_alg)",
+    "expression_latex": "\\Err_t\\ge C' t^{-2-\\varepsilon}",
+    "regime": "t >= C (constant independent of t), any eps_alg > 0"
+   },
+   "symbols": {},
+   "conditions": [
+    "applies only to the specific algorithm 1/2-Tsallis-INF (Algorithm 1) with eta_t = alpha/sqrt(t), 0<alpha<1",
+    "unique optimal arm",
+    "mean loss of the optimal arm mu_{i_*} > 0"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "lower",
+    "number": "Theorem 3.3",
+    "quote": "For Algorithm \\ref{alg: FTRL}, if $i_*$ is unique, $\\mu_{i_*}>0$ and $0<\\alpha<1$, then for any $\\varepsilon>0$, there exist $C $ and $C'>0$ that are independent of $t$ such that for any $t\\ge C$, we have \\[ \\Err_t\\ge C' t^{-2-\\varepsilon}. \\]"
+   },
+   "confidence": "medium",
+   "notes": "Algorithm-specific lower bound (not minimax over algorithms). Constants C, C' depend on d, Delta, eps in an unspecified way."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:17:55",
+  "source_chars": 135834,
+  "input_tokens": 115011,
+  "output_tokens": 4360,
+  "cost_usd_equiv": 0.7240542,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,305 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Regime Switching Bandits",
+  "arxiv_id": "2001.09390",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Xiang Zhou",
+   "Yi Xiong",
+   "Ningyuan Chen",
+   "Xuefeng Gao"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "MAB with Markovian Regime Switching",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "markovian",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Reward distributions of all arms are modulated by a common unobserved finite-state Markov chain (hidden Markov / POMDP structure); Markovian environments are out of scope in this ontology version.",
+   "unmapped": [
+    "Rewards of all arms modulated by a common hidden finite-state Markov chain with unknown transition matrix P (regime switching); the state is never observed",
+    "Regret benchmarked against the optimal long-run average reward rho* of the belief-MDP (POMDP) oracle that knows P and the reward distributions but not the state",
+    "Learner knows the number of hidden states M",
+    "Learner needs (upper bounds on) the spectral-estimator constants C_1, C_2",
+    "Assumes access to an optimization oracle solving the average-reward belief-MDP Bellman equation",
+    "Transition matrix P invertible, mean reward matrix full row rank, min entry of P epsilon > 0"
+   ],
+   "definition_quote": "There is a Markov chain $\\{M_t\\}$ with states $\\mathcal{M}\\coloneqq\\{1,2,\\dots,M\\}$ and transition probability matrix $P$. In period $t$, if the state of the Markov chain $M_t=m$ and the agent chooses arm $I_t= i$, then the reward in that period is $R_t$ ... distribution $Q(\\cdot|m,i)$. The agent knows $M$ and $I$, but has no knowledge about the underlying state $M_t$, the transition matrix $P$ or the reward distribution ... $\\mathcal{R}_T\\coloneqq T\\rho^* - \\sum_{t=1}^T R_t^{\\pi}$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "SEEU (Spectral Exploration and Exploitation with UCB)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "explore_then_commit",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "M (number of hidden states)",
+    "upper bounds on C_1, C_2",
+    "delta",
+    "tau_1",
+    "tau_2"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_reg*T**(2/3)*sqrt(log(3*(2*K + 1)*T/delta)) + T_0*rho_star",
+    "expression_latex": "CT^{2/3}\\sqrt{\\log\\left(\\frac{3(S+1)}{\\delta}T\\right)}+T_0\\rho^*",
+    "regime": "T > T_0"
+   },
+   "symbols": {
+    "C_reg": "constant independent of T depending on D, L_1, L_2, M, C_1, C_2, tau_1, tau_2, rho*, delta",
+    "T_0": "number of periods for exploration samples to exceed N_0 of Proposition 1",
+    "rho_star": "optimal long-run average reward of the belief MDP under the true model"
+   },
+   "conditions": [
+    "Assumption 1: P invertible",
+    "Assumption 2: mean reward matrix full row rank",
+    "Assumption 3: min entry of P epsilon > 0",
+    "T > T_0",
+    "holds with probability 1 - 7/2 delta"
+   ],
+   "tuning": [
+    "tau_1 sufficiently large",
+    "delta_k = delta/k^3"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:upper_bound",
+    "number": "Theorem 1",
+    "quote": "Suppose Assumptions 1 to 3 hold. Fix the parameter $\\tau_1$ in Algorithm 2 to be sufficiently large. Then there exist constants $T_0,C$ which are independent of $T$, such that when $T>T_0$, with probability $1-\\frac{7}{2}\\delta$, the regret of Algorithm~2 satisfies $\\mathcal{R}_T \\leq CT^{2/3}\\sqrt{\\log\\left(\\frac{3(S+1)}{\\delta}T\\right)}+T_0\\rho^*$, where $S=2I$ ..."
+   },
+   "confidence": "medium",
+   "notes": "Paper's S=2I with I = number of arms (K). Regret is realized regret T rho* - sum R_t bounded w.p. 1-7delta/2. Constant C given explicitly in paper; computation of optimistic POMDP not addressed efficiently."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_reg*T**(2/3)*sqrt(2*log(T)) + (T_0 + 11*(2*K + 1))*rho_star",
+    "expression_latex": "CT^{2/3}\\sqrt{2\\log T} + (T_0+11(S+1))\\rho^*",
+    "regime": "T > T_0"
+   },
+   "symbols": {
+    "C_reg": "constant independent of T (as in Theorem 1)",
+    "T_0": "number of periods for exploration samples to exceed N_0",
+    "rho_star": "optimal long-run average reward"
+   },
+   "conditions": [
+    "Assumption 1: P invertible",
+    "Assumption 2: mean reward matrix full row rank",
+    "Assumption 3: min entry of P epsilon > 0"
+   ],
+   "tuning": [
+    "delta = 3(S+1)/T",
+    "tau_1 sufficiently large"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:expected_upper_bound",
+    "number": "Theorem 3",
+    "quote": "Under the same assumptions as Theorem~\\ref{thm:upper_bound}, the regret of Algorithm~\\ref{alg:SEEU} satisfies $\\E[\\mathcal{R}_T] \\leq CT^{2/3}\\sqrt{2\\log T} + (T_0+11(S+1))\\rho^*$."
+   },
+   "confidence": "medium",
+   "notes": "Obtained by choosing delta = 3(S+1)/T, which uses T, so marked known horizon. Expected regret E[T rho* - sum R_t] relative to the POMDP oracle's average reward."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "auer2002nonstochastic",
+   "cited_title": "The nonstochastic multiarmed bandit problem",
+   "cited_first_author": "P. Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Adversarial bandit, oracle best fixed action, linear changing budget",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\tilde O(\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "Garivier2011",
+   "cited_title": "On upper-confidence bound policies for switching bandit problems",
+   "cited_first_author": "A. Garivier",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Switching bandits with finitely many changes, oracle best action in each period",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\tilde{O}(\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "Besbes2014",
+   "cited_title": "Stochastic multi-armed-bandit problem with non-stationary rewards",
+   "cited_first_author": "O. Besbes",
+   "cited_year": 2014,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Non-stationary bandits with sublinear variation budget, oracle best action in each period",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(2/3)",
+    "expression_latex": "\\tilde{O}(T^{2/3})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "Azizzadenesheli2016",
+   "cited_title": "Reinforcement learning of POMDPs using spectral methods",
+   "cited_first_author": "K. Azizzadenesheli",
+   "cited_year": 2016,
+   "cited_arxiv_id": "1602.07764",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "POMDP learning, oracle optimal memoryless policy",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\tilde O(\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T16:07:42",
+  "source_chars": 135068,
+  "input_tokens": 113029,
+  "output_tokens": 5038,
+  "cost_usd_equiv": 0.7217582,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

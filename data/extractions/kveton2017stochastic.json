@@ -1,0 +1,227 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Stochastic Low-Rank Bandits",
+  "arxiv_id": "1712.04644",
+  "arxiv_version": null,
+  "year": 2017,
+  "authors": [
+   "Branislav Kveton",
+   "Csaba Szepesvari",
+   "Anup Rao",
+   "Zheng Wen",
+   "Yasin Abbasi-Yadkori",
+   "S. Muthukrishnan"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "stochastic low-rank bandit (simplified problem: learning (I*, J*))",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "low_rank"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "unspecified"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Mean reward matrix R = U V^T of rank d with K rows and L columns, U in S_{K,d}, V in S_{L,d} (rows in the simplex)",
+    "Hott topics assumption: all rows of U (resp. V) are convex combinations of d base rows and the zero vector",
+    "Action is a pair (d-subset of rows, d-subset of columns); learner observes noisy realizations of all d x d entries; reward is the entry at the best pair within the chosen submatrix",
+    "Noise on entries is independent across observed entries",
+    "Learner knows the number of columns L",
+    "The analysed algorithm observes many d-rows/d-columns per step (all remaining rows and columns during exploration)"
+   ],
+   "definition_quote": "An instance of this problem is defined by a tuple $(U, V, P)$, where $U \\in \\mathcal{S}_{K, d}$ are latent row factors, $V \\in \\mathcal{S}_{L, d}$ are latent column factors ... At time $t$, the agent chooses arm $(\\rnd{I}_t, \\rnd{J}_t) \\in \\Pi_d([K]) \\times \\Pi_d([L])$, a pair of $d$-subsets of rows and columns, and observes a noisy realization of matrix $\\bar{R}(\\rnd{I}_t, \\rnd{J}_t)$ ... The reward is $\\rnd{r}_t(i^\\ast(\\rnd{I}_t, \\rnd{J}_t), j^\\ast(\\rnd{I}_t, \\rnd{J}_t))$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "LowRankElim",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "d",
+    "L_col"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "exponential",
+   "bound": {
+    "notation": "exact",
+    "expression": "3072*d**3*(K + L_col)/(c_max*c_min**2*Delta_vol)*4*det_max**2*log((K**d + L_col**d)*T) + 4",
+    "expression_latex": "\\frac{c d^3 (K + L)}{c_{\\max} c_{\\min}^2 \\Delta_{\\min}} C(n) + 4,\\ c = 3072,\\ C(n) = 4 \\det_{\\max}^2(d) \\log((K^d + L^d) n)",
+    "regime": null
+   },
+   "symbols": {
+    "L_col": "number of columns of the matrix (paper's L)",
+    "c_max": "maximum volume min{det^2(U*), det^2(V*)}",
+    "c_min": "minimum volume: min over d-rows/d-columns of det^2(U(I,:)), det^2(V(J,:))",
+    "Delta_vol": "minimum gap over suboptimal d-rows and d-columns, Delta_I = det^2(U(I*,:)) - det^2(U(I,:)) (paper's Delta_min)",
+    "det_max": "maximum determinant of a d x d matrix with entries in [0,1]"
+   },
+   "conditions": [
+    "hott topics assumption on U and V",
+    "c_min > 0 (any d rows and columns of R are linearly independent)",
+    "independent noise on matrix entries, rewards in [0,1]"
+   ],
+   "tuning": [
+    "n_l = ceil(4 Delta_tilde_l^{-2} C(n)), stages halving Delta_tilde"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:upper bound",
+    "number": "Theorem 1",
+    "quote": "The expected $n$-step regret of $\\lowrankelim$ is bounded as \\mathcal{R}(n) \\leq \\frac{c d^3 (K + L)}{c_{\\max} c_{\\min}^2 \\Delta_{\\min}} C(n) + 4, where $c = 3072$, $c_{\\max}$ is defined in \\eqref{eq:maximum volume}, $c_{\\min}$ is defined in \\eqref{eq:minimum volume}, $\\Delta_{\\min}$ is defined in \\eqref{eq:minimum gap}, and $C(n)$ is defined in \\eqref{eq:log n}."
+   },
+   "confidence": "medium",
+   "notes": "Regret defined via stochastic rewards of the same round of optimal vs chosen entry; in expectation equals mean differences, so pseudo-regret. Delta_min is a volume gap (not a reward gap), so declared as Delta_vol; the paper's definition has a typo (Delta^u used for columns). Computation is exponential in d. The discussion gives an informal improved bound replacing c_min by an averaged volume c_bar for a modified algorithm (not a formal statement, not recorded)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "kawale15efficient",
+   "cited_title": "Efficient Thompson sampling for online matrix-factorization recommendation",
+   "cited_first_author": "Jaya Kawale",
+   "cited_year": 2015,
+   "cited_arxiv_id": null,
+   "algorithm_name": "computationally-inefficient particle Thompson sampling for low-rank matrix completion",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "bandit low-rank matrix completion, rank-1 matrices",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)/Delta**2",
+    "expression_latex": "O(\\Delta^{-2} \\log n)",
+    "regime": null
+   },
+   "where": "Section 6 (Related Work)"
+  },
+  {
+   "cited_key": "sen17contextual",
+   "cited_title": "Contextual bandits with latent confounders: An NMF approach",
+   "cited_first_author": "Rajat Sen",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "epsilon-greedy for non-negative matrix completion",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "contextual bandits with latent confounders (non-negative matrix completion), under a restricted-isometry-type assumption",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)/Delta**2",
+    "expression_latex": "O(\\Delta^{-2} \\log n)",
+    "regime": null
+   },
+   "where": "Section 6 (Related Work)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T17:08:39",
+  "source_chars": 57518,
+  "input_tokens": 66937,
+  "output_tokens": 4094,
+  "cost_usd_equiv": 0.3341422,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,492 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Batched Thompson Sampling",
+  "arxiv_id": "2110.00202",
+  "arxiv_version": null,
+  "year": 2021,
+  "authors": [
+   "Cem Kalkanli",
+   "Ayfer Ozgur"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Batched multi-armed bandit",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [
+    "batched"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Batch sizes may be chosen adaptively based on past observations; the number of batches is not fixed in advance but is a performance measure"
+   ],
+   "definition_quote": "Here there are $K$ arms, where each consecutive pull of the $i^{th}$ arm produces bounded i.i.d. rewards ... $Y_{i,1}\\in [0,1]$ ... there are batch end points $0=T_0<T_1<...$, and the actions the agent plays in the $j^{th}$ batch ... as well as the size of the batch itself ... can depend only on the information present in $\\Hp_{T_{j-1}}$ ... Finally, we let $\\mu_1>\\mu_i$ for any $i\\geq 2$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Batched Thompson Sampling",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling",
+    "other"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_1*alpha_b*sigma_ts**2*log(T)/Delta_i**2",
+    "expression_latex": "\\Ex[N_i(T)]\\leq C_1\\alpha\\sigma^2\\frac{\\log(T)}{\\Delta_i^2}",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_b": "batch growth factor alpha > 1",
+    "sigma_ts": "sampling (prior) standard deviation of the Gaussian Thompson sampler (algorithm parameter)",
+    "C_1": "absolute constant >= 1"
+   },
+   "conditions": [
+    "T >= 2"
+   ],
+   "tuning": [
+    "alpha_b <= 5*sigma_ts**2/4",
+    "sigma_ts^2 >= 1 (used in proof)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm1",
+    "number": "Theorem 1",
+    "quote": "If $T\\geq 2$ and the batch growth factor $\\alpha$ satisfies $\\frac{5\\sigma^2}{4}\\geq\\alpha$, then Batched Thompson sampling obeys the following inequalities \\Ex[N_i(T)]\\leq C_1\\alpha\\sigma^2\\frac{\\log(T)}{\\Delta_i^2} for any $i\\geq 2$"
+   },
+   "confidence": "medium",
+   "notes": "Bound on expected number of pulls of suboptimal arm i."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_1*alpha_b*sigma_ts**2*sum_subopt(log(T)/Delta_i)",
+    "expression_latex": "\\Ex[R(T)]\\leq C_1\\alpha\\sigma^2\\sum_{i=2}^K\\frac{\\log(T)}{\\Delta_i}",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_b": "batch growth factor alpha > 1",
+    "sigma_ts": "sampling standard deviation of the Gaussian Thompson sampler (algorithm parameter)",
+    "C_1": "absolute constant >= 1"
+   },
+   "conditions": [
+    "T >= 2"
+   ],
+   "tuning": [
+    "alpha_b <= 5*sigma_ts**2/4",
+    "sigma_ts^2 >= 1 (used in proof)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm1",
+    "number": "Theorem 1",
+    "quote": "which lead to \\Ex[R(T)]\\leq C_1\\alpha\\sigma^2\\sum_{i=2}^K\\frac{\\log(T)}{\\Delta_i}"
+   },
+   "confidence": "high",
+   "notes": "Regret defined as sum Delta_i E[N_i(T)], i.e. pseudo-regret."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_2*sigma_ts*sqrt(alpha_b*K*T*log(T))",
+    "expression_latex": "\\Ex[R(T)]\\leq C_2\\sigma\\sqrt{\\alpha KT\\log(T)}",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_b": "batch growth factor alpha > 1",
+    "sigma_ts": "sampling standard deviation of the Gaussian Thompson sampler (algorithm parameter)",
+    "C_2": "absolute constant >= 1"
+   },
+   "conditions": [
+    "T >= 2"
+   ],
+   "tuning": [
+    "alpha_b <= 5*sigma_ts**2/4",
+    "sigma_ts^2 >= 1 (used in proof)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm1",
+    "number": "Theorem 1",
+    "quote": "and \\Ex[R(T)]\\leq C_2\\sigma\\sqrt{\\alpha KT\\log(T)} where $C_1, C_2\\geq 1$ are absolute constants independent of the system parameters."
+   },
+   "confidence": "high",
+   "notes": ""
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "almost_sure",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "1 + K + K*log(T/K)/log(alpha_b)",
+    "expression_latex": "B(T)\\leq 1+K+K\\log_\\alpha(\\frac{T}{K})",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_b": "batch growth factor alpha > 1",
+    "sigma_ts": "sampling standard deviation of the Gaussian Thompson sampler"
+   },
+   "conditions": [
+    "T >= 2"
+   ],
+   "tuning": [
+    "alpha_b <= 5*sigma_ts**2/4"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm2",
+    "number": "Theorem 2",
+    "quote": "If $T\\geq 2$ and $\\frac{5\\sigma^2}{4}\\geq\\alpha$, then the batch complexity $B(T)$ of Batched Thompson sampling satisfies the following: B(T)\\leq 1+K+K\\log_\\alpha(\\frac{T}{K})"
+   },
+   "confidence": "high",
+   "notes": "Deterministic bound on number of batches (batch complexity)."
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "1 + K + log(1 + C*alpha_b*sigma_ts**2*sum_subopt(log(T)/Delta_i**2))/log(alpha_b) + sum_subopt(log(1 + C*alpha_b*sigma_ts**2*log(T)/Delta_i**2)/log(alpha_b))",
+    "expression_latex": "\\Ex[B(T)]\\leq1+K+\\log_\\alpha(1+C\\alpha\\sigma^2\\sum_{i=2}^K\\frac{\\log(T)}{\\Delta_i^2}))+\\sum_{i=2}^K\\log_\\alpha(1+C\\alpha\\sigma^2\\frac{\\log(T)}{\\Delta_i^2})",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_b": "batch growth factor alpha > 1",
+    "sigma_ts": "sampling standard deviation of the Gaussian Thompson sampler",
+    "C": "absolute constant"
+   },
+   "conditions": [
+    "T >= 2"
+   ],
+   "tuning": [
+    "alpha_b <= 5*sigma_ts**2/4"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm2",
+    "number": "Theorem 2",
+    "quote": "\\Ex[B(T)]\\leq1+K+\\log_\\alpha(1+C\\alpha\\sigma^2\\sum_{i=2}^K\\frac{\\log(T)}{\\Delta_i^2}))+\\sum_{i=2}^K\\log_\\alpha(1+C\\alpha\\sigma^2\\frac{\\log(T)}{\\Delta_i^2})"
+   },
+   "confidence": "high",
+   "notes": "Expected batch complexity, O(K log log T)."
+  },
+  {
+   "id": "r6",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "1 + 2*C*alpha_b*sigma_ts**2*sum_subopt(log(T)/Delta_i**2)",
+    "expression_latex": "\\Ex[B(T)]\\leq1+2C\\alpha\\sigma^2\\sum_{i=2}^K\\frac{\\log(T)}{\\Delta_i^2}",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_b": "batch growth factor alpha > 1",
+    "sigma_ts": "sampling standard deviation of the Gaussian Thompson sampler",
+    "C": "absolute constant"
+   },
+   "conditions": [
+    "T >= 2"
+   ],
+   "tuning": [
+    "alpha_b <= 5*sigma_ts**2/4"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm2",
+    "number": "Theorem 2",
+    "quote": "\\Ex[B(T)]\\leq1+2C\\alpha\\sigma^2\\sum_{i=2}^K\\frac{\\log(T)}{\\Delta_i^2}, where $C$ is an absolute constant independent of the system parameters."
+   },
+   "confidence": "high",
+   "notes": "Expected batch complexity."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "agrawal2017near",
+   "cited_title": "Near-optimal regret bounds for thompson sampling",
+   "cited_first_author": "Shipra Agrawal",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson Sampling (Beta priors)",
+   "algorithm_registry_id": "thompson_sampling_beta",
+   "side": "upper",
+   "setting_description": "Stochastic K-armed Bernoulli/[0,1] bandit, sequential feedback",
+   "bound": {
+    "notation": "exact",
+    "expression": "(1 + eps_alg)*sum_subopt(log(T)*Delta_i/kl_i) + K/eps_alg**2",
+    "expression_latex": "(1+\\epsilon)\\sum_{i=2}^{K}\\frac{\\log(T)}{d(\\mu_i,\\mu_1)}\\Delta_i+O(\\frac{K}{\\epsilon^2})",
+    "regime": "eps in (0,1); second term is O(K/eps^2)"
+   },
+   "where": "Section 4, eq. (r7)"
+  },
+  {
+   "cited_key": "agrawal2017near",
+   "cited_title": "Near-optimal regret bounds for thompson sampling",
+   "cited_first_author": "Shipra Agrawal",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson Sampling (Beta priors)",
+   "algorithm_registry_id": "thompson_sampling_beta",
+   "side": "upper",
+   "setting_description": "Stochastic K-armed bandit, sequential feedback, minimax",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(T))",
+    "expression_latex": "O(\\sqrt{KT\\log(T)})",
+    "regime": null
+   },
+   "where": "Section 4, eq. (r8)"
+  },
+  {
+   "cited_key": "agrawal2017near",
+   "cited_title": "Near-optimal regret bounds for thompson sampling",
+   "cited_first_author": "Shipra Agrawal",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Gaussian Thompson Sampling",
+   "algorithm_registry_id": "thompson_sampling_gaussian",
+   "side": "upper",
+   "setting_description": "Stochastic K-armed bandit, sequential feedback, minimax",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(K*T*log(K))",
+    "expression_latex": "O(\\sqrt{KT\\log(K)})",
+    "regime": "T >= K"
+   },
+   "where": "Section 4"
+  },
+  {
+   "cited_key": "lai1985asymptotically",
+   "cited_title": "Asymptotically efficient adaptive allocation rules",
+   "cited_first_author": "Tze Leung Lai",
+   "cited_year": 1985,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Stochastic K-armed bandit, asymptotic lower bound",
+   "bound": {
+    "notation": "Omega",
+    "expression": "log(T)",
+    "expression_latex": "\\Omega(\\log(T))",
+    "regime": null
+   },
+   "where": "Section 4"
+  },
+  {
+   "cited_key": "audibert2009minimax",
+   "cited_title": "Minimax policies for adversarial and stochastic bandits",
+   "cited_first_author": "Jean-Yves Audibert",
+   "cited_year": 2009,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Stochastic K-armed bandit, minimax lower bound",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(K*T)",
+    "expression_latex": "\\Omega(\\sqrt{KT})",
+    "regime": null
+   },
+   "where": "Section 4"
+  },
+  {
+   "cited_key": "perchet2016batched",
+   "cited_title": "Batched bandit problems",
+   "cited_first_author": "Vianney Perchet",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": "ETC (batched explore-then-commit)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Batched two-armed stochastic bandit, minimax regret with O(log log T) batches",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)",
+    "expression_latex": "O(\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "perchet2016batched",
+   "cited_title": "Batched bandit problems",
+   "cited_first_author": "Vianney Perchet",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": "ETC (batched explore-then-commit)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Batched two-armed stochastic bandit, problem-dependent regret with O(log(T/log T)) batches",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)",
+    "expression_latex": "O(\\log(T))",
+    "regime": null
+   },
+   "where": "Introduction"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T16:59:50",
+  "source_chars": 121277,
+  "input_tokens": 110380,
+  "output_tokens": 6990,
+  "cost_usd_equiv": 0.7396061999999999,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

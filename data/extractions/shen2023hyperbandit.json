@@ -1,0 +1,197 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "HyperBandit: Contextual Bandit with Hypernewtork for Time-Varying User Preferences in Streaming Recommendation",
+  "arxiv_id": "2308.08497",
+  "arxiv_version": null,
+  "year": 2023,
+  "authors": [
+   "Chenglei Shen",
+   "Xiao Zhang",
+   "Wei Wei",
+   "Jun Xu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Bandit-based streaming recommendation with time-varying (periodic) user preferences",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "bernoulli",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "unspecified",
+    "loss_set": "unspecified",
+    "parameter_structure": "unspecified"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "bilinear reward r* = c_a^T Theta_p^* c_u with a time-period-dependent user preference matrix Theta_p^*; time period p (35 periods per week) is observed by the learner",
+    "item features partly observed and partly latent (to be learned)",
+    "rewards in {0,1}: r = r* + zero-mean noise"
+   ],
+   "definition_quote": "r^*(u, a, p) := \\bm c_a^\\intercal \\bm \\Theta_p^* \\bm{c}_u ... the generation process of the observed reward can be formalized as r (u, a, p) := r^* (u, a, p) + \\eta ... a corresponding reward r (u, a_{I_t}) \\in\\{0,1\\} is observed"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "HyperBandit",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*C_x*sqrt(2*L*T*log(1 + C_Theta*C_U**2*T/(2*lam*L*delta))) + C_x*sqrt(2/lam)*sum_E",
+    "expression_latex": "2 C_{\\bm x} \\sqrt{2 L T \\ln\\left(1 + \\frac{C_{\\bm \\Theta} C_{\\mathcal{U}}^2 T}{2\\lambda L \\delta}\\right)} + C_{\\bm x} \\sqrt{\\frac{2}{\\lambda}} \\sum_{n \\in [N] } E_n",
+    "regime": null
+   },
+   "symbols": {
+    "L": "dimension of latent item features l_a",
+    "C_x": "max_a ||x_a(T) - x_a^*||_{Psi_{a,T}} (elliptic-norm estimation error of latent features)",
+    "C_Theta": "max over updates n and periods p of ||Theta_p^(n)||_F^2",
+    "C_U": "max_u ||c_u||_2^2 (as defined in the paper)",
+    "sum_E": "sum_{n in [N]} E_n, accumulated hypernetwork error E_n = sum_i ||(Theta^(n)_{p} - Theta^*_{p}) c_u||_2"
+   },
+   "conditions": [
+    "latent feature dimension l_a = L for all items"
+   ],
+   "tuning": [
+    "regularization parameter lambda > 0",
+    "exploration parameter alpha > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:hyperbandit:regret",
+    "number": "Theorem (thm:hyperbandit:regret)",
+    "quote": "Assume that the dimension of the latent features is $l_{a} = L, \\forall a \\in \\mathcal{A}.$ The sequence of the actions executed by HyperBandit enjoys the following regret upper bound: with probability at least $1 - \\delta$, \\mathrm{Reg}(T) \\leq 2 C_{\\bm x} \\sqrt{2 L T \\ln\\left(1 + \\frac{C_{\\bm \\Theta} C_{\\mathcal{U}}^2 T}{2\\lambda L \\delta}\\right)} + C_{\\bm x} \\sqrt{\\frac{2}{\\lambda}} \\sum_{n \\in [N] } E_n"
+   },
+   "confidence": "low",
+   "notes": "Bound depends on data-dependent quantities (C_x, hypernetwork error E_n) that are not controlled; regret is defined via true (expected) rewards against per-round best item. The paper informally argues (not as a formal statement) that with enough hypernetwork parameters, N = O(sqrt T) and tau >= rank, sum E_n = O~(sqrt T) giving O~(sqrt T) regret. Setting mapping (contextual, periodic preferences) is approximate. Theorem number not printed in source."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "yu2009piecewise",
+   "cited_title": "Piecewise-stationary bandit problems with side observations",
+   "cited_first_author": "Jia Yuan Yu",
+   "cited_year": 2009,
+   "cited_arxiv_id": null,
+   "algorithm_name": "windowed mean-shift detection algorithm",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "piecewise-stationary multi-armed bandit (with side observations), Gamma_T ground-truth changes",
+   "bound": {
+    "notation": "O",
+    "expression": "S_T*log(T)",
+    "expression_latex": "O\\left(\\Gamma_T \\log (T)\\right)",
+    "regime": null
+   },
+   "where": "Related Work"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:04:25",
+  "source_chars": 87230,
+  "input_tokens": 76753,
+  "output_tokens": 3241,
+  "cost_usd_equiv": 0.39561019999999997,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

@@ -11,7 +11,7 @@ Theory papers state results of a regular shape: *in setting S, algorithm X achie
 
 Bandits are the test domain; the goal is a domain-agnostic engine for ML, CS and maths theory.
 
-**Status:** Phase 4 (scaling). 1,057 papers (a 59-paper pilot and two breadth batches of about 500) extracted by an LLM with ontology v0.6: about 4,700 results across about 2,060 canonical settings. Results are checked by automated audits and a textbook gold set ([`notes/validation.md`](notes/validation.md)), and a few by their authors, but are not human-verified in general. Roughly half the extracted bounds can be compared across papers; why the rest can't is in [`notes/comparability.md`](notes/comparability.md). Browse at <https://act65.github.io/bandit-browser/>; contributions and corrections: [CONTRIBUTING.md](CONTRIBUTING.md).
+**Status:** Phase 4 (scaling). 1,555 papers (a 59-paper pilot and three breadth batches of about 500) extracted by an LLM with ontology v0.6: about 6,900 results across about 2,940 canonical settings. Results are checked by automated audits and a textbook gold set ([`notes/validation.md`](notes/validation.md)), and a few by their authors, but are not human-verified in general. Roughly half the extracted bounds can be compared across papers; why the rest can't is in [`notes/comparability.md`](notes/comparability.md). Browse at <https://act65.github.io/bandit-browser/>; contributions and corrections: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Documents
 

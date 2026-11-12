@@ -1,0 +1,263 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Online Minimization of Polarization and Disagreement via Low-Rank Matrix Bandits",
+  "arxiv_id": "2510.00803",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Federico Cinus",
+   "Yuko Kuroki",
+   "Atsushi Miyauchi",
+   "Francesco Bonchi"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online Polarization and Disagreement Minimization (OPD-Min)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "arbitrary_bounded",
+    "loss_set": "not_applicable",
+    "parameter_structure": "low_rank"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {
+    "r_rank": "1"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Low-rank (rank-one, symmetric PSD Theta* = s s^T) matrix bandit: actions are |V|x|V| forest matrices (I+L)^{-1} of graph Laplacians, loss <Theta*, X> (trace inner product), loss minimization",
+    "Innate opinions s in [-1,1]^{|V|}, mean-centered",
+    "Learner knows the RSC curvature kappa and the signal strength ||s||^2 (or a lower bound ell_s) to tune the exploration length T1"
+   ],
+   "definition_quote": "Let $\\mathcal{L} = \\{\\mat{L}_1, \\dots, \\mat{L}_K\\}$ be the intervention space... $f(\\mat{X}) = \\langle \\mat{\\Theta}^*, \\mat{X}\\rangle$... The learner observes bandit feedback in the form of a noisy loss signal: $Y_t = f(\\mat{X}_t) + \\eta_t$, where $\\eta_t \\sim N(0,\\sigma^2)$... $R_T = \\sum_{t=1}^T ( f(\\mat{X}_t) - f(\\mat{X}^*) )$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "OPD-Min-ESTR (Explore-Subspace-Then-Refine for OPD-Min)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "kappa",
+    "||s||^2 or lower bound ell_s",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "Max(1/kappa, sqrt(V_n))*sqrt(V_n*T)",
+    "expression_latex": "\\widetilde{\\mathcal{O}} \\left( \\max\\left\\{\\frac{ 1}{\\kappa}, \\sqrt{ \\dimension } \\right\\}  \\sqrt{ \\dimension \\cdot T} \\right)",
+    "regime": "T >= T_0 ~ ||s||^4/kappa^2 * log(2|V|/delta)"
+   },
+   "symbols": {
+    "V_n": "number of agents |V| (matrices are |V| x |V|)",
+    "kappa": "RSC curvature constant (kappa_min of the arm set over the cone)"
+   },
+   "conditions": [
+    "RSC condition (Assumption 2) holds with curvature kappa and 128 tau^2_{T1} <= kappa",
+    "Theta* = s s^T rank one, s in [-1,1]^|V| mean-centered",
+    "noise standard Gaussian (sigma = 1)",
+    "T sufficiently large: T >= T_0 ~ ||s||^4/kappa^2 log(2|V|/delta)"
+   ],
+   "tuning": [
+    "T1 ~ sqrt(T log(2|V|/delta)) / (||s||^2 kappa)",
+    "lambda_{T1} = 2 sqrt(2 log(2|V|/delta)/T1)",
+    "Stage-2 linear bandit subroutine with regret O~(k sqrt T), k = 2|V|-1 (e.g. OFUL)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main regret",
+    "number": "Theorem 4.1",
+    "quote": "Suppose the subspace linear bandit algorithm used in Stage~2 enjoys $R^{\\mathrm{sub}}_T= \\tilde{\\mathcal{O}}(k \\sqrt{T})$, where $ k = 2\\dimension - 1 $. Under \\Cref{assum: RSC}, for any failure probability $\\delta \\in (0, 1)$ and an optimally chosen number of exploration rounds $T_1 \\asymp \\frac{1}{\\|\\innateopinions\\|^2 \\kappa} \\sqrt{T\\log(2\\dimension/\\delta)})$, the total regret ... over sufficiently large $T \\ge T_0 \\asymp \\frac{\\|\\innateopinions\\|^4}{\\kappa^2} \\log(2\\dimension/\\delta)$ rounds satisfies, with probability at least $ 1 - \\delta $, $R_T = \\widetilde{\\mathcal{O}} ( \\max\\{\\frac{ 1}{\\kappa}, \\sqrt{ \\dimension } \\} \\sqrt{ \\dimension \\cdot T})$"
+   },
+   "confidence": "medium",
+   "notes": "Regret defined via expected losses f(X_t) (pseudo-regret type) but holds w.p. 1-delta. Mapped to linear_finite with low-rank parameter structure; ambient dimension is |V|^2."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(V_n*T)/kappa",
+    "expression_latex": "R_T =\\tilde{\\mathcal{O}}\\left( \\frac{1}{\\kappa  } \\sqrt{\\dimension \\cdot T}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "V_n": "number of agents |V|",
+    "kappa": "RSC curvature constant",
+    "ell_s": "known lower bound on ||s||^2"
+   },
+   "conditions": [
+    "same assumptions as Theorem 4.1 (RSC, rank-one Theta*, sigma = 1, T large enough)",
+    "||s||^2 >= ell_s with ell_s known; proof uses ell_s = Omega(|V|)"
+   ],
+   "tuning": [
+    "T1 ~ sqrt(T log(2|V|/delta)) / (ell_s kappa) (proof: 6/(ell_s kappa) sqrt(T log(2|V|/delta)))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:regret_with_lower_bound",
+    "number": "Corollary 1",
+    "quote": "Under the same assumptions as \\Cref{thm:main regret}, suppose that the true signal strength $\\|\\innateopinions\\|^2$ is unknown, but a lower bound $\\ell_s > 0$ is known, such that $\\|\\innateopinions\\|^2 \\ge \\ell_s$. If we set the exploration phase length $T_1 \\asymp \\frac{1}{\\ell_s\\,\\kappa}\\,\\sqrt{T\\,\\log\\frac{2\\dimension}{\\delta}}$, then the total regret $R_T$ is bounded by: $R_T =\\tilde{\\mathcal{O}}( \\frac{1}{\\kappa } \\sqrt{\\dimension \\cdot T})$."
+   },
+   "confidence": "low",
+   "notes": "Recorded as stated. The proof's final line drops the c(k) sqrt(T) = O~(|V| sqrt T) in-subspace term, so the statement looks inconsistent with Theorem 4.1 unless 1/kappa >= sqrt(|V|). High probability inherited from Theorem 4.1."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "abbasi2011improved",
+   "cited_title": "Improved algorithms for linear stochastic bandits",
+   "cited_first_author": "Yasin Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "OFUL (naive vectorized linear bandit reduction)",
+   "algorithm_registry_id": "oful",
+   "side": "upper",
+   "setting_description": "OPD-Min treated as a linear bandit in |V|^2 dimensions",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "V_n**2*sqrt(T)",
+    "expression_latex": "\\tilde{O}(\\dimension^2 \\sqrt{T})",
+    "regime": null
+   },
+   "where": "Appendix A"
+  },
+  {
+   "cited_key": "kang2022efficient",
+   "cited_title": "Efficient frameworks for generalized low-rank matrix bandit problems",
+   "cited_first_author": "Yue Kang",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "G-ESTT / G-ESTS",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Generalized low-rank matrix bandits, rank r matrix of dimensions d1 x d2; D_r is the r-th largest singular value of Theta*",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt((d_1 + d_2)**3*r_rank*T)/D_r",
+    "expression_latex": "\\widetilde{\\mathcal{O}}(\\sqrt{(d_1+d_2)^3 r T}/D_r)",
+    "regime": null
+   },
+   "where": "Appendix A"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:50:56",
+  "source_chars": 140040,
+  "input_tokens": 109088,
+  "output_tokens": 5002,
+  "cost_usd_equiv": 0.6895102000000001,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

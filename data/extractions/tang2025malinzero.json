@@ -1,0 +1,240 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "MALinZero: Efficient Low-Dimensional Search for Mastering Complex Multi-Agent Planning",
+  "arxiv_id": "2511.06142",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Sizhe Tang",
+   "Jiayu Chen",
+   "Tian Lan"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Contextual linear bandit over n-hot joint actions (low-dimensional joint-action reward)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "S",
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Action set is the set of n-hot vectors in R^{nd} (one local action per agent among d_act per agent), so ambient dimension is n_ag*d_act and ||a||_2 <= sqrt(n_ag)"
+   ],
+   "definition_quote": "we consider a contextual linear bandit problem with a finite joint-action set \\(\\mathcal{A} \\subset \\mathbb{R}^{nd}\\) ... each joint action $a\\in \\mathcal{A}$ is represented by an $n$-hot vector ... \\(X_t=\\langle\\theta^*, A_t\\rangle + \\varepsilon_t \\). Here \\(\\varepsilon_t\\) is conditionally \\(1-\\)subgaussian ... \\(\\|\\theta^*\\|_2 \\le S\\)"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "LinUCT (weighted LinUCB with strongly-convex mu-smooth loss f)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "S",
+    "T"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sqrt(8*mu_f*n_ag*d_act*T*beta_T*log((n_ag*d_act*lam + mu_f*n_ag*T)/(n_ag*d_act*lam)))",
+    "expression_latex": "\\sqrt{8\\mu ndt\\beta_t\\operatorname{ln}\\left(\\frac{nd \\lambda + \\mu nt}{nd\\lambda}\\right)}",
+    "regime": null
+   },
+   "symbols": {
+    "n_ag": "number of agents n",
+    "d_act": "number of actions per agent (paper's d); ambient dimension is n_ag*d_act",
+    "mu_f": "smoothness constant of the loss f (f'' <= mu)",
+    "beta_T": "confidence radius sqrt(2 mu ln(det(V_T)^{1/2}/(lam^{nd/2} delta))) + sqrt(lam) S"
+   },
+   "conditions": [
+    "noise conditionally 1-subgaussian",
+    "||theta*||_2 <= S",
+    "||A_t||_2 <= sqrt(n)"
+   ],
+   "tuning": [
+    "f strongly convex and mu-smooth (eps <= f'' <= mu)",
+    "beta_t = sqrt(2 mu ln(det(V_t)^{1/2}/(det(lam I)^{1/2} delta))) + sqrt(lam) S",
+    "regularisation lam > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:f-linucb",
+    "number": "Theorem 1",
+    "quote": "[Regret Bound of LinUCT] With probability \\(1-\\delta\\), the regret of LinUCT satisfies \\hat{R}_t \\le \\sqrt{8\\mu t \\beta_t \\operatorname{ln}\\left(\\frac{\\operatorname{det}(V_t)}{\\operatorname{det}(\\lambda I)}\\right)} \\le \\sqrt{8\\mu ndt\\beta_t\\operatorname{ln}\\left(\\frac{nd \\lambda + \\mu nt}{nd\\lambda}\\right)}."
+   },
+   "confidence": "medium",
+   "notes": "Regret is the realized regret sum_t (X_t^* - X_t), including noise differences, bounded with probability 1-delta. beta_t appears unsquared inside the sqrt as stated; proof appears to have inconsistencies. Recorded the second (explicit) form of the bound."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "n_ag*d_act*sqrt(mu_f*T)*log(T)",
+    "expression_latex": "O\\left(nd\\cdot \\sqrt{\\mu T}\\cdot\\operatorname{ln}(T)\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "n_ag": "number of agents n",
+    "d_act": "number of actions per agent (paper's d)",
+    "mu_f": "smoothness constant of the loss f"
+   },
+   "conditions": [
+    "noise conditionally 1-subgaussian",
+    "||theta*||_2 <= S",
+    "||A_t||_2 <= sqrt(n)"
+   ],
+   "tuning": [
+    "delta = 1/T",
+    "beta_t as in Theorem 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Corollary 2",
+    "quote": "[The Order of Regret Bound for LinUCT] Under the above conditions, the cumulative regret bound of LinUCT with \\(\\delta=1/T\\) satisfies \\hat{R}_T = O\\left(nd\\cdot \\sqrt{\\mu T}\\cdot\\operatorname{ln}(T)\\right)."
+   },
+   "confidence": "medium",
+   "notes": "Realized regret with delta=1/T; probability type not restated in the corollary, interpreted as holding w.p. 1-1/T."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "linucb",
+   "cited_title": null,
+   "cited_first_author": null,
+   "cited_year": null,
+   "cited_arxiv_id": null,
+   "algorithm_name": "LinUCB",
+   "algorithm_registry_id": "lin_ucb",
+   "side": "upper",
+   "setting_description": "Stochastic linear bandit with n-hot actions in R^{nd}, Euclidean least squares",
+   "bound": {
+    "notation": "O",
+    "expression": "n_ag*d_act*sqrt(T)*log(T*sqrt(n_ag))",
+    "expression_latex": "R_T \\le Cnd\\sqrt{T}\\operatorname{log}(T\\sqrt{n})",
+    "regime": null
+   },
+   "where": "Section 3.1, Classic LinUCB paragraph"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:50:39",
+  "source_chars": 110879,
+  "input_tokens": 88839,
+  "output_tokens": 3871,
+  "cost_usd_equiv": 0.5048982,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

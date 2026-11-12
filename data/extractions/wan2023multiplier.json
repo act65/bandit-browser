@@ -1,0 +1,328 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Multiplier Bootstrap-based Exploration",
+  "arxiv_id": "2302.01543",
+  "arxiv_version": null,
+  "year": 2023,
+  "authors": [
+   "Runzhe Wan",
+   "Haoyu Wei",
+   "Branislav Kveton",
+   "Rui Song"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "K-armed bandit with sub-Gaussian rewards (mean in [0,1])",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "K",
+    "sigma"
+   ],
+   "instance_assumptions": [
+    "means_in_known_interval"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_unknown"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "arm-dependent sub-Gaussian variance proxies sigma_k^2; lambda tuning requires knowledge of sigma_1 (optimal arm's proxy) or an upper bound"
+   ],
+   "definition_quote": "Consider a $K$-armed bandit, where the reward distribution of arm $k$ is $\\subG(\\sigma_k^2)$ with mean $\\mu_k$. ... Without loss of generality, we assume $f(\\vx_t, A_t) \\in [0,1]$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "MBE (Multiplier Bootstrap-based Exploration) for MAB, Gaussian weights N(1, sigma_omega^2) with pseudo-rewards 0 and 1",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "sigma"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(7*Delta_i + 10*(C_1_star + C_2_star)*log(T)/Delta_i)",
+    "expression_latex": "\\sum_{k = 2}^K \\Big\\{ 7 \\Delta_k + \\frac{10 \\big[ C_1^*(\\lambda, \\sigma_{\\omega}) + C_2^*( \\lambda, \\sigma_{\\omega}) \\big]}{\\Delta_k} \\log T \\Big\\}",
+    "regime": null
+   },
+   "symbols": {
+    "C_1_star": "8*sqrt(2)*C_3_star + 38*sigma_omega^2",
+    "C_2_star": "5*lambda_pr^2 + 45*(3+sigma_omega^2)*lambda_pr^4*C_3_star + 38*sigma_omega^2",
+    "C_3_star": "log((1 + 15/sigma_omega^2 + 3*sigma_omega + 10*sigma_omega^2)*lambda_pr^2)/(3*log(2)) + 1",
+    "lambda_pr": "pseudo-reward weight tuning parameter lambda",
+    "sigma_omega": "std of Gaussian multiplier weights"
+   },
+   "conditions": [
+    "each arm's reward is 1-sub-Gaussian",
+    "arm 1 is the unique best arm",
+    "mean rewards in [0,1]"
+   ],
+   "tuning": [
+    "multiplier weights N(1, sigma_omega^2)",
+    "lambda >= (1 + 4/sigma_omega) + sqrt(4*(1 + 4/sigma_omega)/sigma_omega)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm.MAB.1",
+    "number": "Theorem 5.1",
+    "quote": "Consider a $K$-armed bandit, where the reward distribution of arm $k$ is $1$-sub-Gaussian with mean $\\mu_k$. Suppose arm $1$ is the unique best arm ... Let the tuning parameters satisfy $\\lambda \\geq \\left(1 + 4 / \\sigma_{\\omega} \\right) + \\sqrt{4 \\left(1 + 4 / \\sigma_{\\omega} \\right)/ \\sigma_{\\omega} }$. Then, the problem-dependent regret is upper bounded by \\[ \\operatorname{Reg}_T \\leq \\sum_{k = 2}^K \\Big\\{ 7 \\Delta_k + \\frac{10 \\big[ C_1^* + C_2^* \\big]}{\\Delta_k} \\log T \\Big\\}"
+   },
+   "confidence": "high",
+   "notes": "Regret defined via means in expectation -> pseudo-regret. Algorithm does not use T; bound holds for all T, so anytime."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "7*K*mu_star + C_1_star*K*log(T) + 2*sqrt(C_2_star*K*T*log(T))",
+    "expression_latex": "7 K \\mu_1 + C_1^*(\\lambda, \\sigma_{\\omega}) K \\log T + 2 \\sqrt{ C_2^* (\\lambda, \\sigma_{\\omega}) K T \\log T}",
+    "regime": null
+   },
+   "symbols": {
+    "C_1_star": "8*sqrt(2)*C_3_star + 38*sigma_omega^2",
+    "C_2_star": "5*lambda_pr^2 + 45*(3+sigma_omega^2)*lambda_pr^4*C_3_star + 38*sigma_omega^2",
+    "C_3_star": "log((1 + 15/sigma_omega^2 + 3*sigma_omega + 10*sigma_omega^2)*lambda_pr^2)/(3*log(2)) + 1",
+    "lambda_pr": "pseudo-reward weight tuning parameter lambda",
+    "sigma_omega": "std of Gaussian multiplier weights"
+   },
+   "conditions": [
+    "each arm's reward is 1-sub-Gaussian",
+    "arm 1 is the unique best arm",
+    "mean rewards in [0,1]"
+   ],
+   "tuning": [
+    "multiplier weights N(1, sigma_omega^2)",
+    "lambda >= (1 + 4/sigma_omega) + sqrt(4*(1 + 4/sigma_omega)/sigma_omega)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm.MAB.1",
+    "number": "Theorem 5.1",
+    "quote": "and the problem-independent regret is bounded by \\begin{align*} \\operatorname{Reg}_T \\leq 7 K \\mu_1 + C_1^*(\\lambda, \\sigma_{\\omega}) K \\log T + 2 \\sqrt{ C_2^* (\\lambda, \\sigma_{\\omega}) K T \\log T}. \\end{align*}"
+   },
+   "confidence": "high",
+   "notes": "Problem-independent bound O(sqrt(KT log T))."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(Delta_i*(7 + (C_1_i + C_2_i/Delta_i**2)*log(T)))",
+    "expression_latex": "\\sum_{k = 2}^K \\Delta_k \\Bigg[ 7 + \\left\\{ C_1(\\sigma_1, \\sigma_k, \\lambda, \\sigma_{\\omega}) + \\frac{C_2(\\sigma_1, \\sigma_k, \\lambda, \\sigma_{\\omega})}{\\Delta_k^{2}} \\right\\} \\log T \\Bigg]",
+    "regime": null
+   },
+   "symbols": {
+    "C_1_i": "C_1(sigma_1, sigma_k, lambda, sigma_omega) = 10[8 sqrt(2) max_k sigma_k^2 (log D_2/(3 log 2) + 1) + 38 sigma_omega^2]",
+    "C_2_i": "C_2(sigma_1, sigma_k, lambda, sigma_omega) = 50 lambda^2 sigma_k^2 + 10[D_1 (log D_2/(3 log 2) + 1) + 38 sigma_omega^2], D_1, D_2 as defined in Theorem C.1",
+    "sigma_omega": "std of Gaussian multiplier weights",
+    "lambda_pr": "pseudo-reward weight tuning parameter lambda"
+   },
+   "conditions": [
+    "reward of arm k is sub-Gaussian with variance proxy sigma_k^2",
+    "mean rewards in [0,1]",
+    "mu_1 = max_k mu_k"
+   ],
+   "tuning": [
+    "multiplier weights N(1, sigma_omega^2)",
+    "lambda >= (4 sigma_1/sigma_omega + 1) + sqrt(4 sigma_1/sigma_omega * (4 sigma_1/sigma_omega + 1))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm.MAB",
+    "number": "Theorem C.1",
+    "quote": "Consider a $K$-armed bandit, where the reward distribution of arm $k$ is $\\subG(\\sigma_k^2)$ with mean $\\mu_k$. Suppose $\\mu_1 = \\max_{k \\in [K]} \\ \\mu_k$ ... Let the tuning parameters satisfy $\\lambda \\geq \\left( \\frac{4 \\sigma_1}{\\sigma_{\\omega}} + 1 \\right) + \\sqrt{\\frac{4\\sigma_1}{\\sigma_{\\omega}} \\left( \\frac{4 \\sigma_1}{\\sigma_{\\omega}} + 1\\right)}$, Then the problem-dependent regret is upper bounded by \\[ \\operatorname{Reg}_T \\leq \\sum_{k = 2}^K \\Delta_k \\Bigg[ 7 + \\left\\{ C_1 + \\frac{C_2}{\\Delta_k^{2}} \\right\\} \\log T \\Bigg]"
+   },
+   "confidence": "high",
+   "notes": "General-variance version of Theorem 5.1; tuning of lambda depends on sigma_1, so learner needs knowledge of the variance proxy."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "7*K*mu_star + C_1_max*K*log(T) + 2*sqrt(C_2_max*K*T*log(T))",
+    "expression_latex": "7 K \\mu_1 + \\max_{k \\in [K] \\setminus \\{ 1 \\}} C_1(\\sigma_1, \\sigma_k, \\lambda) K \\log T + 2 \\sqrt{\\max_{k \\in [K] \\setminus \\{ 1 \\}} C_2 (\\sigma_1, \\sigma_k, \\lambda) K T \\log T}",
+    "regime": null
+   },
+   "symbols": {
+    "C_1_max": "max over suboptimal k of C_1(sigma_1, sigma_k, lambda, sigma_omega)",
+    "C_2_max": "max over suboptimal k of C_2(sigma_1, sigma_k, lambda, sigma_omega)"
+   },
+   "conditions": [
+    "reward of arm k is sub-Gaussian with variance proxy sigma_k^2",
+    "mean rewards in [0,1]",
+    "mu_1 = max_k mu_k"
+   ],
+   "tuning": [
+    "multiplier weights N(1, sigma_omega^2)",
+    "lambda >= (4 sigma_1/sigma_omega + 1) + sqrt(4 sigma_1/sigma_omega * (4 sigma_1/sigma_omega + 1))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm.MAB",
+    "number": "Theorem C.1",
+    "quote": "Furthermore, the problem-independent regret is upper bounded by \\[ \\operatorname{Reg}_T \\leq 7 K \\mu_1 + \\max_{k \\in [K] \\setminus \\{ 1 \\}} C_1(\\sigma_1, \\sigma_k, \\lambda) K \\log T + 2 \\sqrt{\\max_{k \\in [K] \\setminus \\{ 1 \\}} C_2 (\\sigma_1, \\sigma_k, \\lambda) K T \\log T}. \\]"
+   },
+   "confidence": "medium",
+   "notes": "Statement drops sigma_omega argument of C_1, C_2 (typo); proof uses the full C_1, C_2."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "vaswani2018new",
+   "cited_title": "New insights into bootstrapping for bandits",
+   "cited_first_author": "Vaswani",
+   "cited_year": 2018,
+   "cited_arxiv_id": "1805.09793",
+   "algorithm_name": "Non-parametric bootstrap with forced exploration",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Bernoulli multi-armed bandit",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(2/3)",
+    "expression_latex": "\\mathcal{O}(T^{2/3})",
+    "regime": null
+   },
+   "where": "Section 2 (Related Work)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T16:56:42",
+  "source_chars": 200071,
+  "input_tokens": 150560,
+  "output_tokens": 7215,
+  "cost_usd_equiv": 1.0655462,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

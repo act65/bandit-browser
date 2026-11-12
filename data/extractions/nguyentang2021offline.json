@@ -1,0 +1,276 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Offline Neural Contextual Bandits: Pessimism, Optimization and Generalization",
+  "arxiv_id": "2111.13807",
+  "arxiv_version": null,
+  "year": 2021,
+  "authors": [
+   "Thanh Nguyen-Tang",
+   "Sunil Gupta",
+   "A. Tuan Nguyen",
+   "Svetha Venkatesh"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Offline stochastic K-armed contextual bandit with neural network function approximation",
+   "objective": "simple_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "neural_ntk"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": false,
+   "out_of_scope_reason": "Offline policy learning from a fixed logged dataset (no interaction); not an interactive bandit problem.",
+   "unmapped": [
+    "Offline setting: learner only has n logged samples collected by an unknown (possibly adaptive, non-stationary) behaviour policy mu",
+    "Empirical single-policy concentration: ||pi*(.|x_t)/mu(.|D_{t-1},x_t)||_inf <= kappa",
+    "Unknown reward function h: R^d -> [0,1] with R-subgaussian conditional noise; no functional form assumed",
+    "NTK Gram matrix H >= lambda_0 I on observed contexts; the learner's tuning uses lambda_0 (network width and beta_t depend on it)",
+    "Context vectors on the unit sphere with duplicated-coordinate structure"
+   ],
+   "definition_quote": "In the offline contextual bandit setting, the goal is to learn an optimal policy only from an offline data $\\mathcal{D}_n = \\{ (\\bm{x}_t,a_t, r_t) \\}_{t=1}^n$ collected a priori by a behaviour policy $\\mu$. ... For each $t$, $r_t = h( \\bm{x}_{t, a_t}) + \\xi_t$, where $h: \\mathbb{R}^d \\rightarrow [0,1]$ is an unknown reward function, and $\\xi_t$ is a $R$-subgaussian noise conditioned on $(\\mathcal{D}_{t-1}, \\bm{x}_t, a_t)$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "NeuraLCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(kappa*sqrt(n)*sqrt(d_eff*log(1 + n*K/lam) + 2) + kappa*sqrt(n) + 2 + sqrt(2*n*log((10*n + 4)/delta)))/n",
+    "expression_latex": "n \\cdot \\mathbb{E} [\\subopt(\\hat{\\pi}) ] \\leq  \\kappa \\sqrt{n}  \\sqrt{\\tilde{d} \\log(1 + nK/\\lambda)  + 2} +  \\kappa \\sqrt{n}  + 2 + \\sqrt{2 n \\log((10n+4)/\\delta)}",
+    "regime": null
+   },
+   "symbols": {
+    "n": "number of offline samples",
+    "kappa": "empirical single-policy concentration coefficient (Assumption 4.2)",
+    "d_eff": "effective dimension of the NTK matrix, log det(I+H/lambda)/log(1+nK/lambda)"
+   },
+   "conditions": [
+    "Assumption 4.1: NTK matrix H >= lambda_0 I, ||x^(i)||_2 = 1, duplicated-coordinate structure of inputs",
+    "Assumption 4.2: contexts x_t independent of D_{t-1}; ||pi*(.|x_t)/mu(.|D_{t-1},x_t)||_inf <= kappa",
+    "h maps into [0,1], noise R-subgaussian conditionally on the past"
+   ],
+   "tuning": [
+    "m >= poly(n, L, K, 1/lambda, 1/lambda_0, log(1/delta))",
+    "lambda >= max{1, Theta(L)}",
+    "beta_t = sqrt(lambda + C_3^2 t L)(t^{1/2} lambda^{-1/2} + (nK)^{1/2} lambda_0^{-1/2}) m^{-1/2}",
+    "eta_t = iota/sqrt(t), iota^{-1} = Omega(n^{2/3} m^{5/6} lambda^{-1/6} L^{17/6} log^{1/2} m) v Omega(m lambda^{1/2} log^{1/2}(nKL^2(10n+4)/delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "main_theorem",
+    "number": "Theorem 4.1",
+    "quote": "For any $\\delta \\in (0,1)$, under Assumption \\ref{assumption:ntk_input_data} and \\ref{assumption:distributional_shift}, if the network width $m$, ... then with probability at least $1 - \\delta$ over the randomness of $\\bm{W}^{(0)}$ and $\\mathcal{D}_n$, the sub-optimality of $\\hat{\\pi}$ returned by Algorithm 1 is bounded as $n \\cdot \\mathbb{E} [\\subopt(\\hat{\\pi}) ] \\leq  \\kappa \\sqrt{n}  \\sqrt{\\tilde{d} \\log(1 + nK/\\lambda)  + 2} +  \\kappa \\sqrt{n}  + 2 + \\sqrt{2 n \\log((10n+4)/\\delta)}$"
+   },
+   "confidence": "medium",
+   "notes": "Theorem bounds n*E[SubOpt]; expression divided by n to give the expected sub-optimality of the returned (randomly selected) policy, measured against the per-context optimal policy over the context distribution. Expectation is over the uniform choice of hat-pi; overall statement is w.p. 1-delta over initialization and data. Paper simplifies to O~(kappa max{sqrt(d_tilde),1} n^{-1/2}). Offline setting, out of scope."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "DBLP:conf/aistats/YinW20",
+   "cited_title": "Asymptotically efficient off-policy evaluation for tabular reinforcement learning",
+   "cited_first_author": "Ming Yin",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Offline (off-policy evaluation), tabular, greedy, uniform data coverage, independent data",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(X_size*K)/sqrt(n)",
+    "expression_latex": "\\tilde{\\mathcal{O}}\\left( \\sqrt{ | \\mathcal{X}| \\cdot K} \\cdot n^{-1/2}\\right)",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "rashidinejad2021bridging",
+   "cited_title": "Bridging offline reinforcement learning and imitation learning: A tale of pessimism",
+   "cited_first_author": "Paria Rashidinejad",
+   "cited_year": 2021,
+   "cited_arxiv_id": "2103.12021",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Offline contextual bandit, tabular, pessimism, single-policy concentration, independent data",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(X_size*kappa)/sqrt(n)",
+    "expression_latex": "\\tilde{\\mathcal{O}}\\left( \\sqrt{|\\mathcal{X}| \\cdot \\kappa} \\cdot n^{-1/2} \\right)",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "DBLP:journals/corr/abs-2002-09516",
+   "cited_title": "Minimax-optimal off-policy evaluation with linear function approximation",
+   "cited_first_author": "Yaqi Duan",
+   "cited_year": 2020,
+   "cited_arxiv_id": "2002.09516",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Off-policy evaluation, linear function approximation, uniform coverage, independent data",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "kappa/sqrt(n) + d/n",
+    "expression_latex": "\\tilde{\\mathcal{O}}\\left( \\kappa \\cdot n^{-1/2} + d \\cdot n^{-1} \\right)",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "DBLP:journals/corr/abs-2012-15085",
+   "cited_title": "Is pessimism provably efficient for offline rl?",
+   "cited_first_author": "Ying Jin",
+   "cited_year": 2020,
+   "cited_arxiv_id": "2012.15085",
+   "algorithm_name": "PEVI / LinLCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Offline policy learning, linear function approximation, pessimism, uniform coverage, independent data",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d/sqrt(n)",
+    "expression_latex": "\\tilde{\\mathcal{O}}\\left( d \\cdot n^{-1/2} \\right)",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "nguyentang2021sample",
+   "cited_title": "Sample complexity of offline reinforcement learning with deep relu networks",
+   "cited_first_author": "Thanh Nguyen-Tang",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Offline policy learning with narrow ReLU networks, greedy, optimization oracle, uniform coverage, independent data; alpha is a smoothness parameter",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(kappa)*n**(-alpha_s/(2*(alpha_s + d)))",
+    "expression_latex": "\\tilde{\\mathcal{O}}\\left(  \\sqrt{\\kappa} \\cdot n^{- \\frac{\\alpha}{2(\\alpha + d)}} \\right)",
+    "regime": null
+   },
+   "where": "Table 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:10:57",
+  "source_chars": 132171,
+  "input_tokens": 109514,
+  "output_tokens": 5650,
+  "cost_usd_equiv": 0.7058782,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

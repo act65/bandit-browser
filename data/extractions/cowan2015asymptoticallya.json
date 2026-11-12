@@ -1,0 +1,304 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "An Asymptotically Optimal Policy for Uniform Bandits of Unknown Support",
+  "arxiv_id": "1505.01918",
+  "arxiv_version": null,
+  "year": 2015,
+  "authors": [
+   "Wesley Cowan",
+   "Michael N. Katehakis"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Uniform bandits of unknown support",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "reward_family"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_unknown"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each arm's reward distribution is uniform on an unknown finite interval [a_i, b_i] (both endpoints unknown, not normalised to a known range)"
+   ],
+   "definition_quote": "It is assumed that for each fixed $i$, $\\{ X^i_k \\}_{k \\geq 1}$ is a sequence of i.i.d. uniform random variables over some interval $[a_i, b_i]$, with the support (i.e., $a_i, b_i$) unknown to the controller."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "UCB-Uniform (pi_CHK)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "reward_family"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "BK-UCB (pi_BK)",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "reward_family"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(Delta_i*log(T)/log(1 + 2*Delta_i/S_i*(1 - (eps_i + delta_i)/Delta_i))) + sum_subopt((S_i/delta_i + 3*S_star**3/(8*eps_i**3) + 18)*Delta_i)",
+    "expression_latex": "\\left( \\sum_{i:\\mu_i \\neq \\mu^*} \\frac{ \\Delta_i }{ \\ln ( 1 + \\frac{ 2\\Delta_i}{S_i} (1- \\frac{ (\\epsilon_i +\\delta_i) }{\\Delta_i} )) } \\right) \\ln n + \\sum_{i:\\mu_i \\neq \\mu^*} \\left( \\frac{ S_i }{\\delta_i} + \\frac{3}{8} \\frac{S^3_*}{\\epsilon_i^3} + 18 \\right) \\Delta_i",
+    "regime": "T >= 3K"
+   },
+   "symbols": {
+    "S_i": "span b_i - a_i of arm i",
+    "S_star": "minimal span among optimal arms",
+    "eps_i": "analysis parameter with 0 < eps_i < S_star",
+    "delta_i": "analysis parameter with 0 < delta_i < S_i (not failure probability)"
+   },
+   "conditions": [
+    "n >= 3N",
+    "0 < eps_i < S_star, 0 < delta_i < S_i, eps_i + delta_i < Delta_i"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:finite-time",
+    "number": "Theorem 3",
+    "quote": "For each sub-optimal $i$ (i.e., $\\mu_i \\neq \\mu^*$), let $(\\epsilon_i, \\delta_i)$ be such that $0 < \\epsilon_i < S_*$, $0 < \\delta_i < S_i$, and $\\epsilon_i + \\delta_i < \\Delta_i$. For \\cpi\\ as defined above, for all $n \\geq 3N$: R_{\\cpi}(n) \\leq ..."
+   },
+   "confidence": "high",
+   "notes": "Regret defined as sum Delta_i E[T_i(n)], i.e. pseudo-regret. N = K. Policy uses current time n, no horizon needed."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "asymptotic",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "sum_subopt(Delta_i/log(1 + 2*Delta_i/S_i))*log(T)",
+    "expression_latex": "\\lim_n \\frac{ R_{\\cpi}(n) }{ \\ln n } = \\sum_{i:\\mu_i \\neq \\mu^*} \\frac{ \\Delta_i }{ \\ln ( 1 + \\frac{2 \\Delta_i }{ S_i } ) }",
+    "regime": null
+   },
+   "symbols": {
+    "S_i": "span b_i - a_i of arm i"
+   },
+   "conditions": [],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:optimality",
+    "number": "Theorem 4",
+    "quote": "For \\cpi\\ as defined above, \\cpi\\ is asymptotically optimal in the sense that \\lim_n \\frac{ R_{\\cpi}(n) }{ \\ln n } = \\bM_{\\ttext{BK}}( \\{ f_i \\} )= \\sum_{i:\\mu_i \\neq \\mu^*} \\frac{ \\Delta_i }{ \\ln ( 1 + \\frac{2 \\Delta_i }{ S_i } ) }."
+   },
+   "confidence": "high",
+   "notes": "Stated as an equality of the limit; the upper (limsup) part is proven here, matching lower bound from Burnetas-Katehakis 1996 (cited)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(Delta_i/log(1 + 2*Delta_i/S_i))*log(T) + sum_subopt(8*G_i*Delta_i/((S_i + 2*Delta_i)*log(1 + 2*Delta_i/S_i)**2) + 3*S_star**3*Delta_i/(8*G_i**3))*log(T)**(3/4) + sum_subopt(S_i*Delta_i/G_i)*log(T)**(1/4) + 18*sum_subopt(Delta_i)",
+    "expression_latex": "( \\sum \\frac{ \\Delta_i}{ \\ln ( 1 + \\frac{2 \\Delta_i }{ S_i } ) } ) ( \\ln n ) + \\sum ( \\frac{8 G_i \\Delta_i }{ (S_i+2\\Delta_i) \\ln(1+\\frac{ 2\\Delta_i}{S_i})^2} + \\frac{3S^3_* \\Delta_i}{8G^3_i} ) ( \\ln n )^{3/4} + \\sum (\\frac{ S_i \\Delta_i }{G_i} ) ( \\ln n )^{1/4} + 18 \\sum \\Delta_i",
+    "regime": "T >= 3K"
+   },
+   "symbols": {
+    "S_i": "span b_i - a_i of arm i",
+    "S_star": "minimal span among optimal arms",
+    "G_i": "min(S_star, S_i, Delta_i/4)"
+   },
+   "conditions": [
+    "n >= 3N"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:epsilon-free",
+    "number": "Theorem 5",
+    "quote": "For each sub-optimal $i$ (i.e., $\\mu_i \\neq \\mu^*)$, let $G_i = \\min\\left( S_*, S_i, \\frac{1}{4} \\Delta_i \\right)$. For all $n \\geq 3N$, R_{\\cpi}(n) \\leq ..."
+   },
+   "confidence": "high",
+   "notes": "Epsilon-free version; remainder O((ln n)^{3/4})."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_subopt(Delta_i*log(T)/log(1 + 2*Delta_i/S_i)) + log(T)**(2/3 + beta_r)",
+    "expression_latex": "\\sum_{i:\\mu_i \\neq \\mu^*} \\frac{ \\Delta_i \\ln n }{ \\ln ( 1 + \\frac{2 \\Delta_i }{ S_i } ) } + o(( \\ln n )^{2/3 + \\beta})",
+    "regime": "asymptotic in T; second term is little-o"
+   },
+   "symbols": {
+    "S_i": "span b_i - a_i of arm i",
+    "beta_r": "arbitrary beta > 0 in the remainder exponent"
+   },
+   "conditions": [],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:remainder-refined",
+    "number": "Theorem 7",
+    "quote": "For any $\\beta > 0$, R_{\\cpi}(n) \\leq \\sum_{i:\\mu_i \\neq \\mu^*} \\frac{ \\Delta_i \\ln n }{ \\ln ( 1 + \\frac{2 \\Delta_i }{ S_i } ) } + o(( \\ln n )^{2/3 + \\beta})."
+   },
+   "confidence": "medium",
+   "notes": "The second term is o((ln T)^{2/3+beta}), not exactly (ln T)^{2/3+beta}; the expression writes the remainder rate with leading term exact. Notation 'exact' is approximate here."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "bkmab96",
+   "cited_title": "Optimal adaptive policies for sequential allocation problems",
+   "cited_first_author": "Apostolos N Burnetas",
+   "cited_year": 1996,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Stochastic K-armed bandits with arm densities in a family F (here uniform densities of unknown support), uniformly fast policies",
+   "bound": {
+    "notation": "liminf",
+    "expression": "sum_subopt(Delta_i/log(1 + 2*Delta_i/S_i))*log(T)",
+    "expression_latex": "\\liminf_n \\frac{ R_\\pi(n) }{ \\ln n } \\geq \\sum_{i:\\mu_i \\neq \\mu^*} \\frac{ \\Delta_i }{ \\ln ( 1 + \\frac{2 \\Delta_i }{ b_i - a_i } ) }",
+    "regime": "for uniformly fast policies"
+   },
+   "where": "Section 1.2 Eq. (lower-bound) and Lemma 2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T17:09:39",
+  "source_chars": 55889,
+  "input_tokens": 68647,
+  "output_tokens": 5672,
+  "cost_usd_equiv": 0.3793822,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

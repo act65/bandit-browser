@@ -1,0 +1,266 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Tree Search-Based Evolutionary Bandits for Protein Sequence Optimization",
+  "arxiv_id": "2401.06173",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Jiahao Qiu",
+   "Hui Yuan",
+   "Jinghong Zhang",
+   "Wentao Chen",
+   "Huazheng Wang",
+   "Mengdi Wang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Bayesian sequence design with GP fitness prior over embedded sequences within a Hamming ball (tree search)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "kernel_rkhs",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "T",
+    "kernel",
+    "prior",
+    "sigma"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "general"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Actions are discrete amino-acid sequences within Hamming distance N of a wild-type, mapped to R^d by a known Lipschitz embedding phi; the learner can only move locally (tree search), with Condition 3.2 requiring each step to reach at least the local maximum of the sampled function within radius r of the previous iterate in embedding space"
+   ],
+   "definition_quote": "we focus on a local searching region $\\bar{\\mathcal{X}} := \\{x: d(x, x^{wt}) \\leq N\\} ... $f^{\\star}:\\mathbb{R}^d \\to R$ is a sample from the Gaussian process $\\mathcal{GP}(0, k(\\cdot, \\cdot))$ (with known kernel function) ... $\\tilde F(x) = f^{\\star}(\\phi(x)) + \\epsilon$, where $\\epsilon \\sim \\mathcal{N}(0, \\lambda), \\lambda > 1$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Meta algorithm (tree search with rarely-switching GP posterior sampling, Alg. 1 / Alg. 3)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "kernel",
+    "prior",
+    "sigma"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "(f_norm + sqrt(d*log(T)) + sqrt(gamma_Tm1))*sqrt(lambda_noise*T*gamma_T) + B_f*gamma_T*(1 + 4*L_phi**2*N_depth**2/r**2)",
+    "expression_latex": "\\beta_{T}\\sqrt{\\lambda T \\gamma_{T}} + B \\gamma_{T} \\rbra{1 + \\frac{4 L_{\\phi}^2 N^2}{r^2}},\\ \\beta_T = O( \\mathbb{E}[\\|f^{\\star}\\|_{k}]+\\sqrt{d \\ln T} + \\sqrt{\\gamma_{T-1}})",
+    "regime": null
+   },
+   "symbols": {
+    "f_norm": "E[||f*||_k], expected RKHS norm of the GP sample",
+    "gamma_Tm1": "maximum information gain over T-1 rounds",
+    "lambda_noise": "Gaussian noise variance lambda (>1)",
+    "B_f": "bound on |f_t| over the local region D",
+    "L_phi": "Lipschitz constant of the embedding map phi",
+    "N_depth": "tree-search depth (max Hamming distance from wild-type)",
+    "r": "local search radius from Condition 3.2"
+   },
+   "conditions": [
+    "Assumption 3.6: each f_t bounded by B on D, locally concave, L_f-Lipschitz, attains maximum in the interior of D",
+    "Condition 3.2: each tree-search step finds x_t with F_t(x_t) >= max F_t over ||phi(x)-phi(x_{t-1})|| <= r",
+    "embedding phi is L_phi-Lipschitz w.r.t. Hamming distance",
+    "noise variance lambda > 1 (proof takes lambda = 1 + 1/T)"
+   ],
+   "tuning": [
+    "f_t resampled from the GP posterior only when det(V_t)/det(V_pre(t)) > 2 (O(gamma_T) updates)",
+    "discretization D_t with |f*(x) - f*([x]_t)| <= 1/t^2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 3.7",
+    "quote": "Under Assumption \\ref{asmp:gp_f}, \\ref{asmp:noisy_fdb}, \\ref{asmp:ft_cvx} and Condition \\ref{cond:local_argmax}, Alg.\\ref{alg:meta} updates $f_t$ for $O \\rbra{\\gamma_T}$ times its Bayesian regret is bounded by \\operatorname{BayesRGT}(T) = O \\rbra{  \\beta_{T}\\sqrt{\\lambda T \\gamma_{T}} + B \\gamma_{T} \\rbra{1 + \\frac{4 L_{\\phi}^2 N^2}{r^2}}}, where $\\beta_T = O\\left( \\mathbb{E} \\sbra{\\|f^{\\star}\\|_{k}}+\\sqrt{d \\ln T} + \\sqrt{\\gamma_{T-1}}\\right)$."
+   },
+   "confidence": "medium",
+   "notes": "beta_T substituted into the expression. Regret is against the best sequence in the Hamming ball. The proof sets lambda = 1+1/T even though Assumption 3.5 only requires lambda > 1. The paper notes this gives Õ(d sqrt T) for a linear kernel."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "srinivas2009gaussian",
+   "cited_title": "Gaussian process optimization in the bandit setting: No regret and experimental design",
+   "cited_first_author": "Srinivas",
+   "cited_year": 2009,
+   "cited_arxiv_id": "0912.3995",
+   "algorithm_name": "GP-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "GP bandits (Bayesian GP prior), d-dim actions",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(d*T*gamma_T)",
+    "expression_latex": "\\tilde O(\\sqrt{dT\\gamma_T})",
+    "regime": null
+   },
+   "where": "Related Work"
+  },
+  {
+   "cited_key": "srinivas2009gaussian",
+   "cited_title": "Gaussian process optimization in the bandit setting: No regret and experimental design",
+   "cited_first_author": "Srinivas",
+   "cited_year": 2009,
+   "cited_arxiv_id": "0912.3995",
+   "algorithm_name": "GP-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "agnostic (RKHS) kernel bandits",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "gamma_T*sqrt(T)",
+    "expression_latex": "\\tilde O(\\gamma_T \\sqrt{T})",
+    "regime": null
+   },
+   "where": "Related Work"
+  },
+  {
+   "cited_key": "chowdhury2017kernelized",
+   "cited_title": "On kernelized multi-armed bandits",
+   "cited_first_author": "Chowdhury",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GP-TS",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "agnostic (RKHS) kernel bandits",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "gamma_T*sqrt(d*T)",
+    "expression_latex": "\\tilde O(\\gamma_T \\sqrt{dT})",
+    "regime": null
+   },
+   "where": "Related Work"
+  },
+  {
+   "cited_key": "abbasi2011improved",
+   "cited_title": "Improved algorithms for linear stochastic bandits",
+   "cited_first_author": "Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "d-dimensional linear bandits (upper and lower bounds stated to match)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\tilde O(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Related Work"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:14:57",
+  "source_chars": 112381,
+  "input_tokens": 92382,
+  "output_tokens": 4992,
+  "cost_usd_equiv": 0.5556622,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,195 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Online Influence Maximization with Semi-Bandit Feedback under Corruptions",
+  "arxiv_id": "2409.20079",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Xiaotong Cheng",
+   "Behzad Nourani-Koliji",
+   "Setareh Maghsudi"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online influence maximization under corruption (IC model, edge semi-bandit feedback, linear generalization of activation probabilities)",
+   "objective": "cumulative_regret",
+   "feedback": "triggered_semi_bandit",
+   "environment": "stochastic_corrupted",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "d",
+    "S",
+    "C"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "linear_optimization_oracle",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
+   },
+   "corruption": {
+    "adversary": "unspecified",
+    "budget_measure": "unspecified",
+    "structure": "arbitrary",
+    "regret_reference": "uncorrupted",
+    "model": "budget",
+    "target": "rewards"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "m_set",
+    "reward": "nonlinear_monotone_lipschitz",
+    "loss_scale": "unspecified"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Independent cascade diffusion on a known directed graph; base arms are edges with activation probability p(e)=x_e^T theta (known edge features, unknown theta)",
+    "Corruption: each corrupted node u shifts activation probabilities of all its out-edges by c_{u,t}; C = max_u sum_t |c_{u,t}| (per-node budget, maximum over nodes)",
+    "Reward is expected influence spread f(S), satisfying monotonicity and 1-norm bounded smoothness with constant B",
+    "Learner knows the graph topology (hence E^* and E^c) and has access to an (alpha,gamma)-approximation oracle for offline IM"
+   ],
+   "definition_quote": "For a normal user, the activation probability $p(e)$ of any out-edge $e$ can always be well-approximated as $p(e) = \\boldsymbol{x}_{e}^T\\boldsymbol{\\theta}$, whereas for any corrupted user $u \\in \\mathcal{V}$, the activation probability of its out-edge $e$ at $t$ is given by $p_t(e) = \\boldsymbol{x}_{e}^T\\boldsymbol{\\theta} + c_{u,t}$. ... $R^{\\alpha \\gamma}(T) = T \\cdot f_{D,\\boldsymbol{P}}(\\mathcal{S}^{opt}) - \\frac{1}{\\alpha \\gamma}\\mathbb{E}[\\sum_{t=1}^T f_{D,\\boldsymbol{P}}(\\mathcal{S}_t)]$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "CW-IMLinUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d",
+    "S",
+    "C",
+    "E_star",
+    "E_c",
+    "graph topology",
+    "approximation oracle"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "alpha_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "d*B_smooth*E_star*sqrt(T)*log(n_nodes*T) + B_smooth*E_star*E_c*C*d*log(n_nodes*T)",
+    "expression_latex": "O(dBE^*\\sqrt{T}\\log(nT) + BE^*E^cCd\\log(nT))",
+    "regime": null
+   },
+   "symbols": {
+    "B_smooth": "1-norm bounded smoothness constant of the expected spread (B = largest number of nodes reachable from any node)",
+    "E_star": "number of edges in the first min{l,K_seed} (largest) connected subgraphs, E^* <= m_edges",
+    "E_c": "sum over the first min{l,K_seed} subgraphs of the maximum number of descendant edges of a node, E^c <= E^*",
+    "n_nodes": "number of users (nodes) in the graph",
+    "K_seed": "seed-set cardinality budget (paper's K)",
+    "m_edges": "number of edges (paper's m)"
+   },
+   "conditions": [
+    "Activation probabilities follow Assumption 3 (linear in known edge features plus per-node corruption c_{u,t})",
+    "||x_e|| <= 1 for all edges, ||theta|| <= Theta (known)",
+    "Monotonicity and 1-norm bounded smoothness (Assumptions 1-2)",
+    "ORACLE is an (alpha,gamma)-approximation algorithm",
+    "Independent cascade diffusion model with edge semi-bandit feedback"
+   ],
+   "tuning": [
+    "lambda = sqrt(d)/(C*E^c)",
+    "beta >= sigma^{-2} sqrt(d log(1+E^*T/d) + 2 log(nT)) + sigma^{-2} lambda E^c C + Theta",
+    "any sigma > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "the:rgt",
+    "number": "Theorem 1",
+    "quote": "Assume that the activation probability of users satisfy Assumption~\\ref{assump:clb-p}. Besides, \\textsc{ORACLE} is an $(\\alpha,\\gamma)$-approximation algorithm. Let $\\Theta$ be the known upper bound on $\\norm{\\boldsymbol{\\theta}}$, $C \\geq 0$ is the corruption budget, $\\lambda= \\frac{\\sqrt{d}}{CE^c}$. For any $\\sigma > 0$ and any $x_e \\in \\mathbb{R}^d$, ... if $\\beta$ satisfies ... the $\\alpha \\gamma$-scaled regret is upper bounded as $R^{\\alpha \\gamma}(T) \\leq O(dBE^*\\sqrt{T}\\log(nT) + BE^*E^cCd\\log(nT))$."
+   },
+   "confidence": "medium",
+   "notes": "The regret is alpha*gamma-scaled regret in expectation against the uncorrupted spread f_{D,P}, so it is recorded as alpha_regret. The bound depends on graph topology (E^*, E^c), so 'worst_case' here means not gap-dependent. Remark 7 gives the topology-free version O(dmB sqrt(T) log(nT) + B m^2 C d log(nT)) using E^c, E^* <= m. Noise: activations are Bernoulli but the proof only uses bounded zero-mean noise. Compute depends on the oracle, so it is recorded as not_stated."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:28:58",
+  "source_chars": 92693,
+  "input_tokens": 83111,
+  "output_tokens": 4382,
+  "cost_usd_equiv": 0.4692942,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,243 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Multi-Agent Stage-wise Conservative Linear Bandits",
+  "arxiv_id": "2510.00602",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Amirhossein Afsharrad",
+   "Ahmadreza Moradipari",
+   "Sanjay Lall"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Multi-agent stage-wise conservative linear bandit",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "N",
+    "S",
+    "L_feat",
+    "sigma"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "multi_agent_cooperative",
+    "safety_constraints"
+   ],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "l2_ball",
+    "loss_set": "bounded_mean_reward",
+    "parameter_structure": "dense"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "conservative_baseline",
+    "violation": "never"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "N agents on an undirected connected network communicate only with neighbours via a doubly stochastic matrix W; each communication round is a played round incurring regret",
+    "each agent observes local reward with its own parameter theta^i; regret measured w.r.t. the global (average) parameter",
+    "the learner knows the network's second largest eigenvalue magnitude |lambda_2| and the weight matrix W",
+    "stage-wise conservative constraint: expected reward at every round >= (1-alpha) times known baseline reward r_{b,t}; learner knows alpha, baseline rewards r_{b,t}, and bounds kappa_l, r_l, r_h",
+    "mean rewards x^T theta_global in [0,1]"
+   ],
+   "definition_quote": "A network of $N$ agents collaboratively maximizes cumulative reward while ensuring that the expected reward at every round is no less than $(1-\\alpha)$ times that of a baseline policy. ... $\\mathcal{R}(T) = \\sum_{t=1}^T \\left[x^{*\\top} \\theta_*^{\\text{global}} - x_t^\\top \\theta_*^{\\text{global}}\\right]$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "MA-SCLUCB (Multi-Agent Stage-wise Conservative Linear UCB)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "delta",
+    "T",
+    "lam",
+    "alpha_cons",
+    "N",
+    "lambda_2",
+    "W",
+    "S",
+    "L_feat",
+    "sigma",
+    "kappa_l",
+    "r_l",
+    "r_h",
+    "r_{b,t}"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(1 + q_M)*(2*beta_M*sqrt(2*d*M_ep*log(1 + M_ep*L_feat**2/(lam*d))) + N_c*(kappa_h + rho*(r_h + S)))",
+    "expression_latex": "(1+q(M))\\Big[2\\beta_M\\sqrt{2dM\\log(1+\\tfrac{ML^2}{\\lambda d})} + N_M^c\\cdot(\\kappa_h+\\rho(r_h+S))\\Big]",
+    "regime": null
+   },
+   "symbols": {
+    "q_M": "communication length q(M) = ceil(log(2 N M)/sqrt(2 log(1/|lambda_2|)))",
+    "beta_M": "confidence radius beta_M = (R/sqrt(N)) sqrt(d log((1+M L^2/lam)/delta)) + sqrt(lam) S + L/sqrt(lam)",
+    "M_ep": "number of episodes completed by time T",
+    "N_c": "number of conservative episodes, bounded in Lemma 2",
+    "kappa_h": "upper bound on baseline suboptimality gap",
+    "rho": "alpha r_l/(S + r_h)",
+    "r_h": "upper bound on baseline reward",
+    "alpha_cons": "conservatism parameter",
+    "lambda_2": "second largest eigenvalue magnitude of W"
+   },
+   "conditions": [
+    "Assumptions 1-4: conditionally R-sub-Gaussian noise, ||theta^i|| <= S, ||x|| <= L with x^T theta_global in [0,1], baseline gap and reward bounds kappa_l<=kappa_{b,t}<=kappa_h, 0<r_l<=r_{b,t}<=r_h",
+    "|lambda_2| < 1"
+   ],
+   "tuning": [
+    "q(s) = ceil(log(2Ns)/sqrt(2 log(1/|lambda_2|)))",
+    "rho = alpha r_l/(S + r_h)",
+    "delta_conf = delta/(2N)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem 2",
+    "quote": "Run MA-SCLUCB with $q(s)$ from \\eqref{eq:comm_length}. Let $M$ be the number of episodes by time $T$. With probability at least $1-\\delta$, \\mathcal{R}(T)\\ \\le\\ (1+q(M))\\Big[ 2\\beta_M\\sqrt{2dM\\log(1+\\tfrac{ML^2}{\\lambda d})} + N_M^c\\cdot(\\kappa_h+\\rho(r_h+S))\\Big], where $N_M^c$ satisfies \\eqref{eq:num-cons}."
+   },
+   "confidence": "medium",
+   "notes": "Regret is pseudo-regret on means but bound holds w.p. 1-delta. N_c is bounded by Lemma 2 (involves sigma_zeta, h_1, beta_M). Safety constraint holds at every round on the high-probability event."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d/sqrt(N)*sqrt(T)*(1 + log(N*T)/sqrt(log(1/lambda_2)))",
+    "expression_latex": "\\tilde{O}\\!\\left(\\frac{d}{\\sqrt{N}}\\sqrt{T}\\,\\Big(1+\\frac{\\log(NT)}{\\sqrt{\\log(1/|\\lambda_2|)}}\\Big)\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "lambda_2": "second largest eigenvalue magnitude of W"
+   },
+   "conditions": [
+    "Assumptions 1-4",
+    "|lambda_2| < 1"
+   ],
+   "tuning": [
+    "q(s) = ceil(log(2Ns)/sqrt(2 log(1/|lambda_2|)))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem 2",
+    "quote": "Using this bound and noting that $q(M) \\le q(T/(1+q(1))) = O(\\log(NT)/\\sqrt{\\log(1/|\\lambda_2|)})$, the regret bound simplifies to: \\mathcal{R}(T) = \\tilde{O}(\\frac{d}{\\sqrt{N}}\\sqrt{T}(1+\\frac{\\log(NT)}{\\sqrt{\\log(1/|\\lambda_2|)}}))"
+   },
+   "confidence": "low",
+   "notes": "Simplification stated in the 'Orders of magnitude' discussion after Theorem 2, not a formal statement; hides dependence on baseline constants, alpha, sigma_zeta. Abstract states it as d/sqrt(N) sqrt(T) log(NT)/sqrt(log(1/|lambda_2|))."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:46:58",
+  "source_chars": 42421,
+  "input_tokens": 57198,
+  "output_tokens": 4019,
+  "cost_usd_equiv": 0.2547302,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

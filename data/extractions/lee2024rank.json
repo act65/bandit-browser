@@ -1,0 +1,328 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Low-Rank Online Dynamic Assortment with Dual Contextual Information",
+  "arxiv_id": "2404.17592",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Seong Jin Lee",
+   "Will Wei Sun",
+   "Yufeng Liu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Low-rank Online Assortment with Dual-contexts (LOAD) problem",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "T",
+    "m",
+    "r_rank",
+    "sigma"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "unspecified",
+    "loss_set": "not_applicable",
+    "parameter_structure": "low_rank"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "at_most_m",
+    "reward": "unspecified",
+    "loss_scale": "unspecified"
+   },
+   "reward_model": {
+    "kind": "unspecified"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "MNL (multinomial logit) choice feedback: user picks at most one item from the offered assortment; revenue = sum r_i * choice probability",
+    "Bilinear utility v_it = p_i^T Phi* q_t with rank-r matrix Phi* in R^{d2 x d1}; user features q_t in R^{d1} i.i.d., fixed item features p_i in R^{d2}",
+    "Assortment capacity K (canonical m) out of N items",
+    "The learner knows kappa (Assumption 3 lower bound on p(i)p(0)), bounds S_p, S_q, and singular-value/covariance quantities needed to set T_0 and alpha_n"
+   ],
+   "definition_quote": "At time $t$, a user with feature vector $q_t \\in \\bbR^{d_1}$ arrives at the platform. Assume there are $N$ products, each with item feature vector $p_i \\in \\bbR^{d_2}$ ... The platform offers an assortment $S_t$ of size at most $K$ ... we model the utility $v_{it}$ as a low-rank bilinear form of the dual contexts with $v_{it} = p_i^\\top \\Phi^* q_t$, where $\\Phi^*$ is a rank-$r$ matrix"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "ELSA-UCB (Explore-Low-rank-Subspace-then-Apply-UCB)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "m",
+    "r_rank",
+    "sigma",
+    "kappa",
+    "S_2",
+    "S_perp"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "ELSA-GIC (ELSA-UCB with GIC rank estimation)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "explore_then_commit",
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "m"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "R_max*(T_0 + 3 + 2*alpha_T*sqrt(T*2*df*log(T/df)) + 2*S_2**2*S_perp*(T - T_0))",
+    "expression_latex": "R_{\\max} \\left( T_0 + 3 + 2 \\alpha_T \\sqrt{T \\cdot 2\\cdot df \\log(T/df)} + 2S_2^2 S_\\perp(T-T_0) \\right)",
+    "regime": null
+   },
+   "symbols": {
+    "R_max": "maximum item revenue max_i r_i",
+    "T_0": "exploration length 4 sigma^2 (C_1 sqrt(d1 d2) + C_2 sqrt(log T))^2 + 2B/(lambda_min(Sigma) m)",
+    "alpha_T": "confidence radius (1/kappa)(sigma sqrt(2 df log(1+T/df) + 4 log T) + S_2^2 S_perp sqrt(T m))",
+    "df": "(d_1+d_2) r - r^2, dimension of reduced space",
+    "S_2": "max(S_p, S_q), bound on item/user feature norms",
+    "S_perp": "truncation error bound 288 sigma_1^3/(sigma_r^3 kappa) (3/4 + 8T_0/(kappa B) + 2/(m ||Sigma||)) m r log((d1+d2)/delta)/B S_2^4",
+    "d_1": "user feature dimension",
+    "d_2": "item feature dimension"
+   },
+   "conditions": [
+    "Assumption 1: user features i.i.d., bounded norm S_q, positive definite second moment, whitened features sigma-sub-Gaussian with norm bounded by S_v",
+    "Assumption 2: item features bounded by S_p with positive definite Sigma_p",
+    "Assumption 3: p_t(i|S,Phi) p_t(0|S,Phi) >= kappa > 0 in a unit Frobenius ball around Phi*",
+    "initial estimate satisfies ||Phi_0 - Phi*||_F <= c_2 sqrt(sigma_r)",
+    "Phi* has rank r"
+   ],
+   "tuning": [
+    "T_0 and alpha_n as defined in the theorem, any B > 0",
+    "B = b sqrt(T) gives O_tilde(r(d_1+d_2) sqrt(T))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regretbound",
+    "number": "Theorem 1",
+    "quote": "Suppose assumptions of Proposition \\ref{prop:lowrankest} hold. Define T_0 ..., S_perp ..., alpha_n ... Then applying Algorithm \\ref{alg:ELSA-UCB} with $T_0$ and $\\alpha_n$, the cumulative regret of our ELSA-UCB policy satisfies ${\\calR}_T \\le R_{\\max} \\left( T_0 + 3 + 2 \\alpha_T \\sqrt{T \\cdot 2\\cdot df \\log(T/df)} + 2S_2^2 S_\\perp(T-T_0) \\right)$, where $R_{\\max} = \\max_{i\\in [N]} r_i$."
+   },
+   "confidence": "medium",
+   "notes": "Regret defined as expectation of differences of expected revenues -> pseudo_regret, against per-user optimal assortment. Paper's K (capacity) is canonical m. delta inside S_perp is left free in statement. Text says with B = b sqrt(T): R_T = O_tilde(r(d_1+d_2) sqrt(T)) (recorded as r2)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "r_rank*(d_1 + d_2)*sqrt(T)",
+    "expression_latex": "\\tilde{O}(r(d_1+d_2)\\sqrt{T})",
+    "regime": "large T, K treated as constant"
+   },
+   "symbols": {
+    "d_1": "user feature dimension",
+    "d_2": "item feature dimension"
+   },
+   "conditions": [
+    "Assumptions 1-3 and initial-estimate condition of Proposition 1"
+   ],
+   "tuning": [
+    "B = b sqrt(T) for a constant b"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regretbound",
+    "number": "Theorem 1",
+    "quote": "With the choice $B = b\\sqrt{T}$ for some constant $b$, we have $S_\\perp = O(r/\\sqrt{T})$ by definition and therefore the sub-linear regret $\\calR_T = \\tilde{O}(r(d_1+d_2)\\sqrt{T})$"
+   },
+   "confidence": "medium",
+   "notes": "Simplification stated in the text after Theorem 1, not a separate formal statement; constants depending on kappa, singular values, K suppressed."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "R_max*(T_0 + 2*alpha_T*sqrt(T*2*df*log(T/df)) + 2*S_2**2*S_perp*(T - T_0))",
+    "expression_latex": "R_{\\max} \\left( T_0 + 2 \\alpha_T \\sqrt{T \\cdot 2\\cdot df \\log(T/df)} + 2S_2^2 S_\\perp(T-T_0) \\right)",
+    "regime": "with probability at least 1-2 delta"
+   },
+   "symbols": {
+    "R_max": "maximum item revenue",
+    "T_0": "exploration length as in Theorem 1",
+    "alpha_T": "confidence radius as in Theorem 1",
+    "df": "(d_1+d_2) r - r^2",
+    "S_2": "max(S_p, S_q)",
+    "S_perp": "truncation error bound as in Theorem 1"
+   },
+   "conditions": [
+    "Assumptions 1-3 and initial-estimate condition of Proposition 1"
+   ],
+   "tuning": [
+    "T_0 > 1/delta",
+    "alpha_n as defined"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:regretbound_hp",
+    "number": "Corollary 1",
+    "quote": "Then by applying Algorithm 2 with $T_0 > 1/\\delta$ and $\\alpha_n$, the cumulative regret of our ELSA-UCB policy satisfies $\\sum_{t=1}^{T} r_t \\le R_{\\max} \\left( T_0 + 2 \\alpha_T \\sqrt{T \\cdot 2\\cdot df \\log(T/df)} + 2S_2^2 S_\\perp(T-T_0) \\right)$, with probability at least $1-2\\delta$"
+   },
+   "confidence": "medium",
+   "notes": "Realized sum of per-round pseudo-regrets r_t bounded with probability >= 1-2 delta."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "chen2020dynamic",
+   "cited_title": null,
+   "cited_first_author": "Chen",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "d-dimensional contextual MNL dynamic assortment with capacity K",
+   "bound": {
+    "notation": "Omega",
+    "expression": "d*sqrt(T)/m",
+    "expression_latex": "\\Omega(d\\sqrt{T}/K)",
+    "regime": null
+   },
+   "where": "Section 4.2 (discussion after Theorem 1)"
+  },
+  {
+   "cited_key": "oh2021multinomial",
+   "cited_title": null,
+   "cited_first_author": "Oh",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB-MNL (vectorized dual features)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "contextual MNL assortment with vectorized outer product of user and item features (dimension d1*d2)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d_1*d_2*sqrt(T)",
+    "expression_latex": "\\tilde{O}(d_1d_2\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Introduction"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:30:26",
+  "source_chars": 133198,
+  "input_tokens": 103022,
+  "output_tokens": 5560,
+  "cost_usd_equiv": 0.6521422,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

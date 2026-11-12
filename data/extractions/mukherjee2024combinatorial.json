@@ -1,0 +1,252 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Combinatorial Multi-armed Bandits: Arm Selection via Group Testing",
+  "arxiv_id": "2410.10679",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Arpan Mukherjee",
+   "Shashanka Ubaru",
+   "Keerthiram Murugesan",
+   "Karthikeyan Shanmugam",
+   "Ali Tajer"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "CMAB with semi-bandit feedback and cardinality constraint (Bernoulli base arms, black-box reward)",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "m",
+    "L_lip"
+   ],
+   "instance_assumptions": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "fixed",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "extras": [],
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "reward function r(S; mu) is unknown but accessible via black-box evaluation queries at any parameter theta",
+    "reward depends only on base-arm means (Assumption 1), is monotone in S (Assumption 3), bounded in [0,M] with M known (Assumption 4)",
+    "separable reward (Assumption 6): adding an optimal arm yields strictly higher reward than adding a sub-optimal arm",
+    "the learner knows the CDF of the minimum gap Delta_min(mu) (Assumption 5); the instance's minimum gap is treated as random",
+    "the learner knows the reward bound M",
+    "paper's m is the number of base arms; paper's K (canonical m) is the cardinality bound on super-arms"
+   ],
+   "definition_quote": "we consider a CMAB setting with $m$ arms... Each arm $i\\in[m]$ is associated with an independent Bernoulli distribution with an \\emph{unknown} mean $\\mu_i$... We consider the semi-bandit feedback model... Function $r$ is assumed to be \\emph{unknown}, and the learner only has {\\em black-box} access to it... we impose that the cardinality of the optimal super-arm $|\\mcS| \\leq K\\in[m]$.",
+   "combinatorial": {
+    "family": "at_most_m",
+    "reward": "nonlinear_monotone_lipschitz",
+    "loss_scale": "unspecified"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   }
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "GT+QTS (Group Testing + Quantized Thompson Sampling)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "m",
+    "L_lip",
+    "reward bound M",
+    "CDF of Delta_min (to set quantization level)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "sum_arms((2*log(m) + 6)*L_lip**2*log(2**n_base*I_size*T)/Dt_i) + (13*alpha_c*8/eps_alg**2*(4/eps_alg**2 + 1)**m*log(m/eps_alg**2) + pi**2/6 + n_base*(m**2/eps_alg**2 + 1))*Delta_max",
+    "expression_latex": "\\sum_{i\\in[m]} (2\\log K + 6)B^2\\frac{\\log(2^m|\\mcI|T)}{\\min_{\\mcS : i\\in\\mcS}(\\Delta(\\mcS,\\bmu) - \\frac{\\Delta_{\\min}(\\bmu)}{2}-(K^2+2)B\\varepsilon)} + \\Big(13\\alpha\\frac{8}{\\varepsilon^2}(\\frac{4}{\\varepsilon^2} + 1)^K \\log\\frac{K}{\\varepsilon^2} + \\frac{\\pi^2}{6}+m(\\frac{K^2}{\\varepsilon^2} + 1)\\Big)\\Delta_{\\max}(\\bmu)",
+    "regime": null
+   },
+   "symbols": {
+    "n_base": "number of base arms (paper's m)",
+    "m": "cardinality bound on super-arms (paper's K)",
+    "I_size": "number of permissible super-arms |I|",
+    "Dt_i": "min over super-arms S containing base arm i of (Delta(S,mu) - Delta_min(mu)/2 - (K^2+2) B eps)",
+    "alpha_c": "universal positive constant alpha",
+    "eps_alg": "analysis parameter epsilon < Delta_min/(4B(K^2+2))",
+    "L_lip": "Lipschitz constant B of the reward (l1 norm)",
+    "Delta_max": "maximal super-arm sub-optimality gap Delta_max(mu)"
+   },
+   "conditions": [
+    "Assumptions 1-6: reward depends only on means, B-Lipschitz in l1, monotone, bounded in [0,M] with M known, CDF of Delta_min known, separable reward",
+    "Bernoulli base arms",
+    "holds with probability at least 1-2*gamma (over the random minimum gap)"
+   ],
+   "tuning": [
+    "delta = 1/t^2 in the group-testing oracle",
+    "quantization level Delta = F_mu^{-1}(gamma), gamma in [0,1/2]",
+    "epsilon < Delta_min(mu)/(4B(K^2+2))",
+    "number of tests per round per Lemma 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem: regret upper bound",
+    "number": "Theorem 1",
+    "quote": "Under Assumptions~\\ref{assumption: mean only}--\\ref{assumption: C separability}, by setting $\\delta = \\frac{1}{t^2}$, and the quantization level $\\Delta:= \\mathbb{F}^{-1}_{\\bmu}(\\gamma)$ for any $\\gamma\\in[0,1/2]$, with probability at least $1-2\\gamma$, the regret of the GT+QTS algorithm satisfies \\mathfrak{R}(T) \\leq \\sum_{i\\in[m]} (2\\log K + 6)B^2 \\times\\frac{\\log(2^m|\\mcI|T)}{\\min_{\\mcS : i\\in\\mcS}(\\Delta(\\mcS,\\bmu) - \\frac{\\Delta_{\\min}(\\bmu)}{2}-(K^2+2)B\\varepsilon)} + (...)\\Delta_{\\max}(\\bmu), where $\\alpha\\in\\R_+$ is a constant, and $\\varepsilon$ is chosen as $\\varepsilon<\\frac{\\Delta_{\\min}(\\bmu)}{4B(K^2 + 2)}$."
+   },
+   "confidence": "medium",
+   "notes": "Regret defined as sum_t E[Delta(S(t),mu)] => pseudo-regret; the bound on this expectation holds with probability >=1-2gamma over the randomness of the instance's minimum gap, recorded as high_probability. Paper summarizes as O(m Delta_min^{-1} log K log T). Oracle uses O(log m) reward evaluations per round (Lemma 1), not recorded as a regret result."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "wang2022thompson",
+   "cited_title": "Thompson sampling for combinatorial semi-bandits",
+   "cited_first_author": "S. Wang",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CTS (Combinatorial Thompson Sampling) with exact oracle",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Combinatorial semi-bandits, Bernoulli base arms, exact oracle; n_base = number of base arms, Delta = minimum super-arm gap",
+   "bound": {
+    "notation": "O",
+    "expression": "n_base*log(T)/Delta_min",
+    "expression_latex": "O\\big(\\frac{m}{\\Delta}\\log T\\big)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "perrault2021statistical",
+   "cited_title": "Statistical efficiency of Thompson sampling for combinatorial semi-bandits",
+   "cited_first_author": "P. Perrault",
+   "cited_year": 2021,
+   "cited_arxiv_id": "2006.06613",
+   "algorithm_name": "CTS (Combinatorial Thompson Sampling) with exact oracle",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Combinatorial semi-bandits, Bernoulli base arms, exact oracle; n_base = number of base arms",
+   "bound": {
+    "notation": "O",
+    "expression": "n_base*log(T)/Delta_min",
+    "expression_latex": "O\\big(\\frac{m}{\\Delta}\\log T\\big)",
+    "regime": null
+   },
+   "where": "Introduction"
+  },
+  {
+   "cited_key": "wang2022thompson",
+   "cited_title": "Thompson sampling for combinatorial semi-bandits",
+   "cited_first_author": "S. Wang",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "CTS with exact oracle",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Combinatorial semi-bandits with cardinality K (canonical m), n_base base arms",
+   "bound": {
+    "notation": "O",
+    "expression": "n_base*log(m)*log(T)/Delta_min",
+    "expression_latex": "O(m\\Delta^{-1}_{\\min}(\\bmu)\\log K \\log T)",
+    "regime": null
+   },
+   "where": "Section 4, after Theorem 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:30:12",
+  "source_chars": 105987,
+  "input_tokens": 92016,
+  "output_tokens": 5344,
+  "cost_usd_equiv": 0.5597742,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

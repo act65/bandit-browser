@@ -1,0 +1,321 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Prior-Agnostic Incentive-Compatible Exploration",
+  "arxiv_id": "2602.20465",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Ramya Ramalingam",
+   "Osbert Bastani",
+   "Aaron Roth"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Recommendation game: incentive-compatible exploration with agents uncertain about arrival time (adversarial bandits)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_adaptive",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K",
+    "T"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "strategic_arms"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Recommendations are made to a sequence of myopic agents who may deviate; the guarantee is the approximation error epsilon of an incentive-compatible Bayes-Nash equilibrium, not regret",
+    "Each agent holds a private reward belief P^i (distribution over mean-reward sequences) and a temporal belief D^i over her arrival time; the mechanism does not know these beliefs",
+    "Agents' beliefs satisfy explorability (each action is Delta-better under D-marginalized means with prob >= alpha) and slowly-moving means (||mu_{t+1}-mu_t||_inf <= rho)"
+   ],
+   "definition_quote": "A new agent arrives and receives a recommendation $I_t \\in A$ from the algorithm ... The environment selects a reward vector $u_t \\in [0,1]^K$ independently of $I_t$ ... The agent chooses an action $a_t \\in A$, possibly deviating from the recommendation. The algorithm observes the played action $a_t$ and the corresponding reward $u_t(a_t)$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Exp4.S (Luo et al.)",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "exponential_weights"
+   ],
+   "requires_knowledge_of": [
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": null,
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "Min(R_swap*(Delta_P - 2*rho*Psi_max)/(alpha_P*(Delta_P - 2*rho*Psi_max - R_swap - 2*sqrt(2*W_2*log(2*K)))), R_swap*Delta_P/(alpha_P*(Delta_P - R_swap - 2*sqrt(2*W_2*log(2*K)) - 2*rho*Phi_D)), 1)",
+    "expression_latex": "\\epsilon_i(T) = \\min\\{\\eta_{\\Psi}(T), \\eta_{\\Phi}(T), 1\\}",
+    "regime": "each eta term counts only when positive, else +infinity"
+   },
+   "symbols": {
+    "R_swap": "expected D^i-weighted swap regret guaranteed by the algorithm",
+    "W_2": "sum_t D^i(t)^2",
+    "Psi_max": "max dispersion of the temporal belief D^i",
+    "Phi_D": "mean dispersion of D^i",
+    "rho": "slow-moving drift bound of believed mean rewards",
+    "alpha_P": "explorability probability in Assumption 4.1",
+    "Delta_P": "explorability margin in Assumption 4.1"
+   },
+   "conditions": [
+    "Agents' beliefs satisfy Assumption 4.1 (explorability with (alpha, Delta)) and Assumption 4.2 (slowly moving, rho)",
+    "algorithm guarantees expected D^i-weighted swap regret R_swap for all agents i"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:BIC-swap",
+    "number": "Theorem 4.1",
+    "quote": "If an algorithm $\\mathcal{A}$ played over $T$ rounds guarantees expected $\\mathcal{D}^i$-weighted swap regret $R_{\\emph{Swap}}^{(\\mathcal{D}^i)}(T)$ for all $i \\in [T]$, then $\\mathcal{A}$ implements an incentive-compatible Bayes $\\epsilon(T)$-Nash equilibrium with error term for agent $i$: \\epsilon_i(T) = \\min\\{\\eta_{\\Psi}(T),\\, \\eta_{\\Phi}(T), 1\\}."
+   },
+   "confidence": "medium",
+   "notes": "Bound is on the IC-BNE approximation error epsilon_i, not regret; reduction for any algorithm with weighted swap regret guarantees."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": null,
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "Min((R_ext + 2*rho*Phi_D + 2*sqrt(2*W_2*log(2*K)))*(Delta_P - 2*rho*Psi_max)/(alpha_P*(Delta_P - 2*rho*Psi_max - R_ext - 2*sqrt(2*W_2*log(2*K)))), (R_ext + 2*rho*Phi_D + 2*sqrt(2*W_2*log(2*K)))*Delta_P/(alpha_P*(Delta_P - 2*rho*Phi_D - R_ext - 2*sqrt(2*W_2*log(2*K)))), 1)",
+    "expression_latex": "\\epsilon_i(T) = \\min\\{\\eta_{\\Psi}(T), \\eta_{\\Phi}(T), 1\\}",
+    "regime": "each eta term counts only when positive, else +infinity"
+   },
+   "symbols": {
+    "R_ext": "expected D^i-weighted external regret guaranteed by the algorithm",
+    "W_2": "sum_t D^i(t)^2",
+    "Psi_max": "max dispersion of D^i",
+    "Phi_D": "mean dispersion of D^i",
+    "rho": "slow-moving drift bound",
+    "alpha_P": "explorability probability (Assumption 4.1)",
+    "Delta_P": "explorability margin (Assumption 4.1)"
+   },
+   "conditions": [
+    "Assumptions 4.1 and 4.2 hold for all agents' beliefs with (alpha, Delta, rho)",
+    "algorithm guarantees expected D^i-weighted external regret R_ext for all i"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:BIC-ext",
+    "number": "Theorem 4.2",
+    "quote": "If an algorithm $\\mathcal{A}$ played over $T$ rounds guarantees expected $\\mathcal{D}^i$-weighted external regret $R^{(\\mathcal{D}^i)}(T)$ for all $i \\in [T]$, then $\\mathcal{A}$ implements an incentive-compatible Bayes $\\epsilon(T)$-Nash equilibrium with error term for agent $i$: \\epsilon_i(T) = \\min\\{\\eta_{\\Psi}(T),\\, \\eta_{\\Phi}(T), 1\\}."
+   },
+   "confidence": "medium",
+   "notes": "IC-BNE approximation error, not regret."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "(sqrt(T*K*log(T*K))/L + 2*rho*(L**2 - 1)/(3*L) + 2*sqrt(2*log(2*K)/L))*(Delta_P - rho*(L - 1))/(alpha_P*(Delta_P - sqrt(T*K*log(T*K))/L - rho*(L - 1) - 2*sqrt(2*log(2*K)/L)))",
+    "expression_latex": "\\frac{\\left(O\\left(\\frac{\\sqrt{TK\\ln(TK)}}{L}\\right) + \\frac{2\\rho(L^2 - 1)}{3L} + 2\\sqrt{\\frac{2\\ln(2K)}{L}}\\right)(\\Delta - \\rho(L-1))}{\\alpha\\left(\\Delta - O\\left(\\frac{\\sqrt{TK\\ln(TK)}}{L}\\right) - \\rho(L-1) - 2\\sqrt{\\frac{2\\ln(2K)}{L}}\\right)}",
+    "regime": "o(1) when L = omega_tilde(sqrt(T)) and rho = o(1/L)"
+   },
+   "symbols": {
+    "L": "length of the agent's uniform temporal-belief window",
+    "rho": "slow-moving drift bound",
+    "alpha_P": "explorability probability",
+    "Delta_P": "explorability margin"
+   },
+   "conditions": [
+    "each agent's temporal belief is uniform over a contiguous interval of length L",
+    "Assumptions 4.1 and 4.2 hold with (alpha, Delta, rho)"
+   ],
+   "tuning": [
+    "Exp4.S with parameter T"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:uniform-first",
+    "number": "Theorem 5.2",
+    "quote": "If agent $i$'s temporal belief is uniform over a subsequence of length $L$, then Exp4.S with parameter $T$ implements an incentive-compatible Bayes $\\epsilon(T)$-Nash equilibrium where the error term for agent $i$ is: ... Specifically, when $L = \\tilde{\\omega}(\\sqrt{T})$, and $\\rho = o(1/L)$, we have vanishing error $\\epsilon_i(T) = o(1)$."
+   },
+   "confidence": "medium",
+   "notes": "O() appears only on the regret term inside the expression in the paper; recorded with notation O."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "(L**(-1/2) + 2*rho*(L**2 - 1)/(3*L))*(Delta_P - rho*(L - 1))/(alpha_P*(Delta_P - L**(-1/2) - rho*(L - 1)))",
+    "expression_latex": "\\frac{\\left(\\tilde{O}\\left(L^{-1/2}\\right) + \\frac{2\\rho(L^2 - 1)}{3L} \\right)(\\Delta - \\rho(L-1))}{\\alpha\\left(\\Delta - \\tilde{O}(L^{-1/2}) - \\rho(L-1)\\right)}",
+    "regime": "o(1) when rho = o(1/L)"
+   },
+   "symbols": {
+    "L": "fixed window length of temporal beliefs",
+    "rho": "slow-moving drift bound",
+    "alpha_P": "explorability probability",
+    "Delta_P": "explorability margin"
+   },
+   "conditions": [
+    "each agent's temporal belief is uniform over a contiguous interval of length exactly L",
+    "Assumptions 4.1 and 4.2 hold with (alpha, Delta, rho)"
+   ],
+   "tuning": [
+    "Exp4.S with parameter L"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 5.3",
+    "quote": "Exp4.S with parameter $L$ implements an incentive-compatible Bayes $\\epsilon(T)$-Nash equilibrium where the error term for agent $i$ is: ... When $\\rho = o(1/L)$, we have vanishing error $\\epsilon_i(T) = o(1)$."
+   },
+   "confidence": "medium",
+   "notes": "IC-BNE error; K dependence hidden in O_tilde."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "luo_intervalreg",
+   "cited_title": null,
+   "cited_first_author": "Luo",
+   "cited_year": null,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Exp4.S",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Adversarial K-armed bandits; expected regret on any contiguous interval of length at most L (adaptive/interval regret)",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(L*K*log(L*K))",
+    "expression_latex": "O(\\sqrt{LK\\ln(LK)})",
+    "regime": "intervals with |I| <= L"
+   },
+   "where": "Theorem 5.1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:00:05",
+  "source_chars": 95028,
+  "input_tokens": 81787,
+  "output_tokens": 6371,
+  "cost_usd_equiv": 0.781708,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

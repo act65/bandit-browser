@@ -1,0 +1,297 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "A Query Is Not a Commitment: Learning to Correct Expert Answers in Online Deferral",
+  "arxiv_id": "2610.07084",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Yannis Montreuil",
+   "Axel Carlier",
+   "Lai Xing Ng",
+   "Wei Tsang Ooi"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Online learning to defer with post-answer responses (conditional response oracle)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "structured_general",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "T",
+    "K",
+    "d",
+    "S",
+    "loss_range"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "sleeping_arms",
+    "time_varying_action_sets",
+    "expert_advice"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "adaptive_sequence",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_unknown"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "realizable_general_class"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Action = choice of free prediction or expert j together with a correction coefficient vector a in a unit ball of Legendre polynomial features, fixed before observing the expert answer",
+    "Free action's loss observed every round (outcome always revealed); only queried expert answer revealed",
+    "Consultation fees beta_{t,j} added to cost",
+    "Conditional laws given history may vary over rounds and are not i.i.d.; regret is conditional pseudo-regret against per-round conditional oracle",
+    "Linear models of free risk and optimal queried risk in public features (Assumption 6.2), with known norm bounds Q_0, Q_*",
+    "Fixed feasible matrix per identity represents optimal response coefficients (Assumption 6.1)",
+    "Learner knows residual bound R and disagreement bound D"
+   ],
+   "definition_quote": "Assume $|Y_t-h_t|\\le R$ and $|M_{t,j}-h_t|\\le D$ almost surely for every round and active expert, with known $R,D>0$. ... Our pseudo-regret is \\Reg_T=\\sum_{t=1}^T\\{\\E[C_t\\mid\\cF_t]-C_t^*\\}."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Response-Aware UCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "exponential_weights",
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "d",
+    "S",
+    "loss_range",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "C_prob*(sqrt(T)*log((T+1)/delta) + log((T+1)/delta))",
+    "expression_latex": "C_{\\rm prob}\\left\\{\\sqrt T\\log\\frac{T+1}{\\delta}+\\log\\frac{T+1}{\\delta}\\right\\}",
+    "regime": null
+   },
+   "symbols": {
+    "C_prob": "finite constant depending only on residual bounds, dimensions, registry capacity, regularizers, priors, parameter-norm bounds and pool rate"
+   },
+   "conditions": [
+    "|Y_t - h_t| <= R and |M_{t,j} - h_t| <= D almost surely",
+    "non-intervention: purchasing does not change conditional joint law",
+    "Assumption 6.1: fixed feasible matrix Theta_j^* (||.||_F<=1) per identity gives optimal response coefficients",
+    "Assumption 6.2: free and optimal queried risks linear in public features with known norm bounds Q_0, Q_*",
+    "public features of norm at most one"
+   ],
+   "tuning": [
+    "0 < eta <= 1/2",
+    "tau = 4 B_*/Ebar_T, alpha = 2 B_*",
+    "exact constrained response fits",
+    "positive-definite priors fixed before interaction"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main-regret",
+    "number": "Theorem (thm:main-regret)",
+    "quote": "Assume the bounded non-interventional protocol ... Run \\ORUCB{} with exact constrained response fits, full-history weighted queried-risk estimates, $0<\\eta\\le1/2$ and \\cref{eq:main-calibration}. With probability at least $1-\\delta$ over the joint interaction law, \\Reg_T\\le C_{\\rm prob}\\left\\{\\sqrt T\\log\\frac{T+1}{\\delta}+\\log\\frac{T+1}{\\delta}\\right\\}"
+   },
+   "confidence": "medium",
+   "notes": "Regret is conditional pseudo-regret against per-round conditional oracle. With delta=(T+1)^{-2} gives O(sqrt(T) log(T+1)). Constant hides dimension dependence; notation O used since C_prob is unspecified."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "R_res**2*B_0*W_0 + G**2*(16*B_star*sqrt(N_T*H_N) + 4*Ebar_T*H_N + E_T)",
+    "expression_latex": "R^2B_0\\mathcal W(T,d_0,\\lambda_0)+G^2\\left[16B_*\\sqrt{N_T\\mathcal H(N_T)}+4\\overline E_T\\mathcal H(N_T)+E_T\\right]",
+    "regime": null
+   },
+   "symbols": {
+    "R_res": "bound R on |Y_t - h_t|",
+    "G": "R + D, bound on expert residual",
+    "B_0": "free-risk confidence radius (1/2)sqrt(d_0 log(1+T/(d_0 lambda_0)) + 2 log(3/delta)) + Q_0",
+    "B_star": "queried-risk confidence radius, same form with d_c, lambda_*, Q_*",
+    "W_0": "sqrt(T(1+1/lambda_0) d_0 log(1+T/(d_0 lambda_0)))",
+    "H_N": "(1+1/lambda_*) d_c log(1+N_T/(d_c lambda_*))",
+    "N_T": "total number of queries up to T",
+    "Ebar_T": "deterministic response-error envelope 2[K lam_I + 8K p_I log(1+T/(K p_I lam_I)) + 4K log2/eta] + 64 log(3/delta)",
+    "E_T": "pathwise response-error bound 2A_T + 64 log(3/delta)"
+   },
+   "conditions": [
+    "same hypotheses as Theorem (thm:main-regret)"
+   ],
+   "tuning": [
+    "0 < eta <= 1/2",
+    "tau = 4 B_*/Ebar_T, alpha = 2 B_*"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:explicit-routing-bound",
+    "number": "Proposition (prop:explicit-routing-bound)",
+    "quote": "Under the hypotheses and calibration of \\cref{thm:main-regret}, with probability at least $1-\\delta$, \\Reg_T\\le R^2B_0\\mathcal W(T,d_0,\\lambda_0)+G^2\\left[16B_*\\sqrt{N_T\\mathcal H(N_T)}+4\\overline E_T\\mathcal H(N_T)+E_T\\right]."
+   },
+   "confidence": "medium",
+   "notes": "Explicit finite-horizon bound; depends on random query count N_T and pathwise E_T."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "R_res**2*((B_0 + eps_0*sqrt(T))*W_0 + T*eps_0) + G**2*(16*B_star_app*sqrt(N_T*H_N) + 4*Ebar_T_app*H_N + E_T_app + 8*T*eps_star)",
+    "expression_latex": "R^2\\left[(B_0+\\varepsilon_0\\sqrt T)\\mathcal W(T,d_0,\\lambda_0)+T\\varepsilon_0\\right]+G^2\\left[16B_*^{\\rm app}\\sqrt{N_T\\mathcal H(N_T)}+4\\overline E_T^{\\rm app}\\mathcal H(N_T)+E_T^{\\rm app}+8T\\varepsilon_*\\right]",
+    "regime": null
+   },
+   "symbols": {
+    "R_res": "bound R on |Y_t - h_t|",
+    "G": "R + D",
+    "B_0": "free-risk confidence radius",
+    "eps_0": "free-risk linear-model approximation tolerance",
+    "eps_star": "queried-risk linear-model approximation tolerance",
+    "eps_R": "response-model excess-risk tolerance",
+    "W_0": "sqrt(T(1+1/lambda_0) d_0 log(1+T/(d_0 lambda_0)))",
+    "H_N": "(1+1/lambda_*) d_c log(1+N_T/(d_c lambda_*))",
+    "N_T": "total number of queries",
+    "B_star_app": "B_* + eps_star*sqrt(T)",
+    "Ebar_T_app": "2 Abar_T + 3 T eps_R + 128 log(3/delta)",
+    "E_T_app": "2A_T + 3 D_T + 128 log(3/delta), D_T cumulative response approximation error"
+   },
+   "conditions": [
+    "approximate response model: excess risk of fixed feasible matrix over ball optimum in [0, eps_R]",
+    "approximate linear risk models with errors eps_0, eps_* and norm bounds Q_0, Q_*",
+    "bounded non-interventional protocol",
+    "public features of norm at most one"
+   ],
+   "tuning": [
+    "0 < eta <= 1/2",
+    "alpha = 2 B_*^app, tau = 4 B_*^app / Ebar_T^app",
+    "learner is supplied eps_R and eps_* for calibration"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "prop:approximate-models",
+    "number": "Proposition (prop:approximate-models)",
+    "quote": "Assume the bounded non-interventional protocol ... and the approximation assumptions above ... With probability at least $1-\\delta$ over the joint interaction law, \\Reg_T\\le R^2[(B_0+\\varepsilon_0\\sqrt T)\\mathcal W(T,d_0,\\lambda_0)+T\\varepsilon_0]+G^2[16B_*^{\\rm app}\\sqrt{N_T\\mathcal H(N_T)}+4\\overline E_T^{\\rm app}\\mathcal H(N_T)+E_T^{\\rm app}+8T\\varepsilon_*]"
+   },
+   "confidence": "medium",
+   "notes": "Misspecified models; paper remarks that for delta=(T+1)^{-2} this is O(sqrt(T)log(T+1) + T eps_R log(T+1) + T(eps_0+eps_*) sqrt(log(T+1))). Setting's realizability assumption is relaxed here."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:56:15",
+  "source_chars": 137213,
+  "input_tokens": 99816,
+  "output_tokens": 5634,
+  "cost_usd_equiv": 0.6279742,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,266 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Bayesian Bandit Beamforming with Implicit Channel Learning for RIS under Hybrid Near/Far-Field Propagation",
+  "arxiv_id": "2608.01218",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Haochen Xu",
+   "Junting Chen",
+   "Pooi-Yuen Kam"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Bayesian bandit beamforming for RIS phase-shift configuration (Bayesian received-power regret)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "continuum_other",
+   "function_class": [],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "d",
+    "sigma",
+    "prior"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "nonconvex",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "unbounded",
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Actions are complex unit-modulus vectors b in C^N (|b_n|=1); the dimension N (number of RIS elements) is recorded as d",
+    "Reward is the received power |b^T h|^2 (quadratic Hermitian form), but the observation is the noisy linear complex scalar y_t = b_t^T h + xi_t with circular complex Gaussian noise CN(0, sigma^2)",
+    "Unknown cascaded channel h drawn from a complex Gaussian prior CN(0, Sigma_0); the learner knows the prior and the noise variance"
+   ],
+   "definition_quote": "one scalar pilot observation can be written as y_{t}=\\mathbf{b}_{t}^{\\top}\\mathbf{h}+\\xi_{t}. ... \\mathcal{R}_{T}\\triangleq\\mathbb{E}\\left[\\sum_{t=1}^{T}\\Big(|\\mathbf{b}_{*}^{\\top}\\mathbf{h}|^{2}-|\\mathbf{b}_{t}^{\\top}\\mathbf{h}|^{2}\\Big)\\right] where \\mathbf{b}_{*}\\in\\arg\\max_{\\mathbf{b}\\in\\mathcal{B}}|\\mathbf{b}^{\\top}\\mathbf{h}|^{2}"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Recursive MMSE-based Thompson sampling",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "prior",
+    "sigma",
+    "d"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "SBL-based Thompson sampling with warm starts",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*sqrt(2)*d*S_h*Psi_T",
+    "expression_latex": "\\mathcal{R}_{T}\\leq4\\sqrt{2}NS\\sum_{t=1}^{T}\\sqrt{\\mathbb{E}[\\text{tr}(\\bm{\\Sigma}_{t-1})]}",
+    "regime": null
+   },
+   "symbols": {
+    "d": "number of RIS elements N (dimension of the channel vector)",
+    "S_h": "S = sqrt(E[||h||_2^2]) under the prior (not a norm bound)",
+    "Psi_T": "sum_{t=1}^T sqrt(E[tr(Sigma_{t-1})]), cumulative root expected posterior covariance trace"
+   },
+   "conditions": [
+    "well-specified Bayesian Gaussian observation model",
+    "E[||h||_2^2] < infinity",
+    "complex Gaussian prior CN(0, Sigma_0) with Sigma_0 Hermitian positive definite"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:Bayesian-regret-decomposition",
+    "number": "Theorem 1",
+    "quote": "Under the well-specified Bayesian observation model in Sections II-III, assume that $S^{2}\\triangleq\\mathbb{E}[||\\mathbf{h}||_{2}^{2}]<\\infty$. The Bayesian regret for the proposed algorithm satisfies \\mathcal{R}_{T}\\leq4\\sqrt{2}NS\\sum_{t=1}^{T}\\sqrt{\\mathbb{E}[\\text{tr}(\\bm{\\Sigma}_{t-1})]}"
+   },
+   "confidence": "medium",
+   "notes": "Regret decomposition in terms of an algorithm-dependent quantity (posterior covariance trace); received-power Bayesian regret. Effective-rate regret is at most eta/(sigma^2 ln2) times this."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\mathcal{R}_{T}=O(\\sqrt{T}),\\hspace*{1em}T\\rightarrow\\infty",
+    "regime": "T -> infinity"
+   },
+   "symbols": {},
+   "conditions": [
+    "Rayleigh prior h ~ CN(0, I_N)",
+    "posterior covariance Sigma_t = (I_N + sigma^{-2} G_t)^{-1}",
+    "almost surely lambda_min(G_t) >= C (t - max{t_0,N} + 1) for all t >= max{t_0, N}, for some C>0 (assumption on the realized RIS sequence)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "cor:Sublinear=000020Bayesian=000020regret",
+    "number": "Corollary 1",
+    "quote": "Assume the well-specified Bayesian observation model and the channel follows Rayleigh fading, $\\mathbf{h}\\sim\\mathcal{CN}(\\mathbf{0},\\mathbf{I}_{N})$ ... If there exists a constant $C>0$ such that, almost surely for the realized RIS sequence \\lambda_{\\min}(\\mathbf{G}_{t})\\geq C(t-\\bar{t}_{0}+1),\\forall t\\geq\\bar{t}_{0}. Then, \\mathcal{R}_{T}=O(\\sqrt{T}),T\\rightarrow\\infty."
+   },
+   "confidence": "medium",
+   "notes": "Conditional bound: depends on an assumed linear eigenvalue growth of the algorithm's design matrix, not proved for the algorithm. Initial phase contributes 4*sqrt(2)*N^3 when t_0<=N. Constants depending on N, sigma, C hidden."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*sqrt(2)*d**(3/2)*(sqrt(d) + Sum(sqrt(d/(1 + c_alpha*t**alpha_c/(2*sigma**2)) + d*q(t) + d**2*exp(-c_alpha**2*t**(2*alpha_c - 1)/(128*d**2))), (t, 1, T - 1)))",
+    "expression_latex": "4\\sqrt{2}N^{3/2}\\Bigg(\\sqrt{N}+\\sum_{t=1}^{T-1}\\Bigg(\\frac{N}{1+\\frac{c_{\\alpha}}{2\\sigma^{2}}t^{\\alpha}}+Nq_{t,\\alpha}+N^{2}\\exp(-\\frac{c_{\\alpha}^{2}}{128N^{2}}t^{2\\alpha-1})\\Bigg)^{1/2}\\Bigg)",
+    "regime": null
+   },
+   "symbols": {
+    "d": "number of RIS elements N",
+    "c_alpha": "constant c_alpha > 0 in the information-growth condition",
+    "alpha_c": "exponent alpha in (1/2,1] of the information-growth condition",
+    "q": "q(t) = q_{t,alpha}, probability bound that lambda_min(sum_s Q_s)/t^alpha <= c_alpha",
+    "sigma": "noise standard deviation (noise variance sigma^2)"
+   },
+   "conditions": [
+    "Rayleigh prior h ~ CN(0, I_N), well-specified model",
+    "P(lambda_min(sum_{s<=t} Q_s)/t^alpha <= c_alpha) <= q_{t,alpha} for all t, with Q_t = E[b_t^* b_t^T | F_{t-1}], alpha in (1/2,1], c_alpha > 0"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "thm:sublinear=000020comm=000020with=000020channel=000020excitation",
+    "number": "Theorem 2",
+    "quote": "Suppose that there exist constants $c_{\\alpha}>0$ and $\\alpha\\in(1/2,1]$, and a nonnegative sequence $\\{q_{t,\\alpha}\\}_{t\\ge1}$, such that \\mathbb{P}(\\frac{\\lambda_{\\min}(\\sum_{s=1}^{t}\\mathbf{Q}_{s})}{t^{\\alpha}}\\le c_{\\alpha})\\le q_{t,\\alpha}. Then the cumulative Bayesian received-power regret satisfies ... Consequently, if $\\sum_{t=1}^{T}\\sqrt{q_{t,\\alpha}}=o(T)$, then $\\mathcal{R}_{T}/T\\to0$"
+   },
+   "confidence": "medium",
+   "notes": "Conditional on an information-growth assumption on the algorithm's own sampling, only numerically checked. Theorem also states R_T/T -> 0 if sum sqrt(q_t) = o(T); proof gives O(T^{1-alpha/2}) + O(sum sqrt(q_t))."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:12:31",
+  "source_chars": 100583,
+  "input_tokens": 88915,
+  "output_tokens": 5617,
+  "cost_usd_equiv": 0.5404262,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

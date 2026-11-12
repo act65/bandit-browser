@@ -230,7 +230,10 @@ CONSTRUCTED = re.compile(r"\bconstruct", re.I)
 T_CAPPED = re.compile(r"^\s*(T|n)\s*(<|<=|≤)")  # a condition bounding the horizon from above
 # consistency / uniform-goodness assumptions: the standard admissible class of asymptotic lower
 # bounds (Lai & Robbins), handled through algorithm_class, not a restriction of the learner
-CONSISTENCY = re.compile(r"o\(\s*[nT]\s*\^\s*\(?\s*a|for (every|all) a\s*>\s*0|uniformly (good|efficient|fast)|consisten"
+# little-o only (O(T^alpha) for one alpha is a rate assumption, not consistency); "for all a > 0" in a
+# learning-rate condition (pogodin2019first: limsup n grad g*(-a n eta_n) < inf) is not consistency either
+CONSISTENCY = re.compile(r"(?-i:o)\(\s*[nT]\s*\^\s*\(?\s*a|O\(\s*[nT]\s*\^\s*a\)\s*for (every|all|any) a\s*>\s*0"
+                         r"|^(?!.*(\beta_|learning rate)).*for (every|all) a\s*>\s*0|uniformly (good|efficient|fast)|consisten"
                          r"|(delta|δ)[- ]?(correct|PAC)|\(\s*(epsilon|ε)\s*,\s*(delta|δ)\s*\)[- ]?PAC", re.I)
 # ... and for fixed-confidence identification, delta-correct / (epsilon, delta)-PAC algorithms
 
@@ -334,16 +337,25 @@ RELATION = re.compile(r"(<=|>=|≤|≥|==|=|<|>)")
 FUNCTION_NAMES = {"log", "sqrt", "exp", "min", "max", "Min", "Max", "O", "Omega", "Theta", "poly", "polylog"}
 
 
+CONSTANT_VAR = {
+    "K": re.compile(r"(\bK\b|number of (arms|actions)|\bk\b)[^,;]{0,40}\b(treated as|regarded as|is) (a )?constant", re.I),
+    "d": re.compile(r"(\bd\b|dimension)[^,;]{0,40}\b(treated as|regarded as|is) (a )?constant", re.I),
+}
+
+
 def side_condition_unknowns(texts: list[str], canonical: set[str]) -> set[str]:
     """Scanned variables whose scan path violates a side condition of the bound.
 
     The profile sends one variable to infinity (K, d up; Delta, epsilon down) with the others fixed. A bound
     stated for "2 <= K <= d" says nothing about K -> infinity at fixed d, and one stated for "n_act = 2^(d/2)"
     or "m = d/2" nothing about d alone: its exponent in that variable is unknown (else such bounds show as
-    conflicts, e.g. jin2026nearly, li2019nearlyminimax). Only relations between canonical symbols are read;
+    conflicts, e.g. jin2026nearly, li2019nearlyminimax); nor does one stated for "K = 2" about K. Only relations between canonical symbols are read;
     relations involving T are left to the horizon rules (the scan raises T with the variable)."""
     out = set()
     for text in texts:
+        for v, pat in CONSTANT_VAR.items():
+            if pat.search(text or ""):
+                out.add(v)  # "number of arms treated as a constant": the bound says nothing about K -> infinity
         for piece in re.split(r"[,;]| and |\bfor\b|\bwith\b", text or ""):
             parts = RELATION.split(piece)
             for i in range(0, len(parts) - 2, 2):
@@ -354,6 +366,10 @@ def side_condition_unknowns(texts: list[str], canonical: set[str]) -> set[str]:
                              if side[m.end():m.end() + 1] != "(" and m.group(0) not in FUNCTION_NAMES}
                     ids.append(names)
                 (a, b) = ids
+                if op in ("=", "==") and len(a | b) == 1 and not (a and b) and (a | b) <= set(SCAN) - {"T"} \
+                        and re.fullmatch(r"\s*[0-9.]+\s*", rhs if a else lhs):
+                    out |= a | b  # "K = 2": a statement about one value says nothing about K -> infinity
+                    continue
                 if not a or not b or (a | b) - canonical or "T" in a | b:
                     continue  # numbers only, a foreign symbol, or the horizon
                 if op in ("=", "=="):
@@ -539,7 +555,7 @@ def compare(results: dict, inferred: list[dict], canonical: set[str], adaptive: 
             src = source_of(eid)
             unk = side_condition_unknowns(conditions_of(eid) + [src["bound"].get("regime") or ""], canonical | set(SCAN))
             unk = _expand(p, unk)
-            if unk & set(p["_path"]):
+            if unk:  # also variables the bound lacks: absent is not exponent 0 when a condition fixes them
                 profiles[eid] = {**p, "_unknown": set(p.get("_unknown", ())) | unk}
     notation = {e[0]: e[6] for e in entries}
 

@@ -1,0 +1,375 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Improved Regret Bounds for Projection-free Bandit Convex Optimization",
+  "arxiv_id": "1910.03374",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Dan Garber",
+   "Ben Kretzu"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Bandit convex optimization (projection-free, linear optimization oracle)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "adversarial_oblivious",
+   "action_space": "convex_body",
+   "function_class": [
+    "convex",
+    "lipschitz",
+    "bounded"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "bounded_pm1",
+   "learner_knows": [
+    "T",
+    "d",
+    "L_lip",
+    "r_K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "linear_optimization_oracle",
+    "norm_bound": "bounded_L",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "the learner knows the inner radius r and outer radius R with r B^n ⊆ K ⊆ R B^n",
+    "the learner knows the loss magnitude bound M (|f_t(x)| <= M) used to tune eta",
+    "access to K only through a linear optimization oracle"
+   ],
+   "definition_quote": "an online learner is required to iteratively draw actions from a fixed feasible set K... he observes his loss given by f_t(x_t), where f_t is convex over R^n and chosen by an adversary... we assume the adversary is oblivious... subgradients upper-bounded by G... r B^n ⊆ K ⊆ R B^n"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Block Bandit Conditional Gradient Method",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "ftrl_or_mirror_descent",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d",
+    "r_K",
+    "R_out",
+    "M_loss",
+    "L_lip"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(3*c_alg*L_lip + c_alg*R_out*L_lip/r_K + 6*L_lip*R_out + 4*c_alg*L_lip**2*R_out/(d*M_loss) + 4*R_out*d*M_loss/c_alg)*T**(3/4)",
+    "expression_latex": "\\left( 3 c G + \\frac{c R G }{r} + 6 G R + 4 \\frac{c G^2 R}{nM} + 4\\frac{RnM}{c } \\right) T^{\\frac{3}{4}}",
+    "regime": null
+   },
+   "symbols": {
+    "R_out": "radius R with K ⊆ R B^n",
+    "M_loss": "bound on |f_t(x)| over K",
+    "c_alg": "free constant c > 0 in tuning"
+   },
+   "conditions": [
+    "r B^n ⊆ K ⊆ R B^n",
+    "subgradients bounded by G (L_lip) over K",
+    "|f_t(x)| <= M on K"
+   ],
+   "tuning": [
+    "c T^{-1/4}/r <= 1",
+    "eta = 2cR/(nM) T^{-3/4}",
+    "delta = c T^{-1/4}",
+    "epsilon = 16 R^2 T^{-1/2}",
+    "K = T^{1/2}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1",
+    "quote": "For all $ c > 0 $ such that $\\frac{cT^{-1/4}}{r} \\leq 1$, setting $\\eta = \\frac{2 c R}{nM} T^{-\\frac{3}{4}}$, $\\delta = c T^{-\\frac{1}{4}} $, $\\epsilon =  16R^2  T^{-\\frac{1}{2}}$, $K = T^{\\frac{1}{2}}$ in Algorithm \\ref{alg:VRBCO}, guarantees that the expected regret is upper-bounded by\n    {\\small\\begin{align}\n        \\mathbb{E}[\\mathcal{R}_{T}] \\leq & \\left( 3  c  G + \\frac{c R G }{r} + 6 G R + 4 \\frac{c G^2 R}{nM} + 4\\frac{RnM}{c } \\right) T^{\\frac{3}{4}}, \\nonumber\n    \\end{align}}"
+   },
+   "confidence": "high",
+   "notes": "Regret defined as sum E[f_t(x_t)] - min_x sum f_t(x) with oblivious adversary. Paper's n is d, G is L_lip. Uses O(T) LO-oracle calls in expectation."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "expected_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(8*(R_out/r_K)*sqrt(d*M_loss*r_K*L_lip) + 6*L_lip*R_out + 4*L_lip*R_out*sqrt(r_K*L_lip/(d*M_loss)))*T**(3/4)",
+    "expression_latex": "\\left( 8 \\frac{R}{r} \\sqrt{nMrG} + 6 G R + 4 G R \\sqrt{\\frac{rG}{nM}} \\right) T^{\\frac{3}{4}}",
+    "regime": "(nM/(Gr))^2 <= T"
+   },
+   "symbols": {
+    "R_out": "radius R with K ⊆ R B^n",
+    "M_loss": "bound on |f_t(x)| over K"
+   },
+   "conditions": [
+    "r B^n ⊆ K ⊆ R B^n",
+    "subgradients bounded by G (L_lip) over K",
+    "|f_t(x)| <= M on K",
+    "(nM/(Gr))^2 <= T"
+   ],
+   "tuning": [
+    "c = sqrt(nMr/G)",
+    "eta = 2cR/(nM) T^{-3/4}",
+    "delta = c T^{-1/4}",
+    "epsilon = 16 R^2 T^{-1/2}",
+    "K = T^{1/2}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1",
+    "quote": "In particular, if $\\left( \\frac{nM}{Gr} \\right)^2 \\leq T$ then, setting $c=\\sqrt{\\frac{nMr}{G}}$, we have\n    {\\small\n    \\begin{align}\n        \\mathbb{E}[\\mathcal{R}_{T}] \\leq & \\left( 8 \\frac{R}{r}  \\sqrt{nMrG} + 6 G R + 4 G R \\sqrt{\\frac{rG}{nM}} \\right) T^{\\frac{3}{4}}, \\nonumber\n    \\end{align}}"
+   },
+   "confidence": "high",
+   "notes": "Specialized tuning of r1."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(3/4 + L_lip*c_alg/(2*d*M_loss) + L_lip**2*c_alg**2/(4*d**2*M_loss**2))*T",
+    "expression_latex": "\\left( \\frac{3}{4} + \\frac{G c}{2 n M} + \\frac{G^2 c^2 }{4 n^2 M^2} \\right) T",
+    "regime": null
+   },
+   "symbols": {
+    "M_loss": "bound on |f_t(x)| over K",
+    "c_alg": "free constant c > 0 in tuning"
+   },
+   "conditions": [
+    "r B^n ⊆ K ⊆ R B^n",
+    "subgradients bounded by G over K",
+    "|f_t(x)| <= M on K"
+   ],
+   "tuning": [
+    "c T^{-1/4}/r <= 1",
+    "eta = 2cR/(nM) T^{-3/4}",
+    "delta = c T^{-1/4}",
+    "epsilon = 16 R^2 T^{-1/2}",
+    "K = T^{1/2}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1",
+    "quote": "and that the expected overall number of calls to the linear optimization oracle is upper-bounded by E[sum_m L_m] <= (3/4 + Gc/(2nM) + G^2c^2/(4n^2M^2)) T"
+   },
+   "confidence": "high",
+   "notes": "Expected number of linear optimization oracle calls, not regret."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "(3/4 + (1/2)*sqrt(L_lip*r_K/(d*M_loss)) + (1/4)*sqrt(L_lip*r_K/(d*M_loss)))*T",
+    "expression_latex": "\\left( \\frac{3}{4} + \\frac{1}{2}\\sqrt{\\frac{Gr}{nM}} + \\frac{1}{4}\\sqrt{\\frac{Gr }{nM}} \\right) T",
+    "regime": "(nM/(Gr))^2 <= T"
+   },
+   "symbols": {
+    "M_loss": "bound on |f_t(x)| over K"
+   },
+   "conditions": [
+    "r B^n ⊆ K ⊆ R B^n",
+    "subgradients bounded by G over K",
+    "|f_t(x)| <= M on K",
+    "(nM/(Gr))^2 <= T"
+   ],
+   "tuning": [
+    "c = sqrt(nMr/G)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem 1",
+    "quote": "and\n    \\begin{align}\n        \\mathbb{E} \\left[ \\sum_{m=1}^{\\frac{T}{K}} L_m \\right] \\leq & ~ \\left( \\frac{3}{4} + \\frac{1}{2}\\sqrt{\\frac{Gr}{nM}} + \\frac{1}{4}\\sqrt{\\frac{Gr }{nM}} \\right) T . \\nonumber\n    \\end{align}"
+   },
+   "confidence": "medium",
+   "notes": "Oracle-call count as printed; the last term as printed seems inconsistent with plugging c into r3 (should be Gr/(4nM)), recorded verbatim."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "Flaxman05",
+   "cited_title": "Online convex optimization in the bandit setting: gradient descent without a gradient",
+   "cited_first_author": "Abraham D Flaxman",
+   "cited_year": 2005,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Bandit gradient descent (Flaxman et al.)",
+   "algorithm_registry_id": "osgd_one_point",
+   "side": "upper",
+   "setting_description": "Bandit convex optimization, convex Lipschitz losses, oblivious adversary, with Euclidean projections",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(3/4)",
+    "expression_latex": "T^{3/4}",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "Hazan12",
+   "cited_title": "Projection-free online learning",
+   "cited_first_author": "Elad E Hazan",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Online Frank-Wolfe",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Online convex optimization, full information, projection-free (linear optimization oracle)",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(3/4)",
+    "expression_latex": "T^{3/4}",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "Karbasi19",
+   "cited_title": "Projection-free bandit convex optimization",
+   "cited_first_author": "Lin Chen",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Projection-free bandit Frank-Wolfe (Chen et al.)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Bandit convex optimization, projection-free (linear optimization oracle), T oracle calls",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(4/5)",
+    "expression_latex": "T^{4/5}",
+    "regime": null
+   },
+   "where": "Table 1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:28:14",
+  "source_chars": 60701,
+  "input_tokens": 70036,
+  "output_tokens": 5393,
+  "cost_usd_equiv": 0.38491420000000004,
+  "quote_retry": {
+   "asked": 3,
+   "fixed": 3,
+   "cost_usd_equiv": 0.2883604
+  },
+  "status": "extracted"
+ }
+}

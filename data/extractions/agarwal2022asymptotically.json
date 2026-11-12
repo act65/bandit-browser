@@ -1,0 +1,468 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "An Asymptotically Optimal Batched Algorithm for the Dueling Bandit Problem",
+  "arxiv_id": "2209.12108",
+  "arxiv_version": null,
+  "year": 2022,
+  "authors": [
+   "Arpit Agarwal",
+   "Rohan Ghuge",
+   "Viswanath Nagarajan"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Batched K-armed dueling bandit under the Condorcet condition",
+   "objective": "cumulative_regret",
+   "feedback": "dueling",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "K",
+    "M_batch"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "batched"
+   ],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "general",
+    "winner": "condorcet",
+    "comparison": "pair"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Existence of a Condorcet winner a* with p_{a*,j} > 1/2 for all j; Delta_j := p_{a*,j} - 1/2; regret per step (Delta_{i_t}+Delta_{j_t})/2"
+   ],
+   "definition_quote": "In each time-step, a noisy comparison between two arms (possibly the same), say (i, j), is performed. The outcome of the comparison is an independent random variable, and the probability of picking i over j is denoted p_{i,j} = 1/2 + Delta_{i,j} ... We say that arm i is a Condorcet winner if, and only if, p_{i,j} > 1/2 for all j ... We assume that the values of T and B are known."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "C2B (Catching the Condorcet winner in Batches)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "M_batch"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "C2B-KL",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "M_batch"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(1/M_batch)*K**2*log(K)/Delta_min**2*log(log(K)/Delta_min) + T**(2/M_batch)*K**2*sqrt(1/delta) + sum_subopt(T**(1/M_batch)*log(K*T)/Delta_i)",
+    "expression_latex": "O( T^{1/B} \\frac{K^2 \\log(K)}{\\Delta_{\\min}^2} \\log(\\frac{\\log K}{\\Delta_{\\min}}) ) + O( T^{2/B} K^2 \\sqrt{1/\\delta}) + \\sum_{j \\neq a^*} O(\\frac{T^{1/B} \\log(KT)}{\\Delta_j})",
+    "regime": null
+   },
+   "symbols": {
+    "M_batch": "number of batches B"
+   },
+   "conditions": [
+    "Condorcet winner exists",
+    "K <= T",
+    "probability at least 1 - delta - 1/T"
+   ],
+   "tuning": [
+    "q = T^{1/B}, pairs compared floor(q^r) times in round r"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:condorcet-init-high-prob",
+    "number": "Theorem 1.1",
+    "quote": "For any integer $B \\geq 1$, there is an algorithm for the $K$-armed dueling bandit problem that uses at most $B$ rounds with the following guarantee. For any $\\delta > 0$, with probability at least $1 - \\delta - \\frac{1}{T}$, its regret under the Condorcet condition is at most ..."
+   },
+   "confidence": "high",
+   "notes": "Failure probability is delta + 1/T."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(1/M_batch)*K**2*log(K)/Delta_min**2*log(log(K)/Delta_min) + T**(2/M_batch)*K**2 + sum_subopt(T**(1/M_batch)*log(K*T)/Delta_i)",
+    "expression_latex": "O( T^{1/B} \\frac{K^2 \\log(K)}{\\Delta_{\\min}^2} \\log(\\frac{\\log K}{\\Delta_{\\min}}) ) + O( T^{2/B} K^2) + \\sum_{j \\neq a^*} O(\\frac{T^{1/B} \\log(KT)}{\\Delta_j})",
+    "regime": null
+   },
+   "symbols": {
+    "M_batch": "number of batches B"
+   },
+   "conditions": [
+    "Condorcet winner exists",
+    "K <= T"
+   ],
+   "tuning": [
+    "q = T^{1/B}"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:condorcet-init-exp",
+    "number": "Theorem 1.2",
+    "quote": "For any integer $B \\geq 1$, there is an algorithm for the $K$-armed dueling bandit problem that uses at most $B$ rounds, with expected regret under the Condorcet condition at most ..."
+   },
+   "confidence": "high",
+   "notes": "Regret defined via gaps Delta, so pseudo-regret."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "K**2*log(K)/Delta_min**2*log(log(K)/Delta_min) + sum_subopt(log(K*T)/Delta_i)",
+    "expression_latex": "O( \\frac{K^2 \\log(K)}{\\Delta_{\\min}^2} \\log(\\frac{\\log K}{\\Delta_{\\min}}) ) + \\sum_{j \\neq a^*} O(\\frac{\\log(KT)}{\\Delta_j})",
+    "regime": "M_batch = log(T)"
+   },
+   "symbols": {
+    "M_batch": "number of batches B"
+   },
+   "conditions": [
+    "Condorcet winner exists",
+    "K <= T"
+   ],
+   "tuning": [
+    "B = log(T)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:log",
+    "number": "Corollary 1.3",
+    "quote": "There is an algorithm for the $K$-armed dueling bandit problem that uses at most $\\log(T)$ rounds, with expected regret under the Condorcet condition at most ..."
+   },
+   "confidence": "high",
+   "notes": "Special case of Theorem 1.2 with B = log T; recorded as it gives a different expression."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "T**(1/M_batch)*K**2*log(K)/Delta_min**2*log(log(K)/Delta_min) + T**(2/M_batch)*K**2*sqrt(1/delta) + sum_subopt(T**(1/M_batch)*log(T)/Delta_i) + sum_subopt(T**(1/M_batch)*f_K/Delta_i)",
+    "expression_latex": "O( T^{1/B} \\frac{K^2 \\log(K)}{\\Delta_{\\min}^2} \\log(\\frac{\\log K}{\\Delta_{\\min}}) ) + O( T^{2/B} K^2 \\sqrt{1/\\delta}) + \\sum_{j \\neq a^*} O(\\frac{T^{1/B} \\log(T)}{\\Delta_j}) + \\sum_{j \\neq a^*} O(\\frac{T^{1/B} f(K)}{\\Delta_j})",
+    "regime": null
+   },
+   "symbols": {
+    "M_batch": "number of batches B",
+    "f_K": "non-negative function f(K) in the KL elimination threshold log(T)+f(K)"
+   },
+   "conditions": [
+    "Condorcet winner exists",
+    "probability at least 1 - delta - (1/T) e^{K log(C) - f(K)}, C an instance-dependent constant"
+   ],
+   "tuning": [
+    "elimination threshold log(T) + f(K)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:kl-condorcet-init-high-prob",
+    "number": "Theorem A.1",
+    "quote": "For any integer $B \\geq 1$, there is an algorithm for the $K$-armed dueling bandit problem that uses at most $B$ rounds. Furthermore, for any $\\delta > 0$, with probability at least $1 - \\delta - \\frac{1}{T}\\cdot e^{K\\log(C)-f(K)}$, where $C$ is some constant ..., its regret under the Condorcet condition is at most ..."
+   },
+   "confidence": "medium",
+   "notes": "C depends on the instance's pairwise probabilities."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "AgarwalGN22",
+   "cited_title": "Batched dueling bandits",
+   "cited_first_author": "A. Agarwal",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Batched K-armed dueling bandits (B batches), holds even under SST+STI",
+   "bound": {
+    "notation": "Omega",
+    "expression": "K*T**(1/M_batch)/(M_batch**2*Delta_min)",
+    "expression_latex": "\\Omega(\\frac{KT^{1/B}}{B^2\\Delta_{\\min}})",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "AgarwalGN22",
+   "cited_title": "Batched dueling bandits",
+   "cited_first_author": "A. Agarwal",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "PCOMP",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Batched dueling bandits under Condorcet condition, log(T) batches, expected regret",
+   "bound": {
+    "notation": "O",
+    "expression": "K**2*log(T)/Delta_min",
+    "expression_latex": "O(K^2\\log(T)/\\Delta_{\\min})",
+    "regime": "M_batch = log(T)"
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "AgarwalGN22",
+   "cited_title": "Batched dueling bandits",
+   "cited_first_author": "A. Agarwal",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SCOMP",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Batched dueling bandits under SST+STI, B+1 batches, expected regret",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(sqrt(K)*T**(1/M_batch)*log(T)/Delta_i)",
+    "expression_latex": "\\sum_{j} O(\\sqrt{K}T^{1/B}\\log(T)/\\Delta_j)",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "AgarwalGN22",
+   "cited_title": "Batched dueling bandits",
+   "cited_first_author": "A. Agarwal",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "SCOMP2",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Batched dueling bandits under SST+STI, 2B+1 batches",
+   "bound": {
+    "notation": "O",
+    "expression": "K*M_batch*T**(1/M_batch)*log(T)/Delta_min",
+    "expression_latex": "O(KBT^{1/B}\\log(T)/\\Delta_{\\min})",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "Zoghi+14",
+   "cited_title": "Relative Upper Confidence Bound for the K-Armed Dueling Bandit Problem",
+   "cited_first_author": "M. Zoghi",
+   "cited_year": 2014,
+   "cited_arxiv_id": null,
+   "algorithm_name": "RUCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Sequential dueling bandits under Condorcet condition",
+   "bound": {
+    "notation": "O",
+    "expression": "K**2/Delta_min**2 + sum_subopt(log(T)/Delta_i**2)",
+    "expression_latex": "O(K^2/\\Delta_{\\min}^2) + \\sum_j O(\\log T/\\Delta_j^2)",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "Urvoy+13",
+   "cited_title": "Generic Exploration and K-armed Voting Bandits",
+   "cited_first_author": "T. Urvoy",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Sequential dueling bandits under Condorcet condition",
+   "bound": {
+    "notation": "O",
+    "expression": "K**2*log(T)/Delta_min",
+    "expression_latex": "O(K^2\\log T/\\Delta_{\\min})",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "SahaGi22",
+   "cited_title": "Versatile dueling bandits: Best-of-both world analyses for learning from relative preferences",
+   "cited_first_author": "A. Saha",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Sequential dueling bandits under Condorcet condition",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(log(T)/Delta_i)",
+    "expression_latex": "\\sum_j O(\\log T)/\\Delta_j",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "YueJo11",
+   "cited_title": "Beat the mean bandit",
+   "cited_first_author": "Y. Yue",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Beat-the-Mean",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Sequential dueling bandits under relaxed SST+STI",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt(log(T)/Delta_i)",
+    "expression_latex": "\\sum_j O(\\log(T)/\\Delta_j)",
+    "regime": null
+   },
+   "where": "Section 2"
+  },
+  {
+   "cited_key": "EsfandiariKM+21",
+   "cited_title": "Regret bounds for batched bandits",
+   "cited_first_author": "H. Esfandiari",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Batched stochastic K-armed bandits, B batches",
+   "bound": {
+    "notation": "O",
+    "expression": "K*T**(1/M_batch)*log(T)/Delta_min",
+    "expression_latex": "O(KT^{1/B}\\log(T)/\\Delta_{\\min})",
+    "regime": null
+   },
+   "where": "Section 2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:43:59",
+  "source_chars": 94782,
+  "input_tokens": 85342,
+  "output_tokens": 7214,
+  "cost_usd_equiv": 0.5437822,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

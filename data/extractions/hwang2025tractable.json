@@ -1,0 +1,395 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Tractable Multinomial Logit Contextual Bandits with Non-Linear Utilities",
+  "arxiv_id": "2601.06913",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Taehyun Hwang",
+   "Dahngoon Kim",
+   "Min-hwan Oh"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "MNL contextual bandits with non-linear parametric utilities",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "T",
+    "K",
+    "m",
+    "function_class"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "at_most_m",
+    "reward": "unspecified",
+    "loss_scale": "per_action"
+   },
+   "reward_model": {
+    "kind": "realizable_general_class"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Feedback is a single user choice from the offered assortment plus outside option, drawn from an MNL choice model with utilities f_w*(x_ti); reward is the expected revenue sum_i p(i|S) r_ti",
+    "Utility f_w is a non-linear parametric function (e.g. neural network) of the context with parameter w in R^{d_w}; bounded value, gradient and Hessian in w (C_f, C_g, C_h)",
+    "Contexts must be i.i.d. from an unknown distribution during Phase I (first t_0 rounds); afterwards may be adversarial",
+    "Generalized geometric condition (growth / local strong convexity mu) on the expected squared loss around the equivalence set W*",
+    "The learner knows C_h, kappa and mu (used in tuning lambda, beta_t, t_0 and the optimistic utility)",
+    "Paper's N (number of items) maps to K; paper's K (max assortment size) maps to m"
+   ],
+   "definition_quote": "at each round $t$, the agent observes a set of feature vectors for all items, denoted by $X_t := \\{ \\xb_{t1}, \\ldots, \\xb_{tN} \\} \\subset \\mathbb{R}^d$ ... the agent selects an assortment $S_t = \\{i_1, \\dots, i_l\\} \\in \\mathcal{S}:= \\{ S \\subset [N]: |S| \\le K \\}$ ... and observes a user choice $i_t \\in S_t \\cup \\{0\\}$ ... modeled by the MNL choice model"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "ONL-MNL (Optimistic Non-Linear Utility for Contextual MNL Bandit)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "explore_then_commit"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "m",
+    "function_class",
+    "kappa",
+    "mu_lsc",
+    "C_h",
+    "d_w"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "kappa**(-3/2)*d_w*sqrt(T) + kappa**(-2)*mu_lsc**(-1)*d_w*sqrt(T)",
+    "expression_latex": "\\tilde{\\Ocal}\\left( \\kappa^{-3/2} d_w \\sqrt{T} + \\kappa^{-2} \\mu^{-1} d_w \\sqrt{T} \\right)",
+    "regime": "T >= C_tilde * kappa^{-1} C_f^2 zeta^2 (mu^{gamma/(2-gamma)} / tau^{2/(2-gamma)})^2"
+   },
+   "symbols": {
+    "d_w": "dimension of the utility parameter w",
+    "kappa": "min over w, X, S, i in S of p(0|X,S,w) p(i|X,S,w)",
+    "mu_lsc": "local strong convexity constant of the expected squared loss (Assumption 4)"
+   },
+   "conditions": [
+    "realizability: w* in W and function class F given to the agent",
+    "||x_ti|| <= 1, r_ti in [0,1], ||w|| <= 1",
+    "|f_w(x)| <= C_f, ||grad f_w(x)|| <= C_g, ||Hess f_w(x)||_op <= C_h",
+    "contexts i.i.d. from unknown distribution D during Phase I",
+    "generalized geometric condition: (tau,gamma)-growth or mu-local strong convexity of expected squared loss w.r.t. equivalence set W*, 0<gamma<2"
+   ],
+   "tuning": [
+    "t_0 = ceil(kappa^{-3/2} d_w sqrt(T))",
+    "lambda = O~(kappa^{-5/2} mu^{-1} d_w sqrt(T))",
+    "beta_t = O~(mu^{-2} kappa^{-4} d_w)",
+    "confidence delta in (0,1); bound holds w.p. at least 1-2delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret bound",
+    "number": "Theorem 1",
+    "quote": "Suppose Assumptions 1,2,3 and 4 hold. For any $\\delta \\in (0,1)$, if we set ... $t_0 = \\lceil \\kappa^{-3/2} d_w \\sqrt{T} \\rceil$, $\\lambda = \\tilde{\\Ocal}(\\kappa^{-5/2} \\mu^{-1} d_w \\sqrt{T})$, $\\beta_t = \\tilde{\\Ocal} ( \\mu^{-2} \\kappa^{-4} d_w )$ ... then with probability at least $1 - 2\\delta$, Algorithm 1 achieves ... $\\mathrm{Regret}_{T} = \\tilde{ \\Ocal } ( \\kappa^{-3/2} d_w \\sqrt{T} + \\kappa^{-2} \\mu^{-1} d_w \\sqrt{T} )$."
+   },
+   "confidence": "medium",
+   "notes": "Regret defined via expected revenues R_t(S, w*) per round, not expectation-averaged; high probability 1-2delta. Paper's mu renamed mu_lsc. Feedback/setting mapping (MNL choice) is approximate."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "zhang2024contextual",
+   "cited_title": null,
+   "cited_first_author": "Zhang",
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": "epsilon-greedy (offline regression oracle)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "MNL contextual bandit with Lipschitz general utility class, stochastic contexts; K=number of items (paper N), m=assortment size (paper K)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "(d_w*K*m)**(1/3)*T**(2/3)",
+    "expression_latex": "\\tilde{\\Ocal}((d_w N K)^{1/3} T^{2/3})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "zhang2024contextual",
+   "cited_title": null,
+   "cited_first_author": "Zhang",
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": "log-barrier regularizer (offline regression oracle)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "MNL contextual bandit with Lipschitz general utility class, stochastic contexts",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "m**2*sqrt(d_w*K*T)",
+    "expression_latex": "\\tilde{\\Ocal}(K^2 \\sqrt{d_w N T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "zhang2024contextual",
+   "cited_title": null,
+   "cited_first_author": "Zhang",
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": "epsilon-greedy (online regression oracle)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "MNL contextual bandit with Lipschitz general utility class, adversarial contexts",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "(K*m)**(1/3)*T**(5/6)",
+    "expression_latex": "\\tilde{\\Ocal}((NK)^{1/3} T^{5/6})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "zhang2024contextual",
+   "cited_title": null,
+   "cited_first_author": "Zhang",
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Feel-Good TS",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "MNL contextual bandit with Lipschitz general utility class, adversarial contexts (online regression oracle)",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "m**2*sqrt(d_w*K*T)",
+    "expression_latex": "\\tilde{\\Ocal}(K^2 \\sqrt{d_w N T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "zhang2024contextual",
+   "cited_title": null,
+   "cited_first_author": "Zhang",
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": "log-barrier regularizer (online regression oracle)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "MNL contextual bandit with Lipschitz general utility class, adversarial contexts",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "m**2*sqrt(d*K)*T**(3/4)",
+    "expression_latex": "\\tilde{\\Ocal}(K^2 \\sqrt{d N} T^{3/4})",
+    "regime": null
+   },
+   "where": "Appendix A (Related Works)"
+  },
+  {
+   "cited_key": "ou2018multinomial",
+   "cited_title": null,
+   "cited_first_author": "Ou",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "MNL contextual bandit with linear utility, fixed item features",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*m*sqrt(T)",
+    "expression_latex": "\\tilde{\\Ocal}(d K\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Appendix A (Related Works)"
+  },
+  {
+   "cited_key": "chen2020dynamic",
+   "cited_title": null,
+   "cited_first_author": "Chen",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "MNL contextual bandit with linear utility, stochastic time-varying contexts",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T) + d**2*m**2",
+    "expression_latex": "\\tilde{\\Ocal}(d\\sqrt{T} + d^2 K^2)",
+    "regime": null
+   },
+   "where": "Appendix A (Related Works)"
+  },
+  {
+   "cited_key": "oh2021multinomial",
+   "cited_title": null,
+   "cited_first_author": "Oh",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB-MNL",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "MNL contextual bandit with linear utility",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*m*sqrt(T/kappa)",
+    "expression_latex": "\\tilde{\\Ocal}(dK\\sqrt{T/\\kappa})",
+    "regime": null
+   },
+   "where": "Appendix A (Related Works)"
+  },
+  {
+   "cited_key": "perivier2022dynamic",
+   "cited_title": null,
+   "cited_first_author": "Perivier",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "MNL contextual bandit with linear utility, adversarial contexts, non-uniform rewards",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*m*sqrt(kappa_star*T) + d**2*m**4/kappa",
+    "expression_latex": "\\tilde{\\Ocal}(dK\\sqrt{\\kappa^* T} + d^2K^4/\\kappa)",
+    "regime": null
+   },
+   "where": "Appendix A (Related Works)"
+  },
+  {
+   "cited_key": "liu2023global",
+   "cited_title": null,
+   "cited_first_author": "Liu",
+   "cited_year": 2023,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "infinite-armed bandit with general parametric reward model under a geometric condition",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d_w**2*sqrt(T)",
+    "expression_latex": "\\tilde{\\mathcal{O}}(d_w^2 \\sqrt{T})",
+    "regime": null
+   },
+   "where": "Appendix A (Related Works)"
+  },
+  {
+   "cited_key": "xu2021robust",
+   "cited_title": null,
+   "cited_first_author": "Xu",
+   "cited_year": 2021,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "contextual bandit with quadratic one-hidden-layer neural network reward",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "T**(2/3)",
+    "expression_latex": "\\tilde{\\Ocal}(T^{2/3})",
+    "regime": null
+   },
+   "where": "Appendix A (Related Works)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:58:21",
+  "source_chars": 124292,
+  "input_tokens": 100904,
+  "output_tokens": 6912,
+  "cost_usd_equiv": 0.6622382,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

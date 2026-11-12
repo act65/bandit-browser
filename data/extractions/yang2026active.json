@@ -1,0 +1,241 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Active Hypothesis Testing for Correlated Combinatorial Anomaly Detection",
+  "arxiv_id": "2601.17430",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "Zichuan Yang",
+   "Yiming Xing"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Correlated combinatorial anomaly identification with designed linear measurements (fixed confidence)",
+   "objective": "general_identification",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "gaussian_known_variance",
+   "learner_knows": [
+    "K",
+    "m"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "l1_ball",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "unspecified",
+    "loss_set": "not_applicable",
+    "parameter_structure": "sparse"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Goal: identify an unknown anomalous subset S* of size n (m in the vocabulary) among K streams; the hypothesis space is all n-subsets",
+    "Observation y_t = c_t^T x_t + noise, where x_t ~ N(mu_S*, Sigma) with a full known covariance Sigma (correlated noise); the observation variance c^T Sigma c depends on the action",
+    "The learner knows the covariance matrix Sigma, the nominal mean mu_0 and the anomaly signal pattern delta (the size of the mean shift)",
+    "The action set is the L1 ball {c : ||c||_1 <= B}; the learner knows the L1 action budget B (not a knapsack budget)"
+   ],
+   "definition_quote": "At time $t$, the learner chooses a vector $\\mathbf{c}_t \\in \\mathbb{R}^K$ and observes a scalar projection $y_t = \\mathbf{c}_t^\\top \\mathbf{x}_t + \\xi_t$, where $\\mathbf{x}_t$ is the latent system state and $\\xi_t$ is Gaussian noise with variance $\\mathbf{c}_t^\\top \\bm{\\Sigma} \\mathbf{c}_t$. To model sensing or energy constraints, we restrict the action space to $\\mathcal{C} = \\{ \\mathbf{c} \\in \\mathbb{R}^K : \\|\\mathbf{c}\\|_1 \\le B \\}$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "ECC-AHT (Efficient Champion-Challenger Active Hypothesis Testing)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "m",
+    "Sigma (covariance)",
+    "B (L1 action budget)",
+    "delta (signal pattern)",
+    "mu_0",
+    "delta (confidence)"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "expectation",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "log(1/delta)/Gamma_star + C_1*log(log(1/delta)) + C_2",
+    "expression_latex": "\\mathbb{E}[\\tau] \\le \\frac{\\log(1/\\delta)}{\\Gamma^\\star} + C_1 \\log\\log(1/\\delta) + C_2",
+    "regime": "delta in (0,1)"
+   },
+   "symbols": {
+    "Gamma_star": "optimal information rate max_{c in C} min_{S' != S*} D(H_S* || H_S' | c), i.e. the Chernoff information of the best measurement",
+    "C_1": "constant independent of delta",
+    "C_2": "constant independent of delta"
+   },
+   "conditions": [
+    "Sigma positive definite",
+    "action set C compact",
+    "the proof also relies on Assumptions E.1-E.3 (effective rank r_eff(Sigma)/K >= eps, incoherence, bounded signal ratio)"
+   ],
+   "tuning": [
+    "GLR stopping rule with threshold beta(t,delta) = log(1/delta) + O(log log(1/delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:nonasymptotic",
+    "number": "Theorem 4.2",
+    "quote": "Assume that $\\bm{\\Sigma}$ is positive definite and the action set $\\mathcal{C}$ is compact. For any $\\delta \\in (0,1)$, ECC-AHT is $\\delta$-correct, and its expected stopping time satisfies \\mathbb{E}[\\tau] \\le \\frac{\\log(1/\\delta)}{\\Gamma^\\star} + C_1 \\log\\log(1/\\delta) + C_2, where $C_1$ and $C_2$ are constants independent of $\\delta$."
+   },
+   "confidence": "medium",
+   "notes": "The algorithm is also stated to be delta-correct. Gamma_star is defined inconsistently: KL-based, with a factor of 1/2, in the main text, and as an SNR ratio without the 1/2 in the appendix proof. The proof is heuristic in places."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "asymptotic",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "limsup",
+    "expression": "log(1/delta)/Gamma_star",
+    "expression_latex": "\\limsup_{\\delta \\to 0} \\frac{\\mathbb{E}[\\tau]}{\\log(1/\\delta)} = \\frac{1}{\\Gamma^\\star}",
+    "regime": "delta -> 0"
+   },
+   "symbols": {
+    "Gamma_star": "optimal information rate max_{c in C} min_{S' != S*} D(H_S* || H_S' | c)"
+   },
+   "conditions": [
+    "Sigma positive definite",
+    "action set C compact",
+    "the proof also relies on Assumptions E.1-E.3"
+   ],
+   "tuning": [
+    "GLR stopping rule with threshold beta(t,delta) = log(1/delta) + o(log(1/delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:asymptotic",
+    "number": "Theorem 4.3",
+    "quote": "Under the same assumptions, \\limsup_{\\delta \\to 0} \\frac{\\mathbb{E}[\\tau]}{\\log(1/\\delta)} = \\frac{1}{\\Gamma^\\star}."
+   },
+   "confidence": "medium",
+   "notes": "The theorem is stated as an equality. It is recorded as a limsup upper bound with the expression c*log(1/delta) and c = 1/Gamma_star."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "garivier2016optimal",
+   "cited_title": "Optimal best arm identification with fixed confidence",
+   "cited_first_author": "Garivier",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Fixed-confidence identification of the anomalous subset under correlated Gaussian noise with designed measurements; any delta-correct algorithm (classical Chernoff / Garivier-Kaufmann argument, also citing chernoff1959sequential)",
+   "bound": {
+    "notation": "liminf",
+    "expression": "log(1/delta)/Gamma_star",
+    "expression_latex": "\\mathbb{E}[\\tau] \\ge \\frac{\\log(1/\\delta)}{\\Gamma^\\star}(1-o(1)), \\ \\delta \\to 0",
+    "regime": "delta -> 0"
+   },
+   "where": "Section 4.1, eq. (lower_bound)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T16:31:27",
+  "source_chars": 143581,
+  "input_tokens": 104415,
+  "output_tokens": 5870,
+  "cost_usd_equiv": 0.6694861999999999,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,378 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Communication-Constrained Bandits under Additive Gaussian Noise",
+  "arxiv_id": "2304.12680",
+  "arxiv_version": null,
+  "year": 2023,
+  "authors": [
+   "Prathamesh Mayekar",
+   "Jonathan Scarlett",
+   "Vincent Y. F. Tan"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Distributed SMAB problem over an AWGN channel",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [
+    "bounded_variance"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Reward is observed by a memoryless client which must encode it with second moment at most P; the encoded value is sent over an AWGN channel with noise variance sigma^2, and the learner only sees the channel output (SNR = P/sigma^2)",
+    "Learner may send side information to the client each round and chooses encoder/decoder",
+    "Rewards centred are 1-subgaussian and have second moment E[X^2] <= B_rew^2 with B_rew >= 1",
+    "The learner knows SNR (P, sigma^2) and B_rew"
+   ],
+   "definition_quote": "the client encodes this reward using an encoding function $ C_t \\colon \\R \\times \\mathcal{S}  \\to \\R$ ... must satisfy the power constraint $\\E{C_t(X_{t, A_t}, S_t)^2} \\leq P$ ... $Y_t = C_t(X_{t, A_t}, S_t) + Z_t$ ... We assume that $X_{1, i}-\\mu_i$ is subgaussian with variance factor $1$ ... $\\E{X_{1, i}^2} \\leq B^2.$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "UCB0 with CAS encoding",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "SNR",
+    "B_rew"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "UE-UCB with CAS encoding",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "explore_then_commit"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "SNR",
+    "B_rew"
+   ]
+  },
+  {
+   "id": "a3",
+   "name": "UE-UCB++ with CAS encoding",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "explore_then_commit"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "SNR",
+    "B_rew"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "Min(sqrt(K*T)/sqrt(Min(log(1 + SNR)/(2*log(2)), 1)), c_2*T) + K*B_rew",
+    "expression_latex": "c_1 \\bigg( \\sqrt{KT} \\cdot \\frac{1}{\\sqrt{\\frac{1}{2} \\log (1+ \\SNR) \\wedge 1}} \\wedge c_2 T     + KB \\bigg)",
+    "regime": "T >= c_2*K/Min(log2(1+SNR)/2, 1)"
+   },
+   "symbols": {
+    "SNR": "signal-to-noise ratio P/sigma^2 of the AWGN channel",
+    "B_rew": "bound on the L2 norm of rewards, E[X^2] <= B_rew^2",
+    "c_2": "universal constant > 0"
+   },
+   "conditions": [
+    "T >= c_2 K / (1/2 log2(1+SNR) wedge 1)",
+    "minimax over all algorithms and all encoding strategies satisfying the power constraint"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "t:lb",
+    "number": "Theorem 3.1",
+    "quote": "For universal   constants $c_1$ and $c_2$,  where $0 < c_1 <1$ and $c_2 > 0,$ we have R^\\ast_T(\\SNR) \\geq c_1 \\bigg( \\sqrt{KT} \\cdot \\frac{1}{\\sqrt{\\frac{1}{2} \\log (1+ \\SNR) \\wedge 1}} \\wedge c_2 T     + KB \\bigg) for all $T \\geq  \\frac{c_2 K}{\\frac{1}{2} \\log (1+ \\SNR) \\wedge 1}$."
+   },
+   "confidence": "medium",
+   "notes": "log is base 2 in the paper; converted. Universal constant c_1 absorbed into Omega. Regret defined as T mu* - E[sum X], i.e. pseudo-regret."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "lower",
+   "algorithm": null,
+   "algorithm_class": "all",
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sqrt(K*T)/sqrt(Min(SNR, 1)) + K*B_rew",
+    "expression_latex": "c_1 \\left(\\sqrt{KT} \\cdot \\frac{1}{ \\sqrt{\\SNR  \\wedge 1}} + KB \\right)",
+    "regime": "T >= c_2*K/Min(log2(1+SNR)/2, 1)"
+   },
+   "symbols": {
+    "SNR": "signal-to-noise ratio P/sigma^2",
+    "B_rew": "bound on the L2 norm of rewards"
+   },
+   "conditions": [
+    "T >= c_2 K / (1/2 log2(1+SNR) wedge 1)"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Corollary 3.2",
+    "quote": "For universal   constants $c_1$ and $c_2$,  where $0 < c_1 <1$ and $c_2 > 0,$ we have \\[R^\\ast_T(\\SNR) \\geq c_1 \\left(\\sqrt{KT} \\cdot \\frac{1}{ \\sqrt{\\SNR  \\wedge 1}} + KB \\right)\\] for all $T \\geq  \\frac{c_2 K}{\\frac{1}{2} \\log (1+ \\SNR) \\wedge 1}$."
+   },
+   "confidence": "high",
+   "notes": "Derived from Theorem 3.1 via ln(1+x) <= x."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "8*sqrt(B_rew**2/SNR + 1)*sqrt(K*T*log(T)) + 6*K*B_rew",
+    "expression_latex": "8 \\sqrt{ \\frac{B^2}{\\SNR}+1} \\cdot \\sqrt{KT \\ln T} + 6 KB",
+    "regime": null
+   },
+   "symbols": {
+    "SNR": "signal-to-noise ratio P/sigma^2",
+    "B_rew": "bound on the L2 norm of rewards"
+   },
+   "conditions": [],
+   "tuning": [
+    "eta = B^2/SNR + 1",
+    "theta = sqrt(P)/B",
+    "no side information sent"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "t:UCB0",
+    "number": "Theorem 4.1",
+    "quote": "For all bandit instances $\\nu \\in \\cE$, the $\\ZSUCB$ algorithm  along with $\\CAS$ encoding   satisfies the power constraint \\eqref{eq:Power_Constraint} at all rounds and has the following regret guarantee: \\[R_T(\\nu, \\UCB0, \\CAS)  \\leq 8 \\sqrt{ \\frac{B^2}{\\SNR}+1} \\cdot \\sqrt{KT \\ln T} + 6 KB.\\]"
+   },
+   "confidence": "high",
+   "notes": "Holds for every instance, hence worst-case."
+  },
+  {
+   "id": "r4",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*K*B_rew**3/SNR + 8*K*B_rew + 8*sqrt(2/SNR + 1)*sqrt(K*T*log(T))",
+    "expression_latex": "\\frac{2KB^3}{\\SNR} +8KB  +  8\\sqrt{\\frac{2}{\\SNR}+1} \\sqrt{KT \\ln T}",
+    "regime": null
+   },
+   "symbols": {
+    "SNR": "signal-to-noise ratio P/sigma^2",
+    "B_rew": "bound on the L2 norm of rewards"
+   },
+   "conditions": [],
+   "tuning": [
+    "theta_1 = sqrt(P)/B, tau = B^2/SNR + 1",
+    "eta_2 = 2/SNR + 1, theta_2 = sqrt(P/2)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "t:UEUCB",
+    "number": "Theorem 4.2",
+    "quote": "For all bandit instances $\\nu \\in \\cE$, the $\\UEUCB$  algorithm  along with $\\CAS$ encoding ... satisfies the power constraint ... R_T(\\nu, \\UEUCB, \\CAS)  \\leq  \\frac{2KB^3}{\\SNR} +8KB  +  8\\sqrt{\\frac{2}{\\SNR}+1} \\sqrt{KT \\ln T}."
+   },
+   "confidence": "high",
+   "notes": ""
+  },
+  {
+   "id": "r5",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a3",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "8*K*B_rew*(log(B_rew)/log(2))/Min(SNR, 1) + 6*K*B_rew + 8*sqrt(4/SNR + 1)*sqrt(K*T*log(T))",
+    "expression_latex": "\\frac{8 K B \\log B}{\\SNR \\wedge 1}+6KB + 8 \\sqrt{\\left(\\frac{4}{\\SNR}+1\\right)} \\cdot \\sqrt{ KT \\ln T}",
+    "regime": null
+   },
+   "symbols": {
+    "SNR": "signal-to-noise ratio P/sigma^2",
+    "B_rew": "bound on the L2 norm of rewards"
+   },
+   "conditions": [],
+   "tuning": [
+    "L = 2 log2 B sub-phases",
+    "tau = 2/SNR vee 2",
+    "B_{l+1}^2 recursion as in eq. (e:imp_rec)",
+    "eta_{L+1} = B_{L+1}^2/SNR + 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "t:UEUCBP",
+    "number": "Theorem 4.3",
+    "quote": "For all bandit instances $\\nu \\in \\cE$, the $\\UEUCBP$ bandit algorithm  along with $\\CAS$ encoding algorithm ... satisfies the power constraint ... R_T(\\nu, \\UEUCBP, \\CAS) \\leq  \\frac{8 K B \\log B}{\\SNR \\wedge 1}+6KB + 8 \\sqrt{\\left(\\frac{4}{\\SNR}+1\\right)} \\cdot \\sqrt{ KT \\ln T}."
+   },
+   "confidence": "high",
+   "notes": "log B is base 2 in the paper; converted to natural log ratio."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "lattimore2020bandit",
+   "cited_title": "Bandit Algorithms",
+   "cited_first_author": "T. Lattimore",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Stochastic K-armed bandit with alpha^2-subgaussian rewards and second moment at most B",
+   "bound": {
+    "notation": "exact",
+    "expression": "8*sqrt(alpha_sg**2*K*T*log(T)) + 6*K*B_rew",
+    "expression_latex": "8\\sqrt{\\alpha^2 KT \\ln T} +6KB",
+    "regime": null
+   },
+   "where": "Lemma 2.2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T16:55:48",
+  "source_chars": 74031,
+  "input_tokens": 75262,
+  "output_tokens": 6223,
+  "cost_usd_equiv": 0.4433222,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

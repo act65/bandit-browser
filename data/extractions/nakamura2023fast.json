@@ -1,0 +1,303 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "A Fast Algorithm for the Real-Valued Combinatorial Pure Exploration of Multi-Armed Bandit",
+  "arxiv_id": "2306.09202",
+  "arxiv_version": null,
+  "year": 2023,
+  "authors": [
+   "Shintaro Nakamura",
+   "Masashi Sugiyama"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Real-valued combinatorial pure exploration of multi-armed bandit (R-CPE-MAB)",
+   "objective": "bai_fixed_confidence",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "sigma",
+    "K",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "unbounded",
+    "loss_set": "not_applicable",
+    "parameter_structure": "unspecified"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Learner pulls one of d base arms (standard-basis measurements) and observes that arm's R-sub-Gaussian reward, but must identify the best of K known real-valued action vectors in R^d (transductive linear bandit with standard-basis measurement set)",
+    "K is assumed polynomial in d"
+   ],
+   "definition_quote": "Suppose we have $d$ arms ... We assume all reward distributions have $R$-sub-Gaussian tails for some known constant $R>0$. ... We define the action class $\\mathcal{A} = \\{\\boldsymbol{\\pi}^1, \\ldots, \\boldsymbol{\\pi}^K\\} \\subset \\mathbb{R}^d$ ... in each round $t$, she pulls an arm $p(t)\\in[d]$ and observes a reward $r_{p(t)}$ ... find an action $\\boldsymbol{\\pi}_{\\mathrm{out}}$ which satisfies $\\Pr[\\boldsymbol{\\pi}^* = \\boldsymbol{\\pi}_{\\mathrm{out}}] \\geq 1 - \\delta$ as fast as possible."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "CombGapE (Combinatorial Gap-based Exploration)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "K",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "delta",
+    "expression_latex": "\\Pr[\\boldsymbol{\\pi}^{*} = \\boldsymbol{\\pi}_{\\mathrm{out}}] \\geq 1 - \\delta",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "R-sub-Gaussian rewards with known R"
+   ],
+   "tuning": [
+    "confidence width beta_kl(t) = R sqrt(1/2 sum_s (pi^k_s - pi^l_s)^2/T_s(t) log(2K^2t^2/delta))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "identification_accuracy",
+    "number": "Theorem 4.1",
+    "quote": "The output of Algorithm \\ref{OurAlgorithm} $\\boldsymbol{\\pi}^{a_{\\mathrm{out}}}$ satisfies the following condition: $\\Pr\\left[\\boldsymbol{\\pi}^{*} = \\boldsymbol{\\pi}_{\\mathrm{out}}\\right] \\geq 1 - \\delta.$"
+   },
+   "confidence": "high",
+   "notes": "delta-correctness: misidentification probability at most delta. Compute is polynomial in K (enumerates the K actions)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "sample_complexity",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "not_applicable",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "8*sigma**2*sum_arms(V_s/Delta_s**2)*log(2*K**2*C_const**2/delta) + A_ratio*d",
+    "expression_latex": "8R^{2} \\sum_{s = 1}^{d} \\frac{V_{s}}{\\Delta^{2}_{(s)}} \\log \\left( \\frac{2K^{2}C^{2}}{\\delta} \\right) + Ad",
+    "regime": null
+   },
+   "symbols": {
+    "V_s": "max over pi in A with pi_s != pi*_s and pi' in A of |pi_s - pi'_s| / |pi*_s - pi_s|^2 * sum_u |pi_u - pi'_u|",
+    "Delta_s": "Delta_(s): per-arm gap, extremum over pi != pi* of mu^T(pi* - pi)/|pi*_s - pi_s| (paper writes argmax; proof uses it as a lower bound, i.e. min)",
+    "A_ratio": "A = max over s,u in [d], pi,pi' in A with pi_s != pi'_s of |pi_u - pi'_u|/|pi_s - pi'_s|",
+    "C_const": "problem-dependent constant determined by R, {V_s}, {Delta_(s)}, A, d (and K, delta per proof)",
+    "sum_arms": "sum over the d base arms s"
+   },
+   "conditions": [
+    "R-sub-Gaussian rewards with known R (sigma = R)",
+    "any delta in (0,1), any action class A subset R^d, any mu in R^d"
+   ],
+   "tuning": [],
+   "is_new": true,
+   "source": {
+    "label": "sample_complexity",
+    "number": "Theorem 4.2",
+    "quote": "Assume any $\\delta\\in(0, 1)$, any action class $\\mathcal{A}\\subset \\mathbb{R}^d$, and any expected rewards $\\boldsymbol{\\mu}\\in\\mathbb{R}^d$ are given. The reward distribution $\\phi_s$ for each arm $s\\in[d]$ is an $R$-sub-Gaussian tail distribution. With probability at least $1 - \\delta$, an upper bound of the sample complexity $\\tau$ of Algorithm \\ref{OurAlgorithm} is $8R^{2} \\sum_{s = 1}^{d} \\frac{V_{s}}{\\Delta^{2}_{(s)}} \\log ( \\frac{2K^{2}C^{2}}{\\delta} ) + Ad$ ..."
+   },
+   "confidence": "medium",
+   "notes": "Sum is over the d base arms. C is an unspecified problem-dependent constant. Paper remarks that for ordinary d-armed BAI, V_s = 2 giving 16R^2 sum 1/Delta_(s)^2 log(1/delta)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "nakamura2023thompson",
+   "cited_title": "Thompson sampling for real-valued combinatorial pure exploration of multi-armed bandit",
+   "cited_first_author": "Nakamura",
+   "cited_year": 2023,
+   "cited_arxiv_id": "2308.10238",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "R-CPE-MAB, fixed-confidence best action identification, R-sub-Gaussian arms",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sigma**2*sum_arms(1/Delta_s**2)*log(1/delta)",
+    "expression_latex": "\\mathcal{O}\\left( R^{2} \\sum_{s = 1}^{d} \\frac{1}{\\Delta^{2}_{(s)}} \\log \\left( \\frac{1}{\\delta} \\right) \\right)",
+    "regime": null
+   },
+   "where": "Section 4.2"
+  },
+  {
+   "cited_key": "Kaufmann2016",
+   "cited_title": "On the complexity of best-arm identification in multi-armed bandit models",
+   "cited_first_author": "Kaufmann",
+   "cited_year": 2016,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "best-arm identification in ordinary d-armed bandit, fixed confidence",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sigma**2*sum_arms(1/Delta_s**2)*log(1/delta)",
+    "expression_latex": "\\mathcal{O}\\left( R^{2} \\sum_{s = 1}^{d} \\frac{1}{\\Delta^{2}_{(s)}} \\log \\left( \\frac{1}{\\delta} \\right) \\right)",
+    "regime": null
+   },
+   "where": "Section 4.2"
+  },
+  {
+   "cited_key": "Fiez2019",
+   "cited_title": "Sequential experimental design for transductive linear bandits",
+   "cited_first_author": "Fiez",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": "RAGE",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "transductive linear bandit applied to R-CPE-MAB, fixed confidence sample complexity",
+   "bound": {
+    "notation": "O",
+    "expression": "sigma**2*rho_star*log(1/Delta_min)*log(1/delta)",
+    "expression_latex": "\\mathcal{O} ( R^{2} \\min_{\\lambda \\in \\Pi_{d}} \\max_{i \\neq a^{*}} \\{ \\frac{ \\sum_{s} |\\pi^{*}_{s} - \\pi_{s}^{i}|^{2}/\\lambda_{s} }{\\Delta_{i}^{2}} \\} \\log ( \\frac{1}{\\Delta_{\\mathrm{min}}} ) \\log( \\frac{1}{\\delta} ) )",
+    "regime": "rho_star = min_lambda max_i sum_s |pi*_s - pi^i_s|^2/lambda_s / Delta_i^2"
+   },
+   "where": "Section 4.3"
+  },
+  {
+   "cited_key": "Fiez2019",
+   "cited_title": "Sequential experimental design for transductive linear bandits",
+   "cited_first_author": "Fiez",
+   "cited_year": 2019,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "transductive linear bandit, fixed confidence sample complexity",
+   "bound": {
+    "notation": "Omega",
+    "expression": "sigma**2*rho_star*log(1/delta)",
+    "expression_latex": "\\mathcal{O} ( R^{2} \\min_{\\lambda \\in \\Pi_{d}} \\max_{i \\neq a^{*}} \\{ \\frac{ \\sum_{s} |\\pi^{*}_{s} - \\pi_{s}^{i}|^{2}/\\lambda_{s} }{\\Delta_{i}^{2}} \\} \\log( \\frac{1}{\\delta} ) )",
+    "regime": "rho_star = min_lambda max_i sum_s |pi*_s - pi^i_s|^2/lambda_s / Delta_i^2"
+   },
+   "where": "Section 4.3"
+  },
+  {
+   "cited_key": "KatzSamuels2020",
+   "cited_title": "An empirical process approach to the union bound: Practical algorithms for combinatorial and linear bandits",
+   "cited_first_author": "Katz-Samuels",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Peace",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "transductive linear bandit with Gaussian rewards, fixed confidence; same order as RAGE",
+   "bound": {
+    "notation": "O",
+    "expression": "sigma**2*rho_star*log(1/Delta_min)*log(1/delta)",
+    "expression_latex": "same order as RAGE",
+    "regime": "rho_star = min_lambda max_i sum_s |pi*_s - pi^i_s|^2/lambda_s / Delta_i^2"
+   },
+   "where": "Section 4.3"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:32:11",
+  "source_chars": 70204,
+  "input_tokens": 73093,
+  "output_tokens": 5667,
+  "cost_usd_equiv": 0.4148502,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

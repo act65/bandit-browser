@@ -181,6 +181,31 @@ def test_side_conditions_parsed_conservatively():
     assert compare.side_condition_unknowns(["d >= K"], can) == {"K"}
     assert compare.side_condition_unknowns(["m = d/2"], can) == {"d"}
     assert compare.side_condition_unknowns(["T >= d^2", "K >= 2", "n >= d", "losses in [0,1]"], can) == set()
+    assert compare.side_condition_unknowns(["K = 2"], can) == {"K"}
+    assert compare.side_condition_unknowns(["d=1", "T = 100", "K = 2 arms"], can) == {"d"}
+    assert compare.side_condition_unknowns(["K >= d; the K actions span R^d"], can) == {"d"}
+
+
+def test_bound_for_a_fixed_number_of_arms_says_nothing_about_K():
+    """Regression (batch 3): abbasiyadkori2020regret's sqrt(T) "for K = 2" lacks K, and an absent variable
+    counted as K^0, a conflict with every sqrt(KT) lower bound (16 cells). So did a bound whose K dependence
+    the paper hides ("number of arms treated as a constant", seldin2014practical)."""
+    for cond in ("K = 2", "number of arms k treated as a constant"):
+        c = cells([U("u", "sqrt(T)", conditions=[cond]), L("l", "sqrt(K*T)")])
+        assert c["regret|worst_case"]["status"] != "conflict" and "K" not in c["regret|worst_case"]["per_var"]
+    assert cells([U("u", "sqrt(T)"), L("l", "sqrt(K*T)")])["regret|worst_case"]["status"] == "conflict"
+
+
+def test_consistency_regex_reads_little_o_only():
+    """Lai-Robbins consistency is o(T^a) for all a > 0. O(T^alpha) for one alpha (marinov2021pareto) and "for all
+    a > 0" inside a learning-rate condition (pogodin2019first) are not, and must not admit an algorithm-specific
+    lower bound as the setting's rate."""
+    yes = ["policy satisfies E[T_k(n)] = o(n^a) for any a > 0", "strategy is consistent: R_T <= O(T^a) for all a>0",
+           "anytime algorithm A with E R^(n)/n^a -> 0 for all a > 0", "uniformly good: R(T) = o(T^a)"]
+    no = ["any algorithm satisfying Reg(T,Pi_1) = PolyLog * O(T^alpha) for some alpha in [1/2,1)",
+          "limsup_n n grad g*(-a n eta_n) < infinity for all a > 0", "gamma_T ~ O(T^alpha) with 0 <= alpha < 1"]
+    assert all(compare.CONSISTENCY.search(c) for c in yes)
+    assert not any(compare.CONSISTENCY.search(c) for c in no)
 
 
 def test_O_tilde_upper_hides_logs_not_rates():

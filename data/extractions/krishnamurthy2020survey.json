@@ -1,0 +1,239 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Survey Bandits with Regret Guarantees",
+  "arxiv_id": "2002.09814",
+  "arxiv_version": null,
+  "year": 2020,
+  "authors": [
+   "Sanath Kumar Krishnamurthy",
+   "Susan Athey"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Survey bandits (zero-shot surveys)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K",
+    "d",
+    "sigma",
+    "S",
+    "L_feat"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "l1_ball",
+    "loss_set": "bounded_mean_reward",
+    "parameter_structure": "sparse"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Disjoint linear contextual bandit: each of K arms has its own unknown parameter beta_i in R^d; reward X_t^T beta_i + sigma-sub-Gaussian noise",
+    "Learner must choose a subset of context features (survey questions) to observe before acting; only queried coordinates of X_t are observed; secondary goal of minimizing survey length",
+    "Beta-min assumption: each nonzero coordinate of each beta_i exceeds a known threshold beta_min in absolute value; the learner knows beta_min",
+    "Contexts arbitrary (no distributional assumption); ||X_t||_1 <= L and ||beta_i||_1 <= b, rewards Y_i(t) in [0,1]"
+   ],
+   "definition_quote": "At time $t$, pulling arm $i$ would yield a reward $Y_i(t):=X_t^{\\transpose}\\beta_i +\\epsilon_{i,t}$. Where $\\epsilon_{i,t}$ are independent sequence of $\\sigma$-sub-Gaussian random variables. ... Note that we do not observe $X_t$ and only observe $(X_t)_{\\pi^s_t}$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Ridge SurveyUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "S",
+    "L_feat",
+    "K",
+    "beta_min",
+    "delta"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Elastic Net SurveyUCB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "sigma",
+    "S",
+    "L_feat",
+    "K",
+    "d",
+    "beta_min",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "d*sqrt(K*T*log(K))*log(T)",
+    "expression_latex": "O(d \\sqrt{KT\\log(K)} \\log(T))",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "Assumption 1 (beta-min) holds with known beta_min",
+    "Assumption 2: ||X_t||_1 <= L, ||beta_i||_1 <= b, rewards Y_i(t) in [0,1]",
+    "sigma-sub-Gaussian noise"
+   ],
+   "tuning": [
+    "ridge parameter alpha > 0 fixed",
+    "theta_{k,t} chosen as in eq. (ridge-conftbound) with confidence delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:ridge-survey-ucb-regret",
+    "number": "Theorem (thm:ridge-survey-ucb-regret)",
+    "quote": "Suppose \\cref{ass:beta-min} and \\cref{ass:bounded-rewards} hold. Let $\\delta,\\alpha > 0$ be fixed constants. Let $\\conftBound{k}{t}$ be chosen as in \\cref{eq:ridge-conftbound} for all $k,t$. Then with probability at least $1-\\delta$, Ridge $\\SurveyUCB$ has the following regret guarantee: R_T \\leq O(d \\sqrt{KT\\log(K)} \\log(T))."
+   },
+   "confidence": "medium",
+   "notes": "Regret r_t defined via expected rewards (means), bound holds w.p. 1-delta. Dependence on delta, sigma, L, b hidden in O. Confidence widths do not use T, so treated as anytime."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "K**(1/4)*d**(1/2)*T**(3/4)*log(T)**(3/4)*log(d*K)**(1/4)",
+    "expression_latex": "O(K^{1/4} d^{1/2} T^{3/4}  \\log^{3/4}(T) \\log^{1/4}(dK) )",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "Assumption 1 (beta-min) holds with known beta_min",
+    "Assumption 2: ||X_t||_1 <= L, ||beta_i||_1 <= b, rewards Y_i(t) in [0,1]",
+    "sigma-sub-Gaussian noise"
+   ],
+   "tuning": [
+    "alpha > 0 fixed",
+    "lambda_{k,t} = 4 sigma L sqrt(2/n_{k,t} log(4dK n_{k,t}^2/delta))",
+    "theta_{k,t} as in the paper's confidence bound equation"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:elastic-net-survey-ucb-regret",
+    "number": "Theorem (thm:elastic-net-survey-ucb-regret)",
+    "quote": "Suppose \\cref{ass:beta-min} and \\cref{ass:bounded-rewards} hold. Let $\\delta,\\alpha > 0$ be fixed constants. For all $k,t$, let $\\lambda_{k,t}$ and  $\\conftBound{k}{t}$ be chosen as in \\cref{eq:elnet-L1reg} and \\cref{eq:ridge-conftbound} respectively. Then with probability at least $1-\\delta$, Elastic Net $\\SurveyUCB$ has the following regret guarantee: R_T \\leq O(K^{1/4} d^{1/2} T^{3/4}  \\log^{3/4}(T) \\log^{1/4}(dK) )."
+   },
+   "confidence": "medium",
+   "notes": "Theorem text references eq:ridge-conftbound for theta but proof uses eq:elnet-conftbound; likely typo. Treated as anytime since tuning does not use T."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:12:52",
+  "source_chars": 72317,
+  "input_tokens": 154497,
+  "output_tokens": 6785,
+  "cost_usd_equiv": 0.5004702,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

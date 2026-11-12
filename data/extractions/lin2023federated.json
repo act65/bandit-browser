@@ -1,0 +1,229 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Federated Learning for Heterogeneous Bandits with Unobserved Contexts",
+  "arxiv_id": "2303.17043",
+  "arxiv_version": null,
+  "year": 2023,
+  "authors": [
+   "Jiabin Lin",
+   "Shana Moothedath"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Federated linear contextual bandit with heterogeneous agents and unobserved contexts (context distribution available)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_finite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "T",
+    "K",
+    "N",
+    "d",
+    "context_distribution"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "federated",
+    "multi_agent_cooperative"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "l2_ball",
+    "loss_set": "unspecified",
+    "parameter_structure": "unspecified"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each of M agents has a fixed unobserved context vector c_i; only its distribution mu_i is observed; agent features are psi_{a,mu_i}=E[phi_{a,c_i}]",
+    "Reward parameter theta_a is arm-specific (disjoint per-arm linear models) shared across agents",
+    "Agents communicate with a central server periodically, sharing only estimates (federated)",
+    "Feature norms bounded below by ell > 0; the learner uses ell in its confidence widths (learner knows ell)",
+    "Regret measured against the optimal action given the context distribution mu_i, not the true context c_i"
+   ],
+   "definition_quote": "Each agent $i\\in [M]$ is a user in the system whose user profile is denoted by $c_i \\in \\mathbb{R}^d$ and all agents have the same action set $\\A=[K]$. The context vector $c_i$ cannot be observed by the agent $i$ and only the context distribution $\\mu_i$ is available. ... receive the reward $\\yt =\\langle\\theta_{a_{i, t}}, \\phi_{a_{i, t}, c_i} \\rangle+ \\eta_{i, t}$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Fed-PECD (Federated Phased Elimination with Context Distribution)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "N",
+    "K",
+    "d",
+    "context_distribution",
+    "ell",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "(L_feat/ell)*sqrt(d*K*N*T*(log(K*log(T)/delta) + Min(d, log(N))))",
+    "expression_latex": "O\\left( \\frac{L}{\\l} \\sqrt{d K M T( \\log (K( \\log T) / \\delta) + \\min \\{ d, \\log M\\})}\\right)",
+    "regime": "K = O(sqrt(T)) (stated in proof)"
+   },
+   "symbols": {
+    "ell": "lower bound on feature vector norms, ell <= ||phi_{a,c_i}||_2",
+    "N": "number of agents M"
+   },
+   "conditions": [
+    "||theta_a||_2 <= s",
+    "0 <= ell <= ||phi_{a,c_i}||_2 <= L <= 1",
+    "noise 1-sub-Gaussian, independent",
+    "K = O(sqrt(T)) (used in the proof to obtain the stated rate)"
+   ],
+   "tuning": [
+    "f_p = c n^p with integers c, n > 1",
+    "alpha = min{sqrt(2 log(2MKH/delta)), sqrt(2 log(KH/delta) + d log(k e))}, k > 1 with kd >= 2 log(KH/delta) + d log(ke)"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "Thm",
+    "number": "Theorem 1",
+    "quote": "Consider time horizon $T$ that consists of $H$ phases with $\\fp = cn^p$, ... Then, with probability (w.p) at least $1 - \\delta$ the cumulative regret of our algorithm scales in $O\\left( \\frac{L}{\\l} \\sqrt{d K M T( \\log (K( \\log T) / \\delta) + \\min \\{ d, \\log M\\})}\\right)$ and communication cost scales in $O\\left( M d^2 K \\log{T}\\right)$."
+   },
+   "confidence": "medium",
+   "notes": "Regret is total over M agents, against the optimal action given psi (context distribution). Proof gives the more general O((L/ell) sqrt(dKM(log(K log T/delta)+min{d,log M}))(sqrt(T)+K)) and specialises to K=O(sqrt T). Paper's M mapped to N."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "worst_case",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "N*d**2*K*log(T)",
+    "expression_latex": "O\\left( M d^2 K \\log{T}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "N": "number of agents M"
+   },
+   "conditions": [
+    "||theta_a||_2 <= s",
+    "0 <= ell <= ||phi_{a,c_i}||_2 <= L <= 1"
+   ],
+   "tuning": [
+    "f_p = c n^p with integers c, n > 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "Thm",
+    "number": "Theorem 1",
+    "quote": "and communication cost scales in $O\\left( M d^2 K \\log{T}\\right)$."
+   },
+   "confidence": "medium",
+   "notes": "Communication cost = number of scalars communicated; proof deferred to Huang et al. 2021. Probability qualifier is ambiguous (stated within the same w.p. 1-delta sentence)."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:03:58",
+  "source_chars": 73130,
+  "input_tokens": 76639,
+  "output_tokens": 3707,
+  "cost_usd_equiv": 0.4040182,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

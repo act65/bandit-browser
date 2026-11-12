@@ -1,0 +1,213 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Bayesian Collaborative Bandits with Thompson Sampling for Improved Outreach in Maternal Health Program",
+  "arxiv_id": "2410.21405",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Arpan Dasgupta",
+   "Gagan Jain",
+   "Arun Suggala",
+   "Karthikeyan Shanmugam",
+   "Milind Tambe",
+   "Aparna Taneja"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Cluster Model with infinite arms (clustered low rank bandits, Bayesian setup)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "subgaussian",
+   "learner_knows": [
+    "prior",
+    "function_class"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "arbitrary_compact",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "bounded_L",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "clustered"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "realizable_general_class"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Multi-user setting: N users arrive uniformly at random; each user belongs to one of C clusters via unknown assignment c:[N]->[C]; reward is R(c(u),:)^T a with unknown cluster-reward matrix R in R^{C x D}"
+   ],
+   "definition_quote": "Y(u,a) \\sim R(u,:)^T a + N where N is i.i.d 1-sub-Gaussian random variable. ... We further consider \\Omega_C with a clustering assumption that is there are only C distinct rows in R and every user u is mapped to a cluster using a cluster assignment function c:[N] \\rightarrow [C]."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Thompson Sampling (exact posterior sampling)",
+   "registry_id": "posterior_sampling",
+   "is_new": false,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "prior"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "TS-SGLD",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "prior",
+    "T"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_action_per_round",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "C_clu*d*sqrt(T*(1 + N_users/d)*(1 + log(C_clu)*N_users/(C_clu*d)))*log(T)",
+    "expression_latex": "\\tilde{O}\\left(CD\\sqrt{T\\left(1+\\frac{N}{D}\\right)\\left(1+\\log(C)\\frac{N}{CD}\\right)}\\log(T)\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "C_clu": "number of user clusters (paper's C)",
+    "N_users": "number of users (paper's N)"
+   },
+   "conditions": [
+    "||R(u,:)||_2 < S for all R in support of prior",
+    "||a||_2 < gamma for all actions",
+    "noise 1-sub-Gaussian",
+    "users arrive uniformly at random from [N]"
+   ],
+   "tuning": [
+    "exact posterior (perfect Gibbs) sampling at every step"
+   ],
+   "is_new": true,
+   "source": {
+    "label": null,
+    "number": "Theorem 4",
+    "quote": "For the cluster model in the infinite arm case, we have: a) the log-covering number $\\log N(\\Omega_C, \\epsilon, ||.||_\\infty) = O(CD \\log(1/\\epsilon)+ N \\log C)$ and, b) $\\mathrm{dim}_E(\\Omega_C, \\epsilon) = \\mathcal{O}(2CD \\log (1+2S/\\epsilon^2) + CN)$ ... Thus propositions 4 and 5 from \\cite{russo2013eluder} with $\\epsilon = T^{-2}$ yields a Bayesian regret bound of: \\tilde{O}(CD\\sqrt{T(1+N/D)(1+\\log(C)N/(CD))}\\log(T))"
+   },
+   "confidence": "medium",
+   "notes": "Paper's D is the action dimension (mapped to d). Obtained by plugging the paper's Eluder dimension and covering-number bounds into Russo & Van Roy (2013). Theorems 2, 3, 5, 6 bound the Eluder dimension ((2D+N)C finite arms; O(2CD log(1+2S/eps^2)+CN) infinite arms); they are complexity characterizations, not regret bounds, so not recorded separately. Applies to idealised TS, not TS-SGLD."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "russo2013eluder",
+   "cited_title": "Eluder dimension and the sample complexity of optimistic exploration",
+   "cited_first_author": "Daniel Russo",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Thompson Sampling",
+   "algorithm_registry_id": "posterior_sampling",
+   "side": "upper",
+   "setting_description": "Bayesian regret of Thompson sampling for a general model class, in terms of eluder dimension dim_E and covering number of the class",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(dim_E_T*logN_T*T)",
+    "expression_latex": "\\sqrt{\\text{dim}_E(\\Omega_{C}, T^{-2}) \\log N(\\Omega_{C}, T^{-2}, \\|\\cdot\\|_{\\infty})T}",
+    "regime": null
+   },
+   "where": "Section 5 (Theoretical Bounds)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:14:18",
+  "source_chars": 80136,
+  "input_tokens": 149553,
+  "output_tokens": 5926,
+  "cost_usd_equiv": 0.46124139999999997,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,305 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Annealed Softmax Greedy in Many-Armed Bayesian Bandits",
+  "arxiv_id": "2605.31034",
+  "arxiv_version": null,
+  "year": 2026,
+  "authors": [
+   "William Overman",
+   "Mohsen Bayati"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Many-armed Bayesian Bernoulli bandit with 1-regular (linear upper tail) prior",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "K"
+   ],
+   "instance_assumptions": [
+    "bayesian_prior"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Arm means drawn i.i.d. from a prior Gamma on [0,1] that is beta-regular near 1 (c0 eps^beta <= Gamma([1-eps,1]) <= C0 eps^beta); main result for beta = 1",
+    "Many-armed regime: number of arms m may scale with T (e.g. m = Theta(sqrt T))"
+   ],
+   "definition_quote": "Fix a time horizon $T\\in\\mathbb{N}$ and consider $m\\in\\mathbb{N}$ arms indexed by $i\\in[m]$. Each arm has an unknown mean $\\mu_i\\in[0,1]$ drawn i.i.d. from a prior $\\Gamma$ on $[0,1]$. Conditional on $\\mu_i$, each arm $i$ has an i.i.d. sequence of Bernoulli rewards ... Throughout the paper we assume $T \\ge m$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Annealed Softmax Greedy (ASG)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "exponential_weights"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Greedy (Empirical-Mean Greedy)",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "K + T*delta_thr + K*(1 + log(1/delta_thr)) + L_leak/delta_thr + T*exp(-c_alg*K*delta_thr)",
+    "expression_latex": "C\\Big[m + T\\delta + m(1+\\log(1/\\delta)) + \\frac{1}{\\delta}\\sum_{t=1}^T \\exp(-\\eta_t\\delta) + T\\exp(-c m\\delta)\\Big]",
+    "regime": null
+   },
+   "symbols": {
+    "delta_thr": "threshold parameter delta in (0, delta_0] of the analysis/schedule",
+    "L_leak": "softmax leakage sum_{t=1}^T exp(-eta_t * delta_thr) for the inverse-temperature schedule eta_t",
+    "c_alg": "constant c>0 depending only on prior regularity constants and Bernoulli crossing constant"
+   },
+   "conditions": [
+    "prior Gamma is 1-regular with constants (c0, C0, eps0)",
+    "T >= m",
+    "Bernoulli rewards"
+   ],
+   "tuning": [
+    "delta in (0, delta_0] with delta_0 <= min{1/8, eps0/8}",
+    "any nonnegative nondecreasing schedule eta_t"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:asg-beta1",
+    "number": "Theorem 5.2",
+    "quote": "Then there exist constants $c,C>0$ (depending only on $c_0, C_0, \\varepsilon_0$ and on the Bernoulli crossing constant in Lemma~\\ref{lem:bern-cross}) such that\n\\begin{align}\n\\mathrm{BR}_{T,m}(\\text{ASG})\n\\ &\\le\\ C\\Bigg[\nm\n\\ +\\ T\\,\\delta\n\\ +\\ m\\bigl(1+\\log(1/\\delta)\\bigr)\n\\ +\\frac{1}{\\delta}\\sum_{t=1}^T \\exp(-\\eta_t\\,\\delta)\n\\ +\\ T\\,\\exp(-c\\,m\\,\\delta)\n\\Bigg].\\label{eq:asg-main-bound}\n\\end{align}"
+   },
+   "confidence": "high",
+   "notes": "K = m (number of arms). Bayes regret over prior, rewards and policy randomness. Constant C depends on prior regularity constants."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "K + T/K",
+    "expression_latex": "\\tilde{O}(m + T/m)",
+    "regime": null
+   },
+   "symbols": {},
+   "conditions": [
+    "prior Gamma is 1-regular",
+    "T >= m",
+    "Bernoulli rewards"
+   ],
+   "tuning": [
+    "delta = min{delta_0, A log(T v 2)/m} with A > 1/c",
+    "eta_t = (c_eta/delta) log(t v 2), c_eta > 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:asg-beta1",
+    "number": "Theorem 5.2",
+    "quote": "In particular, choosing\n\\begin{equation}\\label{eq:delta-choice-beta1}\n\\delta \\ =\\ \\min\\!\\left\\{\\delta_0,\\, A\\frac{\\log(T\\vee 2)}{m}\\right\\},\n\\qquad\n\\eta_t \\ =\\ \\frac{c_\\eta}{\\delta}\\log(t\\vee 2)\\quad(c_\\eta>1),\n\\end{equation}\nwith $A > 1/c$, we have\n\\[\n\\mathrm{BR}_{T,m}(\\text{ASG}) \\ =\\ \\tilde{O}\\!\\left(m+\\frac{T}{m}\\right)\\,,\n\\]\nand for $m=\\Theta(\\sqrt{T})$ one obtains $\\mathrm{BR}_{T,m}(\\text{ASG})=\\tilde{O}(\\sqrt{T})$."
+   },
+   "confidence": "high",
+   "notes": "Remark 5.3 sketches a general-beta extension O~(m + T(log T/m)^{1/beta}) for beta>=1 without a formal proof; not recorded."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "bayesian_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\tilde{O}(\\sqrt{T})",
+    "regime": "m = Theta(sqrt(T))"
+   },
+   "symbols": {},
+   "conditions": [
+    "prior Gamma is 1-regular",
+    "m = Theta(sqrt(T))",
+    "Bernoulli rewards"
+   ],
+   "tuning": [
+    "delta = min{delta_0, A log(T v 2)/m} with A > 1/c",
+    "eta_t = (c_eta/delta) log(t v 2), c_eta > 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:asg-beta1",
+    "number": "Theorem 5.2",
+    "quote": "and for $m=\\Theta(\\sqrt{T})$ one obtains $\\mathrm{BR}_{T,m}(\\text{ASG})=\\tilde{O}(\\sqrt{T})$."
+   },
+   "confidence": "high",
+   "notes": "Specialization of r2 with m = Theta(sqrt T)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "bayati2020greedy",
+   "cited_title": null,
+   "cited_first_author": "Bayati",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Greedy (Empirical-Mean Greedy)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Many-armed Bayesian Bernoulli bandit, m arms with i.i.d. means from a 1-regular prior; Bayes regret",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "K + T/K",
+    "expression_latex": "\\tilde{O}(m + T/m)",
+    "regime": null
+   },
+   "where": "Proposition 5.1"
+  },
+  {
+   "cited_key": "bayati2020greedy",
+   "cited_title": null,
+   "cited_first_author": "Bayati",
+   "cited_year": 2020,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Greedy (Empirical-Mean Greedy)",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Many-armed Bayesian Bernoulli bandit, 1-regular prior, m = Theta(sqrt T); Bayes regret",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\tilde{O}(\\sqrt{T})",
+    "regime": "m = Theta(sqrt(T))"
+   },
+   "where": "Proposition 5.1"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:12:49",
+  "source_chars": 82838,
+  "input_tokens": 76269,
+  "output_tokens": 4646,
+  "cost_usd_equiv": 0.4198382,
+  "quote_retry": {
+   "asked": 2,
+   "fixed": 2,
+   "cost_usd_equiv": 0.3361444
+  },
+  "status": "extracted"
+ }
+}

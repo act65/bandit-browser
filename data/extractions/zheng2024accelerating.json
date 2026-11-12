@@ -1,0 +1,279 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Accelerating Approximate Thompson Sampling with Underdamped Langevin Monte Carlo",
+  "arxiv_id": "2401.11665",
+  "arxiv_version": null,
+  "year": 2024,
+  "authors": [
+   "Haoyang Zheng",
+   "Wei Deng",
+   "Christian Moya",
+   "Guang Lin"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Multi-armed bandit with parametric reward distributions (log-concave likelihood, smooth prior)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "K",
+    "d",
+    "reward_family",
+    "prior"
+   ],
+   "instance_assumptions": [
+    "unique_optimal_arm"
+   ],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each arm's reward distribution is parameterized by x_{a,*} in R^d with a log-likelihood that is L-smooth and m-strongly concave in x, and L-smooth / nu-strongly log-concave in the reward",
+    "The learner knows the smoothness/strong-convexity constants L_a, m_a, nu_a (used to set the posterior scaling rho_a)",
+    "Prior quality B_a = max_x pi_a(x)/pi_a(x_*) enters the bounds (frequentist regret, prior used only by the algorithm)"
+   ],
+   "definition_quote": "MABs consist of a set of arms $\\mathcal A=\\{1, 2, \\cdots, K\\}$, each associated with an unknown reward distribution. ... we make the assumption that each arm's reward distribution is parameterized by a set of fixed parameters $x_{a,*}\\in \\mathbb R^d$ ... ${\\mathfrak R}(N) = N \\bar{\\mathcal R}_1 - \\sum_{n=1}^{N} \\mathbb{E}[\\mathcal R_{A_n, n}]$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Thompson sampling with exact (scaled) posterior sampling",
+   "registry_id": null,
+   "is_new": false,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "prior",
+    "reward_family",
+    "d"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Approximate Thompson sampling with (stochastic gradient) underdamped Langevin Monte Carlo (TS-ULMC)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "thompson_sampling"
+   ],
+   "requires_knowledge_of": [
+    "prior",
+    "reward_family",
+    "d"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt((log(B_i) + d**2 + d*log(T))/Delta_i) + sum_subopt(sqrt(B_1)*(log(B_1) + d**2)/Delta_i) + sum_subopt(Delta_i)",
+    "expression_latex": "\\sum_{a>1} \\frac{C_{a}}{\\Delta_a}\\left(\\log B_a + d^2 + d\\log N\\right) + \\frac{C_1\\sqrt{B_1}}{\\Delta_a}\\left(\\log B_1 + d^2\\right) + 2\\Delta_a",
+    "regime": null
+   },
+   "symbols": {
+    "B_i": "prior quality of arm i: max_x pi_i(x)/pi_i(x_*)",
+    "B_1": "prior quality of the optimal arm"
+   },
+   "conditions": [
+    "Assumptions 1-3: log-likelihood L-smooth and m-strongly concave locally around x_*, reward log-density L-smooth and nu-strongly concave, prior gradient L-Lipschitz"
+   ],
+   "tuning": [
+    "rho_a = kappa_a^{-3}(8d)^{-1} (appendix: rho_a = nu_a m_a^2/(8 d L_a^3))",
+    "gamma = 2, u = 1/L"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem_exact_regret_main",
+    "number": "Theorem 4",
+    "quote": "Suppose the likelihoods, rewards, and priors satisfy Assumptions 1-3. With the choice of $\\rho_a=\\kappa_a^{-3}\\left(8d\\right)^{-1}$, we have that the total expected regrets after $N>0$ rounds of TS with exact sampling satisfies: $\\mathbb{E}[{\\mathfrak R}(N)] \\leq \\sum_{a>1} \\frac{C_{a}}{\\Delta_a}(\\log B_a + d^2 + d\\log N) + \\frac{C_1\\sqrt{B_1}}{\\Delta_a}(\\log B_1 + d^2) + 2\\Delta_a$, where $C_1, C_a>0$ are universal constants"
+   },
+   "confidence": "medium",
+   "notes": "Universal constants C_a, C_1 absorbed into O notation. Main-text statement places second and third terms ambiguously; Appendix Theorem 7 (same result) puts them inside the sum over a>1, which is what is recorded. Constants hide dependence on kappa_a, nu_a and omega_a (norm of feature vector alpha_a)."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt((d + log(B_i) + d**2*kappa_i**2*log(T))/Delta_i) + sum_subopt(sqrt(B_1)*(log(B_1) + d*kappa_1**2*log(T) + d**2*kappa_1**2)/Delta_i) + sum_subopt(Delta_i)",
+    "expression_latex": "\\sum_{a>1} \\frac{\\hat C_a}{ \\Delta_a}\\left( d+ {\\log B_a}+d^2\\kappa_a^2 \\log N  \\right) +\\frac{\\hat C_1 \\sqrt{B_1} }{\\Delta_a}\\left( \\log B_1+d\\kappa_1^2\\log N+d^2\\kappa_1^2 \\right) + 4\\Delta_a",
+    "regime": null
+   },
+   "symbols": {
+    "B_i": "prior quality of arm i",
+    "B_1": "prior quality of the optimal arm",
+    "kappa_i": "condition number L_i/m_i of arm i's likelihood",
+    "kappa_1": "condition number of the optimal arm's likelihood"
+   },
+   "conditions": [
+    "Assumptions 2-5: reward log-density smooth/strongly concave, prior gradient Lipschitz, log-likelihood globally L-smooth and m-strongly concave, joint Lipschitz gradient in (x, R)"
+   ],
+   "tuning": [
+    "hat rho_a = (8 kappa_a Omega_a)^{-1}",
+    "step size h = O~(1/sqrt(d)), number of steps I = O~(sqrt(d)), batch size k = O~(kappa^2)",
+    "gamma = 2, u = 1/L"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem_approximate_ts_regret_main",
+    "number": "Theorem 5",
+    "quote": "Suppose the likelihoods, rewards, and priors satisfy Assumptions 2-5. Given $\\hat\\rho_a=\\left(8\\kappa_a\\Omega_a\\right)^{-1}$ and sampling schemes specified in Theorem 2, then the total expected regrets after $N$ rounds of approximate TS conform to: $\\mathbb{E}[\\mathfrak R(N)] \\leq \\sum_{a>1} \\frac{\\hat C_a}{ \\Delta_a}( d+ {\\log B_a}+d^2\\kappa_a^2 \\log N ) +\\frac{\\hat C_1 \\sqrt{B_1} }{\\Delta_a}( \\log B_1+d\\kappa_1^2\\log N+d^2\\kappa_1^2 ) + 4\\Delta_a$."
+   },
+   "confidence": "medium",
+   "notes": "Universal constants absorbed into O. Second/third terms interpreted as inside the sum over suboptimal arms. Appendix Theorem 12 states a slightly different second term (recorded separately). Proof uses delta_2 = 1/N^2 only in the analysis; algorithm parameters do not depend on N, so recorded as anytime (uncertain)."
+  },
+  {
+   "id": "r3",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "pseudo_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "sum_subopt((log(B_i) + d + d**2*kappa_i**2*log(T))/Delta_i) + sum_subopt(sqrt(B_1)*(log(B_1) + d**2*kappa_1**2 + d*kappa_1*log(T))/Delta_i) + sum_subopt(Delta_i)",
+    "expression_latex": "\\sum_{a>1} \\frac{\\hat C_a }{\\Delta_a}\\left( \\log B_a + d + d^2\\kappa_a^2\\log N\\right) +\\frac{\\hat C_1 \\sqrt{B_1}}{\\Delta_a}\\left( \\log B_1 + d^2\\kappa_1^2 + d\\kappa_1\\log N\\right) +4\\Delta_a",
+    "regime": null
+   },
+   "symbols": {
+    "B_i": "prior quality of arm i",
+    "B_1": "prior quality of the optimal arm",
+    "kappa_i": "condition number L_i/m_i of arm i",
+    "kappa_1": "condition number of the optimal arm"
+   },
+   "conditions": [
+    "Assumptions 2-5 on likelihood, rewards and prior"
+   ],
+   "tuning": [
+    "bar rho_a = m_a/(8 L_a Omega_a)",
+    "h = O~(1/sqrt(d)), I = O~(sqrt(d)), k = O~(kappa_a^2)",
+    "gamma = 2, u = 1/L"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem_approximate_ts_regret",
+    "number": "Theorem 12",
+    "quote": "When the likelihood, rewards, and priors satisfy Assumptions 2-5, scaling parameter $\\bar\\rho_a=\\frac{m_a}{8L_a\\Omega_a}$, and the sampling schemes ... We then have that the total expected regrets after $N>0$ rounds of Thompson sampling with the (stochastic gradient) underdamped Langevin Monte Carlo method satisfy: $\\mathbb{E}[\\mathfrak R(N)] \\leq \\sum_{a>1} \\frac{\\hat C_a }{\\Delta_a}( \\log B_a + d + d^2\\kappa_a^2\\log N) +\\frac{\\hat C_1 \\sqrt{B_1}}{\\Delta_a}( \\log B_1 + d^2\\kappa_1^2 + d\\kappa_1\\log N) +4\\Delta_a$."
+   },
+   "confidence": "low",
+   "notes": "Appendix version of Theorem 5 with a different kappa_1 dependence in the log N term (d*kappa_1 vs d*kappa_1^2); recorded as stated. Constants absorbed into O."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:13:34",
+  "source_chars": 240340,
+  "input_tokens": 165824,
+  "output_tokens": 6218,
+  "cost_usd_equiv": 1.1677182,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

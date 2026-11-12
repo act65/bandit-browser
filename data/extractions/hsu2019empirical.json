@@ -1,0 +1,181 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Empirical Bayes Regret Minimization",
+  "arxiv_id": "1904.02664",
+  "arxiv_version": null,
+  "year": 2019,
+  "authors": [
+   "Chih-Wei Hsu",
+   "Branislav Kveton",
+   "Ofer Meshi",
+   "Martin Mladenov",
+   "Csaba Szepesvari"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Fixed-budget tuning of a single parameter gamma in [0,1] minimizing a unimodal Bayes regret R_gamma from noisy sub-Gaussian regret samples",
+   "objective": "other_pure_exploration",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "continuum_other",
+   "function_class": [
+    "unimodal",
+    "quasi_convex"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "subgaussian",
+   "learner_knows": [],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {
+    "d": "1"
+   },
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Goal is to output gamma_hat that is eps-close to the minimizer gamma_* in argument (|gamma_hat - gamma_*| <= eps), not in function value",
+    "Each measurement is the random regret of a bandit algorithm A_gamma run on a problem instance sampled from a known distribution of instances (meta-level tuning of a bandit algorithm)",
+    "Fixed budget s of total measurements"
+   ],
+   "definition_quote": "The space of tunable parameters is $\\Gamma = [0, 1]$. The algorithm with tunable parameter $\\gamma \\in \\Gamma$ is denoted by $A_\\gamma$ and its Bayes regret is $R_\\gamma = \\E{R(A_\\gamma, P)}$. The optimal tunable parameter is $\\gamma_\\ast = \\argmin_{\\gamma \\in \\Gamma} R_\\gamma$. Our algorithm outputs $\\hat{\\gamma} \\in \\Gamma$ and we maximize the probability that $\\hat{\\gamma}$ is \\say{close} to $\\gamma_\\ast$, under a budget constraint on the number of measurements $s$ of the random regret."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "NoTeS (Noisy ternary search)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination"
+   ],
+   "requires_knowledge_of": []
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "4*Sum(exp(-(Rational(2,3))**(2*ell)*lambda_q**2*s(ell)/(32*sigma**2)), (ell, 1, L))",
+    "expression_latex": "\\prob{|\\hat{\\gamma} - \\gamma_\\ast| > \\eps} \\leq 4 \\sum_{\\ell = 1}^L \\exp\\left[- \\frac{(2 / 3)^{2 \\ell} \\lambda^2 s_\\ell}{32 \\, \\sigma^2}\\right]",
+    "regime": "L >= log_{3/2}(1/(2 epsilon))"
+   },
+   "symbols": {
+    "ell": "iteration index of NoTeS",
+    "L": "number of iterations of NoTeS",
+    "s": "s(ell) = number of regret measurements allocated to iteration ell",
+    "lambda_q": "slope lower bound lambda in Assumption 1: |R_a - R_b| >= lambda |a-b| on each side of gamma_*"
+   },
+   "conditions": [
+    "R_gamma is a unimodal quasi-convex function of gamma with minimum at gamma_* such that |R_a - R_b| >= lambda |a - b| for all a < b <= gamma_* and a > b >= gamma_*, for some lambda > 0 (Assumption 1)",
+    "The random regret R(A_gamma, P) is sigma^2-sub-Gaussian for all gamma (Assumption 2); sigma need not be known"
+   ],
+   "tuning": [
+    "L >= log_{3/2}(1/(2 eps))",
+    "arbitrary allocation (s_ell); suggested L = ceil(log_{3/2}(1/(2 eps))) and s_ell = c (3/2)^{2 ell} with sum s_ell = s"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:main",
+    "number": "Theorem (thm:main)",
+    "quote": "We have $\\displaystyle \\prob{|\\hat{\\gamma} - \\gamma_\\ast| > \\eps} \\leq 4 \\sum_{\\ell = 1}^L \\exp\\left[- \\frac{(2 / 3)^{2 \\ell} \\lambda^2 s_\\ell}{32 \\, \\sigma^2}\\right]$ for any number of iterations $L$ in \\cref{lem:number of steps} and $(s_\\ell)_{\\ell = 1}^L$."
+   },
+   "confidence": "medium",
+   "notes": "Bound is on the probability that the output is not eps-close to the minimizer in argument. Lemma lem:error probability gives the same bound on P(gamma_* not in [I_L,J_L]) and is not recorded separately. Objective/setting mapping to the ontology is approximate (meta-level tuning of a bandit algorithm's parameter)."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:16:16",
+  "source_chars": 57201,
+  "input_tokens": 65733,
+  "output_tokens": 3379,
+  "cost_usd_equiv": 0.3102102,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

@@ -1,0 +1,202 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "PAUSE: Low-Latency and Privacy-Aware Active User Selection for Federated Learning",
+  "arxiv_id": "2503.13173",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Ori Peleg",
+   "Natalie Lang",
+   "Dan Ben Ami",
+   "Stefano Rini",
+   "Nir Shlezinger",
+   "Kobi Cohen"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Privacy-aware active user selection for FL (CMAB with latency, generalization and privacy reward)",
+   "objective": "cumulative_regret",
+   "feedback": "semi_bandit",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bounded_01",
+   "learner_knows": [
+    "K",
+    "m"
+   ],
+   "instance_assumptions": [
+    "gap_bounded_below"
+   ],
+   "extras": [
+    "federated"
+   ],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "m_set",
+    "reward": "unspecified",
+    "loss_scale": "unspecified"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Reward of a set is min over selected users of tau_min/tau_{k,t} (non-linear, bottleneck) plus bounded history-dependent generalization and privacy terms Phi_g, Phi_p that depend on past selection counts",
+    "Regret is measured against a history-dependent Genie policy knowing the expected latency ratios mu_k",
+    "The learner knows the minimal latency tau_min",
+    "Users' expected latencies are pairwise distinct with minimal difference delta > 0"
+   ],
+   "definition_quote": "We model this delay via the random variable $\\tau_{t,k}$ ... drawn in an i.i.d. manner from a device specific distribution ... We denote the minimal difference between these terms as $\\delta \\triangleq \\min_{i\\neq j \\in \\bK}  |\\E[\\tau_i] - \\E[\\tau_j]|$ ... $r(\\cS, t) \\triangleq \\frac{\\tau_{\\min}}{\\max_{k \\in \\cS} \\tau_{k,t}} +  \\alpha\\cdot \\Phi_{\\rm g}(\\cdot) + \\gamma \\cdot \\Phi_{\\rm p}(\\cdot)$"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "PAUSE",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "m",
+    "tau_min"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "SA-PAUSE",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "K",
+    "m",
+    "tau_min"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "other",
+   "dependence": "instance_dependent",
+   "comparator": "best_policy",
+   "probability": "expectation",
+   "horizon": "anytime",
+   "compute": "exponential",
+   "bound": {
+    "notation": "exact",
+    "expression": "K*(Delta_rmax + delta_lat)*(4*(m+1)*log(T)/delta_lat**2 + 1 + 2*pi**2/3)",
+    "expression_latex": "K(\\Delta_{\\max} + \\delta) \\left(\\frac{4(m+1)\\log(n)}{\\delta^2} + 1 + \\frac{2\\pi^2}{3}\\right)",
+    "regime": null
+   },
+   "symbols": {
+    "Delta_rmax": "maximal per-round reward gap between the Genie and any policy, bounded by max mu_k - min mu_k + alpha*range(Phi_g) + gamma*range(Phi_p) (Lemma 1)",
+    "delta_lat": "minimal difference between users' expected latencies, min_{i != j} |E[tau_i] - E[tau_j]| > 0"
+   },
+   "conditions": [
+    "latencies tau_{t,k} i.i.d. per user with tau_{t,k} >= tau_min > 0 a.s.",
+    "users have pairwise distinct expected latencies (delta > 0)",
+    "Phi_g and Phi_p are bounded functions"
+   ],
+   "tuning": [
+    "UCB exploration bonus sqrt((m+1) log t / T_k(t))"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "THMREGRET",
+    "number": "Theorem 3",
+    "quote": "The regret of \\ac{pause} holds \\begin{equation} R^{\\cP}(n) \\leq K(\\Delta_{\\max} \\!+\\! \\delta) \\left(\\frac{4(m\\!+\\! 1)\\log(n)}{\\delta^2} \\!+\\! 1\\! +\\! \\frac{2\\pi^2}{3}\\right), \\end{equation}"
+   },
+   "confidence": "medium",
+   "notes": "Regret defined as E[sum_t r(G_t,t) - r(S_t,t)] against a history-dependent Genie policy (greedy per round with known means), hence quantity 'other' and comparator best_policy. Appendix proof ends with 4pi^2/3 instead of 2pi^2/3; theorem statement recorded. The proof uses an 'enhanced Genie' argument. Brute-force policy computation is exponential in general (O(K log K) in the averaged special case via Pivot-and-Fill)."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:46:27",
+  "source_chars": 116462,
+  "input_tokens": 93746,
+  "output_tokens": 3961,
+  "cost_usd_equiv": 0.5459542,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

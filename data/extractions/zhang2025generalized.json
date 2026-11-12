@@ -1,0 +1,302 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Generalized Linear Bandits: Almost Optimal Regret with One-Pass Update",
+  "arxiv_id": "2507.11847",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Yu-Jie Zhang",
+   "Sheng-An Xu",
+   "Peng Zhao",
+   "Masashi Sugiyama"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Generalized linear bandit (GLB) with time-varying arm sets and self-concordant link",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "generalized_linear",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "adversarial_contexts",
+   "noise": "exponential_family",
+   "learner_knows": [
+    "S",
+    "k_mu",
+    "d",
+    "reward_family"
+   ],
+   "instance_assumptions": [],
+   "extras": [
+    "time_varying_action_sets"
+   ],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "adaptive_sequence",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "heteroscedastic_unknown"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Link function is R-self-concordant: |mu''(z)| <= R mu'(z); the learner knows R",
+    "The learner knows the dispersion g(tau) of the canonical exponential family",
+    "Rewards may be unbounded (e.g. Poisson, Gaussian)"
+   ],
+   "definition_quote": "At each round $t \\in [T]$, the learner selects an action $X_t \\in \\mathcal{X}_t \\subset \\mathbb{R}^d$ ... conditioned on $\\mathcal{F}_t$, the reward $r_t$ follows a canonical exponential family distribution with the natural parameter given by the linear model $z_t = X_t^\\top\\theta_*$. ... Assumption 1: $\\norm{\\x}_2 \\leq 1$ ... $\\norm{\\theta_*}_2 \\leq S$ for some constant $S > 0$ known to the learner. Assumption 2: $c_\\mu \\leq \\mu'(z) \\leq L_\\mu$ for all $z \\in [-S,S]$. Assumption 3: $|\\mu''(z)| \\leq R \\mu'(z)$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "GLB-OMD",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "ftrl_or_mirror_descent"
+   ],
+   "requires_knowledge_of": [
+    "S",
+    "k_mu",
+    "d",
+    "R_sc",
+    "g_tau",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "anytime",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "O",
+    "expression": "d*S*R_sc*sqrt(S**2*R_sc + log(T))*sqrt(T*log(T)/kappa_star) + kappa*d**2*S**2*R_sc**3*log(T)*(S**2*R_sc + log(T))",
+    "expression_latex": "dSR\\sqrt{S^2R + \\log T} \\sqrt{\\frac{T\\log T}{\\kappa_*}} + \\kappa d^2S^2R^3 \\log T (S^2R + \\log T)",
+    "regime": null
+   },
+   "symbols": {
+    "R_sc": "self-concordance constant of the link, |mu''| <= R mu'",
+    "kappa_star": "1/((1/T) sum_t mu'(x_{t,*}^T theta_*)), inverse average slope at optimal actions",
+    "kappa": "1/c_mu = 1/inf_{x,theta in Theta} mu'(x^T theta)",
+    "g_tau": "dispersion g(tau) of the exponential family"
+   },
+   "conditions": [
+    "||x||_2 <= 1 for all x in X_t",
+    "||theta_*||_2 <= S",
+    "c_mu <= mu'(z) <= L_mu on [-S,S]",
+    "|mu''(z)| <= R mu'(z)"
+   ],
+   "tuning": [
+    "eta = 1 + R S",
+    "lambda = max{14 d eta R^2, 6 eta R S L_mu / g(tau)}",
+    "confidence level delta"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem 2",
+    "quote": "Let $\\delta\\in(0,1]$. Under Assumptions 1, 2, and 3, with probability at least $1-\\delta$, Algorithm 1 with parameter $\\eta = 1 + RS$ and $\\lambda = \\max\\{ 14d\\eta R^2, 6\\eta RS L_\\mu/g(\\tau) \\}$ ensures $\\Reg \\lesssim dSR\\sqrt{S^2R + \\log T} \\sqrt{\\frac{T\\log T}{\\kappa_*}} + \\kappa d^2S^2R^3 \\log T (S^2R + \\log T)$, where $\\lesssim$ is used to hide constant independence of $d$, $\\kappa$, $S$, $R$ and $T$."
+   },
+   "confidence": "medium",
+   "notes": "Regret is defined via mean rewards mu(x^T theta_*) against the per-round optimal action, and the bound holds with probability 1-delta. The paper writes argmin for x_{t,*}, but argmax is clearly intended. Per-round cost is O(d^3 + d^2|X_t|). The bound hides constants and polynomial dependence on L_mu and g(tau). Dependence on delta is hidden in the constant."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "NIPS'10:GLB",
+   "cited_title": "Parametric bandits: The generalized linear case",
+   "cited_first_author": "Sarah Filippi",
+   "cited_year": 2010,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GLM-UCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Generalized linear bandits with bounded rewards",
+   "bound": {
+    "notation": "O",
+    "expression": "kappa*log(T)**(3/2)*sqrt(T)",
+    "expression_latex": "\\O(\\kappa (\\log T)^{\\frac{3}{2}} \\sqrt{T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "conf/nips/JunBNW17",
+   "cited_title": "Scalable generalized linear bandits: Online computation and hashing",
+   "cited_first_author": "Kwang-Sung Jun",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "GLOC",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Generalized linear bandits",
+   "bound": {
+    "notation": "O",
+    "expression": "kappa*log(T)*sqrt(T)",
+    "expression_latex": "\\O(\\kappa \\log T \\sqrt{T})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "NeurIPS'24:GLB-improved-kappa",
+   "cited_title": "A unified confidence sequence for generalized linear models, with applications to bandits",
+   "cited_first_author": "Junghyun Lee",
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": "OFUGLB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Generalized linear bandits with self-concordant link",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)*sqrt(T/kappa_star)",
+    "expression_latex": "\\O(\\log T \\sqrt{T/\\kappa_*})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "NeurIPS'24:GLB-limited-adaptivity",
+   "cited_title": "Generalized linear bandits with limited adaptivity",
+   "cited_first_author": "Ayush Sawarni",
+   "cited_year": 2024,
+   "cited_arxiv_id": null,
+   "algorithm_name": "RS-GLinCB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Generalized linear bandits with bounded rewards",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)*sqrt(T/kappa_star)",
+    "expression_latex": "\\O(\\log T \\sqrt{T/\\kappa_*})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "conf/aistats/FauryAJC22",
+   "cited_title": "Jointly efficient and optimal algorithms for logistic bandits",
+   "cited_first_author": "Louis Faury",
+   "cited_year": 2022,
+   "cited_arxiv_id": null,
+   "algorithm_name": "(ada)-OFU-ECOLog",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Logistic bandits",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)*sqrt(T/kappa_star)",
+    "expression_latex": "\\O(\\log T\\sqrt{T/\\kappa_*})",
+    "regime": null
+   },
+   "where": "Table 2"
+  },
+  {
+   "cited_key": "NeurIPS'23:MLogB",
+   "cited_title": "Online (multinomial) logistic bandit: Improved regret and constant computation cost",
+   "cited_first_author": "Yu-Jie Zhang",
+   "cited_year": 2023,
+   "cited_arxiv_id": null,
+   "algorithm_name": "OFUL-MLogB",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Logistic bandits",
+   "bound": {
+    "notation": "O",
+    "expression": "log(T)**(3/2)*sqrt(T/kappa_star)",
+    "expression_latex": "\\O((\\log T)^{3/2}\\sqrt{T/\\kappa_*})",
+    "regime": null
+   },
+   "where": "Table 2"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:50:16",
+  "source_chars": 134609,
+  "input_tokens": 105547,
+  "output_tokens": 5095,
+  "cost_usd_equiv": 0.6630422,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

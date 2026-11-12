@@ -1,0 +1,253 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Simple Regret Minimization for Contextual Bandits",
+  "arxiv_id": "1810.07371",
+  "arxiv_version": null,
+  "year": 2018,
+  "authors": [
+   "Aniket Anand Deshmukh",
+   "Srinagesh Sharma",
+   "James W. Cutler",
+   "Mark Moldwin",
+   "Clayton Scott"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Simple regret minimization for contextual bandits (pure exploration phase followed by pure exploitation phase)",
+   "objective": "simple_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "finite_K",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "stochastic_contexts",
+   "noise": "conditionally_subgaussian",
+   "learner_knows": [
+    "T",
+    "K",
+    "sigma",
+    "S"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "not_applicable",
+    "time_varying": "not_applicable",
+    "access": "not_applicable",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "homoscedastic"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "realizable_general_class"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Each arm's expected reward f_a(x) is a function of the context in an RKHS with bounded kernel",
+    "Contexts form a (possibly non-i.i.d.) random process on a compact space, with conditional second-moment operator having d* eigenvalues above lambda_x (Assumption A III)",
+    "No feedback during the exploitation phase; simple regret is evaluated per context at each exploitation step",
+    "The learner knows lambda_x, d*, the hardness H_epsilon and the constants C_1, C_2 (used to set beta and N_lambda)"
+   ],
+   "definition_quote": "The first \\(T\\) time steps belong to the \\emph{exploration phase} where the learner observes context \\(x_t\\), chooses arm \\(a_t\\) and obtains reward \\(r_{t}\\). The time steps after \\(T\\) belong to an \\emph{exploitation phase} where the learner observes context \\(x_t\\), chooses arm \\(a_t\\) and earns an implicit reward \\(r_{t}\\) that is not returned to the learner."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Contextual-Gap",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "sigma",
+    "S",
+    "lambda_x",
+    "d_star",
+    "H_epsilon"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "error_probability",
+   "dependence": "instance_dependent",
+   "comparator": "best_action_per_round",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "K*(T - K*N_lambda)*exp(-beta_c**2) + K*delta",
+    "expression_latex": "\\PP (R_{\\Omega(x_t)}(x_t) < \\epsilon | x_t) \\geq 1 - A(T - AN_\\lambda) e^{-\\beta^2} - A\\delta",
+    "regime": "beta_c > 0, i.e. T > (16 H_epsilon C_2^2 - 2 A lambda)/lambda_x + N_lambda (A-1)"
+   },
+   "symbols": {
+    "beta_c": "sqrt((lambda_x*(T - N_lambda*(K-1)) + 2*K*lam)/(16*C_1**2*H_epsilon)) - C_2/C_1",
+    "N_lambda": "burn-in length max(2(1-lam)/lambda_x, d_star, 256/lambda_x^2 log(128 d_tilde/(lambda_x^2 delta)))",
+    "lambda_x": "lower bound on nonzero eigenvalues of conditional second moment operator of features",
+    "d_star": "dimension of the subspace containing the feature second-moment operator",
+    "H_epsilon": "total hardness sum_a H_{a,eps}^{-2}, H_{a,eps} = inf_x max((Delta_a(x)+eps)/2, eps)",
+    "C_1": "rho*sqrt(2)",
+    "C_2": "rho*sqrt(sum log(1+sigma_hat^2/lam)) + sqrt(lam)*||f_a||_H, O(rho sqrt(log T))"
+   },
+   "conditions": [
+    "Assumptions A I-A III: contexts form a random process on a compact space; kernel bounded by L with continuous feature map and separable RKHS; conditional second moment operator has d* eigenvalues > lambda_x and zero elsewhere",
+    "f_a in RKHS for each arm",
+    "0 < delta <= 1/8",
+    "epsilon > 0",
+    "bound on probability that simple regret at any exploitation step t > T is >= epsilon, conditional on x_t"
+   ],
+   "tuning": [
+    "beta = sqrt((lambda_x(T - N_lambda(A-1)) + 2 A lambda)/(16 C_1^2 H_epsilon)) - C_2/C_1",
+    "burn-in N_lambda as defined",
+    "regularization lambda > 0"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:MainTheorem",
+    "number": "Theorem 5.3",
+    "quote": "Consider a contextual bandit problem as defined in Section \\ref{sec:formal_setting} with assumptions \\ref{AsX}-\\ref{Alambda}. For  \\( 0 < \\delta \\leq \\frac{1}{8} \\), \\( \\epsilon > 0 \\) and \\( N_{\\lambda} := \\max(...) \\), let \\beta = \\sqrt{\\frac{\\lambda_{x}(T - N_{\\lambda}( A -1)) + 2 A\\lambda}{ 16  C_1^2 H_{\\epsilon} }} - \\frac{C_2}{C_1}. For all \\(t > T\\) and \\(\\epsilon  > 0\\), \\PP (R_{\\Omega(x_t)}(x_t) < \\epsilon | x_t) \\geq 1 - A(T - AN_\\lambda) e^{-\\beta^2} - A\\delta."
+   },
+   "confidence": "medium",
+   "notes": "Recorded as the failure probability P(R >= eps | x_t). Paper's A (number of arms) mapped to K. Environment labelled stochastic_iid for the noise/reward model, but contexts are a general (possibly non-i.i.d.) random process; see unmapped. Paper says this gives order A(T-AN_lambda)exp(-(T-AN_lambda)/H_eps)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "hoffman2014correlation",
+   "cited_title": "On correlation and budget constraints in model-based bandit optimization with application to automatic machine learning",
+   "cited_first_author": "Hoffman",
+   "cited_year": 2014,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Bayes Gap",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Non-contextual multi-armed bandit best-arm identification / simple regret, fixed budget; probability of simple regret exceeding epsilon",
+   "bound": {
+    "notation": "O",
+    "expression": "K*T*exp(-(T-K)/H_epsilon)",
+    "expression_latex": "O(AT e^{-\\frac{T-A}{H_{\\epsilon}}})",
+    "regime": null
+   },
+   "where": "Section 5, discussion after Theorem 5.3"
+  },
+  {
+   "cited_key": "gabillon2012best",
+   "cited_title": "Best arm identification: A unified approach to fixed budget and fixed confidence",
+   "cited_first_author": "Gabillon",
+   "cited_year": 2012,
+   "cited_arxiv_id": null,
+   "algorithm_name": "UGapEb",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Non-contextual multi-armed bandit best-arm identification, fixed budget; probability of simple regret exceeding epsilon",
+   "bound": {
+    "notation": "O",
+    "expression": "K*T*exp(-(T-K)/H_epsilon)",
+    "expression_latex": "O(AT e^{-\\frac{T-A}{H_{\\epsilon}}})",
+    "regime": null
+   },
+   "where": "Section 5, discussion after Theorem 5.3"
+  },
+  {
+   "cited_key": "guan2018nonparametric",
+   "cited_title": "Nonparametric stochastic contextual bandits",
+   "cited_first_author": "Guan",
+   "cited_year": 2018,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Uniform sampling",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Nonparametric i.i.d. contextual bandits, simple regret under uniform sampling of arms; decay of failure probability",
+   "bound": {
+    "notation": "exact",
+    "expression": "C_g*exp(-c_g*T**(2/(d_1 + d)))",
+    "expression_latex": "Ce^{-c T^{\\frac{2}{(d_1 + d)}}}",
+    "regime": "d_1 >= 2, d context dimension"
+   },
+   "where": "Section 5, discussion after Theorem 5.3"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:14:55",
+  "source_chars": 107142,
+  "input_tokens": 91076,
+  "output_tokens": 4509,
+  "cost_usd_equiv": 0.5355542,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

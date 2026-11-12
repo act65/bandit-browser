@@ -1,0 +1,263 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "ECPv2: Fast, Efficient, and Scalable Global Optimization of Lipschitz Functions",
+  "arxiv_id": "2511.16575",
+  "arxiv_version": null,
+  "year": 2025,
+  "authors": [
+   "Fares Fourati",
+   "Mohamed-Slim Alouini",
+   "Vaneet Aggarwal"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Global optimization of Lipschitz functions with unknown Lipschitz constant",
+   "objective": "simple_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "lipschitz_metric",
+   "function_class": [
+    "lipschitz"
+   ],
+   "domain": "constrained",
+   "context": "none",
+   "noise": "noise_free",
+   "learner_knows": [
+    "T",
+    "d",
+    "diam_K"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "convex_body",
+    "time_varying": "fixed",
+    "access": "membership_oracle",
+    "norm_bound": "not_applicable",
+    "parameter_set": "not_applicable",
+    "loss_set": "not_applicable",
+    "parameter_structure": "not_applicable"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "not_applicable"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "deterministic black-box function on a compact convex subset of R^d with non-empty interior (Euclidean metric)",
+    "Lipschitz constant k unknown to the learner",
+    "learner can sample uniformly from the domain"
+   ],
+   "definition_quote": "We consider the problem of global optimization for a black-box, deterministic, non-convex function f: X -> R that is expensive to evaluate. The function is defined over a compact, convex subset X subset R^d with non-empty interior. ... We assume that f is Lipschitz-continuous with an unknown finite Lipschitz constant k >= 0"
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "ECPv2",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "elimination",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "d",
+    "diam_K"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "simple_regret",
+   "dependence": "instance_dependent",
+   "comparator": "not_applicable",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "L_lip*diam_K*(log(L_lip/eps_1)/log(tau))**(1/d)*(log(1/xi)/T)**(1/d)",
+    "expression_latex": "k \\cdot \\operatorname{diam}(\\mathcal{X}) \\cdot \\log_{\\tau_{n,d}}\\left(\\frac{k}{\\varepsilon_1}\\right)^{\\frac{1}{d}} \\left(  \\frac{\\ln(1/\\xi)}{ n } \\right)^{\\frac{1}{d}}",
+    "regime": null
+   },
+   "symbols": {
+    "eps_1": "initial value epsilon_1 of the Lipschitz-constant estimate",
+    "tau": "geometric growth factor tau_{n,d} > 1",
+    "xi": "confidence parameter in (0, 1-1/beta^2); bound holds w.p. >= 1 - 1/beta^2 - xi",
+    "beta_jl": "random-projection confidence parameter beta > 1"
+   },
+   "conditions": [
+    "f is non-constant and k-Lipschitz on a compact domain",
+    "holds with probability at least 1 - 1/beta^2 - xi"
+   ],
+   "tuning": [
+    "any delta in [0,1)",
+    "any integer m >= 1",
+    "any beta > 1",
+    "any eps_1 > 0",
+    "any tau_{n,d} > 1",
+    "any C > 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:ecpupperbound",
+    "number": "Theorem 2",
+    "quote": "Let \\( f \\in \\text{Lip}(k) \\) be a non-constant function over a compact domain \\( \\mathcal{X} \\subset \\mathbb{R}^d \\), and let ECPv2 be tuned with any \\( \\delta \\in [0,1) \\), integer \\( m \\geq 1 \\), $\\beta>1$, \\( \\varepsilon_1 > 0 \\), \\( \\tau_{n,d} > 1 \\), and \\( C > 1 \\). Then for any budget \\( n \\in \\mathbb{N}^\\star \\) and confidence level \\( \\xi \\in (0, 1 - \\frac{1}{\\beta^2}) \\), with probability at least \\( 1 - \\frac{1}{\\beta^2} - \\xi \\), the simple regret satisfies:\n\\[\n\\mathcal{R}_{\\text{ECPv2}, f}(n)\n\\leq\nk \\cdot\n\\operatorname{diam}(\\mathcal{X}) \\cdot \\log_{\\tau_{n,d}}\\left(\\frac{k}{\\varepsilon_1}\\right)^{\\frac{1}{d}}\n\\left(  \\frac{\\ln(1/\\xi)}{ n } \\right)^{\\frac{1}{d}}.\n\\]"
+   },
+   "confidence": "medium",
+   "notes": "The paper's n is the horizon T, its k is L_lip and its rad/diam map to r_K/diam_K. The precedence of log_tau(k/eps_1)^(1/d) is taken literally as (log_tau(k/eps_1))^(1/d). The expression uses tau as a fixed symbol, but the paper's default tau_{n,d} depends on n. The noise-free deterministic function is recorded with environment stochastic_iid because no deterministic option exists. Theorem 1 (asymptotic no-regret, with regret converging to 0 in probability) is not recorded separately because it gives no rate. The proof has gaps, e.g. it uses i_star^(1/d) as a bound on (n/(n-i*+1))^(1/d)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "bull2011convergence",
+   "cited_title": null,
+   "cited_first_author": "Bull",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Minimax expected simple regret for optimizing k-Lipschitz functions on X in R^d (k known)",
+   "bound": {
+    "notation": "Omega",
+    "expression": "r_K*L_lip*T**(-1/d)",
+    "expression_latex": "\\Omega(\\operatorname{rad}(\\mathcal{X}) \\cdot k \\cdot n^{-1/d})",
+    "regime": null
+   },
+   "where": "Proposition 1; Table 1"
+  },
+  {
+   "cited_key": "fourati25ecp",
+   "cited_title": null,
+   "cited_first_author": "Fourati",
+   "cited_year": 2025,
+   "cited_arxiv_id": null,
+   "algorithm_name": "ECP",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Simple regret of Lipschitz global optimization with unknown k, holding with probability 1 - 1/xi as written in Table 1",
+   "bound": {
+    "notation": "O",
+    "expression": "diam_K*(log(L_lip/eps_1)/log(tau))**(1/d)*log(1/xi)**(1/d)*L_lip*T**(-1/d)",
+    "expression_latex": "\\mathcal{O}_{1-\\frac{1}{\\xi}}(c^\\star (\\ln(1/\\xi))^{1/d} k n^{-1/d})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "malherbe2017global",
+   "cited_title": null,
+   "cited_first_author": "Malherbe",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "AdaLIPO",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Simple regret of Lipschitz global optimization with unknown k, holding with probability 1 - 1/xi as written in Table 1; p is the exploration probability",
+   "bound": {
+    "notation": "O",
+    "expression": "c_ddag*p**(-1/d)*log(3/xi)**(1/d)*L_lip*T**(-1/d)",
+    "expression_latex": "\\mathcal{O}_{1-\\frac{1}{\\xi}}(c^{\\ddag} p^{-1/d} (\\ln(3/\\xi))^{1/d} k n^{-1/d})",
+    "regime": null
+   },
+   "where": "Table 1"
+  },
+  {
+   "cited_key": "malherbe2017global",
+   "cited_title": null,
+   "cited_first_author": "Malherbe",
+   "cited_year": 2017,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Pure Random Search",
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Simple regret of n uniform i.i.d. samples on a compact convex domain for a k-Lipschitz function, with probability >= 1 - xi",
+   "bound": {
+    "notation": "exact",
+    "expression": "L_lip*diam_K*(log(1/xi)/T)**(1/d)",
+    "expression_latex": "k \\cdot \\operatorname{Diam}(\\mathcal{X}) (\\ln(1/\\xi)/n)^{1/d}",
+    "regime": null
+   },
+   "where": "Lemma 9 (Corollary 13 in Malherbe & Vayatis)"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:21:34",
+  "source_chars": 108793,
+  "input_tokens": 86149,
+  "output_tokens": 4586,
+  "cost_usd_equiv": 0.49767819999999996,
+  "quote_retry": {
+   "asked": 1,
+   "fixed": 1,
+   "cost_usd_equiv": 0.4102204
+  },
+  "status": "extracted"
+ }
+}

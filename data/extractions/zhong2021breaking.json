@@ -1,0 +1,323 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Breaking the Moments Condition Barrier: No-Regret Algorithm for Bandits with Super Heavy-Tailed Payoffs",
+  "arxiv_id": "2110.13876",
+  "arxiv_version": null,
+  "year": 2021,
+  "authors": [
+   "Han Zhong",
+   "Jiayi Huang",
+   "Lin F. Yang",
+   "Liwei Wang"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Super heavy-tailed linear bandits (alpha-heavy-tail noise)",
+   "objective": "cumulative_regret",
+   "feedback": "bandit",
+   "environment": "stochastic_iid",
+   "action_space": "linear_infinite",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "general_model_class",
+   "learner_knows": [
+    "T",
+    "d"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "unspecified",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unit_l2",
+    "parameter_set": "l2_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "not_applicable",
+    "reward": "not_applicable",
+    "loss_scale": "not_applicable"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Noise is symmetric, independent, with alpha-heavy tail Pr(|eta|>y) <= 1/y^alpha for some alpha>0; moments (even the mean) may not exist",
+    "The learner knows (a lower bound on) the tail index alpha"
+   ],
+   "definition_quote": "At each round $t$, a learner chooses an action $x_t \\in \\cX$ and observes the reward $r_t = \\theta^\\top x_t + \\eta_t$, where $\\eta_t$ is a symmetric and independent noise. ... We say a random variable, $\\eta$, has $\\alpha$-heavy-tail for some $\\alpha>0$, if ... $\\Pr(|\\eta| > y) \\le \\frac{1}{y^\\alpha}$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "Synthetic Algorithm (mean of medians filter + base bandit algorithm A)",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "alpha_tail",
+    "delta"
+   ]
+  },
+  {
+   "id": "a2",
+   "name": "Synthetic Algorithm with OFUL",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism",
+    "other"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "alpha_tail",
+    "delta"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "exact",
+    "expression": "n_tilde*R(d, T/n_tilde, delta)",
+    "expression_latex": "\\tilde{n} \\cdot R(d, T/\\tilde{n}, \\delta)",
+    "regime": null
+   },
+   "symbols": {
+    "n_tilde": "block size ceil(max{C, (16 log(2T/delta))^{1/varepsilon}, (2*4^{2/alpha} log(4/delta))^{1/(1-varepsilon)}})",
+    "R": "high-probability regret bound of the base algorithm A under 1-sub-Gaussian noise",
+    "alpha_tail": "tail index of the noise"
+   },
+   "conditions": [
+    "noise is symmetric alpha-heavy-tail",
+    "base algorithm A achieves regret R(d,T,delta) w.p. 1-delta under 1-sub-Gaussian noise"
+   ],
+   "tuning": [
+    "varepsilon in (0,1)",
+    "C constant with 2C^{1-varepsilon} e^{-C^varepsilon/16} <= 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "thm:regret",
+    "number": "Theorem 6",
+    "quote": "Suppose a linear bandit instance, $(\\cX, \\theta)$, has $\\alpha$-heavy-tail noise for some $\\alpha > 0$. Fix $\\varepsilon \\in (0, 1)$. Let $\\tilde{n} = \\lceil \\max\\{C, \\big(16\\log(2T/\\delta)\\bigr)^{1/\\varepsilon}, (2\\cdot4^{2/\\alpha}\\log(4/\\delta))^{\\frac{1}{1-\\varepsilon}}\\} \\rceil$ ... Then, Algorithm \\ref{alg2} with input $(\\cA, \\delta, \\varepsilon, \\tilde{n})$ enjoys a regret bound \\[\\tilde{n} \\cdot R(d, T/\\tilde{n}, \\delta)\\] with probability at least $1 - 2\\delta$."
+   },
+   "confidence": "medium",
+   "notes": "Pseudo-regret holding w.p. 1-2delta. Generic reduction; expression involves the base algorithm's regret function R."
+  },
+  {
+   "id": "r2",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a2",
+   "algorithm_class": null,
+   "quantity": "high_probability_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "high_probability",
+   "horizon": "known",
+   "compute": "not_stated",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(n_tilde*T)*log(T/delta)",
+    "expression_latex": "\\tilde{\\cO}(d \\sqrt{\\tilde{n} T} \\log(T/\\delta))",
+    "regime": null
+   },
+   "symbols": {
+    "n_tilde": "ceil(max{C, (16 log(2T/delta))^2, (2*4^{2/alpha} log(4/delta))^2})"
+   },
+   "conditions": [
+    "noise is symmetric alpha-heavy-tail"
+   ],
+   "tuning": [
+    "varepsilon = 1/2",
+    "C with 2 sqrt(C) e^{-sqrt(C)/16} <= 1"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "cor:oful",
+    "number": "Corollary 10",
+    "quote": "We use the OFUL algorithm in \\citet{abbasi2011improved} as the input in Algorithm \\ref{alg2} and set $\\varepsilon = 1/2$. ... Then, by using Algorithm \\ref{alg2} achieves a regret bound $\\tilde{\\cO}(d \\sqrt{\\tilde{n} T} \\log(T/\\delta))$ with probability at least $1 - \\delta$."
+   },
+   "confidence": "medium",
+   "notes": "Probability stated 1-delta (Theorem 6 gives 1-2delta)."
+  }
+ ],
+ "cited_results": [
+  {
+   "cited_key": "shao2018almost",
+   "cited_title": "Almost optimal algorithms for linear stochastic bandits with heavy-tailed payoffs",
+   "cited_first_author": "Han Shao",
+   "cited_year": 2018,
+   "cited_arxiv_id": "1810.10895",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Linear bandits with heavy-tailed payoffs with finite (1+epsilon) moment, expected regret",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T**(1/(1+eps_m))",
+    "expression_latex": "\\Omega(T^{\\frac{1}{1+\\epsilon}})",
+    "regime": null
+   },
+   "where": "Remark 8"
+  },
+  {
+   "cited_key": "xue2020nearly",
+   "cited_title": "Nearly optimal regret for stochastic linear bandits with heavy-tailed payoffs",
+   "cited_first_author": "Bo Xue",
+   "cited_year": 2020,
+   "cited_arxiv_id": "2004.13465",
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "lower",
+   "setting_description": "Linear bandits with heavy-tailed payoffs with finite (1+epsilon) moment, expected regret",
+   "bound": {
+    "notation": "Omega",
+    "expression": "T**(1/(1+eps_m))",
+    "expression_latex": "\\Omega(T^{\\frac{1}{1+\\epsilon}})",
+    "regime": null
+   },
+   "where": "Remark 8"
+  },
+  {
+   "cited_key": "auer2002using",
+   "cited_title": "Using confidence bounds for exploitation-exploration trade-offs",
+   "cited_first_author": "Peter Auer",
+   "cited_year": 2002,
+   "cited_arxiv_id": null,
+   "algorithm_name": null,
+   "algorithm_registry_id": null,
+   "side": "upper",
+   "setting_description": "Linear bandits with finite arm set",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "sqrt(d*T)",
+    "expression_latex": "\\tilde{\\cO}(\\sqrt{dT})",
+    "regime": null
+   },
+   "where": "Related Works"
+  },
+  {
+   "cited_key": "abbasi2011improved",
+   "cited_title": "Improved algorithms for linear stochastic bandits",
+   "cited_first_author": "Yasin Abbasi-Yadkori",
+   "cited_year": 2011,
+   "cited_arxiv_id": null,
+   "algorithm_name": "OFUL",
+   "algorithm_registry_id": "oful",
+   "side": "upper",
+   "setting_description": "Linear bandits with infinite arm set, sub-Gaussian noise",
+   "bound": {
+    "notation": "O_tilde",
+    "expression": "d*sqrt(T)",
+    "expression_latex": "\\tilde{\\cO}(d\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Related Works"
+  },
+  {
+   "cited_key": "bubeck2013bandits",
+   "cited_title": "Bandits with heavy tail",
+   "cited_first_author": "Sébastien Bubeck",
+   "cited_year": 2013,
+   "cited_arxiv_id": null,
+   "algorithm_name": "Robust UCB",
+   "algorithm_registry_id": "robust_ucb",
+   "side": "upper",
+   "setting_description": "Heavy-tailed MAB with finite variance",
+   "bound": {
+    "notation": "O",
+    "expression": "sqrt(T)",
+    "expression_latex": "\\cO(\\sqrt{T})",
+    "regime": null
+   },
+   "where": "Section 3.3"
+  }
+ ],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T15:38:03",
+  "source_chars": 54638,
+  "input_tokens": 62897,
+  "output_tokens": 5424,
+  "cost_usd_equiv": 0.3284222,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}

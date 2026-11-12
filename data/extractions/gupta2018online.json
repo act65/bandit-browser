@@ -1,0 +1,188 @@
+{
+ "schema_version": "0.5",
+ "ontology_version": "bandits-0.5",
+ "paper": {
+  "title": "Online Diverse Learning to Rank from Partial-Click Feedback",
+  "arxiv_id": "1811.00911",
+  "arxiv_version": null,
+  "year": 2018,
+  "authors": [
+   "Prakhar Gupta",
+   "Gaurush Hiranandani",
+   "Harvineet Singh",
+   "Branislav Kveton",
+   "Zheng Wen",
+   "Iftikhar Ahamath Burhanuddin"
+  ]
+ },
+ "settings": [
+  {
+   "id": "s1",
+   "name_in_paper": "Diverse cascading bandit",
+   "objective": "cumulative_regret",
+   "feedback": "cascade",
+   "environment": "stochastic_iid",
+   "action_space": "combinatorial",
+   "function_class": [],
+   "domain": "not_applicable",
+   "context": "none",
+   "noise": "bernoulli",
+   "learner_knows": [
+    "T",
+    "K",
+    "d",
+    "S"
+   ],
+   "instance_assumptions": [],
+   "extras": [],
+   "action_set": {
+    "shape": "finite",
+    "time_varying": "fixed",
+    "access": "explicit",
+    "norm_bound": "unspecified",
+    "parameter_set": "l1_ball",
+    "loss_set": "not_applicable",
+    "parameter_structure": "dense"
+   },
+   "corruption": {
+    "adversary": "not_applicable",
+    "budget_measure": "not_applicable",
+    "structure": "not_applicable",
+    "regret_reference": "not_applicable",
+    "model": "not_applicable",
+    "target": "not_applicable"
+   },
+   "feedback_graph": {
+    "observability": "not_applicable",
+    "time_varying": "not_applicable",
+    "knowledge": "not_applicable",
+    "self_loops": "not_applicable",
+    "directedness": "not_applicable",
+    "generation": "not_applicable"
+   },
+   "noise_detail": {
+    "variance": "unspecified"
+   },
+   "combinatorial": {
+    "family": "ordered_list",
+    "reward": "click_model",
+    "loss_scale": "per_action"
+   },
+   "reward_model": {
+    "kind": "not_applicable"
+   },
+   "constraints": {
+    "kind": "not_applicable",
+    "violation": "not_applicable"
+   },
+   "preference": {
+    "model": "not_applicable",
+    "winner": "not_applicable",
+    "comparison": "not_applicable"
+   },
+   "partial_monitoring": {
+    "observability": "not_applicable",
+    "structure": "not_applicable"
+   },
+   "delay": {
+    "generation": "not_applicable"
+   },
+   "kernel": {
+    "family": "not_applicable"
+   },
+   "parameters": {},
+   "in_scope": true,
+   "out_of_scope_reason": null,
+   "unmapped": [
+    "Diverse cascade click model: attraction probability of the k-th item is <Delta(a_k | a_1..a_{k-1}), theta*>, a linear function of the gain in a monotone submodular topic coverage function",
+    "Learner knows the topic coverage gains Delta(e|S) for all items and sets",
+    "Reward is 1 if at least one item in the list is clicked: f(A,theta*) = 1 - prod_k (1 - <Delta(a_k|...), theta*>)",
+    "theta* is a distribution over d topics (nonnegative, ||theta*||_1 <= 1)"
+   ],
+   "definition_quote": "An instance of this problem is a tuple $(E, c, \\theta^\\ast, K )$ ... The attractiveness of item $a_k$ at time $t$ ... is a realization of an independent Bernoulli random variable with mean $\\langle\\Delta(\\rnd{a}^t_k \\mid \\{\\rnd{a}^t_1, \\dots, \\rnd{a}^t_{k - 1}\\}), \\theta^\\ast\\rangle$. The user examines the list from the first item to the last and clicks on the first attractive item. The feedback is the index of the click ... The reward is defined as $\\rnd{r}_t = \\I{\\rnd{C}_t \\leq K}$."
+  }
+ ],
+ "algorithms": [
+  {
+   "id": "a1",
+   "name": "CascadeLSB",
+   "registry_id": null,
+   "is_new": true,
+   "techniques": [
+    "optimism"
+   ],
+   "requires_knowledge_of": [
+    "T",
+    "K",
+    "d",
+    "S"
+   ]
+  }
+ ],
+ "results": [
+  {
+   "id": "r1",
+   "setting": "s1",
+   "side": "upper",
+   "algorithm": "a1",
+   "algorithm_class": null,
+   "quantity": "alpha_regret",
+   "dependence": "worst_case",
+   "comparator": "best_fixed_action",
+   "probability": "expectation",
+   "horizon": "known",
+   "compute": "polynomial",
+   "bound": {
+    "notation": "exact",
+    "expression": "2*alpha_c*K/gamma*sqrt(d*T*log(1 + T*K/(d*sigma_alg**2))/log(1 + 1/sigma_alg**2)) + 1",
+    "expression_latex": "R^{\\gamma}(n) \\leq \\frac{2\\alpha K}{\\gamma} \\sqrt{\\frac{dn \\log \\left[ 1 + \\frac{nK}{d \\sigma^2}\\right]}{\\log \\left( 1+ \\frac{1}{\\sigma^2}\\right)}}+1",
+    "regime": null
+   },
+   "symbols": {
+    "alpha_c": "optimism parameter alpha of CascadeLSB, alpha >= (1/sigma) sqrt(d log(1+nK/(d sigma^2)) + 2 log n) + ||theta*||_2",
+    "sigma_alg": "tunable parameter sigma > 0 of CascadeLSB controlling Gram matrix growth (not the noise level)",
+    "gamma": "approximation ratio (1-1/e) max{1/K, 1-(K-1)c_max/2} used to scale regret",
+    "c_max": "maximum click probability max_e <c({e}), theta*>"
+   },
+   "conditions": [
+    "||theta*||_2 <= ||theta*||_1 <= 1",
+    "topic coverage c_j monotone submodular with values in [0,1]"
+   ],
+   "tuning": [
+    "any sigma > 0",
+    "alpha >= (1/sigma) sqrt(d log(1 + nK/(d sigma^2)) + 2 log(n)) + ||theta*||_2"
+   ],
+   "is_new": true,
+   "source": {
+    "label": "theorem:main",
+    "number": "Theorem 2",
+    "quote": "Under the above assumptions, for any $\\sigma>0$ and any \\alpha \\geq \\frac{1}{\\sigma} \\sqrt{d \\log \\left( 1 + \\frac{nK}{d \\sigma^2}\\right) + 2 \\log \\left( n \\right)} + \\|\\theta^* \\|_2 in \\cref{alg:main}, where $\\|\\theta^* \\|_2 \\leq \\|\\theta^* \\|_1 \\leq 1$, we have R^{\\gamma}(n) \\leq \\frac{2\\alpha K}{\\gamma} \\sqrt{\\frac{dn \\log \\left[ 1 + \\frac{nK}{d \\sigma^2}\\right]}{\\log \\left( 1+ \\frac{1}{\\sigma^2}\\right)}}+1."
+   },
+   "confidence": "medium",
+   "notes": "Regret is gamma-scaled: sum_t E[f(A*,theta*) - f(A_t,theta*)/gamma], recorded as alpha_regret (scaled by 1/gamma rather than comparing to gamma*OPT). Paper remarks that with sigma=1 and suitable alpha this gives O_tilde(dK sqrt(n)/gamma). Horizon n is needed for alpha. Theorem 1 (greedy approximation ratio, offline) is not a regret guarantee and not recorded."
+  }
+ ],
+ "cited_results": [],
+ "_run": {
+  "backend": "claude_cli",
+  "models": [
+   "claude-opus-5-5"
+  ],
+  "effort": null,
+  "prompt_sha": "7d4c38bfd00b",
+  "schema_version": "0.6",
+  "ontology_version": "bandits-0.6",
+  "variables_version": "0.4",
+  "algorithm_registry_size": 133,
+  "date": "2026-11-12T14:39:18",
+  "source_chars": 75666,
+  "input_tokens": 72399,
+  "output_tokens": 3134,
+  "cost_usd_equiv": 0.3586382,
+  "quote_retry": {
+   "asked": 0,
+   "fixed": 0
+  },
+  "status": "extracted"
+ }
+}
