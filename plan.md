@@ -33,7 +33,7 @@ Batch 3 is in: **1,555 papers**, 6,920 results, 2,939 canonical settings, 4,065 
   Conflicts 9 -> 6 (the zhou2025learning S_T cells and cesari2026action vs arora2019bandits); tight 228.
 - Duplicate versions: manifest `duplicate_of` (saha2022versatilea -> saha2022versatile); resolve.py, the site and
   paper_numbers skip them.
-- Not yet done for batch 3: gap triage of the new gap cells.
+- Batch-3 gap triage (2026-11-16): 134 cells, 105 closed, 7 open_known, 22 blank; every gap cell has a verdict.
 
 ## Status (2026-11-09)
 
