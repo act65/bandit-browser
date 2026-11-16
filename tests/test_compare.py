@@ -366,3 +366,15 @@ def test_condition_satisfied_by_the_setting_does_not_exclude_the_bound():
     sat = {"SM": [re.compile(r, re.I) for r in compare.schema.load_ontology()["node_parameters"]["kernel"]["fields"]
                   ["family"]["satisfies"]["matern"]]}
     assert compare.compare(rs, [], CAN, satisfied=sat)["settings"]["SM"]["regret|worst_case"]["status"] == "tight"
+
+
+def test_lower_bound_needing_a_growing_parameter_excluded():
+    """Regression (4 conflict cells since batch 2): zhou2025learning's c_1 T lower bound holds when the switch count
+    L_T >= c_1 T, while its O~(L_T) upper bound is profiled with L_T fixed as T grows. A lower bound whose condition
+    makes a fixed parameter grow with T is not about the scan; a threshold that shrinks with T is."""
+    assert compare.needs_growing_parameter("L_T >= c_1 T")
+    assert compare.needs_growing_parameter("T_a >= Omega(T^(1-gamma) (ln T)^(-mu))")
+    assert not compare.needs_growing_parameter("rho >= 0.22 sqrt((K-1)/T)")
+    assert not compare.needs_growing_parameter("K >= T")  # a scanned variable: the horizon rules handle it
+    c = cells([U("u", "sqrt(T)"), L("l", "T", conditions=["L_T >= c_1 T"])])
+    assert c["regret|worst_case"]["status"] == "no_lower"

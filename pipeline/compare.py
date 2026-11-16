@@ -232,6 +232,30 @@ def restricts_instances(conditions: list[str]) -> bool:
 # classifier calls it a side condition), but an upper bound proved only there is restricted
 CONSTRUCTED = re.compile(r"\bconstruct", re.I)
 T_CAPPED = re.compile(r"^\s*(T|n)\s*(<|<=|≤)")  # a condition bounding the horizon from above
+PARAM_FLOOR = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*(>=|≥|>)\s*([^,;]*\bT\b[^,;]*)$")
+
+
+def needs_growing_parameter(cond: str) -> bool:
+    """A lower-bound condition "S_T >= c_1 T" (switches, variation, corruption budget at least growing with T):
+    the bound is about the regime where that parameter grows with the horizon, but the scan holds non-scanned
+    parameters fixed as T grows, so along the scan the condition fails (zhou2025learning's c_1 T lower bounds
+    against O(L_T) upper bounds). Thresholds that shrink with T (rho >= sqrt(K/T)) hold along the scan."""
+    m = PARAM_FLOOR.match(cond)
+    if not m or m.group(1) in SCAN or m.group(1) in ("n",):
+        return False
+    rhs = re.sub(r"\b(Omega|Theta|O)\s*\(", "(", m.group(3))
+    rhs = re.sub(r"\blambda\b", "lam", re.sub(r"\bln\b", "log", rhs))
+    rhs = re.sub(r"\b(log|sqrt|exp)\s+([A-Za-z_]\w*)", r"\1(\2)", rhs)  # "log T" -> "log(T)"
+    rhs = re.sub(r"(?<=[\w)])\s+(?=[\w(])", "*", rhs.strip()).replace("^", "**")  # "c_1 T" -> "c_1*T"
+    try:
+        e = resolve.parse(rhs)
+        T = sympy.Symbol("T")
+        e = e.replace(lambda x: isinstance(x, sympy.core.function.AppliedUndef), lambda x: sympy.Rational(1, 2))
+        e = e.subs({x: sympy.Rational(1, 4) for x in e.free_symbols if x != T})
+        lo, hi = float(e.subs(T, 1e4)), float(e.subs(T, 1e8))
+    except Exception:
+        return False
+    return hi > 2 * lo > 0
 # consistency / uniform-goodness assumptions: the standard admissible class of asymptotic lower
 # bounds (Lai & Robbins), handled through algorithm_class, not a restriction of the learner
 # little-o only (O(T^alpha) for one alpha is a rate assumption, not consistency); "for all a > 0" in a
@@ -583,6 +607,8 @@ def compare(results: dict, inferred: list[dict], canonical: set[str], adaptive: 
             continue  # holds only on a restricted instance class: shown, but not the setting's rate
         if side == "upper" and any(T_CAPPED.match(c) for c in conds):
             continue  # holds only for small horizons (e.g. T < (K log K)^2): says nothing about the rate
+        if side == "lower" and any(needs_growing_parameter(c) for c in conds):
+            continue  # holds only when a fixed problem parameter grows with T: not along the scan
         if side == "lower" and cls == "other" and any(CONSISTENCY.search(c) for c in conds):
             cls = "consistent"  # the admissible class of the lower bound (consistent, uniformly good, delta-correct)
         if side == "lower" and (cls not in MINIMAX_LOWER_CLASSES or any(c.startswith("holds for") for c in cav)

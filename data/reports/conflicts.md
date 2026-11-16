@@ -2,30 +2,6 @@
 
 An upper bound grows more slowly than a lower bound in the same setting and regime. Usually an extraction error (a dropped term, a missing assumption in the setting) — occasionally a genuine contradiction.
 
-- adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] · switching_cost (`S-0c139a66`, 1 papers), regret / worst_case, variable K: upper 0·log^0.5 < lower 0
-  - upper: `1099511627776*Min(T, sqrt(T*log(K))*log(E*K*T)**2)` (exact; inherited from cesari2026action Theorem 2) — conditions: graph strongly revealing, known and fixed; oblivious losses in [0,1]^K
-  - lower: `T**(2/3)/log(T)` (Omega; arora2019bandits Theorem 5.1)
-- adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] · switching_cost (`S-0c139a66`, 1 papers), regret / worst_case, variable T: upper 0.5·log^2 < lower 0.666667·log^-1
-  - upper: `1099511627776*Min(T, sqrt(T*log(K))*log(E*K*T)**2)` (exact; inherited from cesari2026action Theorem 2) — conditions: graph strongly revealing, known and fixed; oblivious losses in [0,1]^K
-  - lower: `T**(2/3)/log(T)` (Omega; arora2019bandits Theorem 5.1)
-- adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] · switching_cost (`S-6f1e943a`, 1 papers), regret / worst_case, variable K: upper 0·log^0.5 < lower 0
-  - upper: `1099511627776*Min(T, sqrt(T*log(K))*log(E*K*T)**2)` (exact; cesari2026action Theorem 2) — conditions: graph strongly revealing, known and fixed; oblivious losses in [0,1]^K
-  - lower: `T**(2/3)/log(T)` (Omega; inherited from arora2019bandits Theorem 5.1)
-- adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] · switching_cost (`S-6f1e943a`, 1 papers), regret / worst_case, variable T: upper 0.5·log^2 < lower 0.666667·log^-1
-  - upper: `1099511627776*Min(T, sqrt(T*log(K))*log(E*K*T)**2)` (exact; cesari2026action Theorem 2) — conditions: graph strongly revealing, known and fixed; oblivious losses in [0,1]^K
-  - lower: `T**(2/3)/log(T)` (Omega; inherited from arora2019bandits Theorem 5.1)
-- nonstationary_drifting · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 · knows V_T · first price auction (value before action) (`S-5657cac6`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 1
-  - upper: `Min(S_T, sqrt(T*V_T))` (O_tilde; inherited from zhou2025learning Theorem (thm:bobw)) — conditions: V_T = Omega(ln T)
-  - lower: `T*c_1` (exact; zhou2025learning Proposition (prop:lb1))
-- nonstationary_drifting · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 · first price auction (value before action) (`S-6ead9dfd`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 1
-  - upper: `Min(S_T, sqrt(T*V_T))` (O_tilde; zhou2025learning Theorem (thm:bobw)) — conditions: V_T = Omega(ln T)
-  - lower: `T*c_1` (exact; inherited from zhou2025learning Proposition (prop:lb1))
-- nonstationary_switching · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 · first price auction (value before action) (`S-70bb5d00`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 1
-  - upper: `S_T` (O_tilde; zhou2025learning Theorem (thm:full_lt1)) — conditions: L_T = o(T)
-  - lower: `T*c_1**2` (exact; inherited from zhou2025learning Proposition (prop:lb1))
-- nonstationary_switching · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 · knows S_T · first price auction (value before action) (`S-6915b97b`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 1
-  - upper: `S_T` (O_tilde; inherited from zhou2025learning Theorem (thm:full_lt1)) — conditions: L_T = o(T)
-  - lower: `T*c_1**2` (exact; zhou2025learning Proposition (prop:lb1))
 
 ## Vacuous upper bounds (regret growing at least linearly in T)
 

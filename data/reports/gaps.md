@@ -1575,6 +1575,13 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best lower: `sqrt(T*alpha_G)` (Omega; alon2014nonstochastic Theorem 5)
 - relies on inherited bounds: True
 
+## adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] · switching_cost (`S-0c139a66`, 1 papers): regret, worst_case — **log gap**
+- K: upper 0 vs lower 0 (log_gap)
+- T: upper 0.666667 vs lower 0.666667·log^-1 (log_gap)
+- best upper: `Max(C_c**(1/3)*T**(2/3), sqrt(K*T))` (O_tilde; inherited from koren2017multi Theorem 7)
+- best lower: `T**(2/3)/log(T)` (Omega; arora2019bandits Theorem 5.1)
+- relies on inherited bounds: True
+
 ## adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] · switching_cost (`S-84718472`, 1 papers): regret, worst_case — **log gap**
 - K: upper 0 vs lower 0 (log_gap)
 - T: upper 0.666667 vs lower 0.666667·log^-1 (log_gap)
@@ -1695,6 +1702,13 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best upper: `T**(3/4)*(3*log(T)**(1/3) + 2/sigma_s)` (exact; cesabianchi2023repeated Theorem 4)
 - best lower: `T**(3/4)/125000` (exact; cesabianchi2023repeated Theorem 3)
 - relies on inherited bounds: False
+
+## adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] · switching_cost (`S-6f1e943a`, 1 papers): regret, worst_case — **log gap**
+- K: upper 0·log^0.333333 vs lower 0 (log_gap)
+- T: upper 0.666667 vs lower 0.666667·log^-1 (log_gap)
+- best upper: `T**(2/3)*(D_obs*log(K))**(1/3)` (exact; inherited from cesari2026action Theorem 3); `Min(T, 5*T**(2/3)*(gamma_dom*log(K))**(1/3))` (exact; inherited from cesari2026action Theorem 1)
+- best lower: `T**(2/3)/log(T)` (Omega; inherited from arora2019bandits Theorem 5.1)
+- relies on inherited bounds: True
 
 ## adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] · switching_cost (`S-40d2342c`, 1 papers): regret, worst_case — **log gap**
 - K: upper 0·log^0.333333 vs lower 0 (log_gap)
@@ -2190,6 +2204,18 @@ Settings whose best upper and lower bounds differ (polynomial gaps first). Rates
 - best upper: `sqrt(T)` (O_tilde; zhang2022leveraging Theorem 4)
 - best lower: `sqrt(T)` (Omega_tilde; zhang2022leveraging Theorem 4)
 - relies on inherited bounds: False
+
+## nonstationary_drifting · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 · knows V_T · first price auction (value before action) (`S-5657cac6`, 1 papers): dynamic_regret, worst_case — **log gap**
+- T: upper 0.5 vs lower 0.5 (log_gap)
+- best upper: `sqrt(T*V_T)` (O_tilde; zhou2025learning Theorem (thm:full_vt_ub)); `sqrt(T*V_T)` (O_tilde; zhou2025learning Proposition (prop:restart_zhang)); `Max(1, sqrt(T*V_T))` (O_tilde; inherited from zhou2025learning Theorem (thm:full_vt_ub))
+- best lower: `sqrt(T*V_T)/16` (exact; zhou2025learning Theorem (thm:full_lb))
+- relies on inherited bounds: True
+
+## nonstationary_drifting · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 · first price auction (value before action) (`S-6ead9dfd`, 1 papers): dynamic_regret, worst_case — **log gap**
+- T: upper 0.5 vs lower 0.5 (log_gap)
+- best upper: `Max(1, sqrt(T*V_T))` (O_tilde; zhou2025learning Theorem (thm:full_vt_ub)); `sqrt(T*V_T)` (O_tilde; zhou2025learning Theorem (thm:bobw))
+- best lower: `sqrt(T*V_T)/16` (exact; inherited from zhou2025learning Theorem (thm:full_lb))
+- relies on inherited bounds: True
 
 ## stochastic · linear · Gaussian · bayesian_prior · knows prior, sigma (`S-50431437`, 1 papers): bayesian_regret, worst_case — **log gap**
 - T: upper 0.5 vs lower 0.5 (log_gap)
