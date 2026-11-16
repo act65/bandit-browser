@@ -9,6 +9,7 @@ extractor declared and an expression it appears in:
                      bound S, a noise scale, a Lipschitz constant, a smoothness exponent, a number of players)
   tuning_constant    an algorithm parameter fixed independently of T, K, d, gap, epsilon (alpha > 1 of UCB(alpha))
   alias:<var>        the same quantity as canonical variable <var> under another name
+  kl_gap             a KL divergence (or K_inf) between an arm's distribution and the optimal one: of order Delta^2
   scales             grows or varies with a scanned variable (path length, cumulative loss, a ground-set size
                      that grows with K, a number of edges, a learning rate tuned with T)
   derived            a function of canonical and other quantities that would have to be expanded
@@ -56,7 +57,10 @@ symbol, the meaning the extractor declared, a bound it appears in) choose one cl
   with T or K is "scales".
 - alias:<var>: the same quantity as canonical variable <var> under another name. <var> must be one of the canonical
   variables listed. (n = number of rounds -> alias:T; N = number of arms -> alias:K; number of base arms of a
-  combinatorial problem -> alias:d only if the paper's d is that quantity, else instance_constant.)
+  combinatorial problem -> alias:d without item features (ontology v0.7: base arms are d), alias:K with features.)
+- kl_gap: a KL divergence (or K_inf, KL-information) between one arm's reward distribution and the optimal arm's or
+  a confusing alternative's, i.e. a per-arm divergence of order Delta^2. Not KL terms to a prior, regularisers or
+  learning rates.
 - scales: grows or varies with a scanned variable: path length P_T, variation V_T, number of switches S_T, a
   cumulative loss or variance, a budget B proportional to T, a covering number growing with d, a confidence radius
   beta_T, a learning rate tuned with T.
@@ -90,7 +94,7 @@ def collect() -> dict[str, dict]:
 
 
 def classify(batch: list[tuple[str, dict]], model: str, canon: str) -> dict[str, str]:
-    enum = BASE[:3] + [f"alias:{v}" for v in sorted(compare.SCAN) + ["delta"]] + BASE[4:]
+    enum = BASE[:3] + [f"alias:{v}" for v in sorted(compare.SCAN) + ["delta"]] + ["kl_gap"] + BASE[4:]
     sch = {"type": "object", "additionalProperties": False, "required": ["labels"], "properties": {"labels": {
         "type": "array", "items": {"type": "object", "additionalProperties": False, "required": ["i", "cls"],
                                    "properties": {"i": {"type": "integer"}, "cls": {"enum": enum}}}}}}

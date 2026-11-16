@@ -204,6 +204,8 @@ def hold_symbols(e, paper: str, canonical: set[str], classes: dict | None = None
             return None
         if c.startswith("alias:"):
             alias[sympy.Symbol(s)] = sympy.Symbol(c.split(":", 1)[1])
+        elif c == "kl_gap":  # a per-arm KL divergence between arm distributions: of order Delta^2, as KL_LIKE
+            alias[sympy.Symbol(s)] = sympy.Symbol("Delta") ** 2
         elif (c in HELD_CLASSES if side == "upper" else c == "constant") and not _in_exponent(e, s):
             held.append(s)
         else:

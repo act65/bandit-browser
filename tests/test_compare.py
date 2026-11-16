@@ -378,3 +378,10 @@ def test_lower_bound_needing_a_growing_parameter_excluded():
     assert not compare.needs_growing_parameter("K >= T")  # a scanned variable: the horizon rules handle it
     c = cells([U("u", "sqrt(T)"), L("l", "T", conditions=["L_T >= c_1 T"])])
     assert c["regret|worst_case"]["status"] == "no_lower"
+
+
+def test_kl_gap_symbols_scale_as_squared_gap():
+    """A per-arm KL divergence (kaufmann2014complexity's KL_a_m) is of order Delta^2: a lower bound written with it
+    is profiled in 1/Delta (lower bounds may hold numerical constants only, so as an instance constant it was lost)."""
+    e = compare.hold_symbols(resolve.parse("sum_arms(1/KL_a)*log(1/delta)"), "p", CAN, {"p|KL_a": "kl_gap"}, side="lower")
+    assert e is not None and sympy.Symbol("Delta") in e[0].free_symbols
