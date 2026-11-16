@@ -68,13 +68,18 @@ def conditions_of(eid, results, inferred) -> list[str]:
 
 
 def poset(settings, order: Order) -> list[dict]:
-    pairs = {(a, b): ch for a, b, ch in order.comparable_pairs({k: v["key"] for k, v in settings.items()})}
+    # only the pairs are kept (the change lists of every comparable pair took ~27 GB at 2,939 settings);
+    # changes are recomputed for the covering edges
+    keys = {k: v["key"] for k, v in settings.items()}
+    ordered = [(a, b) for a, b, _ in order.comparable_pairs(keys)]
+    pairs = set(ordered)
     succ = collections.defaultdict(set)
     for a, b in pairs:
         succ[a].add(b)
     cover = []
-    for (a, b), ch in pairs.items():
+    for a, b in ordered:
         if not any((c, b) in pairs for c in succ[a] if c != b):
+            ch = order.leq(keys[a], keys[b])
             cover.append({"special": a, "general": b,
                           "changes": [{"dim": c.dim, "special": c.special, "general": c.general, "kind": c.kind,
                                        "justification": c.justification, "caveats": c.caveats,
@@ -170,6 +175,8 @@ def main() -> None:
         try:
             e = compare.instance_expr(expr, r["bound"].get("notation"))
             e = e.subs(compare.sympy.Symbol("delta"), 1 / compare.sympy.Symbol("T"))  # delta = 1/T
+            if compare.runaway_exponent(e):
+                continue  # e.g. 2**(K+3): evaluating it along the scan builds huge integers (25 GB, saha2020improved)
             p = compare.profile(e, canonical) or {}
         except Exception:  # unprofilable expressions are reported by validate.py
             continue

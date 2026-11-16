@@ -7,7 +7,7 @@ corpus/manifest.yaml ──fetch.py──▶ corpus/src/<arxiv_id>/      (LaTeX 
                      ──validate.py──▶ data/validation-report.md
                      ──resolve.py──▶ data/canonical/  (stable ids: settings S-<hash>, algorithms,
                                                         citations, normalised bounds; report.md)
-                     ──infer.py──▶ data/canonical/inferred.json  (inherited bounds + derivations)
+                     ──infer.py──▶ data/canonical/inferred.json  (inherited bounds + derivations; generated, not committed)
 site/build.py ──▶ _site/   (static site; deployed by .github/workflows/pages.yml)
 ```
 

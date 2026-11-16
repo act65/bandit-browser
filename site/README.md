@@ -1,6 +1,6 @@
 # Site
 
-A static browser over the data, backed by a SQLite database that is queried in the browser. `build.py` reads the data files and writes `_site/` (gitignored). Display only: no bound comparison or inference happens here. Inherited bounds come from `data/canonical/inferred.json` (`pipeline/infer.py`) and the analysis from `data/canonical/site_index.json` (`pipeline/site_index.py`).
+A static browser over the data, backed by a SQLite database that is queried in the browser. `build.py` reads the data files and writes `_site/` (gitignored). Display only: no bound comparison or inference happens here. Inherited bounds come from `data/canonical/inferred.json` (`pipeline/infer.py`; gitignored, so run it before building) and the analysis from `data/canonical/site_index.json` (`pipeline/site_index.py`).
 
 ## Architecture
 
