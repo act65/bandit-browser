@@ -44,7 +44,8 @@ def main() -> None:
 
     # ---- corpus and extraction
     manifest = yaml.safe_load((ROOT / "corpus" / "manifest.yaml").read_text())["papers"]
-    exts = sorted(glob.glob(str(ROOT / "data" / "extractions" / "*.json")))
+    dups = {p["id"] for p in manifest if p.get("duplicate_of")}
+    exts = sorted(f for f in glob.glob(str(ROOT / "data" / "extractions" / "*.json")) if Path(f).stem not in dups)
     runs = [json.loads(Path(f).read_text()).get("_run", {}) for f in exts]
     N["NPapers"] = comma(len(exts))
     have = {Path(f).stem for f in exts}

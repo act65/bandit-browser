@@ -103,13 +103,17 @@ def load_json(path: Path):
 def load_manifest(root: Path) -> list[dict]:
     data = load_yaml(root / "corpus" / "manifest.yaml") or {}
     papers = data.get("papers") if isinstance(data, dict) else None
-    return [p for p in (papers or []) if isinstance(p, dict) and p.get("id")]
+    return [p for p in (papers or []) if isinstance(p, dict) and p.get("id") and not p.get("duplicate_of")]
 
 
 def load_extractions(root: Path) -> dict[str, dict]:
     out = {}
     d = root / "data" / "extractions"
+    man = load_yaml(root / "corpus" / "manifest.yaml") or {}
+    dups = {p["id"] for p in man.get("papers") or [] if isinstance(p, dict) and p.get("duplicate_of")}
     for f in sorted(d.glob("*.json")) if d.is_dir() else []:
+        if f.stem in dups:
+            continue  # another version of a manifest paper (corpus/manifest.yaml duplicate_of)
         data = load_json(f)
         if isinstance(data, dict):
             out[f.stem] = data

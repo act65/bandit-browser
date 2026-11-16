@@ -178,7 +178,7 @@ def audit_one(item: dict, manifest: dict, model: str) -> dict:
         out = grade(norm(src)[:300_000], s, r, item, model)
         located = "full text"
     return {"paper": item["paper"], "result": r["id"], "stratum": item["stratum"], "weight": item["weight"],
-            "model": model, "located": located, **out}
+            "model": model, "located": located, **out}  # out carries model_id
 
 
 def grade(text: str, s: dict, r: dict, item: dict, model: str) -> dict:
@@ -191,12 +191,14 @@ def grade(text: str, s: dict, r: dict, item: dict, model: str) -> dict:
             "\n\nEXTRACTED RESULT:\n" + json.dumps(record, ensure_ascii=False))
     out, env = claude_cli.call_structured(SYSTEM, user, SCHEMA, model=model, label=f"audit:{item['paper']}:{r['id']}",
                                           timeout=1500)
-    return out
+    return {**out, "model_id": ",".join(sorted((env.get("modelUsage") or {}).keys()))}  # the alias's resolved model
 
 
 def report(rows: list[dict], model: str, population: str = "random") -> str:
     graded = [r for r in rows if r["overall"] != "cannot_tell"]
     n = len(graded)
+    ids = collections.Counter(r.get("model_id") or "not recorded" for r in rows)
+    model = f"{model}: " + ", ".join(f"{k} ({v})" for k, v in ids.most_common())
     pres = collections.Counter(r.get("present", "not asked") for r in rows)
     loc = collections.Counter(r.get("located", "quote prefix (old locator)") for r in rows)
     intro = (f"a random sample of {len(rows)} extracted results (stratified by side and batch)" if population == "random"

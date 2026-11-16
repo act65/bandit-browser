@@ -165,3 +165,32 @@ def test_k_armed_embedding_is_dense_box_parameters():
     assert not leq(key(), key(**lin, action_set={**fin, "parameter_structure": "sparse"}))
     assert not leq(key(), key(**lin, action_set={**fin, "parameter_set": "l2_ball"}))
     assert leq(key(), key(**lin, action_set={**fin, "parameter_set": "arbitrary_bounded"}))
+
+
+def test_exact_match_fields_need_the_same_value():
+    """Ontology v0.7 (`match: exact`): an unstated dueling winner or regret type is not "any" (saha2022versatile's
+    fixed-arm regret, winner unspecified, reached Borda cells), and a market setting is not a special case of a
+    non-market one that shares every other key (a first-price bound reached a tax-rate welfare setting)."""
+    duel = dict(feedback="dueling", environment="adversarial_oblivious")
+    borda = key(**duel, preference={"model": "general", "winner": "borda", "comparison": "pair"})
+    unspec = key(**duel, preference={"model": "general", "winner": "unspecified", "comparison": "pair"})
+    assert not leq(borda, unspec) and not leq(unspec, borda)
+    weak = key(**duel, preference={"model": "general", "winner": "borda", "comparison": "pair", "regret_type": "weak"})
+    assert not leq(weak, borda) and not leq(borda, weak)
+    cont = dict(action_space="continuum_other", feedback="full_information", environment="adversarial_oblivious")
+    fpa = key(**cont, market={"mechanism": "first_price_auction", "value_timing": "before_action"})
+    trade = key(**cont, market={"mechanism": "bilateral_trade", "value_timing": "not_applicable"})
+    plain = key(**cont)
+    for a, b in itertools.permutations([fpa, trade, plain], 2):
+        assert not leq(a, b)
+    # a less specific key elsewhere still orders within one mechanism
+    assert leq(fpa, key(**{**cont, "environment": "adversarial_unspecified"},
+                        market={"mechanism": "first_price_auction", "value_timing": "before_action"}))
+
+
+def test_combinatorial_item_features_linear_below_none():
+    """Linear item features restrict the means: unstructured combinatorial upper bounds hold for them, not back."""
+    comb = dict(action_space="combinatorial", feedback="semi_bandit")
+    lin, none = key(**comb, combinatorial={"item_features": "linear"}), key(**comb, combinatorial={"item_features": "none"})
+    assert leq(lin, none) and not leq(none, lin)
+    assert key(**comb)["combinatorial"]["item_features"] == "none"  # unstated means none (unspecified_means)

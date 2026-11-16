@@ -164,3 +164,36 @@ def test_kernel_node_parameter_keeps_other_setting_ids():
     assert k["kernel"] == {"family": "not_applicable"}
     assert resolve.setting_id(k) == resolve.setting_id({x: v for x, v in k.items() if x != "kernel"})
     assert resolve.setting_id(key(**KERNEL, kernel={"family": "matern"})) != resolve.setting_id(key(**KERNEL))
+
+
+def test_v07_fields_keep_other_setting_ids():
+    """market (node, id_optional) and the fields added to preference / combinatorial (field-level id_optional)
+    must not change the ids of settings they do not apply to."""
+    import resolve
+    k = key()
+    stripped = {x: ({f: v for f, v in val.items() if f not in ("regret_type", "item_features")}
+                    if isinstance(val, dict) else val) for x, val in k.items() if x != "market"}
+    assert resolve.setting_id(k) == resolve.setting_id(stripped)
+
+
+def test_base_arm_symbol_convention():
+    """v0.7: without item features the number of base arms is d; K and the paper's aliases of K are renamed, but not
+    when d is already used (features), not in the paper's own notation, and not with linear item features."""
+    import resolve
+    comb = {"action_space": "combinatorial", "combinatorial": {"item_features": "none"}}
+    e, c, done = resolve.base_arm_symbol("sqrt(K*T*m)", ["K >= m (paper: L >= K)"], comb, "nopaper")
+    assert done and e == "sqrt(T*d*m)" and c == ["d >= m (paper: L >= K)"]
+    assert not resolve.base_arm_symbol("sqrt(K*T*d)", [], comb, "nopaper")[2]
+    lin = {"action_space": "combinatorial", "combinatorial": {"item_features": "linear"}}
+    assert not resolve.base_arm_symbol("sqrt(K*T)", [], lin, "nopaper")[2]
+    assert not resolve.base_arm_symbol("sqrt(K*T)", [], {"action_space": "finite_K"}, "nopaper")[2]
+
+
+def test_field_patches_and_scope_classes_apply():
+    """fill_fields.py patches set v0.7 fields (and add function classes) before the key is built."""
+    import resolve
+    s = resolve.apply_patch({"function_class": ["unimodal"], "preference": {"winner": "borda"}},
+                            {"preference.regret_type": "weak", "function_class_add": ["monotone"],
+                             "market.mechanism": "not_applicable"})
+    assert s["preference"] == {"winner": "borda", "regret_type": "weak"}
+    assert s["function_class"] == ["monotone", "unimodal"] and s["market"] == {"mechanism": "not_applicable"}

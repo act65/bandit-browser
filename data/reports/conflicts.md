@@ -14,25 +14,16 @@ An upper bound grows more slowly than a lower bound in the same setting and regi
 - adversarial (oblivious) · K-armed · graph_feedback feedback · rewards in [0,1] · switching_cost (`S-6f1e943a`, 1 papers), regret / worst_case, variable T: upper 0.5·log^2 < lower 0.666667·log^-1
   - upper: `1099511627776*Min(T, sqrt(T*log(K))*log(E*K*T)**2)` (exact; cesari2026action Theorem 2) — conditions: graph strongly revealing, known and fixed; oblivious losses in [0,1]^K
   - lower: `T**(2/3)/log(T)` (Omega; inherited from arora2019bandits Theorem 5.1)
-- pac_epsilon_best · stochastic · combinatorial · rewards in [0,1] · knows m · finite (`S-e7a8db51`, 1 papers), sample_complexity / worst_case, variable d: upper 0 < lower 1
-  - upper: `K*(log(1/delta) + log(m))/epsilon**2` (O; chen2016pure Theorem 1.7)
-  - lower: `d/epsilon**2` (Omega; inherited from rejwan2019combinatorial Theorem 10)
-- pac_epsilon_best · stochastic · combinatorial · bernoulli · knows m, reward_family · finite (`S-70c3bd9a`, 1 papers), sample_complexity / worst_case, variable d: upper 0 < lower 1
-  - upper: `K*(log(1/delta) + log(m))/epsilon**2` (O; inherited from chen2016pure Theorem 1.7)
-  - lower: `d/epsilon**2` (Omega; rejwan2019combinatorial Theorem 10)
-- stochastic · combinatorial · semi_bandit feedback · bernoulli · knows m · finite (`S-a06b480b`, 1 papers), regret / instance_dependent, variable d: upper 0 < lower 1
-  - upper: `log(T)` (O; inherited from lai2007cognitive Lemma 11)
-  - lower: `d*log(T)/(eps_gap*m)` (Omega; yang2021combinatorial Theorem 3)
-- nonstationary_drifting · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 · knows V_T (`S-540a698b`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 1
+- nonstationary_drifting · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 · knows V_T · first price auction (value before action) (`S-5657cac6`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 1
   - upper: `Min(S_T, sqrt(T*V_T))` (O_tilde; inherited from zhou2025learning Theorem (thm:bobw)) — conditions: V_T = Omega(ln T)
   - lower: `T*c_1` (exact; zhou2025learning Proposition (prop:lb1))
-- nonstationary_drifting · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 (`S-6e75cd9f`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 1
+- nonstationary_drifting · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 · first price auction (value before action) (`S-6ead9dfd`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 1
   - upper: `Min(S_T, sqrt(T*V_T))` (O_tilde; zhou2025learning Theorem (thm:bobw)) — conditions: V_T = Omega(ln T)
   - lower: `T*c_1` (exact; inherited from zhou2025learning Proposition (prop:lb1))
-- nonstationary_switching · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 (`S-a878f7d7`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 1
+- nonstationary_switching · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 · first price auction (value before action) (`S-70bb5d00`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 1
   - upper: `S_T` (O_tilde; zhou2025learning Theorem (thm:full_lt1)) — conditions: L_T = o(T)
   - lower: `T*c_1**2` (exact; inherited from zhou2025learning Proposition (prop:lb1))
-- nonstationary_switching · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 · knows S_T (`S-469c2c8b`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 1
+- nonstationary_switching · continuum_other · full_information feedback · adversarial contexts · {bounded} · bounded_pm1 · knows S_T · first price auction (value before action) (`S-6915b97b`, 1 papers), dynamic_regret / worst_case, variable T: upper 0 < lower 1
   - upper: `S_T` (O_tilde; inherited from zhou2025learning Theorem (thm:full_lt1)) — conditions: L_T = o(T)
   - lower: `T*c_1**2` (exact; zhou2025learning Proposition (prop:lb1))
 

@@ -111,6 +111,7 @@ def main() -> None:
             if unknown:
                 p = {**p, "_unknown": unknown}
         fam, dep = compare.FAMILY.get(g["quantity"]), g["dependence"]
+        fam = compare.COMPARATOR_FAMILY.get((fam, g.get("comparator")), fam)
         rec = {"id": g["id"], "theorem": g["theorem"], "side": g["side"], "quantity": g["quantity"], "dependence": dep,
                "expression": g["expression"], "algorithm": g.get("algorithm"), "confidence": g.get("confidence", "high")}
         if p is None or fam is None or "T" not in p and g["quantity"] not in ("sample_complexity", "simple_regret", "error_probability"):
@@ -130,7 +131,9 @@ def main() -> None:
                 continue
             n_rel += 1
             for r in by_setting.get(sid, []):
-                if compare.FAMILY.get(r.get("quantity")) != fam or r.get("dependence") != dep:
+                rfam = compare.FAMILY.get(r.get("quantity"))
+                rfam = compare.COMPARATOR_FAMILY.get((rfam, r.get("comparator")), rfam)  # e.g. foresight regret
+                if rfam != fam or r.get("dependence") != dep:
                     continue
                 q = norm(profiles.get(r["id"]))
                 expr = r["bound"].get("expression_normalised") or r["bound"]["expression"]

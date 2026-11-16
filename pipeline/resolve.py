@@ -122,18 +122,24 @@ def out_of_scope(key: dict, ont: dict) -> str | None:
 
 
 _ID_OPTIONAL: set | None = None
+_ID_OPTIONAL_FIELDS: set = set()
 
 
 def setting_id(key: dict) -> str:
     """Stable id: a hash of the canonical key. Node parameters marked id_optional in the ontology (added after
     ids were published, e.g. kernel in v0.6) are left out when all their fields are not_applicable, so adding
     one changes only the ids of the settings it applies to."""
-    global _ID_OPTIONAL
+    global _ID_OPTIONAL, _ID_OPTIONAL_FIELDS
     if _ID_OPTIONAL is None:
-        _ID_OPTIONAL = {n for n, spec in (schema.load_ontology().get("node_parameters") or {}).items()
-                        if spec.get("id_optional")}
+        nodes = schema.load_ontology().get("node_parameters") or {}
+        _ID_OPTIONAL = {n for n, spec in nodes.items() if spec.get("id_optional")}
+        _ID_OPTIONAL_FIELDS = {(n, f) for n, spec in nodes.items() for f, fs in spec["fields"].items()
+                               if fs.get("id_optional")}
     key = {k: v for k, v in key.items() if not (k in _ID_OPTIONAL and isinstance(v, dict)
                                                 and all(x == "not_applicable" for x in v.values()))}
+    # field-level id_optional (v0.7: fields added to existing node parameters): left out when not_applicable
+    key = {k: ({f: x for f, x in v.items() if not (x == "not_applicable" and (k, f) in _ID_OPTIONAL_FIELDS)}
+               if isinstance(v, dict) else v) for k, v in key.items()}
     blob = json.dumps(key, sort_keys=True)
     return "S-" + hashlib.sha1(blob.encode()).hexdigest()[:8]
 
@@ -166,6 +172,19 @@ def setting_label(key: dict) -> str:
             parts.append(("knows " if dim == "learner_knows" else "") + ", ".join(key[dim]))
     if key["action_set"].get("shape") not in ("not_applicable", "unspecified", None):
         parts.append(key["action_set"]["shape"].replace("_", " "))
+    # v0.7 fields that separate settings with otherwise equal labels
+    mech = (key.get("market") or {}).get("mechanism")
+    if mech not in ("not_applicable", None):
+        timing = (key.get("market") or {}).get("value_timing")
+        parts.append(mech.replace("_", " ") + (f" (value {timing.replace('_', ' ')})"
+                                               if timing not in ("not_applicable", "unspecified", None) else ""))
+    pref = key.get("preference") or {}
+    if pref.get("winner") not in ("not_applicable", "unspecified", None):
+        parts.append(f"{pref['winner']} winner")
+    if pref.get("regret_type") in ("weak", "fixed_arm"):
+        parts.append(pref["regret_type"].replace("_", "-") + " regret")
+    if (key.get("combinatorial") or {}).get("item_features") == "linear":
+        parts.append("linear item features")
     if key["parameters"]:
         parts.append(", ".join(f"{k}={v}" for k, v in key["parameters"].items()))
     return " · ".join(str(p) for p in parts)
@@ -201,6 +220,59 @@ def conversion_applies(conv: dict, s: dict) -> bool:
         elif have != want:
             return False
     return True
+
+
+def apply_patch(s: dict, patch: dict | None) -> dict:
+    """Fields filled after extraction (pipeline/fill_fields.py, ontology v0.7): "node.field" values and
+    function_class additions."""
+    if not patch:
+        return s
+    s = json.loads(json.dumps(s))
+    for f, v in patch.items():
+        if f == "function_class_add":
+            s["function_class"] = sorted(set(s.get("function_class") or []) | set(v))
+        elif "." in f:
+            node, field = f.split(".")
+            if v != "not_applicable" or node == "market":
+                s[node] = {**(s.get(node) or {}), field: v}
+    return s
+
+
+BASE_ARMS = "base_arms_K_to_d"
+
+
+_SYMBOL_CLASSES: dict | None = None
+
+
+def k_aliases(paper: str) -> set[str]:
+    """K and the paper's own symbols for it (data/symbol-classes.yaml alias:K, e.g. L for items)."""
+    global _SYMBOL_CLASSES
+    if _SYMBOL_CLASSES is None:
+        f = ROOT / "data" / "symbol-classes.yaml"
+        _SYMBOL_CLASSES = (yaml.safe_load(f.read_text()) or {}).get("classes", {}) if f.exists() else {}
+    return {"K"} | {k.split("|", 1)[1] for k, v in _SYMBOL_CLASSES.items() if k.startswith(paper + "|") and v == "alias:K"}
+
+
+def _outside_paper_notes(text: str, fn) -> str:
+    """Apply fn to text outside parentheses that quote the paper's notation ("(paper: N = L/K)")."""
+    parts = re.split(r"(\([^()]*\bpaper\b[^()]*\))", text)
+    return "".join(p if i % 2 else fn(p) for i, p in enumerate(parts))
+
+
+def base_arm_symbol(expr: str | None, conditions: list[str], s: dict, paper: str = "") -> tuple[str | None, list[str], bool]:
+    """Ontology v0.7 convention: in combinatorial settings without item features the number of base arms is d.
+    A bound written with K (or the paper's alias of K) for base arms and without d is renamed; with both symbols
+    the paper has features."""
+    if s.get("action_space") != "combinatorial" or (s.get("combinatorial") or {}).get("item_features") == "linear" \
+            or expr is None:
+        return expr, conditions, False
+    names = set(IDENT_RE.findall(expr))
+    ks = k_aliases(paper) & names
+    if not ks or "d" in names:
+        return expr, conditions, False
+    e = parse(expr).subs({sympy.Symbol(k): sympy.Symbol("d") for k in ks})
+    pat = re.compile(r"\b(" + "|".join(map(re.escape, sorted(ks))) + r")\b")
+    return str(e), [_outside_paper_notes(c, lambda t: pat.sub("d", t)) for c in conditions], True
 
 
 def normalise(expr: str, s: dict, conversions: list[dict]) -> tuple[str | None, list[str]]:
@@ -251,8 +323,11 @@ def main() -> None:
         for m in a.get("mentions", []):
             alias_to_id[(m["paper"], m["name"])] = a["id"]
     manifest = yaml.safe_load(MANIFEST.read_text())["papers"]
-    by_title = {norm_title(t): p["id"] for p in manifest for t in [p["title"], *p.get("alt_titles", [])]}
-    by_arxiv = {p["arxiv_id"]: p["id"] for p in manifest if p.get("arxiv_id")}
+    # `duplicate_of`: another version of a manifest paper (e.g. arXiv and PMLR records whose titles differ); its
+    # extraction is skipped and citations of it resolve to the kept paper
+    dup = {p["id"]: p["duplicate_of"] for p in manifest if p.get("duplicate_of")}
+    by_title = {norm_title(t): dup.get(p["id"], p["id"]) for p in manifest for t in [p["title"], *p.get("alt_titles", [])]}
+    by_arxiv = {p["arxiv_id"]: dup.get(p["id"], p["id"]) for p in manifest if p.get("arxiv_id")}
     canonical_vars = set(var["variables"])
     corrections = load_corrections()
 
@@ -264,13 +339,24 @@ def main() -> None:
     unregistered = []
     dropped_scope = collections.Counter()
 
+    patch_file = ROOT / "data" / "field-patches.yaml"  # pipeline/fill_fields.py: v0.7 fields for earlier extractions
+    patches = (yaml.safe_load(patch_file.read_text()) or {}).get("patches", {}) if patch_file.exists() else {}
+    scope_file = ROOT / "data" / "scope-classes.yaml"  # pipeline/classify_scope.py: features the key cannot see
+    scope_classes = (yaml.safe_load(scope_file.read_text()) or {}).get("classes", {}) if scope_file.exists() else {}
     for f in sorted(EXT.glob("*.json")):
         paper = f.stem
+        if paper in dup:
+            continue
         o = json.loads(f.read_text())
         local_setting = {}
         for s in o["settings"]:
             if s.get("in_scope") is False:
                 continue
+            scope_cls = scope_classes.get(f"{paper}|{s['id']}", "in_scope")
+            if scope_cls != "in_scope":
+                dropped_scope[f"{scope_cls}: pipeline/classify_scope.py"] += 1
+                continue
+            s = apply_patch(s, patches.get(f"{paper}|{s['id']}"))
             key = setting_key(s, ont)
             if out_of_scope(key, ont):
                 dropped_scope[out_of_scope(key, ont)] += 1
@@ -293,6 +379,8 @@ def main() -> None:
             local_algo[a["id"]] = aid
 
         for r in o["results"]:
+            if (patches.get(f"{paper}:{r['id']}") or {}).get("comparator", "keep") != "keep":
+                r = {**r, "comparator": patches[f"{paper}:{r['id']}"]["comparator"]}
             todo = corrections.get(f"{paper}:*", []) + corrections.get(f"{paper}:{r['id']}", [])
             if todo:  # paper-wide (paper:*) corrections first
                 r = apply_corrections(r, todo)
@@ -311,6 +399,10 @@ def main() -> None:
                                             "derived": "learner knows the algorithm's inputs"})
             expr = r["bound"]["expression"]
             norm_expr, applied = normalise(expr, s, var.get("conversions", []))
+            conds = r.get("conditions", r.get("extra_assumptions", []))
+            norm_expr, conds, renamed = base_arm_symbol(norm_expr, conds, s, paper)
+            if renamed:
+                applied = applied + [BASE_ARMS]
             for name, meaning in (r.get("symbols") or {}).items():
                 if name not in canonical_vars:
                     declared[name].append((paper, meaning))
@@ -322,9 +414,9 @@ def main() -> None:
                                           "symbols", "is_new")},
                 # schema 0.4 splits extra_assumptions into conditions + tuning; older files keep
                 # extra_assumptions (unclassified, treated as conditions)
-                "conditions": r.get("conditions", r.get("extra_assumptions", [])),
+                "conditions": conds,
                 "tuning": r.get("tuning", []),
-                "extra_assumptions": r.get("conditions", r.get("extra_assumptions", [])) + r.get("tuning", []),
+                "extra_assumptions": conds + r.get("tuning", []),
                 "corrections": r.get("corrections", []),
                 "bound": {**r["bound"], "expression_normalised": norm_expr, "conversions": applied},
                 "source": r["source"],

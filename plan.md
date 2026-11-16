@@ -22,8 +22,18 @@ Batch 3 is in: **1,555 papers**, 6,920 results, 2,939 canonical settings, 4,065 
   [ontology/review-v0.6.md](ontology/review-v0.6.md) with a ranked synthesis for v0.7 (not applied).
 - **CI:** report.py's vacuous-bound check took 27 GB on a 2^(K+3) bound (fixed, 0.6 GB); inferred.json (87 MB) is
   generated in CI, not committed.
-- Not yet done for batch 3: gap triage of the new gap cells; saha2022versatile and saha2022versatilea are two
-  versions of one paper (dedupe).
+- **Ontology v0.7 (2026-11-16, review-v0.6.md synthesis items 1-3):** scope leakage: `pipeline/classify_scope.py` tags
+  in-scope settings whose defining feature is out of scope (284 of 4,031: multi-agent 178, state-dependent 87,
+  non-interactive 15, ...) and resolve.py drops them; base arms: `d` in combinatorial settings without item features
+  (resolve.py renames K and the paper's aliases of K; 157 + expressions); new fields market {mechanism, value_timing},
+  preference.regret_type, combinatorial.item_features, function_class monotone / concave_means, comparators foresight /
+  ex_post_policy, filled for existing extractions by `pipeline/fill_fields.py` (1,068 settings and results, from the
+  extracted text; no re-extraction). `match: exact` fields (winner, regret type, market) never pair with an
+  unspecified or absent value. 16 corrections from the batch-3 review are superseded by the fields and removed.
+  Conflicts 9 -> 6 (the zhou2025learning S_T cells and cesari2026action vs arora2019bandits); tight 228.
+- Duplicate versions: manifest `duplicate_of` (saha2022versatilea -> saha2022versatile); resolve.py, the site and
+  paper_numbers skip them.
+- Not yet done for batch 3: gap triage of the new gap cells.
 
 ## Status (2026-11-09)
 

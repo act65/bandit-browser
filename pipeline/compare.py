@@ -85,7 +85,11 @@ ADAPTIVE_SPLIT = {("pseudo_regret", "upper"): ["pseudo_regret"],
 # Regret against a switching comparator is switching regret, whatever quantity the paper names: pooling it with
 # regret against the best fixed action would compare a static upper bound with a switching lower bound.
 COMPARATOR_FAMILY = {("regret", "best_switching_sequence"): "switching_regret",
-                     ("hp_regret", "best_switching_sequence"): "switching_regret"}
+                     ("hp_regret", "best_switching_sequence"): "switching_regret",
+                     # v0.7: stronger comparators than the best fixed action / policy (liu2022stationary,
+                     # balseiro2018contextual): their own families, never pooled with static regret
+                     **{(f, "foresight"): "foresight_regret" for f in ("regret", "hp_regret", "bayesian_regret")},
+                     **{(f, "ex_post_policy"): "ex_post_regret" for f in ("regret", "hp_regret", "bayesian_regret")}}
 MINIMAX_LOWER_CLASSES = {None, "all", "consistent", "uniformly_good"}
 # A condition is a benign side condition if it only constrains the scanned problem sizes
 # (e.g. "K >= 2", "T >= max{55, K}"); anything else restricts the instance class.
@@ -339,7 +343,7 @@ FUNCTION_NAMES = {"log", "sqrt", "exp", "min", "max", "Min", "Max", "O", "Omega"
 
 CONSTANT_VAR = {
     "K": re.compile(r"(\bK\b|number of (arms|actions)|\bk\b)[^,;]{0,40}\b(treated as|regarded as|is) (a )?constant", re.I),
-    "d": re.compile(r"(\bd\b|dimension)[^,;]{0,40}\b(treated as|regarded as|is) (a )?constant", re.I),
+    "d": re.compile(r"(\bd\b|dimension|number of base arms)[^,;]{0,60}\b(treated as|regarded as|is) (a )?constant", re.I),
 }
 
 

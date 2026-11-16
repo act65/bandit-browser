@@ -138,7 +138,7 @@ def judge(it: dict, results: dict, settings: dict, model: str) -> dict:
     out, env = claude_cli.call_structured(SYSTEM, user, SCHEMA, model=model, label=f"audit_inference:{x['id']}",
                                           timeout=1200)
     return {"id": x["id"], "rule": x["rule"], "stratum": it["stratum"], "weight": it["weight"], "cells": it["cells"],
-            "model": model, **out}
+            "model": model, "model_id": ",".join(sorted((env.get("modelUsage") or {}).keys())), **out}
 
 
 def report(rows: list[dict], model: str, n_pop: int) -> str:

@@ -78,6 +78,7 @@ class Order:
                       for d, spec in self.dims.items()}
         self.node_fields = {}  # node parameter -> fields that take part in the order
         self.tops: dict[str, set] = {}
+        self.exact: set[str] = set()  # fields with `match: exact`: an unspecified value matches no stated one (v0.7)
         for name, spec in (ontology.get("node_parameters") or {}).items():
             self.node_fields[name] = [f for f, fs in spec["fields"].items() if not fs.get("computational_only")]
             for f, fspec in spec["fields"].items():
@@ -87,6 +88,8 @@ class Order:
                 # unstated value is: unspecified ⊑ top with a caveat, but never top ⊑ unspecified
                 self.tops[f"{name}.{f}"] = {b for _, b in pairs} - {a for a, _ in pairs}
                 self.value_maps[f"{name}.{f}"] = fspec.get("value_maps") or {}
+                if fspec.get("match") == "exact":
+                    self.exact.add(f"{name}.{f}")
 
     @staticmethod
     def _compose(direct: dict, order: set) -> dict:
@@ -173,6 +176,10 @@ class Order:
                 if va == vb:
                     continue
                 dim = f"{name}.{f}"
+                if dim in self.exact:
+                    # e.g. the dueling winner or the market mechanism: unstated is not "any", and a market setting is
+                    # not a special case of a non-market one that happens to share every other key (v0.7)
+                    return None
                 if (va, vb) in self.orders.get(dim, set()):
                     changes.append(Change(dim, va, vb, "order", dict(self.value_maps.get(dim, {}).get(va, {}))))
                 elif "not_applicable" in (va, vb) and any("not_applicable" in p for p in self.orders.get(dim, ())):
