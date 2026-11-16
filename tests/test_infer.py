@@ -197,3 +197,31 @@ def test_field_patches_and_scope_classes_apply():
                              "market.mechanism": "not_applicable"})
     assert s["preference"] == {"winner": "borda", "regret_type": "weak"}
     assert s["function_class"] == ["monotone", "unimodal"] and s["market"] == {"mechanism": "not_applicable"}
+
+
+def test_v08_patches_respect_the_setting():
+    """Outcome dependence between base arms exists only in stochastic models, privacy fields only refine extras
+    differential_privacy ("private values" in auctions are not DP), and "keep" leaves the extracted value."""
+    import resolve
+    adv = resolve.apply_patch({"environment": "adversarial_oblivious", "combinatorial": {"family": "m_set"}},
+                              {"combinatorial.outcome_dependence": "independent", "combinatorial.reward": "keep"})
+    assert adv["combinatorial"] == {"family": "m_set"}
+    sto = resolve.apply_patch({"environment": "stochastic_iid"}, {"combinatorial.outcome_dependence": "independent"})
+    assert sto["combinatorial"]["outcome_dependence"] == "independent"
+    auction = resolve.apply_patch({"environment": "stochastic_iid", "extras": []}, {"privacy.model": "unspecified"})
+    assert "privacy" not in auction
+    dp = resolve.apply_patch({"environment": "stochastic_iid", "extras": ["differential_privacy"]}, {"privacy.model": "local"})
+    assert dp["privacy"] == {"model": "local"}
+
+
+def test_unstated_outcome_dependence_is_correlated():
+    """Stochastic combinatorial papers allow any joint law unless they state independence, so lower bounds built on
+    correlated instances (kveton2014tight) reach unstated settings but not independent ones."""
+    from order import Order
+    O = Order(ONT)
+    comb = dict(action_space="combinatorial", feedback="semi_bandit")
+    unstated = key(**comb, combinatorial={"outcome_dependence": "unspecified"})
+    corr = key(**comb, combinatorial={"outcome_dependence": "arbitrary_correlated"})
+    ind = key(**comb, combinatorial={"outcome_dependence": "independent"})
+    assert unstated["combinatorial"]["outcome_dependence"] == "arbitrary_correlated" and unstated == corr
+    assert O.leq(ind, corr) is not None and O.leq(corr, ind) is None

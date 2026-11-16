@@ -17,15 +17,15 @@ Contradictions are the error signal: either an extraction is wrong, or a transfe
 | id | side | verdict | atlas evidence |
 |---|---|---|---|
 | LS-6.1a | upper | skipped |  |
-| LS-6.1b | upper | recovered (exact) | li2021dynamic:r1 |
+| LS-6.1b | upper | not covered |  |
 | LS-6.1c | upper | recovered (exact) | abbasiyadkori2020regret:r3 |
-| LS-7.1 | upper | recovered (exact) | degenne2018bandits:r6 |
-| LS-7.2 | upper | recovered | abbasiyadkori2020regret:r3 |
-| LS-8.1a | upper | recovered (exact) | degenne2018bandits:r6 |
-| LS-8.1b | upper | recovered (exact) | degenne2018bandits:r6 |
-| LS-8.1c | upper | recovered (exact) | degenne2018bandits:r6 |
-| LS-8.1d | upper | recovered | abbasiyadkori2020regret:r3 |
-| LS-9.1 | upper | recovered (exact) | abbasiyadkori2020regret:r3 |
+| LS-7.1 | upper | recovered (exact) | jin2021mots:r2 |
+| LS-7.2 | upper | recovered | jin2021mots:r1 |
+| LS-8.1a | upper | recovered (exact) | jin2021mots:r2 |
+| LS-8.1b | upper | recovered (exact) | jin2021mots:r2 |
+| LS-8.1c | upper | recovered (exact) | jin2021mots:r2 |
+| LS-8.1d | upper | recovered | jin2021mots:r1 |
+| LS-9.1 | upper | recovered (exact) | jin2021mots:r1 |
 | LS-10.6a | upper | skipped |  |
 | LS-10.6b | upper | recovered (exact) | auer2002ucb1:r1 |
 | LS-11.1 | upper | recovered (exact) | hadiji2020adaptation:r4 |
@@ -68,12 +68,12 @@ Contradictions are the error signal: either an extraction is wrong, or a transfe
 | LS-33.1a | upper | skipped |  |
 | LS-33.1b | upper | recovered | zhao2022revisiting:r5 |
 | LS-33.3 | upper | recovered (exact) | zhao2022revisiting:r5 |
-| LS-33.5 | lower | not covered |  |
+| LS-33.5 | lower | recovered (exact) | simchowitz2017simulator:r1 |
 | LS-33.6 | upper | recovered | kone2023adaptive:r5 |
 | LS-33.10 | upper | skipped |  |
 | LS-36.1 | upper | recovered | bayati2020unreasonable:r2 |
-| LS-36.3a | upper | recovered (exact) | degenne2018bandits:r6 |
-| LS-36.3b | upper | recovered (exact) | abbasiyadkori2020regret:r3 |
+| LS-36.3a | upper | recovered (exact) | jin2021mots:r2 |
+| LS-36.3b | upper | recovered (exact) | jin2021mots:r1 |
 | LS-36.4 | upper | recovered (exact) | russo2014posterior:r9 |
 | LS-36.5 | upper | recovered (exact) | tianhui2024active:r1 |
 | LS-37.11a | upper | recovered (exact) | lattimore2018cleaning:r2 |

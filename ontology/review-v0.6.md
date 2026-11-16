@@ -13,7 +13,7 @@ Input: the 9643 `unmapped` items in 1555 extractions, grouped into themes by one
 
 Inputs: the themes below (LLM grouping of 9,643 `unmapped` items), the conflict review after batch 3 (85 → 9 conflict
 cells; `data/corrections.yaml`, entries dated 2026-11-12), the batch-3 audit (`data/reports/audit-batch3.md`) and the
-citation cross-check (`data/reports/crosscheck.md`). **Nothing below is applied yet.** v0.6 added only the kernel
+citation cross-check (`data/reports/crosscheck.md`). **Status (2026-11-16): items 1-3 applied in v0.7 and the ontology-change themes below in v0.8** (fields filled from the extracted text by `pipeline/fill_fields.py`, no re-extraction). v0.6 added only the kernel
 family; items 1–2 of the v0.5 synthesis are still open and come first. Ranked by how much they change the atlas:
 
 1. **Scope leakage (open since v0.5, larger now).** The out-of-scope themes below hold 1,884 items from 294 papers:

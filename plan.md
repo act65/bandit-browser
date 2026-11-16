@@ -31,6 +31,20 @@ Batch 3 is in: **1,555 papers**, 6,920 results, 2,939 canonical settings, 4,065 
   extracted text; no re-extraction). `match: exact` fields (winner, regret type, market) never pair with an
   unspecified or absent value. 16 corrections from the batch-3 review are superseded by the fields and removed.
   Conflicts 9 -> 6 (the zhou2025learning S_T cells and cesari2026action vs arora2019bandits); tight 228.
+- **Conflicts 6 -> 0 (2026-11-16):** lower bounds whose condition makes a fixed parameter grow with T
+  (L_T >= c_1 T) leave the rate; cesari2026action holds for strongly revealing graphs only (no contradiction with
+  arora2019bandits); zhou2025learning:r4 worst case in the drifting class. Symbol class kl_gap (per-arm KL = Delta^2).
+  The cross-check's "cited side missing" papers had results, only without a growth profile.
+- **Ontology v0.8 (2026-11-16, the remaining review-v0.6.md themes):** feedback cross_learning,
+  free_or_paid_observations, choice; noise symmetric_location; extras multi_task, loss_predictions, auxiliary_signals,
+  arm_pull_limits; function_class local_smoothness_at_optimum, dr_submodular_or_up_concave, convex_concave_saddle;
+  combinatorial outcome_dependence (stochastic only; unstated = arbitrary_correlated) and rewards max_or_bottleneck,
+  general_smooth, mnl_revenue; constraints kinds, known_baseline, signal; noise_detail moment, variance
+  action_dependent; action_set.parameter_sharing; feedback-graph knowledge / generation / side_observation_quality;
+  preference models and weighted_borda; reward_model nonparametric_smooth_in_context and selection; corruption
+  strong_after_action, binary_feedback; delay knowledge / observability / coupling; node parameters target_functional,
+  privacy, batched, query_cost. Filled by fill_fields.py (declarative FIELDS table; fields that only gained values may
+  only move to a new value). Tight 230 -> 222 (each loss a separation), conflicts 0.
 - Duplicate versions: manifest `duplicate_of` (saha2022versatilea -> saha2022versatile); resolve.py, the site and
   paper_numbers skip them.
 - Batch-3 gap triage (2026-11-16): 134 cells, 105 closed, 7 open_known, 22 blank; every gap cell has a verdict.

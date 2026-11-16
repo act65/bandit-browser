@@ -229,12 +229,22 @@ def apply_patch(s: dict, patch: dict | None) -> dict:
         return s
     s = json.loads(json.dumps(s))
     for f, v in patch.items():
-        if f == "function_class_add":
-            s["function_class"] = sorted(set(s.get("function_class") or []) | set(v))
+        if v == "keep" or f == "comparator":
+            continue
+        if "_add" in f:  # function_class_add, function_class_add_v08, extras_add
+            dim = f.split("_add")[0]
+            s[dim] = sorted(set(s.get(dim) or []) | set(v))
         elif "." in f:
             node, field = f.split(".")
-            if v != "not_applicable" or node == "market":
+            if node == "privacy" and "differential_privacy" not in (s.get("extras") or []):
+                continue  # privacy refines extras.differential_privacy only ("private values" in auctions are not DP)
+            if v != "not_applicable" or node in ("market", "target_functional"):
                 s[node] = {**(s.get(node) or {}), field: v}
+        else:  # a dimension value (feedback, noise)
+            s[f] = v
+    if not str(s.get("environment", "")).startswith("stochastic"):
+        # outcome dependence between base arms is a property of a stochastic model: adversarial losses are arbitrary
+        s["combinatorial"] = {k: v for k, v in (s.get("combinatorial") or {}).items() if k != "outcome_dependence"}
     return s
 
 
