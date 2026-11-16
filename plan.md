@@ -17,8 +17,13 @@ Batch 3 is in: **1,555 papers**, 6,920 results, 2,939 canonical settings, 4,065 
   side conditions.
 - **Ontology gaps the review hit again:** no mechanism field (auctions vs bilateral trade), no dueling regret notion
   beyond the winner, no shape constraints on the means, linear structure of combinatorial / cascade items.
-- Not yet done for batch 3: gap triage of the new gap cells, the batch-3 audit, the ontology review, crosscheck;
-  saha2022versatile and saha2022versatilea are two versions of one paper (dedupe).
+- **Batch-3 checks (2026-11-16):** audit (200 results) major errors 2% (1–4%), minor setting errors 36% → 25%;
+  citation cross-check 66% agree (62%), 83 consensus disagreements; ontology review
+  [ontology/review-v0.6.md](ontology/review-v0.6.md) with a ranked synthesis for v0.7 (not applied).
+- **CI:** report.py's vacuous-bound check took 27 GB on a 2^(K+3) bound (fixed, 0.6 GB); inferred.json (87 MB) is
+  generated in CI, not committed.
+- Not yet done for batch 3: gap triage of the new gap cells; saha2022versatile and saha2022versatilea are two
+  versions of one paper (dedupe).
 
 ## Status (2026-11-09)
 
