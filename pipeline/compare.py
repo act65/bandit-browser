@@ -565,7 +565,8 @@ def compare(results: dict, inferred: list[dict], canonical: set[str], adaptive: 
         p = cache[key]
         if p is None:
             failures["no_profile"] += 1
-        elif dep == "instance_dependent" and nota in ("O", "O_tilde", "Theta") and not _has(p, "Delta"):
+        elif dep == "instance_dependent" and nota in ("O", "O_tilde", "Theta") and not _has(p, "Delta") \
+                and "hidden_instance_constant" not in schema.ABLATE:
             p = {**p, "_unknown": set(p.get("_unknown", ())) | _expand(p, {"Delta"})}  # hidden instance-dependent constant
         elif _has(p, "Delta") and set(resolve.IDENT_RE.findall(expr)) & INSTANCE_TIED_PARAMS:
             p = {**p, "_unknown": set(p.get("_unknown", ())) | _expand(p, {"Delta"})}  # tuning parameter constrained by the gap (e.g. eps < Delta)
@@ -583,7 +584,8 @@ def compare(results: dict, inferred: list[dict], canonical: set[str], adaptive: 
     for eid, p in profiles.items():
         if p is not None:
             src = source_of(eid)
-            unk = side_condition_unknowns(conditions_of(eid) + [src["bound"].get("regime") or ""], canonical | set(SCAN))
+            unk = set() if "side_conditions" in schema.ABLATE else \
+                side_condition_unknowns(conditions_of(eid) + [src["bound"].get("regime") or ""], canonical | set(SCAN))
             unk = _expand(p, unk)
             if unk:  # also variables the bound lacks: absent is not exponent 0 when a condition fixes them
                 profiles[eid] = {**p, "_unknown": set(p.get("_unknown", ())) | unk}
@@ -593,31 +595,34 @@ def compare(results: dict, inferred: list[dict], canonical: set[str], adaptive: 
     rate_regime = {}  # bound id -> "family|dependence" of the cell whose rate it takes part in
     for eid, sid, side, q, dep, cls, nota, expr, inh, cav in entries:
         fam = FAMILY.get(q)
-        fam = COMPARATOR_FAMILY.get((fam, source_of(eid).get("comparator")), fam)
-        fams = ADAPTIVE_SPLIT.get((q, side), [fam]) if fam == "regret" and sid in adaptive else [fam]
+        if "comparator_family" not in schema.ABLATE:
+            fam = COMPARATOR_FAMILY.get((fam, source_of(eid).get("comparator")), fam)
+        fams = ADAPTIVE_SPLIT.get((q, side), [fam]) if fam == "regret" and sid in adaptive \
+            and "adaptive_split" not in schema.ABLATE else [fam]
         fam = fams[0]
-        if set(resolve.IDENT_RE.findall(expr)) & WORST_CASE_T:
+        if set(resolve.IDENT_RE.findall(expr)) & WORST_CASE_T and "data_dependent" not in schema.ABLATE:
             dep = "data_dependent"  # small-loss / variation bounds: not comparable with gap-based ones
         p = profiles.get(eid)
         if fam is None or p is None:
             continue
         # conditions the target setting satisfies by definition (e.g. polynomial eigendecay in a Matern setting)
         conds = [c for c in conditions_of(eid) if not any(rx.search(c) for rx in satisfied.get(sid, ()))]
-        if changes_model(conds):
+        if changes_model(conds) and "model_change" not in schema.ABLATE:
             continue  # a different protocol (e.g. quantum oracle access): not this setting's rate
-        if side == "upper" and restricts_instances(conds):
+        if side == "upper" and restricts_instances(conds) and "instance_restriction" not in schema.ABLATE:
             continue  # holds only on a restricted instance class: shown, but not the setting's rate
-        if side == "upper" and any(T_CAPPED.match(c) for c in conds):
+        if side == "upper" and any(T_CAPPED.match(c) for c in conds) and "t_capped" not in schema.ABLATE:
             continue  # holds only for small horizons (e.g. T < (K log K)^2): says nothing about the rate
-        if side == "lower" and any(needs_growing_parameter(c) for c in conds):
+        if side == "lower" and any(needs_growing_parameter(c) for c in conds) and "growing_parameter" not in schema.ABLATE:
             continue  # holds only when a fixed problem parameter grows with T: not along the scan
         if side == "lower" and cls == "other" and any(CONSISTENCY.search(c) for c in conds):
             cls = "consistent"  # the admissible class of the lower bound (consistent, uniformly good, delta-correct)
-        if side == "lower" and (cls not in MINIMAX_LOWER_CLASSES or any(c.startswith("holds for") for c in cav)
-                                or (cls in (None, "all") and restricts_algorithms(conds))):
+        if side == "lower" and "algorithm_class" not in schema.ABLATE and (
+                cls not in MINIMAX_LOWER_CLASSES or any(c.startswith("holds for") for c in cav)
+                or (cls in (None, "all") and restricts_algorithms(conds))):
             continue  # algorithm-specific or fixed-parameter lower bounds don't define the setting's rate
         if side == "lower" and inh and any("unspecified on one side" in c for c in cav) \
-                and restricts_instances(conds):
+                and restricts_instances(conds) and "instance_restriction" not in schema.ABLATE:
             continue  # hard instances may lie outside the target (e.g. non-observable graphs, observability unspecified)
         for f in fams:
             regimes[(sid, f, dep)][side].append({"id": eid, "profile": p, "inherited": inh})
@@ -657,12 +662,13 @@ def compare(results: dict, inferred: list[dict], canonical: set[str], adaptive: 
                     or all(notation.get(x["id"]) == "Omega_tilde" for x in ls if path_exp(x["profile"], v) == bl)
                 if bu[0] == bl[0] and abs(bu[1] - bl[1]) < LOG_TOL:
                     bu = bl  # equal up to a numerically fitted log log factor (e.g. log(log(1/Delta)))
-                if bu < bl and all(x["profile"].get("_held") for x in us if path_exp(x["profile"], v) == bu):
+                if bu < bl and "held_unresolved" not in schema.ABLATE \
+                        and all(x["profile"].get("_held") for x in us if path_exp(x["profile"], v) == bu):
                     # the apparent violation rests on held instance parameters, which may hide a scanned
                     # variable (a class size that grows with d): not evidence of an error, so no verdict here
                     per_var[v] = {"status": "unresolved", "upper": fmt(du), "lower": fmt(dl)}
                     continue
-                if bu[0] == bl[0] and bu <= bl and hidden_logs:
+                if bu[0] == bl[0] and bu <= bl and hidden_logs and "hidden_logs" not in schema.ABLATE:
                     s, lvl = "log_gap", 1
                 elif bu < bl:
                     s, lvl = "conflict", 3

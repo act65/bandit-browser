@@ -31,6 +31,9 @@ uv run python pipeline/audit_inference.py   # second-model check of inherited bo
 uv run python pipeline/open_problems.py     # COLT open problems + web-searched status -> data/reports/open_problems.yaml
 uv run python pipeline/link_open_problems.py # place them in the atlas, compare statuses -> data/reports/open_problems_links.yaml
 uv run python pipeline/review_algorithms.py # registry vs extraction evidence -> data/reports/algorithm-registry-review.md
+uv run python pipeline/audit_taxonomy.py   # kinds of setting error in the audits -> data/reports/audit-taxonomy.md
+uv run python pipeline/ablate.py           # comparison re-derived with each rule off (ATLAS_ABLATE) -> data/reports/ablations.md
+uv run python pipeline/saturation.py       # comparison re-derived on growing subsets of the corpus -> data/reports/saturation.md
 uv run python site/build.py && uv run python site/serve.py   # local preview (needs range requests)
 uv run pytest tests -q                      # order / inference / comparison tests + checks on the committed data
 ```

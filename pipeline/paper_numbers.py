@@ -75,6 +75,16 @@ def main() -> None:
     N["NDims"] = str(len(onto["dimensions"]))
     N["NNodeParams"] = str(len(onto.get("node_parameters") or {}))
 
+    def onto_size(path: Path) -> tuple[int, int]:
+        o = yaml.safe_load(path.read_text())
+        fields = [fs for spec in (o.get("node_parameters") or {}).values() if isinstance(spec, dict)
+                  for fs in (spec.get("fields", spec) or {}).values() if isinstance(fs, dict) and "values" in fs]
+        values = sum(len(d.get("values") or []) for d in o["dimensions"].values() if isinstance(d, dict))
+        return len(fields), values + sum(len(f["values"]) for f in fields)
+    first_v = sorted((ROOT / "ontology").glob("bandits-0.5.yaml"))[0]
+    N["OntoFieldsFirst"], N["OntoValuesFirst"] = map(str, onto_size(first_v))
+    N["OntoFieldsLast"], N["OntoValuesLast"] = map(str, onto_size(onto_path))
+
     # ---- canonical layer
     settings = json.loads((CAN / "settings.json").read_text())
     settings = settings["settings"] if isinstance(settings, dict) else settings
@@ -109,6 +119,46 @@ def main() -> None:
     N["NKernelVerdicts"] = str(sum(1 for k in kernel if k in verdict))
     karmed = [x["id"] for x in settings if (x.get("key") or {}).get("action_space") == "finite_K"]
     N["PctKarmedVerdicts"] = str(round(100 * sum(1 for k in karmed if k in verdict) / len(karmed)))
+    # convergence per batch: settings already populated by an earlier batch; ontology values first used
+    batch_of = {p["id"]: p.get("batch") or 0 for p in manifest if p["id"] in have}
+    first = {}
+    for x in settings:
+        bs = [batch_of[m["paper"]] for m in x.get("members") or [] if m.get("paper") in batch_of]
+        if bs:
+            first[x["id"]] = min(bs)
+
+    def key_values(key: dict) -> set:
+        out = set()
+        for k, v in key.items():
+            items = v.items() if isinstance(v, dict) else [(None, v)]
+            for f, val in items:
+                for y in (val if isinstance(val, list) else [val]):
+                    if y not in ("not_applicable", "unspecified", None):
+                        out.add((k, f, str(y)))
+        return out
+    seen: set = set()
+    words = {0: "Pilot", 1: "One", 2: "Two", 3: "Three"}
+    for b in sorted(words):
+        members = [(x["id"], m) for x in settings for m in x.get("members") or [] if batch_of.get(m.get("paper")) == b]
+        new_vals = set().union(*[key_values(x["key"]) for x in settings if first.get(x["id"]) == b]) - seen
+        seen |= new_vals
+        N[f"ValuesFirst{words[b]}"] = str(len(new_vals))
+        if b:
+            N[f"Reuse{words[b]}"] = str(round(100 * sum(1 for sid, _ in members if first[sid] < b) / len(members))) + r"\%"
+            N[f"NewSettings{words[b]}"] = comma(sum(1 for sid in first if first[sid] == b))
+    N["ValuesUsed"] = str(len(seen))
+    unm = collections.Counter()
+    for f in exts:
+        b = batch_of.get(Path(f).stem)
+        for x in json.loads(Path(f).read_text())["settings"]:
+            if x.get("in_scope") is not False:
+                unm[(b, "s")] += 1
+                unm[(b, "u")] += len(x.get("unmapped") or [])
+    for b in (1, 2, 3):
+        N[f"Unmapped{words[b]}"] = f"{unm[(b, 'u')] / unm[(b, 's')]:.1f}"
+    patches = yaml.safe_load((ROOT / "data" / "field-patches.yaml").read_text())["patches"]
+    patched = {k for k, v in patches.items() if any(x != "keep" for x in v.values())}
+    N["PctPatched"] = str(round(100 * len(patched) / sum(unm[(b, "s")] for b in (0, 1, 2, 3)))) + r"\%"
     syms = yaml.safe_load((ROOT / "data" / "symbol-classes.yaml").read_text())["classes"]
     N["NSymbolPairs"] = comma(len(syms))
     N["NTransfer"] = comma(len(si["transfer"]))
@@ -118,9 +168,8 @@ def main() -> None:
     N["NCorrections"] = str(len(corr))
 
     # ---- validation (parsed from the generated reports)
-    a1 = (REP / "audit.md").read_text()
-    a2 = (REP / "audit-batch2.md").read_text()
-    for tag, txt in [("One", a1), ("Two", a2)]:
+    audits = [("One", "audit"), ("Two", "audit-batch2"), ("Three", "audit-batch3")]
+    for tag, txt in [(t, (REP / f"{f}.md").read_text()) for t, f in audits]:
         row = re.search(r"\| \*\*overall\*\* \| (\d+) \| (\d+) \| (\d+) \| (\d+)% \((\d+)%–(\d+)%\)", txt)
         N[f"Audit{tag}Major"] = row.group(4) + r"\%"
         N[f"Audit{tag}CI"] = f"{row.group(5)}--{row.group(6)}" + r"\%"
@@ -130,6 +179,14 @@ def main() -> None:
         N[f"Audit{tag}SettingMinor"] = str(round(100 * int(s.group(2)) / graded)) + r"\%"
         b = re.search(r"\| bound \| (\d+) \| (\d+) \| (\d+) \| (\d+)% \((\d+)%–(\d+)%\)", txt)
         N[f"Audit{tag}BoundMajor"] = b.group(4) + r"\%"
+    # kinds of setting error (pipeline/audit_taxonomy.py), shares over all audits
+    tax = json.loads((REP / "audit-taxonomy.json").read_text())["labels"]
+    N["TaxItems"] = str(len(tax))
+    for kind, name in [("knowledge", "Knowledge"), ("missing_assumption", "MissingAssumption"), ("noise", "Noise"),
+                       ("protocol_feature", "Protocol"), ("environment", "Environment"), ("action_space", "Action")]:
+        N[f"Tax{name}"] = str(round(100 * sum(kind in v for v in tax.values()) / len(tax))) + r"\%"
+    N["NCorrectionsFromConflicts"] = str(sum(1 for c in corr if re.search(r"conflict", c.get("reason") or "", re.I)))
+
     q = (REP / "audit-quotes.md").read_text()
     N["NQuoteAudited"] = grab(q, r"(\d+) (?:in-scope )?results")
     g = (REP / "goldcheck.md").read_text()
@@ -160,6 +217,28 @@ def main() -> None:
     N["TriageOpen"] = str(tv["open_known"])
     N["TriageBlank"] = str(tv["blank"])
     N["TriageClosedPct"] = str(round(100 * tv["closed"] / len(tri))) + r"\%"
+
+    # ---- saturation (pipeline/saturation.py) and ablations (pipeline/ablate.py)
+    sat = json.loads((REP / "saturation.json").read_text())
+    rows = sat["rows"]
+    full = max(r["n"] for r in rows)
+    mid = min({r["n"] for r in rows}, key=lambda n: abs(n - full / 2))  # the subset closest to half the corpus
+    rand = [r for r in rows if r["order"].startswith("random")]
+    t_mid = sum(r["tight"] for r in rand if r["n"] == mid) / len({r["order"] for r in rand})
+    t_full = next(r["tight"] for r in rows if r["n"] == full)
+    N["SatMidPapers"] = comma(mid)
+    N["SatMidTight"] = str(round(t_mid))
+    N["SatRateFirst"] = f"{100 * t_mid / mid:.0f}"
+    N["SatRateSecond"] = f"{100 * (t_full - t_mid) / (full - mid):.0f}"
+    pilot = next(r for r in rows if r["order"] == "batch" and r["n"] == min(x["n"] for x in rows))
+    N["SatPilotTight"] = str(pilot["tight"])
+    multi = {r["n"]: r["settings_multi_paper"] for r in rows if r["order"] == "batch"}
+    N["SatMultiFull"] = str(multi[full])
+    abl = json.loads((REP / "ablations.json").read_text())
+    for r in abl["rules"]:
+        name = "".join(w.capitalize() for w in r["rule"].split("_"))
+        N[f"Abl{name}Conflict"] = comma(r["conflict"])
+        N[f"Abl{name}Changed"] = comma(r["changed"])
 
     # ---- provenance
     sha = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()

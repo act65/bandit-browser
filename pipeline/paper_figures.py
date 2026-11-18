@@ -1,5 +1,8 @@
 """Figures for the paper, rendered from the data (vector PDF), not screenshotted from the site.
 
+saturation.pdf: settings shared by more than one paper, and tight cells, as papers are added
+(data/reports/saturation.json from pipeline/saturation.py): the order the batches were added, and random orders.
+
 settings-map-action.pdf, settings-map-status.pdf: the settings similarity map (site/layout.py, the same
 seeded t-SNE the site's graph uses), coloured by action space and by the status of each setting's main
 regime (site/analysis.py setting_status). Print colours: the site's light-mode palette, with the
@@ -34,6 +37,38 @@ STATUS_LABEL = {"tight": "tight", "log_gap": "log gap", "poly_gap": "polynomial 
                 "none": "no comparable bounds"}
 
 
+def saturation(out: Path) -> None:
+    import json
+    import matplotlib.pyplot as plt
+    data = json.loads((ROOT / "data" / "reports" / "saturation.json").read_text())
+    rows = data["rows"]
+    fig, axes = plt.subplots(1, 2, figsize=(5.6, 2.0))
+    panels = [("settings_multi_paper", "settings described by\nmore than one paper"), ("tight", "tight cells")]
+    for ax, (key, ylabel) in zip(axes, panels):
+        for name in sorted({r["order"] for r in rows}):
+            pts = sorted((r["n"], r[key]) for r in rows if r["order"] == name)
+            xs, ys = [0] + [p[0] for p in pts], [0] + [p[1] for p in pts]
+            if name == "batch":
+                ax.plot(xs, ys, color=SLOTS[0], lw=2, marker="o", ms=3.5, zorder=3, label="order added")
+            else:
+                ax.plot(xs, ys, color=OTHER, lw=1, zorder=2, label="random order" if name == "random1" else None)
+        n, y = pts[-1]
+        ax.plot([0, n], [0, y], color="#5f5f5a", lw=0.8, ls=":", zorder=1, label="linear")
+        ax.set_xlabel("papers", fontsize=7.5)
+        ax.set_ylabel(ylabel, fontsize=7.5)
+        ax.tick_params(labelsize=7)
+        ax.set_xlim(0, None)
+        ax.set_ylim(0, None)
+        for side in ("top", "right"):
+            ax.spines[side].set_visible(False)
+        ax.grid(axis="y", color="#e4e4e0", lw=0.5)
+        ax.set_axisbelow(True)
+    axes[0].legend(fontsize=6.5, frameon=False, loc="upper left")
+    fig.tight_layout(pad=0.3)
+    fig.savefig(out / "saturation.pdf", bbox_inches="tight")
+    plt.close(fig)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(ROOT.parent / "bandit-browser-paper" / "figures"))
@@ -56,6 +91,7 @@ def main() -> None:
     ys = [-pos[i][1] for i in ids]  # screen coordinates have y downwards
     ss = [6 + 4 * (size[i] ** 0.5) for i in ids]
     out = Path(args.out)
+    saturation(out)
 
     def panel(colours, handles, name, zorder=None):
         fig, ax = plt.subplots(figsize=(4.2, 4.0))

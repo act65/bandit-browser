@@ -14,6 +14,9 @@ import yaml
 from pydantic import BaseModel, ConfigDict, create_model
 
 ROOT = Path(__file__).resolve().parent.parent
+# Rules switched off for an ablation run (pipeline/ablate.py), e.g. ATLAS_ABLATE=corrections,exact_fields.
+# Empty in normal use; nothing committed is ever derived with it set.
+ABLATE = frozenset(filter(None, __import__("os").environ.get("ATLAS_ABLATE", "").split(",")))
 DEFAULT_ONTOLOGY = ROOT / "ontology" / "bandits-0.8.yaml"
 VARIABLES = ROOT / "ontology" / "variables.yaml"
 ALGORITHMS = ROOT / "data" / "algorithms.yaml"

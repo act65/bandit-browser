@@ -22,6 +22,7 @@ ontology's dimensions:
 from __future__ import annotations
 
 import itertools
+import os
 from dataclasses import dataclass, field
 
 # Generic caveats for edges without a pair-specific note in the ontology.
@@ -176,7 +177,7 @@ class Order:
                 if va == vb:
                     continue
                 dim = f"{name}.{f}"
-                if dim in self.exact:
+                if dim in self.exact and "exact_fields" not in os.environ.get("ATLAS_ABLATE", "").split(","):
                     # e.g. the dueling winner or the market mechanism: unstated is not "any", and a market setting is
                     # not a special case of a non-market one that happens to share every other key (v0.7)
                     return None

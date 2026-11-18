@@ -339,7 +339,7 @@ def main() -> None:
     by_title = {norm_title(t): dup.get(p["id"], p["id"]) for p in manifest for t in [p["title"], *p.get("alt_titles", [])]}
     by_arxiv = {p["arxiv_id"]: dup.get(p["id"], p["id"]) for p in manifest if p.get("arxiv_id")}
     canonical_vars = set(var["variables"])
-    corrections = load_corrections()
+    corrections = {} if "corrections" in schema.ABLATE else load_corrections()
 
     settings: dict[str, dict] = {}
     results, citations, candidates = [], {}, collections.Counter()
@@ -351,8 +351,12 @@ def main() -> None:
 
     patch_file = ROOT / "data" / "field-patches.yaml"  # pipeline/fill_fields.py: v0.7 fields for earlier extractions
     patches = (yaml.safe_load(patch_file.read_text()) or {}).get("patches", {}) if patch_file.exists() else {}
+    if "field_patches" in schema.ABLATE:
+        patches = {}
     scope_file = ROOT / "data" / "scope-classes.yaml"  # pipeline/classify_scope.py: features the key cannot see
     scope_classes = (yaml.safe_load(scope_file.read_text()) or {}).get("classes", {}) if scope_file.exists() else {}
+    if "scope_classes" in schema.ABLATE:
+        scope_classes = {}
     for f in sorted(EXT.glob("*.json")):
         paper = f.stem
         if paper in dup:
